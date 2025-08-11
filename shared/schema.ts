@@ -34,7 +34,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   phoneNumber: varchar("phone_number").unique(),
   bio: text("bio"),
-  inviteCode: varchar("invite_code", { length: 12 }).unique(),
+  inviteCode: varchar("invite_code", { length: 20 }).unique(),
   kliqName: varchar("kliq_name").default("My Kliq"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

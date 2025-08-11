@@ -41,7 +41,7 @@ export interface IStorage {
   removeFriend(userId: string, friendId: string): Promise<void>;
   
   // Post operations
-  getPosts(userId: string, filters: string[]): Promise<(Post & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
+  getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
   createPost(post: InsertPost): Promise<Post>;
   likePost(postId: string, userId: string): Promise<void>;
   unlikePost(postId: string, userId: string): Promise<void>;
@@ -163,7 +163,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Post operations
-  async getPosts(userId: string, filters: string[]): Promise<(Post & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]> {
+  async getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]> {
     // Get user's friends first
     const userFriends = await this.getFriends(userId);
     const friendIds = userFriends.map(f => f.friendId);
@@ -222,11 +222,10 @@ export class DatabaseStorage implements IStorage {
           userId: post.userId,
           content: post.content,
           imageUrl: post.imageUrl,
-          likes: post.likes || 0,
+          likes: likesData,
           createdAt: post.createdAt,
           updatedAt: post.updatedAt,
           author: post.author,
-          likesData,
           comments: commentsData,
         };
       })
