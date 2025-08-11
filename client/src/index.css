@@ -1,0 +1,299 @@
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 0%);
+  --foreground: hsl(0, 0%, 100%);
+  --card: hsl(228, 9.8%, 10%);
+  --card-foreground: hsl(0, 0%, 85.1%);
+  --popover: hsl(0, 0%, 0%);
+  --popover-foreground: hsl(0, 0%, 100%);
+  --primary: hsl(328, 100%, 54%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(195, 100%, 50%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(0, 0%, 9.4%);
+  --muted-foreground: hsl(0, 0%, 63.9%);
+  --accent: hsl(228, 9.8%, 10%);
+  --accent-foreground: hsl(0, 0%, 85.1%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(0, 0%, 20%);
+  --input: hsl(0, 0%, 14.9%);
+  --ring: hsl(328, 100%, 54%);
+  --chart-1: hsl(328, 100%, 54%);
+  --chart-2: hsl(195, 100%, 50%);
+  --chart-3: hsl(91, 60%, 47%);
+  --chart-4: hsl(22, 100%, 50%);
+  --chart-5: hsl(271, 81%, 56%);
+  --sidebar: hsl(228, 9.8%, 10%);
+  --sidebar-foreground: hsl(0, 0%, 85.1%);
+  --sidebar-primary: hsl(328, 100%, 54%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(228, 9.8%, 10%);
+  --sidebar-accent-foreground: hsl(0, 0%, 85.1%);
+  --sidebar-border: hsl(0, 0%, 20%);
+  --sidebar-ring: hsl(328, 100%, 54%);
+  --font-sans: 'Comic Neue', 'Comic Sans MS', cursive;
+  --font-serif: Georgia, serif;
+  --font-mono: 'Courier Prime', 'Courier New', monospace;
+  --radius: 0.5rem;
+  
+  /* MyKliq Custom Colors */
+  --mykliq-pink: hsl(328, 100%, 54%);
+  --mykliq-blue: hsl(195, 100%, 50%);
+  --mykliq-green: hsl(91, 60%, 47%);
+  --mykliq-orange: hsl(22, 100%, 50%);
+  --mykliq-purple: hsl(271, 81%, 56%);
+  --retro-yellow: hsl(51, 100%, 50%);
+  --neon-cyan: hsl(180, 100%, 50%);
+  
+  /* Shadow definitions for retro effects */
+  --shadow-retro: 4px 4px 0px hsl(22, 100%, 50%), 8px 8px 0px hsl(271, 81%, 56%);
+  --shadow-neon: 0 0 10px hsl(180, 100%, 50%), 0 0 20px hsl(180, 100%, 50%), 0 0 30px hsl(180, 100%, 50%);
+}
+
+.dark {
+  --background: hsl(0, 0%, 0%);
+  --foreground: hsl(0, 0%, 100%);
+  --card: hsl(228, 9.8%, 10%);
+  --card-foreground: hsl(0, 0%, 85.1%);
+  --popover: hsl(0, 0%, 0%);
+  --popover-foreground: hsl(0, 0%, 100%);
+  --primary: hsl(328, 100%, 54%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(195, 100%, 50%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(0, 0%, 9.4%);
+  --muted-foreground: hsl(0, 0%, 63.9%);
+  --accent: hsl(228, 9.8%, 10%);
+  --accent-foreground: hsl(0, 0%, 85.1%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(0, 0%, 20%);
+  --input: hsl(0, 0%, 14.9%);
+  --ring: hsl(328, 100%, 54%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer utilities {
+  /* MyKliq Custom Utilities */
+  .gradient-banner {
+    background: linear-gradient(45deg, var(--mykliq-pink), var(--mykliq-blue), var(--mykliq-green));
+    background-size: 400% 400%;
+    animation: gradientShift 4s ease infinite;
+  }
+  
+  .retro-shadow {
+    box-shadow: var(--shadow-retro);
+  }
+  
+  .neon-glow {
+    box-shadow: var(--shadow-neon);
+  }
+  
+  .sparkle {
+    position: relative;
+  }
+  
+  .sparkle::before {
+    content: "✨";
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 12px;
+    animation: sparkle 2s ease-in-out infinite;
+  }
+  
+  /* Custom animations */
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  @keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+  
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  
+  @keyframes bounce-gentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse-slow 3s ease-in-out infinite;
+  }
+  
+  .animate-bounce-gentle {
+    animation: bounce-gentle 2s ease-in-out infinite;
+  }
+  
+  /* Font family utilities */
+  .font-comic {
+    font-family: 'Comic Neue', 'Comic Sans MS', cursive;
+  }
+  
+  .font-retro {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+  }
+  
+  /* Color utilities for MyKliq theme */
+  .text-mykliq-pink {
+    color: var(--mykliq-pink);
+  }
+  
+  .text-mykliq-blue {
+    color: var(--mykliq-blue);
+  }
+  
+  .text-mykliq-green {
+    color: var(--mykliq-green);
+  }
+  
+  .text-mykliq-orange {
+    color: var(--mykliq-orange);
+  }
+  
+  .text-mykliq-purple {
+    color: var(--mykliq-purple);
+  }
+  
+  .text-retro-yellow {
+    color: var(--retro-yellow);
+  }
+  
+  .text-neon-cyan {
+    color: var(--neon-cyan);
+  }
+  
+  .bg-mykliq-pink {
+    background-color: var(--mykliq-pink);
+  }
+  
+  .bg-mykliq-blue {
+    background-color: var(--mykliq-blue);
+  }
+  
+  .bg-mykliq-green {
+    background-color: var(--mykliq-green);
+  }
+  
+  .bg-mykliq-orange {
+    background-color: var(--mykliq-orange);
+  }
+  
+  .bg-mykliq-purple {
+    background-color: var(--mykliq-purple);
+  }
+  
+  .bg-retro-yellow {
+    background-color: var(--retro-yellow);
+  }
+  
+  .bg-neon-cyan {
+    background-color: var(--neon-cyan);
+  }
+  
+  .border-mykliq-pink {
+    border-color: var(--mykliq-pink);
+  }
+  
+  .border-mykliq-blue {
+    border-color: var(--mykliq-blue);
+  }
+  
+  .border-mykliq-green {
+    border-color: var(--mykliq-green);
+  }
+  
+  .border-mykliq-orange {
+    border-color: var(--mykliq-orange);
+  }
+  
+  .border-mykliq-purple {
+    border-color: var(--mykliq-purple);
+  }
+  
+  .border-retro-yellow {
+    border-color: var(--retro-yellow);
+  }
+  
+  .border-neon-cyan {
+    border-color: var(--neon-cyan);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(0, 0%, 9.4%);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mykliq-pink);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mykliq-blue);
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--mykliq-pink);
+  color: white;
+}
+
+/* Focus ring styling */
+.focus\:ring-mykliq-pink:focus {
+  --tw-ring-color: var(--mykliq-pink);
+}
+
+.focus\:ring-mykliq-blue:focus {
+  --tw-ring-color: var(--mykliq-blue);
+}
+
+/* Custom backdrop blur effects */
+.backdrop-blur-retro {
+  backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Gradient text utilities */
+.bg-gradient-text-pink-blue {
+  background: linear-gradient(45deg, var(--mykliq-pink), var(--mykliq-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-gradient-text-rainbow {
+  background: linear-gradient(45deg, var(--mykliq-pink), var(--mykliq-blue), var(--mykliq-green), var(--mykliq-orange), var(--mykliq-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

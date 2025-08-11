@@ -1,0 +1,371 @@
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { FilterManager } from "@/components/filter-manager";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import { cn } from "@/lib/utils";
+
+export default function Home() {
+  const [newPost, setNewPost] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const { user } = useAuth();
+  const userData = user as any;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch posts
+  const { data: posts = [], isLoading: postsLoading } = useQuery({
+    queryKey: ["/api/posts"],
+  });
+
+  // Fetch filters
+  const { data: filters = [] } = useQuery({
+    queryKey: ["/api/filters"],
+  });
+
+  // Create post mutation
+  const createPostMutation = useMutation({
+    mutationFn: async (content: string) => {
+      await apiRequest("POST", "/api/posts", { content });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      setNewPost("");
+      toast({
+        title: "Post created!",
+        description: "Your post has been shared with your kliq",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create post",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Like post mutation
+  const likePostMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      await apiRequest("POST", `/api/posts/${postId}/like`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to like post",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Add filter mutation
+  const addFilterMutation = useMutation({
+    mutationFn: async (keyword: string) => {
+      await apiRequest("POST", "/api/filters", { keyword });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/filters"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      toast({
+        title: "Filter added",
+        description: "Posts with this keyword will be hidden",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to add filter",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Remove filter mutation
+  const removeFilterMutation = useMutation({
+    mutationFn: async (filterId: string) => {
+      await apiRequest("DELETE", `/api/filters/${filterId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/filters"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      toast({
+        title: "Filter removed",
+        description: "Posts with this keyword will now be visible",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to remove filter",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreatePost = () => {
+    if (newPost.trim()) {
+      createPostMutation.mutate(newPost.trim());
+    }
+  };
+
+  const handleLikePost = (postId: string) => {
+    likePostMutation.mutate(postId);
+  };
+
+  const formatTimeAgo = (date: string) => {
+    const now = new Date();
+    const postDate = new Date(date);
+    const diffMs = now.getTime() - postDate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return "now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+    return `${Math.floor(diffMins / 1440)}d ago`;
+  };
+
+  const getRankColor = (rank: number) => {
+    if (rank === 1) return "bg-pink-500 text-white";
+    if (rank <= 3) return "bg-blue-500 text-white";
+    if (rank <= 6) return "bg-orange-500 text-black";
+    return "bg-gray-500 text-white";
+  };
+
+  return (
+    <div className="pb-20 space-y-4">
+      {/* Post Creation */}
+      <Card className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-3 mb-3">
+            <Avatar className="w-10 h-10 border-2 border-yellow-400">
+              <AvatarImage src={user?.profileImageUrl} />
+              <AvatarFallback className="bg-gray-700 text-white">
+                {user?.firstName?.[0] || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <Textarea
+              value={newPost}
+              onChange={(e) => setNewPost(e.target.value)}
+              placeholder="What's happening in your kliq?"
+              className="flex-1 bg-black/30 text-white placeholder-gray-300 border-none resize-none"
+              rows={2}
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <div className="flex space-x-2">
+              <Button size="sm" variant="ghost" className="text-yellow-400 hover:bg-yellow-400/10">
+                <Smile className="w-4 h-4" />
+              </Button>
+              <Button size="sm" variant="ghost" className="text-green-400 hover:bg-green-400/10">
+                <ImageIcon className="w-4 h-4" />
+              </Button>
+            </div>
+            <Button
+              onClick={handleCreatePost}
+              disabled={!newPost.trim() || createPostMutation.isPending}
+              className="bg-pink-500 hover:bg-pink-600 text-white font-bold px-6"
+              style={{ boxShadow: '0 0 15px rgba(255, 20, 147, 0.4)' }}
+            >
+              {createPostMutation.isPending ? "Posting..." : "Post!"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filter Toggle */}
+      <Card className="bg-gray-800 border-gray-700">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-blue-400">🚫</span>
+              <span className="text-sm font-medium text-blue-400">Content Filters</span>
+              <Badge variant="secondary" className="text-xs">
+                {(filters as any[]).length} active
+              </Badge>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="text-xs border-blue-500 text-blue-400 hover:bg-blue-500/10"
+            >
+              {showFilters ? "Hide" : "Manage"}
+            </Button>
+          </div>
+          {showFilters && (
+            <div className="mt-4">
+              <FilterManager
+                filters={filters as any[]}
+                onAddFilter={(keyword) => addFilterMutation.mutate(keyword)}
+                onRemoveFilter={(filterId) => removeFilterMutation.mutate(filterId)}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Posts Feed */}
+      {postsLoading ? (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="bg-gray-800 border-gray-700">
+              <CardContent className="p-4">
+                <div className="animate-pulse">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-10 h-10 bg-gray-600 rounded-full"></div>
+                    <div className="space-y-1">
+                      <div className="w-24 h-4 bg-gray-600 rounded"></div>
+                      <div className="w-16 h-3 bg-gray-600 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="w-full h-4 bg-gray-600 rounded"></div>
+                    <div className="w-3/4 h-4 bg-gray-600 rounded"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : posts.length === 0 ? (
+        <Card className="bg-gray-800 border-gray-700">
+          <CardContent className="p-8 text-center">
+            <div className="text-4xl mb-4">🌟</div>
+            <h3 className="text-lg font-bold text-gray-400 mb-2">Your feed is empty</h3>
+            <p className="text-gray-500 text-sm mb-4">
+              Invite friends to your kliq or create your first post to get started!
+            </p>
+            <Button
+              onClick={() => setNewPost("Hello, MyKliq! 👋")}
+              variant="outline"
+              className="border-pink-500 text-pink-400 hover:bg-pink-500/10"
+            >
+              Create your first post
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        (posts as any[]).map((post: any) => (
+          <Card
+            key={post.id}
+            className={cn(
+              "bg-gradient-to-br from-gray-800 to-gray-700 border",
+              post.author.id === userData?.id ? "border-purple-500/50" : "border-gray-600"
+            )}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3 mb-3">
+                <Avatar className="w-10 h-10 border-2 border-pink-400">
+                  <AvatarImage src={post.author.profileImageUrl} />
+                  <AvatarFallback className="bg-gray-700 text-white">
+                    {post.author.firstName?.[0] || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-bold text-pink-400">
+                    {post.author.firstName} {post.author.lastName}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {formatTimeAgo(post.createdAt)}
+                  </p>
+                </div>
+                {post.author.id !== user?.id && (
+                  <Badge className={cn("text-xs font-bold", getRankColor(1))}>
+                    #{1} {/* This would be the actual friend rank */}
+                  </Badge>
+                )}
+              </div>
+              
+              <p className="text-white mb-3">{post.content}</p>
+              
+              <div className="flex justify-between items-center">
+                <div className="flex space-x-4">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleLikePost(post.id)}
+                    className="text-pink-400 hover:bg-pink-400/10 p-0 h-auto"
+                  >
+                    <Heart className="w-4 h-4 mr-1" />
+                    {post.likes || 0}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-blue-400 hover:bg-blue-400/10 p-0 h-auto"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-1" />
+                    {post.comments?.length || 0}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-green-400 hover:bg-green-400/10 p-0 h-auto"
+                  >
+                    <Share className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
+  );
+}
