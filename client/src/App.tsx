@@ -27,13 +27,13 @@ import { cn } from "@/lib/utils";
 
 function Navigation({ currentPath }: { currentPath: string }) {
   const navItems = [
+    { path: "/profile", icon: User, label: "Profile", tab: "profile" },
     { path: "/", icon: HomeIcon, label: "Bulletin", tab: "bulletin" },
     { path: "/kliq", icon: Users, label: "My Kliq", tab: "kliq" },
     { path: "/events", icon: Calendar, label: "Events", tab: "events" },
     { path: "/actions", icon: Video, label: "Action", tab: "actions" },
     { path: "/meetup", icon: MapPin, label: "Meetup", tab: "meetup" },
     { path: "/messages", icon: MessageCircle, label: "IM", tab: "messages" },
-    { path: "/profile", icon: User, label: "Profile", tab: "profile" },
     { path: "/themes", icon: Palette, label: "Themes", tab: "themes" },
   ];
 
