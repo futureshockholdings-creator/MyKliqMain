@@ -8,6 +8,7 @@ MyKliq is a social media application designed for close-knit friend groups. The 
 - **Object Storage Integration**: Configured Replit object storage with proper bucket setup and presigned URL generation
 - **Enhanced Feed**: Posts now support text, images, and videos with proper media display and responsive design
 - **Incognito Messaging (IM)**: Direct messaging system for kliq members with conversation management, real-time messaging, and read status tracking
+- **Events Timing Synchronization Fix**: Resolved timezone handling between datetime-local input and server storage to ensure countdown timers display accurate time remaining (August 14, 2025)
 
 # User Preferences
 
