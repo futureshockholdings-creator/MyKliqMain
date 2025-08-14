@@ -87,15 +87,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Music URL and title are required" });
       }
 
-      // Normalize the object entity path
-      const objectStorageService = new ObjectStorageService();
-      const normalizedPath = objectStorageService.normalizeObjectEntityPath(musicUrl);
-
-      // For music files, we'll use the normalized path directly
-      // Music is considered public content for profile use
+      // Handle different types of URLs
+      let finalMusicUrl = musicUrl;
+      
+      // For URLs from object storage, normalize the path
+      if (musicUrl.includes('storage.googleapis.com') || musicUrl.startsWith('/objects/')) {
+        try {
+          const objectStorageService = new ObjectStorageService();
+          finalMusicUrl = objectStorageService.normalizeObjectEntityPath(musicUrl);
+        } catch (error) {
+          console.log("Error normalizing object path, using original URL:", error);
+          finalMusicUrl = musicUrl;
+        }
+      }
+      // For external URLs (YouTube, SoundCloud, etc.), use them directly
+      else {
+        finalMusicUrl = musicUrl;
+      }
 
       await storage.updateUser(userId, {
-        profileMusicUrl: normalizedPath,
+        profileMusicUrl: finalMusicUrl,
         profileMusicTitle: musicTitle,
       });
 
