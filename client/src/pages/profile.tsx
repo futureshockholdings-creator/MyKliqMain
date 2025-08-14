@@ -7,11 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Edit, RefreshCw, MessageSquare, Smartphone } from "lucide-react";
+import { User, Edit, RefreshCw, MessageSquare, Smartphone, Camera } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import type { UploadResult } from "@uppy/core";
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
@@ -43,6 +45,54 @@ export default function Profile() {
     posts: 127,
     friends: 12,
     likes: 1200
+  };
+
+  // Profile picture upload handlers
+  const handleGetUploadParameters = async () => {
+    const response = await apiRequest("POST", "/api/objects/upload", {});
+    return {
+      method: "PUT" as const,
+      url: response.uploadURL,
+    };
+  };
+
+  const handleProfilePictureComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    if (result.successful && result.successful.length > 0) {
+      const uploadedFile = result.successful[0];
+      const profileImageURL = uploadedFile.uploadURL;
+      
+      try {
+        // Update profile with new image URL
+        await apiRequest("PUT", "/api/user/profile-picture", {
+          profileImageURL: profileImageURL,
+        });
+        
+        // Refresh user data
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        
+        toast({
+          title: "Profile picture updated!",
+          description: "Your new profile picture has been saved",
+        });
+      } catch (error) {
+        if (isUnauthorizedError(error as Error)) {
+          toast({
+            title: "Unauthorized",
+            description: "You are logged out. Logging in again...",
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            window.location.href = "/api/login";
+          }, 500);
+          return;
+        }
+        toast({
+          title: "Error",
+          description: "Failed to update profile picture",
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   // Update profile mutation
@@ -152,12 +202,23 @@ export default function Profile() {
       <Card className="bg-gradient-to-r from-pink-600/20 to-purple-600/20 border-pink-500/30" id="profile-section">
         <CardContent className="p-6">
           <div className="text-center">
-            <Avatar className="w-24 h-24 mx-auto border-4 border-pink-400 mb-4">
-              <AvatarImage src={userData?.profileImageUrl} />
-              <AvatarFallback className="bg-gray-700 text-white text-2xl">
-                {userData?.firstName?.[0] || "U"}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative inline-block mb-4">
+              <Avatar className="w-24 h-24 border-4 border-pink-400">
+                <AvatarImage src={userData?.profileImageUrl} />
+                <AvatarFallback className="bg-gray-700 text-white text-2xl">
+                  {userData?.firstName?.[0] || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <ObjectUploader
+                maxNumberOfFiles={1}
+                maxFileSize={5242880}
+                onGetUploadParameters={handleGetUploadParameters}
+                onComplete={handleProfilePictureComplete}
+                buttonClassName="absolute -bottom-1 -right-1 p-2 rounded-full bg-pink-600 hover:bg-pink-700 text-white shadow-lg"
+              >
+                <Camera className="w-4 h-4" />
+              </ObjectUploader>
+            </div>
             
             {isEditing ? (
               <div className="space-y-3 max-w-sm mx-auto">

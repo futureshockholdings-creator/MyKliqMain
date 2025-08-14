@@ -52,7 +52,7 @@ interface ObjectUploaderProps {
  */
 export function ObjectUploader({
   maxNumberOfFiles = 1,
-  maxFileSize = 50485760, // 50MB default for videos/images
+  maxFileSize = 10485760, // 10MB default
   onGetUploadParameters,
   onComplete,
   buttonClassName,
@@ -64,22 +64,13 @@ export function ObjectUploader({
       restrictions: {
         maxNumberOfFiles,
         maxFileSize,
-        allowedFileTypes: ['image/*', 'video/*'],
+        allowedFileTypes: ['image/*'], // Only allow images for profile pictures
       },
       autoProceed: false,
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
-        getUploadParameters: async (file) => {
-          try {
-            const params = await onGetUploadParameters();
-            console.log("Uppy received upload parameters:", params);
-            return params;
-          } catch (error) {
-            console.error("Error in getUploadParameters:", error);
-            throw error;
-          }
-        },
+        getUploadParameters: onGetUploadParameters,
       })
       .on("complete", (result) => {
         onComplete?.(result);
