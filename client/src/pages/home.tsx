@@ -234,6 +234,47 @@ export default function Home() {
     setCommentInputs(prev => ({ ...prev, [postId]: value }));
   };
 
+  const handleSharePost = async (post: any) => {
+    const shareData = {
+      title: `${post.author.firstName} ${post.author.lastName} on MyKliq`,
+      text: post.content || "Check out this post on MyKliq!",
+      url: window.location.href
+    };
+
+    try {
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData);
+        toast({
+          title: "Post shared!",
+          description: "The post has been shared successfully",
+        });
+      } else {
+        // Fallback to clipboard
+        const shareText = `${shareData.title}\n${shareData.text}\n${shareData.url}`;
+        await navigator.clipboard.writeText(shareText);
+        toast({
+          title: "Link copied!",
+          description: "Post link copied to clipboard",
+        });
+      }
+    } catch (error) {
+      // Final fallback - copy just the URL
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link copied!",
+          description: "App link copied to clipboard",
+        });
+      } catch (clipboardError) {
+        toast({
+          title: "Share failed",
+          description: "Unable to share post",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const formatTimeAgo = (date: string) => {
     const now = new Date();
     const postDate = new Date(date);
@@ -519,7 +560,9 @@ export default function Home() {
                   <Button
                     size="sm"
                     variant="ghost"
+                    onClick={() => handleSharePost(post)}
                     className="text-green-400 hover:bg-green-400/10 p-0 h-auto"
+                    data-testid={`button-share-${post.id}`}
                   >
                     <Share className="w-4 h-4" />
                   </Button>
