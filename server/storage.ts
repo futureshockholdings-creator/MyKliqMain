@@ -612,8 +612,7 @@ export class DatabaseStorage implements IStorage {
       .insert(conversations)
       .values({
         user1Id: userId1,
-        user2Id: userId2,
-        participantIds: data.participantIds
+        user2Id: userId2
       })
       .returning();
 

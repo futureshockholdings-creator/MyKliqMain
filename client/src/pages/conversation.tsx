@@ -58,7 +58,7 @@ export function Conversation() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      return apiRequest(`/api/messages/send`, "POST", {
+      return apiRequest("POST", `/api/messages/send`, {
         receiverId: otherUserId,
         content: content.trim(),
       });

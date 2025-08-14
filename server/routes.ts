@@ -415,7 +415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if conversation already exists between these users
       const conversations = await storage.getConversations(userId);
       const existingConversation = conversations.find(conv => 
-        conv.otherParticipant.id === participantId
+        conv.otherUser.id === participantId
       );
 
       if (existingConversation) {
@@ -454,7 +454,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/messages/send', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const messageData = insertMessageSchema.parse({ ...req.body, senderId: userId });
+      const { receiverId, content } = req.body;
+
+      if (!receiverId || !content?.trim()) {
+        console.log("Validation failed:", { receiverId, content: content?.trim() });
+        return res.status(400).json({ message: "receiverId and content are required" });
+      }
+
+      const messageData = {
+        senderId: userId,
+        receiverId,
+        content: content.trim(),
+      };
+
       const message = await storage.sendMessage(messageData);
       res.json(message);
     } catch (error) {
