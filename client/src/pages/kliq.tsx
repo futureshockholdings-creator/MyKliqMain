@@ -322,6 +322,53 @@ export default function Kliq() {
         </Card>
       </div>
 
+      {/* Pyramid Chart */}
+      {friendsLoading ? (
+        <Card className="bg-gray-800 border-gray-700">
+          <CardContent className="p-8 text-center">
+            <div className="animate-pulse space-y-4">
+              <div className="w-16 h-16 bg-gray-600 rounded-full mx-auto"></div>
+              <div className="space-y-2">
+                <div className="w-24 h-4 bg-gray-600 rounded mx-auto"></div>
+                <div className="w-32 h-3 bg-gray-600 rounded mx-auto"></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : friends.length === 0 ? (
+        <Card className="bg-gray-800 border-gray-700">
+          <CardContent className="p-8 text-center">
+            <div className="text-4xl mb-4">👥</div>
+            <h3 className="text-lg font-bold text-gray-400 mb-2">No friends yet</h3>
+            <p className="text-gray-500 text-sm mb-4">
+              Share your invite code or join someone else's kliq to get started!
+            </p>
+            <Button
+              onClick={() => setIsInviteDialogOpen(true)}
+              className="bg-pink-500 hover:bg-pink-600 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Join a Kliq
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <PyramidChart
+          friends={friends.map(f => ({
+            id: f.friend.id,
+            firstName: f.friend.firstName,
+            lastName: f.friend.lastName,
+            profileImageUrl: f.friend.profileImageUrl,
+            rank: f.rank
+          }))}
+          onRankChange={handleRankChange}
+          onMessage={handleMessageFriend}
+          onVideoCall={handleVideoCall}
+          maxFriends={15}
+          kliqName={userData?.kliqName}
+        />
+      )}
+
       {/* Invite Code */}
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
@@ -385,53 +432,6 @@ export default function Kliq() {
           </DialogContent>
         </Dialog>
       </div>
-
-      {/* Pyramid Chart */}
-      {friendsLoading ? (
-        <Card className="bg-gray-800 border-gray-700">
-          <CardContent className="p-8 text-center">
-            <div className="animate-pulse space-y-4">
-              <div className="w-16 h-16 bg-gray-600 rounded-full mx-auto"></div>
-              <div className="space-y-2">
-                <div className="w-24 h-4 bg-gray-600 rounded mx-auto"></div>
-                <div className="w-32 h-3 bg-gray-600 rounded mx-auto"></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : friends.length === 0 ? (
-        <Card className="bg-gray-800 border-gray-700">
-          <CardContent className="p-8 text-center">
-            <div className="text-4xl mb-4">👥</div>
-            <h3 className="text-lg font-bold text-gray-400 mb-2">No friends yet</h3>
-            <p className="text-gray-500 text-sm mb-4">
-              Share your invite code or join someone else's kliq to get started!
-            </p>
-            <Button
-              onClick={() => setIsInviteDialogOpen(true)}
-              className="bg-pink-500 hover:bg-pink-600 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Join a Kliq
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <PyramidChart
-          friends={friends.map(f => ({
-            id: f.friend.id,
-            firstName: f.friend.firstName,
-            lastName: f.friend.lastName,
-            profileImageUrl: f.friend.profileImageUrl,
-            rank: f.rank
-          }))}
-          onRankChange={handleRankChange}
-          onMessage={handleMessageFriend}
-          onVideoCall={handleVideoCall}
-          maxFriends={15}
-          kliqName={userData?.kliqName}
-        />
-      )}
     </div>
   );
 }
