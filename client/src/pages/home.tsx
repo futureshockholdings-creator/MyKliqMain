@@ -512,7 +512,7 @@ export default function Home() {
                     variant="ghost" 
                     className="text-mykliq-purple hover:bg-mykliq-purple/10"
                   >
-                    <Smile className="w-4 h-4" />
+                    <span className="text-xs font-bold">GIF</span>
                   </Button>
                 }
               />
