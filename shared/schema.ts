@@ -79,6 +79,9 @@ export const posts = pgTable("posts", {
   mediaUrl: varchar("media_url"),
   mediaType: mediaTypeEnum("media_type"),
   likes: integer("likes").default(0),
+  latitude: numeric("latitude", { precision: 10, scale: 7 }),
+  longitude: numeric("longitude", { precision: 10, scale: 7 }),
+  locationName: varchar("location_name"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

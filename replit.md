@@ -11,6 +11,7 @@ MyKliq is a social media application designed for close-knit friend groups. The 
 - **Events Timing Synchronization Fix**: Resolved timezone handling between datetime-local input and server storage to ensure countdown timers display accurate time remaining (August 14, 2025)
 - **Action Live Streaming Feature**: Complete implementation of live streaming feature called "Action" with real-time chat, viewer management, WebSocket support, and camera controls (August 14, 2025)
 - **Navigation Update**: Changed "Feed" to "Bulletin" in main navigation (August 14, 2025)
+- **Simplified Location Check-in**: Converted complex meetup system to simple GPS-based check-in that posts location to bulletin feed (August 14, 2025)
 
 # User Preferences
 
