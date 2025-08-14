@@ -257,7 +257,7 @@ export class DatabaseStorage implements IStorage {
     
     if (filters.length > 0) {
       const filterConditions = filters.map(filter => 
-        like(posts.content, `%${filter}%`)
+        sql`LOWER(${posts.content}) LIKE LOWER(${'%' + filter + '%'})`
       );
       whereConditions.push(sql`NOT (${or(...filterConditions)})`);
     }
