@@ -160,30 +160,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
         </Avatar>
       </div>
       
-      <div className="text-center mt-2">
-        <p className={cn(
-          "font-bold text-xs truncate max-w-16",
-          friend.rank === 1 ? "text-pink-400" :
-          friend.rank <= 3 ? "text-blue-400" :
-          friend.rank <= 6 ? "text-purple-400" :
-          friend.rank <= 10 ? "text-orange-400" : "text-gray-400"
-        )}>
-          {getName(friend)}
-        </p>
-        <Badge 
-          variant="secondary" 
-          className={cn(
-            "text-xs px-1 py-0 mt-1",
-            friend.rank === 1 ? "bg-pink-500 text-white" :
-            friend.rank <= 3 ? "bg-blue-500 text-white" :
-            friend.rank <= 6 ? "bg-purple-500 text-white" :
-            friend.rank <= 10 ? "bg-orange-500 text-black" : "bg-gray-500 text-white"
-          )}
-        >
-          {getRankIcon(friend.rank)}
-          {friend.rank === 1 ? "BFF" : `#${friend.rank}`}
-        </Badge>
-      </div>
+
 
       {/* Sparkle effect for top friends */}
       {friend.rank <= 3 && (
@@ -201,7 +178,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
           🏆 Kliq Pyramid 🏆
         </h3>
         <p className="text-gray-400 text-sm mb-4">
-          Drag friends to reorder your pyramid
+          Hover over friends to see actions
         </p>
         <Badge variant="outline" className="border-blue-500 text-blue-400">
           {friends.length}/{maxFriends} Friends
