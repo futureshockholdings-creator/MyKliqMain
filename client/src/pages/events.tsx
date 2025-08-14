@@ -53,7 +53,7 @@ function Countdown({ targetDate }: CountdownProps) {
   if (isExpired) {
     return (
       <div className="text-center py-2">
-        <Badge variant="secondary" className="bg-gray-500 text-white">
+        <Badge variant="secondary" className="bg-muted text-muted-foreground">
           Event Started
         </Badge>
       </div>
@@ -62,21 +62,21 @@ function Countdown({ targetDate }: CountdownProps) {
 
   return (
     <div className="grid grid-cols-4 gap-2 text-center">
-      <div className="bg-gradient-to-br from-pink-600 to-purple-600 rounded-lg p-2">
-        <div className="text-lg font-bold text-white">{timeLeft.days}</div>
-        <div className="text-xs text-pink-200">Days</div>
+      <div className="bg-gradient-to-br from-primary to-secondary rounded-lg p-2">
+        <div className="text-lg font-bold text-primary-foreground">{timeLeft.days}</div>
+        <div className="text-xs text-primary-foreground/80">Days</div>
       </div>
-      <div className="bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg p-2">
-        <div className="text-lg font-bold text-white">{timeLeft.hours}</div>
-        <div className="text-xs text-blue-200">Hours</div>
+      <div className="bg-gradient-to-br from-secondary to-mykliq-blue rounded-lg p-2">
+        <div className="text-lg font-bold text-secondary-foreground">{timeLeft.hours}</div>
+        <div className="text-xs text-secondary-foreground/80">Hours</div>
       </div>
-      <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg p-2">
-        <div className="text-lg font-bold text-white">{timeLeft.minutes}</div>
-        <div className="text-xs text-green-200">Mins</div>
+      <div className="bg-gradient-to-br from-mykliq-green to-mykliq-purple rounded-lg p-2">
+        <div className="text-lg font-bold text-foreground">{timeLeft.minutes}</div>
+        <div className="text-xs text-foreground/80">Mins</div>
       </div>
-      <div className="bg-gradient-to-br from-orange-600 to-red-600 rounded-lg p-2">
-        <div className="text-lg font-bold text-white">{timeLeft.seconds}</div>
-        <div className="text-xs text-orange-200">Secs</div>
+      <div className="bg-gradient-to-br from-mykliq-orange to-primary rounded-lg p-2">
+        <div className="text-lg font-bold text-foreground">{timeLeft.seconds}</div>
+        <div className="text-xs text-foreground/80">Secs</div>
       </div>
     </div>
   );
@@ -332,82 +332,82 @@ export default function Events() {
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-white">Events</h1>
-          <p className="text-gray-400">Create and join events with your kliq</p>
+          <h1 className="text-2xl font-bold text-foreground">Events</h1>
+          <p className="text-muted-foreground">Create and join events with your kliq</p>
         </div>
         
         <Dialog open={showCreateEvent} onOpenChange={setShowCreateEvent}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-pink-600 to-purple-600 text-white">
+            <Button className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
               <Plus className="w-4 h-4 mr-2" />
               Create Event
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-gray-800 border-gray-700 max-w-md">
+          <DialogContent className="bg-card border-border max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-white">Create New Event</DialogTitle>
+              <DialogTitle className="text-foreground">Create New Event</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label className="text-gray-300">Event Title</Label>
+                <Label className="text-muted-foreground">Event Title</Label>
                 <Input
                   value={newEvent.title}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="Enter event title"
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-input border-border text-foreground"
                   data-testid="input-event-title"
                 />
               </div>
               
               <div>
-                <Label className="text-gray-300">Description</Label>
+                <Label className="text-muted-foreground">Description</Label>
                 <Textarea
                   value={newEvent.description}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="What's this event about?"
-                  className="bg-gray-700 border-gray-600 text-white resize-none"
+                  className="bg-input border-border text-foreground resize-none"
                   rows={3}
                   data-testid="input-event-description"
                 />
               </div>
 
               <div>
-                <Label className="text-gray-300">Location</Label>
+                <Label className="text-muted-foreground">Location</Label>
                 <Input
                   value={newEvent.location}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
                   placeholder="Where will this happen?"
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-input border-border text-foreground"
                   data-testid="input-event-location"
                 />
               </div>
 
               <div>
-                <Label className="text-gray-300">Date & Time</Label>
+                <Label className="text-muted-foreground">Date & Time</Label>
                 <Input
                   type="datetime-local"
                   value={newEvent.eventDate}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, eventDate: e.target.value }))}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-input border-border text-foreground"
                   min={new Date().toISOString().slice(0, 16)}
                   data-testid="input-event-datetime"
                 />
               </div>
 
               <div>
-                <Label className="text-gray-300">Media</Label>
+                <Label className="text-muted-foreground">Media</Label>
                 <div className="flex space-x-2">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowMediaUpload(true)}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    className="border-border text-muted-foreground hover:bg-muted"
                   >
                     <ImageIcon className="w-4 h-4 mr-2" />
                     Add Photo/Video
                   </Button>
                   {newEvent.mediaUrl && (
-                    <Badge className="bg-green-600 text-white">
+                    <Badge className="bg-mykliq-green text-foreground">
                       Media attached
                     </Badge>
                   )}
@@ -418,7 +418,7 @@ export default function Events() {
                 <Button
                   onClick={handleCreateEvent}
                   disabled={createEventMutation.isPending}
-                  className="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 text-white"
+                  className="flex-1 bg-gradient-to-r from-primary to-secondary text-primary-foreground"
                   data-testid="button-create-event"
                 >
                   {createEventMutation.isPending ? "Creating..." : "Create Event"}
@@ -426,7 +426,7 @@ export default function Events() {
                 <Button
                   variant="outline"
                   onClick={() => setShowCreateEvent(false)}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  className="border-border text-muted-foreground hover:bg-muted"
                 >
                   Cancel
                 </Button>

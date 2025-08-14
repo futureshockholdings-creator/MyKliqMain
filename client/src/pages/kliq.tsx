@@ -260,8 +260,8 @@ export default function Kliq() {
       {/* Header */}
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <Users className="w-6 h-6 text-pink-400" />
-          <h1 className="text-2xl font-bold text-pink-400">
+          <Users className="w-6 h-6 text-primary" />
+          <h1 className="text-2xl font-bold text-primary">
             {editingName ? (
               <div className="flex items-center gap-2">
                 <Input
@@ -274,7 +274,7 @@ export default function Kliq() {
                   size="sm"
                   onClick={handleSaveKliqName}
                   disabled={updateNameMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground"
                 >
                   Save
                 </Button>
@@ -289,7 +289,7 @@ export default function Kliq() {
                     setKliqName(userData?.kliqName || "");
                     setEditingName(true);
                   }}
-                  className="ml-2 text-gray-400 hover:text-white"
+                  className="ml-2 text-muted-foreground hover:text-foreground"
                 >
                   <Edit className="w-4 h-4" />
                 </Button>
@@ -297,50 +297,50 @@ export default function Kliq() {
             )}
           </h1>
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className="text-muted-foreground text-sm">
           Drag friends to reorder your kliq pyramid
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
-        <Card className="bg-secondary/20 border-secondary/30">
+        <Card className="bg-card border-border">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-secondary" data-testid="text-friend-count">
               {friends.length}/15
             </div>
-            <div className="text-sm text-secondary/70">Friends</div>
+            <div className="text-sm text-muted-foreground">Friends</div>
           </CardContent>
         </Card>
-        <Card className="bg-mykliq-purple/20 border-mykliq-purple/30">
+        <Card className="bg-card border-border">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-mykliq-purple" data-testid="text-open-spots">
               {15 - friends.length}
             </div>
-            <div className="text-sm text-mykliq-purple/70">Open Spots</div>
+            <div className="text-sm text-muted-foreground">Open Spots</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Pyramid Chart */}
       {friendsLoading ? (
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-card border-border">
           <CardContent className="p-8 text-center">
             <div className="animate-pulse space-y-4">
-              <div className="w-16 h-16 bg-gray-600 rounded-full mx-auto"></div>
+              <div className="w-16 h-16 bg-muted rounded-full mx-auto"></div>
               <div className="space-y-2">
-                <div className="w-24 h-4 bg-gray-600 rounded mx-auto"></div>
-                <div className="w-32 h-3 bg-gray-600 rounded mx-auto"></div>
+                <div className="w-24 h-4 bg-muted rounded mx-auto"></div>
+                <div className="w-32 h-3 bg-muted rounded mx-auto"></div>
               </div>
             </div>
           </CardContent>
         </Card>
       ) : friends.length === 0 ? (
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-card border-border">
           <CardContent className="p-8 text-center">
             <div className="text-4xl mb-4">👥</div>
-            <h3 className="text-lg font-bold text-gray-400 mb-2">No friends yet</h3>
-            <p className="text-gray-500 text-sm mb-4">
+            <h3 className="text-lg font-bold text-muted-foreground mb-2">No friends yet</h3>
+            <p className="text-muted-foreground text-sm mb-4">
               Share your invite code or join someone else's kliq to get started!
             </p>
             <Button

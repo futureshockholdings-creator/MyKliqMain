@@ -425,12 +425,12 @@ export default function Home() {
   return (
     <div className="p-4 space-y-4">
       {/* Post Creation */}
-      <Card className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
+      <Card className="bg-gradient-to-r from-mykliq-purple/20 to-secondary/20 border-mykliq-purple/30">
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-3">
-            <Avatar className="w-10 h-10 border-2 border-yellow-400">
+            <Avatar className="w-10 h-10 border-2 border-mykliq-orange">
               <AvatarImage src={userData?.profileImageUrl} />
-              <AvatarFallback className="bg-gray-700 text-white">
+              <AvatarFallback className="bg-muted text-foreground">
                 {userData?.firstName?.[0] || "U"}
               </AvatarFallback>
             </Avatar>
@@ -438,7 +438,7 @@ export default function Home() {
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
               placeholder="What's happening in your kliq?"
-              className="flex-1 bg-black/30 text-white placeholder-gray-300 border-none resize-none"
+              className="flex-1 bg-background/30 text-foreground placeholder-muted-foreground border-none resize-none"
               rows={2}
             />
           </div>
@@ -449,7 +449,7 @@ export default function Home() {
                   <Button 
                     size="sm" 
                     variant="ghost" 
-                    className="text-yellow-400 hover:bg-yellow-400/10"
+                    className="text-mykliq-orange hover:bg-mykliq-orange/10"
                     data-testid="button-emoji-picker"
                   >
                     <Smile className="w-4 h-4" />
@@ -475,7 +475,7 @@ export default function Home() {
               <Button 
                 size="sm" 
                 variant="ghost" 
-                className="text-green-400 hover:bg-green-400/10"
+                className="text-mykliq-green hover:bg-mykliq-green/10"
                 onClick={() => setShowMediaUpload(true)}
               >
                 <ImageIcon className="w-4 h-4" />
@@ -483,7 +483,7 @@ export default function Home() {
               <Button 
                 size="sm" 
                 variant="ghost" 
-                className="text-blue-400 hover:bg-blue-400/10"
+                className="text-secondary hover:bg-secondary/10"
                 onClick={() => setShowStoryUpload(true)}
               >
                 <Camera className="w-4 h-4" />
@@ -492,8 +492,8 @@ export default function Home() {
             <Button
               onClick={handleCreatePost}
               disabled={!newPost.trim() || createPostMutation.isPending}
-              className="bg-pink-500 hover:bg-pink-600 text-white font-bold px-6"
-              style={{ boxShadow: '0 0 15px rgba(255, 20, 147, 0.4)' }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6"
+              style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
             >
               {createPostMutation.isPending ? "Posting..." : "Post!"}
             </Button>
@@ -503,9 +503,9 @@ export default function Home() {
 
       {/* Stories Section */}
       {(stories as any[]).length > 0 && (
-        <Card className="bg-gray-800 border-gray-600">
+        <Card className="bg-card border-border">
           <CardHeader className="pb-3">
-            <h2 className="text-lg font-bold text-white">Stories</h2>
+            <h2 className="text-lg font-bold text-foreground">Stories</h2>
           </CardHeader>
           <CardContent>
             <div className="flex gap-3 overflow-x-auto pb-2">
@@ -517,26 +517,26 @@ export default function Home() {
                   >
                     <div className={cn(
                       "w-16 h-16 rounded-full border-3 p-0.5",
-                      story.hasViewed ? "border-gray-500" : "border-pink-500"
+                      story.hasViewed ? "border-muted" : "border-primary"
                     )}>
                       <Avatar className="w-full h-full">
                         <AvatarImage src={story.author.profileImageUrl} />
-                        <AvatarFallback className="bg-gray-700 text-white text-sm">
+                        <AvatarFallback className="bg-muted text-muted-foreground text-sm">
                           {story.author.firstName?.[0] || story.author.email?.[0]?.toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                     </div>
                     {story.mediaUrl && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-secondary rounded-full flex items-center justify-center">
                         {story.mediaType === 'video' ? (
-                          <Video className="w-3 h-3 text-white" />
+                          <Video className="w-3 h-3 text-secondary-foreground" />
                         ) : (
-                          <ImageIcon className="w-3 h-3 text-white" />
+                          <ImageIcon className="w-3 h-3 text-secondary-foreground" />
                         )}
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 mt-1 text-center truncate w-16">
+                  <p className="text-xs text-muted-foreground mt-1 text-center truncate w-16">
                     {story.author.firstName || story.author.email?.split('@')[0]}
                   </p>
                 </div>
@@ -547,12 +547,12 @@ export default function Home() {
       )}
 
       {/* Filter Toggle */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-card border-border">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-blue-400">🚫</span>
-              <span className="text-sm font-medium text-blue-400">Content Filters</span>
+              <span className="text-secondary">🚫</span>
+              <span className="text-sm font-medium text-secondary">Content Filters</span>
               <Badge variant="secondary" className="text-xs">
                 {(filters as any[]).length} active
               </Badge>
@@ -561,7 +561,7 @@ export default function Home() {
               size="sm"
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
-              className="text-xs border-blue-500 text-blue-400 hover:bg-blue-500/10"
+              className="text-xs border-secondary text-secondary hover:bg-secondary/10"
             >
               {showFilters ? "Hide" : "Manage"}
             </Button>
