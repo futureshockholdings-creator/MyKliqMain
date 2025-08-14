@@ -59,18 +59,18 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden relative">
+    <div className="min-h-screen bg-background text-foreground overflow-hidden relative">
       {/* Animated Background */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-10 left-10 w-20 h-20 bg-pink-500 rounded-full animate-pulse"></div>
-        <div className="absolute top-32 right-8 w-16 h-16 bg-blue-500 rounded-full animate-bounce"></div>
-        <div className="absolute bottom-20 left-6 w-12 h-12 bg-green-500 rounded-full animate-pulse"></div>
-        <div className="absolute bottom-40 right-12 w-8 h-8 bg-yellow-500 rounded-full animate-bounce"></div>
+        <div className="absolute top-10 left-10 w-20 h-20 bg-primary rounded-full animate-pulse"></div>
+        <div className="absolute top-32 right-8 w-16 h-16 bg-secondary rounded-full animate-bounce"></div>
+        <div className="absolute bottom-20 left-6 w-12 h-12 bg-mykliq-green rounded-full animate-pulse"></div>
+        <div className="absolute bottom-40 right-12 w-8 h-8 bg-mykliq-orange rounded-full animate-bounce"></div>
       </div>
 
-      <div className="relative z-10 max-w-sm mx-auto bg-gray-900 min-h-screen">
+      <div className="relative z-10 max-w-sm mx-auto bg-card min-h-screen">
         {/* Hero Banner */}
-        <div className="bg-gradient-to-r from-pink-500 via-blue-500 to-green-500 h-32 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-primary via-secondary to-mykliq-green h-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
           <div className="absolute bottom-4 left-4">
             <h1 className="text-3xl font-bold text-white" style={{ textShadow: '4px 4px 0px #FF4500, 8px 8px 0px #8A2BE2' }}>
@@ -83,59 +83,59 @@ export default function Landing() {
         {/* Welcome Content */}
         <div className="p-6 space-y-6">
           <div className="text-center">
-            <h2 className="text-xl font-bold text-pink-400 mb-2">
+            <h2 className="text-xl font-bold text-primary mb-2">
               Welcome to the Future of Social!
             </h2>
-            <p className="text-gray-400 text-sm">
+            <p className="text-muted-foreground text-sm">
               Connect with your closest friends in a private, customizable space.
             </p>
           </div>
 
           {/* Features */}
           <div className="space-y-4">
-            <Card className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 border-pink-500/30">
+            <Card className="bg-gradient-to-r from-primary/20 to-mykliq-purple/20 border-primary/30">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Users className="w-8 h-8 text-pink-400" />
+                  <Users className="w-8 h-8 text-primary" />
                   <div>
-                    <h3 className="font-bold text-pink-400">Exclusive Friend Limit</h3>
-                    <p className="text-xs text-gray-300">Only 15 friends max - quality over quantity!</p>
+                    <h3 className="font-bold text-primary">Exclusive Friend Limit</h3>
+                    <p className="text-xs text-muted-foreground">Only 15 friends max - quality over quantity!</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-blue-500/20 to-green-500/20 border-blue-500/30">
+            <Card className="bg-gradient-to-r from-secondary/20 to-mykliq-green/20 border-secondary/30">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Crown className="w-8 h-8 text-blue-400" />
+                  <Crown className="w-8 h-8 text-secondary" />
                   <div>
-                    <h3 className="font-bold text-blue-400">Pyramid Rankings</h3>
-                    <p className="text-xs text-gray-300">Organize your friends in a hierarchy that matters to you</p>
+                    <h3 className="font-bold text-secondary">Pyramid Rankings</h3>
+                    <p className="text-xs text-muted-foreground">Organize your friends in a hierarchy that matters to you</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-orange-500/20 to-yellow-500/20 border-orange-500/30">
+            <Card className="bg-gradient-to-r from-mykliq-orange/20 to-retro-yellow/20 border-mykliq-orange/30">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Palette className="w-8 h-8 text-orange-400" />
+                  <Palette className="w-8 h-8 text-mykliq-orange" />
                   <div>
-                    <h3 className="font-bold text-orange-400">Full Customization</h3>
-                    <p className="text-xs text-gray-300">Personalize colors, fonts, and themes like MySpace</p>
+                    <h3 className="font-bold text-mykliq-orange">Full Customization</h3>
+                    <p className="text-xs text-muted-foreground">Personalize colors, fonts, and themes like MySpace</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-500/30">
+            <Card className="bg-gradient-to-r from-mykliq-purple/20 to-primary/20 border-mykliq-purple/30">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Shield className="w-8 h-8 text-purple-400" />
+                  <Shield className="w-8 h-8 text-mykliq-purple" />
                   <div>
-                    <h3 className="font-bold text-purple-400">Content Filtering</h3>
-                    <p className="text-xs text-gray-300">Filter out unwanted content with keyword blocking</p>
+                    <h3 className="font-bold text-mykliq-purple">Content Filtering</h3>
+                    <p className="text-xs text-muted-foreground">Filter out unwanted content with keyword blocking</p>
                   </div>
                 </div>
               </CardContent>
@@ -146,8 +146,8 @@ export default function Landing() {
           <div className="space-y-3">
             <Button 
               onClick={() => window.location.href = "/api/login"}
-              className="w-full bg-gradient-to-r from-pink-500 to-blue-500 hover:from-pink-600 hover:to-blue-600 text-white font-bold py-3"
-              style={{ boxShadow: '0 0 20px rgba(255, 20, 147, 0.5)' }}
+              className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-primary-foreground font-bold py-3"
+              style={{ boxShadow: '0 0 20px hsl(var(--primary) / 0.5)' }}
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Join MyKliq Now!
@@ -157,14 +157,14 @@ export default function Landing() {
               <DialogTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="w-full bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
+                  className="w-full bg-card border-border text-card-foreground hover:bg-accent"
                 >
                   Join with Invite Code
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-sm mx-auto">
+              <DialogContent className="bg-card border-border text-card-foreground max-w-sm mx-auto">
                 <DialogHeader>
-                  <DialogTitle className="text-pink-400">Join a Kliq!</DialogTitle>
+                  <DialogTitle className="text-primary">Join a Kliq!</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <PhoneInput
