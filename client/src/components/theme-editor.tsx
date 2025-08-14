@@ -35,6 +35,8 @@ export function ThemeEditor({ theme, onSave, onReset }: ThemeEditorProps) {
     }
   }, [theme]);
 
+
+
   const handleSave = () => {
     onSave(currentTheme);
   };
@@ -47,6 +49,8 @@ export function ThemeEditor({ theme, onSave, onReset }: ThemeEditorProps) {
   const updateTheme = (key: string, value: any) => {
     setCurrentTheme(prev => ({ ...prev, [key]: value }));
   };
+
+
 
   return (
     <div className="space-y-6 pb-20">
