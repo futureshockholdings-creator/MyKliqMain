@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { convertToMP3, getFileRecommendations, isDRMProtected, getAudioFileInfo, type ConversionResult } from "@/lib/audioConverter";
+import { ConversionGuide } from "./ConversionGuide";
 
 interface MusicUploaderProps {
   currentMusicUrl?: string;
@@ -24,6 +25,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [fileRecommendations, setFileRecommendations] = useState<any>(null);
+  const [showConversionGuide, setShowConversionGuide] = useState(false);
   const [conversionResult, setConversionResult] = useState<ConversionResult | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -145,8 +147,8 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
     setProcessedFile(null);
     setConversionResult(null);
     
-    // Get file recommendations
-    const recommendations = getFileRecommendations(file);
+    // Get file recommendations (async)
+    const recommendations = await getFileRecommendations(file);
     setFileRecommendations(recommendations);
     
     if (!musicTitle) {
@@ -196,7 +198,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     const fileToUpload = processedFile || selectedFile;
     
     if (!fileToUpload || !musicTitle.trim()) {
@@ -208,7 +210,8 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
       return;
     }
     
-    if (isDRMProtected(selectedFile!) && !processedFile) {
+    const isDRM = await isDRMProtected(selectedFile!);
+    if (isDRM && !processedFile) {
       toast({
         title: "Cannot upload DRM-protected file",
         description: "Please convert this file using desktop software first",
@@ -355,6 +358,17 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                                       </li>
                                     ))}
                                   </ul>
+                                  {!fileRecommendations.canProcess && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setShowConversionGuide(true)}
+                                      className="mt-2 text-xs border-amber-500 text-amber-400 hover:bg-amber-500/20"
+                                    >
+                                      <Info className="w-3 h-3 mr-1" />
+                                      View Detailed Guide
+                                    </Button>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -367,27 +381,30 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
               </div>
             </div>
             
-            {/* Manual Conversion Button for DRM files */}
-            {selectedFile && isDRMProtected(selectedFile) && !processedFile && (
+            {/* DRM Detection and Guide Button */}
+            {selectedFile && fileRecommendations && !fileRecommendations.canProcess && (
               <Alert className="border-amber-500/30 bg-amber-500/10">
                 <AlertTriangle className="w-4 h-4 text-amber-400" />
                 <AlertDescription className="text-amber-300">
                   <div className="font-medium mb-2">DRM-Protected File Detected</div>
-                  <div className="text-sm space-y-1">
-                    <p>This M4P file contains copy protection that prevents web playback.</p>
-                    <p className="font-medium">To use this file:</p>
-                    <ul className="ml-4 space-y-1 text-xs">
-                      <li>• Use iTunes to burn to CD and re-import as MP3</li>
-                      <li>• Use legitimate DRM removal software</li>
-                      <li>• Purchase DRM-free version if available</li>
-                    </ul>
+                  <div className="text-sm space-y-2">
+                    <p>This file contains copy protection that prevents web playback.</p>
+                    <Button
+                      onClick={() => setShowConversionGuide(true)}
+                      variant="outline"
+                      size="sm"
+                      className="border-amber-500 text-amber-400 hover:bg-amber-500/20"
+                    >
+                      <Info className="w-4 h-4 mr-2" />
+                      View Conversion Guide
+                    </Button>
                   </div>
                 </AlertDescription>
               </Alert>
             )}
 
             {/* Manual Conversion Button for large files */}
-            {selectedFile && !processedFile && !isDRMProtected(selectedFile) && 
+            {selectedFile && !processedFile && fileRecommendations?.canProcess && 
              fileRecommendations?.recommendation === "Convert to compressed format" && (
               <Button
                 onClick={() => handleFileConversion(selectedFile)}
@@ -417,7 +434,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                   !musicTitle.trim() || 
                   isUploading || 
                   isProcessing ||
-                  (isDRMProtected(selectedFile!) && !processedFile)
+                  (!fileRecommendations?.canProcess && !processedFile)
                 }
                 className="flex-1 bg-pink-500 hover:bg-pink-600 text-white disabled:opacity-50"
                 data-testid="button-confirm-upload"
@@ -455,6 +472,15 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Conversion Guide Modal */}
+      {showConversionGuide && selectedFile && (
+        <ConversionGuide
+          fileName={selectedFile.name}
+          fileFormat={selectedFile.name.substring(selectedFile.name.lastIndexOf('.'))}
+          onClose={() => setShowConversionGuide(false)}
+        />
+      )}
     </div>
   );
 }

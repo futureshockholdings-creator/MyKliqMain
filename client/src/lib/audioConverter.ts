@@ -9,14 +9,37 @@ export interface ConversionResult {
   targetFormat?: string;
 }
 
-// Check if a file is likely DRM-protected
-export function isDRMProtected(file: File): boolean {
-  const fileName = file.name.toLowerCase();
-  const isDRMExtension = fileName.endsWith('.m4p');
-  
-  // M4P files are typically DRM-protected
-  // We can also check file size patterns or other heuristics
-  return isDRMExtension;
+// Enhanced DRM detection with multiple indicators
+export function isDRMProtected(file: File): Promise<boolean> {
+  return new Promise((resolve) => {
+    const fileName = file.name.toLowerCase();
+    const isDRMExtension = fileName.endsWith('.m4p');
+    
+    // Quick check for obvious DRM extensions
+    if (isDRMExtension) {
+      resolve(true);
+      return;
+    }
+    
+    // For M4A files, try to detect DRM by attempting to read metadata
+    if (fileName.endsWith('.m4a') || fileName.endsWith('.aac')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const arrayBuffer = e.target?.result as ArrayBuffer;
+        const uint8Array = new Uint8Array(arrayBuffer, 0, Math.min(1024, arrayBuffer.byteLength));
+        
+        // Look for iTunes DRM signatures in file header
+        const header = Array.from(uint8Array).map(b => String.fromCharCode(b)).join('');
+        const hasDRMSignature = header.includes('sinf') || header.includes('schi') || header.includes('user');
+        
+        resolve(hasDRMSignature);
+      };
+      reader.onerror = () => resolve(false);
+      reader.readAsArrayBuffer(file.slice(0, 1024));
+    } else {
+      resolve(false);
+    }
+  });
 }
 
 // Get file format info
@@ -143,20 +166,36 @@ export function canProcessFile(file: File): boolean {
   return !fileInfo.isDRM && (fileInfo.isLossless || fileInfo.isCompressed);
 }
 
-// Get recommended actions for user
-export function getFileRecommendations(file: File) {
+// Get comprehensive file recommendations with detailed guidance
+export async function getFileRecommendations(file: File) {
   const fileInfo = getAudioFileInfo(file);
+  const isDRM = await isDRMProtected(file);
   
-  if (fileInfo.isDRM) {
+  if (isDRM) {
     return {
       canProcess: false,
       recommendation: "DRM-protected file detected",
-      message: "This file has copy protection. To use it, you'll need to convert it using desktop software first.",
+      message: "This file has copy protection that prevents web playback. Here are legitimate conversion options:",
       suggestedTools: [
-        "Use iTunes to burn to CD and re-import as MP3",
-        "Use legitimate DRM removal software",
-        "Purchase DRM-free version if available"
-      ]
+        "iTunes: Burn to CD → Re-import as MP3/AAC",
+        "TunesKit: Professional DRM removal (paid)",
+        "Requiem: Open-source iTunes DRM removal",
+        "Purchase DRM-free version from artist/label",
+        "Stream from music services instead"
+      ],
+      detailedSteps: {
+        iTunes: [
+          "Create a new playlist with your protected songs",
+          "Insert a blank CD and burn the playlist",
+          "Re-import the CD as MP3 or AAC format",
+          "The imported files will be DRM-free"
+        ],
+        Alternative: [
+          "Check if the artist offers DRM-free downloads",
+          "Purchase from DRM-free stores like Bandcamp",
+          "Use streaming services for web playback"
+        ]
+      }
     };
   }
   
@@ -164,15 +203,32 @@ export function getFileRecommendations(file: File) {
     return {
       canProcess: true,
       recommendation: "Convert to compressed format",
-      message: "Large lossless file detected. Converting to compressed format will reduce file size.",
-      suggestedTools: ["Auto-convert to optimized format for web playback"]
+      message: "Large lossless file detected. Converting will optimize for web playback while maintaining quality.",
+      suggestedTools: ["Auto-convert to web-optimized format"],
+      benefits: [
+        "Faster upload and download times",
+        "Reduced storage space usage",
+        "Better streaming performance",
+        "Maintained audio quality for web use"
+      ]
+    };
+  }
+  
+  if (fileInfo.extension === '.mp3' && file.size > 8 * 1024 * 1024) {
+    return {
+      canProcess: true,
+      recommendation: "Large MP3 file",
+      message: "This MP3 file is quite large. Consider re-encoding at a lower bitrate for web use.",
+      suggestedTools: ["Auto-optimize bitrate for web playback"],
+      benefits: ["Faster loading", "Reduced bandwidth usage"]
     };
   }
   
   return {
     canProcess: true,
     recommendation: "File ready to use",
-    message: "This file format is compatible and ready for upload.",
-    suggestedTools: []
+    message: "This file format is optimized and ready for upload.",
+    suggestedTools: [],
+    benefits: ["Perfect for web playback", "No conversion needed"]
   };
 }
