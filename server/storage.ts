@@ -12,6 +12,9 @@ import {
   conversations,
   events,
   eventAttendees,
+  actions,
+  actionViewers,
+  actionChatMessages,
   type User,
   type UpsertUser,
   type UserTheme,
@@ -36,6 +39,12 @@ import {
   type InsertEvent,
   type EventAttendee,
   type InsertEventAttendee,
+  type Action,
+  type InsertAction,
+  type ActionViewer,
+  type InsertActionViewer,
+  type ActionChatMessage,
+  type InsertActionChatMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or } from "drizzle-orm";
@@ -91,6 +100,16 @@ export interface IStorage {
   createEvent(event: InsertEvent): Promise<Event>;
   updateEvent(eventId: string, updates: Partial<InsertEvent>): Promise<Event>;
   updateEventAttendance(eventId: string, userId: string, status: string): Promise<void>;
+
+  // Action (Live Stream) operations
+  getActions(): Promise<(Action & { author: User; viewers: ActionViewer[]; viewerCount: number })[]>;
+  getActionById(actionId: string): Promise<Action | undefined>;
+  createAction(action: InsertAction): Promise<Action>;
+  endAction(actionId: string): Promise<Action>;
+  joinAction(actionId: string, userId: string): Promise<void>;
+  leaveAction(actionId: string, userId: string): Promise<void>;
+  addActionChatMessage(message: InsertActionChatMessage): Promise<ActionChatMessage>;
+  getActionChatMessages(actionId: string): Promise<(ActionChatMessage & { user: User })[]>;
   
   // Utility operations
   generateInviteCode(): Promise<string>;
@@ -750,6 +769,155 @@ export class DatabaseStorage implements IStorage {
       .update(events)
       .set({ attendeeCount })
       .where(eq(events.id, eventId));
+  }
+
+  // Action (Live Stream) operations
+  async getActions(): Promise<(Action & { author: User; viewers: ActionViewer[]; viewerCount: number })[]> {
+    const allActions = await db
+      .select({
+        action: actions,
+        author: users,
+      })
+      .from(actions)
+      .leftJoin(users, eq(actions.userId, users.id))
+      .where(eq(actions.status, "live"))
+      .orderBy(desc(actions.createdAt));
+
+    // Get viewers for each action
+    const actionsWithViewers = await Promise.all(
+      allActions.map(async ({ action, author }) => {
+        const viewers = await db
+          .select()
+          .from(actionViewers)
+          .where(and(eq(actionViewers.actionId, action.id), sql`left_at IS NULL`));
+
+        return {
+          ...action,
+          author: author!,
+          viewers,
+          viewerCount: viewers.length,
+        };
+      })
+    );
+
+    return actionsWithViewers;
+  }
+
+  async getActionById(actionId: string): Promise<Action | undefined> {
+    const [action] = await db.select().from(actions).where(eq(actions.id, actionId));
+    return action;
+  }
+
+  async createAction(action: InsertAction): Promise<Action> {
+    // Generate unique stream key
+    const streamKey = randomUUID();
+    
+    const [newAction] = await db.insert(actions).values({
+      ...action,
+      streamKey,
+    }).returning();
+    
+    return newAction;
+  }
+
+  async endAction(actionId: string): Promise<Action> {
+    // Mark all viewers as left
+    await db
+      .update(actionViewers)
+      .set({ leftAt: new Date() })
+      .where(and(eq(actionViewers.actionId, actionId), sql`left_at IS NULL`));
+
+    // End the action
+    const [endedAction] = await db
+      .update(actions)
+      .set({ 
+        status: "ended",
+        endedAt: new Date(),
+        viewerCount: 0,
+      })
+      .where(eq(actions.id, actionId))
+      .returning();
+
+    return endedAction;
+  }
+
+  async joinAction(actionId: string, userId: string): Promise<void> {
+    // Check if user is already viewing
+    const [existingViewer] = await db
+      .select()
+      .from(actionViewers)
+      .where(and(
+        eq(actionViewers.actionId, actionId),
+        eq(actionViewers.userId, userId),
+        sql`left_at IS NULL`
+      ))
+      .limit(1);
+
+    if (!existingViewer) {
+      // Add new viewer
+      await db.insert(actionViewers).values({
+        actionId,
+        userId,
+      });
+
+      // Update viewer count
+      const viewerCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(actionViewers)
+        .where(and(eq(actionViewers.actionId, actionId), sql`left_at IS NULL`))
+        .then(result => Number(result[0]?.count) || 0);
+
+      await db
+        .update(actions)
+        .set({ viewerCount })
+        .where(eq(actions.id, actionId));
+    }
+  }
+
+  async leaveAction(actionId: string, userId: string): Promise<void> {
+    // Mark viewer as left
+    await db
+      .update(actionViewers)
+      .set({ leftAt: new Date() })
+      .where(and(
+        eq(actionViewers.actionId, actionId),
+        eq(actionViewers.userId, userId),
+        sql`left_at IS NULL`
+      ));
+
+    // Update viewer count
+    const viewerCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(actionViewers)
+      .where(and(eq(actionViewers.actionId, actionId), sql`left_at IS NULL`))
+      .then(result => Number(result[0]?.count) || 0);
+
+    await db
+      .update(actions)
+      .set({ viewerCount })
+      .where(eq(actions.id, actionId));
+  }
+
+  async addActionChatMessage(message: InsertActionChatMessage): Promise<ActionChatMessage> {
+    const [newMessage] = await db.insert(actionChatMessages).values(message).returning();
+    return newMessage;
+  }
+
+  async getActionChatMessages(actionId: string): Promise<(ActionChatMessage & { user: User })[]> {
+    const messages = await db
+      .select({
+        message: actionChatMessages,
+        user: users,
+      })
+      .from(actionChatMessages)
+      .leftJoin(users, eq(actionChatMessages.userId, users.id))
+      .where(eq(actionChatMessages.actionId, actionId))
+      .orderBy(actionChatMessages.createdAt);
+
+    return messages.map(({ message, user }) => ({
+      ...message,
+      user: user!,
+    }));
   }
 }
 

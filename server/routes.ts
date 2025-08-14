@@ -5,6 +5,13 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema } from "@shared/schema";
 import { z } from "zod";
+import { WebSocketServer, WebSocket } from "ws";
+
+// Extend WebSocket interface for custom properties
+interface ExtendedWebSocket extends WebSocket {
+  action_id?: string;
+  user_id?: string;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -574,6 +581,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Action (Live Stream) routes
+  
+  // Get all live actions
+  app.get('/api/actions', isAuthenticated, async (req: any, res) => {
+    try {
+      const actions = await storage.getActions();
+      res.json(actions);
+    } catch (error) {
+      console.error("Error fetching actions:", error);
+      res.status(500).json({ message: "Failed to fetch actions" });
+    }
+  });
+
+  // Get specific action details
+  app.get('/api/actions/:actionId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { actionId } = req.params;
+      const action = await storage.getActionById(actionId);
+      
+      if (!action) {
+        return res.status(404).json({ message: "Action not found" });
+      }
+      
+      res.json(action);
+    } catch (error) {
+      console.error("Error fetching action:", error);
+      res.status(500).json({ message: "Failed to fetch action" });
+    }
+  });
+
+  // Create new action (start live stream)
+  app.post('/api/actions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { insertActionSchema } = await import("@shared/schema");
+      const actionData = insertActionSchema.parse({ ...req.body, userId });
+      
+      const action = await storage.createAction(actionData);
+      res.json(action);
+    } catch (error) {
+      console.error("Error creating action:", error);
+      res.status(500).json({ message: "Failed to create action" });
+    }
+  });
+
+  // End action (stop live stream)
+  app.put('/api/actions/:actionId/end', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { actionId } = req.params;
+      
+      // Verify user owns this action
+      const action = await storage.getActionById(actionId);
+      if (!action || action.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to end this action" });
+      }
+      
+      const endedAction = await storage.endAction(actionId);
+      res.json(endedAction);
+    } catch (error) {
+      console.error("Error ending action:", error);
+      res.status(500).json({ message: "Failed to end action" });
+    }
+  });
+
+  // Join action (start watching stream)
+  app.post('/api/actions/:actionId/join', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { actionId } = req.params;
+      
+      await storage.joinAction(actionId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error joining action:", error);
+      res.status(500).json({ message: "Failed to join action" });
+    }
+  });
+
+  // Leave action (stop watching stream)
+  app.post('/api/actions/:actionId/leave', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { actionId } = req.params;
+      
+      await storage.leaveAction(actionId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error leaving action:", error);
+      res.status(500).json({ message: "Failed to leave action" });
+    }
+  });
+
+  // Get action chat messages
+  app.get('/api/actions/:actionId/chat', isAuthenticated, async (req: any, res) => {
+    try {
+      const { actionId } = req.params;
+      const messages = await storage.getActionChatMessages(actionId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching action chat:", error);
+      res.status(500).json({ message: "Failed to fetch chat messages" });
+    }
+  });
+
+  // Send action chat message
+  app.post('/api/actions/:actionId/chat', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { actionId } = req.params;
+      const { insertActionChatMessageSchema } = await import("@shared/schema");
+      const messageData = insertActionChatMessageSchema.parse({
+        ...req.body,
+        actionId,
+        userId
+      });
+      
+      const message = await storage.addActionChatMessage(messageData);
+      res.json(message);
+    } catch (error) {
+      console.error("Error sending chat message:", error);
+      res.status(500).json({ message: "Failed to send chat message" });
+    }
+  });
+
   // SMS verification routes (mocked for MVP)
   app.post('/api/auth/send-verification', async (req, res) => {
     try {
@@ -605,5 +737,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+
+  // Setup WebSocket server for real-time Action features
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  wss.on('connection', (ws: ExtendedWebSocket, req) => {
+    console.log('New WebSocket connection');
+    
+    ws.on('message', async (message: string) => {
+      try {
+        const data = JSON.parse(message);
+        
+        switch (data.type) {
+          case 'join_action':
+            // Join action room for real-time updates
+            ws.action_id = data.actionId;
+            ws.user_id = data.userId;
+            
+            // Broadcast to other viewers that someone joined
+            wss.clients.forEach((client: ExtendedWebSocket) => {
+              if (client !== ws && 
+                  client.readyState === WebSocket.OPEN && 
+                  client.action_id === data.actionId) {
+                client.send(JSON.stringify({
+                  type: 'viewer_joined',
+                  actionId: data.actionId,
+                  userId: data.userId
+                }));
+              }
+            });
+            break;
+            
+          case 'leave_action':
+            // Leave action room
+            wss.clients.forEach((client: ExtendedWebSocket) => {
+              if (client !== ws && 
+                  client.readyState === WebSocket.OPEN && 
+                  client.action_id === data.actionId) {
+                client.send(JSON.stringify({
+                  type: 'viewer_left',
+                  actionId: data.actionId,
+                  userId: data.userId
+                }));
+              }
+            });
+            break;
+            
+          case 'action_chat':
+            // Broadcast chat message to all viewers
+            wss.clients.forEach((client: ExtendedWebSocket) => {
+              if (client.readyState === WebSocket.OPEN && 
+                  client.action_id === data.actionId) {
+                client.send(JSON.stringify({
+                  type: 'action_chat',
+                  actionId: data.actionId,
+                  message: data.message,
+                  userId: data.userId,
+                  userName: data.userName,
+                  timestamp: new Date().toISOString()
+                }));
+              }
+            });
+            break;
+            
+          case 'action_ended':
+            // Broadcast that action has ended
+            wss.clients.forEach((client: ExtendedWebSocket) => {
+              if (client.readyState === WebSocket.OPEN && 
+                  client.action_id === data.actionId) {
+                client.send(JSON.stringify({
+                  type: 'action_ended',
+                  actionId: data.actionId
+                }));
+              }
+            });
+            break;
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+    
+    ws.on('close', () => {
+      console.log('WebSocket connection closed');
+      if (ws.action_id && ws.user_id) {
+        // Notify other viewers that someone left
+        wss.clients.forEach((client: ExtendedWebSocket) => {
+          if (client.readyState === WebSocket.OPEN && 
+              client.action_id === ws.action_id) {
+            client.send(JSON.stringify({
+              type: 'viewer_left',
+              actionId: ws.action_id,
+              userId: ws.user_id
+            }));
+          }
+        });
+      }
+    });
+  });
+
   return httpServer;
 }

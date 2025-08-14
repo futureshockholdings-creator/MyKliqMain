@@ -165,6 +165,41 @@ export const events = pgTable("events", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Action (Live Streams)
+export const actionStreamStatusEnum = pgEnum("action_stream_status", ["live", "ended"]);
+
+export const actions = pgTable("actions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  status: actionStreamStatusEnum("status").default("live"),
+  viewerCount: integer("viewer_count").default(0),
+  thumbnailUrl: varchar("thumbnail_url"),
+  streamKey: varchar("stream_key").notNull().unique(),
+  chatEnabled: boolean("chat_enabled").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  endedAt: timestamp("ended_at"),
+});
+
+// Action viewers (who's watching the stream)
+export const actionViewers = pgTable("action_viewers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  actionId: varchar("action_id").references(() => actions.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  joinedAt: timestamp("joined_at").defaultNow(),
+  leftAt: timestamp("left_at"),
+});
+
+// Action chat messages
+export const actionChatMessages = pgTable("action_chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  actionId: varchar("action_id").references(() => actions.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Event attendees
 export const eventAttendees = pgTable("event_attendees", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -191,6 +226,9 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   conversations2: many(conversations, { relationName: "user2Conversations" }),
   events: many(events),
   eventAttendees: many(eventAttendees),
+  actions: many(actions),
+  actionViewers: many(actionViewers),
+  actionChatMessages: many(actionChatMessages),
 }));
 
 export const storiesRelations = relations(stories, ({ one, many }) => ({
@@ -319,6 +357,37 @@ export const eventAttendeesRelations = relations(eventAttendees, ({ one }) => ({
   }),
 }));
 
+export const actionsRelations = relations(actions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [actions.userId],
+    references: [users.id],
+  }),
+  viewers: many(actionViewers),
+  chatMessages: many(actionChatMessages),
+}));
+
+export const actionViewersRelations = relations(actionViewers, ({ one }) => ({
+  action: one(actions, {
+    fields: [actionViewers.actionId],
+    references: [actions.id],
+  }),
+  user: one(users, {
+    fields: [actionViewers.userId],
+    references: [users.id],
+  }),
+}));
+
+export const actionChatMessagesRelations = relations(actionChatMessages, ({ one }) => ({
+  action: one(actions, {
+    fields: [actionChatMessages.actionId],
+    references: [actions.id],
+  }),
+  user: one(users, {
+    fields: [actionChatMessages.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users);
 export const insertUserThemeSchema = createInsertSchema(userThemes).omit({ id: true, createdAt: true, updatedAt: true });
@@ -335,6 +404,9 @@ export const insertEventSchema = createInsertSchema(events).omit({ id: true, att
   eventDate: z.string().transform((val) => new Date(val))
 });
 export const insertEventAttendeeSchema = createInsertSchema(eventAttendees).omit({ id: true, createdAt: true });
+export const insertActionSchema = createInsertSchema(actions).omit({ id: true, viewerCount: true, createdAt: true, endedAt: true });
+export const insertActionViewerSchema = createInsertSchema(actionViewers).omit({ id: true, joinedAt: true, leftAt: true });
+export const insertActionChatMessageSchema = createInsertSchema(actionChatMessages).omit({ id: true, createdAt: true });
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -361,3 +433,9 @@ export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type EventAttendee = typeof eventAttendees.$inferSelect;
 export type InsertEventAttendee = z.infer<typeof insertEventAttendeeSchema>;
+export type Action = typeof actions.$inferSelect;
+export type InsertAction = z.infer<typeof insertActionSchema>;
+export type ActionViewer = typeof actionViewers.$inferSelect;
+export type InsertActionViewer = z.infer<typeof insertActionViewerSchema>;
+export type ActionChatMessage = typeof actionChatMessages.$inferSelect;
+export type InsertActionChatMessage = z.infer<typeof insertActionChatMessageSchema>;
