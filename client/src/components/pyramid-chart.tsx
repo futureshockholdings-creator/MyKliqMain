@@ -187,11 +187,8 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
 
       {/* Pyramid Rows */}
       {pyramidRows.map((rowFriends, rowIndex) => (
-        <div key={rowIndex} className="space-y-3">
-          <h4 className={cn("text-center font-bold mb-3", getRowColor(rowIndex))}>
-            {getRowLabel(rowIndex)}
-          </h4>
-          <div className="flex justify-center gap-3 mb-6">
+        <div key={rowIndex} className="mb-6">
+          <div className="flex justify-center gap-3">
             {rowFriends.map(renderFriend)}
           </div>
         </div>
