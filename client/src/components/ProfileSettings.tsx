@@ -137,7 +137,27 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
     setNewItem: (item: string) => void;
     placeholder: string;
     icon: any;
-  }) => (
+  }) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setNewItem(e.target.value);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addItem(items, setItems, newItem, setNewItem);
+      }
+    };
+
+    const handleAddClick = () => {
+      addItem(items, setItems, newItem, setNewItem);
+    };
+
+    const handleRemoveItem = (itemToRemove: string) => {
+      removeItem(items, setItems, itemToRemove);
+    };
+
+    return (
     <div className="space-y-2">
       <Label className="text-gray-300 flex items-center gap-2">
         <Icon className="w-4 h-4" />
@@ -146,22 +166,17 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
       <div className="flex gap-2">
         <Input
           value={newItem}
-          onChange={(e) => setNewItem(e.target.value)}
+          onChange={handleInputChange}
           placeholder={placeholder}
           className="bg-gray-700 border-gray-600 text-white flex-1"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              addItem(items, setItems, newItem, setNewItem);
-            }
-          }}
+          onKeyDown={handleKeyDown}
           data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}`}
         />
         <Button
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => addItem(items, setItems, newItem, setNewItem)}
+          onClick={handleAddClick}
           className="border-pink-500 text-pink-400 hover:bg-pink-500/20"
           data-testid={`button-add-${label.toLowerCase().replace(/\s+/g, '-')}`}
         >
@@ -180,7 +195,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
               variant="ghost"
               size="sm"
               className="ml-2 h-auto p-0 text-gray-400 hover:text-white"
-              onClick={() => removeItem(items, setItems, item)}
+              onClick={() => handleRemoveItem(item)}
               data-testid={`button-remove-${label.toLowerCase().replace(/\s+/g, '-')}-${index}`}
             >
               <X className="w-3 h-3" />
@@ -189,7 +204,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
         ))}
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
