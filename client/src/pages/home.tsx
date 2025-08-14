@@ -582,19 +582,19 @@ export default function Home() {
       {postsLoading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
-            <Card key={i} className="bg-gray-800 border-gray-700">
+            <Card key={i} className="bg-card border-border">
               <CardContent className="p-4">
                 <div className="animate-pulse">
                   <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-10 h-10 bg-gray-600 rounded-full"></div>
+                    <div className="w-10 h-10 bg-muted rounded-full"></div>
                     <div className="space-y-1">
-                      <div className="w-24 h-4 bg-gray-600 rounded"></div>
-                      <div className="w-16 h-3 bg-gray-600 rounded"></div>
+                      <div className="w-24 h-4 bg-muted rounded"></div>
+                      <div className="w-16 h-3 bg-muted rounded"></div>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="w-full h-4 bg-gray-600 rounded"></div>
-                    <div className="w-3/4 h-4 bg-gray-600 rounded"></div>
+                    <div className="w-full h-4 bg-muted rounded"></div>
+                    <div className="w-3/4 h-4 bg-muted rounded"></div>
                   </div>
                 </div>
               </CardContent>
@@ -602,17 +602,17 @@ export default function Home() {
           ))}
         </div>
       ) : (posts as any[]).length === 0 ? (
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-card border-border">
           <CardContent className="p-8 text-center">
             <div className="text-4xl mb-4">🌟</div>
-            <h3 className="text-lg font-bold text-gray-400 mb-2">Your feed is empty</h3>
-            <p className="text-gray-500 text-sm mb-4">
+            <h3 className="text-lg font-bold text-muted-foreground mb-2">Your feed is empty</h3>
+            <p className="text-muted-foreground text-sm mb-4">
               Invite friends to your kliq or create your first post to get started!
             </p>
             <Button
               onClick={() => setNewPost("Hello, MyKliq! 👋")}
               variant="outline"
-              className="border-pink-500 text-pink-400 hover:bg-pink-500/10"
+              className="border-primary text-primary hover:bg-primary/10"
             >
               Create your first post
             </Button>
@@ -623,23 +623,23 @@ export default function Home() {
           <Card
             key={post.id}
             className={cn(
-              "bg-gradient-to-br from-gray-800 to-gray-700 border",
-              post.author.id === userData?.id ? "border-purple-500/50" : "border-gray-600"
+              "bg-gradient-to-br from-card to-card/80 border",
+              post.author.id === userData?.id ? "border-primary/50" : "border-border"
             )}
           >
             <CardContent className="p-4">
               <div className="flex items-center space-x-3 mb-3">
-                <Avatar className="w-10 h-10 border-2 border-pink-400">
+                <Avatar className="w-10 h-10 border-2 border-primary">
                   <AvatarImage src={post.author.profileImageUrl} />
-                  <AvatarFallback className="bg-gray-700 text-white">
+                  <AvatarFallback className="bg-muted text-foreground">
                     {post.author.firstName?.[0] || "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <p className="font-bold text-pink-400">
+                  <p className="font-bold text-primary">
                     {post.author.firstName} {post.author.lastName}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     {formatTimeAgo(post.createdAt)}
                   </p>
                 </div>
@@ -650,7 +650,7 @@ export default function Home() {
                 )}
               </div>
               
-              {post.content && <p className="text-white mb-3">{post.content}</p>}
+              {post.content && <p className="text-foreground mb-3">{post.content}</p>}
               
               {/* Media Content */}
               {post.mediaUrl && (
@@ -678,7 +678,7 @@ export default function Home() {
                     size="sm"
                     variant="ghost"
                     onClick={() => handleLikePost(post.id)}
-                    className="text-pink-400 hover:bg-pink-400/10 p-0 h-auto"
+                    className="text-primary hover:bg-primary/10 p-0 h-auto"
                   >
                     <Heart className="w-4 h-4 mr-1" />
                     {Array.isArray(post.likes) ? post.likes.length : (post.likes || 0)}
@@ -687,7 +687,7 @@ export default function Home() {
                     size="sm"
                     variant="ghost"
                     onClick={() => handleToggleComments(post.id)}
-                    className="text-blue-400 hover:bg-blue-400/10 p-0 h-auto"
+                    className="text-secondary hover:bg-secondary/10 p-0 h-auto"
                     data-testid={`button-toggle-comments-${post.id}`}
                   >
                     <MessageCircle className="w-4 h-4 mr-1" />
@@ -697,7 +697,7 @@ export default function Home() {
                     size="sm"
                     variant="ghost"
                     onClick={() => handleSharePost(post)}
-                    className="text-green-400 hover:bg-green-400/10 p-0 h-auto"
+                    className="text-mykliq-orange hover:bg-mykliq-orange/10 p-0 h-auto"
                     data-testid={`button-share-${post.id}`}
                   >
                     <Share className="w-4 h-4" />
@@ -707,26 +707,26 @@ export default function Home() {
 
               {/* Comments Section */}
               {expandedComments.has(post.id) && (
-                <div className="mt-4 border-t border-gray-600 pt-4">
+                <div className="mt-4 border-t border-border pt-4">
                   {/* Existing Comments */}
                   {post.comments && post.comments.length > 0 && (
                     <div className="space-y-3 mb-4">
                       {post.comments.map((comment: any) => (
                         <div key={comment.id} className="flex space-x-3">
-                          <Avatar className="w-8 h-8 border border-gray-600">
+                          <Avatar className="w-8 h-8 border border-border">
                             <AvatarImage src={comment.author?.profileImageUrl} />
-                            <AvatarFallback className="bg-gray-700 text-white text-xs">
+                            <AvatarFallback className="bg-muted text-foreground text-xs">
                               {comment.author?.firstName?.[0] || "U"}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
-                            <div className="bg-gray-700 rounded-lg px-3 py-2">
-                              <p className="text-sm font-semibold text-blue-400">
+                            <div className="bg-muted rounded-lg px-3 py-2">
+                              <p className="text-sm font-semibold text-primary">
                                 {comment.author?.firstName} {comment.author?.lastName}
                               </p>
-                              <p className="text-sm text-white">{comment.content}</p>
+                              <p className="text-sm text-foreground">{comment.content}</p>
                             </div>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {formatTimeAgo(comment.createdAt)}
                             </p>
                           </div>
@@ -737,9 +737,9 @@ export default function Home() {
 
                   {/* Add Comment Input */}
                   <div className="flex space-x-3">
-                    <Avatar className="w-8 h-8 border border-gray-600">
+                    <Avatar className="w-8 h-8 border border-border">
                       <AvatarImage src={userData?.profileImageUrl} />
-                      <AvatarFallback className="bg-gray-700 text-white text-xs">
+                      <AvatarFallback className="bg-muted text-foreground text-xs">
                         {userData?.firstName?.[0] || "U"}
                       </AvatarFallback>
                     </Avatar>
@@ -749,7 +749,7 @@ export default function Home() {
                           value={commentInputs[post.id] || ""}
                           onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
                           placeholder="Write a comment..."
-                          className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400 resize-none"
+                          className="flex-1 bg-input border-border text-foreground placeholder-muted-foreground resize-none"
                           rows={2}
                           data-testid={`input-comment-${post.id}`}
                           onKeyDown={(e) => {

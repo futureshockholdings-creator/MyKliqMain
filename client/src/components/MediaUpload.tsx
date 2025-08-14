@@ -154,9 +154,9 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-gray-800 border-gray-600">
+      <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-white">
+          <DialogTitle className="text-foreground">
             {type === "event" ? "Add Media to Event" : `Create ${type === "post" ? "Post" : "Story"}`}
           </DialogTitle>
         </DialogHeader>
@@ -167,13 +167,13 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder={`What's happening in your ${type === "post" ? "kliq" : "story"}?`}
-              className="bg-black/30 text-white placeholder-gray-400 border-gray-600"
+              className="bg-input text-foreground placeholder-muted-foreground border-border"
               rows={3}
             />
           )}
 
           {uploadedMedia && (
-            <Card className="relative bg-gray-700 border-gray-600">
+            <Card className="relative bg-muted border-border">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -183,17 +183,17 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                       <Video className="w-8 h-8 text-blue-400" />
                     )}
                     <div>
-                      <p className="text-sm text-white font-medium">
+                      <p className="text-sm text-foreground font-medium">
                         {uploadedMedia.type === "image" ? "Image" : "Video"} uploaded
                       </p>
-                      <p className="text-xs text-gray-400">Ready to share</p>
+                      <p className="text-xs text-muted-foreground">Ready to share</p>
                     </div>
                   </div>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={removeMedia}
-                    className="text-red-400 hover:bg-red-400/10"
+                    className="text-destructive hover:bg-destructive/10"
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -208,7 +208,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
               maxFileSize={50485760} // 50MB
               onGetUploadParameters={handleGetUploadParameters}
               onComplete={handleUploadComplete}
-              buttonClassName="text-blue-400 hover:bg-blue-400/10"
+              buttonClassName="text-primary hover:bg-primary/10"
             >
               <Upload className="w-4 h-4 mr-2" />
               Add Media
@@ -218,14 +218,14 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="border-gray-600 text-gray-400 hover:bg-gray-700"
+                className="border-border text-muted-foreground hover:bg-muted"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={isUploading}
-                className="bg-pink-500 hover:bg-pink-600 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
 {type === "event" 
                   ? (isUploading ? "Uploading..." : "Upload Media")

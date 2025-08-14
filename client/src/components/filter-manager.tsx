@@ -29,13 +29,13 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
   };
 
   return (
-    <Card className="bg-gray-800 border-gray-700">
+    <Card className="bg-card border-border">
       <CardHeader>
-        <CardTitle className="text-blue-400 flex items-center gap-2">
+        <CardTitle className="text-primary flex items-center gap-2">
           <Shield className="w-5 h-5" />
           🚫 Content Filters
         </CardTitle>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-muted-foreground">
           Hide posts containing these keywords from your feed
         </p>
       </CardHeader>
@@ -47,12 +47,12 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
             onChange={(e) => setNewKeyword(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Enter keyword to filter..."
-            className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+            className="flex-1 bg-input border-border text-foreground placeholder-muted-foreground"
           />
           <Button
             onClick={handleAddFilter}
             disabled={!newKeyword.trim()}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             <Plus className="w-4 h-4" />
           </Button>
@@ -60,11 +60,11 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
 
         {/* Current Filters */}
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-300">
+          <h4 className="text-sm font-medium text-foreground">
             Active Filters ({filters.length})
           </h4>
           {filters.length === 0 ? (
-            <p className="text-sm text-gray-500 italic">
+            <p className="text-sm text-muted-foreground italic">
               No filters set. All posts will be visible.
             </p>
           ) : (
@@ -73,7 +73,7 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
                 <Badge
                   key={filter.id}
                   variant="destructive"
-                  className="bg-red-600 text-white hover:bg-red-700 cursor-pointer group"
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 cursor-pointer group"
                   onClick={() => onRemoveFilter(filter.id)}
                 >
                   {filter.keyword}
@@ -85,8 +85,8 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
         </div>
 
         {/* Info Box */}
-        <div className="bg-blue-900/30 border border-blue-600/30 rounded-lg p-3">
-          <p className="text-xs text-blue-200">
+        <div className="bg-muted/30 border border-border rounded-lg p-3">
+          <p className="text-xs text-muted-foreground">
             💡 <strong>Tip:</strong> Filters are case-insensitive and will hide any post 
             containing these keywords. Add filters for topics you'd rather not see in your feed.
           </p>
@@ -94,7 +94,7 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
 
         {/* Common Filter Suggestions */}
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-300">
+          <h4 className="text-sm font-medium text-foreground">
             Common Filters
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -108,8 +108,8 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
                   onClick={() => !alreadyFiltered && onAddFilter(suggestion)}
                   disabled={alreadyFiltered}
                   className={`text-xs ${alreadyFiltered 
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600 border-gray-600'
+                    ? 'bg-muted text-muted-foreground cursor-not-allowed' 
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border-border'
                   }`}
                 >
                   {alreadyFiltered ? '✓ ' : '+ '}{suggestion}

@@ -15,13 +15,13 @@ export function PhoneInput({ label, error, className, ...props }: PhoneInputProp
         type="tel"
         placeholder="+1 (555) 123-4567"
         className={cn(
-          "bg-gray-700 border-gray-600 text-white placeholder-gray-400",
-          error && "border-red-500",
+          "bg-input border-border text-foreground placeholder-muted-foreground",
+          error && "border-destructive",
           className
         )}
         {...props}
       />
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
 }

@@ -72,7 +72,7 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
   const otherParticipants = call.participants.filter(p => p.userId !== (user as User)?.id);
 
   return (
-    <Card className="w-full h-full bg-black text-white">
+    <Card className="w-full h-full bg-card text-foreground">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -89,7 +89,7 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
         {/* Video Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           {/* Local video */}
-          <div className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video">
+          <div className="relative bg-muted rounded-lg overflow-hidden aspect-video">
             <video 
               ref={localVideoRef}
               autoPlay 
@@ -102,14 +102,14 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
               data-testid="video-local"
             />
             {!isVideoEnabled && (
-              <div className="flex items-center justify-center w-full h-full bg-gray-700">
+              <div className="flex items-center justify-center w-full h-full bg-muted/50">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <span className="text-lg font-bold">
+                  <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-2">
+                    <span className="text-lg font-bold text-primary-foreground">
                       {(user as User)?.firstName?.[0]}
                     </span>
                   </div>
-                  <p className="text-sm">{(user as User)?.firstName} (You)</p>
+                  <p className="text-sm text-foreground">{(user as User)?.firstName} (You)</p>
                 </div>
               </div>
             )}
@@ -120,7 +120,7 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
 
           {/* Remote participants */}
           {otherParticipants.map((participant) => (
-            <div key={participant.userId} className="relative bg-gray-800 rounded-lg overflow-hidden aspect-video">
+            <div key={participant.userId} className="relative bg-muted rounded-lg overflow-hidden aspect-video">
               <video
                 ref={(el) => {
                   remoteVideoRefs.current[participant.userId] = el;
@@ -130,14 +130,14 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
                 className="w-full h-full object-cover"
                 data-testid={`video-participant-${participant.userId}`}
               />
-              <div className="flex items-center justify-center w-full h-full bg-gray-700">
+              <div className="flex items-center justify-center w-full h-full bg-muted/50">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <span className="text-lg font-bold">
+                  <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-2">
+                    <span className="text-lg font-bold text-secondary-foreground">
                       {participant.user.firstName?.[0]}
                     </span>
                   </div>
-                  <p className="text-sm">{participant.user.firstName}</p>
+                  <p className="text-sm text-foreground">{participant.user.firstName}</p>
                 </div>
               </div>
               <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-xs">
