@@ -304,20 +304,20 @@ export default function Kliq() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
-        <Card className="bg-blue-600/20 border-blue-500/30">
+        <Card className="bg-secondary/20 border-secondary/30">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-400" data-testid="text-friend-count">
+            <div className="text-2xl font-bold text-secondary" data-testid="text-friend-count">
               {friends.length}/15
             </div>
-            <div className="text-sm text-blue-200">Friends</div>
+            <div className="text-sm text-secondary/70">Friends</div>
           </CardContent>
         </Card>
-        <Card className="bg-purple-600/20 border-purple-500/30">
+        <Card className="bg-mykliq-purple/20 border-mykliq-purple/30">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-400" data-testid="text-open-spots">
+            <div className="text-2xl font-bold text-mykliq-purple" data-testid="text-open-spots">
               {15 - friends.length}
             </div>
-            <div className="text-sm text-purple-200">Open Spots</div>
+            <div className="text-sm text-mykliq-purple/70">Open Spots</div>
           </CardContent>
         </Card>
       </div>
@@ -345,7 +345,7 @@ export default function Kliq() {
             </p>
             <Button
               onClick={() => setIsInviteDialogOpen(true)}
-              className="bg-pink-500 hover:bg-pink-600 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Plus className="w-4 h-4 mr-2" />
               Join a Kliq
@@ -370,28 +370,28 @@ export default function Kliq() {
       )}
 
       {/* Invite Code */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-green-400 text-lg">
+          <CardTitle className="text-mykliq-green text-lg">
             📱 Your Invite Code
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex items-center justify-between bg-gray-700 rounded p-3">
-            <code className="text-green-400 font-mono font-bold" data-testid="text-invite-code">
+          <div className="flex items-center justify-between bg-muted rounded p-3">
+            <code className="text-mykliq-green font-mono font-bold" data-testid="text-invite-code">
               {userData?.inviteCode || "Loading..."}
             </code>
             <Button
               size="sm"
               onClick={copyInviteCode}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-mykliq-green hover:bg-mykliq-green/90 text-white"
               disabled={!userData?.inviteCode}
               data-testid="button-copy-invite"
             >
               <Copy className="w-4 h-4" />
             </Button>
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-muted-foreground">
             Share this code with friends to invite them to your kliq
           </p>
         </CardContent>
@@ -401,7 +401,7 @@ export default function Kliq() {
       <div className="flex gap-3">
         <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" data-testid="button-join-kliq">
+            <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground" data-testid="button-join-kliq">
               <Plus className="w-4 h-4 mr-2" />
               Join Kliq
             </Button>
@@ -424,7 +424,7 @@ export default function Kliq() {
               <Button
                 onClick={handleJoinKliq}
                 disabled={!inviteCode.trim() || joinKliqMutation.isPending}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
               >
                 {joinKliqMutation.isPending ? "Joining..." : "Join Kliq"}
               </Button>

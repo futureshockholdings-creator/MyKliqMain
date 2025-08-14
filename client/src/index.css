@@ -57,6 +57,17 @@
   --shadow-neon: 0 0 10px hsl(180, 100%, 50%), 0 0 20px hsl(180, 100%, 50%), 0 0 30px hsl(180, 100%, 50%);
 }
 
+/* Utility classes for MyKliq theme colors */
+.bg-mykliq-green { background-color: hsl(var(--mykliq-green)); }
+.text-mykliq-green { color: hsl(var(--mykliq-green)); }
+.border-mykliq-green { border-color: hsl(var(--mykliq-green)); }
+.bg-mykliq-purple { background-color: hsl(var(--mykliq-purple)); }
+.text-mykliq-purple { color: hsl(var(--mykliq-purple)); }
+.border-mykliq-purple { border-color: hsl(var(--mykliq-purple)); }
+.bg-mykliq-orange { background-color: hsl(var(--mykliq-orange)); }
+.text-mykliq-orange { color: hsl(var(--mykliq-orange)); }
+.border-mykliq-orange { border-color: hsl(var(--mykliq-orange)); }
+
 .dark {
   --background: hsl(0, 0%, 0%);
   --foreground: hsl(0, 0%, 100%);

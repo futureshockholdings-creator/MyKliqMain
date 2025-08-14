@@ -55,16 +55,16 @@ export function ThemeEditor({ theme, onSave, onReset }: ThemeEditorProps) {
   return (
     <div className="space-y-6 pb-20">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-purple-400 mb-2">
+        <h2 className="text-2xl font-bold text-mykliq-purple mb-2">
           🎨 Theme Customization
         </h2>
-        <p className="text-gray-400">Personalize your MyKliq experience</p>
+        <p className="text-muted-foreground">Personalize your MyKliq experience</p>
       </div>
 
       {/* Banner & Colors */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-pink-400 flex items-center gap-2">
+          <CardTitle className="text-primary flex items-center gap-2">
             <Palette className="w-5 h-5" />
             Banner & Colors
           </CardTitle>
@@ -82,7 +82,7 @@ export function ThemeEditor({ theme, onSave, onReset }: ThemeEditorProps) {
               <Input
                 value={currentTheme.primaryColor || "#FF1493"}
                 onChange={(e) => updateTheme('primaryColor', e.target.value)}
-                className="flex-1 bg-gray-700 border-gray-600 text-white"
+                className="flex-1 bg-input border-border text-foreground"
               />
             </div>
           </div>
@@ -99,7 +99,7 @@ export function ThemeEditor({ theme, onSave, onReset }: ThemeEditorProps) {
               <Input
                 value={currentTheme.secondaryColor || "#00BFFF"}
                 onChange={(e) => updateTheme('secondaryColor', e.target.value)}
-                className="flex-1 bg-gray-700 border-gray-600 text-white"
+                className="flex-1 bg-input border-border text-foreground"
               />
             </div>
           </div>
@@ -107,9 +107,9 @@ export function ThemeEditor({ theme, onSave, onReset }: ThemeEditorProps) {
       </Card>
 
       {/* Font Customization */}
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-blue-400 flex items-center gap-2">
+          <CardTitle className="text-secondary flex items-center gap-2">
             <Type className="w-5 h-5" />
             Font Style
           </CardTitle>
