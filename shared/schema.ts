@@ -41,6 +41,17 @@ export const users = pgTable("users", {
   birthdate: date("birthdate"),
   profileMusicUrl: varchar("profile_music_url"),
   profileMusicTitle: varchar("profile_music_title"),
+  // Extended profile details
+  interests: text("interests").array(),
+  favoriteLocations: text("favorite_locations").array(),
+  favoriteFoods: text("favorite_foods").array(),
+  musicGenres: text("music_genres").array(),
+  relationshipStatus: varchar("relationship_status"), // single, taken, married, complicated, etc.
+  hobbies: text("hobbies").array(),
+  favoriteMovies: text("favorite_movies").array(),
+  favoriteBooks: text("favorite_books").array(),
+  petPreferences: varchar("pet_preferences"), // dogs, cats, both, none, other
+  lifestyle: varchar("lifestyle"), // active, relaxed, adventurous, homebody, etc.
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

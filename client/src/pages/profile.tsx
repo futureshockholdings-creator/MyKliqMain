@@ -9,6 +9,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { MusicUploader } from "@/components/MusicUploader";
 import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
+import { ProfileDetailsEditor } from "@/components/ProfileDetailsEditor";
+import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
 
 import { type User } from "@shared/schema";
 
@@ -168,6 +170,20 @@ export default function Profile() {
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Profile Details Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Profile Details</CardTitle>
+              <ProfileDetailsEditor user={user} />
+            </div>
+            <CardDescription>Your interests, preferences, and personal details</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProfileDetailsDisplay user={user} />
           </CardContent>
         </Card>
 

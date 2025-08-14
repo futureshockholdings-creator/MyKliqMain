@@ -77,6 +77,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Profile details endpoint
+  app.put("/api/user/profile-details", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profileData = req.body;
+
+      // Validate and clean the data
+      const cleanedData: any = {};
+      
+      // Handle array fields
+      if (profileData.interests) cleanedData.interests = profileData.interests.filter((item: string) => item.trim());
+      if (profileData.favoriteLocations) cleanedData.favoriteLocations = profileData.favoriteLocations.filter((item: string) => item.trim());
+      if (profileData.favoriteFoods) cleanedData.favoriteFoods = profileData.favoriteFoods.filter((item: string) => item.trim());
+      if (profileData.musicGenres) cleanedData.musicGenres = profileData.musicGenres.filter((item: string) => item.trim());
+      if (profileData.hobbies) cleanedData.hobbies = profileData.hobbies.filter((item: string) => item.trim());
+      if (profileData.favoriteMovies) cleanedData.favoriteMovies = profileData.favoriteMovies.filter((item: string) => item.trim());
+      if (profileData.favoriteBooks) cleanedData.favoriteBooks = profileData.favoriteBooks.filter((item: string) => item.trim());
+      
+      // Handle string fields
+      if (profileData.relationshipStatus) cleanedData.relationshipStatus = profileData.relationshipStatus;
+      if (profileData.petPreferences) cleanedData.petPreferences = profileData.petPreferences;
+      if (profileData.lifestyle) cleanedData.lifestyle = profileData.lifestyle;
+
+      await storage.updateUser(userId, cleanedData);
+
+      const updatedUser = await storage.getUser(userId);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating profile details:", error);
+      res.status(500).json({ message: "Failed to update profile details" });
+    }
+  });
+
   // Profile music endpoints
   app.put("/api/user/profile-music", isAuthenticated, async (req: any, res) => {
     try {
