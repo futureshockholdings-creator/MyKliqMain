@@ -24,10 +24,11 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
 
   const handleGetUploadParameters = async () => {
     try {
-      const response = await apiRequest("POST", "/api/media/upload") as any;
+      const response = await apiRequest("POST", "/api/media/upload");
       console.log("Upload parameters response:", response);
       
-      if (!response.uploadURL) {
+      if (!response?.uploadURL) {
+        console.error("Invalid response:", response);
         throw new Error("No upload URL received from server");
       }
       
