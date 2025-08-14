@@ -135,7 +135,7 @@ export default function Profile() {
                   <ProfileMusicPlayer
                     musicUrl={(user as User).profileMusicUrl!}
                     musicTitle={(user as User).profileMusicTitle!}
-                    autoPlay={false}
+                    autoPlay={true}
                   />
                 </div>
               </div>

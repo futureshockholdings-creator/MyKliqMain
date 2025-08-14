@@ -10,7 +10,7 @@ interface ProfileMusicPlayerProps {
   autoPlay?: boolean;
 }
 
-export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: ProfileMusicPlayerProps) {
+export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = true }: ProfileMusicPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -39,14 +39,21 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
     
     audio.addEventListener("timeupdate", updateTime);
     audio.addEventListener("loadedmetadata", updateDuration);
-    audio.addEventListener("ended", () => setIsPlaying(false));
+    audio.addEventListener("ended", () => {
+      // Auto-restart playback for seamless looping
+      audio.currentTime = 0;
+      audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    });
     audio.addEventListener("error", handleError);
+    
+    // Enable looping
+    audio.loop = true;
 
     // Reset error state when URL changes
     setHasError(false);
 
-    // Auto-play if enabled (only for non-YouTube URLs)
-    if (autoPlay && !isYT) {
+    // Auto-play for non-YouTube URLs
+    if (!isYT) {
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise
@@ -55,7 +62,7 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
           })
           .catch((error) => {
             console.log("Auto-play prevented:", error);
-            setHasError(true);
+            // Don't set error state, just wait for user interaction
           });
       }
     }
@@ -63,7 +70,6 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
     return () => {
       audio.removeEventListener("timeupdate", updateTime);
       audio.removeEventListener("loadedmetadata", updateDuration);
-      audio.removeEventListener("ended", () => setIsPlaying(false));
       audio.removeEventListener("error", handleError);
     };
   }, [musicUrl, autoPlay]);
@@ -169,7 +175,7 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
               <iframe
                 width="100%"
                 height="300"
-                src={`https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&rel=0&modestbranding=1`}
+                src={`https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&rel=0&modestbranding=1&mute=0`}
                 title={musicTitle}
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -230,6 +236,8 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
         ref={audioRef}
         src={musicUrl}
         preload="metadata"
+        loop
+        autoPlay
         onError={(e) => {
           console.log("Audio playback error for:", musicUrl, e);
           setIsPlaying(false);
@@ -238,6 +246,8 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
         onCanPlay={() => {
           setHasError(false);
         }}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
       />
       
       <div className="flex items-center gap-3 mb-3">
