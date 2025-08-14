@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Crown, Users, Star, MessageCircle, Video } from "lucide-react";
+import { Crown, Users, Star, MessageCircle, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Friend {
@@ -94,7 +94,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
                 className="w-6 h-6 p-0 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg"
                 data-testid={`button-video-call-${friend.id}`}
               >
-                <Video className="w-3 h-3" />
+                <Phone className="w-3 h-3" />
               </Button>
             )}
             {onMessage && (
@@ -228,7 +228,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
                       className="w-6 h-6 p-0 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg"
                       data-testid={`button-video-call-${friend.id}`}
                     >
-                      <Video className="w-3 h-3" />
+                      <Phone className="w-3 h-3" />
                     </Button>
                   )}
                   {onMessage && (

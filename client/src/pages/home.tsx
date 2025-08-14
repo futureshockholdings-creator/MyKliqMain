@@ -15,8 +15,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { cn } from "@/lib/utils";
 import { MediaUpload } from "@/components/MediaUpload";
 import { PyramidChart } from "@/components/pyramid-chart";
-import { VideoCallComponent } from "@/components/video-call";
-import { useVideoCall } from "@/hooks/useVideoCall";
+
 
 export default function Home() {
   const [newPost, setNewPost] = useState("");
@@ -31,17 +30,6 @@ export default function Home() {
   const userData = user as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Video call functionality
-  const { 
-    currentCall, 
-    isInCall, 
-    isConnecting, 
-    startCall, 
-    endCall, 
-    toggleAudio, 
-    toggleVideo 
-  } = useVideoCall();
 
   // Fetch posts
   const { data: posts = [], isLoading: postsLoading } = useQuery({
@@ -56,11 +44,6 @@ export default function Home() {
   // Fetch stories
   const { data: stories = [] } = useQuery({
     queryKey: ["/api/stories"],
-  });
-  
-  // Fetch friends for pyramid
-  const { data: friends = [] } = useQuery({
-    queryKey: ["/api/friends"],
   });
 
   // Create post mutation
@@ -329,29 +312,9 @@ export default function Home() {
     setCommentInputs(prev => ({ ...prev, [postId]: value }));
   };
   
-  // Video call handlers
-  const handleVideoCall = async (participantIds: string[]) => {
-    try {
-      await startCall(participantIds);
-      toast({
-        title: "Video Call",
-        description: "Starting video call...",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to start video call",
-        variant: "destructive",
-      });
-    }
-  };
+
   
-  const handleMessage = (friendId: string, friendName: string) => {
-    toast({
-      title: "Message",
-      description: `Opening chat with ${friendName}`,
-    });
-  };
+
   
   // Friend ranking handler
   const handleRankChange = async (friendId: string, newRank: number) => {
@@ -459,39 +422,8 @@ export default function Home() {
     }
   };
 
-  // Show video call interface if in a call
-  if (isInCall && currentCall) {
-    return (
-      <div className="h-screen bg-black">
-        <VideoCallComponent
-          call={currentCall}
-          onEndCall={endCall}
-          onToggleAudio={toggleAudio}
-          onToggleVideo={toggleVideo}
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-pink-800 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar with Pyramid Chart */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-6">
-              <PyramidChart
-                friends={friends}
-                onRankChange={handleRankChange}
-                onMessage={handleMessage}
-                onVideoCall={handleVideoCall}
-                maxFriends={15}
-              />
-            </div>
-          </div>
-          
-          {/* Main Feed */}
-          <div className="lg:col-span-3 space-y-6">
+    <div className="p-4 space-y-4">
       {/* Post Creation */}
       <Card className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
         <CardContent className="p-4">
@@ -895,9 +827,6 @@ export default function Home() {
         type="story"
         userId={userData?.id}
       />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

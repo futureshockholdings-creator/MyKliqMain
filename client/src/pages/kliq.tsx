@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PyramidChart } from "@/components/pyramid-chart";
+import { VideoCallComponent } from "@/components/video-call";
+import { useVideoCall } from "@/hooks/useVideoCall";
 import { Badge } from "@/components/ui/badge";
 import { Users, Edit, Plus, Copy, MessageCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -29,6 +31,17 @@ export default function Kliq() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
+  
+  // Video call functionality
+  const { 
+    currentCall, 
+    isInCall, 
+    isConnecting, 
+    startCall, 
+    endCall, 
+    toggleAudio, 
+    toggleVideo 
+  } = useVideoCall();
 
   // Fetch friends
   const { data: friends = [], isLoading: friendsLoading } = useQuery<{ 
@@ -159,6 +172,23 @@ export default function Kliq() {
     }
   };
 
+  // Video call handlers
+  const handleVideoCall = async (participantIds: string[]) => {
+    try {
+      await startCall(participantIds);
+      toast({
+        title: "Video Call",
+        description: "Starting video call...",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to start video call",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleMessageFriend = async (friendId: string, friendName: string) => {
     try {
       // Create or get conversation
@@ -210,6 +240,20 @@ export default function Kliq() {
       }
     }
   };
+
+  // Show video call interface if in a call
+  if (isInCall && currentCall) {
+    return (
+      <div className="h-screen bg-black">
+        <VideoCallComponent
+          call={currentCall}
+          onEndCall={endCall}
+          onToggleAudio={toggleAudio}
+          onToggleVideo={toggleVideo}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-6">
@@ -383,6 +427,7 @@ export default function Kliq() {
           }))}
           onRankChange={handleRankChange}
           onMessage={handleMessageFriend}
+          onVideoCall={handleVideoCall}
           maxFriends={15}
         />
       )}
