@@ -74,6 +74,7 @@ export interface IStorage {
   // Message operations
   getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number })[]>;
   getConversation(userId: string, otherUserId: string): Promise<(Conversation & { messages: (Message & { sender: User; receiver: User })[] }) | undefined>;
+  createConversation(data: { participantIds: string[] }): Promise<{ id: string }>;
   sendMessage(message: InsertMessage): Promise<Message>;
   markMessageAsRead(messageId: string): Promise<void>;
   markConversationAsRead(conversationId: string, userId: string): Promise<void>;
@@ -454,6 +455,7 @@ export class DatabaseStorage implements IStorage {
 
         return {
           ...conv,
+          otherParticipant: otherUser, // Use otherParticipant to match route expectation
           otherUser,
           lastMessage,
           unreadCount,
@@ -600,6 +602,20 @@ export class DatabaseStorage implements IStorage {
           eq(messages.isRead, false)
         )
       );
+  }
+
+  async createConversation(data: { participantIds: string[] }): Promise<{ id: string }> {
+    const [userId1, userId2] = data.participantIds;
+    
+    // Create conversation
+    const [conversation] = await db
+      .insert(conversations)
+      .values({
+        participantIds: data.participantIds
+      })
+      .returning();
+
+    return { id: conversation.id };
   }
 
   async deleteExpiredMessages(): Promise<void> {

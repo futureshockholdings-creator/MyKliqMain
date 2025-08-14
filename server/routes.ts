@@ -342,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/messages/conversations', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const conversations = await storage.getUserConversations(userId);
+      const conversations = await storage.getConversations(userId);
       res.json(conversations);
     } catch (error) {
       console.error("Error fetching conversations:", error);
@@ -360,7 +360,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if conversation already exists between these users
-      const conversations = await storage.getUserConversations(userId);
+      const conversations = await storage.getConversations(userId);
       const existingConversation = conversations.find(conv => 
         conv.otherParticipant.id === participantId
       );
