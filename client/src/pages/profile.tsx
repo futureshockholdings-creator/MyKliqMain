@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,6 +21,7 @@ export default function Profile() {
     bio: "",
   });
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [, setLocation] = useLocation();
   const { user } = useAuth();
   const userData = user as any;
   const { toast } = useToast();
@@ -147,7 +149,7 @@ export default function Profile() {
   return (
     <div className="p-4 pb-20 space-y-6">
       {/* Profile Header */}
-      <Card className="bg-gradient-to-r from-pink-600/20 to-purple-600/20 border-pink-500/30">
+      <Card className="bg-gradient-to-r from-pink-600/20 to-purple-600/20 border-pink-500/30" id="profile-section">
         <CardContent className="p-6">
           <div className="text-center">
             <Avatar className="w-24 h-24 mx-auto border-4 border-pink-400 mb-4">
@@ -312,16 +314,40 @@ export default function Profile() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-3">
-            <Button className="bg-pink-500 hover:bg-pink-600 text-white">
+            <Button 
+              className="bg-pink-500 hover:bg-pink-600 text-white"
+              onClick={() => setLocation('/themes')}
+              data-testid="button-edit-theme"
+            >
               Edit Theme
             </Button>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+            <Button 
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+              onClick={() => {
+                toast({
+                  title: "Feature Coming Soon",
+                  description: "Banner customization will be available in the next update!",
+                });
+              }}
+              data-testid="button-change-banner"
+            >
               Change Banner
             </Button>
-            <Button className="bg-green-600 hover:bg-green-700 text-black">
+            <Button 
+              className="bg-green-600 hover:bg-green-700 text-black"
+              onClick={() => {
+                const profileSection = document.getElementById('profile-section');
+                profileSection?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              data-testid="button-edit-profile"
+            >
               Edit Profile
             </Button>
-            <Button className="bg-orange-500 hover:bg-orange-600 text-white">
+            <Button 
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+              onClick={() => setLocation('/kliq')}
+              data-testid="button-manage-filters"
+            >
               Manage Filters
             </Button>
           </div>
