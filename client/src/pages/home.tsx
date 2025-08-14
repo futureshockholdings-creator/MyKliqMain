@@ -19,6 +19,8 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [showMediaUpload, setShowMediaUpload] = useState(false);
   const [showStoryUpload, setShowStoryUpload] = useState(false);
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const { user } = useAuth();
   const userData = user as any;
   const { toast } = useToast();
@@ -100,6 +102,39 @@ export default function Home() {
     },
   });
 
+  // Add comment mutation
+  const addCommentMutation = useMutation({
+    mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
+      await apiRequest("POST", `/api/posts/${postId}/comments`, { content });
+    },
+    onSuccess: (_, { postId }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      setCommentInputs(prev => ({ ...prev, [postId]: "" }));
+      toast({
+        title: "Comment added!",
+        description: "Your comment has been posted",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to add comment",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Add filter mutation
   const addFilterMutation = useMutation({
     mutationFn: async (keyword: string) => {
@@ -174,6 +209,29 @@ export default function Home() {
 
   const handleLikePost = (postId: string) => {
     likePostMutation.mutate(postId);
+  };
+
+  const handleToggleComments = (postId: string) => {
+    setExpandedComments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleCommentSubmit = (postId: string) => {
+    const content = commentInputs[postId]?.trim();
+    if (content) {
+      addCommentMutation.mutate({ postId, content });
+    }
+  };
+
+  const handleCommentInputChange = (postId: string, value: string) => {
+    setCommentInputs(prev => ({ ...prev, [postId]: value }));
   };
 
   const formatTimeAgo = (date: string) => {
@@ -451,7 +509,9 @@ export default function Home() {
                   <Button
                     size="sm"
                     variant="ghost"
+                    onClick={() => handleToggleComments(post.id)}
                     className="text-blue-400 hover:bg-blue-400/10 p-0 h-auto"
+                    data-testid={`button-toggle-comments-${post.id}`}
                   >
                     <MessageCircle className="w-4 h-4 mr-1" />
                     {post.comments?.length || 0}
@@ -465,6 +525,73 @@ export default function Home() {
                   </Button>
                 </div>
               </div>
+
+              {/* Comments Section */}
+              {expandedComments.has(post.id) && (
+                <div className="mt-4 border-t border-gray-600 pt-4">
+                  {/* Existing Comments */}
+                  {post.comments && post.comments.length > 0 && (
+                    <div className="space-y-3 mb-4">
+                      {post.comments.map((comment: any) => (
+                        <div key={comment.id} className="flex space-x-3">
+                          <Avatar className="w-8 h-8 border border-gray-600">
+                            <AvatarImage src={comment.author?.profileImageUrl} />
+                            <AvatarFallback className="bg-gray-700 text-white text-xs">
+                              {comment.author?.firstName?.[0] || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="bg-gray-700 rounded-lg px-3 py-2">
+                              <p className="text-sm font-semibold text-blue-400">
+                                {comment.author?.firstName} {comment.author?.lastName}
+                              </p>
+                              <p className="text-sm text-white">{comment.content}</p>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {formatTimeAgo(comment.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add Comment Input */}
+                  <div className="flex space-x-3">
+                    <Avatar className="w-8 h-8 border border-gray-600">
+                      <AvatarImage src={userData?.profileImageUrl} />
+                      <AvatarFallback className="bg-gray-700 text-white text-xs">
+                        {userData?.firstName?.[0] || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 flex space-x-2">
+                      <Textarea
+                        value={commentInputs[post.id] || ""}
+                        onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
+                        placeholder="Write a comment..."
+                        className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400 resize-none"
+                        rows={2}
+                        data-testid={`input-comment-${post.id}`}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleCommentSubmit(post.id);
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={() => handleCommentSubmit(post.id)}
+                        disabled={!commentInputs[post.id]?.trim() || addCommentMutation.isPending}
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white self-end"
+                        data-testid={`button-submit-comment-${post.id}`}
+                      >
+                        {addCommentMutation.isPending ? "..." : "Post"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))
