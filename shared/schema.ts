@@ -59,7 +59,7 @@ export const users = pgTable("users", {
 // User themes for customization
 export const userThemes = pgTable("user_themes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
   primaryColor: varchar("primary_color").default("#FF1493"),
   secondaryColor: varchar("secondary_color").default("#00BFFF"),
   fontFamily: varchar("font_family").default("comic"),
