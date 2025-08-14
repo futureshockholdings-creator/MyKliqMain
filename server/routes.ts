@@ -648,6 +648,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual cleanup endpoint for testing
+  app.post('/api/messages/cleanup-expired', isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteExpiredMessages();
+      res.json({ success: true, message: "Expired messages cleaned up" });
+    } catch (error) {
+      console.error("Error cleaning up expired messages:", error);
+      res.status(500).json({ message: "Failed to cleanup expired messages" });
+    }
+  });
+
   // Event routes
   app.get('/api/events', isAuthenticated, async (req: any, res) => {
     try {

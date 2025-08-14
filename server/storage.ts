@@ -698,11 +698,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markConversationAsRead(conversationId: string, userId: string): Promise<void> {
+    // Get the conversation to find the other participant
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, conversationId));
+
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    // Determine the other participant
+    const otherUserId = conversation.user1Id === userId ? conversation.user2Id : conversation.user1Id;
+
     // Mark all unread messages in this conversation as read for the user
     const readAt = new Date();
     const expiresAt = new Date(readAt.getTime() + 3 * 60 * 1000); // 3 minutes after being read
     
-    await db
+    const result = await db
       .update(messages)
       .set({ 
         isRead: true,
@@ -712,9 +725,12 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(messages.receiverId, userId),
+          eq(messages.senderId, otherUserId),
           eq(messages.isRead, false)
         )
       );
+    
+    console.log(`Marked messages as read in conversation ${conversationId} for user ${userId}.`);
   }
 
   async createConversation(data: { participantIds: string[] }): Promise<{ id: string }> {
@@ -734,7 +750,8 @@ export class DatabaseStorage implements IStorage {
 
   async deleteExpiredMessages(): Promise<void> {
     const now = new Date();
-    await db.delete(messages).where(sql`${messages.expiresAt} < ${now}`);
+    const result = await db.delete(messages).where(sql`${messages.expiresAt} < ${now}`);
+    console.log(`Cleaned up expired messages at ${now.toISOString()}`);
   }
 
   // Event operations
@@ -1326,13 +1343,6 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(gifs)
       .where(eq(gifs.trending, true))
-      .orderBy(desc(gifs.createdAt));
-  }
-
-  async getAllGifs(): Promise<Gif[]> {
-    return await db
-      .select()
-      .from(gifs)
       .orderBy(desc(gifs.createdAt));
   }
 

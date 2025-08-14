@@ -19,6 +19,7 @@ MyKliq is a social media application designed for close-knit friend groups. The 
 - **Global Theme System with Background Customization**: Implemented comprehensive theme system that applies changes across entire app with support for background customization including solid colors, gradients, and patterns (dots, lines, waves, geometric) (August 14, 2025)
 - **Complete Theme Consistency**: Eliminated all hardcoded colors across the entire application - posts, profiles, comments, forms, media uploads, filters, music uploader components, and all UI components now follow the global theme system using CSS variables (bg-card, text-foreground, border-border, primary, secondary, destructive, etc.) ensuring complete visual consistency (August 14, 2025)
 - **Auto-Loop Music Player**: Enhanced ProfileMusicPlayer to automatically play and loop music without requiring user interaction - both audio files and YouTube videos now start playing immediately when profiles are viewed and loop continuously for seamless music experience (August 14, 2025)
+- **IM Message Auto-Deletion Bug Fix**: Fixed critical bug in Incognito Messages system where messages persisted for 18+ hours instead of auto-deleting 3 minutes after being read - improved markConversationAsRead function to properly associate messages with conversations and set expiration timestamps, verified cleanup mechanism runs every 5 minutes and successfully deletes expired messages (August 14, 2025)
 
 # User Preferences
 
