@@ -82,6 +82,7 @@ export const posts = pgTable("posts", {
   latitude: numeric("latitude", { precision: 10, scale: 7 }),
   longitude: numeric("longitude", { precision: 10, scale: 7 }),
   locationName: varchar("location_name"),
+  address: varchar("address"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

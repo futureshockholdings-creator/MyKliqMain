@@ -229,13 +229,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       
-      // Convert numeric coordinates to strings if present
+      // Convert numeric coordinates to strings if present and handle address
       const processedBody = { ...req.body, userId };
       if (processedBody.latitude !== undefined && typeof processedBody.latitude === 'number') {
         processedBody.latitude = processedBody.latitude.toString();
       }
       if (processedBody.longitude !== undefined && typeof processedBody.longitude === 'number') {
         processedBody.longitude = processedBody.longitude.toString();
+      }
+      // Ensure address field is included
+      if (processedBody.address === undefined) {
+        processedBody.address = null;
       }
       
       let postData = insertPostSchema.parse(processedBody);
