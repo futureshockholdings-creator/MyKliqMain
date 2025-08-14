@@ -68,6 +68,11 @@ export const userThemes = pgTable("user_themes", {
   navActiveColor: varchar("nav_active_color").default("#FF1493"),
   borderStyle: varchar("border_style").default("retro"),
   enableSparkles: boolean("enable_sparkles").default(true),
+  backgroundType: varchar("background_type").default("solid"), // 'solid', 'gradient', 'pattern'
+  backgroundColor: varchar("background_color").default("#000000"),
+  backgroundGradientStart: varchar("background_gradient_start").default("#FF1493"),
+  backgroundGradientEnd: varchar("background_gradient_end").default("#00BFFF"),
+  backgroundPattern: varchar("background_pattern").default("dots"), // 'dots', 'lines', 'waves', 'geometric'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

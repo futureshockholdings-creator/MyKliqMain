@@ -16,6 +16,7 @@ MyKliq is a social media application designed for close-knit friend groups. The 
 - **Streaming Service Integration Removal**: Removed external streaming service integration per user request to focus on local music profile functionality only (August 14, 2025)
 - **URL-Based Profile Music System**: Enhanced music system to accept YouTube links and web audio URLs through copy-paste functionality, supporting both local file uploads and web URL input methods (August 14, 2025)
 - **Unified Profile Management System**: Merged profile details and profile settings into a single cohesive interface with tabbed organization, supporting basic information (bio, phone, kliq name, birthdate) and extended details (interests, favorites, lifestyle, entertainment preferences) all in one place (August 14, 2025)
+- **Global Theme System with Background Customization**: Implemented comprehensive theme system that applies changes across entire app with support for background customization including solid colors, gradients, and patterns (dots, lines, waves, geometric) (August 14, 2025)
 
 # User Preferences
 

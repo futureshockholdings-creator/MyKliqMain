@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Palette, Type, Navigation, Sparkles } from "lucide-react";
+import { Palette, Type, Navigation, Sparkles, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserTheme } from "@shared/schema";
 
@@ -24,6 +24,11 @@ const defaultTheme = {
   navActiveColor: "#FF1493",
   borderStyle: "retro",
   enableSparkles: true,
+  backgroundType: "solid",
+  backgroundColor: "#000000",
+  backgroundGradientStart: "#FF1493",
+  backgroundGradientEnd: "#00BFFF",
+  backgroundPattern: "dots",
 };
 
 export function ThemeEditor({ theme, onSave, onReset }: ThemeEditorProps) {
@@ -103,6 +108,110 @@ export function ThemeEditor({ theme, onSave, onReset }: ThemeEditorProps) {
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Background Customization */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-mykliq-green flex items-center gap-2">
+            <Image className="w-5 h-5" />
+            Background Style
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label className="text-muted-foreground">Background Type</Label>
+            <Select 
+              value={currentTheme.backgroundType || "solid"} 
+              onValueChange={(value) => updateTheme('backgroundType', value)}
+            >
+              <SelectTrigger className="bg-input border-border text-foreground">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                <SelectItem value="solid">Solid Color</SelectItem>
+                <SelectItem value="gradient">Gradient</SelectItem>
+                <SelectItem value="pattern">Pattern</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {currentTheme.backgroundType === 'solid' && (
+            <div>
+              <Label className="text-muted-foreground">Background Color</Label>
+              <div className="flex gap-2 mt-1">
+                <input
+                  type="color"
+                  value={currentTheme.backgroundColor || "#000000"}
+                  onChange={(e) => updateTheme('backgroundColor', e.target.value)}
+                  className="w-12 h-10 rounded border-2 border-border cursor-pointer"
+                />
+                <Input
+                  value={currentTheme.backgroundColor || "#000000"}
+                  onChange={(e) => updateTheme('backgroundColor', e.target.value)}
+                  className="flex-1 bg-input border-border text-foreground"
+                />
+              </div>
+            </div>
+          )}
+
+          {currentTheme.backgroundType === 'gradient' && (
+            <>
+              <div>
+                <Label className="text-muted-foreground">Gradient Start</Label>
+                <div className="flex gap-2 mt-1">
+                  <input
+                    type="color"
+                    value={currentTheme.backgroundGradientStart || "#FF1493"}
+                    onChange={(e) => updateTheme('backgroundGradientStart', e.target.value)}
+                    className="w-12 h-10 rounded border-2 border-border cursor-pointer"
+                  />
+                  <Input
+                    value={currentTheme.backgroundGradientStart || "#FF1493"}
+                    onChange={(e) => updateTheme('backgroundGradientStart', e.target.value)}
+                    className="flex-1 bg-input border-border text-foreground"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Gradient End</Label>
+                <div className="flex gap-2 mt-1">
+                  <input
+                    type="color"
+                    value={currentTheme.backgroundGradientEnd || "#00BFFF"}
+                    onChange={(e) => updateTheme('backgroundGradientEnd', e.target.value)}
+                    className="w-12 h-10 rounded border-2 border-border cursor-pointer"
+                  />
+                  <Input
+                    value={currentTheme.backgroundGradientEnd || "#00BFFF"}
+                    onChange={(e) => updateTheme('backgroundGradientEnd', e.target.value)}
+                    className="flex-1 bg-input border-border text-foreground"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {currentTheme.backgroundType === 'pattern' && (
+            <div>
+              <Label className="text-muted-foreground">Pattern Style</Label>
+              <Select 
+                value={currentTheme.backgroundPattern || "dots"} 
+                onValueChange={(value) => updateTheme('backgroundPattern', value)}
+              >
+                <SelectTrigger className="bg-input border-border text-foreground">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="dots">Dots</SelectItem>
+                  <SelectItem value="lines">Lines</SelectItem>
+                  <SelectItem value="waves">Waves</SelectItem>
+                  <SelectItem value="geometric">Geometric</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </CardContent>
       </Card>
 

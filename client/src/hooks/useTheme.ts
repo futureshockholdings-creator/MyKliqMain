@@ -53,6 +53,27 @@ const applyTheme = (theme: Partial<UserTheme>) => {
     };
     root.style.setProperty('--font-sans', fontMap[theme.fontFamily as keyof typeof fontMap] || fontMap.comic);
   }
+
+  // Apply background customization
+  if (theme.backgroundType && theme.backgroundType === 'solid' && theme.backgroundColor) {
+    root.style.setProperty('--background', `hsl(${hexToHsl(theme.backgroundColor)})`);
+    root.style.removeProperty('background-image');
+  } else if (theme.backgroundType === 'gradient' && theme.backgroundGradientStart && theme.backgroundGradientEnd) {
+    const startHsl = hexToHsl(theme.backgroundGradientStart);
+    const endHsl = hexToHsl(theme.backgroundGradientEnd);
+    root.style.setProperty('--background', `linear-gradient(135deg, hsl(${startHsl}), hsl(${endHsl}))`);
+    root.style.setProperty('background-image', `linear-gradient(135deg, hsl(${startHsl}), hsl(${endHsl}))`);
+  } else if (theme.backgroundType === 'pattern' && theme.backgroundPattern) {
+    // Apply pattern backgrounds
+    const patterns = {
+      dots: `radial-gradient(circle, hsl(${theme.primaryColor ? hexToHsl(theme.primaryColor) : '328, 100%, 54%'}) 1px, transparent 1px)`,
+      lines: `linear-gradient(45deg, hsl(${theme.primaryColor ? hexToHsl(theme.primaryColor) : '328, 100%, 54%'}) 1px, transparent 1px)`,
+      waves: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20c0-11 9-20 20-20s20 9 20 20-9 20-20 20-20-9-20-20z' fill='%23${theme.primaryColor?.replace('#', '') || 'FF1493'}' opacity='0.1'/%3E%3C/svg%3E")`,
+      geometric: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23${theme.primaryColor?.replace('#', '') || 'FF1493'}' opacity='0.1'%3E%3Cpath d='M30 30l15-15v30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+    };
+    root.style.setProperty('background-image', patterns[theme.backgroundPattern as keyof typeof patterns] || patterns.dots);
+    root.style.setProperty('background-size', theme.backgroundPattern === 'dots' ? '20px 20px' : '40px 40px');
+  }
 };
 
 export function useTheme() {

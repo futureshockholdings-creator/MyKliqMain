@@ -96,7 +96,7 @@ function AppContent() {
 
   return (
     <TooltipProvider>
-      <div className="bg-black min-h-screen text-white">
+      <div className="bg-background min-h-screen text-foreground">
         {/* Navigation - Only show when authenticated */}
         {isAuthenticated && !isLoading && (
           <Navigation currentPath={currentPath} />
@@ -104,7 +104,7 @@ function AppContent() {
         
         {/* Main App Container with left margin for navigation */}
         <div className={cn(
-          "min-h-screen bg-gray-900 relative overflow-hidden",
+          "min-h-screen bg-background relative overflow-hidden",
           isAuthenticated && !isLoading ? "ml-20" : ""
         )}>
           {/* Mobile App Container */}
