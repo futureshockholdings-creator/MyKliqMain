@@ -285,8 +285,28 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
       // YouTube URL handling
       if (urlObj.hostname.includes('youtube.com') || urlObj.hostname.includes('youtu.be')) {
         const urlParams = new URLSearchParams(urlObj.search);
-        const videoId = urlParams.get('v') || urlObj.pathname.split('/').pop();
-        return `YouTube Video ${videoId || ''}`.trim();
+        let videoId = '';
+        
+        if (urlObj.hostname.includes('youtube.com')) {
+          videoId = urlParams.get('v') || '';
+        } else if (urlObj.hostname.includes('youtu.be')) {
+          videoId = urlObj.pathname.split('/').pop() || '';
+        }
+        
+        if (videoId) {
+          // Try to get title from YouTube API or provide a default
+          return `YouTube Music - ${videoId}`;
+        }
+        return 'YouTube Music';
+      }
+      
+      // SoundCloud URL handling
+      if (urlObj.hostname.includes('soundcloud.com')) {
+        const pathSegments = urlObj.pathname.split('/').filter(Boolean);
+        if (pathSegments.length >= 2) {
+          return decodeURIComponent(pathSegments[pathSegments.length - 1].replace(/-/g, ' '));
+        }
+        return 'SoundCloud Track';
       }
       
       // Generic URL handling - extract filename or last segment
@@ -295,10 +315,10 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
       
       if (lastSegment && lastSegment.includes('.')) {
         // Remove file extension and decode URI
-        return decodeURIComponent(lastSegment.replace(/\.[^/.]+$/, ''));
+        return decodeURIComponent(lastSegment.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '));
       }
       
-      return urlObj.hostname;
+      return `Music from ${urlObj.hostname}`;
     } catch {
       return '';
     }
@@ -586,7 +606,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                   Music URL
                 </Label>
                 <p className="text-xs text-gray-400 mt-1">
-                  Paste a link to YouTube, SoundCloud, or direct audio files
+                  Paste a YouTube link for embedded player or direct audio file URL
                 </p>
                 <div className="mt-2">
                   <Input
@@ -594,7 +614,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                     type="url"
                     value={musicUrl}
                     onChange={(e) => handleUrlChange(e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=... or direct audio URL"
+                    placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ or direct audio URL"
                     className="bg-gray-700 border-gray-600 text-white"
                     data-testid="input-music-url"
                   />
@@ -611,11 +631,11 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                     </div>
                     
                     {musicUrl.includes('youtube.com') || musicUrl.includes('youtu.be') ? (
-                      <Alert className="mt-2 border-blue-500/30 bg-blue-500/10">
-                        <Info className="w-4 h-4 text-blue-400" />
-                        <AlertDescription className="text-blue-300 text-xs">
-                          <div className="font-medium mb-1">YouTube Link Detected</div>
-                          <p>Note: Due to CORS policies, YouTube videos may not play directly. Consider using YouTube's embed player or downloading the audio first.</p>
+                      <Alert className="mt-2 border-red-500/30 bg-red-500/10">
+                        <Music className="w-4 h-4 text-red-400" />
+                        <AlertDescription className="text-red-300 text-xs">
+                          <div className="font-medium mb-1">YouTube Music Detected</div>
+                          <p>Perfect! This will show as a YouTube embed player on your profile for easy music sharing.</p>
                         </AlertDescription>
                       </Alert>
                     ) : musicUrl.includes('soundcloud.com') ? (

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX, Music, ExternalLink } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Music, ExternalLink, AlertTriangle } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -147,52 +147,56 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
     const videoId = getYouTubeVideoId(musicUrl);
     
     return (
-      <div className="p-4 bg-gray-700/50 border border-gray-600 rounded-lg">
+      <div className="bg-gradient-to-r from-red-500/20 to-pink-500/20 rounded-lg p-4 border border-red-500/30">
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Music className="w-4 h-4 text-pink-400" />
-            <span className="text-sm font-medium text-gray-300 flex-1">{musicTitle}</span>
+          <div className="flex items-center gap-2 mb-3">
+            <Music className="w-5 h-5 text-red-400" />
+            <span className="text-red-400 font-medium flex-1 truncate">{musicTitle}</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={openExternalUrl}
               className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+              title="Open on YouTube"
             >
-              <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="w-4 h-4" />
             </Button>
           </div>
-          
-          <Alert className="border-blue-500/30 bg-blue-500/10">
-            <Music className="w-4 h-4 text-blue-400" />
-            <AlertDescription className="text-blue-300 text-xs">
-              <div className="font-medium mb-1">YouTube Music</div>
-              <p>Click the external link button to open this music on YouTube.</p>
-            </AlertDescription>
-          </Alert>
 
-          {showEmbedPlayer && videoId && (
-            <div className="mt-3">
+          {/* Always show the YouTube embed player for better integration */}
+          {videoId && (
+            <div className="relative">
               <iframe
                 width="100%"
-                height="200"
-                src={`https://www.youtube.com/embed/${videoId}?autoplay=0`}
+                height="300"
+                src={`https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&rel=0&modestbranding=1`}
                 title={musicTitle}
                 frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
-                className="rounded border border-gray-600"
+                className="rounded-lg shadow-lg"
+                style={{ 
+                  background: 'linear-gradient(45deg, #1a1a1a, #2a2a2a)',
+                  minHeight: '300px'
+                }}
               />
             </div>
           )}
 
-          <Button
-            onClick={() => setShowEmbedPlayer(!showEmbedPlayer)}
-            variant="outline"
-            size="sm"
-            className="w-full border-pink-500 text-pink-400 hover:bg-pink-500/20"
-          >
-            {showEmbedPlayer ? "Hide Player" : "Show YouTube Player"}
-          </Button>
+          {!videoId && (
+            <Alert className="border-red-500/30 bg-red-500/10">
+              <AlertTriangle className="w-4 h-4 text-red-400" />
+              <AlertDescription className="text-red-300 text-sm">
+                <div className="font-medium mb-1">Invalid YouTube URL</div>
+                <p>Cannot extract video ID from this URL. Please check the link.</p>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="flex justify-between items-center text-xs text-gray-400">
+            <span>YouTube Music Player</span>
+            <span className="bg-red-500/20 px-2 py-1 rounded text-red-400">YOUTUBE</span>
+          </div>
         </div>
       </div>
     );
