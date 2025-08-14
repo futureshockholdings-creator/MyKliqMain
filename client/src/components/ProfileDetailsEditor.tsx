@@ -107,7 +107,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
     icon: any;
   }) => (
     <div className="space-y-2">
-      <Label className="text-gray-300 flex items-center gap-2">
+      <Label className="text-foreground flex items-center gap-2">
         <Icon className="w-4 h-4" />
         {label}
       </Label>
@@ -116,7 +116,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
           placeholder={placeholder}
-          className="bg-gray-700 border-gray-600 text-white flex-1"
+          className="bg-input border-border text-foreground flex-1"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -130,7 +130,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
           variant="outline"
           size="sm"
           onClick={() => addItem(items, setItems, newItem, setNewItem)}
-          className="border-pink-500 text-pink-400 hover:bg-pink-500/20"
+          className="border-primary text-primary hover:bg-primary/20"
           data-testid={`button-add-${label.toLowerCase().replace(/\s+/g, '-')}`}
         >
           <Plus className="w-4 h-4" />
@@ -141,13 +141,13 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
           <Badge
             key={index}
             variant="secondary"
-            className="bg-gray-600 text-gray-200 hover:bg-gray-500"
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
           >
             {item}
             <Button
               variant="ghost"
               size="sm"
-              className="ml-2 h-auto p-0 text-gray-400 hover:text-white"
+              className="ml-2 h-auto p-0 text-muted-foreground hover:text-foreground"
               onClick={() => removeItem(items, setItems, item)}
               data-testid={`button-remove-${label.toLowerCase().replace(/\s+/g, '-')}-${index}`}
             >
@@ -165,7 +165,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
         <Button
           variant="outline"
           size="sm"
-          className="border-pink-500 text-pink-400 hover:bg-pink-500/20"
+          className="border-primary text-primary hover:bg-primary/20"
           data-testid="button-edit-profile-details"
         >
           <Settings className="w-4 h-4 mr-2" />
@@ -173,26 +173,26 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="bg-gray-800 border-gray-700 max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-card border-border max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-pink-400">Profile Details</DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogTitle className="text-primary">Profile Details</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Add your interests, preferences, and personal details to help your kliq get to know you better
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="interests" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-700">
-            <TabsTrigger value="interests" className="data-[state=active]:bg-pink-500/20">Interests</TabsTrigger>
-            <TabsTrigger value="favorites" className="data-[state=active]:bg-pink-500/20">Favorites</TabsTrigger>
-            <TabsTrigger value="lifestyle" className="data-[state=active]:bg-pink-500/20">Lifestyle</TabsTrigger>
-            <TabsTrigger value="entertainment" className="data-[state=active]:bg-pink-500/20">Entertainment</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 bg-muted">
+            <TabsTrigger value="interests" className="data-[state=active]:bg-primary/20">Interests</TabsTrigger>
+            <TabsTrigger value="favorites" className="data-[state=active]:bg-primary/20">Favorites</TabsTrigger>
+            <TabsTrigger value="lifestyle" className="data-[state=active]:bg-primary/20">Lifestyle</TabsTrigger>
+            <TabsTrigger value="entertainment" className="data-[state=active]:bg-primary/20">Entertainment</TabsTrigger>
           </TabsList>
 
           <TabsContent value="interests" className="space-y-4">
-            <Card className="bg-gray-700/50 border-gray-600">
+            <Card className="bg-card/50 border-border">
               <CardHeader>
-                <CardTitle className="text-pink-400 flex items-center gap-2">
+                <CardTitle className="text-primary flex items-center gap-2">
                   <Heart className="w-5 h-5" />
                   Your Interests
                 </CardTitle>
@@ -221,9 +221,9 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
           </TabsContent>
 
           <TabsContent value="favorites" className="space-y-4">
-            <Card className="bg-gray-700/50 border-gray-600">
+            <Card className="bg-card/50 border-border">
               <CardHeader>
-                <CardTitle className="text-pink-400 flex items-center gap-2">
+                <CardTitle className="text-primary flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
                   Favorites
                 </CardTitle>
@@ -261,24 +261,24 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
           </TabsContent>
 
           <TabsContent value="lifestyle" className="space-y-4">
-            <Card className="bg-gray-700/50 border-gray-600">
+            <Card className="bg-card/50 border-border">
               <CardHeader>
-                <CardTitle className="text-pink-400 flex items-center gap-2">
+                <CardTitle className="text-primary flex items-center gap-2">
                   <Users className="w-5 h-5" />
                   Lifestyle & Status
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-gray-300 flex items-center gap-2">
+                  <Label className="text-foreground flex items-center gap-2">
                     <Heart className="w-4 h-4" />
                     Relationship Status
                   </Label>
                   <Select value={relationshipStatus} onValueChange={setRelationshipStatus}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white" data-testid="select-relationship-status">
+                    <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-relationship-status">
                       <SelectValue placeholder="Select relationship status" />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600">
+                    <SelectContent className="bg-popover border-border">
                       <SelectItem value="single">Single</SelectItem>
                       <SelectItem value="taken">Taken</SelectItem>
                       <SelectItem value="married">Married</SelectItem>
@@ -289,12 +289,12 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-gray-300">Pet Preferences</Label>
+                  <Label className="text-foreground">Pet Preferences</Label>
                   <Select value={petPreferences} onValueChange={setPetPreferences}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white" data-testid="select-pet-preferences">
+                    <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-pet-preferences">
                       <SelectValue placeholder="Select pet preferences" />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600">
+                    <SelectContent className="bg-popover border-border">
                       <SelectItem value="dogs">Dogs</SelectItem>
                       <SelectItem value="cats">Cats</SelectItem>
                       <SelectItem value="both">Both Dogs & Cats</SelectItem>
@@ -305,12 +305,12 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-gray-300">Lifestyle</Label>
+                  <Label className="text-foreground">Lifestyle</Label>
                   <Select value={lifestyle} onValueChange={setLifestyle}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white" data-testid="select-lifestyle">
+                    <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-lifestyle">
                       <SelectValue placeholder="Select lifestyle" />
                     </SelectTrigger>
-                    <SelectContent className="bg-gray-700 border-gray-600">
+                    <SelectContent className="bg-popover border-border">
                       <SelectItem value="active">Active</SelectItem>
                       <SelectItem value="relaxed">Relaxed</SelectItem>
                       <SelectItem value="adventurous">Adventurous</SelectItem>
@@ -325,9 +325,9 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
           </TabsContent>
 
           <TabsContent value="entertainment" className="space-y-4">
-            <Card className="bg-gray-700/50 border-gray-600">
+            <Card className="bg-card/50 border-border">
               <CardHeader>
-                <CardTitle className="text-pink-400 flex items-center gap-2">
+                <CardTitle className="text-primary flex items-center gap-2">
                   <Film className="w-5 h-5" />
                   Entertainment
                 </CardTitle>
@@ -356,11 +356,11 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-2 pt-4 border-t border-gray-600">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button
             variant="outline"
             onClick={() => setIsOpen(false)}
-            className="border-gray-600 text-gray-300 hover:bg-gray-700"
+            className="border-border text-foreground hover:bg-muted"
             data-testid="button-cancel-profile-details"
           >
             Cancel
@@ -368,7 +368,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
           <Button
             onClick={handleSave}
             disabled={updateProfileMutation.isPending}
-            className="bg-pink-500 hover:bg-pink-600 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
             data-testid="button-save-profile-details"
           >
             {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}

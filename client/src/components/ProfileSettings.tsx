@@ -60,7 +60,7 @@ const TagInput = ({
 
   return (
     <div className="space-y-2">
-      <Label className="text-gray-300 flex items-center gap-2">
+      <Label className="text-foreground flex items-center gap-2">
         <Icon className="w-4 h-4" />
         {label}
       </Label>
@@ -69,7 +69,7 @@ const TagInput = ({
           value={newItem}
           onChange={handleInputChange}
           placeholder={placeholder}
-          className="bg-gray-700 border-gray-600 text-white flex-1"
+          className="bg-input border-border text-foreground flex-1"
           onKeyDown={handleKeyDown}
           data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}`}
         />
@@ -78,7 +78,7 @@ const TagInput = ({
           variant="outline"
           size="sm"
           onClick={handleAddClick}
-          className="border-pink-500 text-pink-400 hover:bg-pink-500/20"
+          className="border-primary text-primary hover:bg-primary/20"
           data-testid={`button-add-${label.toLowerCase().replace(/\s+/g, '-')}`}
         >
           <Plus className="w-4 h-4" />
@@ -89,13 +89,13 @@ const TagInput = ({
           <Badge
             key={index}
             variant="secondary"
-            className="bg-gray-600 text-gray-200 hover:bg-gray-500"
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
           >
             {item}
             <Button
               variant="ghost"
               size="sm"
-              className="ml-2 h-auto p-0 text-gray-400 hover:text-white"
+              className="ml-2 h-auto p-0 text-muted-foreground hover:text-foreground"
               onClick={() => handleRemoveItem(item)}
               data-testid={`button-remove-${label.toLowerCase().replace(/\s+/g, '-')}-${index}`}
             >
@@ -220,7 +220,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
         <Button
           variant="outline"
           size="sm"
-          className="border-pink-500 text-pink-400 hover:bg-pink-500/20"
+          className="border-primary text-primary hover:bg-primary/20"
           data-testid="button-edit-profile-settings"
         >
           <Settings className="w-4 h-4 mr-2" />
@@ -228,27 +228,27 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="bg-gray-800 border-gray-700 max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-card border-border max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-pink-400">Profile Settings</DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogTitle className="text-primary">Profile Settings</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Manage your basic information, interests, and personal details
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="basic" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5 bg-gray-700">
-            <TabsTrigger value="basic" className="data-[state=active]:bg-pink-500/20">Basic Info</TabsTrigger>
-            <TabsTrigger value="interests" className="data-[state=active]:bg-pink-500/20">Interests</TabsTrigger>
-            <TabsTrigger value="favorites" className="data-[state=active]:bg-pink-500/20">Favorites</TabsTrigger>
-            <TabsTrigger value="lifestyle" className="data-[state=active]:bg-pink-500/20">Lifestyle</TabsTrigger>
-            <TabsTrigger value="entertainment" className="data-[state=active]:bg-pink-500/20">Entertainment</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 bg-muted">
+            <TabsTrigger value="basic" className="data-[state=active]:bg-primary/20">Basic Info</TabsTrigger>
+            <TabsTrigger value="interests" className="data-[state=active]:bg-primary/20">Interests</TabsTrigger>
+            <TabsTrigger value="favorites" className="data-[state=active]:bg-primary/20">Favorites</TabsTrigger>
+            <TabsTrigger value="lifestyle" className="data-[state=active]:bg-primary/20">Lifestyle</TabsTrigger>
+            <TabsTrigger value="entertainment" className="data-[state=active]:bg-primary/20">Entertainment</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4">
-            <Card className="bg-gray-700/50 border-gray-600">
+            <Card className="bg-card/50 border-border">
               <CardHeader>
-                <CardTitle className="text-pink-400 flex items-center gap-2">
+                <CardTitle className="text-primary flex items-center gap-2">
                   <User className="w-5 h-5" />
                   Basic Information
                 </CardTitle>
@@ -256,7 +256,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-gray-300 flex items-center gap-2">
+                    <Label className="text-foreground flex items-center gap-2">
                       <User className="w-4 h-4" />
                       Bio
                     </Label>
@@ -264,14 +264,14 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="Tell your kliq about yourself..."
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-input border-border text-foreground"
                       rows={3}
                       data-testid="textarea-bio"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-300 flex items-center gap-2">
+                    <Label className="text-foreground flex items-center gap-2">
                       <Phone className="w-4 h-4" />
                       Phone Number
                     </Label>
@@ -279,13 +279,13 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       placeholder="+1 (555) 123-4567"
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-input border-border text-foreground"
                       data-testid="input-phone-number"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-300 flex items-center gap-2">
+                    <Label className="text-foreground flex items-center gap-2">
                       <Users className="w-4 h-4" />
                       Kliq Name
                     </Label>
@@ -293,13 +293,13 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       value={kliqName}
                       onChange={(e) => setKliqName(e.target.value)}
                       placeholder="My Kliq"
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-input border-border text-foreground"
                       data-testid="input-kliq-name"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-300 flex items-center gap-2">
+                    <Label className="text-foreground flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
                       Birthdate
                     </Label>
@@ -307,7 +307,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       type="date"
                       value={birthdate}
                       onChange={(e) => setBirthdate(e.target.value)}
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-input border-border text-foreground"
                       data-testid="input-birthdate"
                     />
                   </div>
@@ -317,9 +317,9 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
           </TabsContent>
 
           <TabsContent value="interests" className="space-y-4">
-            <Card className="bg-gray-700/50 border-gray-600">
+            <Card className="bg-card/50 border-border">
               <CardHeader>
-                <CardTitle className="text-pink-400 flex items-center gap-2">
+                <CardTitle className="text-primary flex items-center gap-2">
                   <Heart className="w-5 h-5" />
                   Your Interests
                 </CardTitle>
@@ -352,9 +352,9 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
           </TabsContent>
 
           <TabsContent value="favorites" className="space-y-4">
-            <Card className="bg-gray-700/50 border-gray-600">
+            <Card className="bg-card/50 border-border">
               <CardHeader>
-                <CardTitle className="text-pink-400 flex items-center gap-2">
+                <CardTitle className="text-primary flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
                   Favorites
                 </CardTitle>
@@ -398,9 +398,9 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
           </TabsContent>
 
           <TabsContent value="lifestyle" className="space-y-4">
-            <Card className="bg-gray-700/50 border-gray-600">
+            <Card className="bg-card/50 border-border">
               <CardHeader>
-                <CardTitle className="text-pink-400 flex items-center gap-2">
+                <CardTitle className="text-primary flex items-center gap-2">
                   <Users className="w-5 h-5" />
                   Lifestyle & Status
                 </CardTitle>
@@ -408,15 +408,15 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-gray-300 flex items-center gap-2">
+                    <Label className="text-foreground flex items-center gap-2">
                       <Heart className="w-4 h-4" />
                       Relationship Status
                     </Label>
                     <Select value={relationshipStatus} onValueChange={setRelationshipStatus}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white" data-testid="select-relationship-status">
+                      <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-relationship-status">
                         <SelectValue placeholder="Select relationship status" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectContent className="bg-popover border-border">
                         <SelectItem value="single">Single</SelectItem>
                         <SelectItem value="taken">Taken</SelectItem>
                         <SelectItem value="married">Married</SelectItem>
@@ -427,12 +427,12 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-300">Pet Preferences</Label>
+                    <Label className="text-foreground">Pet Preferences</Label>
                     <Select value={petPreferences} onValueChange={setPetPreferences}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white" data-testid="select-pet-preferences">
+                      <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-pet-preferences">
                         <SelectValue placeholder="Select pet preferences" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectContent className="bg-popover border-border">
                         <SelectItem value="dogs">Dogs</SelectItem>
                         <SelectItem value="cats">Cats</SelectItem>
                         <SelectItem value="both">Both Dogs & Cats</SelectItem>
@@ -443,12 +443,12 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-gray-300">Lifestyle</Label>
+                    <Label className="text-foreground">Lifestyle</Label>
                     <Select value={lifestyle} onValueChange={setLifestyle}>
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white" data-testid="select-lifestyle">
+                      <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-lifestyle">
                         <SelectValue placeholder="Select lifestyle" />
                       </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectContent className="bg-popover border-border">
                         <SelectItem value="active">Active</SelectItem>
                         <SelectItem value="relaxed">Relaxed</SelectItem>
                         <SelectItem value="adventurous">Adventurous</SelectItem>
@@ -464,9 +464,9 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
           </TabsContent>
 
           <TabsContent value="entertainment" className="space-y-4">
-            <Card className="bg-gray-700/50 border-gray-600">
+            <Card className="bg-card/50 border-border">
               <CardHeader>
-                <CardTitle className="text-pink-400 flex items-center gap-2">
+                <CardTitle className="text-primary flex items-center gap-2">
                   <Film className="w-5 h-5" />
                   Entertainment
                 </CardTitle>
@@ -499,11 +499,11 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-2 pt-4 border-t border-gray-600">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button
             variant="outline"
             onClick={() => setIsOpen(false)}
-            className="border-gray-600 text-gray-300 hover:bg-gray-700"
+            className="border-border text-foreground hover:bg-muted"
             data-testid="button-cancel-profile-settings"
           >
             Cancel
@@ -511,7 +511,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
           <Button
             onClick={handleSave}
             disabled={updateProfileMutation.isPending}
-            className="bg-pink-500 hover:bg-pink-600 text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
             data-testid="button-save-profile-settings"
           >
             {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
