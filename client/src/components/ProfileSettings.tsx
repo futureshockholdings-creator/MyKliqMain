@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,22 +22,22 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   // Basic profile fields
-  const [bio, setBio] = useState(user?.bio || "");
-  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || "");
-  const [kliqName, setKliqName] = useState(user?.kliqName || "My Kliq");
-  const [birthdate, setBirthdate] = useState(user?.birthdate || "");
+  const [bio, setBio] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [kliqName, setKliqName] = useState("");
+  const [birthdate, setBirthdate] = useState("");
 
   // Extended profile details
-  const [interests, setInterests] = useState<string[]>(user?.interests || []);
-  const [favoriteLocations, setFavoriteLocations] = useState<string[]>(user?.favoriteLocations || []);
-  const [favoriteFoods, setFavoriteFoods] = useState<string[]>(user?.favoriteFoods || []);
-  const [musicGenres, setMusicGenres] = useState<string[]>(user?.musicGenres || []);
-  const [hobbies, setHobbies] = useState<string[]>(user?.hobbies || []);
-  const [favoriteMovies, setFavoriteMovies] = useState<string[]>(user?.favoriteMovies || []);
-  const [favoriteBooks, setFavoriteBooks] = useState<string[]>(user?.favoriteBooks || []);
-  const [relationshipStatus, setRelationshipStatus] = useState(user?.relationshipStatus || "");
-  const [petPreferences, setPetPreferences] = useState(user?.petPreferences || "");
-  const [lifestyle, setLifestyle] = useState(user?.lifestyle || "");
+  const [interests, setInterests] = useState<string[]>([]);
+  const [favoriteLocations, setFavoriteLocations] = useState<string[]>([]);
+  const [favoriteFoods, setFavoriteFoods] = useState<string[]>([]);
+  const [musicGenres, setMusicGenres] = useState<string[]>([]);
+  const [hobbies, setHobbies] = useState<string[]>([]);
+  const [favoriteMovies, setFavoriteMovies] = useState<string[]>([]);
+  const [favoriteBooks, setFavoriteBooks] = useState<string[]>([]);
+  const [relationshipStatus, setRelationshipStatus] = useState("");
+  const [petPreferences, setPetPreferences] = useState("");
+  const [lifestyle, setLifestyle] = useState("");
 
   // Temporary input states for adding new items
   const [newInterest, setNewInterest] = useState("");
@@ -47,6 +47,26 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   const [newHobby, setNewHobby] = useState("");
   const [newMovie, setNewMovie] = useState("");
   const [newBook, setNewBook] = useState("");
+
+  // Initialize state when user data changes or dialog opens
+  useEffect(() => {
+    if (user && isOpen) {
+      setBio(user.bio || "");
+      setPhoneNumber(user.phoneNumber || "");
+      setKliqName(user.kliqName || "My Kliq");
+      setBirthdate(user.birthdate || "");
+      setInterests(user.interests || []);
+      setFavoriteLocations(user.favoriteLocations || []);
+      setFavoriteFoods(user.favoriteFoods || []);
+      setMusicGenres(user.musicGenres || []);
+      setHobbies(user.hobbies || []);
+      setFavoriteMovies(user.favoriteMovies || []);
+      setFavoriteBooks(user.favoriteBooks || []);
+      setRelationshipStatus(user.relationshipStatus || "");
+      setPetPreferences(user.petPreferences || "");
+      setLifestyle(user.lifestyle || "");
+    }
+  }, [user, isOpen]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (profileData: any) => {
