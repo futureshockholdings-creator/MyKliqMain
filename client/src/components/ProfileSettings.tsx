@@ -17,6 +17,97 @@ interface ProfileSettingsProps {
   user: any;
 }
 
+// TagInput component moved outside to prevent re-creation on each render
+const TagInput = ({ 
+  label, 
+  items, 
+  setItems, 
+  newItem, 
+  setNewItem, 
+  placeholder,
+  icon: Icon,
+  onAddItem,
+  onRemoveItem
+}: {
+  label: string;
+  items: string[];
+  setItems: (items: string[]) => void;
+  newItem: string;
+  setNewItem: (item: string) => void;
+  placeholder: string;
+  icon: any;
+  onAddItem: (items: string[], setItems: (items: string[]) => void, newItem: string, setNewItem: (item: string) => void) => void;
+  onRemoveItem: (items: string[], setItems: (items: string[]) => void, itemToRemove: string) => void;
+}) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewItem(e.target.value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      onAddItem(items, setItems, newItem, setNewItem);
+    }
+  };
+
+  const handleAddClick = () => {
+    onAddItem(items, setItems, newItem, setNewItem);
+  };
+
+  const handleRemoveItem = (itemToRemove: string) => {
+    onRemoveItem(items, setItems, itemToRemove);
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-gray-300 flex items-center gap-2">
+        <Icon className="w-4 h-4" />
+        {label}
+      </Label>
+      <div className="flex gap-2">
+        <Input
+          value={newItem}
+          onChange={handleInputChange}
+          placeholder={placeholder}
+          className="bg-gray-700 border-gray-600 text-white flex-1"
+          onKeyDown={handleKeyDown}
+          data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}`}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleAddClick}
+          className="border-pink-500 text-pink-400 hover:bg-pink-500/20"
+          data-testid={`button-add-${label.toLowerCase().replace(/\s+/g, '-')}`}
+        >
+          <Plus className="w-4 h-4" />
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {items.map((item, index) => (
+          <Badge
+            key={index}
+            variant="secondary"
+            className="bg-gray-600 text-gray-200 hover:bg-gray-500"
+          >
+            {item}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-2 h-auto p-0 text-gray-400 hover:text-white"
+              onClick={() => handleRemoveItem(item)}
+              data-testid={`button-remove-${label.toLowerCase().replace(/\s+/g, '-')}-${index}`}
+            >
+              <X className="w-3 h-3" />
+            </Button>
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export function ProfileSettings({ user }: ProfileSettingsProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -121,91 +212,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
     setItems(items.filter(item => item !== itemToRemove));
   };
 
-  const TagInput = ({ 
-    label, 
-    items, 
-    setItems, 
-    newItem, 
-    setNewItem, 
-    placeholder,
-    icon: Icon 
-  }: {
-    label: string;
-    items: string[];
-    setItems: (items: string[]) => void;
-    newItem: string;
-    setNewItem: (item: string) => void;
-    placeholder: string;
-    icon: any;
-  }) => {
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setNewItem(e.target.value);
-    };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        addItem(items, setItems, newItem, setNewItem);
-      }
-    };
-
-    const handleAddClick = () => {
-      addItem(items, setItems, newItem, setNewItem);
-    };
-
-    const handleRemoveItem = (itemToRemove: string) => {
-      removeItem(items, setItems, itemToRemove);
-    };
-
-    return (
-    <div className="space-y-2">
-      <Label className="text-gray-300 flex items-center gap-2">
-        <Icon className="w-4 h-4" />
-        {label}
-      </Label>
-      <div className="flex gap-2">
-        <Input
-          value={newItem}
-          onChange={handleInputChange}
-          placeholder={placeholder}
-          className="bg-gray-700 border-gray-600 text-white flex-1"
-          onKeyDown={handleKeyDown}
-          data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}`}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleAddClick}
-          className="border-pink-500 text-pink-400 hover:bg-pink-500/20"
-          data-testid={`button-add-${label.toLowerCase().replace(/\s+/g, '-')}`}
-        >
-          <Plus className="w-4 h-4" />
-        </Button>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {items.map((item, index) => (
-          <Badge
-            key={index}
-            variant="secondary"
-            className="bg-gray-600 text-gray-200 hover:bg-gray-500"
-          >
-            {item}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-2 h-auto p-0 text-gray-400 hover:text-white"
-              onClick={() => handleRemoveItem(item)}
-              data-testid={`button-remove-${label.toLowerCase().replace(/\s+/g, '-')}-${index}`}
-            >
-              <X className="w-3 h-3" />
-            </Button>
-          </Badge>
-        ))}
-      </div>
-    </div>
-    );
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -326,6 +333,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   setNewItem={setNewInterest}
                   placeholder="e.g., Photography, Travel, Technology"
                   icon={Heart}
+                  onAddItem={addItem}
+                  onRemoveItem={removeItem}
                 />
                 <TagInput
                   label="Hobbies"
@@ -335,6 +344,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   setNewItem={setNewHobby}
                   placeholder="e.g., Reading, Gaming, Cooking"
                   icon={Gamepad2}
+                  onAddItem={addItem}
+                  onRemoveItem={removeItem}
                 />
               </CardContent>
             </Card>
@@ -357,6 +368,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   setNewItem={setNewLocation}
                   placeholder="e.g., Paris, Tokyo, New York"
                   icon={MapPin}
+                  onAddItem={addItem}
+                  onRemoveItem={removeItem}
                 />
                 <TagInput
                   label="Favorite Foods"
@@ -366,6 +379,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   setNewItem={setNewFood}
                   placeholder="e.g., Pizza, Sushi, Tacos"
                   icon={Utensils}
+                  onAddItem={addItem}
+                  onRemoveItem={removeItem}
                 />
                 <TagInput
                   label="Music Genres"
@@ -375,6 +390,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   setNewItem={setNewGenre}
                   placeholder="e.g., Pop, Rock, Hip-Hop"
                   icon={Music}
+                  onAddItem={addItem}
+                  onRemoveItem={removeItem}
                 />
               </CardContent>
             </Card>
@@ -463,6 +480,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   setNewItem={setNewMovie}
                   placeholder="e.g., The Matrix, Inception, Avengers"
                   icon={Film}
+                  onAddItem={addItem}
+                  onRemoveItem={removeItem}
                 />
                 <TagInput
                   label="Favorite Books"
@@ -472,6 +491,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   setNewItem={setNewBook}
                   placeholder="e.g., Harry Potter, 1984, The Hobbit"
                   icon={BookOpen}
+                  onAddItem={addItem}
+                  onRemoveItem={removeItem}
                 />
               </CardContent>
             </Card>
