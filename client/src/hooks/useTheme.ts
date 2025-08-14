@@ -1,5 +1,5 @@
+import React, { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
 import type { UserTheme } from "@shared/schema";
 
 // Helper function to convert hex to HSL
