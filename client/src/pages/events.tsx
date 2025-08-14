@@ -26,7 +26,10 @@ function Countdown({ targetDate }: CountdownProps) {
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      const difference = +new Date(targetDate) - +new Date();
+      // Ensure we're working with a proper Date object
+      const target = new Date(targetDate);
+      const now = new Date();
+      const difference = target.getTime() - now.getTime();
       
       if (difference > 0) {
         setTimeLeft({
@@ -219,7 +222,13 @@ export default function Events() {
       return;
     }
 
-    createEventMutation.mutate(newEvent);
+    // Convert datetime-local to ISO string to ensure proper timezone handling
+    const eventData = {
+      ...newEvent,
+      eventDate: new Date(newEvent.eventDate).toISOString()
+    };
+
+    createEventMutation.mutate(eventData);
   };
 
   const handleEditEvent = (event: any) => {
@@ -246,7 +255,7 @@ export default function Events() {
         title: editingEvent.title,
         description: editingEvent.description,
         location: editingEvent.location,
-        eventDate: editingEvent.eventDate,
+        eventDate: new Date(editingEvent.eventDate).toISOString(),
         mediaUrl: editingEvent.mediaUrl,
         mediaType: editingEvent.mediaType,
       }
@@ -285,9 +294,20 @@ export default function Events() {
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
+    // Ensure we display in the user's local timezone
     return {
-      date: date.toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-      time: date.toLocaleTimeString("en-US", { hour: '2-digit', minute: '2-digit' })
+      date: date.toLocaleDateString("en-US", { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      }),
+      time: date.toLocaleTimeString("en-US", { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      })
     };
   };
 
