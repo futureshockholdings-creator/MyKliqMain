@@ -9,8 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { MusicUploader } from "@/components/MusicUploader";
 import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
-import { StreamingServiceIntegration } from "@/components/StreamingServiceIntegration";
-import { IntegratedMusicPlayer } from "@/components/IntegratedMusicPlayer";
+
 import { type User } from "@shared/schema";
 
 export default function Profile() {
@@ -18,9 +17,7 @@ export default function Profile() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [birthdate, setBirthdate] = useState((user as User)?.birthdate || "");
-  const [showMusicUpload, setShowMusicUpload] = useState(false);
-  const [showStreamingSetup, setShowStreamingSetup] = useState(false);
-  const [connectedServices, setConnectedServices] = useState<Record<string, any>>({});
+
 
   const updateBirthdateMutation = useMutation({
     mutationFn: async (birthdate: string) => {
@@ -82,29 +79,7 @@ export default function Profile() {
     },
   });
 
-  // Streaming service handlers
-  const handleServiceConnect = (service: string, playerInstance: any) => {
-    setConnectedServices(prev => ({
-      ...prev,
-      [service]: playerInstance
-    }));
-    toast({
-      title: "Service Connected",
-      description: `Successfully connected to ${service === 'spotify' ? 'Spotify' : 'Apple Music'}`,
-    });
-  };
 
-  const handleServiceDisconnect = (service: string) => {
-    setConnectedServices(prev => {
-      const updated = { ...prev };
-      delete updated[service];
-      return updated;
-    });
-    toast({
-      title: "Service Disconnected",
-      description: `Disconnected from ${service === 'spotify' ? 'Spotify' : 'Apple Music'}`,
-    });
-  };
 
   if (!user) {
     return <div>Loading...</div>;
@@ -241,55 +216,7 @@ export default function Profile() {
           </Card>
         )}
 
-        {/* Streaming Service Integration Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>🎵 Streaming Service Integration</CardTitle>
-            <CardDescription>Connect your Spotify or Apple Music account to stream music directly</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Button
-                variant={showStreamingSetup ? "default" : "outline"}
-                onClick={() => setShowStreamingSetup(!showStreamingSetup)}
-                className={showStreamingSetup ? "bg-pink-500 hover:bg-pink-600" : ""}
-                data-testid="button-toggle-streaming-setup"
-              >
-                {showStreamingSetup ? "Hide Setup" : "Setup Streaming Services"}
-              </Button>
-              
-              {Object.keys(connectedServices).length > 0 && (
-                <Button
-                  variant="outline"
-                  onClick={() => setShowStreamingSetup(false)}
-                  className="border-green-500 text-green-400 hover:bg-green-500/20"
-                  data-testid="button-show-player"
-                >
-                  Show Music Player
-                </Button>
-              )}
-            </div>
 
-            {showStreamingSetup ? (
-              <StreamingServiceIntegration
-                onServiceConnect={handleServiceConnect}
-                onServiceDisconnect={handleServiceDisconnect}
-              />
-            ) : (
-              Object.keys(connectedServices).length > 0 ? (
-                <IntegratedMusicPlayer
-                  connectedServices={connectedServices}
-                  currentUser={user}
-                />
-              ) : (
-                <div className="text-center py-8 text-gray-400">
-                  <p>No streaming services connected yet.</p>
-                  <p className="text-sm mt-1">Click "Setup Streaming Services" to get started.</p>
-                </div>
-              )
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
