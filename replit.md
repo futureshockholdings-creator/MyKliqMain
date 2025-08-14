@@ -1,6 +1,12 @@
 # Overview
 
-MyKliq is a social media application designed for close-knit friend groups. The platform focuses on intimate social sharing within small circles called "kliq" with features like hierarchical friend ranking, content filtering, and extensive UI customization. Built as a full-stack web application, MyKliq emphasizes personalized user experiences through custom themes and content controls.
+MyKliq is a social media application designed for close-knit friend groups. The platform focuses on intimate social sharing within small circles called "kliq" with features like hierarchical friend ranking, content filtering, extensive UI customization, and rich media sharing. Built as a full-stack web application, MyKliq emphasizes personalized user experiences through custom themes, content controls, photo/video sharing, and disappearing stories.
+
+## Recent Changes (August 2025)
+- **Media Sharing System**: Complete implementation of photo and video upload functionality using Replit's cloud object storage
+- **Stories Feature**: 24-hour disappearing stories with media support and view tracking
+- **Object Storage Integration**: Configured Replit object storage with proper bucket setup and presigned URL generation
+- **Enhanced Feed**: Posts now support text, images, and videos with proper media display and responsive design
 
 # User Preferences
 
