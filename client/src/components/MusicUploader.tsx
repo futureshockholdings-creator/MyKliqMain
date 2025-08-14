@@ -66,7 +66,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
         }
         
         // Update user profile with music info
-        return await apiRequest("/api/user/profile-music", "PUT", {
+        return await apiRequest("PUT", "/api/user/profile-music", {
           musicUrl: uploadURL.split("?")[0], // Remove query params from URL
           musicTitle: title,
         });
@@ -95,7 +95,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
   // URL-based music upload mutation
   const uploadUrlMusicMutation = useMutation({
     mutationFn: async ({ url, title }: { url: string; title: string }) => {
-      return await apiRequest("/api/user/profile-music", "PUT", {
+      return await apiRequest("PUT", "/api/user/profile-music", {
         musicUrl: url,
         musicTitle: title,
       });
@@ -121,7 +121,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
 
   const removeMusicMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/user/profile-music", "DELETE");
+      return await apiRequest("DELETE", "/api/user/profile-music");
     },
     onSuccess: () => {
       toast({
