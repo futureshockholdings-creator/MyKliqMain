@@ -15,6 +15,8 @@ import {
   actions,
   actionViewers,
   actionChatMessages,
+  meetups,
+  meetupCheckIns,
   type User,
   type UpsertUser,
   type UserTheme,
@@ -45,6 +47,10 @@ import {
   type InsertActionViewer,
   type ActionChatMessage,
   type InsertActionChatMessage,
+  type Meetup,
+  type InsertMeetup,
+  type MeetupCheckIn,
+  type InsertMeetupCheckIn,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or } from "drizzle-orm";
@@ -110,6 +116,16 @@ export interface IStorage {
   leaveAction(actionId: string, userId: string): Promise<void>;
   addActionChatMessage(message: InsertActionChatMessage): Promise<ActionChatMessage>;
   getActionChatMessages(actionId: string): Promise<(ActionChatMessage & { user: User })[]>;
+
+  // Meetup operations
+  getMeetups(userId: string): Promise<(Meetup & { organizer: User; checkIns: (MeetupCheckIn & { user: User })[] })[]>;
+  getMeetupById(meetupId: string): Promise<Meetup | undefined>;
+  createMeetup(meetup: InsertMeetup): Promise<Meetup>;
+  endMeetup(meetupId: string): Promise<Meetup>;
+  checkInToMeetup(checkIn: InsertMeetupCheckIn): Promise<MeetupCheckIn>;
+  checkOutFromMeetup(meetupId: string, userId: string): Promise<void>;
+  getNearbyMeetups(latitude: number, longitude: number, radiusKm: number): Promise<(Meetup & { organizer: User; checkIns: (MeetupCheckIn & { user: User })[] })[]>;
+  verifyLocationCheckIn(meetupId: string, userId: string, latitude: number, longitude: number): Promise<boolean>;
   
   // Utility operations
   generateInviteCode(): Promise<string>;
@@ -918,6 +934,185 @@ export class DatabaseStorage implements IStorage {
       ...message,
       user: user!,
     }));
+  }
+
+  // Meetup operations
+  async getMeetups(userId: string): Promise<(Meetup & { organizer: User; checkIns: (MeetupCheckIn & { user: User })[] })[]> {
+    // Get friends of the user to filter meetups
+    const userFriends = await this.getFriends(userId);
+    const friendIds = userFriends.map(f => f.friendId);
+    const userIds = [...friendIds, userId]; // Include user's own meetups
+
+    const meetupsData = await db
+      .select({
+        meetup: meetups,
+        organizer: users,
+      })
+      .from(meetups)
+      .innerJoin(users, eq(meetups.userId, users.id))
+      .where(inArray(meetups.userId, userIds))
+      .orderBy(desc(meetups.meetupTime));
+
+    // Get check-ins for all meetups
+    const meetupsWithCheckIns = await Promise.all(
+      meetupsData.map(async ({ meetup, organizer }) => {
+        const checkInsData = await db
+          .select({
+            checkIn: meetupCheckIns,
+            user: users,
+          })
+          .from(meetupCheckIns)
+          .innerJoin(users, eq(meetupCheckIns.userId, users.id))
+          .where(eq(meetupCheckIns.meetupId, meetup.id));
+
+        const checkIns = checkInsData.map(({ checkIn, user }) => ({
+          ...checkIn,
+          user,
+        }));
+
+        return {
+          ...meetup,
+          organizer,
+          checkIns,
+        };
+      })
+    );
+
+    return meetupsWithCheckIns;
+  }
+
+  async getMeetupById(meetupId: string): Promise<Meetup | undefined> {
+    const [meetup] = await db.select().from(meetups).where(eq(meetups.id, meetupId));
+    return meetup;
+  }
+
+  async createMeetup(meetup: InsertMeetup): Promise<Meetup> {
+    const [newMeetup] = await db.insert(meetups).values({
+      ...meetup,
+      isActive: true,
+    }).returning();
+    return newMeetup;
+  }
+
+  async endMeetup(meetupId: string): Promise<Meetup> {
+    const [updatedMeetup] = await db
+      .update(meetups)
+      .set({ 
+        isActive: false, 
+        endedAt: new Date() 
+      })
+      .where(eq(meetups.id, meetupId))
+      .returning();
+    return updatedMeetup;
+  }
+
+  async checkInToMeetup(checkIn: InsertMeetupCheckIn): Promise<MeetupCheckIn> {
+    const [newCheckIn] = await db.insert(meetupCheckIns).values({
+      ...checkIn,
+      checkInTime: new Date(),
+      isVerified: false, // Will be verified separately based on location
+    }).returning();
+    return newCheckIn;
+  }
+
+  async checkOutFromMeetup(meetupId: string, userId: string): Promise<void> {
+    await db
+      .update(meetupCheckIns)
+      .set({ checkOutTime: new Date() })
+      .where(and(
+        eq(meetupCheckIns.meetupId, meetupId),
+        eq(meetupCheckIns.userId, userId),
+        sql`check_out_time IS NULL`
+      ));
+  }
+
+  async getNearbyMeetups(latitude: number, longitude: number, radiusKm: number): Promise<(Meetup & { organizer: User; checkIns: (MeetupCheckIn & { user: User })[] })[]> {
+    // Use Haversine formula to find nearby meetups
+    const nearbyMeetupsData = await db
+      .select({
+        meetup: meetups,
+        organizer: users,
+      })
+      .from(meetups)
+      .innerJoin(users, eq(meetups.userId, users.id))
+      .where(and(
+        eq(meetups.isActive, true),
+        sql`(
+          6371 * acos(
+            cos(radians(${latitude})) * 
+            cos(radians(${meetups.latitude})) * 
+            cos(radians(${meetups.longitude}) - radians(${longitude})) + 
+            sin(radians(${latitude})) * 
+            sin(radians(${meetups.latitude}))
+          )
+        ) <= ${radiusKm}`
+      ))
+      .orderBy(desc(meetups.meetupTime));
+
+    // Get check-ins for nearby meetups
+    const nearbyMeetupsWithCheckIns = await Promise.all(
+      nearbyMeetupsData.map(async ({ meetup, organizer }) => {
+        const checkInsData = await db
+          .select({
+            checkIn: meetupCheckIns,
+            user: users,
+          })
+          .from(meetupCheckIns)
+          .innerJoin(users, eq(meetupCheckIns.userId, users.id))
+          .where(eq(meetupCheckIns.meetupId, meetup.id));
+
+        const checkIns = checkInsData.map(({ checkIn, user }) => ({
+          ...checkIn,
+          user,
+        }));
+
+        return {
+          ...meetup,
+          organizer,
+          checkIns,
+        };
+      })
+    );
+
+    return nearbyMeetupsWithCheckIns;
+  }
+
+  async verifyLocationCheckIn(meetupId: string, userId: string, latitude: number, longitude: number): Promise<boolean> {
+    // Get meetup location
+    const meetup = await this.getMeetupById(meetupId);
+    if (!meetup) return false;
+
+    // Calculate distance using Haversine formula (allowing 100m radius for check-in)
+    const radiusKm = 0.1; // 100 meters
+    const distance = await db
+      .select({
+        distance: sql<number>`(
+          6371 * acos(
+            cos(radians(${latitude})) * 
+            cos(radians(${meetup.latitude})) * 
+            cos(radians(${meetup.longitude}) - radians(${longitude})) + 
+            sin(radians(${latitude})) * 
+            sin(radians(${meetup.latitude}))
+          )
+        )`
+      })
+      .from(meetups)
+      .where(eq(meetups.id, meetupId));
+
+    const isWithinRange = distance[0]?.distance <= radiusKm;
+
+    if (isWithinRange) {
+      // Update check-in to verified
+      await db
+        .update(meetupCheckIns)
+        .set({ isVerified: true })
+        .where(and(
+          eq(meetupCheckIns.meetupId, meetupId),
+          eq(meetupCheckIns.userId, userId)
+        ));
+    }
+
+    return isWithinRange;
   }
 }
 

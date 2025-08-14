@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 
@@ -741,6 +741,151 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error verifying phone:", error);
       res.status(500).json({ message: "Failed to verify phone" });
+    }
+  });
+
+  // Meetup (Location check-in) routes
+  
+  // Get all meetups for user's kliq
+  app.get('/api/meetups', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const meetups = await storage.getMeetups(userId);
+      res.json(meetups);
+    } catch (error) {
+      console.error("Error fetching meetups:", error);
+      res.status(500).json({ message: "Failed to fetch meetups" });
+    }
+  });
+
+  // Get nearby meetups based on user location
+  app.get('/api/meetups/nearby', isAuthenticated, async (req: any, res) => {
+    try {
+      const { lat, lng, radius = 5 } = req.query;
+      
+      if (!lat || !lng) {
+        return res.status(400).json({ message: "Latitude and longitude are required" });
+      }
+      
+      const latitude = parseFloat(lat as string);
+      const longitude = parseFloat(lng as string);
+      const radiusKm = parseFloat(radius as string);
+      
+      const nearbyMeetups = await storage.getNearbyMeetups(latitude, longitude, radiusKm);
+      res.json(nearbyMeetups);
+    } catch (error) {
+      console.error("Error fetching nearby meetups:", error);
+      res.status(500).json({ message: "Failed to fetch nearby meetups" });
+    }
+  });
+
+  // Get specific meetup details
+  app.get('/api/meetups/:meetupId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { meetupId } = req.params;
+      const meetup = await storage.getMeetupById(meetupId);
+      
+      if (!meetup) {
+        return res.status(404).json({ message: "Meetup not found" });
+      }
+      
+      res.json(meetup);
+    } catch (error) {
+      console.error("Error fetching meetup:", error);
+      res.status(500).json({ message: "Failed to fetch meetup" });
+    }
+  });
+
+  // Create new meetup
+  app.post('/api/meetups', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const meetupData = insertMeetupSchema.parse({ 
+        ...req.body, 
+        userId: userId
+      });
+      
+      const meetup = await storage.createMeetup(meetupData);
+      res.json(meetup);
+    } catch (error) {
+      console.error("Error creating meetup:", error);
+      res.status(500).json({ message: "Failed to create meetup" });
+    }
+  });
+
+  // End meetup
+  app.put('/api/meetups/:meetupId/end', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { meetupId } = req.params;
+      
+      // Verify user owns this meetup
+      const meetup = await storage.getMeetupById(meetupId);
+      if (!meetup || meetup.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to end this meetup" });
+      }
+      
+      const endedMeetup = await storage.endMeetup(meetupId);
+      res.json(endedMeetup);
+    } catch (error) {
+      console.error("Error ending meetup:", error);
+      res.status(500).json({ message: "Failed to end meetup" });
+    }
+  });
+
+  // Check in to meetup
+  app.post('/api/meetups/:meetupId/checkin', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { meetupId } = req.params;
+      const { latitude, longitude } = req.body;
+      
+      if (!latitude || !longitude) {
+        return res.status(400).json({ message: "Location coordinates are required" });
+      }
+      
+      // Create check-in record
+      const checkInData = insertMeetupCheckInSchema.parse({
+        meetupId,
+        userId,
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude)
+      });
+      
+      const checkIn = await storage.checkInToMeetup(checkInData);
+      
+      // Verify location is within acceptable range
+      const isVerified = await storage.verifyLocationCheckIn(
+        meetupId, 
+        userId, 
+        parseFloat(latitude), 
+        parseFloat(longitude)
+      );
+      
+      res.json({ 
+        checkIn, 
+        verified: isVerified,
+        message: isVerified 
+          ? "Successfully checked in!" 
+          : "Check-in recorded, but location verification failed. You may be too far from the meetup location."
+      });
+    } catch (error) {
+      console.error("Error checking in to meetup:", error);
+      res.status(500).json({ message: "Failed to check in to meetup" });
+    }
+  });
+
+  // Check out from meetup
+  app.post('/api/meetups/:meetupId/checkout', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { meetupId } = req.params;
+      
+      await storage.checkOutFromMeetup(meetupId, userId);
+      res.json({ success: true, message: "Successfully checked out!" });
+    } catch (error) {
+      console.error("Error checking out from meetup:", error);
+      res.status(500).json({ message: "Failed to check out from meetup" });
     }
   });
 

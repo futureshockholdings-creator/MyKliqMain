@@ -11,6 +11,7 @@ import Home from "@/pages/home";
 import Kliq from "@/pages/kliq";
 import Events from "@/pages/events";
 import Actions from "@/pages/actions";
+import MeetupPage from "@/pages/meetup";
 import Profile from "@/pages/profile";
 import Themes from "@/pages/themes";
 import NotFound from "@/pages/not-found";
@@ -18,7 +19,7 @@ import { Messages } from "@/pages/messages";
 import { Conversation } from "@/pages/conversation";
 
 // Navigation Component
-import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video } from "lucide-react";
+import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function Navigation({ currentPath }: { currentPath: string }) {
@@ -27,6 +28,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
     { path: "/kliq", icon: Users, label: "My Kliq", tab: "kliq" },
     { path: "/events", icon: Calendar, label: "Events", tab: "events" },
     { path: "/actions", icon: Video, label: "Action", tab: "actions" },
+    { path: "/meetup", icon: MapPin, label: "Meetup", tab: "meetup" },
     { path: "/messages", icon: MessageCircle, label: "IM", tab: "messages" },
     { path: "/profile", icon: User, label: "Profile", tab: "profile" },
     { path: "/themes", icon: Palette, label: "Themes", tab: "themes" },
@@ -70,6 +72,7 @@ function Router() {
           <Route path="/kliq" component={Kliq} />
           <Route path="/events" component={Events} />
           <Route path="/actions" component={Actions} />
+          <Route path="/meetup" component={MeetupPage} />
           <Route path="/messages" component={Messages} />
           <Route path="/messages/:conversationId" component={Conversation} />
           <Route path="/profile" component={Profile} />

@@ -9,6 +9,7 @@ import {
   text,
   integer,
   boolean,
+  numeric,
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -200,6 +201,35 @@ export const actionChatMessages = pgTable("action_chat_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Meetups (location-based gatherings)
+export const meetups = pgTable("meetups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  locationName: varchar("location_name").notNull(),
+  address: text("address"),
+  latitude: numeric("latitude", { precision: 10, scale: 8 }),
+  longitude: numeric("longitude", { precision: 11, scale: 8 }),
+  meetupTime: timestamp("meetup_time").notNull(),
+  maxAttendees: integer("max_attendees").default(50),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  endedAt: timestamp("ended_at"),
+});
+
+// Meetup check-ins (who's at the location)
+export const meetupCheckIns = pgTable("meetup_check_ins", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  meetupId: varchar("meetup_id").references(() => meetups.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  checkInTime: timestamp("check_in_time").defaultNow(),
+  checkOutTime: timestamp("check_out_time"),
+  latitude: numeric("latitude", { precision: 10, scale: 8 }),
+  longitude: numeric("longitude", { precision: 11, scale: 8 }),
+  isVerified: boolean("is_verified").default(false), // Based on location proximity
+});
+
 // Event attendees
 export const eventAttendees = pgTable("event_attendees", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -229,6 +259,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   actions: many(actions),
   actionViewers: many(actionViewers),
   actionChatMessages: many(actionChatMessages),
+  meetups: many(meetups),
+  meetupCheckIns: many(meetupCheckIns),
 }));
 
 export const storiesRelations = relations(stories, ({ one, many }) => ({
@@ -388,6 +420,25 @@ export const actionChatMessagesRelations = relations(actionChatMessages, ({ one 
   }),
 }));
 
+export const meetupsRelations = relations(meetups, ({ one, many }) => ({
+  organizer: one(users, {
+    fields: [meetups.userId],
+    references: [users.id],
+  }),
+  checkIns: many(meetupCheckIns),
+}));
+
+export const meetupCheckInsRelations = relations(meetupCheckIns, ({ one }) => ({
+  meetup: one(meetups, {
+    fields: [meetupCheckIns.meetupId],
+    references: [meetups.id],
+  }),
+  user: one(users, {
+    fields: [meetupCheckIns.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users);
 export const insertUserThemeSchema = createInsertSchema(userThemes).omit({ id: true, createdAt: true, updatedAt: true });
@@ -409,6 +460,10 @@ export const insertActionSchema = createInsertSchema(actions).omit({ id: true, v
 });
 export const insertActionViewerSchema = createInsertSchema(actionViewers).omit({ id: true, joinedAt: true, leftAt: true });
 export const insertActionChatMessageSchema = createInsertSchema(actionChatMessages).omit({ id: true, createdAt: true });
+export const insertMeetupSchema = createInsertSchema(meetups).omit({ id: true, isActive: true, createdAt: true, endedAt: true }).extend({
+  meetupTime: z.string().transform((val) => new Date(val))
+});
+export const insertMeetupCheckInSchema = createInsertSchema(meetupCheckIns).omit({ id: true, checkInTime: true, checkOutTime: true, isVerified: true });
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -441,3 +496,7 @@ export type ActionViewer = typeof actionViewers.$inferSelect;
 export type InsertActionViewer = z.infer<typeof insertActionViewerSchema>;
 export type ActionChatMessage = typeof actionChatMessages.$inferSelect;
 export type InsertActionChatMessage = z.infer<typeof insertActionChatMessageSchema>;
+export type Meetup = typeof meetups.$inferSelect;
+export type InsertMeetup = z.infer<typeof insertMeetupSchema>;
+export type MeetupCheckIn = typeof meetupCheckIns.$inferSelect;
+export type InsertMeetupCheckIn = z.infer<typeof insertMeetupCheckInSchema>;
