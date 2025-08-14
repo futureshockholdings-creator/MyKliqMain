@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, Music, Trash2, Loader2, AlertTriangle, Settings, Info } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Upload, Music, Trash2, Loader2, AlertTriangle, Settings, Info, Link, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -22,11 +23,13 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
   const [musicTitle, setMusicTitle] = useState(currentMusicTitle || "");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [processedFile, setProcessedFile] = useState<File | null>(null);
+  const [musicUrl, setMusicUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [fileRecommendations, setFileRecommendations] = useState<any>(null);
   const [showConversionGuide, setShowConversionGuide] = useState(false);
   const [conversionResult, setConversionResult] = useState<ConversionResult | null>(null);
+  const [activeTab, setActiveTab] = useState("upload");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -63,7 +66,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
         }
         
         // Update user profile with music info
-        return await apiRequest("PUT", "/api/user/profile-music", {
+        return await apiRequest("/api/user/profile-music", "PUT", {
           musicUrl: uploadURL.split("?")[0], // Remove query params from URL
           musicTitle: title,
         });
@@ -89,9 +92,36 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
     },
   });
 
+  // URL-based music upload mutation
+  const uploadUrlMusicMutation = useMutation({
+    mutationFn: async ({ url, title }: { url: string; title: string }) => {
+      return await apiRequest("/api/user/profile-music", "PUT", {
+        musicUrl: url,
+        musicTitle: title,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Profile music updated successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      setIsOpen(false);
+      setMusicUrl("");
+      setMusicTitle("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile music",
+        variant: "destructive",
+      });
+    },
+  });
+
   const removeMusicMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("DELETE", "/api/user/profile-music");
+      return await apiRequest("/api/user/profile-music", "DELETE");
     },
     onSuccess: () => {
       toast({
@@ -223,6 +253,69 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
     uploadMusicMutation.mutate({ file: fileToUpload, title: musicTitle.trim() });
   };
 
+  const handleUrlUpload = () => {
+    if (!musicUrl.trim() || !musicTitle.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please enter both a URL and title",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Basic URL validation
+    try {
+      new URL(musicUrl);
+    } catch {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    uploadUrlMusicMutation.mutate({ url: musicUrl.trim(), title: musicTitle.trim() });
+  };
+
+  const extractTitleFromUrl = (url: string) => {
+    try {
+      const urlObj = new URL(url);
+      
+      // YouTube URL handling
+      if (urlObj.hostname.includes('youtube.com') || urlObj.hostname.includes('youtu.be')) {
+        const urlParams = new URLSearchParams(urlObj.search);
+        const videoId = urlParams.get('v') || urlObj.pathname.split('/').pop();
+        return `YouTube Video ${videoId || ''}`.trim();
+      }
+      
+      // Generic URL handling - extract filename or last segment
+      const pathSegments = urlObj.pathname.split('/').filter(Boolean);
+      const lastSegment = pathSegments[pathSegments.length - 1];
+      
+      if (lastSegment && lastSegment.includes('.')) {
+        // Remove file extension and decode URI
+        return decodeURIComponent(lastSegment.replace(/\.[^/.]+$/, ''));
+      }
+      
+      return urlObj.hostname;
+    } catch {
+      return '';
+    }
+  };
+
+  const handleUrlChange = (url: string) => {
+    setMusicUrl(url);
+    
+    // Auto-fill title if empty
+    if (!musicTitle && url) {
+      const extractedTitle = extractTitleFromUrl(url);
+      if (extractedTitle) {
+        setMusicTitle(extractedTitle);
+      }
+    }
+  };
+
   return (
     <div className="space-y-2">
       {currentMusicUrl && (
@@ -257,13 +350,25 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
           </Button>
         </DialogTrigger>
         
-        <DialogContent className="bg-gray-800 border-gray-700">
+        <DialogContent className="bg-gray-800 border-gray-700 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-pink-400">Upload Profile Music</DialogTitle>
+            <DialogTitle className="text-pink-400">Add Profile Music</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-700">
+              <TabsTrigger value="upload" className="data-[state=active]:bg-pink-500">
+                <Upload className="w-4 h-4 mr-1" />
+                Upload File
+              </TabsTrigger>
+              <TabsTrigger value="url" className="data-[state=active]:bg-pink-500">
+                <Link className="w-4 h-4 mr-1" />
+                Web URL
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Shared Title Input */}
+            <div className="mt-4">
               <Label htmlFor="music-title" className="text-gray-300">
                 Song Title
               </Label>
@@ -276,23 +381,24 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                 data-testid="input-music-title"
               />
             </div>
-            
-            <div>
-              <Label htmlFor="music-file" className="text-gray-300">
-                Audio File (MP3, WAV, M4A, M4P, AAC, OGG, FLAC)
-              </Label>
-              <p className="text-xs text-gray-400 mt-1">
-                Note: M4P files with DRM protection may not play in web browsers
-              </p>
-              <div className="mt-2">
-                <Input
-                  id="music-file"
-                  type="file"
-                  accept="audio/*,.m4p,.m4a,.mp3,.wav,.aac,.ogg,.flac"
-                  onChange={handleFileSelect}
-                  className="bg-gray-700 border-gray-600 text-white file:bg-pink-500 file:text-white file:border-0 file:rounded file:px-3 file:py-1"
-                  data-testid="input-music-file"
-                />
+
+            <TabsContent value="upload" className="space-y-4 mt-4">
+              <div>
+                <Label htmlFor="music-file" className="text-gray-300">
+                  Audio File (MP3, WAV, M4A, M4P, AAC, OGG, FLAC)
+                </Label>
+                <p className="text-xs text-gray-400 mt-1">
+                  Note: M4P files with DRM protection may not play in web browsers
+                </p>
+                <div className="mt-2">
+                  <Input
+                    id="music-file"
+                    type="file"
+                    accept="audio/*,.m4p,.m4a,.mp3,.wav,.aac,.ogg,.flac"
+                    onChange={handleFileSelect}
+                    className="bg-gray-700 border-gray-600 text-white file:bg-pink-500 file:text-white file:border-0 file:rounded file:px-3 file:py-1"
+                    data-testid="input-music-file"
+                  />
                 {selectedFile && (
                   <div className="mt-2 space-y-2">
                     <div className="p-3 bg-gray-600 rounded border">
@@ -378,10 +484,10 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                     </div>
                   </div>
                 )}
+                </div>
               </div>
-            </div>
-            
-            {/* DRM Detection and Guide Button */}
+
+              {/* DRM Detection and Guide Button */}
             {selectedFile && fileRecommendations && !fileRecommendations.canProcess && (
               <Alert className="border-amber-500/30 bg-amber-500/10">
                 <AlertTriangle className="w-4 h-4 text-amber-400" />
@@ -469,7 +575,107 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                 Cancel
               </Button>
             </div>
-          </div>
+            </TabsContent>
+
+            <TabsContent value="url" className="space-y-4 mt-4">
+              <div>
+                <Label htmlFor="music-url" className="text-gray-300">
+                  Music URL
+                </Label>
+                <p className="text-xs text-gray-400 mt-1">
+                  Paste a link to YouTube, SoundCloud, or direct audio files
+                </p>
+                <div className="mt-2">
+                  <Input
+                    id="music-url"
+                    type="url"
+                    value={musicUrl}
+                    onChange={(e) => handleUrlChange(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=... or direct audio URL"
+                    className="bg-gray-700 border-gray-600 text-white"
+                    data-testid="input-music-url"
+                  />
+                </div>
+                
+                {musicUrl && (
+                  <div className="mt-2 p-3 bg-gray-600 rounded border">
+                    <div className="flex items-start gap-2">
+                      <ExternalLink className="w-4 h-4 text-blue-400 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-300">URL Preview</p>
+                        <p className="text-xs text-blue-400 break-all">{musicUrl}</p>
+                      </div>
+                    </div>
+                    
+                    {musicUrl.includes('youtube.com') || musicUrl.includes('youtu.be') ? (
+                      <Alert className="mt-2 border-blue-500/30 bg-blue-500/10">
+                        <Info className="w-4 h-4 text-blue-400" />
+                        <AlertDescription className="text-blue-300 text-xs">
+                          <div className="font-medium mb-1">YouTube Link Detected</div>
+                          <p>Note: Due to CORS policies, YouTube videos may not play directly. Consider using YouTube's embed player or downloading the audio first.</p>
+                        </AlertDescription>
+                      </Alert>
+                    ) : musicUrl.includes('soundcloud.com') ? (
+                      <Alert className="mt-2 border-green-500/30 bg-green-500/10">
+                        <Info className="w-4 h-4 text-green-400" />
+                        <AlertDescription className="text-green-300 text-xs">
+                          <div className="font-medium mb-1">SoundCloud Link</div>
+                          <p>SoundCloud links should work well for profile music playback.</p>
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <Alert className="mt-2 border-yellow-500/30 bg-yellow-500/10">
+                        <Info className="w-4 h-4 text-yellow-400" />
+                        <AlertDescription className="text-yellow-300 text-xs">
+                          <div className="font-medium mb-1">Direct Audio URL</div>
+                          <p>Make sure this URL directly points to an audio file (MP3, WAV, etc.) for best compatibility.</p>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleUrlUpload}
+                  disabled={
+                    !musicUrl.trim() || 
+                    !musicTitle.trim() || 
+                    uploadUrlMusicMutation.isPending
+                  }
+                  className="flex-1 bg-pink-500 hover:bg-pink-600 text-white disabled:opacity-50"
+                  data-testid="button-save-url"
+                >
+                  {uploadUrlMusicMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Link className="w-4 h-4 mr-2" />
+                      Save Music URL
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setMusicUrl("");
+                    setMusicTitle(currentMusicTitle || "");
+                  }}
+                  disabled={uploadUrlMusicMutation.isPending}
+                  className="text-gray-400 hover:text-white hover:bg-gray-700"
+                  data-testid="button-cancel-url"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
       

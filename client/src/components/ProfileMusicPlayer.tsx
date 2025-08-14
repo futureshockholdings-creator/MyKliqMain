@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX, Music } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Music, ExternalLink } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProfileMusicPlayerProps {
   musicUrl: string;
@@ -17,20 +18,35 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [hasError, setHasError] = useState(false);
+  const [isYouTubeUrl, setIsYouTubeUrl] = useState(false);
+  const [showEmbedPlayer, setShowEmbedPlayer] = useState(false);
 
   useEffect(() => {
+    // Check if URL is YouTube
+    const isYT = musicUrl.includes('youtube.com') || musicUrl.includes('youtu.be');
+    setIsYouTubeUrl(isYT);
+    setHasError(false);
+    
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || isYT) return;
 
     const updateTime = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration);
+    const handleError = () => {
+      setHasError(true);
+      setIsPlaying(false);
+    };
     
     audio.addEventListener("timeupdate", updateTime);
     audio.addEventListener("loadedmetadata", updateDuration);
     audio.addEventListener("ended", () => setIsPlaying(false));
+    audio.addEventListener("error", handleError);
 
-    // Auto-play if enabled
-    if (autoPlay) {
+    // Reset error state when URL changes
+    setHasError(false);
+
+    // Auto-play if enabled (only for non-YouTube URLs)
+    if (autoPlay && !isYT) {
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise
@@ -39,6 +55,7 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
           })
           .catch((error) => {
             console.log("Auto-play prevented:", error);
+            setHasError(true);
           });
       }
     }
@@ -47,19 +64,34 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
       audio.removeEventListener("timeupdate", updateTime);
       audio.removeEventListener("loadedmetadata", updateDuration);
       audio.removeEventListener("ended", () => setIsPlaying(false));
+      audio.removeEventListener("error", handleError);
     };
   }, [musicUrl, autoPlay]);
 
   const togglePlay = () => {
+    if (isYouTubeUrl) {
+      setShowEmbedPlayer(!showEmbedPlayer);
+      return;
+    }
+
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || hasError) return;
 
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
     } else {
-      audio.play();
-      setIsPlaying(true);
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((error) => {
+            console.log("Playback failed:", error);
+            setHasError(true);
+          });
+      }
     }
   };
 
@@ -101,6 +133,92 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
+
+  const getYouTubeVideoId = (url: string) => {
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+    return match?.[1] || null;
+  };
+
+  const openExternalUrl = () => {
+    window.open(musicUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  if (isYouTubeUrl) {
+    const videoId = getYouTubeVideoId(musicUrl);
+    
+    return (
+      <div className="p-4 bg-gray-700/50 border border-gray-600 rounded-lg">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Music className="w-4 h-4 text-pink-400" />
+            <span className="text-sm font-medium text-gray-300 flex-1">{musicTitle}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={openExternalUrl}
+              className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+            >
+              <ExternalLink className="w-3 h-3" />
+            </Button>
+          </div>
+          
+          <Alert className="border-blue-500/30 bg-blue-500/10">
+            <Music className="w-4 h-4 text-blue-400" />
+            <AlertDescription className="text-blue-300 text-xs">
+              <div className="font-medium mb-1">YouTube Music</div>
+              <p>Click the external link button to open this music on YouTube.</p>
+            </AlertDescription>
+          </Alert>
+
+          {showEmbedPlayer && videoId && (
+            <div className="mt-3">
+              <iframe
+                width="100%"
+                height="200"
+                src={`https://www.youtube.com/embed/${videoId}?autoplay=0`}
+                title={musicTitle}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="rounded border border-gray-600"
+              />
+            </div>
+          )}
+
+          <Button
+            onClick={() => setShowEmbedPlayer(!showEmbedPlayer)}
+            variant="outline"
+            size="sm"
+            className="w-full border-pink-500 text-pink-400 hover:bg-pink-500/20"
+          >
+            {showEmbedPlayer ? "Hide Player" : "Show YouTube Player"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-red-400">
+            <Music className="w-4 h-4" />
+            <span className="text-sm">Unable to load audio file</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={openExternalUrl}
+            className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+          >
+            <ExternalLink className="w-3 h-3" />
+          </Button>
+        </div>
+        <p className="text-xs text-red-300 mt-1">Try opening the link directly or check if the URL is accessible.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-lg p-4 border border-pink-500/30">
