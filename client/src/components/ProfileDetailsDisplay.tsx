@@ -23,9 +23,9 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
 
   if (!hasAnyDetails) {
     return (
-      <Card className="bg-gray-700/50 border-gray-600">
+      <Card className="bg-card/50 border-border">
         <CardContent className="p-6 text-center">
-          <p className="text-gray-400">No profile details added yet</p>
+          <p className="text-muted-foreground">No profile details added yet</p>
         </CardContent>
       </Card>
     );
@@ -45,11 +45,11 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
     if (singleValue) {
       return (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-pink-400 font-medium">
+          <div className="flex items-center gap-2 text-primary font-medium">
             <Icon className="w-4 h-4" />
             {title}
           </div>
-          <div className="text-gray-300">{singleValue}</div>
+          <div className="text-foreground">{singleValue}</div>
         </div>
       );
     }
@@ -58,7 +58,7 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
 
     return (
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-pink-400 font-medium">
+        <div className="flex items-center gap-2 text-primary font-medium">
           <Icon className="w-4 h-4" />
           {title}
         </div>
@@ -67,7 +67,7 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
             <Badge
               key={index}
               variant="secondary"
-              className="bg-gray-600 text-gray-200 hover:bg-gray-500"
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
             >
               {item}
             </Badge>
@@ -107,9 +107,9 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
     <div className="space-y-4">
       {/* Interests & Hobbies */}
       {(user.interests?.length > 0 || user.hobbies?.length > 0) && (
-        <Card className="bg-gray-700/50 border-gray-600">
+        <Card className="bg-card/50 border-border">
           <CardHeader>
-            <CardTitle className="text-pink-400 flex items-center gap-2">
+            <CardTitle className="text-primary flex items-center gap-2">
               <Heart className="w-5 h-5" />
               Interests & Hobbies
             </CardTitle>
@@ -123,9 +123,9 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
 
       {/* Favorites */}
       {(user.favoriteLocations?.length > 0 || user.favoriteFoods?.length > 0 || user.musicGenres?.length > 0) && (
-        <Card className="bg-gray-700/50 border-gray-600">
+        <Card className="bg-card/50 border-border">
           <CardHeader>
-            <CardTitle className="text-pink-400 flex items-center gap-2">
+            <CardTitle className="text-primary flex items-center gap-2">
               <MapPin className="w-5 h-5" />
               Favorites
             </CardTitle>
@@ -140,9 +140,9 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
 
       {/* Lifestyle & Status */}
       {(user.relationshipStatus || user.petPreferences || user.lifestyle) && (
-        <Card className="bg-gray-700/50 border-gray-600">
+        <Card className="bg-card/50 border-border">
           <CardHeader>
-            <CardTitle className="text-pink-400 flex items-center gap-2">
+            <CardTitle className="text-primary flex items-center gap-2">
               <Users className="w-5 h-5" />
               Lifestyle & Status
             </CardTitle>
@@ -175,9 +175,9 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
 
       {/* Entertainment */}
       {(user.favoriteMovies?.length > 0 || user.favoriteBooks?.length > 0) && (
-        <Card className="bg-gray-700/50 border-gray-600">
+        <Card className="bg-card/50 border-border">
           <CardHeader>
-            <CardTitle className="text-pink-400 flex items-center gap-2">
+            <CardTitle className="text-primary flex items-center gap-2">
               <Film className="w-5 h-5" />
               Entertainment
             </CardTitle>

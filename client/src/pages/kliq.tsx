@@ -267,7 +267,7 @@ export default function Kliq() {
                 <Input
                   value={kliqName}
                   onChange={(e) => setKliqName(e.target.value)}
-                  className="bg-gray-700 border-gray-600 text-white text-center"
+                  className="bg-input border-border text-foreground text-center"
                   placeholder={userData?.kliqName || "My Kliq"}
                 />
                 <Button

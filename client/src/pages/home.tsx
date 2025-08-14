@@ -399,10 +399,10 @@ export default function Home() {
   };
 
   const getRankColor = (rank: number) => {
-    if (rank === 1) return "bg-pink-500 text-white";
-    if (rank <= 3) return "bg-blue-500 text-white";
-    if (rank <= 6) return "bg-orange-500 text-black";
-    return "bg-gray-500 text-white";
+    if (rank === 1) return "bg-primary text-primary-foreground";
+    if (rank <= 3) return "bg-secondary text-secondary-foreground";
+    if (rank <= 6) return "bg-mykliq-orange text-foreground";
+    return "bg-muted text-muted-foreground";
   };
 
   const handleMediaUploadSuccess = () => {
@@ -462,7 +462,7 @@ export default function Home() {
                         key={index}
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-lg hover:bg-gray-100"
+                        className="h-8 w-8 p-0 text-lg hover:bg-accent"
                         onClick={() => handleEmojiClick(emoji)}
                         data-testid={`emoji-${index}`}
                       >
@@ -768,7 +768,7 @@ export default function Home() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="text-yellow-400 hover:bg-yellow-400/10 h-8 w-8 p-0"
+                                className="text-retro-yellow hover:bg-retro-yellow/10 h-8 w-8 p-0"
                                 data-testid={`button-comment-emoji-${post.id}`}
                               >
                                 <Smile className="w-4 h-4" />
@@ -781,7 +781,7 @@ export default function Home() {
                                     key={index}
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 w-8 p-0 text-lg hover:bg-gray-100"
+                                    className="h-8 w-8 p-0 text-lg hover:bg-accent"
                                     onClick={() => handleCommentEmojiClick(post.id, emoji)}
                                     data-testid={`comment-emoji-${post.id}-${index}`}
                                   >
@@ -795,7 +795,7 @@ export default function Home() {
                             onClick={() => handleCommentSubmit(post.id)}
                             disabled={!commentInputs[post.id]?.trim() || addCommentMutation.isPending}
                             size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white h-8"
+                            className="bg-secondary hover:bg-secondary/90 text-secondary-foreground h-8"
                             data-testid={`button-submit-comment-${post.id}`}
                           >
                             {addCommentMutation.isPending ? "..." : "Post"}
