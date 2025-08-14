@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,20 @@ export default function Profile() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const userData = user as any;
+  const userData = user as { 
+    id?: string; 
+    firstName?: string; 
+    lastName?: string; 
+    bio?: string; 
+    profileImageUrl?: string; 
+    phoneNumber?: string; 
+    inviteCode?: string; 
+  };
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Initialize profile state when user data loads
-  useState(() => {
+  useEffect(() => {
     if (user) {
       setProfile({
         firstName: userData?.firstName || "",
@@ -38,7 +46,7 @@ export default function Profile() {
         bio: userData?.bio || "",
       });
     }
-  });
+  }, [user, userData?.firstName, userData?.lastName, userData?.bio]);
 
   // Fetch user stats (mocked for now)
   const stats = {

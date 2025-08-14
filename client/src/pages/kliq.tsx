@@ -19,13 +19,28 @@ export default function Kliq() {
   const [inviteCode, setInviteCode] = useState("");
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const { user } = useAuth();
-  const userData = user as any;
+  const userData = user as { 
+    id?: string; 
+    firstName?: string; 
+    lastName?: string; 
+    kliqName?: string; 
+    inviteCode?: string; 
+  };
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
 
   // Fetch friends
-  const { data: friends = [], isLoading: friendsLoading } = useQuery({
+  const { data: friends = [], isLoading: friendsLoading } = useQuery<{ 
+    id: string; 
+    rank: number; 
+    friend: { 
+      id: string; 
+      firstName?: string; 
+      lastName?: string; 
+      profileImageUrl?: string; 
+    }; 
+  }[]>({
     queryKey: ["/api/friends"],
   });
 
@@ -247,16 +262,16 @@ export default function Kliq() {
       <div className="grid grid-cols-2 gap-4">
         <Card className="bg-blue-600/20 border-blue-500/30">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-400">
-              {(friends as any[]).length}/15
+            <div className="text-2xl font-bold text-blue-400" data-testid="text-friend-count">
+              {friends.length}/15
             </div>
             <div className="text-sm text-blue-200">Friends</div>
           </CardContent>
         </Card>
         <Card className="bg-purple-600/20 border-purple-500/30">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-400">
-              {15 - (friends as any[]).length}
+            <div className="text-2xl font-bold text-purple-400" data-testid="text-open-spots">
+              {15 - friends.length}
             </div>
             <div className="text-sm text-purple-200">Open Spots</div>
           </CardContent>
@@ -272,7 +287,7 @@ export default function Kliq() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between bg-gray-700 rounded p-3">
-            <code className="text-green-400 font-mono font-bold">
+            <code className="text-green-400 font-mono font-bold" data-testid="text-invite-code">
               {userData?.inviteCode || "Loading..."}
             </code>
             <Button
@@ -280,6 +295,7 @@ export default function Kliq() {
               onClick={copyInviteCode}
               className="bg-green-600 hover:bg-green-700 text-white"
               disabled={!userData?.inviteCode}
+              data-testid="button-copy-invite"
             >
               <Copy className="w-4 h-4" />
             </Button>
@@ -294,7 +310,7 @@ export default function Kliq() {
       <div className="flex gap-3">
         <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" data-testid="button-join-kliq">
               <Plus className="w-4 h-4 mr-2" />
               Join Kliq
             </Button>
@@ -311,6 +327,7 @@ export default function Kliq() {
                   onChange={(e) => setInviteCode(e.target.value)}
                   placeholder="KLIQ-XXXX-XXXX"
                   className="bg-gray-700 border-gray-600 text-white"
+                  data-testid="input-join-invite-code"
                 />
               </div>
               <Button
@@ -338,7 +355,7 @@ export default function Kliq() {
             </div>
           </CardContent>
         </Card>
-      ) : (friends as any[]).length === 0 ? (
+      ) : friends.length === 0 ? (
         <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-8 text-center">
             <div className="text-4xl mb-4">👥</div>
@@ -357,7 +374,7 @@ export default function Kliq() {
         </Card>
       ) : (
         <PyramidChart
-          friends={(friends as any[]).map(f => ({
+          friends={friends.map(f => ({
             id: f.friend.id,
             firstName: f.friend.firstName,
             lastName: f.friend.lastName,

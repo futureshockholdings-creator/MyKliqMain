@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Link, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -34,17 +34,18 @@ function Navigation({ currentPath }: { currentPath: string }) {
         {navItems.map((item) => {
           const isActive = currentPath === item.path;
           return (
-            <a
+            <Link
               key={item.path}
-              href={item.path}
+              to={item.path}
               className={cn(
                 "flex flex-col items-center p-3 mb-4 transition-colors rounded-lg w-16",
                 isActive ? "text-pink-400 bg-pink-400/10" : "text-gray-400 hover:text-gray-300 hover:bg-gray-700/50"
               )}
+              data-testid={`nav-${item.tab}`}
             >
               <item.icon className="w-6 h-6" />
               <span className="text-xs mt-1">{item.label}</span>
-            </a>
+            </Link>
           );
         })}
       </div>
@@ -76,9 +77,7 @@ function Router() {
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
-  
-  // Get current path for navigation
-  const currentPath = window.location.pathname;
+  const [currentPath] = useLocation();
 
   return (
     <TooltipProvider>

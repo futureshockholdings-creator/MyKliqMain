@@ -196,8 +196,23 @@ export function PyramidChart({ friends, onRankChange, onMessage, maxFriends = 15
                 onDragStart={() => handleDragStart(friend)}
                 onDragOver={handleDragOver}
                 onDrop={() => handleDrop(friend)}
-                className="text-center cursor-move hover:scale-105 transition-transform"
+                className="relative group text-center cursor-move hover:scale-105 transition-transform"
               >
+                {/* Message button - appears on hover */}
+                {onMessage && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMessage(friend.id, getName(friend));
+                    }}
+                    className="absolute -top-1 -right-1 z-20 w-6 h-6 p-0 bg-pink-500 hover:bg-pink-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    data-testid={`button-message-${friend.id}`}
+                  >
+                    <MessageCircle className="w-3 h-3" />
+                  </Button>
+                )}
                 <div className="p-1 rounded-full bg-gradient-to-r from-gray-500 to-gray-600">
                   <Avatar className="w-8 h-8 border border-white">
                     <AvatarImage src={friend.profileImageUrl} />
