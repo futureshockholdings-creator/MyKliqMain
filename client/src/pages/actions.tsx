@@ -26,6 +26,14 @@ import {
   CameraOff
 } from "lucide-react";
 
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profileImageUrl?: string;
+}
+
 interface Action {
   id: string;
   title: string;
@@ -79,12 +87,12 @@ export default function Actions() {
   });
 
   // Get current user
-  const { data: userData } = useQuery({
+  const { data: userData } = useQuery<User>({
     queryKey: ["/api/auth/user"],
   });
 
   // Get all live actions
-  const { data: actions, isLoading } = useQuery({
+  const { data: actions, isLoading } = useQuery<Action[]>({
     queryKey: ["/api/actions"],
     refetchInterval: 5000, // Refresh every 5 seconds
   });
@@ -163,11 +171,13 @@ export default function Actions() {
 
     websocket.onopen = () => {
       console.log("WebSocket connected");
-      websocket.send(JSON.stringify({
-        type: 'join_action',
-        actionId,
-        userId: userData?.id
-      }));
+      if (userData?.id) {
+        websocket.send(JSON.stringify({
+          type: 'join_action',
+          actionId,
+          userId: userData.id
+        }));
+      }
     };
 
     websocket.onmessage = (event) => {
@@ -275,7 +285,7 @@ export default function Actions() {
     setupWebSocket(action.id);
     
     // Join action if not the creator
-    if (action.author.id !== userData?.id) {
+    if (userData && action.author.id !== userData.id) {
       joinActionMutation.mutate(action.id);
     }
   };
@@ -309,14 +319,14 @@ export default function Actions() {
 
   // Send chat message
   const handleSendMessage = () => {
-    if (!chatMessage.trim() || !selectedAction || !ws) return;
+    if (!chatMessage.trim() || !selectedAction || !ws || !userData) return;
 
     ws.send(JSON.stringify({
       type: 'action_chat',
       actionId: selectedAction.id,
       message: chatMessage,
-      userId: userData?.id,
-      userName: `${userData?.firstName} ${userData?.lastName}`.trim()
+      userId: userData.id,
+      userName: `${userData.firstName} ${userData.lastName}`.trim()
     }));
 
     setChatMessage("");
@@ -332,7 +342,7 @@ export default function Actions() {
     };
   }, []);
 
-  if (isLoading) {
+  if (isLoading || !userData) {
     return (
       <div className="max-w-6xl mx-auto p-6 space-y-6">
         <div className="animate-pulse space-y-4">
@@ -377,7 +387,7 @@ export default function Actions() {
               
               <CardContent className="p-0">
                 <div className="relative bg-black aspect-video">
-                  {selectedAction.author.id === userData?.id ? (
+                  {userData && selectedAction.author.id === userData.id ? (
                     // Streamer view
                     <div className="relative w-full h-full">
                       <video
@@ -460,7 +470,7 @@ export default function Actions() {
                 Back to Actions
               </Button>
               
-              {selectedAction.author.id !== userData?.id && (
+              {userData && selectedAction.author.id !== userData.id && (
                 <Button
                   onClick={() => leaveActionMutation.mutate(selectedAction.id)}
                   variant="outline"
@@ -602,7 +612,7 @@ export default function Actions() {
       </div>
 
       {/* Live Actions Grid */}
-      {actions && actions.length > 0 ? (
+      {actions && Array.isArray(actions) && actions.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {actions.map((action: Action) => (
             <Card

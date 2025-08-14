@@ -9,6 +9,8 @@ MyKliq is a social media application designed for close-knit friend groups. The 
 - **Enhanced Feed**: Posts now support text, images, and videos with proper media display and responsive design
 - **Incognito Messaging (IM)**: Direct messaging system for kliq members with conversation management, real-time messaging, and read status tracking
 - **Events Timing Synchronization Fix**: Resolved timezone handling between datetime-local input and server storage to ensure countdown timers display accurate time remaining (August 14, 2025)
+- **Action Live Streaming Feature**: Complete implementation of live streaming feature called "Action" with real-time chat, viewer management, WebSocket support, and camera controls (August 14, 2025)
+- **Navigation Update**: Changed "Feed" to "Bulletin" in main navigation (August 14, 2025)
 
 # User Preferences
 

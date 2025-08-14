@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 
 function Navigation({ currentPath }: { currentPath: string }) {
   const navItems = [
-    { path: "/", icon: HomeIcon, label: "Feed", tab: "feed" },
+    { path: "/", icon: HomeIcon, label: "Bulletin", tab: "bulletin" },
     { path: "/kliq", icon: Users, label: "My Kliq", tab: "kliq" },
     { path: "/events", icon: Calendar, label: "Events", tab: "events" },
     { path: "/actions", icon: Video, label: "Action", tab: "actions" },
