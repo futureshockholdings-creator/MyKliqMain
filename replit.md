@@ -7,6 +7,7 @@ MyKliq is a social media application designed for close-knit friend groups. The 
 - **Stories Feature**: 24-hour disappearing stories with media support and view tracking
 - **Object Storage Integration**: Configured Replit object storage with proper bucket setup and presigned URL generation
 - **Enhanced Feed**: Posts now support text, images, and videos with proper media display and responsive design
+- **Incognito Messaging (IM)**: Direct messaging system for kliq members with conversation management, real-time messaging, and read status tracking
 
 # User Preferences
 
@@ -41,6 +42,8 @@ PostgreSQL database with Drizzle ORM providing type-safe database operations:
 - **Friendships**: Many-to-many relationships with ranking system (1-15 hierarchy)
 - **Posts & Comments**: Content creation with author relationships and engagement tracking
 - **Content Filters**: User-defined keyword filtering for feed customization
+- **Messages & Conversations**: Direct messaging system with conversation management and read status
+- **Stories & Story Views**: Temporary content sharing with view tracking
 - **Sessions**: Secure session storage for authentication
 
 ## Authentication & Authorization
@@ -57,7 +60,9 @@ The application implements a sophisticated content system:
 - **Hierarchical Feed**: Posts filtered by friend rankings and content filters
 - **Engagement System**: Like/unlike functionality with real-time updates
 - **Content Filtering**: User-defined keyword filters for personalized feeds
-- **Media Support**: Extensible architecture for future media attachments
+- **Media Support**: Complete media upload and sharing system using object storage
+- **Stories**: 24-hour disappearing content with media support and view tracking
+- **Incognito Messaging**: Private direct messaging between kliq members with conversation management
 
 ## UI Customization System
 Extensive theming system allowing deep personalization:

@@ -8,6 +8,8 @@ import {
   comments,
   postLikes,
   contentFilters,
+  messages,
+  conversations,
   type User,
   type UpsertUser,
   type UserTheme,
@@ -24,6 +26,10 @@ import {
   type PostLike,
   type ContentFilter,
   type InsertContentFilter,
+  type Message,
+  type InsertMessage,
+  type Conversation,
+  type InsertConversation,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or } from "drizzle-orm";
@@ -64,6 +70,13 @@ export interface IStorage {
   getContentFilters(userId: string): Promise<ContentFilter[]>;
   addContentFilter(filter: InsertContentFilter): Promise<ContentFilter>;
   removeContentFilter(userId: string, filterId: string): Promise<void>;
+
+  // Message operations
+  getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number })[]>;
+  getConversation(userId: string, otherUserId: string): Promise<(Conversation & { messages: (Message & { sender: User; receiver: User })[] }) | undefined>;
+  sendMessage(message: InsertMessage): Promise<Message>;
+  markMessageAsRead(messageId: string): Promise<void>;
+  markConversationAsRead(conversationId: string, userId: string): Promise<void>;
   
   // Utility operations
   generateInviteCode(): Promise<string>;
@@ -388,6 +401,180 @@ export class DatabaseStorage implements IStorage {
   async deleteExpiredStories(): Promise<void> {
     const now = new Date();
     await db.delete(stories).where(sql`${stories.expiresAt} < ${now}`);
+  }
+
+  // Message operations
+  async getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number })[]> {
+    // Get all conversations for the user
+    const userConversations = await db
+      .select()
+      .from(conversations)
+      .where(or(eq(conversations.user1Id, userId), eq(conversations.user2Id, userId)))
+      .orderBy(desc(conversations.lastActivity));
+
+    const conversationsWithDetails = await Promise.all(
+      userConversations.map(async (conv) => {
+        // Determine the other user
+        const otherUserId = conv.user1Id === userId ? conv.user2Id : conv.user1Id;
+        
+        // Get other user info
+        const [otherUser] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, otherUserId));
+
+        // Get last message if exists
+        let lastMessage: Message | undefined;
+        if (conv.lastMessageId) {
+          const [msg] = await db
+            .select()
+            .from(messages)
+            .where(eq(messages.id, conv.lastMessageId));
+          lastMessage = msg;
+        }
+
+        // Count unread messages
+        const unreadCount = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(messages)
+          .where(
+            and(
+              eq(messages.receiverId, userId),
+              or(eq(messages.senderId, otherUserId), eq(messages.receiverId, otherUserId)),
+              eq(messages.isRead, false)
+            )
+          )
+          .then(result => Number(result[0]?.count) || 0);
+
+        return {
+          ...conv,
+          otherUser,
+          lastMessage,
+          unreadCount,
+        };
+      })
+    );
+
+    return conversationsWithDetails.filter(conv => conv.otherUser);
+  }
+
+  async getConversation(userId: string, otherUserId: string): Promise<(Conversation & { messages: (Message & { sender: User; receiver: User })[] }) | undefined> {
+    // Find existing conversation between users
+    const [conversation] = await db
+      .select()
+      .from(conversations)
+      .where(
+        or(
+          and(eq(conversations.user1Id, userId), eq(conversations.user2Id, otherUserId)),
+          and(eq(conversations.user1Id, otherUserId), eq(conversations.user2Id, userId))
+        )
+      );
+
+    if (!conversation) {
+      return undefined;
+    }
+
+    // Get all messages in this conversation with sender/receiver info
+    const conversationMessages = await db
+      .select({
+        message: messages,
+        sender: users,
+      })
+      .from(messages)
+      .innerJoin(users, eq(messages.senderId, users.id))
+      .where(
+        and(
+          or(
+            and(eq(messages.senderId, userId), eq(messages.receiverId, otherUserId)),
+            and(eq(messages.senderId, otherUserId), eq(messages.receiverId, userId))
+          )
+        )
+      )
+      .orderBy(desc(messages.createdAt));
+
+    // Get receiver info for each message
+    const messagesWithUsers = await Promise.all(
+      conversationMessages.map(async ({ message, sender }) => {
+        const [receiver] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, message.receiverId));
+        
+        return {
+          ...message,
+          sender,
+          receiver,
+        };
+      })
+    );
+
+    return {
+      ...conversation,
+      messages: messagesWithUsers,
+    };
+  }
+
+  async sendMessage(message: InsertMessage): Promise<Message> {
+    // First, create or find conversation
+    const [existingConversation] = await db
+      .select()
+      .from(conversations)
+      .where(
+        or(
+          and(eq(conversations.user1Id, message.senderId), eq(conversations.user2Id, message.receiverId)),
+          and(eq(conversations.user1Id, message.receiverId), eq(conversations.user2Id, message.senderId))
+        )
+      );
+
+    let conversationId: string;
+
+    if (existingConversation) {
+      conversationId = existingConversation.id;
+    } else {
+      // Create new conversation
+      const [newConversation] = await db
+        .insert(conversations)
+        .values({
+          user1Id: message.senderId,
+          user2Id: message.receiverId,
+        })
+        .returning();
+      conversationId = newConversation.id;
+    }
+
+    // Insert the message
+    const [newMessage] = await db.insert(messages).values(message).returning();
+
+    // Update conversation with last message and activity
+    await db
+      .update(conversations)
+      .set({
+        lastMessageId: newMessage.id,
+        lastActivity: new Date(),
+      })
+      .where(eq(conversations.id, conversationId));
+
+    return newMessage;
+  }
+
+  async markMessageAsRead(messageId: string): Promise<void> {
+    await db
+      .update(messages)
+      .set({ isRead: true })
+      .where(eq(messages.id, messageId));
+  }
+
+  async markConversationAsRead(conversationId: string, userId: string): Promise<void> {
+    // Mark all unread messages in this conversation as read for the user
+    await db
+      .update(messages)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(messages.receiverId, userId),
+          eq(messages.isRead, false)
+        )
+      );
   }
 }
 

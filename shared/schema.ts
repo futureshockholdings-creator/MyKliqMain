@@ -127,6 +127,26 @@ export const storyViews = pgTable("story_views", {
   viewedAt: timestamp("viewed_at").defaultNow(),
 });
 
+// Incognito Messages (IM) - Direct messages between kliq members
+export const messages = pgTable("messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  receiverId: varchar("receiver_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  content: text("content").notNull(),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Message conversations for organizing messages between users
+export const conversations = pgTable("conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  user1Id: varchar("user1_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  user2Id: varchar("user2_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  lastMessageId: varchar("last_message_id").references(() => messages.id),
+  lastActivity: timestamp("last_activity").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   friendships: many(friendships, { relationName: "userFriendships" }),
@@ -138,6 +158,10 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   storyViews: many(storyViews),
   contentFilters: many(contentFilters),
   userTheme: one(userThemes),
+  sentMessages: many(messages, { relationName: "senderMessages" }),
+  receivedMessages: many(messages, { relationName: "receiverMessages" }),
+  conversations1: many(conversations, { relationName: "user1Conversations" }),
+  conversations2: many(conversations, { relationName: "user2Conversations" }),
 }));
 
 export const storiesRelations = relations(stories, ({ one, many }) => ({
@@ -217,6 +241,36 @@ export const contentFiltersRelations = relations(contentFilters, ({ one }) => ({
   }),
 }));
 
+export const messagesRelations = relations(messages, ({ one }) => ({
+  sender: one(users, {
+    fields: [messages.senderId],
+    references: [users.id],
+    relationName: "senderMessages",
+  }),
+  receiver: one(users, {
+    fields: [messages.receiverId],
+    references: [users.id],
+    relationName: "receiverMessages",
+  }),
+}));
+
+export const conversationsRelations = relations(conversations, ({ one }) => ({
+  user1: one(users, {
+    fields: [conversations.user1Id],
+    references: [users.id],
+    relationName: "user1Conversations",
+  }),
+  user2: one(users, {
+    fields: [conversations.user2Id],
+    references: [users.id],
+    relationName: "user2Conversations",
+  }),
+  lastMessage: one(messages, {
+    fields: [conversations.lastMessageId],
+    references: [messages.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users);
 export const insertUserThemeSchema = createInsertSchema(userThemes).omit({ id: true, createdAt: true, updatedAt: true });
@@ -227,6 +281,8 @@ export const insertStorySchema = createInsertSchema(stories).omit({ id: true, vi
 });
 export const insertCommentSchema = createInsertSchema(comments).omit({ id: true, createdAt: true });
 export const insertContentFilterSchema = createInsertSchema(contentFilters).omit({ id: true, createdAt: true });
+export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, isRead: true, createdAt: true });
+export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true, lastMessageId: true, lastActivity: true, createdAt: true });
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -244,4 +300,9 @@ export type Comment = typeof comments.$inferSelect;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type PostLike = typeof postLikes.$inferSelect;
 export type ContentFilter = typeof contentFilters.$inferSelect;
+export type InsertContentFilter = z.infer<typeof insertContentFilterSchema>;
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Conversation = typeof conversations.$inferSelect;
+export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type InsertContentFilter = z.infer<typeof insertContentFilterSchema>;

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PyramidChart } from "@/components/pyramid-chart";
 import { Badge } from "@/components/ui/badge";
-import { Users, Edit, Plus, Copy } from "lucide-react";
+import { Users, Edit, Plus, Copy, MessageCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
