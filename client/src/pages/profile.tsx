@@ -13,7 +13,7 @@ export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [birthdate, setBirthdate] = useState(user?.birthdate || "");
+  const [birthdate, setBirthdate] = useState((user as User)?.birthdate || "");
 
   const updateBirthdateMutation = useMutation({
     mutationFn: async (birthdate: string) => {
@@ -48,7 +48,7 @@ export default function Profile() {
   };
 
   // Query for birthday users today
-  const { data: birthdayUsers = [] } = useQuery({
+  const { data: birthdayUsers = [] } = useQuery<User[]>({
     queryKey: ["/api/birthdays/today"],
   });
 
@@ -91,21 +91,21 @@ export default function Profile() {
             <div className="space-y-2">
               <Label>Name</Label>
               <div className="text-sm text-muted-foreground">
-                {user.firstName} {user.lastName}
+                {(user as User)?.firstName} {(user as User)?.lastName}
               </div>
             </div>
             
             <div className="space-y-2">
               <Label>Email</Label>
               <div className="text-sm text-muted-foreground">
-                {user.email}
+                {(user as User)?.email}
               </div>
             </div>
             
             <div className="space-y-2">
               <Label>Kliq Name</Label>
               <div className="text-sm text-muted-foreground">
-                {user.kliqName}
+                {(user as User)?.kliqName}
               </div>
             </div>
 
@@ -139,7 +139,7 @@ export default function Profile() {
             <CardContent>
               <div className="space-y-4">
                 {birthdayUsers.map((birthdayUser: User) => {
-                  if (birthdayUser.id === user.id) return null; // Don't show own birthday
+                  if (birthdayUser.id === (user as User)?.id) return null; // Don't show own birthday
                   
                   return (
                     <div key={birthdayUser.id} className="flex items-center justify-between p-3 border rounded-lg">

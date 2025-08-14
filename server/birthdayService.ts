@@ -85,7 +85,9 @@ export function startBirthdayService(): void {
   console.log("Starting birthday service...");
   
   // Run immediately on startup
-  sendAutomaticBirthdayMessages();
+  setTimeout(() => {
+    sendAutomaticBirthdayMessages();
+  }, 5000); // Wait 5 seconds for database to be ready
   
   // Run every hour (3600000 ms)
   // In production, you might want to run this daily at midnight
