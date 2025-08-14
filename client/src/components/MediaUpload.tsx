@@ -1,0 +1,184 @@
+import { useState } from "react";
+import { ObjectUploader } from "./ObjectUploader";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Image as ImageIcon, Video, X, Upload } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+interface MediaUploadProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+  type: "post" | "story";
+  userId: string;
+}
+
+export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: MediaUploadProps) {
+  const [content, setContent] = useState("");
+  const [uploadedMedia, setUploadedMedia] = useState<{ url: string; type: "image" | "video" } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+
+  const handleGetUploadParameters = async () => {
+    const response = await apiRequest("POST", "/api/media/upload");
+    return {
+      method: "PUT" as const,
+      url: response.uploadURL,
+    };
+  };
+
+  const handleUploadComplete = async (result: any) => {
+    if (result.successful && result.successful.length > 0) {
+      const uploadedFile = result.successful[0];
+      const fileType = uploadedFile.type;
+      const mediaType = fileType.startsWith('image/') ? 'image' : 'video';
+      
+      setUploadedMedia({
+        url: uploadedFile.uploadURL,
+        type: mediaType
+      });
+
+      toast({
+        title: "Media uploaded!",
+        description: "Your media file has been uploaded successfully."
+      });
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!uploadedMedia && !content.trim()) {
+      toast({
+        title: "Error",
+        description: "Please add some content or media to your " + type,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const payload: any = {
+        userId,
+        content: content.trim() || null,
+        mediaUrl: uploadedMedia?.url || null,
+        mediaType: uploadedMedia?.type || null,
+      };
+
+      if (type === "story") {
+        // Stories expire after 24 hours
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
+        payload.expiresAt = expiresAt.toISOString();
+      }
+
+      await apiRequest("POST", `/api/${type === "post" ? "posts" : "stories"}`, payload);
+      
+      toast({
+        title: `${type === "post" ? "Post" : "Story"} created!`,
+        description: `Your ${type} has been shared with your kliq`
+      });
+
+      onSuccess();
+      onOpenChange(false);
+      setContent("");
+      setUploadedMedia(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to create ${type}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeMedia = () => {
+    setUploadedMedia(null);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md bg-gray-800 border-gray-600">
+        <DialogHeader>
+          <DialogTitle className="text-white">
+            Create {type === "post" ? "Post" : "Story"}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={`What's happening in your ${type === "post" ? "kliq" : "story"}?`}
+            className="bg-black/30 text-white placeholder-gray-400 border-gray-600"
+            rows={3}
+          />
+
+          {uploadedMedia && (
+            <Card className="relative bg-gray-700 border-gray-600">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    {uploadedMedia.type === "image" ? (
+                      <ImageIcon className="w-8 h-8 text-green-400" />
+                    ) : (
+                      <Video className="w-8 h-8 text-blue-400" />
+                    )}
+                    <div>
+                      <p className="text-sm text-white font-medium">
+                        {uploadedMedia.type === "image" ? "Image" : "Video"} uploaded
+                      </p>
+                      <p className="text-xs text-gray-400">Ready to share</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={removeMedia}
+                    className="text-red-400 hover:bg-red-400/10"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="flex justify-between items-center">
+            <ObjectUploader
+              maxNumberOfFiles={1}
+              maxFileSize={50485760} // 50MB
+              onGetUploadParameters={handleGetUploadParameters}
+              onComplete={handleUploadComplete}
+              buttonClassName="text-blue-400 hover:bg-blue-400/10"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Add Media
+            </ObjectUploader>
+
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="border-gray-600 text-gray-400 hover:bg-gray-700"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isUploading}
+                className="bg-pink-500 hover:bg-pink-600 text-white"
+              >
+                {isUploading ? "Sharing..." : `Share ${type === "post" ? "Post" : "Story"}`}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

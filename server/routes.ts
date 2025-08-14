@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertPostSchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema } from "@shared/schema";
+import { ObjectStorageService } from "./objectStorage";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -165,7 +166,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/posts', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const postData = insertPostSchema.parse({ ...req.body, userId });
+      let postData = insertPostSchema.parse({ ...req.body, userId });
+      
+      // Normalize media URL if provided
+      if (postData.mediaUrl) {
+        const objectStorage = new ObjectStorageService();
+        postData.mediaUrl = objectStorage.normalizeObjectEntityPath(postData.mediaUrl);
+      }
+      
       const post = await storage.createPost(postData);
       res.json(post);
     } catch (error) {
@@ -247,6 +255,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error removing filter:", error);
       res.status(500).json({ message: "Failed to remove filter" });
+    }
+  });
+
+  // Media upload routes
+  app.post('/api/media/upload', isAuthenticated, async (req: any, res) => {
+    try {
+      const objectStorage = new ObjectStorageService();
+      const uploadURL = await objectStorage.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
+  // Media serving route
+  app.get('/objects/:objectPath(*)', async (req: any, res) => {
+    try {
+      const objectStorage = new ObjectStorageService();
+      const objectFile = await objectStorage.getObjectEntityFile(req.path);
+      objectStorage.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving media:", error);
+      res.status(404).json({ message: "Media not found" });
+    }
+  });
+
+  // Stories routes
+  app.get('/api/stories', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const stories = await storage.getActiveStories(userId);
+      res.json(stories);
+    } catch (error) {
+      console.error("Error fetching stories:", error);
+      res.status(500).json({ message: "Failed to fetch stories" });
+    }
+  });
+
+  app.post('/api/stories', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      let storyData = insertStorySchema.parse({ ...req.body, userId });
+      
+      // Normalize media URL if provided
+      if (storyData.mediaUrl) {
+        const objectStorage = new ObjectStorageService();
+        storyData.mediaUrl = objectStorage.normalizeObjectEntityPath(storyData.mediaUrl);
+      }
+      
+      const story = await storage.createStory(storyData);
+      res.json(story);
+    } catch (error) {
+      console.error("Error creating story:", error);
+      res.status(500).json({ message: "Failed to create story" });
+    }
+  });
+
+  app.post('/api/stories/:storyId/view', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { storyId } = req.params;
+      
+      await storage.viewStory(storyId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error viewing story:", error);
+      res.status(500).json({ message: "Failed to view story" });
     }
   });
 

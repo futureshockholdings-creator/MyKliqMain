@@ -6,16 +6,19 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, Share, Image as ImageIcon, Smile } from "lucide-react";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Video, Plus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { cn } from "@/lib/utils";
+import { MediaUpload } from "@/components/MediaUpload";
 
 export default function Home() {
   const [newPost, setNewPost] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [showMediaUpload, setShowMediaUpload] = useState(false);
+  const [showStoryUpload, setShowStoryUpload] = useState(false);
   const { user } = useAuth();
   const userData = user as any;
   const { toast } = useToast();
@@ -29,6 +32,11 @@ export default function Home() {
   // Fetch filters
   const { data: filters = [] } = useQuery({
     queryKey: ["/api/filters"],
+  });
+
+  // Fetch stories
+  const { data: stories = [] } = useQuery({
+    queryKey: ["/api/stories"],
   });
 
   // Create post mutation
@@ -187,6 +195,23 @@ export default function Home() {
     return "bg-gray-500 text-white";
   };
 
+  const handleMediaUploadSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+  };
+
+  const handleStoryUploadSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+  };
+
+  const handleViewStory = async (storyId: string) => {
+    try {
+      await apiRequest("POST", `/api/stories/${storyId}/view`);
+      queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+    } catch (error: any) {
+      console.error("Error viewing story:", error);
+    }
+  };
+
   return (
     <div className="pb-20 space-y-4">
       {/* Post Creation */}
@@ -194,9 +219,9 @@ export default function Home() {
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-3">
             <Avatar className="w-10 h-10 border-2 border-yellow-400">
-              <AvatarImage src={user?.profileImageUrl} />
+              <AvatarImage src={userData?.profileImageUrl} />
               <AvatarFallback className="bg-gray-700 text-white">
-                {user?.firstName?.[0] || "U"}
+                {userData?.firstName?.[0] || "U"}
               </AvatarFallback>
             </Avatar>
             <Textarea
@@ -212,8 +237,21 @@ export default function Home() {
               <Button size="sm" variant="ghost" className="text-yellow-400 hover:bg-yellow-400/10">
                 <Smile className="w-4 h-4" />
               </Button>
-              <Button size="sm" variant="ghost" className="text-green-400 hover:bg-green-400/10">
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="text-green-400 hover:bg-green-400/10"
+                onClick={() => setShowMediaUpload(true)}
+              >
                 <ImageIcon className="w-4 h-4" />
+              </Button>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="text-blue-400 hover:bg-blue-400/10"
+                onClick={() => setShowStoryUpload(true)}
+              >
+                <Camera className="w-4 h-4" />
               </Button>
             </div>
             <Button
@@ -227,6 +265,51 @@ export default function Home() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Stories Section */}
+      {(stories as any[]).length > 0 && (
+        <Card className="bg-gray-800 border-gray-600">
+          <CardHeader className="pb-3">
+            <h2 className="text-lg font-bold text-white">Stories</h2>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {(stories as any[]).map((story: any) => (
+                <div key={story.id} className="flex-shrink-0">
+                  <div 
+                    className="relative cursor-pointer"
+                    onClick={() => handleViewStory(story.id)}
+                  >
+                    <div className={cn(
+                      "w-16 h-16 rounded-full border-3 p-0.5",
+                      story.hasViewed ? "border-gray-500" : "border-pink-500"
+                    )}>
+                      <Avatar className="w-full h-full">
+                        <AvatarImage src={story.author.profileImageUrl} />
+                        <AvatarFallback className="bg-gray-700 text-white text-sm">
+                          {story.author.firstName?.[0] || story.author.email?.[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    {story.mediaUrl && (
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                        {story.mediaType === 'video' ? (
+                          <Video className="w-3 h-3 text-white" />
+                        ) : (
+                          <ImageIcon className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1 text-center truncate w-16">
+                    {story.author.firstName || story.author.email?.split('@')[0]}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filter Toggle */}
       <Card className="bg-gray-800 border-gray-700">
@@ -283,7 +366,7 @@ export default function Home() {
             </Card>
           ))}
         </div>
-      ) : posts.length === 0 ? (
+      ) : (posts as any[]).length === 0 ? (
         <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-8 text-center">
             <div className="text-4xl mb-4">🌟</div>
@@ -325,14 +408,34 @@ export default function Home() {
                     {formatTimeAgo(post.createdAt)}
                   </p>
                 </div>
-                {post.author.id !== user?.id && (
+                {post.author.id !== userData?.id && (
                   <Badge className={cn("text-xs font-bold", getRankColor(1))}>
                     #{1} {/* This would be the actual friend rank */}
                   </Badge>
                 )}
               </div>
               
-              <p className="text-white mb-3">{post.content}</p>
+              {post.content && <p className="text-white mb-3">{post.content}</p>}
+              
+              {/* Media Content */}
+              {post.mediaUrl && (
+                <div className="mb-3 rounded-lg overflow-hidden bg-black/20">
+                  {post.mediaType === 'video' ? (
+                    <video 
+                      src={post.mediaUrl} 
+                      controls 
+                      className="w-full max-h-96 object-cover"
+                      preload="metadata"
+                    />
+                  ) : (
+                    <img 
+                      src={post.mediaUrl} 
+                      alt="Post media" 
+                      className="w-full max-h-96 object-cover"
+                    />
+                  )}
+                </div>
+              )}
               
               <div className="flex justify-between items-center">
                 <div className="flex space-x-4">
@@ -343,7 +446,7 @@ export default function Home() {
                     className="text-pink-400 hover:bg-pink-400/10 p-0 h-auto"
                   >
                     <Heart className="w-4 h-4 mr-1" />
-                    {post.likes || 0}
+                    {Array.isArray(post.likes) ? post.likes.length : (post.likes || 0)}
                   </Button>
                   <Button
                     size="sm"
@@ -366,6 +469,23 @@ export default function Home() {
           </Card>
         ))
       )}
+
+      {/* Media Upload Modals */}
+      <MediaUpload
+        open={showMediaUpload}
+        onOpenChange={setShowMediaUpload}
+        onSuccess={handleMediaUploadSuccess}
+        type="post"
+        userId={userData?.id}
+      />
+
+      <MediaUpload
+        open={showStoryUpload}
+        onOpenChange={setShowStoryUpload}
+        onSuccess={handleStoryUploadSuccess}
+        type="story"
+        userId={userData?.id}
+      />
     </div>
   );
 }

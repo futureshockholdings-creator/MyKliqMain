@@ -67,15 +67,31 @@ export const friendships = pgTable("friendships", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Media type enum
+export const mediaTypeEnum = pgEnum("media_type", ["image", "video"]);
+
 // Posts
 export const posts = pgTable("posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  content: text("content").notNull(),
-  imageUrl: varchar("image_url"),
+  content: text("content"),
+  mediaUrl: varchar("media_url"),
+  mediaType: mediaTypeEnum("media_type"),
   likes: integer("likes").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Stories (disappear after 24 hours)
+export const stories = pgTable("stories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  content: text("content"),
+  mediaUrl: varchar("media_url"),
+  mediaType: mediaTypeEnum("media_type"),
+  viewCount: integer("view_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
 });
 
 // Comments on posts
@@ -103,15 +119,44 @@ export const contentFilters = pgTable("content_filters", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Story views tracking
+export const storyViews = pgTable("story_views", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  storyId: varchar("story_id").references(() => stories.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  viewedAt: timestamp("viewed_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   friendships: many(friendships, { relationName: "userFriendships" }),
   friendOf: many(friendships, { relationName: "friendOfUser" }),
   posts: many(posts),
+  stories: many(stories),
   comments: many(comments),
   postLikes: many(postLikes),
+  storyViews: many(storyViews),
   contentFilters: many(contentFilters),
   userTheme: one(userThemes),
+}));
+
+export const storiesRelations = relations(stories, ({ one, many }) => ({
+  author: one(users, {
+    fields: [stories.userId],
+    references: [users.id],
+  }),
+  views: many(storyViews),
+}));
+
+export const storyViewsRelations = relations(storyViews, ({ one }) => ({
+  story: one(stories, {
+    fields: [storyViews.storyId],
+    references: [stories.id],
+  }),
+  user: one(users, {
+    fields: [storyViews.userId],
+    references: [users.id],
+  }),
 }));
 
 export const userThemesRelations = relations(userThemes, ({ one }) => ({
@@ -177,6 +222,7 @@ export const insertUserSchema = createInsertSchema(users);
 export const insertUserThemeSchema = createInsertSchema(userThemes).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertFriendshipSchema = createInsertSchema(friendships).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertPostSchema = createInsertSchema(posts).omit({ id: true, likes: true, createdAt: true, updatedAt: true });
+export const insertStorySchema = createInsertSchema(stories).omit({ id: true, viewCount: true, createdAt: true });
 export const insertCommentSchema = createInsertSchema(comments).omit({ id: true, createdAt: true });
 export const insertContentFilterSchema = createInsertSchema(contentFilters).omit({ id: true, createdAt: true });
 
@@ -189,6 +235,9 @@ export type Friendship = typeof friendships.$inferSelect;
 export type InsertFriendship = z.infer<typeof insertFriendshipSchema>;
 export type Post = typeof posts.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
+export type Story = typeof stories.$inferSelect;
+export type InsertStory = z.infer<typeof insertStorySchema>;
+export type StoryView = typeof storyViews.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type PostLike = typeof postLikes.$inferSelect;

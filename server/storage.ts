@@ -3,6 +3,8 @@ import {
   userThemes,
   friendships,
   posts,
+  stories,
+  storyViews,
   comments,
   postLikes,
   contentFilters,
@@ -14,6 +16,9 @@ import {
   type InsertFriendship,
   type Post,
   type InsertPost,
+  type Story,
+  type InsertStory,
+  type StoryView,
   type Comment,
   type InsertComment,
   type PostLike,
@@ -45,6 +50,12 @@ export interface IStorage {
   createPost(post: InsertPost): Promise<Post>;
   likePost(postId: string, userId: string): Promise<void>;
   unlikePost(postId: string, userId: string): Promise<void>;
+  
+  // Story operations
+  getActiveStories(userId: string): Promise<(Story & { author: User; viewCount: number; hasViewed: boolean })[]>;
+  createStory(story: InsertStory): Promise<Story>;
+  viewStory(storyId: string, userId: string): Promise<void>;
+  deleteExpiredStories(): Promise<void>;
   
   // Comment operations
   addComment(comment: InsertComment): Promise<Comment>;
@@ -184,7 +195,8 @@ export class DatabaseStorage implements IStorage {
         id: posts.id,
         userId: posts.userId,
         content: posts.content,
-        imageUrl: posts.imageUrl,
+        mediaUrl: posts.mediaUrl,
+        mediaType: posts.mediaType,
         likes: posts.likes,
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
@@ -221,7 +233,8 @@ export class DatabaseStorage implements IStorage {
           id: post.id,
           userId: post.userId,
           content: post.content,
-          imageUrl: post.imageUrl,
+          mediaUrl: post.mediaUrl,
+          mediaType: post.mediaType,
           likes: likesData,
           createdAt: post.createdAt,
           updatedAt: post.updatedAt,
@@ -294,6 +307,87 @@ export class DatabaseStorage implements IStorage {
   async getUserByInviteCode(inviteCode: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.inviteCode, inviteCode));
     return user;
+  }
+
+  // Story operations
+  async getActiveStories(userId: string): Promise<(Story & { author: User; viewCount: number; hasViewed: boolean })[]> {
+    // Get user's friends first
+    const userFriends = await this.getFriends(userId);
+    const friendIds = userFriends.map(f => f.friendId);
+    friendIds.push(userId); // Include user's own stories
+
+    const now = new Date();
+    const storiesData = await db
+      .select({
+        id: stories.id,
+        userId: stories.userId,
+        content: stories.content,
+        mediaUrl: stories.mediaUrl,
+        mediaType: stories.mediaType,
+        viewCount: stories.viewCount,
+        createdAt: stories.createdAt,
+        expiresAt: stories.expiresAt,
+        author: users,
+      })
+      .from(stories)
+      .innerJoin(users, eq(stories.userId, users.id))
+      .where(and(inArray(stories.userId, friendIds), sql`${stories.expiresAt} > ${now}`))
+      .orderBy(desc(stories.createdAt));
+
+    // Check if user has viewed each story
+    const storiesWithViewStatus = await Promise.all(
+      storiesData.map(async (story) => {
+        const [hasViewed] = await db
+          .select()
+          .from(storyViews)
+          .where(and(eq(storyViews.storyId, story.id), eq(storyViews.userId, userId)))
+          .limit(1);
+
+        return {
+          id: story.id,
+          userId: story.userId,
+          content: story.content,
+          mediaUrl: story.mediaUrl,
+          mediaType: story.mediaType,
+          viewCount: story.viewCount || 0,
+          createdAt: story.createdAt,
+          expiresAt: story.expiresAt,
+          author: story.author,
+          hasViewed: !!hasViewed,
+        };
+      })
+    );
+
+    return storiesWithViewStatus;
+  }
+
+  async createStory(story: InsertStory): Promise<Story> {
+    const [newStory] = await db.insert(stories).values(story).returning();
+    return newStory;
+  }
+
+  async viewStory(storyId: string, userId: string): Promise<void> {
+    // Check if user has already viewed this story
+    const [existingView] = await db
+      .select()
+      .from(storyViews)
+      .where(and(eq(storyViews.storyId, storyId), eq(storyViews.userId, userId)))
+      .limit(1);
+
+    if (!existingView) {
+      // Add view record
+      await db.insert(storyViews).values({ storyId, userId });
+      // Increment view count
+      await db
+        .update(stories)
+        .set({ viewCount: sql`${stories.viewCount} + 1` })
+        .where(eq(stories.id, storyId));
+    }
+  }
+
+  async deleteExpiredStories(): Promise<void> {
+    const now = new Date();
+    await db.delete(stories).where(sql`${stories.expiresAt} < ${now}`);
   }
 }
 
