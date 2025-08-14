@@ -750,8 +750,30 @@ export class DatabaseStorage implements IStorage {
 
   async deleteExpiredMessages(): Promise<void> {
     const now = new Date();
+    
+    // First, get expired message IDs
+    const expiredMessages = await db
+      .select({ id: messages.id })
+      .from(messages)
+      .where(sql`${messages.expiresAt} < ${now}`);
+    
+    if (expiredMessages.length === 0) {
+      console.log(`No expired messages to clean up at ${now.toISOString()}`);
+      return;
+    }
+    
+    const expiredMessageIds = expiredMessages.map(m => m.id);
+    
+    // Update conversations to remove references to expired messages
+    await db
+      .update(conversations)
+      .set({ lastMessageId: null })
+      .where(inArray(conversations.lastMessageId, expiredMessageIds));
+    
+    // Delete expired messages
     const result = await db.delete(messages).where(sql`${messages.expiresAt} < ${now}`);
-    console.log(`Cleaned up expired messages at ${now.toISOString()}`);
+    
+    console.log(`Cleaned up ${expiredMessages.length} expired messages at ${now.toISOString()}`);
   }
 
   // Event operations
