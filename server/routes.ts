@@ -46,6 +46,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public user profile endpoint (for viewing other users' profiles)
+  app.get('/api/user/profile/:userId', async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Return public profile info (excluding sensitive data)
+      const publicProfile = {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImageUrl: user.profileImageUrl,
+        bio: user.bio,
+        kliqName: user.kliqName,
+        birthdate: user.birthdate,
+        profileMusicUrl: user.profileMusicUrl,
+        profileMusicTitle: user.profileMusicTitle,
+        createdAt: user.createdAt,
+      };
+      
+      res.json(publicProfile);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
+  // Profile music endpoints
+  app.put("/api/user/profile-music", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { musicUrl, musicTitle } = req.body;
+
+      if (!musicUrl || !musicTitle) {
+        return res.status(400).json({ message: "Music URL and title are required" });
+      }
+
+      // Normalize the object entity path
+      const objectStorageService = new ObjectStorageService();
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(musicUrl);
+
+      // For music files, we'll use the normalized path directly
+      // Music is considered public content for profile use
+
+      await storage.updateUser(userId, {
+        profileMusicUrl: normalizedPath,
+        profileMusicTitle: musicTitle,
+      });
+
+      const updatedUser = await storage.getUser(userId);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating profile music:", error);
+      res.status(500).json({ message: "Failed to update profile music" });
+    }
+  });
+
+  app.delete("/api/user/profile-music", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      await storage.updateUser(userId, {
+        profileMusicUrl: null,
+        profileMusicTitle: null,
+      });
+
+      const updatedUser = await storage.getUser(userId);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error removing profile music:", error);
+      res.status(500).json({ message: "Failed to remove profile music" });
+    }
+  });
+
   app.post('/api/user/generate-invite', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

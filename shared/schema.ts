@@ -39,6 +39,8 @@ export const users = pgTable("users", {
   inviteCode: varchar("invite_code", { length: 20 }).unique(),
   kliqName: varchar("kliq_name").default("My Kliq"),
   birthdate: date("birthdate"),
+  profileMusicUrl: varchar("profile_music_url"),
+  profileMusicTitle: varchar("profile_music_title"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

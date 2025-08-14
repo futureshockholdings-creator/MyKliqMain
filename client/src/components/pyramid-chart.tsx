@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,7 @@ interface PyramidChartProps {
 
 export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, maxFriends = 15, kliqName }: PyramidChartProps) {
   const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
+  const [_, setLocation] = useLocation();
 
   const sortedFriends = [...friends].sort((a, b) => a.rank - b.rank);
   
@@ -143,11 +145,18 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
           </Button>
         )}
       </div>
-      <div className={cn(
-        "p-1 rounded-full bg-gradient-to-r",
-        getRankColor(friend.rank),
-        "shadow-lg hover:shadow-xl"
-      )}>
+      <div 
+        className={cn(
+          "p-1 rounded-full bg-gradient-to-r cursor-pointer",
+          getRankColor(friend.rank),
+          "shadow-lg hover:shadow-xl transition-transform hover:scale-105"
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          setLocation(`/user/${friend.id}`);
+        }}
+        data-testid={`friend-avatar-${friend.id}`}
+      >
         <Avatar className={cn(
           friend.rank === 1 ? "w-16 h-16" : 
           friend.rank <= 3 ? "w-12 h-12" : 

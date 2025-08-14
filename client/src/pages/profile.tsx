@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { MusicUploader } from "@/components/MusicUploader";
+import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
 import { type User } from "@shared/schema";
 
 export default function Profile() {
@@ -127,6 +129,41 @@ export default function Profile() {
             >
               {updateBirthdateMutation.isPending ? "Updating..." : "Update Birthdate"}
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Profile Music Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>🎵 Profile Music</CardTitle>
+            <CardDescription>Add music that plays when people visit your profile</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Current Profile Music Player (if music exists) */}
+            {(user as User)?.profileMusicUrl && (user as User)?.profileMusicTitle && (
+              <div>
+                <Label className="text-sm font-medium">Current Profile Music</Label>
+                <div className="mt-2">
+                  <ProfileMusicPlayer
+                    musicUrl={(user as User).profileMusicUrl!}
+                    musicTitle={(user as User).profileMusicTitle!}
+                    autoPlay={false}
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Music Upload/Management */}
+            <div>
+              <Label className="text-sm font-medium">Profile Music Settings</Label>
+              <div className="mt-2">
+                <MusicUploader
+                  currentMusicUrl={(user as User)?.profileMusicUrl || undefined}
+                  currentMusicTitle={(user as User)?.profileMusicTitle || undefined}
+                  userId={(user as User)?.id!}
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 

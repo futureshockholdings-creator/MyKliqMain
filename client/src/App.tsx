@@ -13,6 +13,7 @@ import Events from "@/pages/events";
 import Actions from "@/pages/actions";
 import MeetupPage from "@/pages/meetup";
 import Profile from "@/pages/profile";
+import UserProfile from "@/pages/user-profile";
 import Themes from "@/pages/themes";
 import NotFound from "@/pages/not-found";
 import { Messages } from "@/pages/messages";
@@ -76,6 +77,7 @@ function Router() {
           <Route path="/messages" component={Messages} />
           <Route path="/messages/:conversationId" component={Conversation} />
           <Route path="/profile" component={Profile} />
+          <Route path="/user/:userId" component={UserProfile} />
           <Route path="/themes" component={Themes} />
         </>
       )}
