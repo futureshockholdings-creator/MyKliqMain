@@ -15,6 +15,9 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { cn } from "@/lib/utils";
 import { MediaUpload } from "@/components/MediaUpload";
 import { PyramidChart } from "@/components/pyramid-chart";
+import { GifPicker } from "@/components/GifPicker";
+import { GifDisplay } from "@/components/GifDisplay";
+import type { Gif } from "@shared/schema";
 
 
 export default function Home() {
@@ -26,6 +29,8 @@ export default function Home() {
   const [showCommentEmojiPicker, setShowCommentEmojiPicker] = useState<string | null>(null);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [selectedGif, setSelectedGif] = useState<Gif | null>(null);
+  const [commentGifs, setCommentGifs] = useState<Record<string, Gif | null>>({});
   const { user } = useAuth();
   const userData = user as any;
   const { toast } = useToast();
@@ -48,12 +53,13 @@ export default function Home() {
 
   // Create post mutation
   const createPostMutation = useMutation({
-    mutationFn: async (content: string) => {
-      await apiRequest("POST", "/api/posts", { content });
+    mutationFn: async (postData: { content: string; gifId?: string }) => {
+      await apiRequest("POST", "/api/posts", postData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       setNewPost("");
+      setSelectedGif(null);
       toast({
         title: "Post created!",
         description: "Your post has been shared with your kliq",
@@ -109,12 +115,13 @@ export default function Home() {
 
   // Add comment mutation
   const addCommentMutation = useMutation({
-    mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
-      await apiRequest("POST", `/api/posts/${postId}/comments`, { content });
+    mutationFn: async ({ postId, content, gifId }: { postId: string; content: string; gifId?: string }) => {
+      await apiRequest("POST", `/api/posts/${postId}/comments`, { content, gifId });
     },
     onSuccess: (_, { postId }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
+      setCommentGifs(prev => ({ ...prev, [postId]: null }));
       toast({
         title: "Comment added!",
         description: "Your comment has been posted",
@@ -207,8 +214,11 @@ export default function Home() {
   });
 
   const handleCreatePost = () => {
-    if (newPost.trim()) {
-      createPostMutation.mutate(newPost.trim());
+    if (newPost.trim() || selectedGif) {
+      createPostMutation.mutate({
+        content: newPost.trim(),
+        gifId: selectedGif?.id
+      });
     }
   };
 
@@ -303,8 +313,9 @@ export default function Home() {
 
   const handleCommentSubmit = (postId: string) => {
     const content = commentInputs[postId]?.trim();
-    if (content) {
-      addCommentMutation.mutate({ postId, content });
+    const gifId = commentGifs[postId]?.id;
+    if (content || gifId) {
+      addCommentMutation.mutate({ postId, content: content || '', gifId });
     }
   };
 
@@ -442,6 +453,19 @@ export default function Home() {
               rows={2}
             />
           </div>
+          {selectedGif && (
+            <div className="mt-3 flex items-center gap-2">
+              <GifDisplay gif={selectedGif} className="max-w-xs" />
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSelectedGif(null)}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                ×
+              </Button>
+            </div>
+          )}
           <div className="flex justify-between items-center">
             <div className="flex space-x-2">
               <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
@@ -480,6 +504,18 @@ export default function Home() {
               >
                 <ImageIcon className="w-4 h-4" />
               </Button>
+              <GifPicker
+                onSelectGif={setSelectedGif}
+                trigger={
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="text-mykliq-purple hover:bg-mykliq-purple/10"
+                  >
+                    <Smile className="w-4 h-4" />
+                  </Button>
+                }
+              />
               <Button 
                 size="sm" 
                 variant="ghost" 
@@ -491,7 +527,7 @@ export default function Home() {
             </div>
             <Button
               onClick={handleCreatePost}
-              disabled={!newPost.trim() || createPostMutation.isPending}
+              disabled={(!newPost.trim() && !selectedGif) || createPostMutation.isPending}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6"
               style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
             >
@@ -672,6 +708,13 @@ export default function Home() {
                 </div>
               )}
               
+              {/* GIF Content */}
+              {post.gif && (
+                <div className="mb-3">
+                  <GifDisplay gif={post.gif} className="max-w-md" />
+                </div>
+              )}
+              
               <div className="flex justify-between items-center">
                 <div className="flex space-x-4">
                   <Button
@@ -725,6 +768,11 @@ export default function Home() {
                                 {comment.author?.firstName} {comment.author?.lastName}
                               </p>
                               <p className="text-sm text-foreground">{comment.content}</p>
+                              {comment.gif && (
+                                <div className="mt-2">
+                                  <GifDisplay gif={comment.gif} className="max-w-xs" />
+                                </div>
+                              )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
                               {formatTimeAgo(comment.createdAt)}
@@ -744,6 +792,19 @@ export default function Home() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
+                      {commentGifs[post.id] && (
+                        <div className="mb-2 flex items-center gap-2">
+                          <GifDisplay gif={commentGifs[post.id]} className="max-w-xs" />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleCommentGifRemove(post.id)}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      )}
                       <div className="flex space-x-2">
                         <Textarea
                           value={commentInputs[post.id] || ""}
@@ -760,6 +821,19 @@ export default function Home() {
                           }}
                         />
                         <div className="flex flex-col justify-end space-y-1">
+                          <GifPicker
+                            onSelectGif={(gif) => handleCommentGifSelect(post.id, gif)}
+                            trigger={
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-mykliq-purple hover:bg-mykliq-purple/10 h-8 w-8 p-0"
+                                data-testid={`button-comment-gif-${post.id}`}
+                              >
+                                <span className="text-xs font-bold">GIF</span>
+                              </Button>
+                            }
+                          />
                           <Popover 
                             open={showCommentEmojiPicker === post.id} 
                             onOpenChange={(open) => setShowCommentEmojiPicker(open ? post.id : null)}
@@ -793,7 +867,7 @@ export default function Home() {
                           </Popover>
                           <Button
                             onClick={() => handleCommentSubmit(post.id)}
-                            disabled={!commentInputs[post.id]?.trim() || addCommentMutation.isPending}
+                            disabled={(!commentInputs[post.id]?.trim() && !commentGifs[post.id]) || addCommentMutation.isPending}
                             size="sm"
                             className="bg-secondary hover:bg-secondary/90 text-secondary-foreground h-8"
                             data-testid={`button-submit-comment-${post.id}`}

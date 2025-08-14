@@ -60,6 +60,9 @@ import {
   type InsertVideoCall,
   type CallParticipant,
   type InsertCallParticipant,
+  gifs,
+  type Gif,
+  type InsertGif,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or } from "drizzle-orm";
@@ -100,6 +103,17 @@ export interface IStorage {
   getContentFilters(userId: string): Promise<ContentFilter[]>;
   addContentFilter(filter: InsertContentFilter): Promise<ContentFilter>;
   removeContentFilter(userId: string, filterId: string): Promise<void>;
+  
+  // GIF operations
+  getAllGifs(): Promise<Gif[]>;
+  getTrendingGifs(): Promise<Gif[]>;
+  getFeaturedGifs(): Promise<Gif[]>;
+  searchGifs(query: string): Promise<Gif[]>;
+  getGifsByCategory(category: string): Promise<Gif[]>;
+  getGifById(id: string): Promise<Gif | undefined>;
+  createGif(gif: InsertGif): Promise<Gif>;
+  updateGif(id: string, updates: Partial<Gif>): Promise<Gif>;
+  deleteGif(id: string): Promise<void>;
 
   // Message operations
   getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number })[]>;
@@ -156,6 +170,17 @@ export interface IStorage {
   updateParticipantStatus(callId: string, userId: string, status: string, joinedAt?: Date, leftAt?: Date): Promise<void>;
   getCallParticipants(callId: string): Promise<(CallParticipant & { user: User })[]>;
   getUserActiveCalls(userId: string): Promise<(VideoCall & { participants: (CallParticipant & { user: User })[] })[]>;
+
+  // GIF operations
+  getAllGifs(): Promise<Gif[]>;
+  getGifsByCategory(category: string): Promise<Gif[]>;
+  getTrendingGifs(): Promise<Gif[]>;
+  getFeaturedGifs(): Promise<Gif[]>;
+  searchGifs(query: string): Promise<Gif[]>;
+  getGifById(id: string): Promise<Gif | undefined>;
+  createGif(gif: InsertGif): Promise<Gif>;
+  updateGif(id: string, updates: Partial<Gif>): Promise<Gif>;
+  deleteGif(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -284,6 +309,7 @@ export class DatabaseStorage implements IStorage {
         content: posts.content,
         mediaUrl: posts.mediaUrl,
         mediaType: posts.mediaType,
+        gifId: posts.gifId,
         likes: posts.likes,
         latitude: posts.latitude,
         longitude: posts.longitude,
@@ -292,9 +318,11 @@ export class DatabaseStorage implements IStorage {
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
         author: users,
+        gif: gifs,
       })
       .from(posts)
       .innerJoin(users, eq(posts.userId, users.id))
+      .leftJoin(gifs, eq(posts.gifId, gifs.id))
       .where(and(...whereConditions))
       .orderBy(desc(posts.createdAt));
 
@@ -311,11 +339,14 @@ export class DatabaseStorage implements IStorage {
               postId: comments.postId,
               userId: comments.userId,
               content: comments.content,
+              gifId: comments.gifId,
               createdAt: comments.createdAt,
               author: users,
+              gif: gifs,
             })
             .from(comments)
             .innerJoin(users, eq(comments.userId, users.id))
+            .leftJoin(gifs, eq(comments.gifId, gifs.id))
             .where(eq(comments.postId, post.id))
             .orderBy(comments.createdAt),
         ]);
@@ -326,6 +357,8 @@ export class DatabaseStorage implements IStorage {
           content: post.content,
           mediaUrl: post.mediaUrl,
           mediaType: post.mediaType,
+          gifId: post.gifId,
+          gif: post.gif,
           likes: likesData,
           latitude: post.latitude,
           longitude: post.longitude,
@@ -1273,6 +1306,78 @@ export class DatabaseStorage implements IStorage {
     );
 
     return callsWithParticipants;
+  }
+
+  // GIF operations
+  async getAllGifs(): Promise<Gif[]> {
+    return await db.select().from(gifs).orderBy(desc(gifs.createdAt));
+  }
+
+  async getGifsByCategory(category: string): Promise<Gif[]> {
+    return await db
+      .select()
+      .from(gifs)
+      .where(eq(gifs.category, category))
+      .orderBy(desc(gifs.createdAt));
+  }
+
+  async getTrendingGifs(): Promise<Gif[]> {
+    return await db
+      .select()
+      .from(gifs)
+      .where(eq(gifs.trending, true))
+      .orderBy(desc(gifs.createdAt));
+  }
+
+  async getAllGifs(): Promise<Gif[]> {
+    return await db
+      .select()
+      .from(gifs)
+      .orderBy(desc(gifs.createdAt));
+  }
+
+  async getFeaturedGifs(): Promise<Gif[]> {
+    return await db
+      .select()
+      .from(gifs)
+      .where(eq(gifs.featured, true))
+      .orderBy(desc(gifs.createdAt));
+  }
+
+  async searchGifs(query: string): Promise<Gif[]> {
+    const searchTerm = `%${query}%`;
+    return await db
+      .select()
+      .from(gifs)
+      .where(or(
+        like(gifs.title, searchTerm),
+        like(gifs.description, searchTerm),
+        sql`${gifs.tags} && ARRAY[${query}]`
+      ))
+      .orderBy(desc(gifs.createdAt));
+  }
+
+  async getGifById(id: string): Promise<Gif | undefined> {
+    const [gif] = await db.select().from(gifs).where(eq(gifs.id, id));
+    return gif;
+  }
+
+  async createGif(gif: InsertGif): Promise<Gif> {
+    const [newGif] = await db.insert(gifs).values(gif).returning();
+    return newGif;
+  }
+
+  async updateGif(id: string, updates: Partial<Gif>): Promise<Gif> {
+    const [updatedGif] = await db
+      .update(gifs)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(gifs.id, id))
+      .returning();
+    return updatedGif;
+  }
+
+  async deleteGif(id: string): Promise<void> {
+    await db.delete(gifs).where(eq(gifs.id, id));
   }
 }
 

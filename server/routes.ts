@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 
@@ -1052,6 +1052,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error checking in:", error);
       res.status(500).json({ message: "Failed to check in" });
+    }
+  });
+
+  // GIF API routes
+  
+  // Get all GIFs
+  app.get('/api/gifs', async (req, res) => {
+    try {
+      const gifs = await storage.getAllGifs();
+      res.json(gifs);
+    } catch (error) {
+      console.error("Error fetching gifs:", error);
+      res.status(500).json({ message: "Failed to fetch gifs" });
+    }
+  });
+
+  // Get GIFs by category
+  app.get('/api/gifs/category/:category', async (req, res) => {
+    try {
+      const { category } = req.params;
+      const gifs = await storage.getGifsByCategory(category);
+      res.json(gifs);
+    } catch (error) {
+      console.error("Error fetching gifs by category:", error);
+      res.status(500).json({ message: "Failed to fetch gifs by category" });
+    }
+  });
+
+  // Get trending GIFs
+  app.get('/api/gifs/trending', async (req, res) => {
+    try {
+      const gifs = await storage.getTrendingGifs();
+      res.json(gifs);
+    } catch (error) {
+      console.error("Error fetching trending gifs:", error);
+      res.status(500).json({ message: "Failed to fetch trending gifs" });
+    }
+  });
+
+  // Get featured GIFs
+  app.get('/api/gifs/featured', async (req, res) => {
+    try {
+      const gifs = await storage.getFeaturedGifs();
+      res.json(gifs);
+    } catch (error) {
+      console.error("Error fetching featured gifs:", error);
+      res.status(500).json({ message: "Failed to fetch featured gifs" });
+    }
+  });
+
+  // Search GIFs
+  app.get('/api/gifs/search', async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+      const gifs = await storage.searchGifs(q);
+      res.json(gifs);
+    } catch (error) {
+      console.error("Error searching gifs:", error);
+      res.status(500).json({ message: "Failed to search gifs" });
+    }
+  });
+
+  // Get GIF by ID
+  app.get('/api/gifs/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const gif = await storage.getGifById(id);
+      if (!gif) {
+        return res.status(404).json({ message: "GIF not found" });
+      }
+      res.json(gif);
+    } catch (error) {
+      console.error("Error fetching gif:", error);
+      res.status(500).json({ message: "Failed to fetch gif" });
+    }
+  });
+
+  // Create new GIF (admin only)
+  app.post('/api/gifs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const gifData = insertGifSchema.parse({ 
+        ...req.body, 
+        uploadedBy: userId 
+      });
+      
+      const gif = await storage.createGif(gifData);
+      res.json(gif);
+    } catch (error) {
+      console.error("Error creating gif:", error);
+      res.status(500).json({ message: "Failed to create gif" });
+    }
+  });
+
+  // Update GIF (admin only)
+  app.put('/api/gifs/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const gif = await storage.updateGif(id, updates);
+      res.json(gif);
+    } catch (error) {
+      console.error("Error updating gif:", error);
+      res.status(500).json({ message: "Failed to update gif" });
+    }
+  });
+
+  // Delete GIF (admin only)
+  app.delete('/api/gifs/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteGif(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting gif:", error);
+      res.status(500).json({ message: "Failed to delete gif" });
     }
   });
 

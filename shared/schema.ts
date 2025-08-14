@@ -94,6 +94,25 @@ export const mediaTypeEnum = pgEnum("media_type", ["image", "video"]);
 // Call status enum
 export const callStatusEnum = pgEnum("call_status", ["pending", "active", "ended", "declined"]);
 
+// GIF database for posts and comments
+export const gifs = pgTable("gifs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: varchar("description"),
+  url: varchar("url").notNull(),
+  thumbnailUrl: varchar("thumbnail_url"),
+  tags: varchar("tags").array().default(sql`'{}'::varchar[]`),
+  category: varchar("category").notNull().default("general"),
+  width: integer("width"),
+  height: integer("height"),
+  fileSize: integer("file_size"),
+  trending: boolean("trending").default(false),
+  featured: boolean("featured").default(false),
+  uploadedBy: varchar("uploaded_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Posts
 export const posts = pgTable("posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -101,6 +120,7 @@ export const posts = pgTable("posts", {
   content: text("content"),
   mediaUrl: varchar("media_url"),
   mediaType: mediaTypeEnum("media_type"),
+  gifId: varchar("gif_id").references(() => gifs.id),
   likes: integer("likes").default(0),
   latitude: numeric("latitude", { precision: 10, scale: 7 }),
   longitude: numeric("longitude", { precision: 10, scale: 7 }),
@@ -128,6 +148,7 @@ export const comments = pgTable("comments", {
   postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }).notNull(),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   content: text("content").notNull(),
+  gifId: varchar("gif_id").references(() => gifs.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -288,6 +309,17 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   actionChatMessages: many(actionChatMessages),
   meetups: many(meetups),
   meetupCheckIns: many(meetupCheckIns),
+  uploadedGifs: many(gifs),
+}));
+
+// GIF Relations
+export const gifsRelations = relations(gifs, ({ one, many }) => ({
+  uploader: one(users, {
+    fields: [gifs.uploadedBy],
+    references: [users.id],
+  }),
+  posts: many(posts),
+  comments: many(comments),
 }));
 
 export const storiesRelations = relations(stories, ({ one, many }) => ({
@@ -334,6 +366,10 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
     fields: [posts.userId],
     references: [users.id],
   }),
+  gif: one(gifs, {
+    fields: [posts.gifId],
+    references: [gifs.id],
+  }),
   comments: many(comments),
   likes: many(postLikes),
 }));
@@ -346,6 +382,10 @@ export const commentsRelations = relations(comments, ({ one }) => ({
   author: one(users, {
     fields: [comments.userId],
     references: [users.id],
+  }),
+  gif: one(gifs, {
+    fields: [comments.gifId],
+    references: [gifs.id],
   }),
 }));
 
@@ -542,6 +582,12 @@ export type CallParticipant = typeof callParticipants.$inferSelect;
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type Gif = typeof gifs.$inferSelect;
+export type InsertGif = typeof gifs.$inferInsert;
+
+// GIF Zod schemas
+export const insertGifSchema = createInsertSchema(gifs).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertGifForm = z.infer<typeof insertGifSchema>;
 export type UserTheme = typeof userThemes.$inferSelect;
 export type InsertUserTheme = z.infer<typeof insertUserThemeSchema>;
 export type Friendship = typeof friendships.$inferSelect;
