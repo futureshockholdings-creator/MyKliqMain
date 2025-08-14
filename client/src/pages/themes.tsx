@@ -86,7 +86,7 @@ export default function Themes() {
   return (
     <div className="p-4">
       <ThemeEditor
-        currentTheme={userTheme as any}
+        theme={theme as any}
         onSave={handleSaveTheme}
         onReset={handleResetTheme}
       />

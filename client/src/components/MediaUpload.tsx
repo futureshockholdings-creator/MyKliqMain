@@ -23,7 +23,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
   const { toast } = useToast();
 
   const handleGetUploadParameters = async () => {
-    const response = await apiRequest("POST", "/api/media/upload");
+    const response = await apiRequest("POST", "/api/media/upload") as any;
     return {
       method: "PUT" as const,
       url: response.uploadURL,
