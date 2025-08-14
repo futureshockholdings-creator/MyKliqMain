@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Upload, Music, Trash2, Loader2, AlertTriangle, Settings, Info, Link, ExternalLink } from "lucide-react";
@@ -353,6 +353,9 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
         <DialogContent className="bg-gray-800 border-gray-700 max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-pink-400">Add Profile Music</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Upload a music file or paste a web URL to set your profile music
+            </DialogDescription>
           </DialogHeader>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
