@@ -112,7 +112,7 @@ export function useVideoCall() {
     setState(prev => ({ ...prev, isConnecting: true, error: null }));
 
     try {
-      const callData = await apiRequest('/api/video-calls', 'POST', { participantIds });
+      const callData = await apiRequest('POST', '/api/video-calls', { participantIds });
 
       // WebSocket will handle the call state update
       setState(prev => ({ ...prev, isConnecting: false }));
@@ -133,7 +133,7 @@ export function useVideoCall() {
     if (!user) return;
 
     try {
-      await apiRequest(`/api/video-calls/${callId}/join`, 'POST');
+      await apiRequest('POST', `/api/video-calls/${callId}/join`);
     } catch (error) {
       console.error('Error joining call:', error);
       setState(prev => ({ ...prev, error: 'Failed to join call' }));
@@ -144,7 +144,7 @@ export function useVideoCall() {
     if (!state.currentCall) return;
 
     try {
-      await apiRequest(`/api/video-calls/${state.currentCall.id}/leave`, 'POST');
+      await apiRequest('POST', `/api/video-calls/${state.currentCall.id}/leave`);
 
       setState(prev => ({
         ...prev,
@@ -162,7 +162,7 @@ export function useVideoCall() {
     if (!state.currentCall) return;
 
     try {
-      await apiRequest(`/api/video-calls/${state.currentCall.id}/end`, 'POST');
+      await apiRequest('POST', `/api/video-calls/${state.currentCall.id}/end`);
 
       setState(prev => ({
         ...prev,
