@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Upload, Music, Trash2, Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Upload, Music, Trash2, Loader2, AlertTriangle, Settings, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { convertToMP3, getFileRecommendations, isDRMProtected, getAudioFileInfo, type ConversionResult } from "@/lib/audioConverter";
 
 interface MusicUploaderProps {
   currentMusicUrl?: string;
@@ -18,7 +20,11 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
   const [isOpen, setIsOpen] = useState(false);
   const [musicTitle, setMusicTitle] = useState(currentMusicTitle || "");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [processedFile, setProcessedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [fileRecommendations, setFileRecommendations] = useState<any>(null);
+  const [conversionResult, setConversionResult] = useState<ConversionResult | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -101,48 +107,99 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
     },
   });
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Validate file type (audio files only, including .m4p)
-      const validAudioTypes = [
-        'audio/',
-        'application/x-m4p', // For .m4p files
-      ];
+    if (!file) return;
+
+    // Validate file type (audio files only, including .m4p)
+    const validAudioTypes = [
+      'audio/',
+      'application/x-m4p', // For .m4p files
+    ];
+    
+    const validExtensions = ['.mp3', '.wav', '.m4a', '.m4p', '.aac', '.ogg', '.flac'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    
+    const isValidType = validAudioTypes.some(type => file.type.startsWith(type)) || 
+                       validExtensions.includes(fileExtension);
+    
+    if (!isValidType) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an audio file (MP3, WAV, M4A, M4P, AAC, OGG, FLAC)",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (file.size > 15 * 1024 * 1024) { // Increased to 15MB to allow for conversion
+      toast({
+        title: "File too large",
+        description: "Please select a file smaller than 15MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setSelectedFile(file);
+    setProcessedFile(null);
+    setConversionResult(null);
+    
+    // Get file recommendations
+    const recommendations = getFileRecommendations(file);
+    setFileRecommendations(recommendations);
+    
+    if (!musicTitle) {
+      setMusicTitle(file.name.replace(/\.[^/.]+$/, ""));
+    }
+    
+    // Auto-process file if it needs conversion
+    if (recommendations.canProcess && recommendations.recommendation !== "File ready to use") {
+      await handleFileConversion(file);
+    }
+  };
+
+  const handleFileConversion = async (file: File) => {
+    setIsProcessing(true);
+    
+    try {
+      const result = await convertToMP3(file);
+      setConversionResult(result);
       
-      const validExtensions = ['.mp3', '.wav', '.m4a', '.m4p', '.aac', '.ogg', '.flac'];
-      const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-      
-      const isValidType = validAudioTypes.some(type => file.type.startsWith(type)) || 
-                         validExtensions.includes(fileExtension);
-      
-      if (!isValidType) {
+      if (result.success && result.blob) {
+        // Create a new File object from the blob
+        const convertedFile = new File([result.blob], 
+          file.name.replace(/\.[^/.]+$/, '.wav'), 
+          { type: 'audio/wav' }
+        );
+        setProcessedFile(convertedFile);
+        
         toast({
-          title: "Invalid file type",
-          description: "Please select an audio file (MP3, WAV, M4A, M4P, AAC, OGG, FLAC)",
+          title: "Conversion successful",
+          description: `File converted from ${result.originalFormat} to optimized format`,
+        });
+      } else {
+        toast({
+          title: "Conversion failed",
+          description: result.error || "Unable to convert file",
           variant: "destructive",
         });
-        return;
       }
-      
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        toast({
-          title: "File too large",
-          description: "Please select a file smaller than 10MB",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setSelectedFile(file);
-      if (!musicTitle) {
-        setMusicTitle(file.name.replace(/\.[^/.]+$/, ""));
-      }
+    } catch (error) {
+      toast({
+        title: "Processing error",
+        description: "An unexpected error occurred during conversion",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleUpload = () => {
-    if (!selectedFile || !musicTitle.trim()) {
+    const fileToUpload = processedFile || selectedFile;
+    
+    if (!fileToUpload || !musicTitle.trim()) {
       toast({
         title: "Missing information",
         description: "Please select a file and enter a title",
@@ -151,7 +208,16 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
       return;
     }
     
-    uploadMusicMutation.mutate({ file: selectedFile, title: musicTitle.trim() });
+    if (isDRMProtected(selectedFile!) && !processedFile) {
+      toast({
+        title: "Cannot upload DRM-protected file",
+        description: "Please convert this file using desktop software first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    uploadMusicMutation.mutate({ file: fileToUpload, title: musicTitle.trim() });
   };
 
   return (
@@ -225,25 +291,135 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                   data-testid="input-music-file"
                 />
                 {selectedFile && (
-                  <div className="mt-1 space-y-1">
-                    <p className="text-sm text-gray-400">
-                      Selected: {selectedFile.name} ({Math.round(selectedFile.size / 1024)}KB)
-                    </p>
-                    {selectedFile.name.toLowerCase().endsWith('.m4p') && (
-                      <p className="text-xs text-amber-400">
-                        ⚠️ M4P files with iTunes DRM may not play in browsers
+                  <div className="mt-2 space-y-2">
+                    <div className="p-3 bg-gray-600 rounded border">
+                      <p className="text-sm text-gray-300 font-medium">
+                        Selected: {selectedFile.name} ({Math.round(selectedFile.size / 1024)}KB)
                       </p>
-                    )}
+                      
+                      {isProcessing && (
+                        <div className="flex items-center gap-2 mt-2 text-blue-400">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm">Processing file...</span>
+                        </div>
+                      )}
+                      
+                      {processedFile && (
+                        <div className="flex items-center gap-2 mt-2 text-green-400">
+                          <Settings className="w-4 h-4" />
+                          <span className="text-sm">
+                            Converted: {processedFile.name} ({Math.round(processedFile.size / 1024)}KB)
+                          </span>
+                        </div>
+                      )}
+                      
+                      {fileRecommendations && (
+                        <Alert className={`mt-2 ${
+                          fileRecommendations.canProcess 
+                            ? fileRecommendations.recommendation === "File ready to use" 
+                              ? "border-green-500/30 bg-green-500/10" 
+                              : "border-blue-500/30 bg-blue-500/10"
+                            : "border-red-500/30 bg-red-500/10"
+                        }`}>
+                          <div className="flex items-start gap-2">
+                            {fileRecommendations.canProcess ? (
+                              fileRecommendations.recommendation === "File ready to use" ? (
+                                <Info className="w-4 h-4 text-green-400 mt-0.5" />
+                              ) : (
+                                <Settings className="w-4 h-4 text-blue-400 mt-0.5" />
+                              )
+                            ) : (
+                              <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5" />
+                            )}
+                            <div className="flex-1">
+                              <div className={`font-medium text-sm ${
+                                fileRecommendations.canProcess 
+                                  ? fileRecommendations.recommendation === "File ready to use"
+                                    ? "text-green-400" 
+                                    : "text-blue-400"
+                                  : "text-red-400"
+                              }`}>
+                                {fileRecommendations.recommendation}
+                              </div>
+                              <AlertDescription className="text-xs text-gray-300 mt-1">
+                                {fileRecommendations.message}
+                              </AlertDescription>
+                              {fileRecommendations.suggestedTools.length > 0 && (
+                                <div className="mt-2">
+                                  <div className="text-xs font-medium text-gray-400 mb-1">Suggestions:</div>
+                                  <ul className="text-xs text-gray-300 space-y-1">
+                                    {fileRecommendations.suggestedTools.map((tool: string, index: number) => (
+                                      <li key={index} className="flex items-start gap-1">
+                                        <span className="text-gray-500">•</span>
+                                        <span>{tool}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </Alert>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
             </div>
             
+            {/* Manual Conversion Button for DRM files */}
+            {selectedFile && isDRMProtected(selectedFile) && !processedFile && (
+              <Alert className="border-amber-500/30 bg-amber-500/10">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <AlertDescription className="text-amber-300">
+                  <div className="font-medium mb-2">DRM-Protected File Detected</div>
+                  <div className="text-sm space-y-1">
+                    <p>This M4P file contains copy protection that prevents web playback.</p>
+                    <p className="font-medium">To use this file:</p>
+                    <ul className="ml-4 space-y-1 text-xs">
+                      <li>• Use iTunes to burn to CD and re-import as MP3</li>
+                      <li>• Use legitimate DRM removal software</li>
+                      <li>• Purchase DRM-free version if available</li>
+                    </ul>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Manual Conversion Button for large files */}
+            {selectedFile && !processedFile && !isDRMProtected(selectedFile) && 
+             fileRecommendations?.recommendation === "Convert to compressed format" && (
+              <Button
+                onClick={() => handleFileConversion(selectedFile)}
+                disabled={isProcessing}
+                variant="outline"
+                className="w-full border-blue-500 text-blue-400 hover:bg-blue-500/20"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Converting...
+                  </>
+                ) : (
+                  <>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Convert to Optimized Format
+                  </>
+                )}
+              </Button>
+            )}
+            
             <div className="flex gap-2">
               <Button
                 onClick={handleUpload}
-                disabled={!selectedFile || !musicTitle.trim() || isUploading}
-                className="flex-1 bg-pink-500 hover:bg-pink-600 text-white"
+                disabled={
+                  !selectedFile || 
+                  !musicTitle.trim() || 
+                  isUploading || 
+                  isProcessing ||
+                  (isDRMProtected(selectedFile!) && !processedFile)
+                }
+                className="flex-1 bg-pink-500 hover:bg-pink-600 text-white disabled:opacity-50"
                 data-testid="button-confirm-upload"
               >
                 {isUploading ? (
@@ -254,7 +430,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                 ) : (
                   <>
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload Music
+                    Upload {processedFile ? "Converted " : ""}Music
                   </>
                 )}
               </Button>
@@ -264,8 +440,12 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                 onClick={() => {
                   setIsOpen(false);
                   setSelectedFile(null);
+                  setProcessedFile(null);
+                  setFileRecommendations(null);
+                  setConversionResult(null);
                   setMusicTitle(currentMusicTitle || "");
                 }}
+                disabled={isUploading || isProcessing}
                 className="text-gray-400 hover:text-white hover:bg-gray-700"
                 data-testid="button-cancel-upload"
               >
