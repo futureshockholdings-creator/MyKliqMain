@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import Kliq from "@/pages/kliq";
+import Events from "@/pages/events";
 import Profile from "@/pages/profile";
 import Themes from "@/pages/themes";
 import NotFound from "@/pages/not-found";
@@ -16,13 +17,14 @@ import { Messages } from "@/pages/messages";
 import { Conversation } from "@/pages/conversation";
 
 // Navigation Component
-import { Home as HomeIcon, Users, User, Palette, MessageCircle } from "lucide-react";
+import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function Navigation({ currentPath }: { currentPath: string }) {
   const navItems = [
     { path: "/", icon: HomeIcon, label: "Feed", tab: "feed" },
     { path: "/kliq", icon: Users, label: "My Kliq", tab: "kliq" },
+    { path: "/events", icon: Calendar, label: "Events", tab: "events" },
     { path: "/messages", icon: MessageCircle, label: "IM", tab: "messages" },
     { path: "/profile", icon: User, label: "Profile", tab: "profile" },
     { path: "/themes", icon: Palette, label: "Themes", tab: "themes" },
@@ -64,6 +66,7 @@ function Router() {
         <>
           <Route path="/" component={Home} />
           <Route path="/kliq" component={Kliq} />
+          <Route path="/events" component={Events} />
           <Route path="/messages" component={Messages} />
           <Route path="/messages/:conversationId" component={Conversation} />
           <Route path="/profile" component={Profile} />

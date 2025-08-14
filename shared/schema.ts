@@ -149,6 +149,31 @@ export const conversations = pgTable("conversations", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Events with countdown functionality
+export const events = pgTable("events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  location: varchar("location"),
+  eventDate: timestamp("event_date").notNull(),
+  mediaUrl: varchar("media_url"),
+  mediaType: mediaTypeEnum("media_type"),
+  isPublic: boolean("is_public").default(true),
+  attendeeCount: integer("attendee_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Event attendees
+export const eventAttendees = pgTable("event_attendees", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventId: varchar("event_id").references(() => events.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  status: varchar("status").default("going"), // going, maybe, not_going
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   friendships: many(friendships, { relationName: "userFriendships" }),
@@ -164,6 +189,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   receivedMessages: many(messages, { relationName: "receiverMessages" }),
   conversations1: many(conversations, { relationName: "user1Conversations" }),
   conversations2: many(conversations, { relationName: "user2Conversations" }),
+  events: many(events),
+  eventAttendees: many(eventAttendees),
 }));
 
 export const storiesRelations = relations(stories, ({ one, many }) => ({
@@ -273,6 +300,25 @@ export const conversationsRelations = relations(conversations, ({ one }) => ({
   }),
 }));
 
+export const eventsRelations = relations(events, ({ one, many }) => ({
+  author: one(users, {
+    fields: [events.userId],
+    references: [users.id],
+  }),
+  attendees: many(eventAttendees),
+}));
+
+export const eventAttendeesRelations = relations(eventAttendees, ({ one }) => ({
+  event: one(events, {
+    fields: [eventAttendees.eventId],
+    references: [events.id],
+  }),
+  user: one(users, {
+    fields: [eventAttendees.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users);
 export const insertUserThemeSchema = createInsertSchema(userThemes).omit({ id: true, createdAt: true, updatedAt: true });
@@ -285,6 +331,10 @@ export const insertCommentSchema = createInsertSchema(comments).omit({ id: true,
 export const insertContentFilterSchema = createInsertSchema(contentFilters).omit({ id: true, createdAt: true });
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, isRead: true, createdAt: true });
 export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true, lastMessageId: true, lastActivity: true, createdAt: true });
+export const insertEventSchema = createInsertSchema(events).omit({ id: true, attendeeCount: true, createdAt: true, updatedAt: true }).extend({
+  eventDate: z.string().transform((val) => new Date(val))
+});
+export const insertEventAttendeeSchema = createInsertSchema(eventAttendees).omit({ id: true, createdAt: true });
 
 // Types
 export type UpsertUser = typeof users.$inferInsert;
@@ -307,3 +357,7 @@ export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type EventAttendee = typeof eventAttendees.$inferSelect;
+export type InsertEventAttendee = z.infer<typeof insertEventAttendeeSchema>;

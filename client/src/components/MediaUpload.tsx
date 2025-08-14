@@ -11,8 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 interface MediaUploadProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
-  type: "post" | "story";
+  onSuccess: (uploadedObject?: any) => void;
+  type: "post" | "story" | "event";
   userId: string;
 }
 
@@ -78,6 +78,29 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
   };
 
   const handleSubmit = async () => {
+    if (type === "event") {
+      // For events, just pass the media data back to parent
+      if (!uploadedMedia) {
+        toast({
+          title: "Error",
+          description: "Please upload media for your event",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const uploadedObject = {
+        objectURL: uploadedMedia.url,
+        type: uploadedMedia.type,
+      };
+      
+      onSuccess(uploadedObject);
+      onOpenChange(false);
+      setContent("");
+      setUploadedMedia(null);
+      return;
+    }
+
     if (!uploadedMedia && !content.trim()) {
       toast({
         title: "Error",
@@ -134,18 +157,20 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       <DialogContent className="sm:max-w-md bg-gray-800 border-gray-600">
         <DialogHeader>
           <DialogTitle className="text-white">
-            Create {type === "post" ? "Post" : "Story"}
+            {type === "event" ? "Add Media to Event" : `Create ${type === "post" ? "Post" : "Story"}`}
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={`What's happening in your ${type === "post" ? "kliq" : "story"}?`}
-            className="bg-black/30 text-white placeholder-gray-400 border-gray-600"
-            rows={3}
-          />
+          {type !== "event" && (
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder={`What's happening in your ${type === "post" ? "kliq" : "story"}?`}
+              className="bg-black/30 text-white placeholder-gray-400 border-gray-600"
+              rows={3}
+            />
+          )}
 
           {uploadedMedia && (
             <Card className="relative bg-gray-700 border-gray-600">
@@ -202,7 +227,9 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                 disabled={isUploading}
                 className="bg-pink-500 hover:bg-pink-600 text-white"
               >
-                {isUploading ? "Sharing..." : `Share ${type === "post" ? "Post" : "Story"}`}
+{type === "event" 
+                  ? (isUploading ? "Uploading..." : "Upload Media")
+                  : (isUploading ? "Sharing..." : `Share ${type === "post" ? "Post" : "Story"}`)}
               </Button>
             </div>
           </div>

@@ -10,6 +10,8 @@ import {
   contentFilters,
   messages,
   conversations,
+  events,
+  eventAttendees,
   type User,
   type UpsertUser,
   type UserTheme,
@@ -30,6 +32,10 @@ import {
   type InsertMessage,
   type Conversation,
   type InsertConversation,
+  type Event,
+  type InsertEvent,
+  type EventAttendee,
+  type InsertEventAttendee,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or } from "drizzle-orm";
@@ -78,6 +84,11 @@ export interface IStorage {
   sendMessage(message: InsertMessage): Promise<Message>;
   markMessageAsRead(messageId: string): Promise<void>;
   markConversationAsRead(conversationId: string, userId: string): Promise<void>;
+  
+  // Event operations
+  getEvents(userId: string): Promise<(Event & { author: User; attendees: (EventAttendee & { user: User })[] })[]>;
+  createEvent(event: InsertEvent): Promise<Event>;
+  updateEventAttendance(eventId: string, userId: string, status: string): Promise<void>;
   
   // Utility operations
   generateInviteCode(): Promise<string>;
@@ -622,6 +633,107 @@ export class DatabaseStorage implements IStorage {
   async deleteExpiredMessages(): Promise<void> {
     const now = new Date();
     await db.delete(messages).where(sql`${messages.expiresAt} < ${now}`);
+  }
+
+  // Event operations
+  async getEvents(userId: string): Promise<(Event & { author: User; attendees: (EventAttendee & { user: User })[] })[]> {
+    // Get friends of the user to filter events
+    const userFriends = await this.getFriends(userId);
+    const friendIds = userFriends.map(f => f.friendId);
+    const userIds = [...friendIds, userId]; // Include user's own events
+
+    // Get all events from user and friends
+    const eventsData = await db
+      .select({
+        event: events,
+        author: users,
+      })
+      .from(events)
+      .innerJoin(users, eq(events.userId, users.id))
+      .where(inArray(events.userId, userIds))
+      .orderBy(events.eventDate);
+
+    // Get attendees for all events
+    const eventsWithAttendees = await Promise.all(
+      eventsData.map(async ({ event, author }) => {
+        const attendeesData = await db
+          .select({
+            attendee: eventAttendees,
+            user: users,
+          })
+          .from(eventAttendees)
+          .innerJoin(users, eq(eventAttendees.userId, users.id))
+          .where(eq(eventAttendees.eventId, event.id));
+
+        const attendees = attendeesData.map(({ attendee, user }) => ({
+          ...attendee,
+          user,
+        }));
+
+        return {
+          ...event,
+          author,
+          attendees,
+        };
+      })
+    );
+
+    return eventsWithAttendees;
+  }
+
+  async createEvent(event: InsertEvent): Promise<Event> {
+    const [newEvent] = await db.insert(events).values(event).returning();
+    
+    // Auto-add creator as "going"
+    await db.insert(eventAttendees).values({
+      eventId: newEvent.id,
+      userId: event.userId,
+      status: "going",
+    });
+
+    // Update attendee count
+    await db
+      .update(events)
+      .set({ attendeeCount: 1 })
+      .where(eq(events.id, newEvent.id));
+
+    return newEvent;
+  }
+
+  async updateEventAttendance(eventId: string, userId: string, status: string): Promise<void> {
+    // Check if attendance record exists
+    const [existingAttendance] = await db
+      .select()
+      .from(eventAttendees)
+      .where(and(eq(eventAttendees.eventId, eventId), eq(eventAttendees.userId, userId)))
+      .limit(1);
+
+    if (existingAttendance) {
+      // Update existing attendance
+      await db
+        .update(eventAttendees)
+        .set({ status })
+        .where(and(eq(eventAttendees.eventId, eventId), eq(eventAttendees.userId, userId)));
+    } else {
+      // Create new attendance record
+      await db.insert(eventAttendees).values({
+        eventId,
+        userId,
+        status,
+      });
+    }
+
+    // Update attendee count
+    const attendeeCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(eventAttendees)
+      .where(and(eq(eventAttendees.eventId, eventId), eq(eventAttendees.status, "going")))
+      .then(result => Number(result[0]?.count) || 0);
+
+    await db
+      .update(events)
+      .set({ attendeeCount })
+      .where(eq(events.id, eventId));
   }
 }
 
