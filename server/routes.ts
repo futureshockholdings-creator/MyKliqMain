@@ -616,7 +616,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { insertActionSchema } = await import("@shared/schema");
-      const actionData = insertActionSchema.parse({ ...req.body, userId });
+      
+      // Generate stream key if not provided
+      const streamKey = req.body.streamKey || `stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const actionData = insertActionSchema.parse({ 
+        ...req.body, 
+        userId,
+        streamKey
+      });
       
       const action = await storage.createAction(actionData);
       res.json(action);
