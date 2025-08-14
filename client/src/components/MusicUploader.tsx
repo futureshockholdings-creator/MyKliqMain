@@ -349,7 +349,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
             size="sm"
             onClick={() => removeMusicMutation.mutate()}
             disabled={removeMusicMutation.isPending}
-            className="text-red-400 hover:text-red-300 hover:bg-red-500/20"
+            className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
             data-testid="button-remove-music"
           >
             <Trash2 className="w-3 h-3" />
@@ -362,7 +362,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
           <Button
             variant="outline"
             size="sm"
-            className="w-full border-pink-500 text-pink-400 hover:bg-pink-500/20"
+            className="w-full border-primary text-primary hover:bg-primary/10"
             data-testid="button-upload-music"
           >
             <Music className="w-4 h-4 mr-2" />
@@ -370,21 +370,21 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
           </Button>
         </DialogTrigger>
         
-        <DialogContent className="bg-gray-800 border-gray-700 max-w-lg">
+        <DialogContent className="bg-card border-border max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-pink-400">Add Profile Music</DialogTitle>
-            <DialogDescription className="text-gray-400">
+            <DialogTitle className="text-primary">Add Profile Music</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
               Upload a music file or paste a web URL to set your profile music
             </DialogDescription>
           </DialogHeader>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-gray-700">
-              <TabsTrigger value="upload" className="data-[state=active]:bg-pink-500">
+            <TabsList className="grid w-full grid-cols-2 bg-muted">
+              <TabsTrigger value="upload" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Upload className="w-4 h-4 mr-1" />
                 Upload File
               </TabsTrigger>
-              <TabsTrigger value="url" className="data-[state=active]:bg-pink-500">
+              <TabsTrigger value="url" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Link className="w-4 h-4 mr-1" />
                 Web URL
               </TabsTrigger>
@@ -392,7 +392,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
 
             {/* Shared Title Input */}
             <div className="mt-4">
-              <Label htmlFor="music-title" className="text-gray-300">
+              <Label htmlFor="music-title" className="text-foreground">
                 Song Title
               </Label>
               <Input
@@ -400,17 +400,17 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                 value={musicTitle}
                 onChange={(e) => setMusicTitle(e.target.value)}
                 placeholder="Enter song title"
-                className="bg-gray-700 border-gray-600 text-white"
+                className="bg-input border-border text-foreground"
                 data-testid="input-music-title"
               />
             </div>
 
             <TabsContent value="upload" className="space-y-4 mt-4">
               <div>
-                <Label htmlFor="music-file" className="text-gray-300">
+                <Label htmlFor="music-file" className="text-foreground">
                   Audio File (MP3, WAV, M4A, M4P, AAC, OGG, FLAC)
                 </Label>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Note: M4P files with DRM protection may not play in web browsers
                 </p>
                 <div className="mt-2">
@@ -424,20 +424,20 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                   />
                 {selectedFile && (
                   <div className="mt-2 space-y-2">
-                    <div className="p-3 bg-gray-600 rounded border">
-                      <p className="text-sm text-gray-300 font-medium">
+                    <div className="p-3 bg-muted rounded border">
+                      <p className="text-sm text-foreground font-medium">
                         Selected: {selectedFile.name} ({Math.round(selectedFile.size / 1024)}KB)
                       </p>
                       
                       {isProcessing && (
-                        <div className="flex items-center gap-2 mt-2 text-blue-400">
+                        <div className="flex items-center gap-2 mt-2 text-primary">
                           <Loader2 className="w-4 h-4 animate-spin" />
                           <span className="text-sm">Processing file...</span>
                         </div>
                       )}
                       
                       {processedFile && (
-                        <div className="flex items-center gap-2 mt-2 text-green-400">
+                        <div className="flex items-center gap-2 mt-2 text-primary">
                           <Settings className="w-4 h-4" />
                           <span className="text-sm">
                             Converted: {processedFile.name} ({Math.round(processedFile.size / 1024)}KB)
@@ -449,40 +449,40 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                         <Alert className={`mt-2 ${
                           fileRecommendations.canProcess 
                             ? fileRecommendations.recommendation === "File ready to use" 
-                              ? "border-green-500/30 bg-green-500/10" 
-                              : "border-blue-500/30 bg-blue-500/10"
-                            : "border-red-500/30 bg-red-500/10"
+                              ? "border-primary/30 bg-primary/10" 
+                              : "border-secondary/30 bg-secondary/10"
+                            : "border-destructive/30 bg-destructive/10"
                         }`}>
                           <div className="flex items-start gap-2">
                             {fileRecommendations.canProcess ? (
                               fileRecommendations.recommendation === "File ready to use" ? (
-                                <Info className="w-4 h-4 text-green-400 mt-0.5" />
+                                <Info className="w-4 h-4 text-primary mt-0.5" />
                               ) : (
-                                <Settings className="w-4 h-4 text-blue-400 mt-0.5" />
+                                <Settings className="w-4 h-4 text-secondary-foreground mt-0.5" />
                               )
                             ) : (
-                              <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5" />
+                              <AlertTriangle className="w-4 h-4 text-destructive mt-0.5" />
                             )}
                             <div className="flex-1">
                               <div className={`font-medium text-sm ${
                                 fileRecommendations.canProcess 
                                   ? fileRecommendations.recommendation === "File ready to use"
-                                    ? "text-green-400" 
-                                    : "text-blue-400"
-                                  : "text-red-400"
+                                    ? "text-primary" 
+                                    : "text-secondary-foreground"
+                                  : "text-destructive"
                               }`}>
                                 {fileRecommendations.recommendation}
                               </div>
-                              <AlertDescription className="text-xs text-gray-300 mt-1">
+                              <AlertDescription className="text-xs text-muted-foreground mt-1">
                                 {fileRecommendations.message}
                               </AlertDescription>
                               {fileRecommendations.suggestedTools.length > 0 && (
                                 <div className="mt-2">
-                                  <div className="text-xs font-medium text-gray-400 mb-1">Suggestions:</div>
-                                  <ul className="text-xs text-gray-300 space-y-1">
+                                  <div className="text-xs font-medium text-muted-foreground mb-1">Suggestions:</div>
+                                  <ul className="text-xs text-foreground space-y-1">
                                     {fileRecommendations.suggestedTools.map((tool: string, index: number) => (
                                       <li key={index} className="flex items-start gap-1">
-                                        <span className="text-gray-500">•</span>
+                                        <span className="text-muted-foreground">•</span>
                                         <span>{tool}</span>
                                       </li>
                                     ))}
@@ -492,7 +492,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                                       variant="outline"
                                       size="sm"
                                       onClick={() => setShowConversionGuide(true)}
-                                      className="mt-2 text-xs border-amber-500 text-amber-400 hover:bg-amber-500/20"
+                                      className="mt-2 text-xs border-muted-foreground text-muted-foreground hover:bg-muted"
                                     >
                                       <Info className="w-3 h-3 mr-1" />
                                       View Detailed Guide
@@ -512,9 +512,9 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
 
               {/* DRM Detection and Guide Button */}
             {selectedFile && fileRecommendations && !fileRecommendations.canProcess && (
-              <Alert className="border-amber-500/30 bg-amber-500/10">
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
-                <AlertDescription className="text-amber-300">
+              <Alert className="border-muted bg-muted/10">
+                <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+                <AlertDescription className="text-muted-foreground">
                   <div className="font-medium mb-2">DRM-Protected File Detected</div>
                   <div className="text-sm space-y-2">
                     <p>This file contains copy protection that prevents web playback.</p>
@@ -522,7 +522,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                       onClick={() => setShowConversionGuide(true)}
                       variant="outline"
                       size="sm"
-                      className="border-amber-500 text-amber-400 hover:bg-amber-500/20"
+                      className="border-muted-foreground text-muted-foreground hover:bg-muted"
                     >
                       <Info className="w-4 h-4 mr-2" />
                       View Conversion Guide
@@ -539,7 +539,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                 onClick={() => handleFileConversion(selectedFile)}
                 disabled={isProcessing}
                 variant="outline"
-                className="w-full border-blue-500 text-blue-400 hover:bg-blue-500/20"
+                className="w-full border-primary text-primary hover:bg-primary/10"
               >
                 {isProcessing ? (
                   <>
@@ -565,7 +565,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                   isProcessing ||
                   (!fileRecommendations?.canProcess && !processedFile)
                 }
-                className="flex-1 bg-pink-500 hover:bg-pink-600 text-white disabled:opacity-50"
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
                 data-testid="button-confirm-upload"
               >
                 {isUploading ? (
@@ -592,7 +592,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                   setMusicTitle(currentMusicTitle || "");
                 }}
                 disabled={isUploading || isProcessing}
-                className="text-gray-400 hover:text-white hover:bg-gray-700"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted"
                 data-testid="button-cancel-upload"
               >
                 Cancel
@@ -602,10 +602,10 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
 
             <TabsContent value="url" className="space-y-4 mt-4">
               <div>
-                <Label htmlFor="music-url" className="text-gray-300">
+                <Label htmlFor="music-url" className="text-foreground">
                   Music URL
                 </Label>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Paste a YouTube link for embedded player or direct audio file URL
                 </p>
                 <div className="mt-2">
@@ -615,41 +615,41 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                     value={musicUrl}
                     onChange={(e) => handleUrlChange(e.target.value)}
                     placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ or direct audio URL"
-                    className="bg-gray-700 border-gray-600 text-white"
+                    className="bg-input border-border text-foreground"
                     data-testid="input-music-url"
                   />
                 </div>
                 
                 {musicUrl && (
-                  <div className="mt-2 p-3 bg-gray-600 rounded border">
+                  <div className="mt-2 p-3 bg-muted rounded border">
                     <div className="flex items-start gap-2">
-                      <ExternalLink className="w-4 h-4 text-blue-400 mt-0.5" />
+                      <ExternalLink className="w-4 h-4 text-primary mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-300">URL Preview</p>
-                        <p className="text-xs text-blue-400 break-all">{musicUrl}</p>
+                        <p className="text-sm font-medium text-foreground">URL Preview</p>
+                        <p className="text-xs text-primary break-all">{musicUrl}</p>
                       </div>
                     </div>
                     
                     {musicUrl.includes('youtube.com') || musicUrl.includes('youtu.be') ? (
-                      <Alert className="mt-2 border-red-500/30 bg-red-500/10">
-                        <Music className="w-4 h-4 text-red-400" />
-                        <AlertDescription className="text-red-300 text-xs">
+                      <Alert className="mt-2 border-primary/30 bg-primary/10">
+                        <Music className="w-4 h-4 text-primary" />
+                        <AlertDescription className="text-foreground text-xs">
                           <div className="font-medium mb-1">YouTube Music Detected</div>
                           <p>Perfect! This will show as a YouTube embed player on your profile for easy music sharing.</p>
                         </AlertDescription>
                       </Alert>
                     ) : musicUrl.includes('soundcloud.com') ? (
-                      <Alert className="mt-2 border-green-500/30 bg-green-500/10">
-                        <Info className="w-4 h-4 text-green-400" />
-                        <AlertDescription className="text-green-300 text-xs">
+                      <Alert className="mt-2 border-secondary/30 bg-secondary/10">
+                        <Info className="w-4 h-4 text-secondary-foreground" />
+                        <AlertDescription className="text-foreground text-xs">
                           <div className="font-medium mb-1">SoundCloud Link</div>
                           <p>SoundCloud links should work well for profile music playback.</p>
                         </AlertDescription>
                       </Alert>
                     ) : (
-                      <Alert className="mt-2 border-yellow-500/30 bg-yellow-500/10">
-                        <Info className="w-4 h-4 text-yellow-400" />
-                        <AlertDescription className="text-yellow-300 text-xs">
+                      <Alert className="mt-2 border-muted/30 bg-muted/10">
+                        <Info className="w-4 h-4 text-muted-foreground" />
+                        <AlertDescription className="text-muted-foreground text-xs">
                           <div className="font-medium mb-1">Direct Audio URL</div>
                           <p>Make sure this URL directly points to an audio file (MP3, WAV, etc.) for best compatibility.</p>
                         </AlertDescription>
@@ -667,7 +667,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                     !musicTitle.trim() || 
                     uploadUrlMusicMutation.isPending
                   }
-                  className="flex-1 bg-pink-500 hover:bg-pink-600 text-white disabled:opacity-50"
+                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
                   data-testid="button-save-url"
                 >
                   {uploadUrlMusicMutation.isPending ? (
@@ -691,7 +691,7 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
                     setMusicTitle(currentMusicTitle || "");
                   }}
                   disabled={uploadUrlMusicMutation.isPending}
-                  className="text-gray-400 hover:text-white hover:bg-gray-700"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted"
                   data-testid="button-cancel-url"
                 >
                   Cancel

@@ -147,16 +147,16 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
     const videoId = getYouTubeVideoId(musicUrl);
     
     return (
-      <div className="bg-gradient-to-r from-red-500/20 to-pink-500/20 rounded-lg p-4 border border-red-500/30">
+      <div className="bg-card border-border rounded-lg p-4 border">
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-3">
-            <Music className="w-5 h-5 text-red-400" />
-            <span className="text-red-400 font-medium flex-1 truncate">{musicTitle}</span>
+            <Music className="w-5 h-5 text-primary" />
+            <span className="text-primary font-medium flex-1 truncate">{musicTitle}</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={openExternalUrl}
-              className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+              className="text-muted-foreground hover:text-foreground"
               title="Open on YouTube"
             >
               <ExternalLink className="w-4 h-4" />
@@ -184,18 +184,18 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
           )}
 
           {!videoId && (
-            <Alert className="border-red-500/30 bg-red-500/10">
-              <AlertTriangle className="w-4 h-4 text-red-400" />
-              <AlertDescription className="text-red-300 text-sm">
+            <Alert className="border-destructive bg-destructive/10">
+              <AlertTriangle className="w-4 h-4 text-destructive" />
+              <AlertDescription className="text-destructive text-sm">
                 <div className="font-medium mb-1">Invalid YouTube URL</div>
                 <p>Cannot extract video ID from this URL. Please check the link.</p>
               </AlertDescription>
             </Alert>
           )}
 
-          <div className="flex justify-between items-center text-xs text-gray-400">
+          <div className="flex justify-between items-center text-xs text-muted-foreground">
             <span>YouTube Music Player</span>
-            <span className="bg-red-500/20 px-2 py-1 rounded text-red-400">YOUTUBE</span>
+            <span className="bg-primary/20 px-2 py-1 rounded text-primary">YOUTUBE</span>
           </div>
         </div>
       </div>
@@ -204,9 +204,9 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
 
   if (hasError) {
     return (
-      <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+      <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-red-400">
+          <div className="flex items-center gap-2 text-destructive">
             <Music className="w-4 h-4" />
             <span className="text-sm">Unable to load audio file</span>
           </div>
@@ -214,18 +214,18 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
             variant="ghost"
             size="sm"
             onClick={openExternalUrl}
-            className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+            className="text-muted-foreground hover:text-foreground"
           >
             <ExternalLink className="w-3 h-3" />
           </Button>
         </div>
-        <p className="text-xs text-red-300 mt-1">Try opening the link directly or check if the URL is accessible.</p>
+        <p className="text-xs text-destructive/80 mt-1">Try opening the link directly or check if the URL is accessible.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-lg p-4 border border-pink-500/30">
+    <div className="bg-card border-border rounded-lg p-4 border">
       <audio
         ref={audioRef}
         src={musicUrl}
@@ -241,19 +241,19 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
       />
       
       <div className="flex items-center gap-3 mb-3">
-        <Music className="w-5 h-5 text-pink-400" />
-        <span className="text-pink-400 font-medium flex-1 truncate">
+        <Music className="w-5 h-5 text-primary" />
+        <span className="text-primary font-medium flex-1 truncate">
           {musicTitle}
         </span>
         {musicUrl.toLowerCase().endsWith('.m4p') && (
-          <span className="text-xs text-amber-400 bg-amber-400/20 px-2 py-1 rounded">
+          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
             M4P
           </span>
         )}
       </div>
       
       {hasError && (
-        <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded text-red-400 text-sm">
+        <div className="mb-3 p-2 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
           {musicUrl.toLowerCase().endsWith('.m4p') ? 
             "M4P files may have playback restrictions. Some protected iTunes files cannot be played in browsers." :
             "Unable to play this audio file. The format may not be supported."
@@ -271,7 +271,7 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
           className="w-full"
           data-testid="slider-progress"
         />
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
+        <div className="flex justify-between text-xs text-muted-foreground mt-1">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
         </div>
@@ -283,7 +283,7 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
           variant="ghost"
           size="sm"
           onClick={togglePlay}
-          className="text-pink-400 hover:text-pink-300 hover:bg-pink-500/20"
+          className="text-primary hover:text-primary/80"
           data-testid="button-play-pause"
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -293,7 +293,7 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
           variant="ghost"
           size="sm"
           onClick={toggleMute}
-          className="text-pink-400 hover:text-pink-300 hover:bg-pink-500/20"
+          className="text-primary hover:text-primary/80"
           data-testid="button-mute"
         >
           {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}

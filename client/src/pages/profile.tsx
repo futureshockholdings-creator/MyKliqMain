@@ -10,6 +10,8 @@ import { useAuth } from "@/hooks/useAuth";
 
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
+import { MusicUploader } from "@/components/MusicUploader";
+import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
 
 import { type User } from "@shared/schema";
 
@@ -118,8 +120,40 @@ export default function Profile() {
           </Card>
         )}
 
-
-
+        {/* Profile Music Section */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-primary">🎵 Profile Music</CardTitle>
+            <CardDescription className="text-muted-foreground">Add music that plays when people visit your profile</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Current Profile Music Player (if music exists) */}
+            {(user as User)?.profileMusicUrl && (user as User)?.profileMusicTitle && (
+              <div>
+                <Label className="text-sm font-medium text-foreground">Current Profile Music</Label>
+                <div className="mt-2">
+                  <ProfileMusicPlayer
+                    musicUrl={(user as User).profileMusicUrl!}
+                    musicTitle={(user as User).profileMusicTitle!}
+                    autoPlay={false}
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Music Upload/Management */}
+            <div>
+              <Label className="text-sm font-medium text-foreground">Profile Music Settings</Label>
+              <div className="mt-2">
+                <MusicUploader
+                  currentMusicUrl={(user as User)?.profileMusicUrl || undefined}
+                  currentMusicTitle={(user as User)?.profileMusicTitle || undefined}
+                  userId={(user as User)?.id!}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
       </div>
     </div>
