@@ -17,6 +17,7 @@ import {
   actionChatMessages,
   meetups,
   meetupCheckIns,
+  birthdayMessages,
   type User,
   type UpsertUser,
   type UserTheme,
@@ -51,6 +52,8 @@ import {
   type InsertMeetup,
   type MeetupCheckIn,
   type InsertMeetupCheckIn,
+  type BirthdayMessage,
+  type InsertBirthdayMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or } from "drizzle-orm";
@@ -132,6 +135,12 @@ export interface IStorage {
   getUserByInviteCode(inviteCode: string): Promise<User | undefined>;
   updateUser(userId: string, updates: Partial<User>): Promise<User>;
   deleteExpiredMessages(): Promise<void>;
+  
+  // Birthday operations
+  getUsersWithBirthdayToday(): Promise<User[]>;
+  createBirthdayMessage(message: InsertBirthdayMessage): Promise<BirthdayMessage>;
+  getBirthdayMessagesSentThisYear(birthdayUserId: string, year: number): Promise<BirthdayMessage[]>;
+  getAllUsers(): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -261,6 +270,10 @@ export class DatabaseStorage implements IStorage {
         mediaUrl: posts.mediaUrl,
         mediaType: posts.mediaType,
         likes: posts.likes,
+        latitude: posts.latitude,
+        longitude: posts.longitude,
+        locationName: posts.locationName,
+        address: posts.address,
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
         author: users,
@@ -299,6 +312,10 @@ export class DatabaseStorage implements IStorage {
           mediaUrl: post.mediaUrl,
           mediaType: post.mediaType,
           likes: likesData,
+          latitude: post.latitude,
+          longitude: post.longitude,
+          locationName: post.locationName,
+          address: post.address,
           createdAt: post.createdAt,
           updatedAt: post.updatedAt,
           author: post.author,
@@ -1113,6 +1130,39 @@ export class DatabaseStorage implements IStorage {
     }
 
     return isWithinRange;
+  }
+
+  // Birthday operations
+  async getUsersWithBirthdayToday(): Promise<User[]> {
+    const today = new Date();
+    const monthDay = `${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+    
+    return await db
+      .select()
+      .from(users)
+      .where(sql`to_char(${users.birthdate}, 'MM-DD') = ${monthDay}`);
+  }
+
+  async createBirthdayMessage(message: InsertBirthdayMessage): Promise<BirthdayMessage> {
+    const [birthdayMessage] = await db
+      .insert(birthdayMessages)
+      .values(message)
+      .returning();
+    return birthdayMessage;
+  }
+
+  async getBirthdayMessagesSentThisYear(birthdayUserId: string, year: number): Promise<BirthdayMessage[]> {
+    return await db
+      .select()
+      .from(birthdayMessages)
+      .where(and(
+        eq(birthdayMessages.birthdayUserId, birthdayUserId),
+        eq(birthdayMessages.year, year)
+      ));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
   }
 }
 

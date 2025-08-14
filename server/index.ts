@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { startBirthdayService } from "./birthdayService";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
@@ -67,5 +68,8 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Start the birthday service for automatic birthday messages
+    startBirthdayService();
   });
 })();

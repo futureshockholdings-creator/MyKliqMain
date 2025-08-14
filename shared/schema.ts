@@ -11,6 +11,7 @@ import {
   boolean,
   numeric,
   pgEnum,
+  date,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -37,6 +38,7 @@ export const users = pgTable("users", {
   bio: text("bio"),
   inviteCode: varchar("invite_code", { length: 20 }).unique(),
   kliqName: varchar("kliq_name").default("My Kliq"),
+  birthdate: date("birthdate"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -470,6 +472,22 @@ export const insertMeetupSchema = createInsertSchema(meetups).omit({ id: true, i
 export const insertMeetupCheckInSchema = createInsertSchema(meetupCheckIns).omit({ id: true, checkInTime: true, checkOutTime: true, isVerified: true });
 
 // Types
+// Birthday messages to track sent birthday wishes
+export const birthdayMessages = pgTable("birthday_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  birthdayUserId: varchar("birthday_user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  senderUserId: varchar("sender_user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  message: text("message").notNull(),
+  year: integer("year").notNull(), // Track year to avoid duplicate messages
+  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Birthday message types
+export const insertBirthdayMessageSchema = createInsertSchema(birthdayMessages).omit({ id: true, createdAt: true });
+export type InsertBirthdayMessage = z.infer<typeof insertBirthdayMessageSchema>;
+export type BirthdayMessage = typeof birthdayMessages.$inferSelect;
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type UserTheme = typeof userThemes.$inferSelect;

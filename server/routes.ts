@@ -903,6 +903,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GPS Check-in route - create a post with location
+  app.post("/api/checkin", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { latitude, longitude, locationName, address, emoji } = req.body;
+
+      // Create post with location info
+      const post = await storage.createPost({
+        userId,
+        content: `${emoji ? emoji + ' ' : ''}Checked in at ${locationName}`,
+        latitude: latitude?.toString(),
+        longitude: longitude?.toString(), 
+        locationName,
+        address,
+      });
+
+      res.json(post);
+    } catch (error) {
+      console.error("Error checking in:", error);
+      res.status(500).json({ message: "Failed to check in" });
+    }
+  });
+
+  // Birthday routes
+  app.get("/api/birthdays/today", isAuthenticated, async (req: any, res) => {
+    try {
+      const birthdayUsers = await storage.getUsersWithBirthdayToday();
+      res.json(birthdayUsers);
+    } catch (error) {
+      console.error("Error fetching birthday users:", error);
+      res.status(500).json({ message: "Failed to fetch birthday users" });
+    }
+  });
+
+  // Update user birthdate
+  app.patch("/api/user/birthdate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { birthdate } = req.body;
+      
+      const updatedUser = await storage.updateUser(userId, { birthdate });
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating birthdate:", error);
+      res.status(500).json({ message: "Failed to update birthdate" });
+    }
+  });
+
+  // Send birthday message (creates automatic birthday post)
+  app.post("/api/birthdays/send-message", isAuthenticated, async (req: any, res) => {
+    try {
+      const senderId = req.user.claims.sub;
+      const { birthdayUserId, message } = req.body;
+      
+      const currentYear = new Date().getFullYear();
+      
+      // Check if message already sent this year
+      const existingMessages = await storage.getBirthdayMessagesSentThisYear(birthdayUserId, currentYear);
+      const alreadySent = existingMessages.some(msg => msg.senderUserId === senderId);
+      
+      if (alreadySent) {
+        return res.status(400).json({ message: "Birthday message already sent this year" });
+      }
+      
+      // Get birthday user info
+      const birthdayUser = await storage.getUser(birthdayUserId);
+      if (!birthdayUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Create post for birthday message
+      const post = await storage.createPost({
+        userId: senderId,
+        content: `🎉 Happy Birthday ${birthdayUser.firstName}! ${message}`
+      });
+      
+      // Save birthday message record
+      const birthdayMessage = await storage.createBirthdayMessage({
+        birthdayUserId,
+        senderUserId: senderId,
+        message,
+        year: currentYear,
+        postId: post.id
+      });
+      
+      res.json({ success: true, post, birthdayMessage });
+    } catch (error) {
+      console.error("Error sending birthday message:", error);
+      res.status(500).json({ message: "Failed to send birthday message" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server for real-time Action features
