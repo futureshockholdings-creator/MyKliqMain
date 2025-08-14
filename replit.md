@@ -15,6 +15,7 @@ MyKliq is a social media application designed for close-knit friend groups. The 
 - **Enhanced Music Profile System**: Comprehensive upgrade with M4P file support, enhanced DRM detection, client-side audio conversion for non-DRM files, detailed conversion guidance, and interactive user education hub with step-by-step tutorials (August 14, 2025)
 - **Streaming Service Integration Removal**: Removed external streaming service integration per user request to focus on local music profile functionality only (August 14, 2025)
 - **URL-Based Profile Music System**: Enhanced music system to accept YouTube links and web audio URLs through copy-paste functionality, supporting both local file uploads and web URL input methods (August 14, 2025)
+- **Unified Profile Management System**: Merged profile details and profile settings into a single cohesive interface with tabbed organization, supporting basic information (bio, phone, kliq name, birthdate) and extended details (interests, favorites, lifestyle, entertainment preferences) all in one place (August 14, 2025)
 
 # User Preferences
 

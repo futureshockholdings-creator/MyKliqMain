@@ -77,8 +77,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Profile details endpoint
-  app.put("/api/user/profile-details", isAuthenticated, async (req: any, res) => {
+  // Unified profile endpoint (basic info + details)
+  app.put("/api/user/profile", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const profileData = req.body;
@@ -86,7 +86,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate and clean the data
       const cleanedData: any = {};
       
-      // Handle array fields
+      // Handle basic profile fields
+      if (profileData.bio !== undefined) cleanedData.bio = profileData.bio;
+      if (profileData.phoneNumber !== undefined) cleanedData.phoneNumber = profileData.phoneNumber;
+      if (profileData.kliqName !== undefined) cleanedData.kliqName = profileData.kliqName;
+      if (profileData.birthdate !== undefined) cleanedData.birthdate = profileData.birthdate;
+      
+      // Handle array fields (filter out empty strings)
       if (profileData.interests) cleanedData.interests = profileData.interests.filter((item: string) => item.trim());
       if (profileData.favoriteLocations) cleanedData.favoriteLocations = profileData.favoriteLocations.filter((item: string) => item.trim());
       if (profileData.favoriteFoods) cleanedData.favoriteFoods = profileData.favoriteFoods.filter((item: string) => item.trim());
@@ -96,17 +102,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (profileData.favoriteBooks) cleanedData.favoriteBooks = profileData.favoriteBooks.filter((item: string) => item.trim());
       
       // Handle string fields
-      if (profileData.relationshipStatus) cleanedData.relationshipStatus = profileData.relationshipStatus;
-      if (profileData.petPreferences) cleanedData.petPreferences = profileData.petPreferences;
-      if (profileData.lifestyle) cleanedData.lifestyle = profileData.lifestyle;
+      if (profileData.relationshipStatus !== undefined) cleanedData.relationshipStatus = profileData.relationshipStatus;
+      if (profileData.petPreferences !== undefined) cleanedData.petPreferences = profileData.petPreferences;
+      if (profileData.lifestyle !== undefined) cleanedData.lifestyle = profileData.lifestyle;
 
       await storage.updateUser(userId, cleanedData);
 
       const updatedUser = await storage.getUser(userId);
       res.json(updatedUser);
     } catch (error) {
-      console.error("Error updating profile details:", error);
-      res.status(500).json({ message: "Failed to update profile details" });
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 

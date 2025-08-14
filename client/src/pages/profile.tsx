@@ -9,7 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { MusicUploader } from "@/components/MusicUploader";
 import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
-import { ProfileDetailsEditor } from "@/components/ProfileDetailsEditor";
+import { ProfileSettings } from "@/components/ProfileSettings";
 import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
 
 import { type User } from "@shared/schema";
@@ -18,40 +18,10 @@ export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [birthdate, setBirthdate] = useState((user as User)?.birthdate || "");
 
 
-  const updateBirthdateMutation = useMutation({
-    mutationFn: async (birthdate: string) => {
-      return await apiRequest("/api/user/birthdate", "PATCH", { birthdate });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({
-        title: "Success",
-        description: "Birthdate updated successfully!",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to update birthdate",
-        variant: "destructive",
-      });
-    },
-  });
 
-  const handleUpdateBirthdate = () => {
-    if (!birthdate) {
-      toast({
-        title: "Error", 
-        description: "Please enter your birthdate",
-        variant: "destructive",
-      });
-      return;
-    }
-    updateBirthdateMutation.mutate(birthdate);
-  };
+
 
   // Query for birthday users today
   const { data: birthdayUsers = [] } = useQuery<User[]>({
@@ -90,53 +60,7 @@ export default function Profile() {
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile Settings</CardTitle>
-            <CardDescription>Update your personal information</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Name</Label>
-              <div className="text-sm text-muted-foreground">
-                {(user as User)?.firstName} {(user as User)?.lastName}
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <div className="text-sm text-muted-foreground">
-                {(user as User)?.email}
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Kliq Name</Label>
-              <div className="text-sm text-muted-foreground">
-                {(user as User)?.kliqName}
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="birthdate">Birthdate</Label>
-              <Input
-                id="birthdate"
-                type="date"
-                value={birthdate}
-                onChange={(e) => setBirthdate(e.target.value)}
-                data-testid="input-birthdate"
-              />
-            </div>
-
-            <Button 
-              onClick={handleUpdateBirthdate}
-              disabled={updateBirthdateMutation.isPending}
-              data-testid="button-update-birthdate"
-            >
-              {updateBirthdateMutation.isPending ? "Updating..." : "Update Birthdate"}
-            </Button>
-          </CardContent>
-        </Card>
 
         {/* Profile Music Section */}
         <Card>
@@ -173,14 +97,14 @@ export default function Profile() {
           </CardContent>
         </Card>
 
-        {/* Profile Details Section */}
+        {/* Profile Settings & Details Section */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Profile Details</CardTitle>
-              <ProfileDetailsEditor user={user} />
+              <CardTitle>Profile Information</CardTitle>
+              <ProfileSettings user={user} />
             </div>
-            <CardDescription>Your interests, preferences, and personal details</CardDescription>
+            <CardDescription>Your personal details, interests, and preferences</CardDescription>
           </CardHeader>
           <CardContent>
             <ProfileDetailsDisplay user={user} />
