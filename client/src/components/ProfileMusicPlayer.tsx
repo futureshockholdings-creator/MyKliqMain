@@ -16,6 +16,7 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
   const [volume, setVolume] = useState(0.7);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -107,6 +108,14 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
         ref={audioRef}
         src={musicUrl}
         preload="metadata"
+        onError={(e) => {
+          console.log("Audio playback error for:", musicUrl, e);
+          setIsPlaying(false);
+          setHasError(true);
+        }}
+        onCanPlay={() => {
+          setHasError(false);
+        }}
       />
       
       <div className="flex items-center gap-3 mb-3">
@@ -114,7 +123,21 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = false }: P
         <span className="text-pink-400 font-medium flex-1 truncate">
           {musicTitle}
         </span>
+        {musicUrl.toLowerCase().endsWith('.m4p') && (
+          <span className="text-xs text-amber-400 bg-amber-400/20 px-2 py-1 rounded">
+            M4P
+          </span>
+        )}
       </div>
+      
+      {hasError && (
+        <div className="mb-3 p-2 bg-red-500/20 border border-red-500/30 rounded text-red-400 text-sm">
+          {musicUrl.toLowerCase().endsWith('.m4p') ? 
+            "M4P files may have playback restrictions. Some protected iTunes files cannot be played in browsers." :
+            "Unable to play this audio file. The format may not be supported."
+          }
+        </div>
+      )}
       
       {/* Progress Bar */}
       <div className="mb-3">

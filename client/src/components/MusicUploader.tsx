@@ -104,10 +104,22 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (!file.type.startsWith("audio/")) {
+      // Validate file type (audio files only, including .m4p)
+      const validAudioTypes = [
+        'audio/',
+        'application/x-m4p', // For .m4p files
+      ];
+      
+      const validExtensions = ['.mp3', '.wav', '.m4a', '.m4p', '.aac', '.ogg', '.flac'];
+      const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+      
+      const isValidType = validAudioTypes.some(type => file.type.startsWith(type)) || 
+                         validExtensions.includes(fileExtension);
+      
+      if (!isValidType) {
         toast({
           title: "Invalid file type",
-          description: "Please select an audio file (MP3, WAV, etc.)",
+          description: "Please select an audio file (MP3, WAV, M4A, M4P, AAC, OGG, FLAC)",
           variant: "destructive",
         });
         return;
@@ -198,21 +210,31 @@ export function MusicUploader({ currentMusicUrl, currentMusicTitle, userId }: Mu
             
             <div>
               <Label htmlFor="music-file" className="text-gray-300">
-                Audio File (MP3, WAV, etc.)
+                Audio File (MP3, WAV, M4A, M4P, AAC, OGG, FLAC)
               </Label>
+              <p className="text-xs text-gray-400 mt-1">
+                Note: M4P files with DRM protection may not play in web browsers
+              </p>
               <div className="mt-2">
                 <Input
                   id="music-file"
                   type="file"
-                  accept="audio/*"
+                  accept="audio/*,.m4p,.m4a,.mp3,.wav,.aac,.ogg,.flac"
                   onChange={handleFileSelect}
                   className="bg-gray-700 border-gray-600 text-white file:bg-pink-500 file:text-white file:border-0 file:rounded file:px-3 file:py-1"
                   data-testid="input-music-file"
                 />
                 {selectedFile && (
-                  <p className="text-sm text-gray-400 mt-1">
-                    Selected: {selectedFile.name} ({Math.round(selectedFile.size / 1024)}KB)
-                  </p>
+                  <div className="mt-1 space-y-1">
+                    <p className="text-sm text-gray-400">
+                      Selected: {selectedFile.name} ({Math.round(selectedFile.size / 1024)}KB)
+                    </p>
+                    {selectedFile.name.toLowerCase().endsWith('.m4p') && (
+                      <p className="text-xs text-amber-400">
+                        ⚠️ M4P files with iTunes DRM may not play in browsers
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
