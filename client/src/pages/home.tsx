@@ -224,8 +224,20 @@ export default function Home() {
   };
 
   const commonEmojis = [
+    // Emotions & Reactions
     '😀', '😂', '😍', '😭', '😎', '😊', '🤔', '😴', 
     '❤️', '👍', '👎', '🔥', '💯', '✨', '🎉', '👏',
+    // Prayer & Spiritual
+    '🙏', '✝️', '🕊️', '☮️', '🤲', '💒',
+    // Disapproval & Negative
+    '🙄', '😤', '😠', '👎', '❌', '🚫', '🤦', '😒',
+    // Sports & Activities
+    '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏓', '🏸',
+    '🏋️', '🏊', '🏃', '🚴', '🏆', '🥇', '🎯', '🏟️',
+    // Outdoor Activities
+    '🏕️', '⛰️', '🥾', '🌲', '🏔️', '🌊', '🏖️', '⛵',
+    '🎣', '🦅', '🌙', '⭐', '🌞', '🌈', '🔥', '🏞️',
+    // Everyday
     '📍', '🏠', '🍕', '☕', '🎵', '📸', '🌟', '💫'
   ];
 
@@ -366,8 +378,8 @@ export default function Home() {
                     <Smile className="w-4 h-4" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80">
-                  <div className="grid grid-cols-8 gap-2 p-2">
+                <PopoverContent className="w-80 max-h-64 overflow-y-auto">
+                  <div className="grid grid-cols-8 gap-1 p-2">
                     {commonEmojis.map((emoji, index) => (
                       <Button
                         key={index}
@@ -685,8 +697,8 @@ export default function Home() {
                                 <Smile className="w-4 h-4" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-80">
-                              <div className="grid grid-cols-8 gap-2 p-2">
+                            <PopoverContent className="w-80 max-h-64 overflow-y-auto">
+                              <div className="grid grid-cols-8 gap-1 p-2">
                                 {commonEmojis.map((emoji, index) => (
                                   <Button
                                     key={index}
