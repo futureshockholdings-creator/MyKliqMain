@@ -29,8 +29,8 @@ function Navigation({ currentPath }: { currentPath: string }) {
   ];
 
   return (
-    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-gray-800 border-t-2 border-pink-500 z-50">
-      <div className="flex justify-around py-2">
+    <div className="fixed left-0 top-0 bottom-0 bg-gray-800 border-r-2 border-pink-500 z-50 w-20">
+      <div className="flex flex-col items-center py-4 h-full">
         {navItems.map((item) => {
           const isActive = currentPath === item.path;
           return (
@@ -38,11 +38,11 @@ function Navigation({ currentPath }: { currentPath: string }) {
               key={item.path}
               href={item.path}
               className={cn(
-                "flex flex-col items-center p-2 transition-colors",
-                isActive ? "text-pink-400" : "text-gray-400 hover:text-gray-300"
+                "flex flex-col items-center p-3 mb-4 transition-colors rounded-lg w-16",
+                isActive ? "text-pink-400 bg-pink-400/10" : "text-gray-400 hover:text-gray-300 hover:bg-gray-700/50"
               )}
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className="w-6 h-6" />
               <span className="text-xs mt-1">{item.label}</span>
             </a>
           );
@@ -83,25 +83,31 @@ function AppContent() {
   return (
     <TooltipProvider>
       <div className="bg-black min-h-screen text-white">
-        {/* Mobile App Container */}
-        <div className="max-w-sm mx-auto bg-gray-900 min-h-screen relative overflow-hidden">
-          {/* Animated Background Pattern */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <div className="absolute top-10 left-10 w-20 h-20 bg-pink-500 rounded-full animate-pulse"></div>
-            <div className="absolute top-32 right-8 w-16 h-16 bg-blue-500 rounded-full animate-bounce"></div>
-            <div className="absolute bottom-20 left-6 w-12 h-12 bg-green-500 rounded-full animate-pulse"></div>
-            <div className="absolute bottom-40 right-12 w-8 h-8 bg-yellow-500 rounded-full animate-bounce"></div>
-          </div>
+        {/* Navigation - Only show when authenticated */}
+        {isAuthenticated && !isLoading && (
+          <Navigation currentPath={currentPath} />
+        )}
+        
+        {/* Main App Container with left margin for navigation */}
+        <div className={cn(
+          "min-h-screen bg-gray-900 relative overflow-hidden",
+          isAuthenticated && !isLoading ? "ml-20" : ""
+        )}>
+          {/* Mobile App Container */}
+          <div className="max-w-sm mx-auto min-h-screen relative">
+            {/* Animated Background Pattern */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none">
+              <div className="absolute top-10 left-10 w-20 h-20 bg-pink-500 rounded-full animate-pulse"></div>
+              <div className="absolute top-32 right-8 w-16 h-16 bg-blue-500 rounded-full animate-bounce"></div>
+              <div className="absolute bottom-20 left-6 w-12 h-12 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="absolute bottom-40 right-12 w-8 h-8 bg-yellow-500 rounded-full animate-bounce"></div>
+            </div>
 
-          {/* Main Content */}
-          <div className="relative z-10">
-            <Router />
+            {/* Main Content */}
+            <div className="relative z-10">
+              <Router />
+            </div>
           </div>
-
-          {/* Navigation - Only show when authenticated */}
-          {isAuthenticated && !isLoading && (
-            <Navigation currentPath={currentPath} />
-          )}
         </div>
       </div>
       <Toaster />

@@ -197,7 +197,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="p-4 pb-20 space-y-6">
+    <div className="p-4 space-y-6">
       {/* Profile Header */}
       <Card className="bg-gradient-to-r from-pink-600/20 to-purple-600/20 border-pink-500/30" id="profile-section">
         <CardContent className="p-6">

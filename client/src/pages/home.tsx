@@ -213,7 +213,7 @@ export default function Home() {
   };
 
   return (
-    <div className="pb-20 space-y-4">
+    <div className="p-4 space-y-4">
       {/* Post Creation */}
       <Card className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-purple-500/30">
         <CardContent className="p-4">

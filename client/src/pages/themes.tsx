@@ -66,7 +66,7 @@ export default function Themes() {
 
   if (isLoading) {
     return (
-      <div className="p-4 pb-20">
+      <div className="p-4">
         <div className="animate-pulse space-y-6">
           <div className="w-48 h-6 bg-gray-600 rounded mx-auto"></div>
           {[...Array(4)].map((_, i) => (

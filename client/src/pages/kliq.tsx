@@ -197,7 +197,7 @@ export default function Kliq() {
   };
 
   return (
-    <div className="p-4 pb-20 space-y-6">
+    <div className="p-4 space-y-6">
       {/* Header */}
       <div className="text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
