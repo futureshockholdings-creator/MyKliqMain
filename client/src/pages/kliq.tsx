@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { useLocation } from "wouter";
 
 export default function Kliq() {
   const [kliqName, setKliqName] = useState("");
@@ -21,6 +22,7 @@ export default function Kliq() {
   const userData = user as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   // Fetch friends
   const { data: friends = [], isLoading: friendsLoading } = useQuery({
@@ -139,6 +141,40 @@ export default function Kliq() {
   const handleJoinKliq = () => {
     if (inviteCode.trim()) {
       joinKliqMutation.mutate(inviteCode.trim());
+    }
+  };
+
+  const handleMessageFriend = async (friendId: string, friendName: string) => {
+    try {
+      // Create or get conversation
+      const response = await apiRequest("POST", "/api/messages/conversations", {
+        participantId: friendId,
+      });
+      
+      const conversationId = response.id;
+      navigate(`/messages/${conversationId}`);
+      
+      toast({
+        title: "Starting conversation",
+        description: `Messaging ${friendName}`,
+      });
+    } catch (error) {
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to start conversation",
+        variant: "destructive",
+      });
     }
   };
 
@@ -329,6 +365,7 @@ export default function Kliq() {
             rank: f.rank
           }))}
           onRankChange={handleRankChange}
+          onMessage={handleMessageFriend}
           maxFriends={15}
         />
       )}

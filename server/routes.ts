@@ -328,15 +328,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Auto-cleanup expired messages every 5 minutes
+  setInterval(async () => {
+    try {
+      await storage.deleteExpiredMessages();
+      console.log("Cleaned up expired messages");
+    } catch (error) {
+      console.error("Error cleaning up expired messages:", error);
+    }
+  }, 5 * 60 * 1000); // 5 minutes
+
   // Incognito Messages (IM) routes
   app.get('/api/messages/conversations', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const conversations = await storage.getConversations(userId);
+      const conversations = await storage.getUserConversations(userId);
       res.json(conversations);
     } catch (error) {
       console.error("Error fetching conversations:", error);
       res.status(500).json({ message: "Failed to fetch conversations" });
+    }
+  });
+
+  app.post('/api/messages/conversations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { participantId } = req.body;
+
+      if (!participantId) {
+        return res.status(400).json({ message: "Participant ID is required" });
+      }
+
+      // Check if conversation already exists between these users
+      const conversations = await storage.getUserConversations(userId);
+      const existingConversation = conversations.find(conv => 
+        conv.otherParticipant.id === participantId
+      );
+
+      if (existingConversation) {
+        return res.json(existingConversation);
+      }
+
+      // Create new conversation
+      const conversation = await storage.createConversation({
+        participantIds: [userId, participantId]
+      });
+
+      res.json({ id: conversation.id });
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).json({ message: "Failed to create conversation" });
     }
   });
 

@@ -134,6 +134,8 @@ export const messages = pgTable("messages", {
   receiverId: varchar("receiver_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   content: text("content").notNull(),
   isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -305,4 +307,3 @@ export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
-export type InsertContentFilter = z.infer<typeof insertContentFilterSchema>;

@@ -82,6 +82,7 @@ export interface IStorage {
   generateInviteCode(): Promise<string>;
   getUserByInviteCode(inviteCode: string): Promise<User | undefined>;
   updateUser(userId: string, updates: Partial<User>): Promise<User>;
+  deleteExpiredMessages(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -433,7 +434,8 @@ export class DatabaseStorage implements IStorage {
           lastMessage = msg;
         }
 
-        // Count unread messages
+        // Count unread, non-expired messages
+        const now = new Date();
         const unreadCount = await db
           .select({ count: sql<number>`count(*)` })
           .from(messages)
@@ -441,7 +443,11 @@ export class DatabaseStorage implements IStorage {
             and(
               eq(messages.receiverId, userId),
               or(eq(messages.senderId, otherUserId), eq(messages.receiverId, otherUserId)),
-              eq(messages.isRead, false)
+              eq(messages.isRead, false),
+              or(
+                sql`${messages.expiresAt} IS NULL`,
+                sql`${messages.expiresAt} > ${now}`
+              )
             )
           )
           .then(result => Number(result[0]?.count) || 0);
@@ -474,7 +480,8 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
 
-    // Get all messages in this conversation with sender/receiver info
+    // Get all non-expired messages in this conversation with sender/receiver info
+    const now = new Date();
     const conversationMessages = await db
       .select({
         message: messages,
@@ -487,6 +494,10 @@ export class DatabaseStorage implements IStorage {
           or(
             and(eq(messages.senderId, userId), eq(messages.receiverId, otherUserId)),
             and(eq(messages.senderId, otherUserId), eq(messages.receiverId, userId))
+          ),
+          or(
+            sql`${messages.expiresAt} IS NULL`,
+            sql`${messages.expiresAt} > ${now}`
           )
         )
       )
@@ -558,23 +569,42 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markMessageAsRead(messageId: string): Promise<void> {
+    const readAt = new Date();
+    const expiresAt = new Date(readAt.getTime() + 3 * 60 * 1000); // 3 minutes after being read
+    
     await db
       .update(messages)
-      .set({ isRead: true })
+      .set({ 
+        isRead: true, 
+        readAt,
+        expiresAt 
+      })
       .where(eq(messages.id, messageId));
   }
 
   async markConversationAsRead(conversationId: string, userId: string): Promise<void> {
     // Mark all unread messages in this conversation as read for the user
+    const readAt = new Date();
+    const expiresAt = new Date(readAt.getTime() + 3 * 60 * 1000); // 3 minutes after being read
+    
     await db
       .update(messages)
-      .set({ isRead: true })
+      .set({ 
+        isRead: true,
+        readAt,
+        expiresAt 
+      })
       .where(
         and(
           eq(messages.receiverId, userId),
           eq(messages.isRead, false)
         )
       );
+  }
+
+  async deleteExpiredMessages(): Promise<void> {
+    const now = new Date();
+    await db.delete(messages).where(sql`${messages.expiresAt} < ${now}`);
   }
 }
 

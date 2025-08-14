@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Crown, Users, Star } from "lucide-react";
+import { Crown, Users, Star, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Friend {
@@ -16,10 +16,11 @@ interface Friend {
 interface PyramidChartProps {
   friends: Friend[];
   onRankChange?: (friendId: string, newRank: number) => void;
+  onMessage?: (friendId: string, friendName: string) => void;
   maxFriends?: number;
 }
 
-export function PyramidChart({ friends, onRankChange, maxFriends = 15 }: PyramidChartProps) {
+export function PyramidChart({ friends, onRankChange, onMessage, maxFriends = 15 }: PyramidChartProps) {
   const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
 
   const sortedFriends = [...friends].sort((a, b) => a.rank - b.rank);
@@ -79,6 +80,21 @@ export function PyramidChart({ friends, onRankChange, maxFriends = 15 }: Pyramid
             draggedFriend?.id === friend.id && "opacity-50"
           )}
         >
+          {/* Message button - appears on hover */}
+          {onMessage && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMessage(friend.id, getName(friend));
+              }}
+              className="absolute -top-1 -right-1 z-20 w-6 h-6 p-0 bg-pink-500 hover:bg-pink-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+              data-testid={`button-message-${friend.id}`}
+            >
+              <MessageCircle className="w-3 h-3" />
+            </Button>
+          )}
           <div className={cn(
             "p-1 rounded-full bg-gradient-to-r",
             getRankColor(friend.rank),
