@@ -11,6 +11,7 @@ import { WebSocketServer, WebSocket } from "ws";
 interface ExtendedWebSocket extends WebSocket {
   action_id?: string;
   user_id?: string;
+  call_id?: string;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -926,6 +927,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Video call routes
+  app.post('/api/video-calls', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { participantIds } = req.body;
+      
+      if (!participantIds || !Array.isArray(participantIds)) {
+        return res.status(400).json({ message: "Invalid participant IDs" });
+      }
+
+      // Create video call
+      const call = await storage.createVideoCall({
+        initiatorId: userId,
+        status: "pending"
+      });
+
+      // Add initiator as participant
+      await storage.addCallParticipant({
+        callId: call.id,
+        userId: userId,
+        status: "joined"
+      });
+
+      // Add other participants
+      for (const participantId of participantIds) {
+        if (participantId !== userId) {
+          await storage.addCallParticipant({
+            callId: call.id,
+            userId: participantId,
+            status: "invited"
+          });
+        }
+      }
+
+      // Get call with participants
+      const callWithParticipants = {
+        ...call,
+        participants: await storage.getCallParticipants(call.id)
+      };
+
+      res.json(callWithParticipants);
+    } catch (error) {
+      console.error("Error creating video call:", error);
+      res.status(500).json({ message: "Failed to create video call" });
+    }
+  });
+
+  app.post('/api/video-calls/:callId/join', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { callId } = req.params;
+
+      await storage.updateParticipantStatus(callId, userId, "joined", new Date());
+      res.json({ message: "Joined call successfully" });
+    } catch (error) {
+      console.error("Error joining video call:", error);
+      res.status(500).json({ message: "Failed to join video call" });
+    }
+  });
+
+  app.post('/api/video-calls/:callId/leave', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { callId } = req.params;
+
+      await storage.updateParticipantStatus(callId, userId, "left", undefined, new Date());
+      res.json({ message: "Left call successfully" });
+    } catch (error) {
+      console.error("Error leaving video call:", error);
+      res.status(500).json({ message: "Failed to leave video call" });
+    }
+  });
+
+  app.post('/api/video-calls/:callId/end', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { callId } = req.params;
+
+      // Check if user is the initiator
+      const call = await storage.getVideoCall(callId);
+      if (!call || call.initiatorId !== userId) {
+        return res.status(403).json({ message: "Only call initiator can end the call" });
+      }
+
+      await storage.updateVideoCallStatus(callId, "ended", undefined, new Date());
+      res.json({ message: "Call ended successfully" });
+    } catch (error) {
+      console.error("Error ending video call:", error);
+      res.status(500).json({ message: "Failed to end video call" });
+    }
+  });
+
+  app.get('/api/video-calls/active', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const activeCalls = await storage.getUserActiveCalls(userId);
+      res.json(activeCalls);
+    } catch (error) {
+      console.error("Error fetching active calls:", error);
+      res.status(500).json({ message: "Failed to fetch active calls" });
+    }
+  });
+
   // Birthday routes
   app.get("/api/birthdays/today", isAuthenticated, async (req: any, res) => {
     try {
@@ -1067,6 +1171,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 client.send(JSON.stringify({
                   type: 'action_ended',
                   actionId: data.actionId
+                }));
+              }
+            });
+            break;
+            
+          case 'join-call-signaling':
+            // Join user to call signaling
+            ws.user_id = data.userId;
+            break;
+            
+          case 'video-call-invite':
+            // Send call invite to specific users
+            const { callId, invitedUsers } = data;
+            wss.clients.forEach((client: ExtendedWebSocket) => {
+              if (client.readyState === WebSocket.OPEN && 
+                  invitedUsers.includes(client.user_id)) {
+                client.send(JSON.stringify({
+                  type: 'call-invite',
+                  callId: callId,
+                  from: data.userId
+                }));
+              }
+            });
+            break;
+            
+          case 'video-call-response':
+            // Handle call response (accept/decline)
+            wss.clients.forEach((client: ExtendedWebSocket) => {
+              if (client.readyState === WebSocket.OPEN && 
+                  client.call_id === data.callId) {
+                client.send(JSON.stringify({
+                  type: 'call-response',
+                  callId: data.callId,
+                  userId: data.userId,
+                  response: data.response // 'accept' or 'decline'
+                }));
+              }
+            });
+            break;
+            
+          case 'webrtc-signal':
+            // Forward WebRTC signaling messages
+            wss.clients.forEach((client: ExtendedWebSocket) => {
+              if (client.readyState === WebSocket.OPEN && 
+                  client.call_id === data.callId &&
+                  client.user_id === data.targetUserId) {
+                client.send(JSON.stringify({
+                  type: 'webrtc-signal',
+                  callId: data.callId,
+                  from: data.fromUserId,
+                  signal: data.signal
+                }));
+              }
+            });
+            break;
+            
+          case 'audio-toggle':
+          case 'video-toggle':
+            // Broadcast media toggle state
+            wss.clients.forEach((client: ExtendedWebSocket) => {
+              if (client.readyState === WebSocket.OPEN && 
+                  client.call_id === data.callId) {
+                client.send(JSON.stringify({
+                  type: data.type,
+                  callId: data.callId,
+                  userId: data.userId || ws.user_id,
+                  enabled: data.enabled
                 }));
               }
             });

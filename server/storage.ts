@@ -18,6 +18,8 @@ import {
   meetups,
   meetupCheckIns,
   birthdayMessages,
+  videoCalls,
+  callParticipants,
   type User,
   type UpsertUser,
   type UserTheme,
@@ -54,6 +56,10 @@ import {
   type InsertMeetupCheckIn,
   type BirthdayMessage,
   type InsertBirthdayMessage,
+  type VideoCall,
+  type InsertVideoCall,
+  type CallParticipant,
+  type InsertCallParticipant,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or } from "drizzle-orm";
@@ -141,6 +147,15 @@ export interface IStorage {
   createBirthdayMessage(message: InsertBirthdayMessage): Promise<BirthdayMessage>;
   getBirthdayMessagesSentThisYear(birthdayUserId: string, year: number): Promise<BirthdayMessage[]>;
   getAllUsers(): Promise<User[]>;
+
+  // Video call operations
+  createVideoCall(call: InsertVideoCall): Promise<VideoCall>;
+  getVideoCall(callId: string): Promise<VideoCall | undefined>;
+  updateVideoCallStatus(callId: string, status: string, startedAt?: Date, endedAt?: Date): Promise<void>;
+  addCallParticipant(participant: InsertCallParticipant): Promise<CallParticipant>;
+  updateParticipantStatus(callId: string, userId: string, status: string, joinedAt?: Date, leftAt?: Date): Promise<void>;
+  getCallParticipants(callId: string): Promise<(CallParticipant & { user: User })[]>;
+  getUserActiveCalls(userId: string): Promise<(VideoCall & { participants: (CallParticipant & { user: User })[] })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1163,6 +1178,101 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users);
+  }
+
+  // Video call operations
+  async createVideoCall(call: InsertVideoCall): Promise<VideoCall> {
+    const [videoCall] = await db
+      .insert(videoCalls)
+      .values(call)
+      .returning();
+    return videoCall;
+  }
+
+  async getVideoCall(callId: string): Promise<VideoCall | undefined> {
+    const [call] = await db
+      .select()
+      .from(videoCalls)
+      .where(eq(videoCalls.id, callId));
+    return call;
+  }
+
+  async updateVideoCallStatus(callId: string, status: string, startedAt?: Date, endedAt?: Date): Promise<void> {
+    await db
+      .update(videoCalls)
+      .set({ 
+        status: status as any,
+        ...(startedAt && { startedAt }),
+        ...(endedAt && { endedAt }),
+        updatedAt: new Date()
+      })
+      .where(eq(videoCalls.id, callId));
+  }
+
+  async addCallParticipant(participant: InsertCallParticipant): Promise<CallParticipant> {
+    const [callParticipant] = await db
+      .insert(callParticipants)
+      .values(participant)
+      .returning();
+    return callParticipant;
+  }
+
+  async updateParticipantStatus(callId: string, userId: string, status: string, joinedAt?: Date, leftAt?: Date): Promise<void> {
+    await db
+      .update(callParticipants)
+      .set({
+        status,
+        ...(joinedAt && { joinedAt }),
+        ...(leftAt && { leftAt })
+      })
+      .where(and(
+        eq(callParticipants.callId, callId),
+        eq(callParticipants.userId, userId)
+      ));
+  }
+
+  async getCallParticipants(callId: string): Promise<(CallParticipant & { user: User })[]> {
+    return await db
+      .select({
+        id: callParticipants.id,
+        callId: callParticipants.callId,
+        userId: callParticipants.userId,
+        status: callParticipants.status,
+        joinedAt: callParticipants.joinedAt,
+        leftAt: callParticipants.leftAt,
+        createdAt: callParticipants.createdAt,
+        user: users,
+      })
+      .from(callParticipants)
+      .innerJoin(users, eq(callParticipants.userId, users.id))
+      .where(eq(callParticipants.callId, callId));
+  }
+
+  async getUserActiveCalls(userId: string): Promise<(VideoCall & { participants: (CallParticipant & { user: User })[] })[]> {
+    // Get calls where user is a participant and call is not ended
+    const callsQuery = await db
+      .select({
+        call: videoCalls,
+      })
+      .from(videoCalls)
+      .innerJoin(callParticipants, eq(videoCalls.id, callParticipants.callId))
+      .where(and(
+        eq(callParticipants.userId, userId),
+        inArray(videoCalls.status, ['pending', 'active'])
+      ));
+
+    // Get participants for each call
+    const callsWithParticipants = await Promise.all(
+      callsQuery.map(async ({ call }) => {
+        const participants = await this.getCallParticipants(call.id);
+        return {
+          ...call,
+          participants,
+        };
+      })
+    );
+
+    return callsWithParticipants;
   }
 }
 

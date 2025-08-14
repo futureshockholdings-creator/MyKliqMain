@@ -73,6 +73,9 @@ export const friendships = pgTable("friendships", {
 // Media type enum
 export const mediaTypeEnum = pgEnum("media_type", ["image", "video"]);
 
+// Call status enum
+export const callStatusEnum = pgEnum("call_status", ["pending", "active", "ended", "declined"]);
+
 // Posts
 export const posts = pgTable("posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -483,10 +486,41 @@ export const birthdayMessages = pgTable("birthday_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Video calls table
+export const videoCalls = pgTable("video_calls", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  initiatorId: varchar("initiator_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  status: callStatusEnum("status").default("pending").notNull(),
+  startedAt: timestamp("started_at"),
+  endedAt: timestamp("ended_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Video call participants table (many-to-many)
+export const callParticipants = pgTable("call_participants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  callId: varchar("call_id").references(() => videoCalls.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  status: varchar("status").default("invited").notNull(), // invited, joined, declined, left
+  joinedAt: timestamp("joined_at"),
+  leftAt: timestamp("left_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Birthday message types
 export const insertBirthdayMessageSchema = createInsertSchema(birthdayMessages).omit({ id: true, createdAt: true });
 export type InsertBirthdayMessage = z.infer<typeof insertBirthdayMessageSchema>;
 export type BirthdayMessage = typeof birthdayMessages.$inferSelect;
+
+// Video call types
+export const insertVideoCallSchema = createInsertSchema(videoCalls).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertVideoCall = z.infer<typeof insertVideoCallSchema>;
+export type VideoCall = typeof videoCalls.$inferSelect;
+
+export const insertCallParticipantSchema = createInsertSchema(callParticipants).omit({ id: true, createdAt: true });
+export type InsertCallParticipant = z.infer<typeof insertCallParticipantSchema>;
+export type CallParticipant = typeof callParticipants.$inferSelect;
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
