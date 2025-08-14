@@ -259,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Media upload routes
-  app.post('/api/media/upload', isAuthenticated, async (req: any, res) => {
+  app.post('/api/media/upload', async (req: any, res) => {
     try {
       const objectStorage = new ObjectStorageService();
       const uploadURL = await objectStorage.getObjectEntityUploadURL();

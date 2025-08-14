@@ -23,27 +23,55 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
   const { toast } = useToast();
 
   const handleGetUploadParameters = async () => {
-    const response = await apiRequest("POST", "/api/media/upload") as any;
-    return {
-      method: "PUT" as const,
-      url: response.uploadURL,
-    };
+    try {
+      const response = await apiRequest("POST", "/api/media/upload") as any;
+      console.log("Upload parameters response:", response);
+      
+      if (!response.uploadURL) {
+        throw new Error("No upload URL received from server");
+      }
+      
+      return {
+        method: "PUT" as const,
+        url: response.uploadURL,
+      };
+    } catch (error) {
+      console.error("Error getting upload parameters:", error);
+      toast({
+        title: "Upload Error",
+        description: "Failed to get upload URL. Please try again.",
+        variant: "destructive"
+      });
+      throw error;
+    }
   };
 
   const handleUploadComplete = async (result: any) => {
+    console.log("Upload complete result:", result);
+    
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       const fileType = uploadedFile.type;
       const mediaType = fileType.startsWith('image/') ? 'image' : 'video';
       
+      // The URL should be the upload URL that was used
+      const mediaUrl = uploadedFile.uploadURL || uploadedFile.response?.uploadURL;
+      
       setUploadedMedia({
-        url: uploadedFile.uploadURL,
+        url: mediaUrl,
         type: mediaType
       });
 
       toast({
         title: "Media uploaded!",
         description: "Your media file has been uploaded successfully."
+      });
+    } else if (result.failed && result.failed.length > 0) {
+      console.error("Upload failed:", result.failed);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload media. Please try again.",
+        variant: "destructive"
       });
     }
   };
