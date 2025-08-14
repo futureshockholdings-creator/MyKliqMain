@@ -21,6 +21,7 @@ export default function Home() {
   const [showMediaUpload, setShowMediaUpload] = useState(false);
   const [showStoryUpload, setShowStoryUpload] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showCommentEmojiPicker, setShowCommentEmojiPicker] = useState<string | null>(null);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const { user } = useAuth();
@@ -212,6 +213,14 @@ export default function Home() {
   const handleEmojiClick = (emoji: string) => {
     setNewPost(prev => prev + emoji);
     setShowEmojiPicker(false);
+  };
+
+  const handleCommentEmojiClick = (postId: string, emoji: string) => {
+    setCommentInputs(prev => ({ 
+      ...prev, 
+      [postId]: (prev[postId] || '') + emoji 
+    }));
+    setShowCommentEmojiPicker(null);
   };
 
   const commonEmojis = [
@@ -645,30 +654,65 @@ export default function Home() {
                         {userData?.firstName?.[0] || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 flex space-x-2">
-                      <Textarea
-                        value={commentInputs[post.id] || ""}
-                        onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
-                        placeholder="Write a comment..."
-                        className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400 resize-none"
-                        rows={2}
-                        data-testid={`input-comment-${post.id}`}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleCommentSubmit(post.id);
-                          }
-                        }}
-                      />
-                      <Button
-                        onClick={() => handleCommentSubmit(post.id)}
-                        disabled={!commentInputs[post.id]?.trim() || addCommentMutation.isPending}
-                        size="sm"
-                        className="bg-blue-600 hover:bg-blue-700 text-white self-end"
-                        data-testid={`button-submit-comment-${post.id}`}
-                      >
-                        {addCommentMutation.isPending ? "..." : "Post"}
-                      </Button>
+                    <div className="flex-1">
+                      <div className="flex space-x-2">
+                        <Textarea
+                          value={commentInputs[post.id] || ""}
+                          onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
+                          placeholder="Write a comment..."
+                          className="flex-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400 resize-none"
+                          rows={2}
+                          data-testid={`input-comment-${post.id}`}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleCommentSubmit(post.id);
+                            }
+                          }}
+                        />
+                        <div className="flex flex-col justify-end space-y-1">
+                          <Popover 
+                            open={showCommentEmojiPicker === post.id} 
+                            onOpenChange={(open) => setShowCommentEmojiPicker(open ? post.id : null)}
+                          >
+                            <PopoverTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-yellow-400 hover:bg-yellow-400/10 h-8 w-8 p-0"
+                                data-testid={`button-comment-emoji-${post.id}`}
+                              >
+                                <Smile className="w-4 h-4" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                              <div className="grid grid-cols-8 gap-2 p-2">
+                                {commonEmojis.map((emoji, index) => (
+                                  <Button
+                                    key={index}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-lg hover:bg-gray-100"
+                                    onClick={() => handleCommentEmojiClick(post.id, emoji)}
+                                    data-testid={`comment-emoji-${post.id}-${index}`}
+                                  >
+                                    {emoji}
+                                  </Button>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                          <Button
+                            onClick={() => handleCommentSubmit(post.id)}
+                            disabled={!commentInputs[post.id]?.trim() || addCommentMutation.isPending}
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white h-8"
+                            data-testid={`button-submit-comment-${post.id}`}
+                          >
+                            {addCommentMutation.isPending ? "..." : "Post"}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
