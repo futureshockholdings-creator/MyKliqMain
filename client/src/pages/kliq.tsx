@@ -384,7 +384,7 @@ export default function Kliq() {
             <Button
               size="sm"
               onClick={copyInviteCode}
-              className="bg-mykliq-green hover:bg-mykliq-green/90 text-white"
+              className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground"
               disabled={!userData?.inviteCode}
               data-testid="button-copy-invite"
             >
@@ -406,18 +406,18 @@ export default function Kliq() {
               Join Kliq
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-gray-800 border-gray-700 text-white max-w-sm mx-auto">
+          <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
             <DialogHeader>
-              <DialogTitle className="text-blue-400">Join Another Kliq</DialogTitle>
+              <DialogTitle className="text-primary">Join Another Kliq</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-400">Invite Code</label>
+                <label className="text-sm text-muted-foreground">Invite Code</label>
                 <Input
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value)}
                   placeholder="KLIQ-XXXX-XXXX"
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-input border-border text-foreground"
                   data-testid="input-join-invite-code"
                 />
               </div>

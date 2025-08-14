@@ -30,11 +30,11 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
   const sortedFriends = [...friends].sort((a, b) => a.rank - b.rank);
   
   const getRankColor = (rank: number) => {
-    if (rank === 1) return "from-pink-500 to-purple-600";
-    if (rank <= 3) return "from-blue-500 to-green-500";
-    if (rank <= 6) return "from-orange-500 to-yellow-500";
-    if (rank <= 10) return "from-purple-500 to-pink-500";
-    return "from-gray-500 to-gray-600";
+    if (rank === 1) return "from-primary to-secondary";
+    if (rank <= 3) return "from-secondary to-mykliq-blue";
+    if (rank <= 6) return "from-mykliq-orange to-mykliq-green";
+    if (rank <= 10) return "from-mykliq-purple to-primary";
+    return "from-muted to-muted-foreground";
   };
 
   const getRankIcon = (rank: number) => {
@@ -92,13 +92,13 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
 
   const getRowColor = (rowIndex: number) => {
     const colors = [
-      "text-pink-400",
-      "text-blue-400", 
-      "text-purple-400",
-      "text-orange-400",
-      "text-gray-400"
+      "text-primary",
+      "text-secondary", 
+      "text-mykliq-purple",
+      "text-mykliq-orange",
+      "text-muted-foreground"
     ];
-    return colors[rowIndex] || "text-gray-400";
+    return colors[rowIndex] || "text-muted-foreground";
   };
 
   const renderFriend = (friend: Friend) => (
@@ -124,7 +124,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
               e.stopPropagation();
               onVideoCall([friend.id]);
             }}
-            className="w-6 h-6 p-0 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg"
+            className="w-6 h-6 p-0 bg-mykliq-green hover:bg-mykliq-green/90 text-foreground rounded-full shadow-lg"
             data-testid={`button-video-call-${friend.id}`}
           >
             <Phone className="w-3 h-3" />
@@ -138,7 +138,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
               e.stopPropagation();
               onMessage(friend.id, getName(friend));
             }}
-            className="w-6 h-6 p-0 bg-pink-500 hover:bg-pink-600 text-white rounded-full shadow-lg"
+            className="w-6 h-6 p-0 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-lg"
             data-testid={`button-message-${friend.id}`}
           >
             <MessageCircle className="w-3 h-3" />
@@ -161,10 +161,10 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
           friend.rank === 1 ? "w-16 h-16" : 
           friend.rank <= 3 ? "w-12 h-12" : 
           friend.rank <= 6 ? "w-10 h-10" : "w-9 h-9",
-          "border-2 border-white"
+          "border-2 border-background"
         )}>
           <AvatarImage src={friend.profileImageUrl} />
-          <AvatarFallback className="bg-gray-700 text-white text-xs">
+          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
             {getInitials(friend)}
           </AvatarFallback>
         </Avatar>
@@ -174,7 +174,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
 
       {/* Sparkle effect for top friends */}
       {friend.rank <= 3 && (
-        <div className="absolute -top-1 -right-1 text-yellow-300 animate-pulse">
+        <div className="absolute -top-1 -right-1 text-mykliq-orange animate-pulse">
           ✨
         </div>
       )}
@@ -182,15 +182,15 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
   );
 
   return (
-    <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl p-6 space-y-6">
+    <div className="bg-card border border-border rounded-xl p-6 space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-bold text-pink-400 mb-2">
+        <h3 className="text-xl font-bold text-primary mb-2">
           🏆 {kliqName || "My Kliq"} 🏆
         </h3>
-        <p className="text-gray-400 text-sm mb-4">
+        <p className="text-muted-foreground text-sm mb-4">
           Hover over friends to see actions
         </p>
-        <Badge variant="outline" className="border-blue-500 text-blue-400">
+        <Badge variant="outline" className="border-primary text-primary">
           {friends.length}/{maxFriends} Friends
         </Badge>
       </div>
@@ -206,7 +206,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
 
       {friends.length < maxFriends && (
         <div className="text-center mt-6">
-          <Button className="bg-gradient-to-r from-pink-500 to-blue-500 hover:from-pink-600 hover:to-blue-600 text-white font-bold">
+          <Button className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground font-bold">
             <Users className="w-4 h-4 mr-2" />
             Invite Friend ({maxFriends - friends.length} spots left)
           </Button>

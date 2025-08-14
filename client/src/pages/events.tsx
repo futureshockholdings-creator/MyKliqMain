@@ -316,10 +316,10 @@ export default function Events() {
       <div className="max-w-2xl mx-auto p-6 space-y-6">
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="bg-gray-800">
+            <Card key={i} className="bg-card border-border">
               <CardContent className="p-6">
-                <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
-                <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-muted rounded w-1/2"></div>
               </CardContent>
             </Card>
           ))}
@@ -437,71 +437,71 @@ export default function Events() {
 
         {/* Edit Event Modal */}
         <Dialog open={showEditEvent} onOpenChange={setShowEditEvent}>
-          <DialogContent className="bg-gray-800 border-gray-700 max-w-md">
+          <DialogContent className="bg-card border-border max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-white">Edit Event</DialogTitle>
+              <DialogTitle className="text-foreground">Edit Event</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label className="text-gray-300">Event Title</Label>
+                <Label className="text-muted-foreground">Event Title</Label>
                 <Input
                   value={editingEvent?.title || ""}
                   onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, title: e.target.value }))}
                   placeholder="Enter event title"
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-input border-border text-foreground"
                   data-testid="input-edit-event-title"
                 />
               </div>
               
               <div>
-                <Label className="text-gray-300">Description</Label>
+                <Label className="text-muted-foreground">Description</Label>
                 <Textarea
                   value={editingEvent?.description || ""}
                   onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, description: e.target.value }))}
                   placeholder="What's this event about?"
-                  className="bg-gray-700 border-gray-600 text-white resize-none"
+                  className="bg-input border-border text-foreground resize-none"
                   rows={3}
                   data-testid="input-edit-event-description"
                 />
               </div>
 
               <div>
-                <Label className="text-gray-300">Location</Label>
+                <Label className="text-muted-foreground">Location</Label>
                 <Input
                   value={editingEvent?.location || ""}
                   onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, location: e.target.value }))}
                   placeholder="Where will this happen?"
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-input border-border text-foreground"
                   data-testid="input-edit-event-location"
                 />
               </div>
 
               <div>
-                <Label className="text-gray-300">Date & Time</Label>
+                <Label className="text-muted-foreground">Date & Time</Label>
                 <Input
                   type="datetime-local"
                   value={editingEvent?.eventDate || ""}
                   onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, eventDate: e.target.value }))}
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-input border-border text-foreground"
                   min={new Date().toISOString().slice(0, 16)}
                   data-testid="input-edit-event-datetime"
                 />
               </div>
 
               <div>
-                <Label className="text-gray-300">Media</Label>
+                <Label className="text-muted-foreground">Media</Label>
                 <div className="flex space-x-2">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowMediaUpload(true)}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    className="border-border text-muted-foreground hover:bg-muted"
                   >
                     <ImageIcon className="w-4 h-4 mr-2" />
                     {editingEvent?.mediaUrl ? "Change Media" : "Add Photo/Video"}
                   </Button>
                   {editingEvent?.mediaUrl && (
-                    <Badge className="bg-green-600 text-white">
+                    <Badge className="bg-mykliq-green text-foreground">
                       Media attached
                     </Badge>
                   )}
@@ -512,7 +512,7 @@ export default function Events() {
                 <Button
                   onClick={handleUpdateEvent}
                   disabled={updateEventMutation.isPending}
-                  className="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 text-white"
+                  className="flex-1 bg-gradient-to-r from-primary to-secondary text-primary-foreground"
                   data-testid="button-update-event"
                 >
                   {updateEventMutation.isPending ? "Updating..." : "Update Event"}
@@ -520,7 +520,7 @@ export default function Events() {
                 <Button
                   variant="outline"
                   onClick={() => setShowEditEvent(false)}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  className="border-border text-muted-foreground hover:bg-muted"
                 >
                   Cancel
                 </Button>
@@ -531,16 +531,16 @@ export default function Events() {
       </div>
 
       {!Array.isArray(events) || events.length === 0 ? (
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-700 border-gray-600 text-center">
+        <Card className="bg-card border-border text-center">
           <CardContent className="p-8">
-            <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h2 className="text-xl font-bold text-white mb-2">No Events Yet</h2>
-            <p className="text-gray-400 mb-4">
+            <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h2 className="text-xl font-bold text-foreground mb-2">No Events Yet</h2>
+            <p className="text-muted-foreground mb-4">
               Create your first event to start planning with your kliq!
             </p>
             <Button
               onClick={() => setShowCreateEvent(true)}
-              className="bg-gradient-to-r from-pink-600 to-purple-600 text-white"
+              className="bg-gradient-to-r from-primary to-secondary text-primary-foreground"
             >
               Create Your First Event
             </Button>
@@ -556,24 +556,24 @@ export default function Events() {
               <Card
                 key={event.id}
                 className={cn(
-                  "bg-gradient-to-br from-gray-800 to-gray-700 border",
-                  event.author.id === userData?.id ? "border-purple-500/50" : "border-gray-600"
+                  "bg-card border",
+                  event.author.id === userData?.id ? "border-primary/50" : "border-border"
                 )}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <Avatar className="w-12 h-12 border-2 border-pink-400">
+                      <Avatar className="w-12 h-12 border-2 border-primary">
                         <AvatarImage src={event.author.profileImageUrl} />
-                        <AvatarFallback className="bg-gray-700 text-white">
+                        <AvatarFallback className="bg-muted text-muted-foreground">
                           {event.author.firstName?.[0] || "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-semibold text-white">
+                        <p className="font-semibold text-foreground">
                           {event.author.firstName} {event.author.lastName}
                         </p>
-                        <p className="text-xs text-gray-400">Event Host</p>
+                        <p className="text-xs text-muted-foreground">Event Host</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -583,13 +583,13 @@ export default function Events() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleEditEvent(event)}
-                            className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
+                            className="border-primary text-primary hover:bg-primary/10"
                             data-testid={`button-edit-event-${event.id}`}
                           >
                             <Edit className="w-3 h-3 mr-1" />
                             Edit
                           </Button>
-                          <Badge className="bg-purple-600 text-white">Your Event</Badge>
+                          <Badge className="bg-primary text-primary-foreground">Your Event</Badge>
                         </>
                       )}
                     </div>
@@ -597,15 +597,15 @@ export default function Events() {
 
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-xl font-bold text-white mb-2">{event.title}</h3>
+                      <h3 className="text-xl font-bold text-foreground mb-2">{event.title}</h3>
                       {event.description && (
-                        <p className="text-gray-300">{event.description}</p>
+                        <p className="text-muted-foreground">{event.description}</p>
                       )}
                     </div>
 
                     {/* Event Media */}
                     {event.mediaUrl && (
-                      <div className="rounded-lg overflow-hidden bg-black/20">
+                      <div className="rounded-lg overflow-hidden bg-muted/20">
                         {event.mediaType === 'video' ? (
                           <video 
                             src={event.mediaUrl} 
@@ -625,36 +625,36 @@ export default function Events() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <div className="flex items-center text-blue-400 mb-2">
+                        <div className="flex items-center text-secondary mb-2">
                           <Calendar className="w-4 h-4 mr-2" />
                           <span className="text-sm font-medium">Date & Time</span>
                         </div>
-                        <p className="text-white font-medium">{date}</p>
-                        <p className="text-gray-300">{time}</p>
+                        <p className="text-foreground font-medium">{date}</p>
+                        <p className="text-muted-foreground">{time}</p>
                       </div>
 
                       {event.location && (
                         <div>
-                          <div className="flex items-center text-green-400 mb-2">
+                          <div className="flex items-center text-mykliq-green mb-2">
                             <MapPin className="w-4 h-4 mr-2" />
                             <span className="text-sm font-medium">Location</span>
                           </div>
-                          <p className="text-white">{event.location}</p>
+                          <p className="text-foreground">{event.location}</p>
                         </div>
                       )}
                     </div>
 
                     {/* Countdown Timer */}
                     <div>
-                      <div className="flex items-center text-pink-400 mb-3">
+                      <div className="flex items-center text-primary mb-3">
                         <Clock className="w-4 h-4 mr-2" />
                         <span className="text-sm font-medium">Event Countdown</span>
                       </div>
                       <Countdown targetDate={event.eventDate} />
                     </div>
 
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-600">
-                      <div className="flex items-center text-purple-400">
+                    <div className="flex items-center justify-between pt-4 border-t border-border">
+                      <div className="flex items-center text-mykliq-purple">
                         <Users className="w-4 h-4 mr-2" />
                         <span className="text-sm">
                           {event.attendeeCount} going • {event.attendees?.length || 0} responded
@@ -669,8 +669,8 @@ export default function Events() {
                           className={cn(
                             "h-8 px-3",
                             userAttendance === 'going'
-                              ? "bg-green-600 text-white"
-                              : "bg-gray-700 text-gray-300 hover:bg-green-600 hover:text-white"
+                              ? "bg-mykliq-green text-foreground"
+                              : "bg-muted text-muted-foreground hover:bg-mykliq-green hover:text-foreground"
                           )}
                           data-testid={`button-going-${event.id}`}
                         >
