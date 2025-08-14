@@ -529,6 +529,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/events/:eventId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { eventId } = req.params;
+      
+      // Validate ownership
+      const existingEvent = await storage.getEventById(eventId);
+      if (!existingEvent || existingEvent.userId !== userId) {
+        return res.status(403).json({ message: "You can only edit your own events" });
+      }
+      
+      const eventData = insertEventSchema.partial().parse(req.body);
+      
+      // Normalize media URL if provided
+      if (eventData.mediaUrl) {
+        const objectStorage = new ObjectStorageService();
+        eventData.mediaUrl = objectStorage.normalizeObjectEntityPath(eventData.mediaUrl);
+      }
+      
+      const updatedEvent = await storage.updateEvent(eventId, eventData);
+      res.json(updatedEvent);
+    } catch (error) {
+      console.error("Error updating event:", error);
+      res.status(500).json({ message: "Failed to update event" });
+    }
+  });
+
   app.put('/api/events/:eventId/attendance', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

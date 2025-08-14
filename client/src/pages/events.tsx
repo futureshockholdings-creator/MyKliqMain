@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Calendar, Clock, MapPin, Users, Plus, Check, X, HelpCircle, Image as ImageIcon } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Plus, Check, X, HelpCircle, Image as ImageIcon, Edit } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -81,7 +81,9 @@ function Countdown({ targetDate }: CountdownProps) {
 
 export default function Events() {
   const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [showEditEvent, setShowEditEvent] = useState(false);
   const [showMediaUpload, setShowMediaUpload] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [newEvent, setNewEvent] = useState({
     title: "",
     description: "",
@@ -141,6 +143,40 @@ export default function Events() {
     },
   });
 
+  // Update event mutation
+  const updateEventMutation = useMutation({
+    mutationFn: async ({ eventId, eventData }: { eventId: string; eventData: any }) => {
+      await apiRequest("PUT", `/api/events/${eventId}`, eventData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      setShowEditEvent(false);
+      setEditingEvent(null);
+      toast({
+        title: "Event updated!",
+        description: "Your event changes have been saved",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update event",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Update attendance mutation
   const updateAttendanceMutation = useMutation({
     mutationFn: async ({ eventId, status }: { eventId: string; status: string }) => {
@@ -186,16 +222,55 @@ export default function Events() {
     createEventMutation.mutate(newEvent);
   };
 
+  const handleEditEvent = (event: any) => {
+    setEditingEvent({
+      ...event,
+      eventDate: new Date(event.eventDate).toISOString().slice(0, 16), // Convert to datetime-local format
+    });
+    setShowEditEvent(true);
+  };
+
+  const handleUpdateEvent = () => {
+    if (!editingEvent.title.trim() || !editingEvent.eventDate) {
+      toast({
+        title: "Missing information",
+        description: "Please provide at least a title and date for your event",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateEventMutation.mutate({ 
+      eventId: editingEvent.id, 
+      eventData: {
+        title: editingEvent.title,
+        description: editingEvent.description,
+        location: editingEvent.location,
+        eventDate: editingEvent.eventDate,
+        mediaUrl: editingEvent.mediaUrl,
+        mediaType: editingEvent.mediaType,
+      }
+    });
+  };
+
   const handleAttendanceUpdate = (eventId: string, status: string) => {
     updateAttendanceMutation.mutate({ eventId, status });
   };
 
   const handleMediaUploadSuccess = (uploadedObject: any) => {
-    setNewEvent(prev => ({
-      ...prev,
-      mediaUrl: uploadedObject.objectURL,
-      mediaType: uploadedObject.type as "image" | "video",
-    }));
+    if (showEditEvent && editingEvent) {
+      setEditingEvent((prev: any) => ({
+        ...prev,
+        mediaUrl: uploadedObject.objectURL,
+        mediaType: uploadedObject.type as "image" | "video",
+      }));
+    } else {
+      setNewEvent(prev => ({
+        ...prev,
+        mediaUrl: uploadedObject.objectURL,
+        mediaType: uploadedObject.type as "image" | "video",
+      }));
+    }
     setShowMediaUpload(false);
     toast({
       title: "Media uploaded!",
@@ -339,6 +414,100 @@ export default function Events() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Edit Event Modal */}
+        <Dialog open={showEditEvent} onOpenChange={setShowEditEvent}>
+          <DialogContent className="bg-gray-800 border-gray-700 max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-white">Edit Event</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-gray-300">Event Title</Label>
+                <Input
+                  value={editingEvent?.title || ""}
+                  onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, title: e.target.value }))}
+                  placeholder="Enter event title"
+                  className="bg-gray-700 border-gray-600 text-white"
+                  data-testid="input-edit-event-title"
+                />
+              </div>
+              
+              <div>
+                <Label className="text-gray-300">Description</Label>
+                <Textarea
+                  value={editingEvent?.description || ""}
+                  onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, description: e.target.value }))}
+                  placeholder="What's this event about?"
+                  className="bg-gray-700 border-gray-600 text-white resize-none"
+                  rows={3}
+                  data-testid="input-edit-event-description"
+                />
+              </div>
+
+              <div>
+                <Label className="text-gray-300">Location</Label>
+                <Input
+                  value={editingEvent?.location || ""}
+                  onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, location: e.target.value }))}
+                  placeholder="Where will this happen?"
+                  className="bg-gray-700 border-gray-600 text-white"
+                  data-testid="input-edit-event-location"
+                />
+              </div>
+
+              <div>
+                <Label className="text-gray-300">Date & Time</Label>
+                <Input
+                  type="datetime-local"
+                  value={editingEvent?.eventDate || ""}
+                  onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, eventDate: e.target.value }))}
+                  className="bg-gray-700 border-gray-600 text-white"
+                  min={new Date().toISOString().slice(0, 16)}
+                  data-testid="input-edit-event-datetime"
+                />
+              </div>
+
+              <div>
+                <Label className="text-gray-300">Media</Label>
+                <div className="flex space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowMediaUpload(true)}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    <ImageIcon className="w-4 h-4 mr-2" />
+                    {editingEvent?.mediaUrl ? "Change Media" : "Add Photo/Video"}
+                  </Button>
+                  {editingEvent?.mediaUrl && (
+                    <Badge className="bg-green-600 text-white">
+                      Media attached
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex space-x-2 pt-4">
+                <Button
+                  onClick={handleUpdateEvent}
+                  disabled={updateEventMutation.isPending}
+                  className="flex-1 bg-gradient-to-r from-pink-600 to-purple-600 text-white"
+                  data-testid="button-update-event"
+                >
+                  {updateEventMutation.isPending ? "Updating..." : "Update Event"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowEditEvent(false)}
+                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {!Array.isArray(events) || events.length === 0 ? (
@@ -387,9 +556,23 @@ export default function Events() {
                         <p className="text-xs text-gray-400">Event Host</p>
                       </div>
                     </div>
-                    {event.author.id === userData?.id && (
-                      <Badge className="bg-purple-600 text-white">Your Event</Badge>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      {event.author.id === userData?.id && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditEvent(event)}
+                            className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
+                            data-testid={`button-edit-event-${event.id}`}
+                          >
+                            <Edit className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Badge className="bg-purple-600 text-white">Your Event</Badge>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-4">
