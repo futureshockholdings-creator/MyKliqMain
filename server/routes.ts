@@ -228,7 +228,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/posts', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      let postData = insertPostSchema.parse({ ...req.body, userId });
+      
+      // Convert numeric coordinates to strings if present
+      const processedBody = { ...req.body, userId };
+      if (processedBody.latitude !== undefined && typeof processedBody.latitude === 'number') {
+        processedBody.latitude = processedBody.latitude.toString();
+      }
+      if (processedBody.longitude !== undefined && typeof processedBody.longitude === 'number') {
+        processedBody.longitude = processedBody.longitude.toString();
+      }
+      
+      let postData = insertPostSchema.parse(processedBody);
       
       // Normalize media URL if provided
       if (postData.mediaUrl) {
