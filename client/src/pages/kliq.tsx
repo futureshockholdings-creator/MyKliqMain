@@ -429,6 +429,7 @@ export default function Kliq() {
           onMessage={handleMessageFriend}
           onVideoCall={handleVideoCall}
           maxFriends={15}
+          kliqName={userData?.kliqName}
         />
       )}
     </div>

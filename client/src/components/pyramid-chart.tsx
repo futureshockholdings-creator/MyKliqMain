@@ -19,9 +19,10 @@ interface PyramidChartProps {
   onMessage?: (friendId: string, friendName: string) => void;
   onVideoCall?: (participantIds: string[]) => void;
   maxFriends?: number;
+  kliqName?: string;
 }
 
-export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, maxFriends = 15 }: PyramidChartProps) {
+export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, maxFriends = 15, kliqName }: PyramidChartProps) {
   const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
 
   const sortedFriends = [...friends].sort((a, b) => a.rank - b.rank);
@@ -175,7 +176,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
     <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl p-6 space-y-6">
       <div className="text-center">
         <h3 className="text-xl font-bold text-pink-400 mb-2">
-          🏆 Kliq Pyramid 🏆
+          🏆 {kliqName || "My Kliq"} 🏆
         </h3>
         <p className="text-gray-400 text-sm mb-4">
           Hover over friends to see actions
