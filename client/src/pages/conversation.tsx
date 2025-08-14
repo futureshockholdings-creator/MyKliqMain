@@ -40,7 +40,9 @@ interface ConversationData {
 }
 
 export function Conversation() {
-  const { otherUserId } = useParams<{ otherUserId: string }>();
+  const { conversationId } = useParams<{ conversationId: string }>();
+  // For now, treat conversationId as otherUserId - in a real app we'd fetch conversation details
+  const otherUserId = conversationId;
   const { user } = useAuth() as { user: User | null };
   const { toast } = useToast();
   const queryClient = useQueryClient();

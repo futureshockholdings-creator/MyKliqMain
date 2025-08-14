@@ -64,7 +64,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/kliq" component={Kliq} />
           <Route path="/messages" component={Messages} />
-          <Route path="/messages/:otherUserId" component={Conversation} />
+          <Route path="/messages/:conversationId" component={Conversation} />
           <Route path="/profile" component={Profile} />
           <Route path="/themes" component={Themes} />
         </>
