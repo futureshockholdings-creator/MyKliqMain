@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
 import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Video, Plus } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +20,7 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
   const [showMediaUpload, setShowMediaUpload] = useState(false);
   const [showStoryUpload, setShowStoryUpload] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const { user } = useAuth();
@@ -207,6 +209,17 @@ export default function Home() {
     }
   };
 
+  const handleEmojiClick = (emoji: string) => {
+    setNewPost(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const commonEmojis = [
+    '😀', '😂', '😍', '😭', '😎', '😊', '🤔', '😴', 
+    '❤️', '👍', '👎', '🔥', '💯', '✨', '🎉', '👏',
+    '📍', '🏠', '🍕', '☕', '🎵', '📸', '🌟', '💫'
+  ];
+
   const handleLikePost = (postId: string) => {
     likePostMutation.mutate(postId);
   };
@@ -333,9 +346,34 @@ export default function Home() {
           </div>
           <div className="flex justify-between items-center">
             <div className="flex space-x-2">
-              <Button size="sm" variant="ghost" className="text-yellow-400 hover:bg-yellow-400/10">
-                <Smile className="w-4 h-4" />
-              </Button>
+              <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                <PopoverTrigger asChild>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="text-yellow-400 hover:bg-yellow-400/10"
+                    data-testid="button-emoji-picker"
+                  >
+                    <Smile className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="grid grid-cols-8 gap-2 p-2">
+                    {commonEmojis.map((emoji, index) => (
+                      <Button
+                        key={index}
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-lg hover:bg-gray-100"
+                        onClick={() => handleEmojiClick(emoji)}
+                        data-testid={`emoji-${index}`}
+                      >
+                        {emoji}
+                      </Button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
               <Button 
                 size="sm" 
                 variant="ghost" 
