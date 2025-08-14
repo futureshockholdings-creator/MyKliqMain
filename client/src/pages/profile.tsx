@@ -60,43 +60,6 @@ export default function Profile() {
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <div className="space-y-6">
-
-
-        {/* Profile Music Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>🎵 Profile Music</CardTitle>
-            <CardDescription>Add music that plays when people visit your profile</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Current Profile Music Player (if music exists) */}
-            {(user as User)?.profileMusicUrl && (user as User)?.profileMusicTitle && (
-              <div>
-                <Label className="text-sm font-medium">Current Profile Music</Label>
-                <div className="mt-2">
-                  <ProfileMusicPlayer
-                    musicUrl={(user as User).profileMusicUrl!}
-                    musicTitle={(user as User).profileMusicTitle!}
-                    autoPlay={false}
-                  />
-                </div>
-              </div>
-            )}
-            
-            {/* Music Upload/Management */}
-            <div>
-              <Label className="text-sm font-medium">Profile Music Settings</Label>
-              <div className="mt-2">
-                <MusicUploader
-                  currentMusicUrl={(user as User)?.profileMusicUrl || undefined}
-                  currentMusicTitle={(user as User)?.profileMusicTitle || undefined}
-                  userId={(user as User)?.id!}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Profile Settings & Details Section */}
         <Card>
           <CardHeader>
@@ -155,6 +118,41 @@ export default function Profile() {
             </CardContent>
           </Card>
         )}
+
+        {/* Profile Music Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>🎵 Profile Music</CardTitle>
+            <CardDescription>Add music that plays when people visit your profile</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Current Profile Music Player (if music exists) */}
+            {(user as User)?.profileMusicUrl && (user as User)?.profileMusicTitle && (
+              <div>
+                <Label className="text-sm font-medium">Current Profile Music</Label>
+                <div className="mt-2">
+                  <ProfileMusicPlayer
+                    musicUrl={(user as User).profileMusicUrl!}
+                    musicTitle={(user as User).profileMusicTitle!}
+                    autoPlay={false}
+                  />
+                </div>
+              </div>
+            )}
+            
+            {/* Music Upload/Management */}
+            <div>
+              <Label className="text-sm font-medium">Profile Music Settings</Label>
+              <div className="mt-2">
+                <MusicUploader
+                  currentMusicUrl={(user as User)?.profileMusicUrl || undefined}
+                  currentMusicTitle={(user as User)?.profileMusicTitle || undefined}
+                  userId={(user as User)?.id!}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
 
       </div>
