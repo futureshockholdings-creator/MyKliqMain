@@ -1438,8 +1438,7 @@ export class DatabaseStorage implements IStorage {
       .from(gifs)
       .where(or(
         like(gifs.title, searchTerm),
-        like(gifs.description, searchTerm),
-        sql`${gifs.tags} && ARRAY[${query}]`
+        like(gifs.category, searchTerm)
       ))
       .orderBy(desc(gifs.createdAt));
   }
