@@ -12,6 +12,9 @@ import { ProfileSettings } from "@/components/ProfileSettings";
 import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
 import { MusicUploader } from "@/components/MusicUploader";
 import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Camera } from "lucide-react";
 
 import { type User } from "@shared/schema";
 
@@ -52,6 +55,42 @@ export default function Profile() {
     },
   });
 
+  // Profile picture upload handlers
+  const handleGetUploadParameters = async () => {
+    const response = await apiRequest("POST", "/api/objects/upload", {});
+    return {
+      method: "PUT" as const,
+      url: response.uploadURL,
+    };
+  };
+
+  const updateProfilePictureMutation = useMutation({
+    mutationFn: async (profileImageURL: string) => {
+      await apiRequest("PUT", "/api/user/profile-picture", { profileImageURL });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: "Success",
+        description: "Profile picture updated successfully!",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update profile picture",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleProfilePictureComplete = (result: any) => {
+    if (result.successful && result.successful[0]) {
+      const uploadURL = result.successful[0].uploadURL;
+      updateProfilePictureMutation.mutate(uploadURL);
+    }
+  };
+
 
 
   if (!user) {
@@ -61,6 +100,49 @@ export default function Profile() {
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <div className="space-y-6">
+        {/* Profile Picture Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Picture</CardTitle>
+            <CardDescription>Upload and manage your profile picture</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-6">
+              <div className="relative">
+                <Avatar className="w-24 h-24 border-4 border-primary">
+                  <AvatarImage 
+                    src={user.profileImageUrl} 
+                    alt="Profile picture" 
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="bg-muted text-foreground text-2xl">
+                    {user.firstName?.[0] || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <div className="flex-1">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={5242880} // 5MB limit for profile pictures
+                  onGetUploadParameters={handleGetUploadParameters}
+                  onComplete={handleProfilePictureComplete}
+                  buttonClassName="w-full"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <Camera className="w-4 h-4" />
+                    <span>
+                      {user.profileImageUrl ? "Change Profile Picture" : "Upload Profile Picture"}
+                    </span>
+                  </div>
+                </ObjectUploader>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Upload a profile picture (max 5MB). Recommended size: 400x400px
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Profile Settings & Details Section */}
         <Card>
           <CardHeader>
