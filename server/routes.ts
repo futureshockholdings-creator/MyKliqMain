@@ -1425,6 +1425,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mark all notifications as read - must come BEFORE the :id route
+  app.patch('/api/notifications/mark-all-read', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { type } = req.body;
+      console.log("Mark all as read - userId:", userId, "type:", type, "body:", req.body);
+      const notifications = await notificationService.markAllAsRead(userId, type);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark notifications as read" });
+    }
+  });
+
   app.patch('/api/notifications/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -1440,19 +1454,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating notification:", error);
       res.status(500).json({ message: "Failed to update notification" });
-    }
-  });
-
-  app.patch('/api/notifications/mark-all-read', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { type } = req.body;
-      console.log("Mark all as read - userId:", userId, "type:", type, "body:", req.body);
-      const notifications = await notificationService.markAllAsRead(userId, type);
-      res.json(notifications);
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-      res.status(500).json({ message: "Failed to mark notifications as read" });
     }
   });
 
