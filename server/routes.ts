@@ -401,15 +401,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get post details to notify the author
       const post = await storage.getPostById(postId);
+      console.log("Post like notification check:", { postUserId: post?.userId, currentUserId: userId, shouldNotify: post && post.userId !== userId });
+      
       if (post && post.userId !== userId) {
         const user = await storage.getUser(userId);
         if (user) {
+          console.log("Creating like notification for:", post.userId, "from:", user.firstName);
           await notificationService.notifyPostLike(
             post.userId,
             user.firstName || "Someone",
             postId
           );
         }
+      } else if (post && post.userId === userId) {
+        console.log("Not creating notification - user liked their own post");
       }
       
       res.json({ success: true });
@@ -1460,6 +1465,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting notification:", error);
       res.status(500).json({ message: "Failed to delete notification" });
+    }
+  });
+
+  // Test endpoint to create a demo notification
+  app.post('/api/notifications/demo', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      console.log("Creating demo notification for user:", userId);
+      
+      const notification = await notificationService.createNotification({
+        userId: userId,
+        type: 'post_like',
+        title: 'Demo Notification',
+        message: 'This is a test notification to verify the system works!',
+        actionUrl: '/bulletin',
+        relatedId: 'demo-post-id',
+        relatedType: 'post',
+        priority: 'normal',
+      });
+      
+      console.log("Demo notification created successfully:", notification);
+      res.json(notification);
+    } catch (error) {
+      console.error("Error creating demo notification:", error);
+      res.status(500).json({ message: "Failed to create demo notification" });
     }
   });
 
