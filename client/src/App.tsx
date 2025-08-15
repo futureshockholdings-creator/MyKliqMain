@@ -43,7 +43,6 @@ function Navigation({ currentPath }: { currentPath: string }) {
     { path: "/profile", icon: User, label: "Profile", tab: "profile" },
     { path: "/", icon: HomeIcon, label: "Bulletin", tab: "bulletin" },
     { path: "/kliq", icon: Users, label: "My Kliq", tab: "kliq", badgeType: "friends" as const },
-    { path: "/meetup", icon: MapPin, label: "Meetup", tab: "meetup" },
     { path: "/messages", icon: MessageCircle, label: "IM", tab: "messages", badgeType: "messages" as const },
     { path: "/events", icon: Calendar, label: "Events", tab: "events", badgeType: "events" as const },
     { path: "/actions", icon: Video, label: "Action", tab: "actions" },
@@ -185,7 +184,7 @@ function Router() {
           <Route path="/kliq" component={Kliq} />
           <Route path="/events" component={Events} />
           <Route path="/actions" component={Actions} />
-          <Route path="/meetup" component={MeetupPage} />
+
           <Route path="/messages" component={Messages} />
           <Route path="/messages/:conversationId" component={Conversation} />
           <Route path="/profile" component={Profile} />

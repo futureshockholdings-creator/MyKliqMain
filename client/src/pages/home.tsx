@@ -6,8 +6,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Video, Plus } from "lucide-react";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Video, Plus, MapPin, Loader2, Edit } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,6 +34,11 @@ export default function Home() {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [selectedGif, setSelectedGif] = useState<Gif | null>(null);
   const [commentGifs, setCommentGifs] = useState<Record<string, Gif | null>>({});
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [locationName, setLocationName] = useState('');
+  const [address, setAddress] = useState('');
   const { user } = useAuth();
   const userData = user as any;
   const { toast } = useToast();
@@ -213,6 +221,111 @@ export default function Home() {
       });
     },
   });
+
+  // Location check-in mutation that creates a post
+  const locationCheckInMutation = useMutation({
+    mutationFn: async (locationData: { latitude: number; longitude: number; locationName: string; address?: string }) => {
+      // Create content based on available information
+      let content = `📍 Checked in`;
+      if (locationData.locationName) {
+        content += ` at ${locationData.locationName}`;
+      }
+      if (locationData.address) {
+        content += ` (${locationData.address})`;
+      }
+      if (!locationData.locationName && !locationData.address) {
+        content += ` at ${locationData.latitude.toFixed(4)}, ${locationData.longitude.toFixed(4)}`;
+      }
+      
+      await apiRequest("POST", "/api/posts", {
+        content: content,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        locationName: locationData.locationName || null,
+        address: locationData.address || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      setShowLocationDialog(false);
+      setLocationName('');
+      setAddress('');
+      setUserLocation(null);
+      toast({
+        title: "Location shared!",
+        description: "Your location has been posted to the bulletin",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to share location",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const getCurrentLocation = () => {
+    setIsGettingLocation(true);
+    
+    if (!navigator.geolocation) {
+      toast({
+        title: "Location not supported",
+        description: "Your browser doesn't support location services",
+        variant: "destructive",
+      });
+      setIsGettingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setUserLocation(location);
+        setIsGettingLocation(false);
+        setShowLocationDialog(true);
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        setIsGettingLocation(false);
+        toast({
+          title: "Location access denied",
+          description: "Please enable location access to share your location",
+          variant: "destructive",
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
+  };
+
+  const handleLocationCheckIn = () => {
+    if (userLocation) {
+      locationCheckInMutation.mutate({
+        latitude: userLocation.lat,
+        longitude: userLocation.lng,
+        locationName: locationName.trim(),
+        address: address.trim()
+      });
+    }
+  };
 
   const handleCreatePost = () => {
     if (newPost.trim() || selectedGif) {
@@ -533,6 +646,19 @@ export default function Home() {
               >
                 <Camera className="w-4 h-4" />
               </Button>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="text-destructive hover:bg-destructive/10"
+                onClick={getCurrentLocation}
+                disabled={isGettingLocation}
+              >
+                {isGettingLocation ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <MapPin className="w-4 h-4" />
+                )}
+              </Button>
             </div>
             <Button
               onClick={handleCreatePost}
@@ -545,6 +671,65 @@ export default function Home() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Location Check-in Dialog */}
+      <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Edit className="h-5 w-5" />
+              <span>Add Location Details</span>
+            </DialogTitle>
+            <DialogDescription>
+              Add a location name and address to make your check-in more informative
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="locationName">Location Name</Label>
+              <Input
+                id="locationName"
+                data-testid="input-location-name"
+                value={locationName}
+                onChange={(e) => setLocationName(e.target.value)}
+                placeholder="e.g., Starbucks, Central Park, Home"
+                className="bg-input border-border text-foreground"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="address">Address (Optional)</Label>
+              <Input
+                id="address"
+                data-testid="input-address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="e.g., 123 Main St, New York, NY"
+                className="bg-input border-border text-foreground"
+              />
+            </div>
+            
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowLocationDialog(false)}
+                className="border-border text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleLocationCheckIn}
+                disabled={locationCheckInMutation.isPending}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                data-testid="button-confirm-checkin"
+              >
+                {locationCheckInMutation.isPending ? "Checking in..." : "Check In"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Stories Section */}
       {(stories as any[]).length > 0 && (
