@@ -162,9 +162,7 @@ export default function Kliq() {
     }
   };
 
-  const handleRankChange = (friendId: string, newRank: number) => {
-    updateRankMutation.mutate({ friendId, rank: newRank });
-  };
+  // Removed ranking functionality for simpler friend management
 
   const handleJoinKliq = () => {
     if (inviteCode.trim()) {
@@ -298,7 +296,7 @@ export default function Kliq() {
           </h1>
         </div>
         <p className="text-muted-foreground text-sm">
-          Drag friends to reorder your kliq pyramid
+          Your friends and connections
         </p>
       </div>
 
@@ -361,7 +359,6 @@ export default function Kliq() {
             profileImageUrl: f.friend.profileImageUrl,
             rank: f.rank
           }))}
-          onRankChange={handleRankChange}
           onMessage={handleMessageFriend}
           onVideoCall={handleVideoCall}
           maxFriends={15}
