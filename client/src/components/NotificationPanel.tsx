@@ -138,7 +138,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" data-testid="notification-panel-overlay">
-      <div className="fixed right-4 top-4 bottom-4 w-96 max-w-[calc(100vw-2rem)]">
+      <div className="fixed right-2 md:right-4 top-2 md:top-4 bottom-16 md:bottom-4 w-[calc(100vw-1rem)] md:w-96 max-w-[calc(100vw-1rem)]">
         <Card className="h-full flex flex-col bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-semibold text-foreground">

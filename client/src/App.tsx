@@ -61,7 +61,8 @@ function Navigation({ currentPath }: { currentPath: string }) {
 
   return (
     <>
-      <div className="fixed left-0 top-0 bottom-0 bg-card border-r-2 border-primary z-50 w-20">
+      {/* Desktop Navigation - Hidden on mobile */}
+      <div className="hidden md:flex fixed left-0 top-0 bottom-0 bg-card border-r-2 border-primary z-50 w-20">
         <div className="flex flex-col items-center py-4 h-full">
           {/* Notification Bell at the top */}
           <button
@@ -106,6 +107,56 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 )}
                 <item.icon className="w-6 h-6" />
                 <span className="text-xs mt-1">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Mobile Navigation - Bottom bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t-2 border-primary z-50 h-16">
+        <div className="flex items-center justify-around h-full px-2">
+          {/* Notification Bell */}
+          <button
+            onClick={toggleNotificationPanel}
+            className={cn(
+              "flex flex-col items-center p-2 transition-colors rounded-lg relative",
+              "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+            data-testid="notification-bell-mobile"
+          >
+            {getTotalUnreadCount() > 0 && (
+              <div className="absolute -top-1 -right-1 h-4 w-4 bg-destructive rounded-full flex items-center justify-center">
+                <span className="text-[10px] text-destructive-foreground font-bold">
+                  {getTotalUnreadCount() > 99 ? "99+" : getTotalUnreadCount()}
+                </span>
+              </div>
+            )}
+            <Bell className="w-5 h-5" />
+          </button>
+
+          {navItems.slice(0, 7).map((item) => {
+            const isActive = currentPath === item.path;
+            const badgeCount = getBadgeCount(item.badgeType);
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex flex-col items-center p-2 transition-colors rounded-lg relative",
+                  isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+                data-testid={`nav-mobile-${item.tab}`}
+              >
+                {item.badgeType && getBadgeCount(item.badgeType) > 0 && (
+                  <div className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full flex items-center justify-center">
+                    <span className="text-[8px] text-destructive-foreground font-bold">
+                      {getBadgeCount(item.badgeType) > 9 ? "9+" : getBadgeCount(item.badgeType)}
+                    </span>
+                  </div>
+                )}
+                <item.icon className="w-5 h-5" />
               </Link>
             );
           })}
@@ -162,10 +213,10 @@ function AppContent() {
           <Navigation currentPath={currentPath} />
         )}
         
-        {/* Main App Container with left margin for navigation */}
+        {/* Main App Container with responsive margins */}
         <div className={cn(
           "min-h-screen h-screen bg-background relative overflow-hidden",
-          isAuthenticated && !isLoading ? "ml-20" : ""
+          isAuthenticated && !isLoading ? "md:ml-20 mb-16 md:mb-0" : ""
         )}>
           {/* Full Screen App Container */}
           <div className="w-full h-full min-h-screen relative">
@@ -177,8 +228,8 @@ function AppContent() {
               <div className="absolute bottom-40 right-12 w-8 h-8 bg-mykliq-orange rounded-full animate-bounce"></div>
             </div>
 
-            {/* Main Content */}
-            <div className="relative z-10 h-full">
+            {/* Main Content with mobile padding */}
+            <div className="relative z-10 h-full pb-16 md:pb-0">
               <Router />
             </div>
           </div>

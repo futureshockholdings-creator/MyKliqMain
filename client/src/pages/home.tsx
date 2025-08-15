@@ -323,6 +323,14 @@ export default function Home() {
   const handleCommentInputChange = (postId: string, value: string) => {
     setCommentInputs(prev => ({ ...prev, [postId]: value }));
   };
+
+  const handleCommentGifSelect = (postId: string, gif: Gif) => {
+    setCommentGifs(prev => ({ ...prev, [postId]: gif }));
+  };
+
+  const handleCommentGifRemove = (postId: string) => {
+    setCommentGifs(prev => ({ ...prev, [postId]: null }));
+  };
   
 
   
@@ -795,7 +803,7 @@ export default function Home() {
                     <div className="flex-1">
                       {commentGifs[post.id] && (
                         <div className="mb-2 flex items-center gap-2">
-                          <GifDisplay gif={commentGifs[post.id]} className="max-w-xs" />
+                          <GifDisplay gif={commentGifs[post.id]!} className="max-w-xs" />
                           <Button
                             size="sm"
                             variant="ghost"
