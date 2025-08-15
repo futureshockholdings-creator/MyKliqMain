@@ -106,6 +106,30 @@ export class NotificationService {
     return notification;
   }
 
+  // Delete all notifications for a user (optionally filtered by type)
+  async deleteAllNotifications(userId: string, type?: string) {
+    let whereClause = and(
+      eq(notifications.userId, userId),
+      eq(notifications.isVisible, true)
+    );
+
+    // Only filter by type if it's specified and not "all" or undefined
+    if (type && type !== "all" && type !== "undefined") {
+      whereClause = and(
+        eq(notifications.userId, userId),
+        eq(notifications.type, type as any),
+        eq(notifications.isVisible, true)
+      );
+    }
+    
+    const deletedNotifications = await db
+      .delete(notifications)
+      .where(whereClause)
+      .returning();
+    
+    return deletedNotifications;
+  }
+
   // Clean up expired notifications
   async cleanupExpiredNotifications() {
     const now = new Date();

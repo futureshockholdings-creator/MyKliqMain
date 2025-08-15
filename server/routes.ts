@@ -1438,6 +1438,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete all notifications - must come BEFORE the :id route
+  app.delete('/api/notifications/delete-all', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { type } = req.body;
+      const notifications = await notificationService.deleteAllNotifications(userId, type);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error deleting all notifications:", error);
+      res.status(500).json({ message: "Failed to delete all notifications" });
+    }
+  });
+
   app.patch('/api/notifications/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

@@ -103,6 +103,28 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     },
   });
 
+  const deleteAllNotificationsMutation = useMutation({
+    mutationFn: async (type?: string) => {
+      await apiRequest("DELETE", "/api/notifications/delete-all", {
+        type: type === "all" ? undefined : type,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      toast({
+        title: "Success",
+        description: "All notifications deleted",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete all notifications",
+        variant: "destructive",
+      });
+    },
+  });
+
 
 
   const handleNotificationClick = (notification: Notification) => {
@@ -158,6 +180,16 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                   data-testid="mark-all-read-button"
                 >
                   <Check className="h-4 w-4" />
+                </Button>
+              )}
+              {filteredNotifications.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deleteAllNotificationsMutation.mutate(selectedTab)}
+                  data-testid="delete-all-notifications-button"
+                >
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               )}
               <Button
