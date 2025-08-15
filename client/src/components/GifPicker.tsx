@@ -111,7 +111,7 @@ export function GifPicker({
           {/* Content */}
           <div className="flex-1 overflow-hidden">
             <div 
-              className="h-full force-scrollbar pr-2" 
+              className="h-full pr-2 gif-scrollbar" 
               style={{ 
                 overflowY: 'scroll',
                 maxHeight: '500px'
