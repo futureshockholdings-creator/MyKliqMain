@@ -86,6 +86,7 @@ export interface IStorage {
   
   // Post operations
   getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
+  getPostById(postId: string): Promise<Post | undefined>;
   createPost(post: InsertPost): Promise<Post>;
   likePost(postId: string, userId: string): Promise<void>;
   unlikePost(postId: string, userId: string): Promise<void>;
@@ -373,6 +374,11 @@ export class DatabaseStorage implements IStorage {
     );
 
     return postsWithDetails;
+  }
+
+  async getPostById(postId: string): Promise<Post | undefined> {
+    const [post] = await db.select().from(posts).where(eq(posts.id, postId));
+    return post;
   }
 
   async createPost(post: InsertPost): Promise<Post> {
