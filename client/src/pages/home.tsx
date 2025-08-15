@@ -601,14 +601,14 @@ export default function Home() {
                     <Smile className="w-4 h-4" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 max-h-64 overflow-y-auto">
-                  <div className="grid grid-cols-8 gap-1 p-2">
+                <PopoverContent className="w-96 max-h-72 overflow-y-auto">
+                  <div className="grid grid-cols-7 gap-1 p-2">
                     {commonEmojis.map((emoji, index) => (
                       <Button
                         key={index}
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-lg hover:bg-accent"
+                        className="h-10 w-10 p-0 text-xl hover:bg-accent emoji-large"
                         onClick={() => handleEmojiClick(emoji)}
                         data-testid={`emoji-${index}`}
                       >
@@ -1042,14 +1042,14 @@ export default function Home() {
                                 <Smile className="w-4 h-4" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-80 max-h-64 overflow-y-auto">
-                              <div className="grid grid-cols-8 gap-1 p-2">
+                            <PopoverContent className="w-96 max-h-72 overflow-y-auto">
+                              <div className="grid grid-cols-7 gap-1 p-2">
                                 {commonEmojis.map((emoji, index) => (
                                   <Button
                                     key={index}
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 w-8 p-0 text-lg hover:bg-accent"
+                                    className="h-10 w-10 p-0 text-xl hover:bg-accent emoji-large"
                                     onClick={() => handleCommentEmojiClick(post.id, emoji)}
                                     data-testid={`comment-emoji-${post.id}-${index}`}
                                   >

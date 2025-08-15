@@ -16,6 +16,29 @@ html, body {
   width: 100vw;
 }
 
+/* Larger emoji styling */
+.emoji-large {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+/* Global emoji styling for larger size */
+.emoji, .emoji-button {
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+
+/* Make all emojis in text content larger */
+p, span, div {
+  font-size: inherit;
+}
+
+p .emoji, span .emoji, div .emoji,
+p .emoji-large, span .emoji-large, div .emoji-large {
+  font-size: 1.4rem;
+  vertical-align: middle;
+}
+
 /* Custom scrollbar styling */
 ::-webkit-scrollbar {
   width: 12px;
