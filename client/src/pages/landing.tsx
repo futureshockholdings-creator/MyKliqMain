@@ -123,7 +123,7 @@ export default function Landing() {
                   <Palette className="w-8 h-8 text-mykliq-orange" />
                   <div>
                     <h3 className="font-bold text-mykliq-orange">Full Customization</h3>
-                    <p className="text-xs text-muted-foreground">Personalize colors, fonts, and themes like MySpace</p>
+                    <p className="text-xs text-muted-foreground">Personalize colors, fonts, and themes to make it yours</p>
                   </div>
                 </div>
               </CardContent>
