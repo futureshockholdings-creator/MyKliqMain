@@ -2,11 +2,41 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Search, Smile } from 'lucide-react';
 import type { Gif } from '@shared/schema';
+
+// Component to handle GIF image loading with fallback
+function GifImage({ gif, className }: { gif: Gif; className?: string }) {
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  if (hasError) {
+    return (
+      <div className={`${className} bg-muted flex flex-col items-center justify-center text-center p-2`}>
+        <div className="text-muted-foreground text-lg mb-1">🎬</div>
+        <div className="text-muted-foreground text-xs leading-tight">{gif.title}</div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {isLoading && (
+        <div className={`${className} bg-muted flex items-center justify-center`}>
+          <div className="text-muted-foreground text-xs">Loading...</div>
+        </div>
+      )}
+      <img
+        src={gif.thumbnailUrl || gif.url}
+        alt={gif.title}
+        className={`${className} ${isLoading ? 'hidden' : 'block'}`}
+        onError={() => setHasError(true)}
+        onLoad={() => setIsLoading(false)}
+      />
+    </>
+  );
+}
 
 interface GifPickerProps {
   onSelectGif: (gif: Gif) => void;
@@ -61,10 +91,9 @@ export function GifPicker({
           onClick={() => handleGifSelect(gif)}
           data-testid={`gif-item-${gif.id}`}
         >
-          <img
-            src={gif.thumbnailUrl || gif.url}
-            alt={gif.title}
-            className="w-full h-24 object-cover group-hover:scale-105 transition-transform"
+          <GifImage 
+            gif={gif} 
+            className="w-full h-24 object-cover group-hover:scale-105 transition-transform" 
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-end">
             <div className="p-2 bg-gradient-to-t from-black/60 to-transparent w-full opacity-0 group-hover:opacity-100 transition-opacity">
