@@ -6,61 +6,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Search, Smile } from 'lucide-react';
 import type { Gif } from '@shared/schema';
 
-// Component to handle GIF image loading with fallback
+// Simple GIF display component with text overlay
 function GifImage({ gif, className }: { gif: Gif; className?: string }) {
-  const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Reset states when gif changes
-    setHasError(false);
-    setIsLoading(true);
-
-    // Create a simple timeout to simulate loading, then try direct image load
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      console.log(`GIF loaded successfully: ${gif.title}`);
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [gif.url, gif.thumbnailUrl, gif.title]);
-
-  if (hasError) {
-    return (
-      <div className={`${className} bg-muted flex flex-col items-center justify-center text-center p-2 h-24 border border-border`}>
-        <div className="text-muted-foreground text-lg mb-1">🎬</div>
-        <div className="text-muted-foreground text-xs leading-tight font-medium">{gif.title}</div>
-        <div className="text-muted-foreground text-xs opacity-60 mt-1">GIF preview</div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className={`${className} bg-muted flex items-center justify-center h-24`}>
-        <div className="text-muted-foreground text-xs">Loading GIF...</div>
-      </div>
-    );
-  }
-
+  // Create a cache-busting URL
+  const imageUrl = `${gif.thumbnailUrl || gif.url}?v=${Date.now()}`;
+  
   return (
     <div 
-      className={`${className} relative h-24 bg-muted overflow-hidden gif-container cursor-pointer`}
+      className={`${className} relative h-24 bg-muted overflow-hidden gif-container cursor-pointer border border-border`}
       style={{
-        backgroundImage: `url("${gif.thumbnailUrl || gif.url}")`,
+        backgroundImage: `url("${imageUrl}")`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}
       title={gif.title}
-      onLoad={() => {
-        console.log(`Background image loaded: ${gif.title}`);
-      }}
     >
-      {/* Fallback content for failed loads */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted text-muted-foreground text-center p-2 opacity-0 hover:opacity-100 transition-opacity">
-        <div className="text-lg mb-1">🎬</div>
-        <div className="text-xs leading-tight font-medium">{gif.title}</div>
+      {/* Always show title overlay */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white text-center p-2">
+        <div className="text-sm font-medium drop-shadow-lg">{gif.title}</div>
       </div>
     </div>
   );
