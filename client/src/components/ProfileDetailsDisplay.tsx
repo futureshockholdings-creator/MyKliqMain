@@ -131,8 +131,8 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <DetailSection title="Favorite Places" items={user.favoriteLocations} icon={MapPin} />
-            <DetailSection title="Favorite Foods" items={user.favoriteFoods} icon={Utensils} />
+            <DetailSection title="Places" items={user.favoriteLocations} icon={MapPin} />
+            <DetailSection title="Foods" items={user.favoriteFoods} icon={Utensils} />
             <DetailSection title="Music Genres" items={user.musicGenres} icon={Music} />
           </CardContent>
         </Card>
@@ -183,8 +183,8 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <DetailSection title="Favorite Movies" items={user.favoriteMovies} icon={Film} />
-            <DetailSection title="Favorite Books" items={user.favoriteBooks} icon={BookOpen} />
+            <DetailSection title="Movies" items={user.favoriteMovies} icon={Film} />
+            <DetailSection title="Books" items={user.favoriteBooks} icon={BookOpen} />
           </CardContent>
         </Card>
       )}

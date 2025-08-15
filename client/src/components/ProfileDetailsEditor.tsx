@@ -230,7 +230,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <TagInput
-                  label="Favorite Locations"
+                  label="Places"
                   items={favoriteLocations}
                   setItems={setFavoriteLocations}
                   newItem={newLocation}
@@ -239,7 +239,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
                   icon={MapPin}
                 />
                 <TagInput
-                  label="Favorite Foods"
+                  label="Foods"
                   items={favoriteFoods}
                   setItems={setFavoriteFoods}
                   newItem={newFood}
@@ -334,7 +334,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <TagInput
-                  label="Favorite Movies"
+                  label="Movies"
                   items={favoriteMovies}
                   setItems={setFavoriteMovies}
                   newItem={newMovie}
@@ -343,7 +343,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
                   icon={Film}
                 />
                 <TagInput
-                  label="Favorite Books"
+                  label="Books"
                   items={favoriteBooks}
                   setItems={setFavoriteBooks}
                   newItem={newBook}
