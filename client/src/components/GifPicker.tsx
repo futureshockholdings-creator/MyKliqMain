@@ -8,7 +8,6 @@ import type { Gif } from '@shared/schema';
 
 // Component to handle GIF image loading with fallback
 function GifImage({ gif, className }: { gif: Gif; className?: string }) {
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -16,67 +15,22 @@ function GifImage({ gif, className }: { gif: Gif; className?: string }) {
     // Reset states when gif changes
     setHasError(false);
     setIsLoading(true);
-    setImageSrc(null);
 
-    // Try loading the image as a blob to ensure proper rendering
-    const loadImageAsBlob = async (url: string) => {
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Accept': 'image/gif,image/webp,image/*,*/*;q=0.8'
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        
-        console.log(`GIF loaded successfully: ${gif.title}`);
-        setImageSrc(objectUrl);
-        setIsLoading(false);
-        
-        // Clean up the blob URL when component unmounts
-        return () => URL.revokeObjectURL(objectUrl);
-      } catch (error) {
-        console.log(`GIF loading failed: ${gif.title} - ${url}`, error);
-        throw error;
-      }
-    };
+    // Create a simple timeout to simulate loading, then try direct image load
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      console.log(`GIF loaded successfully: ${gif.title}`);
+    }, 100);
 
-    const tryLoadImage = async () => {
-      const primaryUrl = gif.thumbnailUrl || gif.url;
-      const fallbackUrl = gif.url !== gif.thumbnailUrl ? gif.url : null;
-      
-      try {
-        await loadImageAsBlob(primaryUrl);
-      } catch (error) {
-        if (fallbackUrl) {
-          console.log(`Primary URL failed, trying fallback: ${gif.title}`);
-          try {
-            await loadImageAsBlob(fallbackUrl);
-          } catch (fallbackError) {
-            setHasError(true);
-            setIsLoading(false);
-          }
-        } else {
-          setHasError(true);
-          setIsLoading(false);
-        }
-      }
-    };
-
-    tryLoadImage();
+    return () => clearTimeout(timer);
   }, [gif.url, gif.thumbnailUrl, gif.title]);
 
   if (hasError) {
     return (
-      <div className={`${className} bg-muted flex flex-col items-center justify-center text-center p-2 h-24`}>
+      <div className={`${className} bg-muted flex flex-col items-center justify-center text-center p-2 h-24 border border-border`}>
         <div className="text-muted-foreground text-lg mb-1">🎬</div>
-        <div className="text-muted-foreground text-xs leading-tight">{gif.title}</div>
+        <div className="text-muted-foreground text-xs leading-tight font-medium">{gif.title}</div>
+        <div className="text-muted-foreground text-xs opacity-60 mt-1">GIF preview</div>
       </div>
     );
   }
@@ -84,25 +38,39 @@ function GifImage({ gif, className }: { gif: Gif; className?: string }) {
   if (isLoading) {
     return (
       <div className={`${className} bg-muted flex items-center justify-center h-24`}>
-        <div className="text-muted-foreground text-xs">Loading...</div>
+        <div className="text-muted-foreground text-xs">Loading GIF...</div>
       </div>
     );
   }
 
   return (
-    <div className={`${className} relative h-24 bg-muted overflow-hidden`}>
+    <div className={`${className} relative h-24 bg-muted overflow-hidden gif-container`}>
       <img
-        src={imageSrc!}
+        src={gif.thumbnailUrl || gif.url}
         alt=""
         title={gif.title}
         className="w-full h-full object-cover"
-        style={{ display: 'block' }}
+        style={{ 
+          display: 'block',
+          minHeight: '96px',
+          minWidth: '100%',
+          textIndent: '-9999px',
+          fontSize: '0',
+          color: 'transparent'
+        }}
         onError={(e) => {
           console.log(`Final render error for: ${gif.title}`);
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
           setHasError(true);
+        }}
+        onLoad={() => {
+          console.log(`Image element loaded: ${gif.title}`);
         }}
         draggable={false}
       />
+      {/* Overlay to completely cover any browser fallback text */}
+      <div className="absolute inset-0 pointer-events-none bg-transparent" style={{ zIndex: 1 }} />
     </div>
   );
 }

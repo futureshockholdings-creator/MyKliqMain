@@ -88,6 +88,26 @@ html, body {
   border-color: hsl(var(--border));
 }
 
+/* Hide any browser-generated broken image text or fallbacks */
+.gif-container img::before,
+.gif-container img::after {
+  display: none !important;
+  content: "" !important;
+}
+
+.gif-container img {
+  background: hsl(var(--muted)) !important;
+  text-indent: -9999px !important;
+  font-size: 0 !important;
+  color: transparent !important;
+}
+
+/* Ensure no broken image indicators show through */
+.gif-container img[alt]::before,
+.gif-container img[alt]::after {
+  display: none !important;
+}
+
 :root {
   --background: hsl(0, 0%, 0%);
   --foreground: hsl(0, 0%, 100%);
