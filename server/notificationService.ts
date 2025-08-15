@@ -19,7 +19,8 @@ export class NotificationService {
       eq(notifications.isVisible, true)
     );
 
-    if (type && type !== "all") {
+    // Only filter by type if it's specified and not "all"
+    if (type && type !== "all" && type !== "undefined") {
       whereClause = and(
         eq(notifications.userId, userId),
         eq(notifications.type, type as any),

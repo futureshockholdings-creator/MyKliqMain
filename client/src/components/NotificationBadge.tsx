@@ -37,7 +37,7 @@ export function NotificationBadge({
   const [isVisible, setIsVisible] = useState(false);
 
   const { data: notifications = [] } = useQuery<Notification[]>({
-    queryKey: ["/api/notifications", type],
+    queryKey: ["/api/notifications", type === "all" ? undefined : type],
     refetchInterval: 5000, // Refresh every 5 seconds for testing
     staleTime: 0, // Always consider data stale
   });
