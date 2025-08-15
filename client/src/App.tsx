@@ -156,7 +156,7 @@ function AppContent() {
 
   return (
     <TooltipProvider>
-      <div className="bg-background min-h-screen text-foreground">
+      <div className="bg-background min-h-screen h-screen text-foreground overflow-hidden">
         {/* Navigation - Only show when authenticated */}
         {isAuthenticated && !isLoading && (
           <Navigation currentPath={currentPath} />
@@ -164,11 +164,11 @@ function AppContent() {
         
         {/* Main App Container with left margin for navigation */}
         <div className={cn(
-          "min-h-screen bg-background relative overflow-hidden",
+          "min-h-screen h-screen bg-background relative overflow-hidden",
           isAuthenticated && !isLoading ? "ml-20" : ""
         )}>
-          {/* Mobile App Container */}
-          <div className="max-w-sm mx-auto min-h-screen relative">
+          {/* Full Screen App Container */}
+          <div className="w-full h-full min-h-screen relative">
             {/* Animated Background Pattern */}
             <div className="absolute inset-0 opacity-10 pointer-events-none">
               <div className="absolute top-10 left-10 w-20 h-20 bg-primary rounded-full animate-pulse"></div>
@@ -178,7 +178,7 @@ function AppContent() {
             </div>
 
             {/* Main Content */}
-            <div className="relative z-10">
+            <div className="relative z-10 h-full">
               <Router />
             </div>
           </div>

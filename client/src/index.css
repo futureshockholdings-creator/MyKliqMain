@@ -5,6 +5,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Full screen styling */
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+}
+
 :root {
   --background: hsl(0, 0%, 0%);
   --foreground: hsl(0, 0%, 100%);
