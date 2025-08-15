@@ -403,7 +403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const post = await storage.getPostById(postId);
       console.log("Post like notification check:", { postUserId: post?.userId, currentUserId: userId, shouldNotify: post && post.userId !== userId });
       
-      if (post && post.userId !== userId) {
+      if (post) {
         const user = await storage.getUser(userId);
         if (user) {
           console.log("Creating like notification for:", post.userId, "from:", user.firstName);
@@ -413,8 +413,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             postId
           );
         }
-      } else if (post && post.userId === userId) {
-        console.log("Not creating notification - user liked their own post");
       }
       
       res.json({ success: true });
@@ -446,7 +444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get post details to notify the author
       const post = await storage.getPostById(postId);
-      if (post && post.userId !== userId) {
+      if (post) {
         const user = await storage.getUser(userId);
         if (user) {
           const commentPreview = comment.content.slice(0, 50) + (comment.content.length > 50 ? "..." : "");
