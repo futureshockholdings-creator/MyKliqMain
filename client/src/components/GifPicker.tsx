@@ -13,22 +13,63 @@ function GifImage({ gif, className }: { gif: Gif; className?: string }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = () => {
-      console.log(`GIF loaded successfully: ${gif.title}`);
-      setImageSrc(gif.thumbnailUrl || gif.url);
-      setIsLoading(false);
+    // Reset states when gif changes
+    setHasError(false);
+    setIsLoading(true);
+    setImageSrc(null);
+
+    // Try loading the image as a blob to ensure proper rendering
+    const loadImageAsBlob = async (url: string) => {
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'image/gif,image/webp,image/*,*/*;q=0.8'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        
+        console.log(`GIF loaded successfully: ${gif.title}`);
+        setImageSrc(objectUrl);
+        setIsLoading(false);
+        
+        // Clean up the blob URL when component unmounts
+        return () => URL.revokeObjectURL(objectUrl);
+      } catch (error) {
+        console.log(`GIF loading failed: ${gif.title} - ${url}`, error);
+        throw error;
+      }
     };
-    
-    img.onerror = () => {
-      console.log(`GIF loading failed: ${gif.title} - ${gif.url}`);
-      setHasError(true);
-      setIsLoading(false);
+
+    const tryLoadImage = async () => {
+      const primaryUrl = gif.thumbnailUrl || gif.url;
+      const fallbackUrl = gif.url !== gif.thumbnailUrl ? gif.url : null;
+      
+      try {
+        await loadImageAsBlob(primaryUrl);
+      } catch (error) {
+        if (fallbackUrl) {
+          console.log(`Primary URL failed, trying fallback: ${gif.title}`);
+          try {
+            await loadImageAsBlob(fallbackUrl);
+          } catch (fallbackError) {
+            setHasError(true);
+            setIsLoading(false);
+          }
+        } else {
+          setHasError(true);
+          setIsLoading(false);
+        }
+      }
     };
-    
-    img.src = gif.thumbnailUrl || gif.url;
+
+    tryLoadImage();
   }, [gif.url, gif.thumbnailUrl, gif.title]);
 
   if (hasError) {
@@ -52,9 +93,15 @@ function GifImage({ gif, className }: { gif: Gif; className?: string }) {
     <div className={`${className} relative h-24 bg-muted overflow-hidden`}>
       <img
         src={imageSrc!}
-        alt={gif.title}
+        alt=""
+        title={gif.title}
         className="w-full h-full object-cover"
         style={{ display: 'block' }}
+        onError={(e) => {
+          console.log(`Final render error for: ${gif.title}`);
+          setHasError(true);
+        }}
+        draggable={false}
       />
     </div>
   );
