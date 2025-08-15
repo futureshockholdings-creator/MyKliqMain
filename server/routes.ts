@@ -1494,6 +1494,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint to create IM notification
+  app.post('/api/notifications/test-im', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const notification = await notificationService.createNotification({
+        userId,
+        type: 'message' as const,
+        title: 'New IM from Alex',
+        message: 'Alex: Hey! How was your day? Want to hang out later?',
+        actionUrl: '/messages',
+        relatedId: 'mock-conversation-id',
+        relatedType: 'conversation',
+        priority: 'medium' as const,
+      });
+
+      console.log("Test IM notification created:", notification);
+      res.json({ success: true, notification });
+    } catch (error) {
+      console.error("Error creating test IM notification:", error);
+      res.status(500).json({ message: "Failed to create test IM notification" });
+    }
+  });
+
   // Test endpoint to create sample notifications of different types
   app.post('/api/notifications/test', isAuthenticated, async (req: any, res) => {
     try {
