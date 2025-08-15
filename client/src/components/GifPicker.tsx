@@ -6,18 +6,43 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Search, Smile } from 'lucide-react';
 import type { Gif } from '@shared/schema';
 
-// Extremely simple approach - just show the GIF without any fallback text
+// Force image loading with proper error handling
 function GifImage({ gif, className }: { gif: Gif; className?: string }) {
+  const [hasError, setHasError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  const handleLoad = () => {
+    setIsLoaded(true);
+    setHasError(false);
+  };
+
+  const handleError = () => {
+    setHasError(true);
+    setIsLoaded(false);
+  };
+
+  if (hasError) {
+    return (
+      <div className={`${className} relative h-24 bg-muted overflow-hidden gif-container cursor-pointer border border-border flex items-center justify-center`}>
+        <span className="text-xs text-muted-foreground">{gif.title}</span>
+      </div>
+    );
+  }
+
   return (
     <div className={`${className} relative h-24 bg-muted overflow-hidden gif-container cursor-pointer border border-border`}>
+      {!isLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted">
+          <span className="text-xs text-muted-foreground">Loading...</span>
+        </div>
+      )}
       <img
         src={gif.url}
-        alt=""
-        className="w-full h-full object-cover"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y5ZjlmOSIvPgogIDx0ZXh0IHg9IjUwIiB5PSI1NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI0MCIgZm9udC1mYW1pbHk9IkFyaWFsIj7wn5mAPC90ZXh0Pgo8L3N2Zz4K';
-        }}
+        alt={gif.title}
+        className={`w-full h-full object-cover transition-opacity ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={handleLoad}
+        onError={handleError}
+        loading="lazy"
         draggable={false}
       />
     </div>
