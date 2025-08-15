@@ -267,6 +267,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateFriendRank(userId: string, friendId: string, newRank: number): Promise<void> {
+    console.log(`Updating friend rank: ${friendId} to rank ${newRank}`);
+    
     // Get all current friendships for this user
     const allFriends = await db
       .select()
@@ -274,45 +276,50 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(friendships.userId, userId), eq(friendships.status, "accepted")))
       .orderBy(friendships.rank);
 
+    console.log(`Found ${allFriends.length} friends for user ${userId}`);
+
     // Find the friend being moved
     const friendToMove = allFriends.find(f => f.friendId === friendId);
-    if (!friendToMove) return;
+    if (!friendToMove) {
+      console.log(`Friend ${friendId} not found for user ${userId}`);
+      return;
+    }
 
     const oldRank = friendToMove.rank;
+    console.log(`Moving friend from rank ${oldRank} to rank ${newRank}`);
     
     // If rank is the same, no need to update
-    if (oldRank === newRank) return;
+    if (oldRank === newRank) {
+      console.log(`Rank unchanged, skipping update`);
+      return;
+    }
 
-    // Update all affected ranks in a transaction
+    // Simpler approach: reassign all ranks based on the new ordering
     await db.transaction(async (tx) => {
-      if (newRank < oldRank) {
-        // Moving up in rank (lower rank number) - shift others down
+      // Create new ordering with the moved friend in the correct position
+      const updatedFriends = [...allFriends];
+      
+      // Remove the friend from old position
+      const movedFriend = updatedFriends.splice(oldRank - 1, 1)[0];
+      
+      // Insert at new position
+      updatedFriends.splice(newRank - 1, 0, movedFriend);
+      
+      // Update all ranks sequentially
+      for (let i = 0; i < updatedFriends.length; i++) {
+        const friend = updatedFriends[i];
+        const newRankForFriend = i + 1;
+        
+        console.log(`Setting friend ${friend.friendId} to rank ${newRankForFriend}`);
+        
         await tx
           .update(friendships)
-          .set({ rank: sql`${friendships.rank} + 1`, updatedAt: new Date() })
-          .where(and(
-            eq(friendships.userId, userId),
-            gte(friendships.rank, newRank),
-            lt(friendships.rank, oldRank)
-          ));
-      } else {
-        // Moving down in rank (higher rank number) - shift others up
-        await tx
-          .update(friendships)
-          .set({ rank: sql`${friendships.rank} - 1`, updatedAt: new Date() })
-          .where(and(
-            eq(friendships.userId, userId),
-            gt(friendships.rank, oldRank),
-            lte(friendships.rank, newRank)
-          ));
+          .set({ rank: newRankForFriend, updatedAt: new Date() })
+          .where(and(eq(friendships.userId, userId), eq(friendships.friendId, friend.friendId)));
       }
-
-      // Finally, update the moved friend's rank
-      await tx
-        .update(friendships)
-        .set({ rank: newRank, updatedAt: new Date() })
-        .where(and(eq(friendships.userId, userId), eq(friendships.friendId, friendId)));
     });
+    
+    console.log(`Successfully updated friend ranks`);
   }
 
   async acceptFriendship(userId: string, friendId: string): Promise<void> {
