@@ -6,24 +6,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Search, Smile } from 'lucide-react';
 import type { Gif } from '@shared/schema';
 
-// Simple img element approach
+// Extremely simple approach - just show the GIF without any fallback text
 function GifImage({ gif, className }: { gif: Gif; className?: string }) {
   return (
     <div className={`${className} relative h-24 bg-muted overflow-hidden gif-container cursor-pointer border border-border`}>
       <img
-        src={gif.thumbnailUrl || gif.url}
+        src={gif.url}
         alt=""
         className="w-full h-full object-cover"
-        style={{ 
-          display: 'block',
-          textIndent: '-9999px',
-          fontSize: '0',
-          color: 'transparent',
-          backgroundColor: '#f0f0f0'
-        }}
         onError={(e) => {
           const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
+          target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2Y5ZjlmOSIvPgogIDx0ZXh0IHg9IjUwIiB5PSI1NSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSI0MCIgZm9udC1mYW1pbHk9IkFyaWFsIj7wn5mAPC90ZXh0Pgo8L3N2Zz4K';
         }}
         draggable={false}
       />
@@ -65,7 +58,7 @@ export function GifPicker({
 
   // Search GIFs
   const { data: searchResults = [], isLoading: isSearching } = useQuery<Gif[]>({
-    queryKey: ['/api/gifs/search', { q: searchQuery }],
+    queryKey: [`/api/gifs/search?q=${encodeURIComponent(searchQuery)}`],
     enabled: searchQuery.length > 2
   });
 
