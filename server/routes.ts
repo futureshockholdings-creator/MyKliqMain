@@ -1473,16 +1473,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/notifications/demo', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      console.log("Creating demo notification for user:", userId);
+      const { type, title, message } = req.body;
+      console.log("Creating demo notification for user:", userId, "type:", type);
+      
+      const actionUrls = {
+        message: '/messages',
+        event_invite: '/events', 
+        friend_request: '/kliq',
+        post_like: '/bulletin'
+      };
       
       const notification = await notificationService.createNotification({
         userId: userId,
-        type: 'post_like',
-        title: 'Demo Notification',
-        message: 'This is a test notification to verify the system works!',
-        actionUrl: '/bulletin',
-        relatedId: 'demo-post-id',
-        relatedType: 'post',
+        type: type || 'post_like',
+        title: title || 'Demo Notification',
+        message: message || 'This is a test notification to verify the system works!',
+        actionUrl: actionUrls[type as keyof typeof actionUrls] || '/bulletin',
+        relatedId: `demo-${type}-id`,
+        relatedType: type === 'message' ? 'conversation' : type === 'event_invite' ? 'event' : type === 'friend_request' ? 'user' : 'post',
         priority: 'normal',
       });
       
