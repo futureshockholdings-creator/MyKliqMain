@@ -53,7 +53,7 @@ export function GifPicker({
   };
 
   const renderGifGrid = (gifs: Gif[]) => (
-    <div className="grid grid-cols-3 md:grid-cols-4 gap-3 p-4">
+    <div className="grid grid-cols-3 md:grid-cols-4 gap-3 p-4 pb-6">
       {gifs.map((gif) => (
         <div
           key={gif.id}
@@ -90,7 +90,7 @@ export function GifPicker({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-3xl h-[600px] bg-card text-foreground">
+      <DialogContent className="max-w-3xl h-[650px] bg-card text-foreground overflow-hidden">
         <DialogHeader>
           <DialogTitle>Choose a GIF</DialogTitle>
         </DialogHeader>
@@ -110,8 +110,8 @@ export function GifPicker({
 
           {/* Content */}
           <div className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full pr-4">
-              <div className="pr-2">
+            <ScrollArea className="h-full w-full" style={{ overflowY: 'auto' }}>
+              <div className="pr-4">
                 {searchQuery.length > 2 ? (
                   // Search results
                   <>
