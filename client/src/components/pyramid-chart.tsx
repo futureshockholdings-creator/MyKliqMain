@@ -64,8 +64,11 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
   };
 
   const handleDrop = (targetFriend: Friend) => {
-    if (draggedFriend && onRankChange) {
-      onRankChange(draggedFriend.id, targetFriend.rank);
+    if (draggedFriend && onRankChange && draggedFriend.id !== targetFriend.id) {
+      // Calculate the new rank based on position in the pyramid
+      const targetRank = targetFriend.rank;
+      console.log(`Dragging ${draggedFriend.id} (rank ${draggedFriend.rank}) to position of ${targetFriend.id} (rank ${targetRank})`);
+      onRankChange(draggedFriend.id, targetRank);
     }
     setDraggedFriend(null);
   };
@@ -198,8 +201,33 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
       {/* Pyramid Rows */}
       {pyramidRows.map((rowFriends, rowIndex) => (
         <div key={rowIndex} className="mb-6">
-          <div className="flex justify-center gap-3">
+          <div className="text-center mb-2">
+            <Badge variant="secondary" className={cn("text-xs", getRowColor(rowIndex))}>
+              {getRowLabel(rowIndex)}
+            </Badge>
+          </div>
+          <div 
+            className="flex justify-center gap-3 min-h-[80px] items-center p-2 rounded-lg"
+            onDragOver={handleDragOver}
+            onDrop={(e) => {
+              e.preventDefault();
+              // If dropping in an empty area of a row, place at the end of that row
+              if (draggedFriend && onRankChange && rowFriends.length > 0) {
+                const lastFriendInRow = rowFriends[rowFriends.length - 1];
+                const newRank = lastFriendInRow.rank + 1;
+                console.log(`Dropping ${draggedFriend.id} at end of row ${rowIndex + 1}, new rank: ${newRank}`);
+                onRankChange(draggedFriend.id, Math.min(newRank, maxFriends));
+              }
+              setDraggedFriend(null);
+            }}
+          >
             {rowFriends.map(renderFriend)}
+            {/* Show empty slots for incomplete rows */}
+            {rowIndex === 0 && rowFriends.length === 0 && (
+              <div className="w-16 h-16 border-2 border-dashed border-muted-foreground/30 rounded-full flex items-center justify-center text-muted-foreground">
+                <Crown className="w-6 h-6" />
+              </div>
+            )}
           </div>
         </div>
       ))}
