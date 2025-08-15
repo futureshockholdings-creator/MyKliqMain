@@ -1430,7 +1430,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { type } = req.body;
-      console.log("Mark all as read - userId:", userId, "type:", type, "body:", req.body);
       const notifications = await notificationService.markAllAsRead(userId, type);
       res.json(notifications);
     } catch (error) {

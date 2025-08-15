@@ -53,8 +53,6 @@ export class NotificationService {
 
   // Mark all notifications as read for a user
   async markAllAsRead(userId: string, type?: string) {
-    console.log("markAllAsRead called with userId:", userId, "type:", type);
-    
     let whereClause = and(
       eq(notifications.userId, userId),
       eq(notifications.isRead, false),
@@ -70,8 +68,6 @@ export class NotificationService {
         eq(notifications.isVisible, true)
       );
     }
-
-    console.log("Updating notifications with whereClause for user:", userId);
     
     const updatedNotifications = await db
       .update(notifications)
@@ -82,7 +78,6 @@ export class NotificationService {
       .where(whereClause)
       .returning();
     
-    console.log("Updated", updatedNotifications.length, "notifications");
     return updatedNotifications;
   }
 

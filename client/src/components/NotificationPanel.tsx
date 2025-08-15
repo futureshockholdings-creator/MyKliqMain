@@ -103,34 +103,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     },
   });
 
-  const testNotificationMutation = useMutation({
-    mutationFn: async (type: string) => {
-      const testData = {
-        message: { title: "New IM from Alex", message: "Alex: Hey! Want to hang out later?" },
-        event_invite: { title: "Event Invitation", message: "You're invited to Movie Night tomorrow!" },
-        friend_request: { title: "Friend Request", message: "Jordan wants to join your kliq" }
-      };
-      
-      await apiRequest("POST", "/api/notifications/demo", {
-        type,
-        ...testData[type as keyof typeof testData]
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-      toast({
-        title: "Success",
-        description: "Test notification created",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create test notification",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   const handleNotificationClick = (notification: Notification) => {
     // Mark as read
@@ -226,41 +199,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                 })}
               </TabsList>
 
-              {/* Test buttons - remove in production */}
-              <div className="px-4 pb-2">
-                <div className="flex gap-1 mb-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => testNotificationMutation.mutate("message")}
-                    disabled={testNotificationMutation.isPending}
-                    className="h-7 text-xs flex-1"
-                    data-testid="test-im-button"
-                  >
-                    Test IM
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => testNotificationMutation.mutate("event_invite")}
-                    disabled={testNotificationMutation.isPending}
-                    className="h-7 text-xs flex-1"
-                    data-testid="test-event-button"
-                  >
-                    Test Event
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => testNotificationMutation.mutate("friend_request")}
-                    disabled={testNotificationMutation.isPending}
-                    className="h-7 text-xs flex-1"
-                    data-testid="test-friend-button"
-                  >
-                    Test Friend
-                  </Button>
-                </div>
-              </div>
+
 
               <ScrollArea className="flex-1 px-4">
                 <TabsContent value={selectedTab} className="space-y-2 mt-0">
