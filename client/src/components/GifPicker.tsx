@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Search, Smile } from 'lucide-react';
@@ -110,8 +110,14 @@ export function GifPicker({
 
           {/* Content */}
           <div className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full w-full" style={{ overflowY: 'auto' }}>
-              <div className="pr-4">
+            <div 
+              className="h-full overflow-y-scroll pr-2" 
+              style={{ 
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#9CA3AF #F3F4F6'
+              }}
+            >
+              <div className="pr-2">
                 {searchQuery.length > 2 ? (
                   // Search results
                   <>
@@ -151,7 +157,7 @@ export function GifPicker({
                   </>
                 )}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         </div>
       </DialogContent>
