@@ -11,7 +11,8 @@ export function useNotifications(type?: string) {
 
   const { data: notifications = [], isLoading, refetch } = useQuery<Notification[]>({
     queryKey: ["/api/notifications", type],
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 5000, // Refresh every 5 seconds for testing
+    staleTime: 0, // Always consider data stale
   });
 
   const markAsReadMutation = useMutation({
