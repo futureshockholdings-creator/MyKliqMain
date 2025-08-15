@@ -6,28 +6,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Search, Smile } from 'lucide-react';
 import type { Gif } from '@shared/schema';
 
-// Simple GIF display component with text overlay
+// Clean GIF display component
 function GifImage({ gif, className }: { gif: Gif; className?: string }) {
-
-  // Create a cache-busting URL
-  const imageUrl = `${gif.thumbnailUrl || gif.url}?v=${Date.now()}`;
-  
   return (
     <div 
       className={`${className} relative h-24 bg-muted overflow-hidden gif-container cursor-pointer border border-border`}
       style={{
-        backgroundImage: `url("${imageUrl}")`,
+        backgroundImage: `url("${gif.thumbnailUrl || gif.url}")`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: '#f0f0f0'
       }}
       title={gif.title}
-    >
-      {/* Always show title overlay */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white text-center p-2">
-        <div className="text-sm font-medium drop-shadow-lg">{gif.title}</div>
-      </div>
-    </div>
+    />
   );
 }
 
