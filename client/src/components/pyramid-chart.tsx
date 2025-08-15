@@ -23,7 +23,8 @@ interface PyramidChartProps {
   kliqName?: string;
 }
 
-export function PyramidChart({ friends, onMessage, onVideoCall, maxFriends = 15, kliqName }: PyramidChartProps) {
+export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, maxFriends = 15, kliqName }: PyramidChartProps) {
+  const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
   const [_, setLocation] = useLocation();
 
   const getInitials = (friend: Friend) => {
@@ -50,10 +51,34 @@ export function PyramidChart({ friends, onMessage, onVideoCall, maxFriends = 15,
     sortedFriends.slice(10, 15)   // Bottom: 5 friends (ranks 11-15)
   ].filter(row => row.length > 0);
 
+  const handleDragStart = (friend: Friend) => {
+    setDraggedFriend(friend);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (targetFriend: Friend) => {
+    if (draggedFriend && onRankChange && draggedFriend.id !== targetFriend.id) {
+      const targetRank = targetFriend.rank;
+      console.log(`Moving ${draggedFriend.id} (rank ${draggedFriend.rank}) to position of ${targetFriend.id} (rank ${targetRank})`);
+      onRankChange(draggedFriend.id, targetRank);
+    }
+    setDraggedFriend(null);
+  };
+
   const renderFriend = (friend: Friend) => (
     <div
       key={friend.id}
-      className="relative group cursor-pointer transition-all duration-300 hover:scale-105 flex flex-col items-center"
+      draggable
+      onDragStart={() => handleDragStart(friend)}
+      onDragOver={handleDragOver}
+      onDrop={() => handleDrop(friend)}
+      className={cn(
+        "relative group cursor-move transition-all duration-300 hover:scale-105 flex flex-col items-center",
+        draggedFriend?.id === friend.id && "opacity-50"
+      )}
     >
       {/* Action buttons - appear on hover */}
       <div className="absolute -top-2 -right-2 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -94,12 +119,7 @@ export function PyramidChart({ friends, onMessage, onVideoCall, maxFriends = 15,
         }}
         data-testid={`friend-avatar-${friend.id}`}
       >
-        <Avatar className={cn(
-          friend.rank === 1 ? "w-24 h-24" : 
-          friend.rank <= 3 ? "w-22 h-22" : 
-          friend.rank <= 6 ? "w-20 h-20" : "w-18 h-18",
-          "border-4 border-background"
-        )}>
+        <Avatar className="w-20 h-20 border-4 border-background">
           <AvatarImage src={friend.profileImageUrl} />
           <AvatarFallback className="bg-muted text-muted-foreground text-lg font-bold">
             {getInitials(friend)}
