@@ -8,43 +8,52 @@ import type { Gif } from '@shared/schema';
 
 // Component to handle GIF image loading with fallback
 function GifImage({ gif, className }: { gif: Gif; className?: string }) {
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.log(`GIF loading failed: ${gif.title} - ${gif.url}`);
-    setHasError(true);
-    setIsLoading(false);
-  };
-
-  const handleLoad = () => {
-    console.log(`GIF loaded successfully: ${gif.title}`);
-    setIsLoading(false);
-  };
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      console.log(`GIF loaded successfully: ${gif.title}`);
+      setImageSrc(gif.thumbnailUrl || gif.url);
+      setIsLoading(false);
+    };
+    
+    img.onerror = () => {
+      console.log(`GIF loading failed: ${gif.title} - ${gif.url}`);
+      setHasError(true);
+      setIsLoading(false);
+    };
+    
+    img.src = gif.thumbnailUrl || gif.url;
+  }, [gif.url, gif.thumbnailUrl, gif.title]);
 
   if (hasError) {
     return (
       <div className={`${className} bg-muted flex flex-col items-center justify-center text-center p-2 h-24`}>
         <div className="text-muted-foreground text-lg mb-1">🎬</div>
         <div className="text-muted-foreground text-xs leading-tight">{gif.title}</div>
-        <div className="text-muted-foreground text-xs opacity-50 mt-1">Failed to load</div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className={`${className} bg-muted flex items-center justify-center h-24`}>
+        <div className="text-muted-foreground text-xs">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className={`${className} relative h-24 bg-muted`}>
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-muted-foreground text-xs">Loading...</div>
-        </div>
-      )}
+    <div className={`${className} relative h-24 bg-muted overflow-hidden`}>
       <img
-        src={gif.thumbnailUrl || gif.url}
+        src={imageSrc!}
         alt={gif.title}
-        className={`w-full h-full object-cover ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
-        onError={handleError}
-        onLoad={handleLoad}
+        className="w-full h-full object-cover"
         style={{ display: 'block' }}
       />
     </div>
@@ -132,9 +141,12 @@ export function GifPicker({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-3xl h-[650px] bg-card text-foreground overflow-hidden">
+      <DialogContent className="max-w-3xl h-[650px] bg-card text-foreground overflow-hidden" aria-describedby="gif-picker-description">
         <DialogHeader>
           <DialogTitle>Choose a GIF</DialogTitle>
+          <div id="gif-picker-description" className="sr-only">
+            Browse and select animated GIFs to add to your post or message
+          </div>
         </DialogHeader>
         
         <div className="flex flex-col h-full">
