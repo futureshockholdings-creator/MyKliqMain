@@ -72,12 +72,13 @@ function Navigation({ currentPath }: { currentPath: string }) {
             )}
             data-testid="notification-bell"
           >
-            <NotificationBadge 
-              type="all" 
-              showIcon={false}
-              className="absolute -top-1 -right-1"
-              size="sm"
-            />
+            {getTotalUnreadCount() > 0 && (
+              <div className="absolute -top-1 -right-1 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
+                <span className="text-xs text-destructive-foreground font-bold">
+                  {getTotalUnreadCount() > 99 ? "99+" : getTotalUnreadCount()}
+                </span>
+              </div>
+            )}
             <Bell className="w-6 h-6" />
             <span className="text-xs mt-1">Alerts</span>
           </button>
@@ -96,13 +97,12 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 )}
                 data-testid={`nav-${item.tab}`}
               >
-                {item.badgeType && (
-                  <NotificationBadge 
-                    type={item.badgeType} 
-                    showIcon={false}
-                    className="absolute -top-1 -right-1"
-                    size="sm"
-                  />
+                {item.badgeType && getBadgeCount(item.badgeType) > 0 && (
+                  <div className="absolute -top-1 -right-1 h-4 w-4 bg-destructive rounded-full flex items-center justify-center">
+                    <span className="text-[10px] text-destructive-foreground font-bold">
+                      {getBadgeCount(item.badgeType) > 9 ? "9+" : getBadgeCount(item.badgeType)}
+                    </span>
+                  </div>
                 )}
                 <item.icon className="w-6 h-6" />
                 <span className="text-xs mt-1">{item.label}</span>

@@ -45,8 +45,8 @@ export function NotificationBadge({
   const unreadCount = notifications.filter((n: Notification) => !n.isRead && n.isVisible).length;
   const hasNotifications = unreadCount > 0;
   
-  // Debug logging
-  console.log(`NotificationBadge [${type}]: notifications=`, notifications.length, 'unread=', unreadCount, 'hasNotifications=', hasNotifications);
+  // Debug logging (remove in production)
+  // console.log(`NotificationBadge [${type}]: notifications=`, notifications.length, 'unread=', unreadCount, 'hasNotifications=', hasNotifications);
 
   useEffect(() => {
     if (hasNotifications) {

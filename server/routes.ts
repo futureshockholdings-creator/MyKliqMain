@@ -1416,9 +1416,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { type } = req.query;
-      console.log("Fetching notifications for user:", userId, "type:", type);
       const notifications = await notificationService.getUserNotifications(userId, type);
-      console.log("Found notifications:", notifications.length, "first notification:", notifications[0]);
+      console.log("Fetching notifications for user:", userId, "type:", type, "count:", notifications.length);
       res.json(notifications);
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -1490,6 +1489,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating demo notification:", error);
       res.status(500).json({ message: "Failed to create demo notification" });
+    }
+  });
+
+  // Test endpoint to create sample notifications of different types
+  app.post('/api/notifications/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const testNotifications = [
+        {
+          userId,
+          type: 'message' as const,
+          title: 'New Message',
+          message: 'Alex sent you a message',
+          actionUrl: '/messages',
+          priority: 'medium' as const,
+        },
+        {
+          userId,
+          type: 'friend_request' as const,
+          title: 'Friend Request',
+          message: 'Jordan wants to join your kliq',
+          actionUrl: '/kliq',
+          priority: 'high' as const,
+        },
+        {
+          userId,
+          type: 'event_invite' as const,
+          title: 'Event Invitation',
+          message: 'You are invited to Movie Night',
+          actionUrl: '/events',
+          priority: 'medium' as const,
+        },
+      ];
+
+      const createdNotifications = [];
+      for (const notificationData of testNotifications) {
+        const notification = await notificationService.createNotification(notificationData);
+        createdNotifications.push(notification);
+      }
+
+      res.json({ 
+        success: true, 
+        created: createdNotifications.length,
+        notifications: createdNotifications 
+      });
+    } catch (error) {
+      console.error("Error creating test notifications:", error);
+      res.status(500).json({ message: "Failed to create test notifications" });
     }
   });
 

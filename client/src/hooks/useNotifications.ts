@@ -9,10 +9,19 @@ export function useNotifications(type?: string) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Get all notifications for calculating totals
+  const { data: allNotifications = [] } = useQuery<Notification[]>({
+    queryKey: ["/api/notifications"],
+    refetchInterval: 5000,
+    staleTime: 0,
+  });
+
+  // Get specific type notifications if requested
   const { data: notifications = [], isLoading, refetch } = useQuery<Notification[]>({
-    queryKey: ["/api/notifications", type],
-    refetchInterval: 5000, // Refresh every 5 seconds for testing
-    staleTime: 0, // Always consider data stale
+    queryKey: ["/api/notifications", type === "all" ? undefined : type],
+    refetchInterval: 5000,
+    staleTime: 0,
+    enabled: !!type,
   });
 
   const markAsReadMutation = useMutation({
@@ -71,9 +80,9 @@ export function useNotifications(type?: string) {
     },
   });
 
-  // Helper functions for getting specific notification counts
+  // Helper functions for getting specific notification counts from all notifications
   const getUnreadCount = (notificationType?: string) => {
-    return notifications.filter((n: Notification) => {
+    return allNotifications.filter((n: Notification) => {
       if (!n.isRead && n.isVisible) {
         if (!notificationType || notificationType === "all") return true;
         return n.type === notificationType;
