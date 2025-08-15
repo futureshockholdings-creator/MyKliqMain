@@ -113,6 +113,27 @@ export const gifs = pgTable("gifs", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Moviecons - short movie clips with sound (3-5 seconds)
+export const moviecons = pgTable("moviecons", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: varchar("description"),
+  videoUrl: varchar("video_url").notNull(),
+  thumbnailUrl: varchar("thumbnail_url"),
+  duration: integer("duration").notNull(), // in seconds, max 5
+  tags: varchar("tags").array().default(sql`'{}'::varchar[]`),
+  category: varchar("category").notNull().default("general"),
+  movieSource: varchar("movie_source"), // e.g., "The Avengers (2012)"
+  width: integer("width"),
+  height: integer("height"),
+  fileSize: integer("file_size"),
+  trending: boolean("trending").default(false),
+  featured: boolean("featured").default(false),
+  uploadedBy: varchar("uploaded_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Posts
 export const posts = pgTable("posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -121,6 +142,7 @@ export const posts = pgTable("posts", {
   mediaUrl: varchar("media_url"),
   mediaType: mediaTypeEnum("media_type"),
   gifId: varchar("gif_id").references(() => gifs.id),
+  movieconId: varchar("moviecon_id").references(() => moviecons.id),
   likes: integer("likes").default(0),
   latitude: numeric("latitude", { precision: 10, scale: 7 }),
   longitude: numeric("longitude", { precision: 10, scale: 7 }),
@@ -149,6 +171,7 @@ export const comments = pgTable("comments", {
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   content: text("content").notNull(),
   gifId: varchar("gif_id").references(() => gifs.id),
+  movieconId: varchar("moviecon_id").references(() => moviecons.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -333,6 +356,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   meetups: many(meetups),
   meetupCheckIns: many(meetupCheckIns),
   uploadedGifs: many(gifs),
+  uploadedMoviecons: many(moviecons),
   notifications: many(notifications),
 }));
 
@@ -340,6 +364,16 @@ export const usersRelations = relations(users, ({ many, one }) => ({
 export const gifsRelations = relations(gifs, ({ one, many }) => ({
   uploader: one(users, {
     fields: [gifs.uploadedBy],
+    references: [users.id],
+  }),
+  posts: many(posts),
+  comments: many(comments),
+}));
+
+// Moviecon Relations
+export const movieconsRelations = relations(moviecons, ({ one, many }) => ({
+  uploader: one(users, {
+    fields: [moviecons.uploadedBy],
     references: [users.id],
   }),
   posts: many(posts),
@@ -394,6 +428,10 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
     fields: [posts.gifId],
     references: [gifs.id],
   }),
+  moviecon: one(moviecons, {
+    fields: [posts.movieconId],
+    references: [moviecons.id],
+  }),
   comments: many(comments),
   likes: many(postLikes),
 }));
@@ -410,6 +448,10 @@ export const commentsRelations = relations(comments, ({ one }) => ({
   gif: one(gifs, {
     fields: [comments.gifId],
     references: [gifs.id],
+  }),
+  moviecon: one(moviecons, {
+    fields: [comments.movieconId],
+    references: [moviecons.id],
   }),
 }));
 
@@ -616,10 +658,16 @@ export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Gif = typeof gifs.$inferSelect;
 export type InsertGif = typeof gifs.$inferInsert;
+export type Moviecon = typeof moviecons.$inferSelect;
+export type InsertMoviecon = typeof moviecons.$inferInsert;
 
 // GIF Zod schemas
 export const insertGifSchema = createInsertSchema(gifs).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertGifForm = z.infer<typeof insertGifSchema>;
+
+// Moviecon Zod schemas
+export const insertMovieconSchema = createInsertSchema(moviecons).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertMovieconForm = z.infer<typeof insertMovieconSchema>;
 export type UserTheme = typeof userThemes.$inferSelect;
 export type InsertUserTheme = z.infer<typeof insertUserThemeSchema>;
 export type Friendship = typeof friendships.$inferSelect;

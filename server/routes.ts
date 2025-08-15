@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { notificationService } from "./notificationService";
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 
@@ -1236,6 +1236,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting gif:", error);
       res.status(500).json({ message: "Failed to delete gif" });
+    }
+  });
+
+  // Moviecon API routes
+  
+  // Get all Moviecons
+  app.get('/api/moviecons', async (req, res) => {
+    try {
+      const { q } = req.query;
+      let moviecons;
+      
+      if (q && typeof q === 'string') {
+        // If search query provided, search moviecons
+        moviecons = await storage.searchMoviecons(q);
+      } else {
+        // Otherwise get all moviecons
+        moviecons = await storage.getAllMoviecons();
+      }
+      
+      res.json(moviecons);
+    } catch (error) {
+      console.error("Error fetching moviecons:", error);
+      res.status(500).json({ message: "Failed to fetch moviecons" });
+    }
+  });
+
+  // Get Moviecons by category
+  app.get('/api/moviecons/category/:category', async (req, res) => {
+    try {
+      const { category } = req.params;
+      const moviecons = await storage.getMovieconsByCategory(category);
+      res.json(moviecons);
+    } catch (error) {
+      console.error("Error fetching moviecons by category:", error);
+      res.status(500).json({ message: "Failed to fetch moviecons by category" });
+    }
+  });
+
+  // Get trending Moviecons
+  app.get('/api/moviecons/trending', async (req, res) => {
+    try {
+      const moviecons = await storage.getTrendingMoviecons();
+      res.json(moviecons);
+    } catch (error) {
+      console.error("Error fetching trending moviecons:", error);
+      res.status(500).json({ message: "Failed to fetch trending moviecons" });
+    }
+  });
+
+  // Get featured Moviecons
+  app.get('/api/moviecons/featured', async (req, res) => {
+    try {
+      const moviecons = await storage.getFeaturedMoviecons();
+      res.json(moviecons);
+    } catch (error) {
+      console.error("Error fetching featured moviecons:", error);
+      res.status(500).json({ message: "Failed to fetch featured moviecons" });
+    }
+  });
+
+  // Search Moviecons
+  app.get('/api/moviecons/search', async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+      const moviecons = await storage.searchMoviecons(q);
+      res.json(moviecons);
+    } catch (error) {
+      console.error("Error searching moviecons:", error);
+      res.status(500).json({ message: "Failed to search moviecons" });
+    }
+  });
+
+  // Get Moviecon by ID
+  app.get('/api/moviecons/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const moviecon = await storage.getMovieconById(id);
+      if (!moviecon) {
+        return res.status(404).json({ message: "Moviecon not found" });
+      }
+      res.json(moviecon);
+    } catch (error) {
+      console.error("Error fetching moviecon:", error);
+      res.status(500).json({ message: "Failed to fetch moviecon" });
+    }
+  });
+
+  // Create new Moviecon (admin only)
+  app.post('/api/moviecons', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const movieconData = insertMovieconSchema.parse({ 
+        ...req.body, 
+        uploadedBy: userId 
+      });
+      
+      const moviecon = await storage.createMoviecon(movieconData);
+      res.json(moviecon);
+    } catch (error) {
+      console.error("Error creating moviecon:", error);
+      res.status(500).json({ message: "Failed to create moviecon" });
+    }
+  });
+
+  // Update Moviecon (admin only)
+  app.put('/api/moviecons/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const moviecon = await storage.updateMoviecon(id, updates);
+      res.json(moviecon);
+    } catch (error) {
+      console.error("Error updating moviecon:", error);
+      res.status(500).json({ message: "Failed to update moviecon" });
+    }
+  });
+
+  // Delete Moviecon (admin only)
+  app.delete('/api/moviecons/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteMoviecon(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting moviecon:", error);
+      res.status(500).json({ message: "Failed to delete moviecon" });
     }
   });
 

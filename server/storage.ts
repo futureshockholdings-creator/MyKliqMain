@@ -63,6 +63,9 @@ import {
   gifs,
   type Gif,
   type InsertGif,
+  moviecons,
+  type Moviecon,
+  type InsertMoviecon,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, isNull, isNotNull } from "drizzle-orm";
@@ -115,6 +118,17 @@ export interface IStorage {
   createGif(gif: InsertGif): Promise<Gif>;
   updateGif(id: string, updates: Partial<Gif>): Promise<Gif>;
   deleteGif(id: string): Promise<void>;
+  
+  // Moviecon operations
+  getAllMoviecons(): Promise<Moviecon[]>;
+  getTrendingMoviecons(): Promise<Moviecon[]>;
+  getFeaturedMoviecons(): Promise<Moviecon[]>;
+  searchMoviecons(query: string): Promise<Moviecon[]>;
+  getMovieconsByCategory(category: string): Promise<Moviecon[]>;
+  getMovieconById(id: string): Promise<Moviecon | undefined>;
+  createMoviecon(moviecon: InsertMoviecon): Promise<Moviecon>;
+  updateMoviecon(id: string, updates: Partial<Moviecon>): Promise<Moviecon>;
+  deleteMoviecon(id: string): Promise<void>;
 
   // Message operations
   getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number })[]>;
@@ -360,6 +374,7 @@ export class DatabaseStorage implements IStorage {
         mediaUrl: posts.mediaUrl,
         mediaType: posts.mediaType,
         gifId: posts.gifId,
+        movieconId: posts.movieconId,
         likes: posts.likes,
         latitude: posts.latitude,
         longitude: posts.longitude,
@@ -369,10 +384,12 @@ export class DatabaseStorage implements IStorage {
         updatedAt: posts.updatedAt,
         author: users,
         gif: gifs,
+        moviecon: moviecons,
       })
       .from(posts)
       .innerJoin(users, eq(posts.userId, users.id))
       .leftJoin(gifs, eq(posts.gifId, gifs.id))
+      .leftJoin(moviecons, eq(posts.movieconId, moviecons.id))
       .where(and(...whereConditions))
       .orderBy(desc(posts.createdAt));
 
@@ -390,13 +407,16 @@ export class DatabaseStorage implements IStorage {
               userId: comments.userId,
               content: comments.content,
               gifId: comments.gifId,
+              movieconId: comments.movieconId,
               createdAt: comments.createdAt,
               author: users,
               gif: gifs,
+              moviecon: moviecons,
             })
             .from(comments)
             .innerJoin(users, eq(comments.userId, users.id))
             .leftJoin(gifs, eq(comments.gifId, gifs.id))
+            .leftJoin(moviecons, eq(comments.movieconId, moviecons.id))
             .where(eq(comments.postId, post.id))
             .orderBy(comments.createdAt),
         ]);
@@ -408,6 +428,7 @@ export class DatabaseStorage implements IStorage {
           mediaUrl: post.mediaUrl,
           mediaType: post.mediaType,
           gifId: post.gifId,
+          movieconId: post.movieconId,
           gif: post.gif,
           likes: likesData,
           latitude: post.latitude,
@@ -1464,6 +1485,71 @@ export class DatabaseStorage implements IStorage {
 
   async deleteGif(id: string): Promise<void> {
     await db.delete(gifs).where(eq(gifs.id, id));
+  }
+
+  // Moviecon operations
+  async getAllMoviecons(): Promise<Moviecon[]> {
+    return await db.select().from(moviecons).orderBy(desc(moviecons.createdAt));
+  }
+
+  async getMovieconsByCategory(category: string): Promise<Moviecon[]> {
+    return await db
+      .select()
+      .from(moviecons)
+      .where(eq(moviecons.category, category))
+      .orderBy(desc(moviecons.createdAt));
+  }
+
+  async getTrendingMoviecons(): Promise<Moviecon[]> {
+    return await db
+      .select()
+      .from(moviecons)
+      .where(eq(moviecons.trending, true))
+      .orderBy(desc(moviecons.createdAt));
+  }
+
+  async getFeaturedMoviecons(): Promise<Moviecon[]> {
+    return await db
+      .select()
+      .from(moviecons)
+      .where(eq(moviecons.featured, true))
+      .orderBy(desc(moviecons.createdAt));
+  }
+
+  async searchMoviecons(query: string): Promise<Moviecon[]> {
+    const searchTerm = `%${query}%`;
+    return await db
+      .select()
+      .from(moviecons)
+      .where(or(
+        like(moviecons.title, searchTerm),
+        like(moviecons.category, searchTerm),
+        like(moviecons.movieSource, searchTerm)
+      ))
+      .orderBy(desc(moviecons.createdAt));
+  }
+
+  async getMovieconById(id: string): Promise<Moviecon | undefined> {
+    const [moviecon] = await db.select().from(moviecons).where(eq(moviecons.id, id));
+    return moviecon;
+  }
+
+  async createMoviecon(moviecon: InsertMoviecon): Promise<Moviecon> {
+    const [newMoviecon] = await db.insert(moviecons).values(moviecon).returning();
+    return newMoviecon;
+  }
+
+  async updateMoviecon(id: string, updates: Partial<Moviecon>): Promise<Moviecon> {
+    const [updatedMoviecon] = await db
+      .update(moviecons)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(moviecons.id, id))
+      .returning();
+    return updatedMoviecon;
+  }
+
+  async deleteMoviecon(id: string): Promise<void> {
+    await db.delete(moviecons).where(eq(moviecons.id, id));
   }
 }
 

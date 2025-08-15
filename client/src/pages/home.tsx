@@ -20,7 +20,9 @@ import { MediaUpload } from "@/components/MediaUpload";
 import { PyramidChart } from "@/components/pyramid-chart";
 import { GifPicker } from "@/components/GifPicker";
 import { GifDisplay } from "@/components/GifDisplay";
-import type { Gif } from "@shared/schema";
+import { MovieconPicker } from "@/components/MovieconPicker";
+import { MovieconDisplay } from "@/components/MovieconDisplay";
+import type { Gif, Moviecon } from "@shared/schema";
 
 
 export default function Home() {
@@ -34,6 +36,8 @@ export default function Home() {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [selectedGif, setSelectedGif] = useState<Gif | null>(null);
   const [commentGifs, setCommentGifs] = useState<Record<string, Gif | null>>({});
+  const [selectedMoviecon, setSelectedMoviecon] = useState<Moviecon | null>(null);
+  const [commentMoviecons, setCommentMoviecons] = useState<Record<string, Moviecon | null>>({});
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
@@ -61,13 +65,14 @@ export default function Home() {
 
   // Create post mutation
   const createPostMutation = useMutation({
-    mutationFn: async (postData: { content: string; gifId?: string }) => {
+    mutationFn: async (postData: { content: string; gifId?: string; movieconId?: string }) => {
       await apiRequest("POST", "/api/posts", postData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       setNewPost("");
       setSelectedGif(null);
+      setSelectedMoviecon(null);
       toast({
         title: "Post created!",
         description: "Your post has been shared with your kliq",
@@ -124,13 +129,14 @@ export default function Home() {
 
   // Add comment mutation
   const addCommentMutation = useMutation({
-    mutationFn: async ({ postId, content, gifId }: { postId: string; content: string; gifId?: string }) => {
-      await apiRequest("POST", `/api/posts/${postId}/comments`, { content, gifId });
+    mutationFn: async ({ postId, content, gifId, movieconId }: { postId: string; content: string; gifId?: string; movieconId?: string }) => {
+      await apiRequest("POST", `/api/posts/${postId}/comments`, { content, gifId, movieconId });
     },
     onSuccess: (_, { postId }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
       setCommentGifs(prev => ({ ...prev, [postId]: null }));
+      setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
       toast({
         title: "Comment added!",
         description: "Your comment has been posted",
@@ -328,10 +334,11 @@ export default function Home() {
   };
 
   const handleCreatePost = () => {
-    if (newPost.trim() || selectedGif) {
+    if (newPost.trim() || selectedGif || selectedMoviecon) {
       createPostMutation.mutate({
         content: newPost.trim(),
-        gifId: selectedGif?.id
+        gifId: selectedGif?.id,
+        movieconId: selectedMoviecon?.id
       });
     }
   };
@@ -428,8 +435,9 @@ export default function Home() {
   const handleCommentSubmit = (postId: string) => {
     const content = commentInputs[postId]?.trim();
     const gifId = commentGifs[postId]?.id;
-    if (content || gifId) {
-      addCommentMutation.mutate({ postId, content: content || '', gifId });
+    const movieconId = commentMoviecons[postId]?.id;
+    if (content || gifId || movieconId) {
+      addCommentMutation.mutate({ postId, content: content || '', gifId, movieconId });
     }
   };
 
@@ -443,6 +451,14 @@ export default function Home() {
 
   const handleCommentGifRemove = (postId: string) => {
     setCommentGifs(prev => ({ ...prev, [postId]: null }));
+  };
+
+  const handleCommentMovieconSelect = (postId: string, moviecon: Moviecon) => {
+    setCommentMoviecons(prev => ({ ...prev, [postId]: moviecon }));
+  };
+
+  const handleCommentMovieconRemove = (postId: string) => {
+    setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
   };
   
 
@@ -588,6 +604,19 @@ export default function Home() {
               </Button>
             </div>
           )}
+          {selectedMoviecon && (
+            <div className="mt-3 flex items-center gap-2">
+              <MovieconDisplay moviecon={selectedMoviecon} className="max-w-xs" />
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSelectedMoviecon(null)}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                ×
+              </Button>
+            </div>
+          )}
           <div className="flex justify-between items-center">
             <div className="flex space-x-2">
               <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
@@ -638,6 +667,18 @@ export default function Home() {
                   </Button>
                 }
               />
+              <MovieconPicker
+                onSelectMoviecon={setSelectedMoviecon}
+                trigger={
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="text-blue-500 hover:bg-blue-500/10"
+                  >
+                    <Video className="w-4 h-4" />
+                  </Button>
+                }
+              />
               <Button 
                 size="sm" 
                 variant="ghost" 
@@ -662,7 +703,7 @@ export default function Home() {
             </div>
             <Button
               onClick={handleCreatePost}
-              disabled={(!newPost.trim() && !selectedGif) || createPostMutation.isPending}
+              disabled={(!newPost.trim() && !selectedGif && !selectedMoviecon) || createPostMutation.isPending}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6"
               style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
             >
@@ -908,6 +949,13 @@ export default function Home() {
                   <GifDisplay gif={post.gif} className="max-w-md" />
                 </div>
               )}
+
+              {/* Moviecon Content */}
+              {post.moviecon && (
+                <div className="mb-3">
+                  <MovieconDisplay moviecon={post.moviecon} className="max-w-md" />
+                </div>
+              )}
               
               <div className="flex justify-between items-center">
                 <div className="flex space-x-4">
@@ -967,6 +1015,11 @@ export default function Home() {
                                   <GifDisplay gif={comment.gif} className="max-w-xs" />
                                 </div>
                               )}
+                              {comment.moviecon && (
+                                <div className="mt-2">
+                                  <MovieconDisplay moviecon={comment.moviecon} className="max-w-xs" />
+                                </div>
+                              )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
                               {formatTimeAgo(comment.createdAt)}
@@ -999,6 +1052,19 @@ export default function Home() {
                           </Button>
                         </div>
                       )}
+                      {commentMoviecons[post.id] && (
+                        <div className="mb-2 flex items-center gap-2">
+                          <MovieconDisplay moviecon={commentMoviecons[post.id]!} className="max-w-xs" />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleCommentMovieconRemove(post.id)}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      )}
                       <div className="flex space-x-2">
                         <Textarea
                           value={commentInputs[post.id] || ""}
@@ -1025,6 +1091,19 @@ export default function Home() {
                                 data-testid={`button-comment-gif-${post.id}`}
                               >
                                 <span className="text-xs font-bold">GIF</span>
+                              </Button>
+                            }
+                          />
+                          <MovieconPicker
+                            onSelectMoviecon={(moviecon) => handleCommentMovieconSelect(post.id, moviecon)}
+                            trigger={
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-blue-500 hover:bg-blue-500/10 h-8 w-8 p-0"
+                                data-testid={`button-comment-moviecon-${post.id}`}
+                              >
+                                <Video className="w-3 h-3" />
                               </Button>
                             }
                           />
@@ -1061,7 +1140,7 @@ export default function Home() {
                           </Popover>
                           <Button
                             onClick={() => handleCommentSubmit(post.id)}
-                            disabled={(!commentInputs[post.id]?.trim() && !commentGifs[post.id]) || addCommentMutation.isPending}
+                            disabled={(!commentInputs[post.id]?.trim() && !commentGifs[post.id] && !commentMoviecons[post.id]) || addCommentMutation.isPending}
                             size="sm"
                             className="bg-secondary hover:bg-secondary/90 text-secondary-foreground h-8"
                             data-testid={`button-submit-comment-${post.id}`}
