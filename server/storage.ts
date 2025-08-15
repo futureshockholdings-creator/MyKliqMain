@@ -65,7 +65,7 @@ import {
   type InsertGif,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, inArray, like, or } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, isNull, isNotNull } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -266,11 +266,53 @@ export class DatabaseStorage implements IStorage {
     return newFriendship;
   }
 
-  async updateFriendRank(userId: string, friendId: string, rank: number): Promise<void> {
-    await db
-      .update(friendships)
-      .set({ rank, updatedAt: new Date() })
-      .where(and(eq(friendships.userId, userId), eq(friendships.friendId, friendId)));
+  async updateFriendRank(userId: string, friendId: string, newRank: number): Promise<void> {
+    // Get all current friendships for this user
+    const allFriends = await db
+      .select()
+      .from(friendships)
+      .where(and(eq(friendships.userId, userId), eq(friendships.status, "accepted")))
+      .orderBy(friendships.rank);
+
+    // Find the friend being moved
+    const friendToMove = allFriends.find(f => f.friendId === friendId);
+    if (!friendToMove) return;
+
+    const oldRank = friendToMove.rank;
+    
+    // If rank is the same, no need to update
+    if (oldRank === newRank) return;
+
+    // Update all affected ranks in a transaction
+    await db.transaction(async (tx) => {
+      if (newRank < oldRank) {
+        // Moving up in rank (lower rank number) - shift others down
+        await tx
+          .update(friendships)
+          .set({ rank: sql`${friendships.rank} + 1`, updatedAt: new Date() })
+          .where(and(
+            eq(friendships.userId, userId),
+            gte(friendships.rank, newRank),
+            lt(friendships.rank, oldRank)
+          ));
+      } else {
+        // Moving down in rank (higher rank number) - shift others up
+        await tx
+          .update(friendships)
+          .set({ rank: sql`${friendships.rank} - 1`, updatedAt: new Date() })
+          .where(and(
+            eq(friendships.userId, userId),
+            gt(friendships.rank, oldRank),
+            lte(friendships.rank, newRank)
+          ));
+      }
+
+      // Finally, update the moved friend's rank
+      await tx
+        .update(friendships)
+        .set({ rank: newRank, updatedAt: new Date() })
+        .where(and(eq(friendships.userId, userId), eq(friendships.friendId, friendId)));
+    });
   }
 
   async acceptFriendship(userId: string, friendId: string): Promise<void> {
