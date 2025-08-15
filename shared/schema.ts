@@ -287,6 +287,29 @@ export const eventAttendees = pgTable("event_attendees", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Notification system for in-app alerts and badges
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "message", "friend_request", "event_invite", "post_like", "comment", 
+  "story_view", "live_stream", "meetup_invite", "birthday"
+]);
+
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  type: notificationTypeEnum("type").notNull(),
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  actionUrl: varchar("action_url"), // URL to navigate when notification is clicked
+  relatedId: varchar("related_id"), // ID of related entity (post, message, user, etc)
+  relatedType: varchar("related_type"), // Type of related entity
+  isRead: boolean("is_read").default(false),
+  isVisible: boolean("is_visible").default(true), // Allow hiding notifications
+  priority: varchar("priority").default("normal"), // low, normal, high, urgent
+  expiresAt: timestamp("expires_at"), // Auto-expire notifications
+  createdAt: timestamp("created_at").defaultNow(),
+  readAt: timestamp("read_at"),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   friendships: many(friendships, { relationName: "userFriendships" }),
@@ -310,6 +333,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   meetups: many(meetups),
   meetupCheckIns: many(meetupCheckIns),
   uploadedGifs: many(gifs),
+  notifications: many(notifications),
 }));
 
 // GIF Relations
@@ -506,8 +530,16 @@ export const meetupCheckInsRelations = relations(meetupCheckIns, ({ one }) => ({
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users);
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, readAt: true });
 export const insertUserThemeSchema = createInsertSchema(userThemes).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertFriendshipSchema = createInsertSchema(friendships).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertPostSchema = createInsertSchema(posts).omit({ id: true, likes: true, createdAt: true, updatedAt: true });
@@ -620,3 +652,5 @@ export type Meetup = typeof meetups.$inferSelect;
 export type InsertMeetup = z.infer<typeof insertMeetupSchema>;
 export type MeetupCheckIn = typeof meetupCheckIns.$inferSelect;
 export type InsertMeetupCheckIn = z.infer<typeof insertMeetupCheckInSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

@@ -22,43 +22,102 @@ import { Messages } from "@/pages/messages";
 import { Conversation } from "@/pages/conversation";
 
 // Navigation Component
-import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin } from "lucide-react";
+import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationBadge } from "@/components/NotificationBadge";
+import { NotificationPanel } from "@/components/NotificationPanel";
+import { useNotifications } from "@/hooks/useNotifications";
 
 function Navigation({ currentPath }: { currentPath: string }) {
+  const { 
+    isNotificationPanelOpen,
+    getTotalUnreadCount,
+    getMessageCount,
+    getFriendRequestCount,
+    getEventInviteCount,
+    toggleNotificationPanel,
+    closeNotificationPanel
+  } = useNotifications();
+
   const navItems = [
     { path: "/profile", icon: User, label: "Profile", tab: "profile" },
     { path: "/", icon: HomeIcon, label: "Bulletin", tab: "bulletin" },
-    { path: "/kliq", icon: Users, label: "My Kliq", tab: "kliq" },
+    { path: "/kliq", icon: Users, label: "My Kliq", tab: "kliq", badgeType: "friends" as const },
     { path: "/meetup", icon: MapPin, label: "Meetup", tab: "meetup" },
-    { path: "/messages", icon: MessageCircle, label: "IM", tab: "messages" },
-    { path: "/events", icon: Calendar, label: "Events", tab: "events" },
+    { path: "/messages", icon: MessageCircle, label: "IM", tab: "messages", badgeType: "messages" as const },
+    { path: "/events", icon: Calendar, label: "Events", tab: "events", badgeType: "events" as const },
     { path: "/actions", icon: Video, label: "Action", tab: "actions" },
     { path: "/themes", icon: Palette, label: "Themes", tab: "themes" },
   ];
 
+  const getBadgeCount = (badgeType?: "messages" | "friends" | "events") => {
+    switch (badgeType) {
+      case "messages": return getMessageCount();
+      case "friends": return getFriendRequestCount();
+      case "events": return getEventInviteCount();
+      default: return 0;
+    }
+  };
+
   return (
-    <div className="fixed left-0 top-0 bottom-0 bg-card border-r-2 border-primary z-50 w-20">
-      <div className="flex flex-col items-center py-4 h-full">
-        {navItems.map((item) => {
-          const isActive = currentPath === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex flex-col items-center p-3 mb-4 transition-colors rounded-lg w-16",
-                isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              )}
-              data-testid={`nav-${item.tab}`}
-            >
-              <item.icon className="w-6 h-6" />
-              <span className="text-xs mt-1">{item.label}</span>
-            </Link>
-          );
-        })}
+    <>
+      <div className="fixed left-0 top-0 bottom-0 bg-card border-r-2 border-primary z-50 w-20">
+        <div className="flex flex-col items-center py-4 h-full">
+          {/* Notification Bell at the top */}
+          <button
+            onClick={toggleNotificationPanel}
+            className={cn(
+              "flex flex-col items-center p-3 mb-6 transition-colors rounded-lg w-16 relative",
+              "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+            data-testid="notification-bell"
+          >
+            <NotificationBadge 
+              type="all" 
+              showIcon={false}
+              className="absolute -top-1 -right-1"
+              size="sm"
+            />
+            <Bell className="w-6 h-6" />
+            <span className="text-xs mt-1">Alerts</span>
+          </button>
+
+          {navItems.map((item) => {
+            const isActive = currentPath === item.path;
+            const badgeCount = getBadgeCount(item.badgeType);
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex flex-col items-center p-3 mb-4 transition-colors rounded-lg w-16 relative",
+                  isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+                data-testid={`nav-${item.tab}`}
+              >
+                {item.badgeType && (
+                  <NotificationBadge 
+                    type={item.badgeType} 
+                    showIcon={false}
+                    className="absolute -top-1 -right-1"
+                    size="sm"
+                  />
+                )}
+                <item.icon className="w-6 h-6" />
+                <span className="text-xs mt-1">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
-    </div>
+
+      {/* Notification Panel */}
+      <NotificationPanel 
+        isOpen={isNotificationPanelOpen} 
+        onClose={closeNotificationPanel} 
+      />
+    </>
   );
 }
 

@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { notificationService } from "./notificationService";
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
@@ -380,6 +381,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const post = await storage.createPost(postData);
+      
+      // Create notifications for post likes (for future likes)
+      // Note: Actual like notifications will be created when someone likes the post
+      
       res.json(post);
     } catch (error) {
       console.error("Error creating post:", error);
@@ -393,6 +398,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { postId } = req.params;
       
       await storage.likePost(postId, userId);
+      
+      // Get post details to notify the author
+      const post = await storage.getPostById(postId);
+      if (post && post.userId !== userId) {
+        const user = await storage.getUser(userId);
+        if (user) {
+          await notificationService.notifyPostLike(
+            post.userId,
+            user.firstName || "Someone",
+            postId
+          );
+        }
+      }
+      
       res.json({ success: true });
     } catch (error) {
       console.error("Error liking post:", error);
@@ -419,6 +438,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { postId } = req.params;
       const commentData = insertCommentSchema.parse({ ...req.body, userId, postId });
       const comment = await storage.addComment(commentData);
+      
+      // Get post details to notify the author
+      const post = await storage.getPostById(postId);
+      if (post && post.userId !== userId) {
+        const user = await storage.getUser(userId);
+        if (user) {
+          const commentPreview = comment.content.slice(0, 50) + (comment.content.length > 50 ? "..." : "");
+          await notificationService.notifyComment(
+            post.userId,
+            user.firstName || "Someone",
+            postId,
+            commentPreview
+          );
+        }
+      }
+      
       res.json(comment);
     } catch (error) {
       console.error("Error adding comment:", error);
@@ -618,6 +653,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const message = await storage.sendMessage(messageData);
+      
+      // Send notification to the receiver
+      if (receiverId !== userId) {
+        const sender = await storage.getUser(userId);
+        if (sender) {
+          const messagePreview = content.trim().slice(0, 30) + (content.trim().length > 30 ? "..." : "");
+          await notificationService.notifyNewMessage(
+            receiverId,
+            userId,
+            sender.firstName || "Someone",
+            messagePreview
+          );
+        }
+      }
+      
       res.json(message);
     } catch (error) {
       console.error("Error sending message:", error);
@@ -1355,6 +1405,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending birthday message:", error);
       res.status(500).json({ message: "Failed to send birthday message" });
+    }
+  });
+
+  // Notification API routes
+  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { type } = req.query;
+      const notifications = await notificationService.getUserNotifications(userId, type);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.patch('/api/notifications/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const { isRead } = req.body;
+
+      if (isRead) {
+        const notification = await notificationService.markAsRead(id, userId);
+        res.json(notification);
+      } else {
+        res.status(400).json({ message: "Invalid update operation" });
+      }
+    } catch (error) {
+      console.error("Error updating notification:", error);
+      res.status(500).json({ message: "Failed to update notification" });
+    }
+  });
+
+  app.patch('/api/notifications/mark-all-read', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { type } = req.body;
+      const notifications = await notificationService.markAllAsRead(userId, type);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark notifications as read" });
+    }
+  });
+
+  app.delete('/api/notifications/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+      const notification = await notificationService.deleteNotification(id, userId);
+      res.json(notification);
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      res.status(500).json({ message: "Failed to delete notification" });
     }
   });
 
