@@ -38,12 +38,17 @@ export function PyramidChart({ friends, onMessage, onVideoCall, maxFriends = 15,
     return first + last || "Unknown";
   };
 
-  // Organize friends into a simple grid layout
-  const friendsPerRow = 4;
-  const friendRows = [];
-  for (let i = 0; i < friends.length; i += friendsPerRow) {
-    friendRows.push(friends.slice(i, i + friendsPerRow));
-  }
+  // Sort friends by rank for pyramid layout
+  const sortedFriends = [...friends].sort((a, b) => a.rank - b.rank);
+  
+  // Organize friends into pyramid rows: 1, 2, 3, 4, 5
+  const pyramidRows = [
+    sortedFriends.slice(0, 1),    // Top: 1 friend (rank 1)
+    sortedFriends.slice(1, 3),    // Second: 2 friends (ranks 2-3)
+    sortedFriends.slice(3, 6),    // Third: 3 friends (ranks 4-6)
+    sortedFriends.slice(6, 10),   // Fourth: 4 friends (ranks 7-10)
+    sortedFriends.slice(10, 15)   // Bottom: 5 friends (ranks 11-15)
+  ].filter(row => row.length > 0);
 
   const renderFriend = (friend: Friend) => (
     <div
@@ -60,7 +65,7 @@ export function PyramidChart({ friends, onMessage, onVideoCall, maxFriends = 15,
               e.stopPropagation();
               onVideoCall([friend.id]);
             }}
-            className="w-8 h-8 p-0 bg-mykliq-green hover:bg-mykliq-green/90 text-foreground rounded-full shadow-lg"
+            className="w-8 h-8 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-lg"
             data-testid={`button-video-call-${friend.id}`}
           >
             <Phone className="w-4 h-4" />
@@ -89,7 +94,12 @@ export function PyramidChart({ friends, onMessage, onVideoCall, maxFriends = 15,
         }}
         data-testid={`friend-avatar-${friend.id}`}
       >
-        <Avatar className="w-20 h-20 border-4 border-background">
+        <Avatar className={cn(
+          friend.rank === 1 ? "w-24 h-24" : 
+          friend.rank <= 3 ? "w-22 h-22" : 
+          friend.rank <= 6 ? "w-20 h-20" : "w-18 h-18",
+          "border-4 border-background"
+        )}>
           <AvatarImage src={friend.profileImageUrl} />
           <AvatarFallback className="bg-muted text-muted-foreground text-lg font-bold">
             {getInitials(friend)}
@@ -108,21 +118,26 @@ export function PyramidChart({ friends, onMessage, onVideoCall, maxFriends = 15,
     <div className="bg-card border border-border rounded-xl p-6 space-y-6">
       <div className="text-center">
         <h3 className="text-xl font-bold text-primary mb-2">
-          👥 {kliqName || "My Kliq"} 👥
+          🏆 {kliqName || "My Kliq"} 🏆
         </h3>
         <p className="text-muted-foreground text-sm mb-4">
-          Your friends in one place
+          Your friendship pyramid
         </p>
         <Badge variant="outline" className="border-primary text-primary">
           {friends.length}/{maxFriends} Friends
         </Badge>
       </div>
 
-      {/* Friend Grid */}
+      {/* Pyramid Layout */}
       <div className="space-y-6">
-        {friendRows.map((rowFriends, rowIndex) => (
+        {pyramidRows.map((rowFriends, rowIndex) => (
           <div key={rowIndex} className="flex justify-center">
-            <div className="flex gap-6 flex-wrap justify-center">
+            <div className={cn(
+              "flex gap-4 justify-center items-end",
+              rowIndex === 0 && "gap-0", // Top friend gets special spacing
+              rowIndex === 1 && "gap-6",
+              rowIndex >= 2 && "gap-4"
+            )}>
               {rowFriends.map(renderFriend)}
             </div>
           </div>
