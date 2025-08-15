@@ -678,10 +678,10 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Edit className="h-5 w-5" />
-              <span>Add Location Details</span>
+              <span>Add Meetup Details</span>
             </DialogTitle>
             <DialogDescription>
-              Add a location name and address to make your check-in more informative
+              Add a location name and address to allow your friends to meetup with you to join in on the fun
             </DialogDescription>
           </DialogHeader>
           
@@ -724,7 +724,7 @@ export default function Home() {
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 data-testid="button-confirm-checkin"
               >
-                {locationCheckInMutation.isPending ? "Checking in..." : "Check In"}
+                {locationCheckInMutation.isPending ? "Posting meetup..." : "Post Meetup"}
               </Button>
             </div>
           </div>
