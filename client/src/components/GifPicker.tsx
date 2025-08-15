@@ -44,33 +44,24 @@ function GifImage({ gif, className }: { gif: Gif; className?: string }) {
   }
 
   return (
-    <div className={`${className} relative h-24 bg-muted overflow-hidden gif-container`}>
-      <img
-        src={gif.thumbnailUrl || gif.url}
-        alt=""
-        title={gif.title}
-        className="w-full h-full object-cover"
-        style={{ 
-          display: 'block',
-          minHeight: '96px',
-          minWidth: '100%',
-          textIndent: '-9999px',
-          fontSize: '0',
-          color: 'transparent'
-        }}
-        onError={(e) => {
-          console.log(`Final render error for: ${gif.title}`);
-          const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
-          setHasError(true);
-        }}
-        onLoad={() => {
-          console.log(`Image element loaded: ${gif.title}`);
-        }}
-        draggable={false}
-      />
-      {/* Overlay to completely cover any browser fallback text */}
-      <div className="absolute inset-0 pointer-events-none bg-transparent" style={{ zIndex: 1 }} />
+    <div 
+      className={`${className} relative h-24 bg-muted overflow-hidden gif-container cursor-pointer`}
+      style={{
+        backgroundImage: `url("${gif.thumbnailUrl || gif.url}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+      title={gif.title}
+      onLoad={() => {
+        console.log(`Background image loaded: ${gif.title}`);
+      }}
+    >
+      {/* Fallback content for failed loads */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted text-muted-foreground text-center p-2 opacity-0 hover:opacity-100 transition-opacity">
+        <div className="text-lg mb-1">🎬</div>
+        <div className="text-xs leading-tight font-medium">{gif.title}</div>
+      </div>
     </div>
   );
 }
@@ -214,9 +205,6 @@ export function GifPicker({
                         <div className="mb-4 text-center">
                           <p className="text-sm text-muted-foreground">
                             Browse all {allGifs.length} GIFs or search for specific ones above
-                          </p>
-                          <p className="text-xs text-muted-foreground opacity-75 mt-1">
-                            Check browser console for any loading issues
                           </p>
                         </div>
                         {renderGifGrid(allGifs)}
