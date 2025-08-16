@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,8 +27,18 @@ interface PyramidChartProps {
 export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 15, kliqName }: PyramidChartProps) {
   const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
   const [showRemoveButton, setShowRemoveButton] = useState<string | null>(null);
+  const [isHolding, setIsHolding] = useState<string | null>(null);
   const [_, setLocation] = useLocation();
   const holdTimer = useRef<NodeJS.Timeout | null>(null);
+  const vibrateTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeout(holdTimer.current!);
+      clearInterval(vibrateTimer.current!);
+    };
+  }, []);
 
   const getInitials = (friend: Friend) => {
     const first = friend.firstName?.[0] || "";
@@ -75,13 +85,36 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
     if (!onRemove) return;
     
     clearTimeout(holdTimer.current!);
+    clearInterval(vibrateTimer.current!);
+    
+    setIsHolding(friend.id);
+    
     holdTimer.current = setTimeout(() => {
       setShowRemoveButton(friend.id);
+      
+      // Trigger vibration if supported
+      if (navigator.vibrate) {
+        navigator.vibrate(200); // Initial vibration
+      }
+      
+      // Start continuous vibration every 500ms
+      vibrateTimer.current = setInterval(() => {
+        if (navigator.vibrate) {
+          navigator.vibrate(100);
+        }
+      }, 500);
     }, 800); // Hold for 800ms to show remove button
   };
 
   const handleHoldEnd = () => {
     clearTimeout(holdTimer.current!);
+    clearInterval(vibrateTimer.current!);
+    setIsHolding(null);
+    
+    // Stop vibration if it was running
+    if (navigator.vibrate) {
+      navigator.vibrate(0);
+    }
   };
 
   const handleRemoveClick = (friendId: string, e: React.MouseEvent) => {
@@ -90,6 +123,17 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
       onRemove(friendId);
     }
     setShowRemoveButton(null);
+    setIsHolding(null);
+    clearInterval(vibrateTimer.current!);
+  };
+
+  const handleAvatarClick = (friend: Friend, e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Don't navigate if we're in holding/remove mode
+    if (isHolding === friend.id || showRemoveButton === friend.id) {
+      return;
+    }
+    setLocation(`/user/${friend.id}`);
   };
 
   const renderFriend = (friend: Friend) => (
@@ -152,11 +196,12 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
       )}
 
       <div 
-        className="p-2 rounded-full bg-gradient-to-r from-primary to-secondary cursor-pointer shadow-lg hover:shadow-xl transition-transform"
-        onClick={(e) => {
-          e.stopPropagation();
-          setLocation(`/user/${friend.id}`);
-        }}
+        className={cn(
+          "p-2 rounded-full bg-gradient-to-r from-primary to-secondary cursor-pointer shadow-lg hover:shadow-xl transition-all duration-200",
+          isHolding === friend.id && "animate-pulse scale-110",
+          showRemoveButton === friend.id && "animate-bounce"
+        )}
+        onClick={(e) => handleAvatarClick(friend, e)}
         onMouseDown={() => handleHoldStart(friend)}
         onMouseUp={handleHoldEnd}
         onMouseLeave={handleHoldEnd}
