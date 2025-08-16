@@ -121,6 +121,9 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground">Upload New Moviecon</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Upload MP4 video files up to 100MB. Supported format: .mp4
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -139,14 +142,15 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
 
           <ObjectUploader
             maxNumberOfFiles={1}
-            maxFileSize={50 * 1024 * 1024} // 50MB limit for video files
+            maxFileSize={100 * 1024 * 1024} // 100MB limit for MP4 video files
             onGetUploadParameters={handleGetUploadParameters}
             onComplete={handleUploadComplete}
             buttonClassName="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+            allowedFileTypes={['.mp4', 'video/mp4']}
           >
             <div className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
-              <span>Upload Video File</span>
+              <span>📹 Upload MP4 Video File</span>
             </div>
           </ObjectUploader>
 
