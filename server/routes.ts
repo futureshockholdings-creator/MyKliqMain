@@ -1339,12 +1339,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/moviecons', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const movieconData = insertMovieconSchema.parse({ 
-        ...req.body, 
-        uploadedBy: userId 
+      const { title, url } = req.body;
+      
+      if (!title || !url) {
+        return res.status(400).json({ message: "Title and URL are required" });
+      }
+
+      // Handle object storage URL and set ACL policy
+      const objectStorageService = new ObjectStorageService();
+      let normalizedUrl = url;
+      
+      // If it's an object storage URL, normalize path
+      if (url.includes('storage.googleapis.com') || url.startsWith('/objects/')) {
+        normalizedUrl = objectStorageService.normalizeObjectEntityPath(url);
+      }
+
+      const moviecon = await storage.createMoviecon({
+        id: `mv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        title,
+        videoUrl: normalizedUrl,
+        duration: 0, // Will be determined later if needed
+        uploadedBy: userId,
       });
       
-      const moviecon = await storage.createMoviecon(movieconData);
       res.json(moviecon);
     } catch (error) {
       console.error("Error creating moviecon:", error);

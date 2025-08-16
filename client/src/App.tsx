@@ -20,6 +20,7 @@ import Themes from "@/pages/themes";
 import NotFound from "@/pages/not-found";
 import { Messages } from "@/pages/messages";
 import { Conversation } from "@/pages/conversation";
+import { MovieconManagerPage } from "@/pages/moviecon-manager";
 import PrivacyPolicy from "./pages/privacy-policy";
 import Disclaimer from "./pages/disclaimer";
 
@@ -192,6 +193,7 @@ function Router() {
           <Route path="/profile" component={Profile} />
           <Route path="/user/:userId" component={UserProfile} />
           <Route path="/themes" component={Themes} />
+          <Route path="/moviecon-manager" component={MovieconManagerPage} />
         </>
       )}
       
