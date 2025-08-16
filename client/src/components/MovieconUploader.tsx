@@ -49,37 +49,41 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
       return;
     }
 
-    if (!title.trim()) {
-      toast({
-        title: "Title required",
-        description: "Please enter a title for the moviecon",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsUploading(true);
 
     try {
-      const uploadedFile = result.successful[0];
-      const videoUrl = uploadedFile.uploadURL;
+      // Process all uploaded files
+      const uploadPromises = result.successful.map(async (uploadedFile, index) => {
+        const videoUrl = uploadedFile.uploadURL;
+        const fileName = uploadedFile.name || `Video ${index + 1}`;
+        
+        // Use title if provided, otherwise use filename without extension
+        let movieconTitle;
+        if (title.trim()) {
+          movieconTitle = result.successful.length > 1 ? `${title.trim()} ${index + 1}` : title.trim();
+        } else {
+          movieconTitle = fileName.replace(/\.[^/.]+$/, ""); // Remove file extension
+        }
 
-      // Create the moviecon record
-      await apiRequest("/api/moviecons", "POST", {
-        title: title.trim(),
-        url: videoUrl,
+        // Create the moviecon record
+        return apiRequest("/api/moviecons", "POST", {
+          title: movieconTitle,
+          url: videoUrl,
+        });
       });
+
+      await Promise.all(uploadPromises);
 
       toast({
         title: "Success!",
-        description: `Moviecon "${title}" uploaded successfully`,
+        description: `${result.successful.length} moviecon${result.successful.length > 1 ? 's' : ''} uploaded successfully`,
       });
 
       setTitle("");
       queryClient.invalidateQueries({ queryKey: ["/api/moviecons"] });
       onRefresh();
     } catch (error) {
-      console.error("Error creating moviecon:", error);
+      console.error("Error creating moviecons:", error);
       toast({
         title: "Upload failed",
         description: "Failed to save moviecon details",
@@ -122,27 +126,27 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
         <CardHeader>
           <CardTitle className="text-foreground">Upload New Moviecon</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Upload MP4 video files up to 100MB. Supported format: .mp4
+            Upload multiple MP4 video files (up to 10 files, 100MB each). Supported format: .mp4
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="moviecon-title" className="text-foreground">
-              Moviecon Title
+              Moviecon Title (Optional)
             </Label>
             <Input
               id="moviecon-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter a title for your moviecon"
+              placeholder="Enter a title (optional - will use filename if empty)"
               className="bg-background border-border text-foreground"
               data-testid="input-moviecon-title"
             />
           </div>
 
           <ObjectUploader
-            maxNumberOfFiles={1}
-            maxFileSize={100 * 1024 * 1024} // 100MB limit for MP4 video files
+            maxNumberOfFiles={10} // Allow up to 10 files at once
+            maxFileSize={100 * 1024 * 1024} // 100MB limit per MP4 video file
             onGetUploadParameters={handleGetUploadParameters}
             onComplete={handleUploadComplete}
             buttonClassName="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -150,7 +154,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
           >
             <div className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
-              <span>📹 Upload MP4 Video File</span>
+              <span>📹 Upload MP4 Video Files (up to 10)</span>
             </div>
           </ObjectUploader>
 
