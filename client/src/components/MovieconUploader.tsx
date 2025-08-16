@@ -53,14 +53,14 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
 
     try {
       // Process all uploaded files
-      const uploadPromises = result.successful.map(async (uploadedFile, index) => {
+      const uploadPromises = result.successful?.map(async (uploadedFile, index) => {
         const videoUrl = uploadedFile.uploadURL;
         const fileName = uploadedFile.name || `Video ${index + 1}`;
         
         // Use title if provided, otherwise use filename without extension
         let movieconTitle;
         if (title.trim()) {
-          movieconTitle = result.successful.length > 1 ? `${title.trim()} ${index + 1}` : title.trim();
+          movieconTitle = (result.successful?.length || 0) > 1 ? `${title.trim()} ${index + 1}` : title.trim();
         } else {
           movieconTitle = fileName.replace(/\.[^/.]+$/, ""); // Remove file extension
         }
@@ -70,13 +70,13 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
           title: movieconTitle,
           url: videoUrl,
         });
-      });
+      }) || [];
 
       await Promise.all(uploadPromises);
 
       toast({
         title: "Success!",
-        description: `${result.successful.length} moviecon${result.successful.length > 1 ? 's' : ''} uploaded successfully`,
+        description: `${result.successful?.length || 0} moviecon${(result.successful?.length || 0) > 1 ? 's' : ''} uploaded successfully`,
       });
 
       setTitle("");
@@ -126,7 +126,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
         <CardHeader>
           <CardTitle className="text-foreground">Upload New Moviecon</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Upload multiple MP4 video files (up to 10 files, 100MB each). Supported format: .mp4
+            Upload multiple MP4 video files (up to 50 files, 100MB each). Supported format: .mp4
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -145,7 +145,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
           </div>
 
           <ObjectUploader
-            maxNumberOfFiles={10} // Allow up to 10 files at once
+            maxNumberOfFiles={50} // Allow up to 50 files at once
             maxFileSize={100 * 1024 * 1024} // 100MB limit per MP4 video file
             onGetUploadParameters={handleGetUploadParameters}
             onComplete={handleUploadComplete}
@@ -154,7 +154,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
           >
             <div className="flex items-center gap-2">
               <Upload className="h-4 w-4" />
-              <span>📹 Upload MP4 Video Files (up to 10)</span>
+              <span>📹 Upload MP4 Video Files (up to 50)</span>
             </div>
           </ObjectUploader>
 
