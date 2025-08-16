@@ -659,6 +659,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "receiverId and at least one content type (text, media, gif, or moviecon) are required" });
       }
 
+      // Validate that both sender and receiver exist in the database
+      const [sender, receiver] = await Promise.all([
+        storage.getUser(userId),
+        storage.getUser(receiverId)
+      ]);
+
+      if (!sender) {
+        console.log("Sender not found:", userId);
+        return res.status(400).json({ message: "Sender user not found" });
+      }
+
+      if (!receiver) {
+        console.log("Receiver not found:", receiverId);
+        return res.status(400).json({ message: "Receiver user not found" });
+      }
+
       const messageData = {
         senderId: userId,
         receiverId,
