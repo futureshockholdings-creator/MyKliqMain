@@ -53,7 +53,10 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
   const handleVideoError = () => {
     setHasError(true);
     setIsLoading(false);
-    console.error('Video failed to load:', moviecon.videoUrl);
+    // Only log real video URL errors, not placeholder URLs
+    if (!moviecon.videoUrl.includes('placeholder')) {
+      console.error('Video failed to load:', moviecon.videoUrl);
+    }
   };
 
   const handleVideoLoaded = () => {

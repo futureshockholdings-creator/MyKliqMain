@@ -8,7 +8,8 @@ import type { Moviecon } from '@shared/schema';
 
 // Force video loading with proper error handling
 function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?: string }) {
-  const [hasError, setHasError] = useState(false);
+  // For placeholder URLs, immediately show fallback
+  const [hasError, setHasError] = useState(moviecon.videoUrl.includes('placeholder'));
   const [isLoaded, setIsLoaded] = useState(false);
 
   const handleLoad = () => {
@@ -19,6 +20,10 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
   const handleError = () => {
     setHasError(true);
     setIsLoaded(false);
+    // For placeholder videos, immediately show the fallback
+    if (moviecon.videoUrl.includes('placeholder')) {
+      setHasError(true);
+    }
   };
 
   if (hasError) {
