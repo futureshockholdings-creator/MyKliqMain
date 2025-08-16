@@ -193,7 +193,6 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
                       className="w-full h-full object-cover"
                       data-testid={`video-${moviecon.id}`}
                       preload="metadata"
-                      muted
                     />
                     {/* Delete Button Overlay */}
                     <Button

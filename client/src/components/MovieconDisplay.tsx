@@ -30,7 +30,7 @@ function getMovieconColor(moviecon: Moviecon): string {
 export function MovieconDisplay({ moviecon, className, autoPlay = false }: MovieconDisplayProps) {
   const [videoError, setVideoError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Show actual video for uploaded moviecons, fallback to gradient for old ones

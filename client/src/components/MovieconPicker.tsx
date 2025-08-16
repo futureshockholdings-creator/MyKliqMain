@@ -37,7 +37,6 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
             src={moviecon.videoUrl}
             className="w-full h-full object-cover"
             preload="metadata"
-            muted
             onError={() => setVideoError(true)}
           />
         ) : (
