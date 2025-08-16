@@ -8,31 +8,37 @@ import type { Moviecon } from '@shared/schema';
 
 // Force video loading with proper error handling
 function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?: string }) {
-  // Always show fallback for placeholder videos, or show thumbnail if available
-  const [hasError, setHasError] = useState(moviecon.videoUrl.includes('placeholder'));
-  const [isLoaded, setIsLoaded] = useState(!!moviecon.thumbnailUrl);
-
-  // Since all videos are placeholders, just show thumbnails directly
+  console.log('Moviecon render:', { title: moviecon.title, thumbnailUrl: moviecon.thumbnailUrl }); // Debug log
+  
+  // Test if thumbnailUrl exists
+  if (!moviecon.thumbnailUrl) {
+    console.log('No thumbnailUrl for:', moviecon.title);
+    return (
+      <div className={`${className} relative h-24 bg-gradient-to-br from-red-500 to-orange-500 overflow-hidden moviecon-container cursor-pointer border border-border rounded-lg flex flex-col items-center justify-center text-white`}>
+        <div className="text-xs font-medium text-center px-2">{moviecon.title}</div>
+        <div className="text-xs opacity-75 mt-1">{moviecon.duration}s</div>
+      </div>
+    );
+  }
+  
+  // Direct thumbnail display
   return (
-    <div className={`${className} relative h-24 bg-muted overflow-hidden moviecon-container cursor-pointer border border-border rounded-lg`}>
-      <div className="relative w-full h-full">
-        {moviecon.thumbnailUrl ? (
-          <img
-            src={moviecon.thumbnailUrl}
-            alt={moviecon.title}
-            className="w-full h-full object-cover"
-            draggable={false}
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-500 flex flex-col items-center justify-center text-white">
-            <div className="text-xs font-medium text-center px-2">{moviecon.title}</div>
-            <div className="text-xs opacity-75 mt-1">{moviecon.duration}s</div>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-          <Play className="w-6 h-6 text-white" />
+    <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg`}>
+      <div className="relative w-full h-full bg-gray-200">
+        <img
+          src={moviecon.thumbnailUrl}
+          alt={moviecon.title}
+          className="w-full h-full object-cover"
+          draggable={false}
+          onLoad={() => console.log('Image loaded successfully:', moviecon.title)}
+          onError={(e) => {
+            console.error('Image load error for', moviecon.title, ':', moviecon.thumbnailUrl);
+          }}
+        />
+        <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-white text-xs p-1 text-center">
+          {moviecon.title}
         </div>
-        <div className="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
+        <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
           {moviecon.duration}s
         </div>
       </div>
