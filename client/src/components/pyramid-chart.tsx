@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Phone, Users } from "lucide-react";
+import { MessageCircle, Phone, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 
@@ -19,13 +19,16 @@ interface PyramidChartProps {
   onRankChange?: (friendId: string, newRank: number) => void;
   onMessage?: (friendId: string, friendName: string) => void;
   onVideoCall?: (participantIds: string[]) => void;
+  onRemove?: (friendId: string) => void;
   maxFriends?: number;
   kliqName?: string;
 }
 
-export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, maxFriends = 15, kliqName }: PyramidChartProps) {
+export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 15, kliqName }: PyramidChartProps) {
   const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
+  const [showRemoveButton, setShowRemoveButton] = useState<string | null>(null);
   const [_, setLocation] = useLocation();
+  const holdTimer = useRef<NodeJS.Timeout | null>(null);
 
   const getInitials = (friend: Friend) => {
     const first = friend.firstName?.[0] || "";
@@ -66,6 +69,27 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
       onRankChange(draggedFriend.id, targetRank);
     }
     setDraggedFriend(null);
+  };
+
+  const handleHoldStart = (friend: Friend) => {
+    if (!onRemove) return;
+    
+    clearTimeout(holdTimer.current!);
+    holdTimer.current = setTimeout(() => {
+      setShowRemoveButton(friend.id);
+    }, 800); // Hold for 800ms to show remove button
+  };
+
+  const handleHoldEnd = () => {
+    clearTimeout(holdTimer.current!);
+  };
+
+  const handleRemoveClick = (friendId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onRemove) {
+      onRemove(friendId);
+    }
+    setShowRemoveButton(null);
   };
 
   const renderFriend = (friend: Friend) => (
@@ -111,12 +135,33 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, ma
           </Button>
         )}
       </div>
+
+      {/* Remove button - appears on hold */}
+      {showRemoveButton === friend.id && onRemove && (
+        <div className="absolute -top-2 -left-2 z-30">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={(e) => handleRemoveClick(friend.id, e)}
+            className="w-8 h-8 p-0 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-full shadow-lg animate-in zoom-in-95 duration-200"
+            data-testid={`button-remove-${friend.id}`}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+
       <div 
         className="p-2 rounded-full bg-gradient-to-r from-primary to-secondary cursor-pointer shadow-lg hover:shadow-xl transition-transform"
         onClick={(e) => {
           e.stopPropagation();
           setLocation(`/user/${friend.id}`);
         }}
+        onMouseDown={() => handleHoldStart(friend)}
+        onMouseUp={handleHoldEnd}
+        onMouseLeave={handleHoldEnd}
+        onTouchStart={() => handleHoldStart(friend)}
+        onTouchEnd={handleHoldEnd}
         data-testid={`friend-avatar-${friend.id}`}
       >
         <Avatar className="w-20 h-20 border-4 border-background">

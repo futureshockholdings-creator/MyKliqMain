@@ -8,7 +8,7 @@ import { PyramidChart } from "@/components/pyramid-chart";
 import { VideoCallComponent } from "@/components/video-call";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import { Badge } from "@/components/ui/badge";
-import { Users, Edit, Plus, Copy, MessageCircle } from "lucide-react";
+import { Users, Edit, Plus, Copy, MessageCircle, X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +20,7 @@ export default function Kliq() {
   const [editingName, setEditingName] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [friendToRemove, setFriendToRemove] = useState<string | null>(null);
   const { user } = useAuth();
   const userData = user as { 
     id?: string; 
@@ -156,6 +157,39 @@ export default function Kliq() {
     },
   });
 
+  // Remove friend
+  const removeFriendMutation = useMutation({
+    mutationFn: async (friendId: string) => {
+      await apiRequest("DELETE", `/api/friends/${friendId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+      setFriendToRemove(null);
+      toast({
+        title: "Friend removed",
+        description: "They have been removed from your kliq",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to remove friend",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSaveKliqName = () => {
     if (kliqName.trim()) {
       updateNameMutation.mutate(kliqName.trim());
@@ -186,6 +220,16 @@ export default function Kliq() {
         description: "Failed to start video call",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleRemoveFriend = (friendId: string) => {
+    setFriendToRemove(friendId);
+  };
+
+  const confirmRemoveFriend = () => {
+    if (friendToRemove) {
+      removeFriendMutation.mutate(friendToRemove);
     }
   };
 
@@ -364,6 +408,7 @@ export default function Kliq() {
           onRankChange={handleRankChange}
           onMessage={handleMessageFriend}
           onVideoCall={handleVideoCall}
+          onRemove={handleRemoveFriend}
           maxFriends={15}
           kliqName={userData?.kliqName}
         />
@@ -432,6 +477,38 @@ export default function Kliq() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Remove Friend Confirmation Dialog */}
+      <Dialog open={!!friendToRemove} onOpenChange={() => setFriendToRemove(null)}>
+        <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Remove Friend?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-muted-foreground">
+              Are you sure you want to remove this friend from your kliq? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setFriendToRemove(null)}
+                className="flex-1"
+                data-testid="button-cancel-remove"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmRemoveFriend}
+                disabled={removeFriendMutation.isPending}
+                className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                data-testid="button-confirm-remove"
+              >
+                {removeFriendMutation.isPending ? "Removing..." : "Remove"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
