@@ -8,67 +8,26 @@ import type { Moviecon } from '@shared/schema';
 
 // Force video loading with proper error handling
 function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?: string }) {
-  // For placeholder URLs, immediately show fallback
+  // Always show fallback for placeholder videos, or show thumbnail if available
   const [hasError, setHasError] = useState(moviecon.videoUrl.includes('placeholder'));
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(!!moviecon.thumbnailUrl);
 
-  const handleLoad = () => {
-    setIsLoaded(true);
-    setHasError(false);
-  };
-
-  const handleError = () => {
-    setHasError(true);
-    setIsLoaded(false);
-    // For placeholder videos, immediately show the fallback
-    if (moviecon.videoUrl.includes('placeholder')) {
-      setHasError(true);
-    }
-  };
-
-  if (hasError) {
-    return (
-      <div className={`${className} relative h-24 bg-gradient-to-br from-gray-700 to-gray-500 overflow-hidden moviecon-container cursor-pointer border border-border flex flex-col items-center justify-center text-white rounded-lg`}>
-        <div className="text-xs font-medium text-center px-2">{moviecon.title}</div>
-        <div className="text-xs opacity-75 mt-1">{moviecon.duration}s</div>
-      </div>
-    );
-  }
-
+  // Since all videos are placeholders, just show thumbnails directly
   return (
-    <div className={`${className} relative h-24 bg-muted overflow-hidden moviecon-container cursor-pointer border border-border`}>
-      {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted">
-          <span className="text-xs text-muted-foreground">Loading...</span>
-        </div>
-      )}
+    <div className={`${className} relative h-24 bg-muted overflow-hidden moviecon-container cursor-pointer border border-border rounded-lg`}>
       <div className="relative w-full h-full">
         {moviecon.thumbnailUrl ? (
           <img
             src={moviecon.thumbnailUrl}
             alt={moviecon.title}
             className="w-full h-full object-cover"
-            onLoad={handleLoad}
-            onError={handleError}
             draggable={false}
           />
         ) : (
-          <video
-            src={moviecon.videoUrl}
-            className={`w-full h-full object-cover transition-opacity ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-            onLoadedMetadata={(event) => {
-              handleLoad();
-              // Show first frame
-              const video = event.target as HTMLVideoElement;
-              if (video) {
-                video.currentTime = 0.1;
-              }
-            }}
-            onError={handleError}
-            muted
-            preload="metadata"
-            playsInline
-          />
+          <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-500 flex flex-col items-center justify-center text-white">
+            <div className="text-xs font-medium text-center px-2">{moviecon.title}</div>
+            <div className="text-xs opacity-75 mt-1">{moviecon.duration}s</div>
+          </div>
         )}
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
           <Play className="w-6 h-6 text-white" />
