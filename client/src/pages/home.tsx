@@ -22,6 +22,8 @@ import { GifPicker } from "@/components/GifPicker";
 import { GifDisplay } from "@/components/GifDisplay";
 import { MovieconPicker } from "@/components/MovieconPicker";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
+import { YouTubeEmbedList } from "@/components/YouTubeEmbed";
+import { extractYouTubeUrlsFromText } from "@/lib/youtubeUtils";
 import type { Gif, Moviecon } from "@shared/schema";
 
 
@@ -921,7 +923,21 @@ export default function Home() {
                 )}
               </div>
               
-              {post.content && <p className="text-foreground mb-3">{post.content}</p>}
+              {post.content && (
+                (() => {
+                  const { cleanText, youtubeUrls } = extractYouTubeUrlsFromText(post.content);
+                  return (
+                    <>
+                      {cleanText && <p className="text-foreground mb-3">{cleanText}</p>}
+                      {youtubeUrls.length > 0 && (
+                        <div className="mb-3">
+                          <YouTubeEmbedList urls={youtubeUrls} />
+                        </div>
+                      )}
+                    </>
+                  );
+                })()
+              )}
               
               {/* Media Content */}
               {post.mediaUrl && (
@@ -1009,7 +1025,21 @@ export default function Home() {
                               <p className="text-sm font-semibold text-primary">
                                 {comment.author?.firstName} {comment.author?.lastName}
                               </p>
-                              <p className="text-sm text-foreground">{comment.content}</p>
+                              {comment.content && (
+                                (() => {
+                                  const { cleanText, youtubeUrls } = extractYouTubeUrlsFromText(comment.content);
+                                  return (
+                                    <>
+                                      {cleanText && <p className="text-sm text-foreground">{cleanText}</p>}
+                                      {youtubeUrls.length > 0 && (
+                                        <div className="mt-2">
+                                          <YouTubeEmbedList urls={youtubeUrls} />
+                                        </div>
+                                      )}
+                                    </>
+                                  );
+                                })()
+                              )}
                               {comment.gif && (
                                 <div className="mt-2">
                                   <GifDisplay gif={comment.gif} className="max-w-xs" />
