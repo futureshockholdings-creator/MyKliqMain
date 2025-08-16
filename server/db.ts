@@ -3,6 +3,7 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
+// Configure neon for WebSocket support
 neonConfig.webSocketConstructor = ws;
 
 if (!process.env.DATABASE_URL) {
@@ -11,5 +12,12 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Configure pool with better error handling and connection settings
+export const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: true,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000
+});
+
 export const db = drizzle({ client: pool, schema });
