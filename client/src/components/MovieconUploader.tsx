@@ -170,7 +170,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground">
-            Current Moviecons ({moviecons.length})
+            Your Moviecons ({moviecons.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -179,33 +179,45 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
               No moviecons uploaded yet. Upload your first video above!
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {moviecons.map((moviecon) => (
                 <div
                   key={moviecon.id}
-                  className="bg-background border border-border rounded-lg p-4 space-y-3"
+                  className="relative group bg-muted/30 rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow"
                   data-testid={`moviecon-item-${moviecon.id}`}
                 >
-                  <video
-                    src={moviecon.url}
-                    className="w-full h-32 object-cover rounded bg-muted"
-                    controls
-                    preload="metadata"
-                  />
-                  <div className="space-y-2">
-                    <h3 className="font-medium text-foreground truncate">
-                      {moviecon.title}
-                    </h3>
+                  {/* Video Thumbnail */}
+                  <div className="aspect-video relative bg-black">
+                    <video
+                      src={moviecon.url}
+                      className="w-full h-full object-cover"
+                      data-testid={`video-${moviecon.id}`}
+                      preload="metadata"
+                      muted
+                    />
+                    {/* Delete Button Overlay */}
                     <Button
-                      onClick={() => handleDelete(moviecon.id, moviecon.title)}
                       variant="destructive"
                       size="sm"
-                      className="w-full"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 p-0 shadow-lg"
+                      onClick={() => handleDelete(moviecon.id, moviecon.title)}
                       data-testid={`button-delete-${moviecon.id}`}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                      <Trash2 className="h-3 w-3" />
                     </Button>
+                    {/* Play Icon Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-8 h-8 bg-white/80 rounded-full flex items-center justify-center">
+                        <div className="w-0 h-0 border-l-[6px] border-l-black border-y-[4px] border-y-transparent ml-1"></div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Title at Bottom */}
+                  <div className="p-3 bg-card">
+                    <h3 className="text-sm font-medium text-foreground truncate" title={moviecon.title}>
+                      {moviecon.title}
+                    </h3>
                   </div>
                 </div>
               ))}
