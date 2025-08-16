@@ -501,8 +501,10 @@ export class DatabaseStorage implements IStorage {
     let isUnique = false;
     
     while (!isUnique) {
-      // Generate a 12-digit random number
-      code = Math.floor(100000000000 + Math.random() * 900000000000).toString();
+      // Generate KLIQ-XXXX-XXXX format with random alphanumeric characters
+      const part1 = Math.random().toString(36).substr(2, 4).toUpperCase();
+      const part2 = Math.random().toString(36).substr(2, 4).toUpperCase();
+      code = `KLIQ-${part1}-${part2}`;
       
       // Check if code is already assigned to a user
       const existingUser = await db.select().from(users).where(eq(users.inviteCode, code));

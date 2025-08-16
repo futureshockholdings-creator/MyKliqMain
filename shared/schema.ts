@@ -36,7 +36,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   phoneNumber: varchar("phone_number").unique(),
   bio: text("bio"),
-  inviteCode: varchar("invite_code", { length: 12 }).unique(),
+  inviteCode: varchar("invite_code", { length: 20 }).unique(),
   kliqName: varchar("kliq_name").default("My Kliq"),
   birthdate: date("birthdate"),
   profileMusicUrl: varchar("profile_music_url"),
@@ -91,7 +91,7 @@ export const friendships = pgTable("friendships", {
 // Used invite codes - tracks which codes have been used once
 export const usedInviteCodes = pgTable("used_invite_codes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  inviteCode: varchar("invite_code", { length: 12 }).unique().notNull(),
+  inviteCode: varchar("invite_code", { length: 20 }).unique().notNull(),
   usedBy: varchar("used_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
   ownedBy: varchar("owned_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
   usedAt: timestamp("used_at").defaultNow().notNull(),
