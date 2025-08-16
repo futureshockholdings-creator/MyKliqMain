@@ -225,9 +225,32 @@ export default function Landing() {
           </div>
 
           {/* Footer */}
-          <div className="text-center pt-6 border-t border-gray-800">
+          <div className="text-center pt-6 border-t border-gray-800 space-y-3">
             <p className="text-xs text-gray-500">
               Relive the golden age of social networking with modern features
+            </p>
+            
+            {/* Privacy Policy and Disclaimer Links */}
+            <div className="flex justify-center items-center gap-4 text-xs">
+              <button 
+                className="text-muted-foreground hover:text-primary underline transition-colors"
+                onClick={() => window.open('/privacy-policy', '_blank')}
+                data-testid="link-privacy-policy"
+              >
+                Privacy Policy
+              </button>
+              <span className="text-gray-600">•</span>
+              <button 
+                className="text-muted-foreground hover:text-primary underline transition-colors"
+                onClick={() => window.open('/disclaimer', '_blank')}
+                data-testid="link-disclaimer"
+              >
+                Disclaimer
+              </button>
+            </div>
+            
+            <p className="text-xs text-gray-600 mt-2">
+              © 2024 MyKliq. All rights reserved.
             </p>
           </div>
         </div>

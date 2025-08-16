@@ -20,6 +20,8 @@ import Themes from "@/pages/themes";
 import NotFound from "@/pages/not-found";
 import { Messages } from "@/pages/messages";
 import { Conversation } from "@/pages/conversation";
+import PrivacyPolicy from "./pages/privacy-policy";
+import Disclaimer from "./pages/disclaimer";
 
 // Navigation Component
 import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell } from "lucide-react";
@@ -192,6 +194,11 @@ function Router() {
           <Route path="/themes" component={Themes} />
         </>
       )}
+      
+      {/* Legal Pages - accessible to all users */}
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/disclaimer" component={Disclaimer} />
+      
       <Route component={NotFound} />
     </Switch>
   );
