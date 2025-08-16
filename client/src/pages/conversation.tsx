@@ -2,20 +2,27 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import type { User } from "@shared/schema";
+import type { User, Gif, Moviecon } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { MessageMediaPicker } from "@/components/MessageMediaPicker";
+import { GifDisplay } from "@/components/GifDisplay";
+import { MovieconDisplay } from "@/components/MovieconDisplay";
 
 interface MessageData {
   id: string;
   content: string;
   senderId: string;
   receiverId: string;
+  mediaUrl?: string;
+  mediaType?: "image" | "video";
+  gifId?: string;
+  movieconId?: string;
   isRead: boolean;
   createdAt: string;
   sender: {
@@ -32,6 +39,18 @@ interface MessageData {
     lastName?: string;
     profileImageUrl?: string;
   };
+  gif?: {
+    id: string;
+    title: string;
+    url: string;
+    category?: string;
+  };
+  moviecon?: {
+    id: string;
+    title: string;
+    videoUrl?: string;
+    movieSource?: string;
+  };
 }
 
 interface ConversationData {
@@ -47,6 +66,10 @@ export function Conversation() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [messageText, setMessageText] = useState("");
+  const [selectedMedia, setSelectedMedia] = useState<{
+    type: "gif" | "moviecon" | "image" | "video";
+    data: any;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: conversation, isLoading } = useQuery<ConversationData>({
@@ -57,14 +80,21 @@ export function Conversation() {
   // We'll get user info from the conversation messages instead of separate API call
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async (messageData: {
+      content?: string;
+      mediaUrl?: string;
+      mediaType?: "image" | "video";
+      gifId?: string;
+      movieconId?: string;
+    }) => {
       return apiRequest("POST", `/api/messages/send`, {
         receiverId: otherUserId,
-        content: content.trim(),
+        ...messageData,
       });
     },
     onSuccess: () => {
       setMessageText("");
+      setSelectedMedia(null);
       queryClient.invalidateQueries({ queryKey: ["/api/messages/conversation", otherUserId] });
       queryClient.invalidateQueries({ queryKey: ["/api/messages/conversations"] });
       scrollToBottom();
@@ -88,8 +118,49 @@ export function Conversation() {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim() || sendMessageMutation.isPending) return;
-    sendMessageMutation.mutate(messageText);
+    const content = messageText.trim();
+    
+    if (content || selectedMedia) {
+      const messageData: any = {};
+      
+      if (content) {
+        messageData.content = content;
+      }
+      
+      if (selectedMedia) {
+        switch (selectedMedia.type) {
+          case "gif":
+            messageData.gifId = selectedMedia.data.id;
+            break;
+          case "moviecon":
+            messageData.movieconId = selectedMedia.data.id;
+            break;
+          case "image":
+          case "video":
+            messageData.mediaUrl = selectedMedia.data.url;
+            messageData.mediaType = selectedMedia.type;
+            break;
+        }
+      }
+      
+      sendMessageMutation.mutate(messageData);
+    }
+  };
+
+  const handleGifSelect = (gif: Gif) => {
+    setSelectedMedia({ type: "gif", data: gif });
+  };
+
+  const handleMovieconSelect = (moviecon: Moviecon) => {
+    setSelectedMedia({ type: "moviecon", data: moviecon });
+  };
+
+  const handleMediaSelect = (mediaUrl: string, mediaType: "image" | "video") => {
+    setSelectedMedia({ type: mediaType, data: { url: mediaUrl } });
+  };
+
+  const clearSelectedMedia = () => {
+    setSelectedMedia(null);
   };
 
   const getDisplayName = (userData: MessageData["sender"]) => {
@@ -189,14 +260,52 @@ export function Conversation() {
                     </Avatar>
                     <div>
                       <div
-                        className={`px-4 py-2 rounded-lg ${
+                        className={`rounded-lg ${
                           isOwn
                             ? "bg-blue-500 text-white"
                             : "bg-gray-100 dark:bg-gray-800 text-black dark:text-white"
                         }`}
                         data-testid={`text-message-content-${message.id}`}
                       >
-                        {message.content}
+                        {/* Text content */}
+                        {message.content && (
+                          <div className="px-4 py-2">
+                            {message.content}
+                          </div>
+                        )}
+                        
+                        {/* Media content */}
+                        {message.mediaUrl && (
+                          <div className="rounded-lg overflow-hidden">
+                            {message.mediaType === "image" ? (
+                              <img 
+                                src={message.mediaUrl} 
+                                alt="Shared image" 
+                                className="max-w-xs max-h-64 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <video 
+                                src={message.mediaUrl} 
+                                controls 
+                                className="max-w-xs max-h-64 rounded-lg"
+                              />
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* GIF content */}
+                        {message.gif && (
+                          <div className="rounded-lg overflow-hidden">
+                            <GifDisplay gif={message.gif} className="max-w-xs" />
+                          </div>
+                        )}
+                        
+                        {/* Moviecon content */}
+                        {message.moviecon && (
+                          <div className="rounded-lg overflow-hidden">
+                            <MovieconDisplay moviecon={message.moviecon} className="max-w-xs" />
+                          </div>
+                        )}
                       </div>
                       <div className={`text-xs text-gray-500 dark:text-gray-400 mt-1 ${isOwn ? "text-right" : "text-left"}`}>
                         {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
@@ -214,7 +323,49 @@ export function Conversation() {
       {/* Message Input */}
       <div className="border-t border-gray-200 dark:border-gray-700 p-4">
         <div className="max-w-2xl mx-auto">
+          {/* Selected media preview */}
+          {selectedMedia && (
+            <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {selectedMedia.type === "gif" && (
+                    <>
+                      <span className="text-sm font-medium">🎭 GIF selected:</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{selectedMedia.data.title}</span>
+                    </>
+                  )}
+                  {selectedMedia.type === "moviecon" && (
+                    <>
+                      <span className="text-sm font-medium">🎬 Moviecon selected:</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{selectedMedia.data.title}</span>
+                    </>
+                  )}
+                  {(selectedMedia.type === "image" || selectedMedia.type === "video") && (
+                    <>
+                      <span className="text-sm font-medium">
+                        {selectedMedia.type === "image" ? "📷 Photo" : "🎥 Video"} selected
+                      </span>
+                    </>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSelectedMedia}
+                  data-testid="button-clear-media"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+          
           <form onSubmit={handleSendMessage} className="flex gap-2">
+            <MessageMediaPicker
+              onSelectGif={handleGifSelect}
+              onSelectMoviecon={handleMovieconSelect}
+              onSelectMedia={handleMediaSelect}
+            />
             <Input
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
@@ -225,7 +376,7 @@ export function Conversation() {
             />
             <Button
               type="submit"
-              disabled={!messageText.trim() || sendMessageMutation.isPending}
+              disabled={(!messageText.trim() && !selectedMedia) || sendMessageMutation.isPending}
               data-testid="button-send-message"
             >
               <Send className="w-4 h-4" />

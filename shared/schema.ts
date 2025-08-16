@@ -213,7 +213,11 @@ export const messages = pgTable("messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   senderId: varchar("sender_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   receiverId: varchar("receiver_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  content: text("content").notNull(),
+  content: text("content"),
+  mediaUrl: varchar("media_url"),
+  mediaType: mediaTypeEnum("media_type"),
+  gifId: varchar("gif_id").references(() => gifs.id),
+  movieconId: varchar("moviecon_id").references(() => moviecons.id),
   isRead: boolean("is_read").default(false),
   readAt: timestamp("read_at"),
   expiresAt: timestamp("expires_at"),
@@ -492,6 +496,14 @@ export const messagesRelations = relations(messages, ({ one }) => ({
     fields: [messages.receiverId],
     references: [users.id],
     relationName: "receiverMessages",
+  }),
+  gif: one(gifs, {
+    fields: [messages.gifId],
+    references: [gifs.id],
+  }),
+  moviecon: one(moviecons, {
+    fields: [messages.movieconId],
+    references: [moviecons.id],
   }),
 }));
 

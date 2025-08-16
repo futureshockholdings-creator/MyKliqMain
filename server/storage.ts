@@ -700,9 +700,13 @@ export class DatabaseStorage implements IStorage {
       .select({
         message: messages,
         sender: users,
+        gif: gifs,
+        moviecon: moviecons,
       })
       .from(messages)
       .innerJoin(users, eq(messages.senderId, users.id))
+      .leftJoin(gifs, eq(messages.gifId, gifs.id))
+      .leftJoin(moviecons, eq(messages.movieconId, moviecons.id))
       .where(
         and(
           or(
@@ -719,7 +723,7 @@ export class DatabaseStorage implements IStorage {
 
     // Get receiver info for each message
     const messagesWithUsers = await Promise.all(
-      conversationMessages.map(async ({ message, sender }) => {
+      conversationMessages.map(async ({ message, sender, gif, moviecon }) => {
         const [receiver] = await db
           .select()
           .from(users)
@@ -729,6 +733,8 @@ export class DatabaseStorage implements IStorage {
           ...message,
           sender,
           receiver,
+          gif,
+          moviecon,
         };
       })
     );

@@ -651,17 +651,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/messages/send', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { receiverId, content } = req.body;
+      const { receiverId, content, mediaUrl, mediaType, gifId, movieconId } = req.body;
 
-      if (!receiverId || !content?.trim()) {
-        console.log("Validation failed:", { receiverId, content: content?.trim() });
-        return res.status(400).json({ message: "receiverId and content are required" });
+      // Validate that we have at least one type of content
+      if (!receiverId || (!content?.trim() && !mediaUrl && !gifId && !movieconId)) {
+        console.log("Validation failed:", { receiverId, content: content?.trim(), mediaUrl, gifId, movieconId });
+        return res.status(400).json({ message: "receiverId and at least one content type (text, media, gif, or moviecon) are required" });
       }
 
       const messageData = {
         senderId: userId,
         receiverId,
-        content: content.trim(),
+        content: content?.trim() || null,
+        mediaUrl: mediaUrl || null,
+        mediaType: mediaType || null,
+        gifId: gifId || null,
+        movieconId: movieconId || null,
       };
 
       const message = await storage.sendMessage(messageData);
@@ -670,7 +675,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (receiverId !== userId) {
         const sender = await storage.getUser(userId);
         if (sender) {
-          const messagePreview = content.trim().slice(0, 30) + (content.trim().length > 30 ? "..." : "");
+          let messagePreview = "";
+          if (content?.trim()) {
+            messagePreview = content.trim().slice(0, 30) + (content.trim().length > 30 ? "..." : "");
+          } else if (mediaUrl) {
+            messagePreview = mediaType === "image" ? "📷 Photo" : "🎥 Video";
+          } else if (gifId) {
+            messagePreview = "🎭 GIF";
+          } else if (movieconId) {
+            messagePreview = "🎬 Moviecon";
+          }
+          
           await notificationService.notifyNewMessage(
             receiverId,
             userId,
