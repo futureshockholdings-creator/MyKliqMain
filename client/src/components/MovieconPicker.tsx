@@ -7,39 +7,34 @@ import { Search, Play } from 'lucide-react';
 import type { Moviecon } from '@shared/schema';
 
 // Force video loading with proper error handling
+// Get color scheme based on category/title for consistent theming
+function getMovieconColor(moviecon: Moviecon): string {
+  const colors = {
+    'Epic Explosion': 'from-red-500 to-red-600',
+    'Dramatic Gasp': 'from-teal-500 to-teal-600', 
+    'Comedy Gold': 'from-yellow-500 to-yellow-600',
+    'Romantic Kiss': 'from-pink-500 to-pink-600',
+    'Horror Scream': 'from-gray-500 to-gray-600',
+    'Sci-Fi Portal': 'from-blue-500 to-blue-600',
+    'Epic Battle': 'from-orange-500 to-orange-600',
+    'Funny Dance': 'from-green-500 to-green-600',
+    'Emotional Cry': 'from-amber-500 to-amber-600',
+    'Magic Spell': 'from-purple-500 to-purple-600',
+  };
+  return colors[moviecon.title as keyof typeof colors] || 'from-slate-500 to-slate-600';
+}
+
 function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?: string }) {
-  console.log('Moviecon render:', { title: moviecon.title, thumbnailUrl: moviecon.thumbnailUrl }); // Debug log
+  const [imageError, setImageError] = useState(false);
   
-  // Test if thumbnailUrl exists
-  if (!moviecon.thumbnailUrl) {
-    console.log('No thumbnailUrl for:', moviecon.title);
-    return (
-      <div className={`${className} relative h-24 bg-gradient-to-br from-red-500 to-orange-500 overflow-hidden moviecon-container cursor-pointer border border-border rounded-lg flex flex-col items-center justify-center text-white`}>
-        <div className="text-xs font-medium text-center px-2">{moviecon.title}</div>
-        <div className="text-xs opacity-75 mt-1">{moviecon.duration}s</div>
-      </div>
-    );
-  }
-  
-  // Direct thumbnail display
+  // Always show CSS-based colorful thumbnails since placeholder.com is failing
   return (
     <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg`}>
-      <div className="relative w-full h-full bg-gray-200">
-        <img
-          src={moviecon.thumbnailUrl}
-          alt={moviecon.title}
-          className="w-full h-full object-cover"
-          draggable={false}
-          onLoad={() => console.log('Image loaded successfully:', moviecon.title)}
-          onError={(e) => {
-            console.error('Image load error for', moviecon.title, ':', moviecon.thumbnailUrl);
-          }}
-        />
-        <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-white text-xs p-1 text-center">
-          {moviecon.title}
-        </div>
-        <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
-          {moviecon.duration}s
+      <div className={`relative w-full h-full bg-gradient-to-br ${getMovieconColor(moviecon)} flex flex-col items-center justify-center text-white`}>
+        <div className="text-xs font-bold text-center px-2 mb-1">{moviecon.title}</div>
+        <div className="text-xs opacity-90">{moviecon.duration}s clip</div>
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+          <Play className="w-6 h-6 text-white" />
         </div>
       </div>
     </div>
