@@ -14,6 +14,8 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const togglePlay = () => {
@@ -48,12 +50,40 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
     }
   };
 
+  const handleVideoError = () => {
+    setHasError(true);
+    setIsLoading(false);
+    console.error('Video failed to load:', moviecon.videoUrl);
+  };
+
+  const handleVideoLoaded = () => {
+    setIsLoading(false);
+    setHasError(false);
+  };
+
+  if (hasError) {
+    return (
+      <div className={cn("relative bg-gradient-to-br from-gray-800 to-gray-600 rounded-lg overflow-hidden min-h-[120px] flex flex-col items-center justify-center text-white", className)}>
+        <div className="text-center p-4">
+          <div className="text-sm font-medium mb-1">{moviecon.title}</div>
+          <div className="text-xs opacity-75">{moviecon.movieSource}</div>
+          <div className="text-xs opacity-50 mt-1">{moviecon.duration}s clip</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
-      className={cn("relative bg-black rounded-lg overflow-hidden", className)}
+      className={cn("relative bg-black rounded-lg overflow-hidden min-h-[120px]", className)}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => setShowControls(false)}
     >
+      {isLoading && (
+        <div className="absolute inset-0 bg-gray-800 rounded-lg flex items-center justify-center text-white text-sm">
+          Loading...
+        </div>
+      )}
       <video
         ref={videoRef}
         src={moviecon.videoUrl}
@@ -65,6 +95,14 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
         loop={autoPlay}
         preload="metadata"
         playsInline
+        onLoadedMetadata={() => {
+          handleVideoLoaded();
+          // Set video to first frame when loaded
+          if (videoRef.current) {
+            videoRef.current.currentTime = 0.1;
+          }
+        }}
+        onError={handleVideoError}
       />
       
       {/* Play/Pause overlay */}

@@ -23,8 +23,9 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
 
   if (hasError) {
     return (
-      <div className={`${className} relative h-24 bg-muted overflow-hidden moviecon-container cursor-pointer border border-border flex items-center justify-center`}>
-        <span className="text-xs text-muted-foreground">{moviecon.title}</span>
+      <div className={`${className} relative h-24 bg-gradient-to-br from-gray-700 to-gray-500 overflow-hidden moviecon-container cursor-pointer border border-border flex flex-col items-center justify-center text-white rounded-lg`}>
+        <div className="text-xs font-medium text-center px-2">{moviecon.title}</div>
+        <div className="text-xs opacity-75 mt-1">{moviecon.duration}s</div>
       </div>
     );
   }
@@ -51,10 +52,18 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
           <video
             src={moviecon.videoUrl}
             className={`w-full h-full object-cover transition-opacity ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-            onLoadedData={handleLoad}
+            onLoadedMetadata={(event) => {
+              handleLoad();
+              // Show first frame
+              const video = event.target as HTMLVideoElement;
+              if (video) {
+                video.currentTime = 0.1;
+              }
+            }}
             onError={handleError}
             muted
             preload="metadata"
+            playsInline
           />
         )}
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
