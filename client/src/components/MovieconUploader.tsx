@@ -28,7 +28,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
 
   const handleGetUploadParameters = async () => {
     try {
-      const response = await apiRequest("/api/objects/upload", "POST");
+      const response = await apiRequest("POST", "/api/objects/upload");
       return {
         method: "PUT" as const,
         url: response.uploadURL,
@@ -66,7 +66,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
         }
 
         // Create the moviecon record
-        return apiRequest("/api/moviecons", "POST", {
+        return apiRequest("POST", "/api/moviecons", {
           title: movieconTitle,
           url: videoUrl,
         });
@@ -100,7 +100,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
     }
 
     try {
-      await apiRequest(`/api/moviecons/${movieconId}`, "DELETE");
+      await apiRequest("DELETE", `/api/moviecons/${movieconId}`);
 
       toast({
         title: "Deleted",
