@@ -68,7 +68,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
         // Create the moviecon record
         return apiRequest("POST", "/api/moviecons", {
           title: movieconTitle,
-          url: videoUrl,
+          videoUrl: videoUrl,
         });
       }) || [];
 

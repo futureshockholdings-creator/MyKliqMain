@@ -28,7 +28,7 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
   const [videoError, setVideoError] = useState(false);
   
   // Show actual video thumbnail for uploaded moviecons, fallback to gradient for old ones
-  if (moviecon.videoUrl && moviecon.videoUrl.includes('storage.googleapis.com')) {
+  if (moviecon.videoUrl && (moviecon.videoUrl.includes('storage.googleapis.com') || moviecon.videoUrl.startsWith('/objects/'))) {
     // This is a custom uploaded moviecon - show video thumbnail
     return (
       <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>

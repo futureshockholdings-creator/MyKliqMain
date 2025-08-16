@@ -34,7 +34,7 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Show actual video for uploaded moviecons, fallback to gradient for old ones
-  if (moviecon.videoUrl && moviecon.videoUrl.includes('storage.googleapis.com')) {
+  if (moviecon.videoUrl && (moviecon.videoUrl.includes('storage.googleapis.com') || moviecon.videoUrl.startsWith('/objects/'))) {
     // This is a custom uploaded moviecon - show actual video
     return (
       <div className={cn('relative rounded-lg overflow-hidden min-h-[120px] bg-black border-2 border-primary/50', className)}>
