@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Film, Plus, MapPin, Loader2, Edit } from "lucide-react";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -675,7 +675,7 @@ export default function Home() {
                     variant="ghost" 
                     className="text-blue-500 hover:bg-blue-500/10"
                   >
-                    <Film className="w-4 h-4" />
+                    <Clapperboard className="w-4 h-4" />
                   </Button>
                 }
               />
@@ -800,7 +800,7 @@ export default function Home() {
                     {story.mediaUrl && (
                       <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-secondary rounded-full flex items-center justify-center">
                         {story.mediaType === 'video' ? (
-                          <Film className="w-3 h-3 text-secondary-foreground" />
+                          <Clapperboard className="w-3 h-3 text-secondary-foreground" />
                         ) : (
                           <ImageIcon className="w-3 h-3 text-secondary-foreground" />
                         )}
@@ -1103,7 +1103,7 @@ export default function Home() {
                                 className="text-blue-500 hover:bg-blue-500/10 h-8 w-8 p-0"
                                 data-testid={`button-comment-moviecon-${post.id}`}
                               >
-                                <Film className="w-3 h-3" />
+                                <Clapperboard className="w-3 h-3" />
                               </Button>
                             }
                           />
