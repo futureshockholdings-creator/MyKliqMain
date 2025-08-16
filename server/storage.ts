@@ -2,6 +2,7 @@ import {
   users,
   userThemes,
   friendships,
+  usedInviteCodes,
   posts,
   stories,
   storyViews,
@@ -500,9 +501,15 @@ export class DatabaseStorage implements IStorage {
     let isUnique = false;
     
     while (!isUnique) {
-      code = `KLIQ-${Math.random().toString(36).substr(2, 4).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-      const existing = await db.select().from(users).where(eq(users.inviteCode, code));
-      isUnique = existing.length === 0;
+      // Generate a 12-digit random number
+      code = Math.floor(100000000000 + Math.random() * 900000000000).toString();
+      
+      // Check if code is already assigned to a user
+      const existingUser = await db.select().from(users).where(eq(users.inviteCode, code));
+      // Check if code has been used
+      const usedCode = await db.select().from(usedInviteCodes).where(eq(usedInviteCodes.inviteCode, code));
+      
+      isUnique = existingUser.length === 0 && usedCode.length === 0;
     }
     
     return code!;
@@ -511,6 +518,19 @@ export class DatabaseStorage implements IStorage {
   async getUserByInviteCode(inviteCode: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.inviteCode, inviteCode));
     return user;
+  }
+
+  async isInviteCodeUsed(inviteCode: string): Promise<boolean> {
+    const [usedCode] = await db.select().from(usedInviteCodes).where(eq(usedInviteCodes.inviteCode, inviteCode));
+    return !!usedCode;
+  }
+
+  async markInviteCodeAsUsed(inviteCode: string, usedBy: string, ownedBy: string): Promise<void> {
+    await db.insert(usedInviteCodes).values({
+      inviteCode,
+      usedBy,
+      ownedBy,
+    });
   }
 
   // Story operations

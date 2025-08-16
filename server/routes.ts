@@ -283,6 +283,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { inviteCode } = req.body;
       
+      // Check if invite code has already been used
+      const isCodeUsed = await storage.isInviteCodeUsed(inviteCode);
+      if (isCodeUsed) {
+        return res.status(400).json({ message: "This invite code has already been used" });
+      }
+      
       const inviter = await storage.getUserByInviteCode(inviteCode);
       if (!inviter) {
         return res.status(404).json({ message: "Invalid invite code" });
@@ -298,6 +304,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (existingFriends.length >= 15) {
         return res.status(400).json({ message: "User has reached maximum friend limit" });
       }
+
+      // Mark the invite code as used before creating the friendship
+      await storage.markInviteCodeAsUsed(inviteCode, userId, inviter.id);
 
       const rank = existingFriends.length + 1;
       const friendship = await storage.addFriend({
