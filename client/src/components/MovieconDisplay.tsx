@@ -31,20 +31,7 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
   const [videoError, setVideoError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Auto-play once when component mounts for posts  
-  useEffect(() => {
-    if (!hasAutoPlayed && videoRef.current && moviecon.videoUrl && (moviecon.videoUrl.includes('storage.googleapis.com') || moviecon.videoUrl.startsWith('/objects/'))) {
-      const timer = setTimeout(() => {
-        videoRef.current?.play();
-        setHasAutoPlayed(true);
-      }, 500); // Small delay to ensure video is loaded
-      
-      return () => clearTimeout(timer);
-    }
-  }, [hasAutoPlayed, moviecon.videoUrl]);
 
   // Show actual video for uploaded moviecons, fallback to gradient for old ones
   if (moviecon.videoUrl && (moviecon.videoUrl.includes('storage.googleapis.com') || moviecon.videoUrl.startsWith('/objects/'))) {
@@ -64,8 +51,8 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
               onEnded={() => setIsPlaying(false)}
             />
             
-            {/* Play Button Overlay - only show when not playing and after auto-play has finished */}
-            {!isPlaying && hasAutoPlayed && (
+            {/* Play Button Overlay - show when not playing */}
+            {!isPlaying && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer" 
                    onClick={() => videoRef.current?.play()}>
                 <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
