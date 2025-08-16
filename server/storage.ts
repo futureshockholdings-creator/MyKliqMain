@@ -431,6 +431,7 @@ export class DatabaseStorage implements IStorage {
           gifId: post.gifId,
           movieconId: post.movieconId,
           gif: post.gif,
+          moviecon: post.moviecon,
           likes: likesData,
           latitude: post.latitude,
           longitude: post.longitude,
