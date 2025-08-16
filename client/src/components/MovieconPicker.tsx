@@ -25,9 +25,35 @@ function getMovieconColor(moviecon: Moviecon): string {
 }
 
 function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?: string }) {
-  const [imageError, setImageError] = useState(false);
+  const [videoError, setVideoError] = useState(false);
   
-  // Always show CSS-based colorful thumbnails since placeholder.com is failing
+  // Show actual video thumbnail for uploaded moviecons, fallback to gradient for old ones
+  if (moviecon.url && moviecon.url.includes('storage.googleapis.com')) {
+    // This is a custom uploaded moviecon - show video thumbnail
+    return (
+      <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
+        {!videoError ? (
+          <video
+            src={moviecon.url}
+            className="w-full h-full object-cover"
+            preload="metadata"
+            muted
+            onError={() => setVideoError(true)}
+          />
+        ) : (
+          <div className={`relative w-full h-full bg-gradient-to-br ${getMovieconColor(moviecon)} flex flex-col items-center justify-center text-white`}>
+            <div className="text-xs font-bold text-center px-2 mb-1">{moviecon.title}</div>
+            <div className="text-xs opacity-90">Custom Clip</div>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+          <Play className="w-6 h-6 text-white drop-shadow-lg" />
+        </div>
+      </div>
+    );
+  }
+  
+  // Fallback to gradient design for demo/default moviecons
   return (
     <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg`}>
       <div className={`relative w-full h-full bg-gradient-to-br ${getMovieconColor(moviecon)} flex flex-col items-center justify-center text-white`}>
@@ -130,22 +156,22 @@ export function MovieconPicker({
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-4 gap-2 p-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 p-2">
                 {moviecons.map((moviecon: Moviecon) => (
                   <div
                     key={moviecon.id}
                     onClick={() => handleMovieconClick(moviecon)}
-                    className="moviecon-item group"
+                    className="moviecon-item group cursor-pointer"
                   >
                     <MovieconVideo 
                       moviecon={moviecon} 
-                      className="rounded-lg hover:scale-105 transition-transform duration-200"
+                      className="rounded-lg hover:scale-105 transition-transform duration-200 shadow-sm hover:shadow-md"
                     />
-                    <div className="text-xs text-center mt-1 text-muted-foreground group-hover:text-foreground transition-colors truncate">
+                    <div className="text-xs text-center mt-2 text-muted-foreground group-hover:text-foreground transition-colors truncate px-1">
                       {moviecon.title}
                     </div>
                     {moviecon.movieSource && (
-                      <div className="text-xs text-center text-muted-foreground/70 truncate">
+                      <div className="text-xs text-center text-muted-foreground/70 truncate px-1">
                         {moviecon.movieSource}
                       </div>
                     )}
