@@ -47,10 +47,9 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
           <img
             src={moviecon.thumbnailUrl}
             alt={moviecon.title}
-            className={`w-full h-full object-cover transition-opacity ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className="w-full h-full object-cover"
             onLoad={handleLoad}
             onError={handleError}
-            loading="lazy"
             draggable={false}
           />
         ) : (
