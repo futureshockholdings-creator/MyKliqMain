@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Moviecon } from '@shared/schema';
@@ -31,7 +31,20 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
   const [videoError, setVideoError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [hasAutoPlayed, setHasAutoPlayed] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Auto-play once when component mounts for posts  
+  useEffect(() => {
+    if (!hasAutoPlayed && videoRef.current && moviecon.videoUrl && (moviecon.videoUrl.includes('storage.googleapis.com') || moviecon.videoUrl.startsWith('/objects/'))) {
+      const timer = setTimeout(() => {
+        videoRef.current?.play();
+        setHasAutoPlayed(true);
+      }, 500); // Small delay to ensure video is loaded
+      
+      return () => clearTimeout(timer);
+    }
+  }, [hasAutoPlayed, moviecon.videoUrl]);
 
   // Show actual video for uploaded moviecons, fallback to gradient for old ones
   if (moviecon.videoUrl && (moviecon.videoUrl.includes('storage.googleapis.com') || moviecon.videoUrl.startsWith('/objects/'))) {
@@ -45,42 +58,34 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
               src={moviecon.videoUrl}
               className="w-full h-full object-cover"
               muted={isMuted}
-              loop
               onError={() => setVideoError(true)}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
-              autoPlay={autoPlay}
+              onEnded={() => setIsPlaying(false)}
             />
             
-            {/* Video Controls Overlay */}
-            <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="bg-black/50 text-white hover:bg-black/70"
-                  onClick={() => {
-                    if (videoRef.current) {
-                      if (isPlaying) {
-                        videoRef.current.pause();
-                      } else {
-                        videoRef.current.play();
-                      }
-                    }
-                  }}
-                >
-                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="bg-black/50 text-white hover:bg-black/70"
-                  onClick={() => setIsMuted(!isMuted)}
-                >
-                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                </Button>
+            {/* Play Button Overlay - only show when not playing and after auto-play has finished */}
+            {!isPlaying && hasAutoPlayed && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer" 
+                   onClick={() => videoRef.current?.play()}>
+                <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
+                  <Play className="w-8 h-8 text-black ml-1" />
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Mute/Unmute Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-2 right-2 bg-black/50 text-white hover:bg-black/70"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMuted(!isMuted);
+              }}
+            >
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </Button>
             
             {/* Title Overlay */}
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
