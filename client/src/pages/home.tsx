@@ -995,7 +995,7 @@ export default function Home() {
           
           {/* Event Posts - Rendered Separately to Avoid React Mixed-Type Issues */}
           {(feedItems as any[]).filter((item: any) => item.type === 'event').map((item: any) => {
-            const userAttendance = eventAttendance[item.id];
+            const userAttendance = item.userAttendanceStatus || eventAttendance[item.id];
             return (
               <Card key={`event-${item.id}`} className={cn(
                 "bg-gradient-to-br from-muted/50 to-muted/20 border border-muted-foreground/20"
@@ -1108,6 +1108,30 @@ export default function Home() {
                         </Button>
                       </div>
                     </div>
+
+                    {/* Attendance Statistics */}
+                    {item.attendance && (
+                      <div className="bg-background/30 rounded-lg p-3">
+                        <p className="text-xs font-medium text-muted-foreground mb-2">Attendance Summary:</p>
+                        <div className="flex gap-4 text-sm">
+                          <div className="flex items-center gap-1">
+                            <Check className="w-4 h-4 text-green-600" />
+                            <span className="font-medium text-green-600">{item.attendance.going}</span>
+                            <span className="text-muted-foreground">Going</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <HelpCircle className="w-4 h-4 text-yellow-600" />
+                            <span className="font-medium text-yellow-600">{item.attendance.maybe}</span>
+                            <span className="text-muted-foreground">Maybe</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <X className="w-4 h-4 text-red-600" />
+                            <span className="font-medium text-red-600">{item.attendance.not_going}</span>
+                            <span className="text-muted-foreground">Can't Go</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Like Button */}
                     <div className="flex items-center justify-between pt-2 border-t border-border">

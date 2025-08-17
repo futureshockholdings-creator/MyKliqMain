@@ -527,7 +527,7 @@ export class DatabaseStorage implements IStorage {
           content: `🗳️ Created a poll: "${poll.title}"`,
         })));
 
-        // 3. Get events from kliq members
+        // 3. Get events from kliq members with attendance statistics
         const eventsQuery = db
           .select({
             id: events.id,
@@ -552,28 +552,72 @@ export class DatabaseStorage implements IStorage {
           .orderBy(desc(events.createdAt));
 
         const eventsData = await eventsQuery;
-        feedItems.push(...eventsData.map(event => ({
-          id: event.id,
-          userId: event.userId,
-          title: event.title,
-          description: event.description,
-          location: event.location,
-          eventDate: event.eventDate,
-          mediaUrl: event.mediaUrl,
-          mediaType: event.mediaType,
-          isPublic: event.isPublic,
-          attendeeCount: event.attendeeCount,
-          createdAt: event.createdAt,
-          author: {
-            id: event.authorId,
-            firstName: event.authorFirstName,
-            lastName: event.authorLastName,
-            profileImageUrl: event.authorProfileImageUrl,
-          },
-          type: 'event',
-          activityDate: event.createdAt,
-          content: `📅 Created an event: "${event.title}"`,
-        })));
+        
+        // Get attendance statistics for each event
+        const eventsWithAttendance = await Promise.all(
+          eventsData.map(async (event) => {
+            // Get attendance breakdown
+            const attendanceQuery = await db
+              .select({
+                status: eventAttendees.status,
+                count: sql<number>`count(*)::int`
+              })
+              .from(eventAttendees)
+              .where(eq(eventAttendees.eventId, event.id))
+              .groupBy(eventAttendees.status);
+
+            const attendanceStats = {
+              going: 0,
+              maybe: 0,
+              not_going: 0
+            };
+
+            attendanceQuery.forEach(stat => {
+              if (stat.status === 'going') attendanceStats.going = stat.count;
+              else if (stat.status === 'maybe') attendanceStats.maybe = stat.count;  
+              else if (stat.status === 'not_going') attendanceStats.not_going = stat.count;
+            });
+
+            // Get user's attendance status if they've responded
+            const userAttendance = await db
+              .select({ status: eventAttendees.status })
+              .from(eventAttendees)
+              .where(and(
+                eq(eventAttendees.eventId, event.id),
+                eq(eventAttendees.userId, userId)
+              ))
+              .limit(1);
+
+            const userAttendanceStatus = userAttendance.length > 0 ? userAttendance[0].status : null;
+
+            return {
+              id: event.id,
+              userId: event.userId,
+              title: event.title,
+              description: event.description,
+              location: event.location,
+              eventDate: event.eventDate,
+              mediaUrl: event.mediaUrl,
+              mediaType: event.mediaType,
+              isPublic: event.isPublic,
+              attendeeCount: event.attendeeCount,
+              createdAt: event.createdAt,
+              author: {
+                id: event.authorId,
+                firstName: event.authorFirstName,
+                lastName: event.authorLastName,
+                profileImageUrl: event.authorProfileImageUrl,
+              },
+              attendance: attendanceStats,
+              userAttendanceStatus,
+              type: 'event',
+              activityDate: event.createdAt,
+              content: `📅 Created an event: "${event.title}"`,
+            };
+          })
+        );
+        
+        feedItems.push(...eventsWithAttendance);
 
         // 4. Get actions (live streams) from kliq members
         const actionsQuery = db
