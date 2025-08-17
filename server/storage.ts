@@ -1830,10 +1830,13 @@ export class DatabaseStorage implements IStorage {
     const poll = await this.getPollById(pollId);
     if (!poll) return [];
 
+    // Get fresh votes from database
     const votes = await db.select().from(pollVotes).where(eq(pollVotes.pollId, pollId));
     const totalVotes = votes.length;
+    
+    console.log(`Fresh poll data for ${pollId}: Total votes = ${totalVotes}, Vote records:`, votes.map(v => ({ userId: v.userId, option: v.selectedOption })));
 
-    return poll.options.map((option, index) => {
+    const results = poll.options.map((option, index) => {
       const optionVotes = votes.filter(vote => vote.selectedOption === index).length;
       const percentage = totalVotes > 0 ? (optionVotes / totalVotes) * 100 : 0;
       
@@ -1844,6 +1847,9 @@ export class DatabaseStorage implements IStorage {
         percentage: Math.round(percentage * 10) / 10, // Round to 1 decimal place
       };
     });
+    
+    console.log(`Calculated results for ${pollId}:`, results);
+    return results;
   }
 }
 
