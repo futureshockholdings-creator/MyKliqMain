@@ -105,12 +105,13 @@ export default function Actions() {
     },
     onSuccess: (newAction) => {
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] }); // Refresh posts to show the auto-post
       setShowCreateAction(false);
       setSelectedAction(newAction);
       setNewAction({ title: "", description: "", chatEnabled: true });
       toast({
         title: "Action started!",
-        description: "Your live stream is now active",
+        description: "Your live stream is active and posted to headlines",
       });
     },
     onError: () => {
@@ -129,7 +130,6 @@ export default function Actions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] }); // Refresh posts to show the auto-post
       setSelectedAction(null);
       setIsStreaming(false);
       stopStream();
@@ -139,7 +139,7 @@ export default function Actions() {
       }
       toast({
         title: "Action ended",
-        description: "Your live stream has been stopped and posted to headlines",
+        description: "Your live stream has been stopped",
       });
     },
   });
