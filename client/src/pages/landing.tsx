@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { Sparkles, Users, Crown, Palette, Shield } from "lucide-react";
+import { Users, Crown, Palette, Shield } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -73,8 +73,8 @@ export default function Landing() {
         <div className="bg-gradient-to-r from-primary via-secondary to-mykliq-green h-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
           <div className="absolute bottom-4 left-4">
-            <h1 className="text-3xl font-bold text-white" style={{ textShadow: '4px 4px 0px #FF4500, 8px 8px 0px #8A2BE2' }}>
-              ✨ MyKliq ✨
+            <h1 className="text-3xl font-bold text-white">
+              MyKliq
             </h1>
             <p className="text-white/90 text-sm">Your Exclusive Social Circle</p>
           </div>
@@ -147,9 +147,7 @@ export default function Landing() {
             <Button 
               onClick={() => window.location.href = "/api/login"}
               className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-primary-foreground font-bold py-3"
-              style={{ boxShadow: '0 0 20px hsl(var(--primary) / 0.5)' }}
             >
-              <Sparkles className="w-4 h-4 mr-2" />
               Join MyKliq Now!
             </Button>
 
