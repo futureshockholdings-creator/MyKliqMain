@@ -228,8 +228,10 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
           </div>
 
           {/* Attendance Buttons */}
-          {currentUserId && (
-            <div className="flex space-x-2 pt-2 border-t border-border">
+          {currentUserId ? (
+            <div>
+              <p className="text-xs text-muted-foreground mb-2">Set your attendance:</p>
+              <div className="flex space-x-2 pt-2 border-t border-border">
               <div className="flex space-x-2 flex-1">
                 <Button
                   onClick={() => handleAttendanceClick('going')}
@@ -289,6 +291,11 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
                   <span className="ml-1">{getStatusText(displayStatus)}</span>
                 </Badge>
               )}
+            </div>
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground">
+              Login required to set attendance
             </div>
           )}
         </div>
