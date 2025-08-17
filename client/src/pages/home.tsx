@@ -924,17 +924,54 @@ export default function Home() {
             console.log('Rendering EventCard for event:', item.id, 'with currentUserId:', userData?.id);
             console.log('Event item data:', item);
             return (
-              <div key={item.id} className="w-full bg-red-100 border-4 border-red-500 p-4 mb-4">
-                <h2 className="text-2xl font-bold text-red-800 mb-4">EVENT DETECTED: {item.title}</h2>
-                <div className="bg-yellow-200 p-2 mb-4">
-                  <p>Event ID: {item.id}</p>
-                  <p>Event Type: {item.type}</p>
-                  <p>User ID: {userData?.id}</p>
+              <div key={item.id} style={{
+                width: '100%',
+                backgroundColor: 'red',
+                border: '10px solid blue',
+                padding: '20px',
+                margin: '20px 0',
+                color: 'white',
+                fontSize: '24px',
+                fontWeight: 'bold'
+              }}>
+                <div>🚨 EVENT FOUND: {item.title} 🚨</div>
+                <div style={{backgroundColor: 'yellow', color: 'black', padding: '10px', margin: '10px 0'}}>
+                  Event ID: {item.id}<br/>
+                  User ID: {userData?.id}<br/>
+                  Status: TESTING
                 </div>
-                <EventCard
-                  event={item}
-                  currentUserId={userData?.id}
-                />
+                <div style={{display: 'flex', gap: '10px'}}>
+                  <button style={{
+                    backgroundColor: 'green',
+                    color: 'white',
+                    padding: '15px 30px',
+                    fontSize: '18px',
+                    border: 'none',
+                    borderRadius: '5px'
+                  }}>
+                    GOING
+                  </button>
+                  <button style={{
+                    backgroundColor: 'orange',
+                    color: 'white',
+                    padding: '15px 30px',
+                    fontSize: '18px',
+                    border: 'none',
+                    borderRadius: '5px'
+                  }}>
+                    MAYBE
+                  </button>
+                  <button style={{
+                    backgroundColor: 'darkred',
+                    color: 'white',
+                    padding: '15px 30px',
+                    fontSize: '18px',
+                    border: 'none',
+                    borderRadius: '5px'
+                  }}>
+                    NOT GOING
+                  </button>
+                </div>
               </div>
             );
           } else if (item.type === 'post') {
