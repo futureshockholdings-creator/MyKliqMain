@@ -51,22 +51,59 @@ export function PollCard({ poll }: PollCardProps) {
   const { data: results = [] } = useQuery<PollOption[]>({
     queryKey: ["/api/polls", poll.id, "results"],
     queryFn: () => apiRequest("GET", `/api/polls/${poll.id}/results`),
+    refetchInterval: 5000, // Auto-refresh every 5 seconds for real-time updates
   });
 
   const voteMutation = useMutation({
     mutationFn: async (option: number) => {
       await apiRequest("POST", `/api/polls/${poll.id}/vote`, { selectedOption: option });
+      return option;
+    },
+    onMutate: async (option: number) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ["/api/polls", poll.id, "results"] });
+      
+      // Snapshot the previous value
+      const previousResults = queryClient.getQueryData(["/api/polls", poll.id, "results"]);
+      
+      // Optimistically update to the new value
+      setSelectedOption(option);
+      
+      // Optionally update results cache optimistically
+      if (previousResults && Array.isArray(previousResults)) {
+        const updatedResults = [...previousResults];
+        if (updatedResults[option]) {
+          updatedResults[option] = {
+            ...updatedResults[option],
+            votes: updatedResults[option].votes + 1,
+          };
+          // Recalculate percentages
+          const totalVotes = updatedResults.reduce((sum, result) => sum + result.votes, 0);
+          updatedResults.forEach(result => {
+            result.percentage = totalVotes > 0 ? (result.votes / totalVotes) * 100 : 0;
+          });
+          queryClient.setQueryData(["/api/polls", poll.id, "results"], updatedResults);
+        }
+      }
+      
+      return { previousResults };
     },
     onSuccess: () => {
+      // Immediately refetch results to get accurate data
+      queryClient.refetchQueries({ queryKey: ["/api/polls", poll.id, "results"] });
       queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/polls", poll.id, "results"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Vote recorded!",
         description: "Your vote has been saved successfully",
       });
     },
-    onError: (error) => {
+    onError: (error, option, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      setSelectedOption(null);
+      if (context?.previousResults) {
+        queryClient.setQueryData(["/api/polls", poll.id, "results"], context.previousResults);
+      }
       console.error("Error voting:", error);
       toast({
         title: "Failed to vote",
