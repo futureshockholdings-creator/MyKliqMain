@@ -108,7 +108,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
                   </div>
                 )}
                 <item.icon className="w-6 h-6" />
-                <span className="text-xs mt-1">{item.label}</span>
+                <span className="text-xs mt-1 text-center leading-tight break-words whitespace-pre-line max-w-14">{item.label}</span>
               </Link>
             );
           })}
@@ -159,6 +159,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
                   </div>
                 )}
                 <item.icon className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5 text-center leading-tight break-words whitespace-pre-line max-w-12">{item.label}</span>
               </Link>
             );
           })}
