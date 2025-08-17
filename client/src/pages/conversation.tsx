@@ -41,15 +41,39 @@ interface MessageData {
   };
   gif?: {
     id: string;
+    createdAt: Date | null;
+    updatedAt: Date | null;
     title: string;
+    height: number | null;
+    width: number | null;
+    description: string | null;
     url: string;
-    category?: string;
+    thumbnailUrl: string | null;
+    tags: string[] | null;
+    category: string;
+    fileSize: number | null;
+    trending: boolean | null;
+    featured: boolean | null;
+    uploadedBy: string | null;
   };
   moviecon?: {
     id: string;
+    createdAt: Date | null;
+    updatedAt: Date | null;
     title: string;
-    videoUrl?: string;
-    movieSource?: string;
+    duration: number;
+    height: number | null;
+    width: number | null;
+    description: string | null;
+    thumbnailUrl: string | null;
+    videoUrl: string;
+    tags: string[] | null;
+    category: string;
+    movieSource: string | null;
+    fileSize: number | null;
+    trending: boolean | null;
+    featured: boolean | null;
+    uploadedBy: string | null;
   };
 }
 

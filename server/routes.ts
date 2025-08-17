@@ -624,7 +624,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         participantIds: [userId, participantId]
       });
 
-      res.json({ id: conversation.id });
+      // Return the participant ID so the frontend can navigate correctly
+      res.json({ id: participantId });
     } catch (error) {
       console.error("Error creating conversation:", error);
       res.status(500).json({ message: "Failed to create conversation" });
