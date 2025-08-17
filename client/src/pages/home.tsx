@@ -25,6 +25,7 @@ import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { YouTubeEmbedList } from "@/components/YouTubeEmbed";
 import { extractYouTubeUrlsFromText } from "@/lib/youtubeUtils";
 import { PollCard } from "@/components/PollCard";
+import { GoogleSearch } from "@/components/GoogleSearch";
 import type { Gif, Moviecon } from "@shared/schema";
 
 
@@ -722,6 +723,9 @@ export default function Home() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Google Search powered by AI */}
+      <GoogleSearch />
 
       {/* Location Check-in Dialog */}
       <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
