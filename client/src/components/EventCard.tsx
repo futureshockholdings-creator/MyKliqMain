@@ -229,12 +229,16 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
             )}
           </div>
 
-          {/* Attendance Buttons */}
+          {/* Attendance Buttons - Debug */}
+          <div className="bg-yellow-100 p-2 text-xs">
+            DEBUG: currentUserId={currentUserId}, hasUser={!!currentUserId}
+          </div>
+          
           {currentUserId ? (
-            <div>
+            <div className="bg-green-100 p-3 rounded">
               <p className="text-xs text-muted-foreground mb-2">Set your attendance:</p>
               <div className="flex space-x-2 pt-2 border-t border-border">
-              <div className="flex space-x-2 flex-1">
+                <div className="flex space-x-2 flex-1">
                 <Button
                   onClick={() => handleAttendanceClick('going')}
                   disabled={isUpdating}
