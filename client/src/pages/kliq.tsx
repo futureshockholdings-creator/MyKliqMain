@@ -341,6 +341,9 @@ export default function Kliq() {
             )}
           </h1>
         </div>
+        <p className="text-muted-foreground text-sm">
+          Drag friends to reorder your pyramid
+        </p>
       </div>
 
       {/* Stats */}
@@ -362,6 +365,54 @@ export default function Kliq() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Pyramid Chart */}
+      {friendsLoading ? (
+        <Card className="bg-card border-border">
+          <CardContent className="p-8 text-center">
+            <div className="animate-pulse space-y-4">
+              <div className="w-16 h-16 bg-muted rounded-full mx-auto"></div>
+              <div className="space-y-2">
+                <div className="w-24 h-4 bg-muted rounded mx-auto"></div>
+                <div className="w-32 h-3 bg-muted rounded mx-auto"></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : friends.length === 0 ? (
+        <Card className="bg-card border-border">
+          <CardContent className="p-8 text-center">
+            <div className="text-4xl mb-4">👥</div>
+            <h3 className="text-lg font-bold text-muted-foreground mb-2">No friends yet</h3>
+            <p className="text-muted-foreground text-sm mb-4">
+              Share your invite code or join someone else's kliq to get started!
+            </p>
+            <Button
+              onClick={() => setIsInviteDialogOpen(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Join a Kliq
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <PyramidChart
+          friends={friends.map(f => ({
+            id: f.friend.id,
+            firstName: f.friend.firstName,
+            lastName: f.friend.lastName,
+            profileImageUrl: f.friend.profileImageUrl,
+            rank: f.rank
+          }))}
+          onRankChange={handleRankChange}
+          onMessage={handleMessageFriend}
+          onVideoCall={handleVideoCall}
+          onRemove={handleRemoveFriend}
+          maxFriends={15}
+          kliqName={userData?.kliqName}
+        />
+      )}
 
       {/* Invite Code */}
       <Card className="bg-card border-border">
