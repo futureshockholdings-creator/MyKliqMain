@@ -2,6 +2,11 @@
 
 MyKliq is a social media application designed for close-knit friend groups, focusing on intimate social sharing within small circles called "kliq". It features hierarchical friend ranking, content filtering, extensive UI customization, and rich media sharing. Built as a full-stack web application, MyKliq emphasizes personalized user experiences through custom themes, content controls, photo/video sharing, and disappearing stories. The platform aims to provide a highly customizable and private social environment.
 
+## Recent Changes (August 2025)
+- **Real-time Polling System**: Implemented comprehensive polling feature with kliq-wide participation, real-time vote tracking, and synchronized updates across headlines feed and My Kliq page
+- **Kliq-wide Content Aggregation**: Enhanced feed system to display polls, posts, events, and live streams from all kliq members with full interactive functionality
+- **Live Vote Updates**: Added optimistic updates, automatic result refreshing, and cache invalidation for instant poll result synchronization
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -47,6 +52,8 @@ Integrated with Replit's OAuth system for seamless authentication:
 ## Content Management
 The application includes a sophisticated content system:
 - **Hierarchical Feed**: Posts filtered by friend rankings and user-defined content filters.
+- **Kliq-wide Content Aggregation**: All kliq member content (posts, polls, events, actions) appears in everyone's headlines feed with full interactivity.
+- **Real-time Polling**: Create polls with customizable time limits, vote tracking, and live percentage-based results synchronized across all views.
 - **Engagement System**: Like/unlike functionality.
 - **Media Support**: Comprehensive photo, video, and YouTube URL embedding (for Bulletin posts/comments) using object storage.
 - **Stories**: 24-hour disappearing content.
