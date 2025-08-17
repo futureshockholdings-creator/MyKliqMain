@@ -229,81 +229,52 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
             )}
           </div>
 
-          {/* Attendance Buttons - Debug */}
-          <div className="bg-yellow-100 p-2 text-xs">
-            DEBUG: currentUserId={currentUserId}, hasUser={!!currentUserId}
-          </div>
-          
-          {currentUserId ? (
-            <div className="bg-green-100 p-3 rounded">
-              <p className="text-xs text-muted-foreground mb-2">Set your attendance:</p>
-              <div className="flex space-x-2 pt-2 border-t border-border">
-                <div className="flex space-x-2 flex-1">
-                <Button
-                  onClick={() => handleAttendanceClick('going')}
-                  disabled={isUpdating}
-                  size="sm"
-                  className={cn(
-                    "flex-1 text-xs",
-                    displayStatus === 'going' 
-                      ? getStatusColor('going')
-                      : "bg-secondary hover:bg-secondary/90 text-secondary-foreground border-secondary"
-                  )}
-                  data-testid={`button-going-${event.id}`}
-                >
-                  {displayStatus === 'going' && getStatusIcon('going')}
-                  <span className="ml-1">Going</span>
-                </Button>
-                
-                <Button
-                  onClick={() => handleAttendanceClick('maybe')}
-                  disabled={isUpdating}
-                  size="sm"
-                  className={cn(
-                    "flex-1 text-xs",
-                    displayStatus === 'maybe' 
-                      ? getStatusColor('maybe')
-                      : "bg-secondary hover:bg-secondary/90 text-secondary-foreground border-secondary"
-                  )}
-                  data-testid={`button-maybe-${event.id}`}
-                >
-                  {displayStatus === 'maybe' && getStatusIcon('maybe')}
-                  <span className="ml-1">Maybe</span>
-                </Button>
-                
-                <Button
-                  onClick={() => handleAttendanceClick('not_going')}
-                  disabled={isUpdating}
-                  size="sm"
-                  className={cn(
-                    "flex-1 text-xs",
-                    displayStatus === 'not_going' 
-                      ? getStatusColor('not_going')
-                      : "bg-secondary hover:bg-secondary/90 text-secondary-foreground border-secondary"
-                  )}
-                  data-testid={`button-not-going-${event.id}`}
-                >
-                  {displayStatus === 'not_going' && getStatusIcon('not_going')}
-                  <span className="ml-1">Not Going</span>
-                </Button>
-              </div>
+          {/* Attendance Buttons */}
+          <div className="mt-4 p-4 border-t border-gray-200">
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => handleAttendanceClick('going')}
+                disabled={isUpdating}
+                className={cn(
+                  "flex-1 bg-green-500 hover:bg-green-600 text-white",
+                  displayStatus === 'going' && "ring-2 ring-green-300"
+                )}
+                data-testid={`button-going-${event.id}`}
+              >
+                Going
+              </Button>
               
-              {displayStatus && (
-                <Badge 
-                  className={cn("text-xs", getStatusColor(displayStatus))}
-                  data-testid={`badge-status-${event.id}`}
-                >
-                  {getStatusIcon(displayStatus)}
-                  <span className="ml-1">{getStatusText(displayStatus)}</span>
-                </Badge>
-              )}
+              <Button
+                onClick={() => handleAttendanceClick('maybe')}
+                disabled={isUpdating}
+                className={cn(
+                  "flex-1 bg-yellow-500 hover:bg-yellow-600 text-white",
+                  displayStatus === 'maybe' && "ring-2 ring-yellow-300"
+                )}
+                data-testid={`button-maybe-${event.id}`}
+              >
+                Maybe
+              </Button>
+              
+              <Button
+                onClick={() => handleAttendanceClick('not_going')}
+                disabled={isUpdating}
+                className={cn(
+                  "flex-1 bg-red-500 hover:bg-red-600 text-white",
+                  displayStatus === 'not_going' && "ring-2 ring-red-300"
+                )}
+                data-testid={`button-not-going-${event.id}`}
+              >
+                Not Going
+              </Button>
             </div>
-            </div>
-          ) : (
-            <div className="text-xs text-muted-foreground">
-              Login required to set attendance
-            </div>
-          )}
+            
+            {displayStatus && (
+              <div className="mt-2 text-sm text-gray-600">
+                Your status: <span className="font-semibold">{displayStatus === 'not_going' ? 'Not Going' : displayStatus}</span>
+              </div>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
