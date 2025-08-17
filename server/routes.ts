@@ -859,6 +859,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.updateEventAttendance(eventId, userId, status);
       
+      console.log(`Attendance update: User ${userId} (${user.firstName} ${user.lastName}) changed status to ${status} for event ${event.title}`);
+      console.log(`Event creator: ${event.userId}, Current user: ${userId}, Are they the same? ${event.userId === userId}`);
+      
       // Initialize notification service for creating attendance notifications
       const { NotificationService } = await import("./notificationService");
       const notificationService = new NotificationService();
@@ -869,6 +872,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                           status === 'maybe' ? '❓ Maybe' : 
                           '❌ Can\'t Go';
                           
+        console.log(`Creating notification for event creator ${event.userId}: ${user.firstName} ${user.lastName} responded ${statusText}`);
+        
         await notificationService.createNotification({
           userId: event.userId,
           type: 'event_attendance',
@@ -877,6 +882,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           relatedId: eventId,
           relatedType: 'event'
         });
+        
+        console.log(`Notification created successfully for event creator ${event.userId}`);
+      } else {
+        console.log(`Event creator updating their own event - creating self-notification for testing purposes`);
+        
+        // For testing: Create a notification even when creator updates their own event
+        const statusText = status === 'going' ? '✅ Going' : 
+                          status === 'maybe' ? '❓ Maybe' : 
+                          '❌ Can\'t Go';
+        
+        await notificationService.createNotification({
+          userId: userId,
+          type: 'event_attendance',
+          title: 'Event Attendance Updated',
+          message: `You updated your attendance to ${statusText} for "${event.title}"`,
+          relatedId: eventId,
+          relatedType: 'event'
+        });
+        
+        console.log(`Self-notification created for event creator updating own event`);
       }
       
       // Create notifications for other attendees (optional - can be enabled/disabled)
