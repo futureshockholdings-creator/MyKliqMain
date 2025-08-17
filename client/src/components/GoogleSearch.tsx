@@ -82,19 +82,14 @@ export function GoogleSearch() {
       borderColor: 'var(--border)',
       boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
     }}>
-      <div className="flex items-center gap-2 mb-2">
-        <Search className="w-4 h-4" style={{ color: 'var(--primary)' }} />
-        <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-          AI Search
-        </span>
-      </div>
+
       
       <div className="flex gap-2">
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Search the web..."
+          placeholder="Google search powered by AI..."
           className="flex-1 bg-white text-black border-gray-300 placeholder:text-gray-500 text-sm h-8"
           style={{ backgroundColor: 'white', color: 'black' }}
           data-testid="input-google-search"
@@ -171,11 +166,7 @@ export function GoogleSearch() {
         </div>
       )}
 
-      {!hasSearched && (
-        <div className="mt-2 text-center py-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
-          Search Google, Wikipedia, News, and more
-        </div>
-      )}
+
     </div>
   );
 }
