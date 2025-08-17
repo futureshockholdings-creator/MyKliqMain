@@ -200,6 +200,7 @@ function Router() {
       {/* Legal Pages - accessible to all users */}
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/disclaimer" component={Disclaimer} />
+      <Route path="/landing" component={Landing} />
       
       <Route component={NotFound} />
     </Switch>
