@@ -972,6 +972,7 @@ export default function Home() {
           
           {(feedItems as any[]).map((item: any) => {
           console.log("Feed item processing:", item.type, item.title || item.content?.substring(0, 30));
+          console.log("🔥 ITEM MAP INDEX:", (feedItems as any[]).indexOf(item), "TYPE:", item.type);
           
           if (item.type === 'poll') {
             return (
