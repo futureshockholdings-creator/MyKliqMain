@@ -364,6 +364,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get aggregated kliq feed with posts, polls, events, and actions from all kliq members
+  app.get('/api/kliq-feed', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const filters = await storage.getContentFilters(userId);
+      const filterKeywords = filters.map(f => f.keyword);
+      const feed = await storage.getKliqFeed(userId, filterKeywords);
+      res.json(feed);
+    } catch (error) {
+      console.error("Error fetching kliq feed:", error);
+      res.status(500).json({ message: "Failed to fetch kliq feed" });
+    }
+  });
+
   app.post('/api/posts', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

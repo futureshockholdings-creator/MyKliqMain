@@ -50,10 +50,14 @@ export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch posts
-  const { data: posts = [], isLoading: postsLoading } = useQuery({
-    queryKey: ["/api/posts"],
+  // Fetch kliq feed (posts, polls, events, actions from all kliq members)
+  const { data: feedItems = [], isLoading: feedLoading } = useQuery({
+    queryKey: ["/api/kliq-feed"],
   });
+
+  // Separate regular posts from activity items
+  const posts = feedItems.filter((item: any) => item.type === 'post');
+  const activityItems = feedItems.filter((item: any) => item.type !== 'post');
 
   // Fetch filters
   const { data: filters = [] } = useQuery({
@@ -71,7 +75,7 @@ export default function Home() {
       await apiRequest("POST", "/api/posts", postData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       setNewPost("");
       setSelectedGif(null);
       setSelectedMoviecon(null);
@@ -108,7 +112,7 @@ export default function Home() {
       await apiRequest("POST", `/api/posts/${postId}/like`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
     },
     onError: (error) => {
@@ -137,7 +141,7 @@ export default function Home() {
       await apiRequest("POST", `/api/posts/${postId}/comments`, { content, gifId, movieconId });
     },
     onSuccess: (_, { postId }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
       setCommentGifs(prev => ({ ...prev, [postId]: null }));
       setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
@@ -500,8 +504,8 @@ export default function Home() {
 
   const handleSharePost = async (post: any) => {
     const shareData = {
-      title: `${post.author.firstName} ${post.author.lastName} on MyKliq`,
-      text: post.content || "Check out this post on MyKliq!",
+      title: `${item.author.firstName} ${item.author.lastName} on MyKliq`,
+      text: item.content || "Check out this post on MyKliq!",
       url: window.location.href
     };
 
@@ -853,8 +857,8 @@ export default function Home() {
         </CardContent>
       </Card>
 
-      {/* Posts Feed */}
-      {postsLoading ? (
+      {/* Feed */}
+      {feedLoading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
             <Card key={i} className="bg-card border-border">
@@ -876,7 +880,7 @@ export default function Home() {
             </Card>
           ))}
         </div>
-      ) : (posts as any[]).length === 0 ? (
+      ) : feedItems.length === 0 ? (
         <Card className="bg-card border-border">
           <CardContent className="p-8 text-center">
             <div className="text-4xl mb-4">🌟</div>
@@ -894,40 +898,41 @@ export default function Home() {
           </CardContent>
         </Card>
       ) : (
-        (posts as any[]).map((post: any) => (
+        feedItems.map((item: any) =>
+          item.type === 'post' ? (
           <Card
-            key={post.id}
+            key={item.id}
             className={cn(
               "bg-gradient-to-br from-card to-card/80 border",
-              post.author.id === userData?.id ? "border-primary/50" : "border-border"
+              item.author.id === userData?.id ? "border-primary/50" : "border-border"
             )}
           >
             <CardContent className="p-4">
               <div className="flex items-center space-x-3 mb-3">
                 <Avatar className="w-10 h-10 border-2 border-primary">
-                  <AvatarImage src={post.author.profileImageUrl} />
+                  <AvatarImage src={item.author.profileImageUrl} />
                   <AvatarFallback className="bg-muted text-foreground">
-                    {post.author.firstName?.[0] || "U"}
+                    {item.author.firstName?.[0] || "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <p className="font-bold text-primary">
-                    {post.author.firstName} {post.author.lastName}
+                    {item.author.firstName} {item.author.lastName}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {formatTimeAgo(post.createdAt)}
+                    {formatTimeAgo(item.createdAt)}
                   </p>
                 </div>
-                {post.author.id !== userData?.id && (
+                {item.author.id !== userData?.id && (
                   <Badge className={cn("text-xs font-bold", getRankColor(1))}>
                     #{1} {/* This would be the actual friend rank */}
                   </Badge>
                 )}
               </div>
               
-              {post.content && (
+              {item.content && (
                 (() => {
-                  const { cleanText, youtubeUrls } = extractYouTubeUrlsFromText(post.content);
+                  const { cleanText, youtubeUrls } = extractYouTubeUrlsFromText(item.content);
                   return (
                     <>
                       {cleanText && <p className="text-foreground mb-3">{cleanText}</p>}
@@ -942,18 +947,18 @@ export default function Home() {
               )}
               
               {/* Media Content */}
-              {post.mediaUrl && (
+              {item.mediaUrl && (
                 <div className="mb-3 rounded-lg overflow-hidden bg-black/20">
-                  {post.mediaType === 'video' ? (
+                  {item.mediaType === 'video' ? (
                     <video 
-                      src={post.mediaUrl} 
+                      src={item.mediaUrl} 
                       controls 
                       className="w-full max-h-96 object-cover"
                       preload="metadata"
                     />
                   ) : (
                     <img 
-                      src={post.mediaUrl} 
+                      src={item.mediaUrl} 
                       alt="Post media" 
                       className="w-full max-h-96 object-cover"
                     />
@@ -962,16 +967,16 @@ export default function Home() {
               )}
               
               {/* GIF Content */}
-              {post.gif && (
+              {item.gif && (
                 <div className="mb-3">
-                  <GifDisplay gif={post.gif} className="max-w-md" />
+                  <GifDisplay gif={item.gif} className="max-w-md" />
                 </div>
               )}
 
               {/* Moviecon Content */}
-              {post.moviecon && (
+              {item.moviecon && (
                 <div className="mb-3">
-                  <MovieconDisplay moviecon={post.moviecon} className="max-w-md" />
+                  <MovieconDisplay moviecon={item.moviecon} className="max-w-md" />
                 </div>
               )}
               
@@ -980,28 +985,28 @@ export default function Home() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleLikePost(post.id)}
+                    onClick={() => handleLikePost(item.id)}
                     className="text-primary hover:bg-primary/10 p-0 h-auto"
                   >
                     <Heart className="w-4 h-4 mr-1" />
-                    {Array.isArray(post.likes) ? post.likes.length : (post.likes || 0)}
+                    {Array.isArray(item.likes) ? item.likes.length : (item.likes || 0)}
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleToggleComments(post.id)}
+                    onClick={() => handleToggleComments(item.id)}
                     className="text-secondary hover:bg-secondary/10 p-0 h-auto"
-                    data-testid={`button-toggle-comments-${post.id}`}
+                    data-testid={`button-toggle-comments-${item.id}`}
                   >
                     <MessageCircle className="w-4 h-4 mr-1" />
-                    {post.comments?.length || 0}
+                    {item.comments?.length || 0}
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleSharePost(post)}
+                    onClick={() => handleSharePost(item)}
                     className="text-mykliq-orange hover:bg-mykliq-orange/10 p-0 h-auto"
-                    data-testid={`button-share-${post.id}`}
+                    data-testid={`button-share-${item.id}`}
                   >
                     <Share className="w-4 h-4" />
                   </Button>
@@ -1009,12 +1014,12 @@ export default function Home() {
               </div>
 
               {/* Comments Section */}
-              {expandedComments.has(post.id) && (
+              {expandedComments.has(item.id) && (
                 <div className="mt-4 border-t border-border pt-4">
                   {/* Existing Comments */}
-                  {post.comments && post.comments.length > 0 && (
+                  {item.comments && item.comments.length > 0 && (
                     <div className="space-y-3 mb-4">
-                      {post.comments.map((comment: any) => (
+                      {item.comments.map((comment: any) => (
                         <div key={comment.id} className="flex space-x-3">
                           <Avatar className="w-8 h-8 border border-border">
                             <AvatarImage src={comment.author?.profileImageUrl} />
@@ -1071,26 +1076,26 @@ export default function Home() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      {commentGifs[post.id] && (
+                      {commentGifs[item.id] && (
                         <div className="mb-2 flex items-center gap-2">
-                          <GifDisplay gif={commentGifs[post.id]!} className="max-w-xs" />
+                          <GifDisplay gif={commentGifs[item.id]!} className="max-w-xs" />
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleCommentGifRemove(post.id)}
+                            onClick={() => handleCommentGifRemove(item.id)}
                             className="text-muted-foreground hover:text-destructive"
                           >
                             ×
                           </Button>
                         </div>
                       )}
-                      {commentMoviecons[post.id] && (
+                      {commentMoviecons[item.id] && (
                         <div className="mb-2 flex items-center gap-2">
-                          <MovieconDisplay moviecon={commentMoviecons[post.id]!} className="max-w-xs" />
+                          <MovieconDisplay moviecon={commentMoviecons[item.id]!} className="max-w-xs" />
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleCommentMovieconRemove(post.id)}
+                            onClick={() => handleCommentMovieconRemove(item.id)}
                             className="text-muted-foreground hover:text-destructive"
                           >
                             ×
@@ -1099,56 +1104,56 @@ export default function Home() {
                       )}
                       <div className="flex space-x-2">
                         <Textarea
-                          value={commentInputs[post.id] || ""}
-                          onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
+                          value={commentInputs[item.id] || ""}
+                          onChange={(e) => handleCommentInputChange(item.id, e.target.value)}
                           placeholder="Write a comment..."
                           className="flex-1 bg-white text-black placeholder-gray-500 border-border resize-none"
                           rows={2}
-                          data-testid={`input-comment-${post.id}`}
+                          data-testid={`input-comment-${item.id}`}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                               e.preventDefault();
-                              handleCommentSubmit(post.id);
+                              handleCommentSubmit(item.id);
                             }
                           }}
                         />
                         <div className="flex flex-col justify-end space-y-1">
                           <GifPicker
-                            onSelectGif={(gif) => handleCommentGifSelect(post.id, gif)}
+                            onSelectGif={(gif) => handleCommentGifSelect(item.id, gif)}
                             trigger={
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 className="text-mykliq-purple hover:bg-mykliq-purple/10 h-8 w-8 p-0"
-                                data-testid={`button-comment-gif-${post.id}`}
+                                data-testid={`button-comment-gif-${item.id}`}
                               >
                                 <span className="text-xs font-bold">GIF</span>
                               </Button>
                             }
                           />
                           <MovieconPicker
-                            onSelectMoviecon={(moviecon) => handleCommentMovieconSelect(post.id, moviecon)}
+                            onSelectMoviecon={(moviecon) => handleCommentMovieconSelect(item.id, moviecon)}
                             trigger={
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 className="text-blue-500 hover:bg-blue-500/10 h-8 w-8 p-0"
-                                data-testid={`button-comment-moviecon-${post.id}`}
+                                data-testid={`button-comment-moviecon-${item.id}`}
                               >
                                 <Clapperboard className="w-3 h-3" />
                               </Button>
                             }
                           />
                           <Popover 
-                            open={showCommentEmojiPicker === post.id} 
-                            onOpenChange={(open) => setShowCommentEmojiPicker(open ? post.id : null)}
+                            open={showCommentEmojiPicker === item.id} 
+                            onOpenChange={(open) => setShowCommentEmojiPicker(open ? item.id : null)}
                           >
                             <PopoverTrigger asChild>
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 className="text-retro-yellow hover:bg-retro-yellow/10 h-8 w-8 p-0"
-                                data-testid={`button-comment-emoji-${post.id}`}
+                                data-testid={`button-comment-emoji-${item.id}`}
                               >
                                 <Smile className="w-4 h-4" />
                               </Button>
@@ -1161,8 +1166,8 @@ export default function Home() {
                                     variant="ghost"
                                     size="sm"
                                     className="h-10 w-10 p-0 text-xl hover:bg-accent emoji-large"
-                                    onClick={() => handleCommentEmojiClick(post.id, emoji)}
-                                    data-testid={`comment-emoji-${post.id}-${index}`}
+                                    onClick={() => handleCommentEmojiClick(item.id, emoji)}
+                                    data-testid={`comment-emoji-${item.id}-${index}`}
                                   >
                                     {emoji}
                                   </Button>
@@ -1171,11 +1176,11 @@ export default function Home() {
                             </PopoverContent>
                           </Popover>
                           <Button
-                            onClick={() => handleCommentSubmit(post.id)}
-                            disabled={(!commentInputs[post.id]?.trim() && !commentGifs[post.id] && !commentMoviecons[post.id]) || addCommentMutation.isPending}
+                            onClick={() => handleCommentSubmit(item.id)}
+                            disabled={(!commentInputs[item.id]?.trim() && !commentGifs[item.id] && !commentMoviecons[item.id]) || addCommentMutation.isPending}
                             size="sm"
                             className="bg-secondary hover:bg-secondary/90 text-secondary-foreground h-8"
-                            data-testid={`button-submit-comment-${post.id}`}
+                            data-testid={`button-submit-comment-${item.id}`}
                           >
                             {addCommentMutation.isPending ? "..." : "Post"}
                           </Button>
@@ -1187,7 +1192,41 @@ export default function Home() {
               )}
             </CardContent>
           </Card>
-        ))
+          ) : (
+            // Activity item display (polls, events, actions)
+            <Card
+              key={item.id}
+              className={cn(
+                "bg-gradient-to-br from-muted/50 to-muted/20 border border-muted-foreground/20"
+              )}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
+                  <Avatar className="w-10 h-10 border-2 border-primary">
+                    <AvatarImage src={item.author.profileImageUrl} />
+                    <AvatarFallback className="bg-muted text-foreground">
+                      {item.author.firstName?.[0] || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="font-bold text-primary">
+                      {item.author.firstName} {item.author.lastName}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {item.content}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatTimeAgo(item.activityDate)}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    {item.type}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        )
       )}
 
       {/* Media Upload Modals */}

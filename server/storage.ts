@@ -101,6 +101,9 @@ export interface IStorage {
   likePost(postId: string, userId: string): Promise<void>;
   unlikePost(postId: string, userId: string): Promise<void>;
   
+  // Feed operations
+  getKliqFeed(userId: string, filters: string[]): Promise<any[]>;
+  
   // Story operations
   getActiveStories(userId: string): Promise<(Story & { author: User; viewCount: number; hasViewed: boolean })[]>;
   createStory(story: InsertStory): Promise<Story>;
@@ -460,6 +463,170 @@ export class DatabaseStorage implements IStorage {
     );
 
     return postsWithDetails;
+  }
+
+  // Get aggregated kliq feed including posts, polls, events, and actions
+  async getKliqFeed(userId: string, filters: string[]): Promise<any[]> {
+    // Get user's friends first
+    const userFriends = await this.getFriends(userId);
+    const friendIds = userFriends.map(f => f.friendId);
+    friendIds.push(userId); // Include user's own content
+
+    const feedItems: any[] = [];
+
+    try {
+      // 1. Get regular posts
+      const posts = await this.getPosts(userId, filters);
+      feedItems.push(...posts.map(post => ({
+        ...post,
+        type: 'post',
+        activityDate: post.createdAt,
+      })));
+
+      // 2. Get polls from kliq members
+      if (friendIds.length > 0) {
+        const pollsQuery = db
+          .select({
+            id: polls.id,
+            userId: polls.userId,
+            title: polls.title,
+            description: polls.description,
+            options: polls.options,
+            expiresAt: polls.expiresAt,
+            isActive: polls.isActive,
+            createdAt: polls.createdAt,
+            authorId: users.id,
+            authorFirstName: users.firstName,
+            authorLastName: users.lastName,
+            authorProfileImageUrl: users.profileImageUrl,
+          })
+          .from(polls)
+          .innerJoin(users, eq(polls.userId, users.id))
+          .where(inArray(polls.userId, friendIds))
+          .orderBy(desc(polls.createdAt));
+
+        const pollsData = await pollsQuery;
+        feedItems.push(...pollsData.map(poll => ({
+          id: poll.id,
+          userId: poll.userId,
+          title: poll.title,
+          description: poll.description,
+          options: poll.options,
+          expiresAt: poll.expiresAt,
+          isActive: poll.isActive,
+          createdAt: poll.createdAt,
+          author: {
+            id: poll.authorId,
+            firstName: poll.authorFirstName,
+            lastName: poll.authorLastName,
+            profileImageUrl: poll.authorProfileImageUrl,
+          },
+          type: 'poll',
+          activityDate: poll.createdAt,
+          content: `🗳️ Created a poll: "${poll.title}"`,
+        })));
+
+        // 3. Get events from kliq members
+        const eventsQuery = db
+          .select({
+            id: events.id,
+            userId: events.userId,
+            title: events.title,
+            description: events.description,
+            location: events.location,
+            eventDate: events.eventDate,
+            mediaUrl: events.mediaUrl,
+            mediaType: events.mediaType,
+            isPublic: events.isPublic,
+            attendeeCount: events.attendeeCount,
+            createdAt: events.createdAt,
+            authorId: users.id,
+            authorFirstName: users.firstName,
+            authorLastName: users.lastName,
+            authorProfileImageUrl: users.profileImageUrl,
+          })
+          .from(events)
+          .innerJoin(users, eq(events.userId, users.id))
+          .where(inArray(events.userId, friendIds))
+          .orderBy(desc(events.createdAt));
+
+        const eventsData = await eventsQuery;
+        feedItems.push(...eventsData.map(event => ({
+          id: event.id,
+          userId: event.userId,
+          title: event.title,
+          description: event.description,
+          location: event.location,
+          eventDate: event.eventDate,
+          mediaUrl: event.mediaUrl,
+          mediaType: event.mediaType,
+          isPublic: event.isPublic,
+          attendeeCount: event.attendeeCount,
+          createdAt: event.createdAt,
+          author: {
+            id: event.authorId,
+            firstName: event.authorFirstName,
+            lastName: event.authorLastName,
+            profileImageUrl: event.authorProfileImageUrl,
+          },
+          type: 'event',
+          activityDate: event.createdAt,
+          content: `📅 Created an event: "${event.title}"`,
+        })));
+
+        // 4. Get actions (live streams) from kliq members
+        const actionsQuery = db
+          .select({
+            id: actions.id,
+            userId: actions.userId,
+            title: actions.title,
+            description: actions.description,
+            streamUrl: actions.streamUrl,
+            thumbnailUrl: actions.thumbnailUrl,
+            status: actions.status,
+            viewerCount: actions.viewerCount,
+            createdAt: actions.createdAt,
+            authorId: users.id,
+            authorFirstName: users.firstName,
+            authorLastName: users.lastName,
+            authorProfileImageUrl: users.profileImageUrl,
+          })
+          .from(actions)
+          .innerJoin(users, eq(actions.userId, users.id))
+          .where(inArray(actions.userId, friendIds))
+          .orderBy(desc(actions.createdAt));
+
+        const actionsData = await actionsQuery;
+        feedItems.push(...actionsData.map(action => ({
+          id: action.id,
+          userId: action.userId,
+          title: action.title,
+          description: action.description,
+          streamUrl: action.streamUrl,
+          thumbnailUrl: action.thumbnailUrl,
+          status: action.status,
+          viewerCount: action.viewerCount,
+          createdAt: action.createdAt,
+          author: {
+            id: action.authorId,
+            firstName: action.authorFirstName,
+            lastName: action.authorLastName,
+            profileImageUrl: action.authorProfileImageUrl,
+          },
+          type: 'action',
+          activityDate: action.createdAt,
+          content: `🔴 ${action.status === 'live' ? 'Started a live stream' : 'Ended a live stream'}: "${action.title}"`,
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching kliq feed items:', error);
+      // Return posts only if there are errors with other queries
+    }
+
+    // Sort all feed items by activity date (newest first)
+    return feedItems.sort((a, b) => 
+      new Date(b.activityDate).getTime() - new Date(a.activityDate).getTime()
+    );
   }
 
   async getPostById(postId: string): Promise<Post | undefined> {
