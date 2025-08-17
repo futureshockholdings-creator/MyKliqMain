@@ -841,30 +841,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/events/:eventId/attendance', isAuthenticated, async (req: any, res) => {
     try {
+      console.log('=== ATTENDANCE UPDATE ENDPOINT CALLED ===');
       const userId = req.user.claims.sub;
       const { eventId } = req.params;
       const { status } = req.body;
+      console.log(`User: ${userId}, Event: ${eventId}, Status: ${status}`);
       
       if (!['going', 'maybe', 'not_going'].includes(status)) {
+        console.log('Invalid status provided');
         return res.status(400).json({ message: "Invalid attendance status" });
       }
       
       // Get event details and user info for notifications
+      console.log('Fetching event and user data...');
       const event = await storage.getEventById(eventId);
       const user = await storage.getUser(userId);
       
+      console.log('Event data:', event ? `${event.title} (created by ${event.userId})` : 'NOT FOUND');
+      console.log('User data:', user ? `${user.firstName} ${user.lastName}` : 'NOT FOUND');
+      
       if (!event || !user) {
+        console.log('Event or user not found - aborting');
         return res.status(404).json({ message: "Event or user not found" });
       }
       
+      console.log('Updating attendance in storage...');
       await storage.updateEventAttendance(eventId, userId, status);
+      console.log('Attendance updated successfully');
       
       console.log(`Attendance update: User ${userId} (${user.firstName} ${user.lastName}) changed status to ${status} for event ${event.title}`);
       console.log(`Event creator: ${event.userId}, Current user: ${userId}, Are they the same? ${event.userId === userId}`);
       
       // Initialize notification service for creating attendance notifications
+      console.log('Initializing notification service...');
       const { NotificationService } = await import("./notificationService");
       const notificationService = new NotificationService();
+      console.log('Notification service initialized');
       
       // Create notification for event creator (if they're not the one updating)
       if (event.userId !== userId) {
@@ -892,7 +904,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                           status === 'maybe' ? '❓ Maybe' : 
                           '❌ Can\'t Go';
         
-        await notificationService.createNotification({
+        console.log(`Creating self-notification: "${statusText}" for event "${event.title}"`);
+        
+        const notificationResult = await notificationService.createNotification({
           userId: userId,
           type: 'event_attendance',
           title: 'Event Attendance Updated',
@@ -901,15 +915,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           relatedType: 'event'
         });
         
-        console.log(`Self-notification created for event creator updating own event`);
+        console.log(`Self-notification result:`, notificationResult);
+        console.log(`Self-notification created successfully for user ${userId}`);
       }
       
       // Create notifications for other attendees (optional - can be enabled/disabled)
       // Get all other attendees to notify them of the attendance change
+      console.log('Checking for other attendees to notify...');
       const otherAttendees = await storage.getEventAttendees(eventId);
+      console.log(`Found ${otherAttendees.length} total attendees`);
+      
       for (const attendee of otherAttendees) {
         // Skip the user making the change and the event creator (already notified above)
         if (attendee.userId !== userId && attendee.userId !== event.userId) {
+          console.log(`Creating notification for attendee ${attendee.userId}`);
           const statusText = status === 'going' ? '✅ is going' : 
                             status === 'maybe' ? '❓ might go' : 
                             '❌ can\'t go';
@@ -922,12 +941,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             relatedId: eventId,
             relatedType: 'event'
           });
+          console.log(`Notification created for attendee ${attendee.userId}`);
+        } else {
+          console.log(`Skipping notification for ${attendee.userId} (is current user or event creator)`);
         }
       }
       
+      console.log('=== ATTENDANCE UPDATE COMPLETE ===');
       res.json({ success: true });
     } catch (error) {
       console.error("Error updating attendance:", error);
+      console.error("Error details:", error.stack);
       res.status(500).json({ message: "Failed to update attendance" });
     }
   });
