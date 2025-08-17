@@ -208,7 +208,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
               maxFileSize={50485760} // 50MB
               onGetUploadParameters={handleGetUploadParameters}
               onComplete={handleUploadComplete}
-              buttonClassName="text-primary hover:bg-primary/10"
+              buttonClassName="bg-white text-black border-2 border-black hover:bg-gray-50"
             >
               <Upload className="w-4 h-4 mr-2" />
               Add Media
