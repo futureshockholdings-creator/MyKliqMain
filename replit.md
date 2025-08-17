@@ -7,6 +7,7 @@ MyKliq is a social media application designed for close-knit friend groups, focu
 - **Kliq-wide Content Aggregation**: Enhanced feed system to display polls, posts, events, and live streams from all kliq members with full interactive functionality
 - **Live Vote Updates**: Added optimistic updates, automatic result refreshing, and cache invalidation for instant poll result synchronization
 - **Event Auto-posting**: Events now automatically create posts in the kliq feed when created or updated, sharing event details (title, location, date/time, description) with all kliq members
+- **Event Attendance Statistics**: Implemented real-time attendance tracking with detailed breakdowns (going, maybe, can't go) displayed on Events page, synchronized attendance updates across headlines feed and Events page through proper cache invalidation
 
 # User Preferences
 
