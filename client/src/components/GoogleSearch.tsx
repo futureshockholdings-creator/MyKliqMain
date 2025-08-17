@@ -87,7 +87,15 @@ export function GoogleSearch() {
       <div className="flex gap-2">
         <Input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            setQuery(newValue);
+            // Clear results when input is empty
+            if (!newValue.trim()) {
+              setResults([]);
+              setHasSearched(false);
+            }
+          }}
           onKeyPress={handleKeyPress}
           placeholder="Google search powered by AI..."
           className="flex-1 bg-white text-black border-gray-300 placeholder:text-gray-500 text-sm h-8"
