@@ -1533,6 +1533,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { pollId } = req.params;
       const results = await storage.getPollResults(pollId);
+      
+      // Set cache headers to prevent caching of poll results for real-time updates
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
+      console.log(`Poll ${pollId} results:`, results);
       res.json(results);
     } catch (error) {
       console.error("Error fetching poll results:", error);

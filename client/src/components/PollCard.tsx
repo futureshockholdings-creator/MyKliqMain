@@ -48,10 +48,12 @@ export function PollCard({ poll }: PollCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: results = [] } = useQuery<PollOption[]>({
+  const { data: results = [], refetch: refetchResults } = useQuery<PollOption[]>({
     queryKey: ["/api/polls", poll.id, "results"],
     queryFn: () => apiRequest("GET", `/api/polls/${poll.id}/results`),
-    refetchInterval: 5000, // Auto-refresh every 5 seconds for real-time updates
+    refetchInterval: 3000, // Auto-refresh every 3 seconds for real-time updates
+    staleTime: 0, // Always consider data stale to ensure fresh results
+    cacheTime: 0, // Don't cache the results
   });
 
   const voteMutation = useMutation({
@@ -90,7 +92,7 @@ export function PollCard({ poll }: PollCardProps) {
     },
     onSuccess: () => {
       // Immediately refetch results to get accurate data
-      queryClient.refetchQueries({ queryKey: ["/api/polls", poll.id, "results"] });
+      refetchResults();
       queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
