@@ -80,16 +80,35 @@ export async function sendAutomaticBirthdayMessages(): Promise<void> {
   }
 }
 
-// Run birthday service every hour (in production, run daily at a specific time)
+// Combined cleanup service that handles all expired content
+async function runCleanupTasks(): Promise<void> {
+  try {
+    console.log("Running cleanup tasks...");
+    
+    // Run all cleanup tasks in parallel
+    await Promise.all([
+      sendAutomaticBirthdayMessages(),
+      storage.deleteExpiredStories(),
+      storage.cleanUpExpiredPolls(),
+      storage.cleanUpExpiredEvents()
+    ]);
+    
+    console.log("Cleanup tasks completed");
+  } catch (error) {
+    console.error("Error in cleanup service:", error);
+  }
+}
+
+// Run cleanup service every hour (in production, run daily at a specific time)
 export function startBirthdayService(): void {
-  console.log("Starting birthday service...");
+  console.log("Starting birthday and cleanup service...");
   
   // Run immediately on startup
   setTimeout(() => {
-    sendAutomaticBirthdayMessages();
+    runCleanupTasks();
   }, 5000); // Wait 5 seconds for database to be ready
   
   // Run every hour (3600000 ms)
   // In production, you might want to run this daily at midnight
-  setInterval(sendAutomaticBirthdayMessages, 3600000);
+  setInterval(runCleanupTasks, 3600000);
 }

@@ -796,6 +796,58 @@ export class DatabaseStorage implements IStorage {
     await db.delete(stories).where(sql`${stories.expiresAt} < ${now}`);
   }
 
+  // Clean up expired polls
+  async cleanUpExpiredPolls(): Promise<void> {
+    const now = new Date();
+    
+    // First get expired poll IDs
+    const expiredPolls = await db
+      .select({ id: polls.id })
+      .from(polls)
+      .where(sql`${polls.expiresAt} < ${now}`);
+
+    if (expiredPolls.length === 0) {
+      console.log(`No expired polls to clean up at ${now.toISOString()}`);
+      return;
+    }
+
+    const expiredPollIds = expiredPolls.map(p => p.id);
+
+    // Delete poll votes first (foreign key constraint)
+    await db.delete(pollVotes).where(inArray(pollVotes.pollId, expiredPollIds));
+    
+    // Delete expired polls
+    const result = await db.delete(polls).where(sql`${polls.expiresAt} < ${now}`);
+    
+    console.log(`Cleaned up ${expiredPolls.length} expired polls and their votes at ${now.toISOString()}`);
+  }
+
+  // Clean up expired events
+  async cleanUpExpiredEvents(): Promise<void> {
+    const now = new Date();
+    
+    // First get expired event IDs  
+    const expiredEvents = await db
+      .select({ id: events.id })
+      .from(events)
+      .where(sql`${events.eventDate} < ${now}`);
+
+    if (expiredEvents.length === 0) {
+      console.log(`No expired events to clean up at ${now.toISOString()}`);
+      return;
+    }
+
+    const expiredEventIds = expiredEvents.map(e => e.id);
+
+    // Delete event attendees first (foreign key constraint)
+    await db.delete(eventAttendees).where(inArray(eventAttendees.eventId, expiredEventIds));
+    
+    // Delete expired events
+    const result = await db.delete(events).where(sql`${events.eventDate} < ${now}`);
+    
+    console.log(`Cleaned up ${expiredEvents.length} expired events and their attendees at ${now.toISOString()}`);
+  }
+
   // Message operations
   async getConversations(userId: string): Promise<(Conversation & { otherUser: User; lastMessage?: Message; unreadCount: number })[]> {
     // Get all conversations for the user
