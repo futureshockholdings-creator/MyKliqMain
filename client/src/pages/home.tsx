@@ -921,54 +921,61 @@ export default function Home() {
             🔥 FORCED EVENT TEST - Pool Party Event Should Appear Below 🔥
           </div>
           
-          {/* DIRECT EVENT TEST - bypassing array map */}
-          <div style={{
-            width: '100%',
-            backgroundColor: 'red',
-            border: '10px solid blue',
-            padding: '20px',
-            margin: '20px 0',
-            color: 'white',
-            fontSize: '24px',
-            fontWeight: 'bold'
-          }}>
-            <div>🚨 DIRECT EVENT TEST 🚨</div>
-            <div style={{backgroundColor: 'yellow', color: 'black', padding: '10px', margin: '10px 0'}}>
-              This is a direct render test bypassing the map function
-            </div>
-            <div style={{display: 'flex', gap: '10px'}}>
-              <button style={{
-                backgroundColor: 'green',
+          {/* SEPARATE EVENT RENDERING - isolate from main map */}
+          {(feedItems as any[]).filter((item: any) => item.type === 'event').map((eventItem: any) => {
+            console.log('🔥 SEPARATE EVENT RENDER:', eventItem.title);
+            return (
+              <div key={`event-${eventItem.id}`} style={{
+                width: '100%',
+                backgroundColor: 'red',
+                border: '10px solid blue',
+                padding: '20px',
+                margin: '20px 0',
                 color: 'white',
-                padding: '15px 30px',
-                fontSize: '18px',
-                border: 'none',
-                borderRadius: '5px'
+                fontSize: '24px',
+                fontWeight: 'bold'
               }}>
-                GOING
-              </button>
-              <button style={{
-                backgroundColor: 'orange',
-                color: 'white',
-                padding: '15px 30px',
-                fontSize: '18px',
-                border: 'none',
-                borderRadius: '5px'
-              }}>
-                MAYBE
-              </button>
-              <button style={{
-                backgroundColor: 'darkred',
-                color: 'white',
-                padding: '15px 30px',
-                fontSize: '18px',
-                border: 'none',
-                borderRadius: '5px'
-              }}>
-                NOT GOING
-              </button>
-            </div>
-          </div>
+                <div>🚨 SEPARATE RENDER: {eventItem.title} 🚨</div>
+                <div style={{backgroundColor: 'yellow', color: 'black', padding: '10px', margin: '10px 0'}}>
+                  Event ID: {eventItem.id}<br/>
+                  User ID: {userData?.id}<br/>
+                  Status: SEPARATE RENDERING SUCCESS
+                </div>
+                <div style={{display: 'flex', gap: '10px'}}>
+                  <button style={{
+                    backgroundColor: 'green',
+                    color: 'white',
+                    padding: '15px 30px',
+                    fontSize: '18px',
+                    border: 'none',
+                    borderRadius: '5px'
+                  }}>
+                    GOING
+                  </button>
+                  <button style={{
+                    backgroundColor: 'orange',
+                    color: 'white',
+                    padding: '15px 30px',
+                    fontSize: '18px',
+                    border: 'none',
+                    borderRadius: '5px'
+                  }}>
+                    MAYBE
+                  </button>
+                  <button style={{
+                    backgroundColor: 'darkred',
+                    color: 'white',
+                    padding: '15px 30px',
+                    fontSize: '18px',
+                    border: 'none',
+                    borderRadius: '5px'
+                  }}>
+                    NOT GOING
+                  </button>
+                </div>
+              </div>
+            );
+          })}
           
           {(feedItems as any[]).map((item: any) => {
           console.log("Feed item processing:", item.type, item.title || item.content?.substring(0, 30));
