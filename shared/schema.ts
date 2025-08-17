@@ -350,7 +350,6 @@ export const notifications = pgTable("notifications", {
 export const usersRelations = relations(users, ({ many, one }) => ({
   friendships: many(friendships, { relationName: "userFriendships" }),
   friendOf: many(friendships, { relationName: "friendOfUser" }),
-
   posts: many(posts),
   stories: many(stories),
   comments: many(comments),
@@ -438,7 +437,6 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
     fields: [posts.userId],
     references: [users.id],
   }),
-
   gif: one(gifs, {
     fields: [posts.gifId],
     references: [gifs.id],
@@ -602,15 +600,12 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
-
-
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users);
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, readAt: true });
 export const insertUserThemeSchema = createInsertSchema(userThemes).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertFriendshipSchema = createInsertSchema(friendships).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertPostSchema = createInsertSchema(posts).omit({ id: true, likes: true, createdAt: true, updatedAt: true });
-
 export const insertStorySchema = createInsertSchema(stories).omit({ id: true, viewCount: true, createdAt: true }).extend({
   expiresAt: z.string().transform((val) => new Date(val))
 });
@@ -728,4 +723,3 @@ export type MeetupCheckIn = typeof meetupCheckIns.$inferSelect;
 export type InsertMeetupCheckIn = z.infer<typeof insertMeetupCheckInSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
-

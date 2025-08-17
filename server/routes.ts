@@ -350,16 +350,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
-
-
-
-
-
-
-
-
-
   // Post routes
   app.get('/api/posts', isAuthenticated, async (req: any, res) => {
     try {

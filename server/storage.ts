@@ -3,7 +3,6 @@ import {
   userThemes,
   friendships,
   usedInviteCodes,
-
   posts,
   stories,
   storyViews,
@@ -28,7 +27,6 @@ import {
   type InsertUserTheme,
   type Friendship,
   type InsertFriendship,
-
   type Post,
   type InsertPost,
   type Story,
@@ -89,8 +87,6 @@ export interface IStorage {
   updateFriendRank(userId: string, friendId: string, rank: number): Promise<void>;
   acceptFriendship(userId: string, friendId: string): Promise<void>;
   removeFriend(userId: string, friendId: string): Promise<void>;
-  
-
   
   // Post operations
   getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
@@ -354,29 +350,15 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(friendships.userId, userId), eq(friendships.friendId, friendId)));
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
   // Post operations
   async getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]> {
-    // Get user's friends to show posts from friends only
+    // Get user's friends first
     const userFriends = await this.getFriends(userId);
     const friendIds = userFriends.map(f => f.friendId);
     friendIds.push(userId); // Include user's own posts
 
-    // Apply content filters - posts from friends only
-    let whereConditions = [
-      inArray(posts.userId, friendIds)
-    ];
+    // Apply content filters
+    let whereConditions = [inArray(posts.userId, friendIds)];
     
     if (filters.length > 0) {
       const filterConditions = filters.map(filter => 
@@ -394,6 +376,7 @@ export class DatabaseStorage implements IStorage {
         mediaType: posts.mediaType,
         gifId: posts.gifId,
         movieconId: posts.movieconId,
+        likes: posts.likes,
         latitude: posts.latitude,
         longitude: posts.longitude,
         locationName: posts.locationName,
