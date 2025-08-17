@@ -1214,6 +1214,7 @@ export default function Home() {
             );
           } else if (item.type === 'event') {
             // Event item display with interactive attendance
+            console.log('Event item data:', item);
             return (
               <EventCard
                 key={item.id}
