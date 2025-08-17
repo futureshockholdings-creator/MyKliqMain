@@ -53,7 +53,6 @@ export function PollCard({ poll }: PollCardProps) {
     queryFn: () => apiRequest("GET", `/api/polls/${poll.id}/results`),
     refetchInterval: 3000, // Auto-refresh every 3 seconds for real-time updates
     staleTime: 0, // Always consider data stale to ensure fresh results
-    cacheTime: 0, // Don't cache the results
   });
 
   const voteMutation = useMutation({
@@ -111,7 +110,11 @@ export function PollCard({ poll }: PollCardProps) {
   };
 
   const isExpired = new Date(poll.expiresAt) <= new Date();
-  const hasVoted = poll.userVote !== undefined;
+  const hasVoted = poll.userVote !== undefined || selectedOption !== null;
+  const totalVotes = results.reduce((sum, result) => sum + (result?.votes || 0), 0);
+  
+  // Always show results when there are votes, regardless of user's vote status  
+  const showResults = totalVotes > 0 || hasVoted || isExpired;
 
   return (
     <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700" data-testid={`card-poll-${poll.id}`}>
@@ -155,16 +158,15 @@ export function PollCard({ poll }: PollCardProps) {
           </div>
           <div className="flex items-center gap-1">
             <Users className="w-3 h-3" />
-            <span>{poll.totalVotes} votes</span>
+            <span>{totalVotes} votes</span>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
           {poll.options.map((option, index) => {
-            const result = results.find(r => r.index === index);
+            const result = (results as PollOption[]).find((r: PollOption) => r.index === index);
             const isSelected = selectedOption === index;
-            const showResults = hasVoted || isExpired;
             
             return (
               <div key={index} className="space-y-2">
