@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Search, ExternalLink, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 interface SearchResult {
@@ -78,93 +77,105 @@ export function GoogleSearch() {
   };
 
   return (
-    <Card className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mt-4">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2 text-black dark:text-white">
-          <Search className="w-5 h-5 text-mykliq-purple" />
-          AI-Powered Search
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex gap-2 mb-4">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Search the web with AI..."
-            className="flex-1 bg-white dark:bg-gray-700 text-black dark:text-white border-gray-300 dark:border-gray-600"
-            data-testid="input-google-search"
-          />
-          <Button
-            onClick={handleSearch}
-            disabled={!query.trim() || isSearching}
-            className="bg-mykliq-purple hover:bg-mykliq-purple/90 text-white px-6"
-            data-testid="button-search"
-          >
-            {isSearching ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Search className="w-4 h-4" />
-            )}
-          </Button>
+    <div className="mt-3 p-3 rounded-lg border" style={{ 
+      background: 'var(--background)', 
+      borderColor: 'var(--border)',
+      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+    }}>
+      <div className="flex items-center gap-2 mb-2">
+        <Search className="w-4 h-4" style={{ color: 'var(--primary)' }} />
+        <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+          AI Search
+        </span>
+      </div>
+      
+      <div className="flex gap-2">
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Search the web..."
+          className="flex-1 bg-white text-black border-gray-300 placeholder:text-gray-500 text-sm h-8"
+          style={{ backgroundColor: 'white', color: 'black' }}
+          data-testid="input-google-search"
+        />
+        <Button
+          onClick={handleSearch}
+          disabled={!query.trim() || isSearching}
+          size="sm"
+          className="h-8 px-3 text-xs"
+          style={{ 
+            backgroundColor: 'var(--primary)', 
+            color: 'var(--primary-foreground)',
+            fontSize: '12px'
+          }}
+          data-testid="button-search"
+        >
+          {isSearching ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            <Search className="w-3 h-3" />
+          )}
+        </Button>
+      </div>
+
+      {isSearching && (
+        <div className="mt-3 text-center py-4" style={{ color: 'var(--muted-foreground)' }}>
+          <Loader2 className="w-4 h-4 animate-spin mx-auto mb-1" />
+          <div className="text-xs">Searching...</div>
         </div>
+      )}
 
-        {isSearching && (
-          <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-            Searching the web...
-          </div>
-        )}
+      {!isSearching && hasSearched && results.length === 0 && (
+        <div className="mt-3 text-center py-4 text-xs" style={{ color: 'var(--muted-foreground)' }}>
+          No results found. Try a different search term.
+        </div>
+      )}
 
-        {!isSearching && hasSearched && results.length === 0 && (
-          <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-            No results found. Try a different search term.
-          </div>
-        )}
-
-        {results.length > 0 && (
-          <div className="space-y-3">
-            {results.map((result, index) => (
-              <div
-                key={index}
-                className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-mykliq-purple/50 transition-colors"
-                data-testid={`search-result-${index}`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-black dark:text-white mb-1 line-clamp-2">
-                      {result.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-3">
-                      {result.snippet}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {result.source}
-                      </Badge>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => window.open(result.url, '_blank')}
-                    className="text-mykliq-purple hover:bg-mykliq-purple/10 shrink-0"
-                    data-testid={`button-open-result-${index}`}
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </Button>
+      {results.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {results.map((result, index) => (
+            <div
+              key={index}
+              className="rounded-md p-2 transition-colors hover:opacity-80 border"
+              style={{ 
+                borderColor: 'var(--border)',
+                backgroundColor: 'var(--card)'
+              }}
+              data-testid={`search-result-${index}`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-xs leading-tight mb-1 truncate" style={{ color: 'var(--foreground)' }}>
+                    {result.title}
+                  </h3>
+                  <p className="text-xs leading-tight mb-1 line-clamp-2" style={{ color: 'var(--muted-foreground)' }}>
+                    {result.snippet}
+                  </p>
+                  <Badge variant="secondary" className="text-xs px-1 py-0 h-4">
+                    {result.source}
+                  </Badge>
                 </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => window.open(result.url, '_blank')}
+                  className="shrink-0 h-6 w-6 p-0 hover:opacity-70"
+                  data-testid={`button-open-result-${index}`}
+                >
+                  <ExternalLink className="w-3 h-3" />
+                </Button>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      )}
 
-        {!hasSearched && (
-          <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-            Enter a search term to find information from across the web
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {!hasSearched && (
+        <div className="mt-2 text-center py-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
+          Search Google, Wikipedia, News, and more
+        </div>
+      )}
+    </div>
   );
 }
