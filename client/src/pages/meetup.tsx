@@ -131,7 +131,7 @@ export default function MeetupPage() {
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">Location Check-in</h1>
           <p className="text-muted-foreground">
-            Share your current location with your kliq on the bulletin
+            Share your current location with your kliq on the headlines
           </p>
         </div>
         
