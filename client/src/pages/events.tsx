@@ -183,10 +183,11 @@ export default function Events() {
   // Update attendance mutation
   const updateAttendanceMutation = useMutation({
     mutationFn: async ({ eventId, status }: { eventId: string; status: string }) => {
-      await apiRequest("PUT", `/api/events/${eventId}/attendance`, { status });
+      await apiRequest("POST", `/api/events/${eventId}/attendance`, { status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Attendance updated!",
         description: "Your attendance status has been updated",
@@ -653,11 +654,45 @@ export default function Events() {
                       <Countdown targetDate={event.eventDate} />
                     </div>
 
+                    {/* Attendance Statistics */}
+                    <div className="bg-muted/30 rounded-lg p-4">
+                      <h4 className="text-sm font-semibold text-foreground mb-3">Attendance Summary</h4>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center mb-1">
+                            <Check className="w-4 h-4 text-green-600 mr-1" />
+                            <span className="text-lg font-bold text-green-600">
+                              {event.attendees?.filter((a: any) => a.status === 'going').length || 0}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Going</p>
+                        </div>
+                        <div className="text-center">
+                          <div className="flex items-center justify-center mb-1">
+                            <HelpCircle className="w-4 h-4 text-yellow-600 mr-1" />
+                            <span className="text-lg font-bold text-yellow-600">
+                              {event.attendees?.filter((a: any) => a.status === 'maybe').length || 0}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Maybe</p>
+                        </div>
+                        <div className="text-center">
+                          <div className="flex items-center justify-center mb-1">
+                            <X className="w-4 h-4 text-red-600 mr-1" />
+                            <span className="text-lg font-bold text-red-600">
+                              {event.attendees?.filter((a: any) => a.status === 'not_going').length || 0}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Can't Go</p>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="flex items-center justify-between pt-4 border-t border-border">
                       <div className="flex items-center text-mykliq-purple">
                         <Users className="w-4 h-4 mr-2" />
                         <span className="text-sm">
-                          {event.attendeeCount} going • {event.attendees?.length || 0} responded
+                          {event.attendees?.filter((a: any) => a.status === 'going').length || 0} going • {event.attendees?.length || 0} responded
                         </span>
                       </div>
 
