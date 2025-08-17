@@ -148,7 +148,9 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
     eventId: event.id,
     eventTitle: event.title,
     currentUserId,
-    currentStatus
+    currentStatus,
+    hasCurrentUserId: !!currentUserId,
+    userIdType: typeof currentUserId
   });
 
   return (
