@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { notificationService } from "./notificationService";
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertKliqSchema, insertKliqMembershipSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 
@@ -347,6 +347,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error removing friend:", error);
       res.status(500).json({ message: "Failed to remove friend" });
+    }
+  });
+
+  // Kliq routes
+  app.post('/api/kliqs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const kliqData = insertKliqSchema.parse({ ...req.body, ownerId: userId });
+      
+      // Generate unique invite code
+      const inviteCode = await storage.generateInviteCode();
+      kliqData.inviteCode = inviteCode;
+      
+      const kliq = await storage.createKliq(kliqData);
+      res.json(kliq);
+    } catch (error) {
+      console.error("Error creating kliq:", error);
+      res.status(500).json({ message: "Failed to create kliq" });
+    }
+  });
+
+  app.get('/api/kliqs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userKliqs = await storage.getUserKliqs(userId);
+      res.json(userKliqs);
+    } catch (error) {
+      console.error("Error fetching user kliqs:", error);
+      res.status(500).json({ message: "Failed to fetch kliqs" });
+    }
+  });
+
+  app.post('/api/kliqs/join', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { inviteCode } = req.body;
+      
+      const kliq = await storage.getKliqByInviteCode(inviteCode);
+      if (!kliq) {
+        return res.status(404).json({ message: "Invalid invite code" });
+      }
+      
+      // Check if user is already a member
+      const userKliqs = await storage.getUserKliqs(userId);
+      if (userKliqs.find(membership => membership.kliqId === kliq.id)) {
+        return res.status(400).json({ message: "Already a member of this kliq" });
+      }
+      
+      // Check member limit
+      const currentMembers = await storage.getKliqMembers(kliq.id);
+      if (currentMembers.length >= (kliq.maxMembers || 15)) {
+        return res.status(400).json({ message: "Kliq has reached maximum member limit" });
+      }
+      
+      // Join kliq with next available rank
+      const membership = await storage.joinKliq({
+        kliqId: kliq.id,
+        userId,
+        rank: currentMembers.length + 1,
+        isActive: true,
+      });
+      
+      res.json({ kliq, membership });
+    } catch (error) {
+      console.error("Error joining kliq:", error);
+      res.status(500).json({ message: "Failed to join kliq" });
+    }
+  });
+
+  app.get('/api/kliqs/:kliqId/members', isAuthenticated, async (req: any, res) => {
+    try {
+      const { kliqId } = req.params;
+      const members = await storage.getKliqMembers(kliqId);
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching kliq members:", error);
+      res.status(500).json({ message: "Failed to fetch kliq members" });
+    }
+  });
+
+  app.delete('/api/kliqs/:kliqId/leave', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { kliqId } = req.params;
+      
+      await storage.leaveKliq(userId, kliqId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error leaving kliq:", error);
+      res.status(500).json({ message: "Failed to leave kliq" });
     }
   });
 

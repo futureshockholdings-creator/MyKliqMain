@@ -88,12 +88,36 @@ export const friendships = pgTable("friendships", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Kliqs - separate entities that users can join
+export const kliqs = pgTable("kliqs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  inviteCode: varchar("invite_code", { length: 20 }).unique().notNull(),
+  ownerId: varchar("owner_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  isPublic: boolean("is_public").default(false),
+  maxMembers: integer("max_members").default(15),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Kliq memberships - tracks which users belong to which kliqs
+export const kliqMemberships = pgTable("kliq_memberships", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  kliqId: varchar("kliq_id").references(() => kliqs.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  rank: integer("rank"), // 1-15, lower number = higher rank within this kliq
+  joinedAt: timestamp("joined_at").defaultNow(),
+  isActive: boolean("is_active").default(true),
+});
+
 // Used invite codes - tracks which codes have been used once
 export const usedInviteCodes = pgTable("used_invite_codes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   inviteCode: varchar("invite_code", { length: 20 }).unique().notNull(),
   usedBy: varchar("used_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
   ownedBy: varchar("owned_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  kliqId: varchar("kliq_id").references(() => kliqs.id, { onDelete: "cascade" }),
   usedAt: timestamp("used_at").defaultNow().notNull(),
 });
 
@@ -147,6 +171,7 @@ export const moviecons = pgTable("moviecons", {
 export const posts = pgTable("posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  kliqId: varchar("kliq_id").references(() => kliqs.id, { onDelete: "cascade" }),
   content: text("content"),
   mediaUrl: varchar("media_url"),
   mediaType: mediaTypeEnum("media_type"),
@@ -350,6 +375,8 @@ export const notifications = pgTable("notifications", {
 export const usersRelations = relations(users, ({ many, one }) => ({
   friendships: many(friendships, { relationName: "userFriendships" }),
   friendOf: many(friendships, { relationName: "friendOfUser" }),
+  ownedKliqs: many(kliqs),
+  kliqMemberships: many(kliqMemberships),
   posts: many(posts),
   stories: many(stories),
   comments: many(comments),
@@ -436,6 +463,10 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
   author: one(users, {
     fields: [posts.userId],
     references: [users.id],
+  }),
+  kliq: one(kliqs, {
+    fields: [posts.kliqId],
+    references: [kliqs.id],
   }),
   gif: one(gifs, {
     fields: [posts.gifId],
@@ -600,12 +631,36 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+// Kliq Relations
+export const kliqsRelations = relations(kliqs, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [kliqs.ownerId],
+    references: [users.id],
+  }),
+  memberships: many(kliqMemberships),
+  posts: many(posts),
+}));
+
+// Kliq Membership Relations
+export const kliqMembershipsRelations = relations(kliqMemberships, ({ one }) => ({
+  kliq: one(kliqs, {
+    fields: [kliqMemberships.kliqId],
+    references: [kliqs.id],
+  }),
+  user: one(users, {
+    fields: [kliqMemberships.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users);
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, readAt: true });
 export const insertUserThemeSchema = createInsertSchema(userThemes).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertFriendshipSchema = createInsertSchema(friendships).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertPostSchema = createInsertSchema(posts).omit({ id: true, likes: true, createdAt: true, updatedAt: true });
+export const insertKliqSchema = createInsertSchema(kliqs).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertKliqMembershipSchema = createInsertSchema(kliqMemberships).omit({ id: true, joinedAt: true });
 export const insertStorySchema = createInsertSchema(stories).omit({ id: true, viewCount: true, createdAt: true }).extend({
   expiresAt: z.string().transform((val) => new Date(val))
 });
@@ -723,3 +778,7 @@ export type MeetupCheckIn = typeof meetupCheckIns.$inferSelect;
 export type InsertMeetupCheckIn = z.infer<typeof insertMeetupCheckInSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Kliq = typeof kliqs.$inferSelect;
+export type InsertKliq = z.infer<typeof insertKliqSchema>;
+export type KliqMembership = typeof kliqMemberships.$inferSelect;
+export type InsertKliqMembership = z.infer<typeof insertKliqMembershipSchema>;

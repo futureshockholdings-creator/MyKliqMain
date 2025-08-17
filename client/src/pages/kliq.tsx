@@ -2,13 +2,16 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { PyramidChart } from "@/components/pyramid-chart";
 import { VideoCallComponent } from "@/components/video-call";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import { Badge } from "@/components/ui/badge";
-import { Users, Edit, Plus, Copy, MessageCircle, X } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Users, Edit, Plus, Copy, MessageCircle, X, Settings, LogOut, Crown } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,11 +19,11 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
 
 export default function Kliq() {
-  const [kliqName, setKliqName] = useState("");
-  const [editingName, setEditingName] = useState(false);
+  const [newKliqName, setNewKliqName] = useState("");
+  const [newKliqDescription, setNewKliqDescription] = useState("");
   const [inviteCode, setInviteCode] = useState("");
-  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-  const [friendToRemove, setFriendToRemove] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
   const { user } = useAuth();
   const userData = user as { 
     id?: string; 
@@ -44,7 +47,12 @@ export default function Kliq() {
     toggleVideo 
   } = useVideoCall();
 
-  // Fetch friends
+  // Fetch user's kliqs
+  const { data: userKliqs = [], isLoading: kliqsLoading } = useQuery({
+    queryKey: ["/api/kliqs"],
+  });
+
+  // Fetch friends (for backward compatibility)
   const { data: friends = [], isLoading: friendsLoading } = useQuery<{ 
     id: string; 
     rank: number; 
@@ -58,17 +66,21 @@ export default function Kliq() {
     queryKey: ["/api/friends"],
   });
 
-  // Update kliq name
-  const updateNameMutation = useMutation({
-    mutationFn: async (name: string) => {
-      await apiRequest("PUT", "/api/user/profile", { kliqName: name });
+  // Create kliq mutation
+  const createKliqMutation = useMutation({
+    mutationFn: async (kliqData: { name: string; description?: string }) => {
+      await apiRequest("POST", "/api/kliqs", kliqData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setEditingName(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/kliqs"] });
+      setIsCreateDialogOpen(false);
+      setNewKliqName("");
+      setNewKliqDescription("");
       toast({
-        title: "Kliq name updated!",
-        description: "Your kliq has a new name",
+        title: "Kliq created!",
+        description: "Your new kliq is ready",
+        duration: 2000,
+        className: "bg-white text-black border-gray-300",
       });
     },
     onError: (error) => {
@@ -85,7 +97,77 @@ export default function Kliq() {
       }
       toast({
         title: "Error",
-        description: "Failed to update kliq name",
+        description: "Failed to create kliq",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Join kliq mutation
+  const joinKliqMutation = useMutation({
+    mutationFn: async (inviteCode: string) => {
+      await apiRequest("POST", "/api/kliqs/join", { inviteCode });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliqs"] });
+      setIsJoinDialogOpen(false);
+      setInviteCode("");
+      toast({
+        title: "Kliq joined!",
+        description: "Welcome to your new kliq",
+        duration: 2000,
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to join kliq",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+  // Leave kliq mutation
+  const leaveKliqMutation = useMutation({
+    mutationFn: async (kliqId: string) => {
+      await apiRequest("DELETE", `/api/kliqs/${kliqId}/leave`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliqs"] });
+      toast({
+        title: "Left kliq",
+        description: "You have left the kliq",
+        duration: 2000,
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to leave kliq",
         variant: "destructive",
       });
     },
@@ -101,6 +183,8 @@ export default function Kliq() {
       toast({
         title: "Friend rank updated!",
         description: "Your pyramid has been reorganized",
+        duration: 2000,
+        className: "bg-white text-black border-gray-300",
       });
     },
     onError: (error) => {
@@ -123,35 +207,25 @@ export default function Kliq() {
     },
   });
 
-  // Join kliq
-  const joinKliqMutation = useMutation({
+  // Add friend via invite code
+  const addFriendMutation = useMutation({
     mutationFn: async (code: string) => {
       await apiRequest("POST", "/api/friends/invite", { inviteCode: code });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
       setInviteCode("");
-      setIsInviteDialogOpen(false);
       toast({
-        title: "Joined kliq!",
-        description: "You've successfully joined a new kliq",
+        title: "Friend added!",
+        description: "You've successfully added a new friend",
+        duration: 2000,
+        className: "bg-white text-black border-gray-300",
       });
     },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to join kliq. Check your invite code.",
+        description: error.message || "Failed to add friend. Check your invite code.",
         variant: "destructive",
       });
     },
@@ -164,10 +238,11 @@ export default function Kliq() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
-      setFriendToRemove(null);
       toast({
         title: "Friend removed",
-        description: "They have been removed from your kliq",
+        description: "Friend has been removed from your kliq",
+        duration: 2000,
+        className: "bg-white text-black border-gray-300",
       });
     },
     onError: (error) => {
@@ -190,9 +265,21 @@ export default function Kliq() {
     },
   });
 
-  const handleSaveKliqName = () => {
-    if (kliqName.trim()) {
-      updateNameMutation.mutate(kliqName.trim());
+  const copyInviteCode = async (inviteCode: string) => {
+    try {
+      await navigator.clipboard.writeText(inviteCode);
+      toast({
+        title: "Invite code copied!",
+        description: "Share this code with friends to invite them",
+        duration: 2000,
+        className: "bg-white text-black border-gray-300",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to copy",
+        description: "Please copy the code manually",
+        variant: "destructive",
+      });
     }
   };
 
@@ -200,315 +287,320 @@ export default function Kliq() {
     updateRankMutation.mutate({ friendId, rank: newRank });
   };
 
+  const handleCreateKliq = () => {
+    if (!newKliqName.trim()) return;
+    createKliqMutation.mutate({
+      name: newKliqName.trim(),
+      description: newKliqDescription.trim() || undefined,
+    });
+  };
+
   const handleJoinKliq = () => {
-    if (inviteCode.trim()) {
-      joinKliqMutation.mutate(inviteCode.trim());
-    }
+    if (!inviteCode.trim()) return;
+    joinKliqMutation.mutate(inviteCode.trim());
   };
-
-  // Video call handlers
-  const handleVideoCall = async (participantIds: string[]) => {
-    try {
-      await startCall(participantIds);
-      toast({
-        title: "Video Call",
-        description: "Starting video call...",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to start video call",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleRemoveFriend = (friendId: string) => {
-    setFriendToRemove(friendId);
-  };
-
-  const confirmRemoveFriend = () => {
-    if (friendToRemove) {
-      removeFriendMutation.mutate(friendToRemove);
-    }
-  };
-
-  const handleMessageFriend = async (friendId: string, friendName: string) => {
-    try {
-      // Create or get conversation
-      const response = await apiRequest("POST", "/api/messages/conversations", {
-        participantId: friendId,
-      });
-      
-      const conversationId = response.id;
-      navigate(`/messages/${conversationId}`);
-      
-      toast({
-        title: "Starting conversation",
-        description: `Messaging ${friendName}`,
-      });
-    } catch (error) {
-      if (isUnauthorizedError(error as Error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to start conversation",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const copyInviteCode = async () => {
-    if (userData?.inviteCode) {
-      try {
-        await navigator.clipboard.writeText(userData.inviteCode);
-        toast({
-          title: "Copied!",
-          description: "Invite code copied to clipboard",
-        });
-      } catch (err) {
-        toast({
-          title: "Error",
-          description: "Failed to copy invite code",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  // Show video call interface if in a call
-  if (isInCall && currentCall) {
-    return (
-      <div className="h-screen bg-black">
-        <VideoCallComponent
-          call={currentCall}
-          onEndCall={endCall}
-          onToggleAudio={toggleAudio}
-          onToggleVideo={toggleVideo}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Users className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold text-primary">
-            {editingName ? (
-              <div className="flex items-center gap-2">
-                <Input
-                  value={kliqName}
-                  onChange={(e) => setKliqName(e.target.value)}
-                  className="bg-input border-border text-foreground text-center"
-                  placeholder={userData?.kliqName || "My Kliq"}
-                />
-                <Button
-                  size="sm"
-                  onClick={handleSaveKliqName}
-                  disabled={updateNameMutation.isPending}
-                  className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground"
-                >
-                  Save
-                </Button>
-              </div>
-            ) : (
-              <>
-                🏆 {userData?.kliqName || "My Kliq"} 🏆
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setKliqName(userData?.kliqName || "");
-                    setEditingName(true);
-                  }}
-                  className="ml-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-              </>
-            )}
-          </h1>
+      {/* Header Section */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">My Kliqs</h1>
+          <p className="text-muted-foreground">Manage your friend circles and connections</p>
         </div>
-        <p className="text-muted-foreground text-sm">
-          Drag friends to reorder your pyramid
-        </p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-secondary" data-testid="text-friend-count">
-              {friends.length}/15
-            </div>
-            <div className="text-sm text-muted-foreground">Friends</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-mykliq-purple" data-testid="text-open-spots">
-              {15 - friends.length}
-            </div>
-            <div className="text-sm text-muted-foreground">Open Spots</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Pyramid Chart */}
-      {friendsLoading ? (
-        <Card className="bg-card border-border">
-          <CardContent className="p-8 text-center">
-            <div className="animate-pulse space-y-4">
-              <div className="w-16 h-16 bg-muted rounded-full mx-auto"></div>
-              <div className="space-y-2">
-                <div className="w-24 h-4 bg-muted rounded mx-auto"></div>
-                <div className="w-32 h-3 bg-muted rounded mx-auto"></div>
+        <div className="flex gap-2">
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90" data-testid="button-create-kliq">
+                <Plus className="w-4 h-4 mr-2" />
+                Create Kliq
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Kliq</DialogTitle>
+                <DialogDescription>
+                  Create a new kliq to organize your friends
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="kliq-name">Kliq Name</Label>
+                  <Input
+                    id="kliq-name"
+                    value={newKliqName}
+                    onChange={(e) => setNewKliqName(e.target.value)}
+                    placeholder="Enter kliq name"
+                    className="bg-white text-black"
+                    data-testid="input-kliq-name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="kliq-description">Description (Optional)</Label>
+                  <Textarea
+                    id="kliq-description"
+                    value={newKliqDescription}
+                    onChange={(e) => setNewKliqDescription(e.target.value)}
+                    placeholder="Describe your kliq..."
+                    className="bg-white text-black"
+                    data-testid="textarea-kliq-description"
+                  />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCreateDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreateKliq}
+                    disabled={createKliqMutation.isPending || !newKliqName.trim()}
+                    data-testid="button-confirm-create-kliq"
+                  >
+                    {createKliqMutation.isPending ? "Creating..." : "Create Kliq"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : friends.length === 0 ? (
-        <Card className="bg-card border-border">
-          <CardContent className="p-8 text-center">
-            <div className="text-4xl mb-4">👥</div>
-            <h3 className="text-lg font-bold text-muted-foreground mb-2">No friends yet</h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Share your invite code or join someone else's kliq to get started!
-            </p>
-            <Button
-              onClick={() => setIsInviteDialogOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Join a Kliq
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <PyramidChart
-          friends={friends.map(f => ({
-            id: f.friend.id,
-            firstName: f.friend.firstName,
-            lastName: f.friend.lastName,
-            profileImageUrl: f.friend.profileImageUrl,
-            rank: f.rank
-          }))}
-          onRankChange={handleRankChange}
-          onMessage={handleMessageFriend}
-          onVideoCall={handleVideoCall}
-          onRemove={handleRemoveFriend}
-          maxFriends={15}
-          kliqName={userData?.kliqName}
-        />
-      )}
+            </DialogContent>
+          </Dialog>
 
-      {/* Invite Code */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-mykliq-green text-lg">
-            📱 Your Invite Code
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between bg-muted rounded p-3">
-            <code className="text-mykliq-green font-mono font-bold" data-testid="text-invite-code">
-              {userData?.inviteCode || "Loading..."}
-            </code>
-            <Button
-              size="sm"
-              onClick={copyInviteCode}
-              className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground"
-              disabled={!userData?.inviteCode}
-              data-testid="button-copy-invite"
-            >
-              <Copy className="w-4 h-4" />
-            </Button>
+          <Dialog open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" data-testid="button-join-kliq">
+                <Users className="w-4 h-4 mr-2" />
+                Join Kliq
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Join Kliq</DialogTitle>
+                <DialogDescription>
+                  Enter an invite code to join an existing kliq
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="invite-code">Invite Code</Label>
+                  <Input
+                    id="invite-code"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    placeholder="Enter invite code"
+                    className="bg-white text-black"
+                    data-testid="input-invite-code"
+                  />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsJoinDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleJoinKliq}
+                    disabled={joinKliqMutation.isPending || !inviteCode.trim()}
+                    data-testid="button-confirm-join-kliq"
+                  >
+                    {joinKliqMutation.isPending ? "Joining..." : "Join Kliq"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* User's Kliqs */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">My Kliqs ({userKliqs.length})</h2>
+        {kliqsLoading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="bg-card border-border">
+                <CardContent className="p-4">
+                  <div className="animate-pulse">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-muted rounded-full"></div>
+                      <div className="space-y-2">
+                        <div className="w-32 h-4 bg-muted rounded"></div>
+                        <div className="w-24 h-3 bg-muted rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Share this code with friends to invite them to your kliq
-          </p>
-        </CardContent>
-      </Card>
+        ) : userKliqs.length === 0 ? (
+          <Card className="bg-card border-border">
+            <CardContent className="p-8 text-center">
+              <div className="text-4xl mb-4">🫂</div>
+              <h3 className="text-lg font-semibold text-muted-foreground mb-2">No kliqs yet</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Create your first kliq or join an existing one to get started
+              </p>
+              <div className="flex gap-2 justify-center">
+                <Button
+                  onClick={() => setIsCreateDialogOpen(true)}
+                  variant="outline"
+                  className="border-primary text-primary hover:bg-primary/10"
+                >
+                  Create Kliq
+                </Button>
+                <Button
+                  onClick={() => setIsJoinDialogOpen(true)}
+                  variant="outline"
+                  className="border-secondary text-secondary hover:bg-secondary/10"
+                >
+                  Join Kliq
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4">
+            {userKliqs.map((membership: any) => (
+              <Card key={membership.id} className="bg-card border-border">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="w-12 h-12">
+                        <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                          {membership.kliq.name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <h3 className="font-semibold text-foreground">{membership.kliq.name}</h3>
+                          {membership.kliq.ownerId === userData?.id && (
+                            <Crown className="w-4 h-4 text-yellow-500" />
+                          )}
+                          <Badge variant="outline" className="text-xs">
+                            Rank #{membership.rank}
+                          </Badge>
+                        </div>
+                        {membership.kliq.description && (
+                          <p className="text-sm text-muted-foreground">{membership.kliq.description}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Joined {new Date(membership.joinedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyInviteCode(membership.kliq.inviteCode)}
+                        className="text-muted-foreground hover:text-foreground"
+                        data-testid={`button-copy-invite-${membership.kliq.id}`}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                      {membership.kliq.ownerId !== userData?.id && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => leaveKliqMutation.mutate(membership.kliq.id)}
+                          className="text-destructive hover:text-destructive/80"
+                          data-testid={`button-leave-kliq-${membership.kliq.id}`}
+                        >
+                          <LogOut className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground" data-testid="button-join-kliq">
-              <Plus className="w-4 h-4 mr-2" />
-              Join Kliq
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
-            <DialogHeader>
-              <DialogTitle className="text-primary">Join Another Kliq</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-muted-foreground">Invite Code</label>
+      {/* Legacy Friends Section */}
+      {friends.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Legacy Friends ({friends.length}/15)</h2>
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Friend Pyramid</span>
+                <Badge variant="secondary" className="text-xs">
+                  {friends.length} friends
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PyramidChart
+                friends={friends}
+                onRankChange={handleRankChange}
+                isLoading={updateRankMutation.isPending}
+                data-testid="pyramid-chart"
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle>Add Friend</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
                 <Input
                   value={inviteCode}
                   onChange={(e) => setInviteCode(e.target.value)}
-                  placeholder="KLIQ-XXXX-XXXX"
-                  className="bg-input border-border text-foreground"
-                  data-testid="input-join-invite-code"
+                  placeholder="Enter friend's invite code"
+                  className="bg-white text-black"
+                  data-testid="input-friend-invite-code"
                 />
+                <Button
+                  onClick={() => addFriendMutation.mutate(inviteCode)}
+                  disabled={addFriendMutation.isPending || !inviteCode.trim()}
+                  data-testid="button-add-friend"
+                >
+                  {addFriendMutation.isPending ? "Adding..." : "Add Friend"}
+                </Button>
               </div>
-              <Button
-                onClick={handleJoinKliq}
-                disabled={!inviteCode.trim() || joinKliqMutation.isPending}
-                className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-              >
-                {joinKliqMutation.isPending ? "Joining..." : "Join Kliq"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Your invite code:</span>
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => copyInviteCode(userData?.inviteCode || "")}
+                  data-testid="badge-user-invite-code"
+                >
+                  {userData?.inviteCode || "Loading..."}
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => copyInviteCode(userData?.inviteCode || "")}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      {/* Remove Friend Confirmation Dialog */}
-      <Dialog open={!!friendToRemove} onOpenChange={() => setFriendToRemove(null)}>
-        <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
-          <DialogHeader>
-            <DialogTitle className="text-destructive">Remove Friend?</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-muted-foreground">
-              Are you sure you want to remove this friend from your kliq? This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setFriendToRemove(null)}
-                className="flex-1"
-                data-testid="button-cancel-remove"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={confirmRemoveFriend}
-                disabled={removeFriendMutation.isPending}
-                className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                data-testid="button-confirm-remove"
-              >
-                {removeFriendMutation.isPending ? "Removing..." : "Remove"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Video Call Section */}
+      {isInCall && (
+        <Card className="bg-card border-border">
+          <CardContent className="p-4">
+            <VideoCallComponent
+              currentCall={currentCall}
+              isConnecting={isConnecting}
+              onEndCall={endCall}
+              onToggleAudio={toggleAudio}
+              onToggleVideo={toggleVideo}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

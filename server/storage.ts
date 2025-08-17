@@ -3,6 +3,8 @@ import {
   userThemes,
   friendships,
   usedInviteCodes,
+  kliqs,
+  kliqMemberships,
   posts,
   stories,
   storyViews,
@@ -27,6 +29,10 @@ import {
   type InsertUserTheme,
   type Friendship,
   type InsertFriendship,
+  type Kliq,
+  type InsertKliq,
+  type KliqMembership,
+  type InsertKliqMembership,
   type Post,
   type InsertPost,
   type Story,
@@ -88,8 +94,18 @@ export interface IStorage {
   acceptFriendship(userId: string, friendId: string): Promise<void>;
   removeFriend(userId: string, friendId: string): Promise<void>;
   
+  // Kliq operations
+  createKliq(kliq: InsertKliq): Promise<Kliq>;
+  getKliqById(kliqId: string): Promise<Kliq | undefined>;
+  getKliqByInviteCode(inviteCode: string): Promise<Kliq | undefined>;
+  getUserKliqs(userId: string): Promise<(KliqMembership & { kliq: Kliq })[]>;
+  joinKliq(membership: InsertKliqMembership): Promise<KliqMembership>;
+  leaveKliq(userId: string, kliqId: string): Promise<void>;
+  updateKliqMemberRank(kliqId: string, userId: string, rank: number): Promise<void>;
+  getKliqMembers(kliqId: string): Promise<(KliqMembership & { user: User })[]>;
+  
   // Post operations
-  getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
+  getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; kliq?: Kliq; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
   getPostById(postId: string): Promise<Post | undefined>;
   createPost(post: InsertPost): Promise<Post>;
   likePost(postId: string, userId: string): Promise<void>;
@@ -350,15 +366,106 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(friendships.userId, userId), eq(friendships.friendId, friendId)));
   }
 
+  // Kliq operations
+  async createKliq(kliq: InsertKliq): Promise<Kliq> {
+    const [newKliq] = await db.insert(kliqs).values(kliq).returning();
+    
+    // Auto-join the creator as owner with rank 1
+    await db.insert(kliqMemberships).values({
+      kliqId: newKliq.id,
+      userId: kliq.ownerId,
+      rank: 1,
+      isActive: true,
+    });
+    
+    return newKliq;
+  }
+
+  async getKliqById(kliqId: string): Promise<Kliq | undefined> {
+    const [kliq] = await db.select().from(kliqs).where(eq(kliqs.id, kliqId));
+    return kliq;
+  }
+
+  async getKliqByInviteCode(inviteCode: string): Promise<Kliq | undefined> {
+    const [kliq] = await db.select().from(kliqs).where(eq(kliqs.inviteCode, inviteCode));
+    return kliq;
+  }
+
+  async getUserKliqs(userId: string): Promise<(KliqMembership & { kliq: Kliq })[]> {
+    const userKliqs = await db
+      .select({
+        id: kliqMemberships.id,
+        kliqId: kliqMemberships.kliqId,
+        userId: kliqMemberships.userId,
+        rank: kliqMemberships.rank,
+        joinedAt: kliqMemberships.joinedAt,
+        isActive: kliqMemberships.isActive,
+        kliq: kliqs,
+      })
+      .from(kliqMemberships)
+      .innerJoin(kliqs, eq(kliqMemberships.kliqId, kliqs.id))
+      .where(and(eq(kliqMemberships.userId, userId), eq(kliqMemberships.isActive, true)))
+      .orderBy(kliqMemberships.joinedAt);
+    
+    return userKliqs;
+  }
+
+  async joinKliq(membership: InsertKliqMembership): Promise<KliqMembership> {
+    const [newMembership] = await db.insert(kliqMemberships).values(membership).returning();
+    return newMembership;
+  }
+
+  async leaveKliq(userId: string, kliqId: string): Promise<void> {
+    await db
+      .update(kliqMemberships)
+      .set({ isActive: false })
+      .where(and(eq(kliqMemberships.userId, userId), eq(kliqMemberships.kliqId, kliqId)));
+  }
+
+  async updateKliqMemberRank(kliqId: string, userId: string, rank: number): Promise<void> {
+    await db
+      .update(kliqMemberships)
+      .set({ rank })
+      .where(and(eq(kliqMemberships.kliqId, kliqId), eq(kliqMemberships.userId, userId)));
+  }
+
+  async getKliqMembers(kliqId: string): Promise<(KliqMembership & { user: User })[]> {
+    const members = await db
+      .select({
+        id: kliqMemberships.id,
+        kliqId: kliqMemberships.kliqId,
+        userId: kliqMemberships.userId,
+        rank: kliqMemberships.rank,
+        joinedAt: kliqMemberships.joinedAt,
+        isActive: kliqMemberships.isActive,
+        user: users,
+      })
+      .from(kliqMemberships)
+      .innerJoin(users, eq(kliqMemberships.userId, users.id))
+      .where(and(eq(kliqMemberships.kliqId, kliqId), eq(kliqMemberships.isActive, true)))
+      .orderBy(kliqMemberships.rank);
+    
+    return members;
+  }
+
   // Post operations
-  async getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]> {
-    // Get user's friends first
+  async getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; kliq?: Kliq; likes: PostLike[]; comments: (Comment & { author: User })[] })[]> {
+    // Get user's kliqs to show posts from all joined kliqs
+    const userKliqs = await this.getUserKliqs(userId);
+    const kliqIds = userKliqs.map(membership => membership.kliqId);
+    
+    // For backward compatibility, also get user's friends for posts without kliqId
     const userFriends = await this.getFriends(userId);
     const friendIds = userFriends.map(f => f.friendId);
     friendIds.push(userId); // Include user's own posts
 
-    // Apply content filters
-    let whereConditions = [inArray(posts.userId, friendIds)];
+    // Apply content filters - posts from user's kliqs OR from friends if no kliqId
+    let whereConditions = [
+      or(
+        kliqIds.length > 0 ? inArray(posts.kliqId, kliqIds) : sql`false`,
+        and(isNull(posts.kliqId), inArray(posts.userId, friendIds))
+      )
+    ];
     
     if (filters.length > 0) {
       const filterConditions = filters.map(filter => 
@@ -371,12 +478,12 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: posts.id,
         userId: posts.userId,
+        kliqId: posts.kliqId,
         content: posts.content,
         mediaUrl: posts.mediaUrl,
         mediaType: posts.mediaType,
         gifId: posts.gifId,
         movieconId: posts.movieconId,
-        likes: posts.likes,
         latitude: posts.latitude,
         longitude: posts.longitude,
         locationName: posts.locationName,
@@ -384,11 +491,13 @@ export class DatabaseStorage implements IStorage {
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
         author: users,
+        kliq: kliqs,
         gif: gifs,
         moviecon: moviecons,
       })
       .from(posts)
       .innerJoin(users, eq(posts.userId, users.id))
+      .leftJoin(kliqs, eq(posts.kliqId, kliqs.id))
       .leftJoin(gifs, eq(posts.gifId, gifs.id))
       .leftJoin(moviecons, eq(posts.movieconId, moviecons.id))
       .where(and(...whereConditions))
@@ -425,6 +534,7 @@ export class DatabaseStorage implements IStorage {
         return {
           id: post.id,
           userId: post.userId,
+          kliqId: post.kliqId,
           content: post.content,
           mediaUrl: post.mediaUrl,
           mediaType: post.mediaType,
@@ -432,6 +542,7 @@ export class DatabaseStorage implements IStorage {
           movieconId: post.movieconId,
           gif: post.gif,
           moviecon: post.moviecon,
+          kliq: post.kliq || undefined,
           likes: likesData,
           latitude: post.latitude,
           longitude: post.longitude,

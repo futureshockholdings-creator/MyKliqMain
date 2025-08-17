@@ -55,6 +55,11 @@ export default function Home() {
     queryKey: ["/api/posts"],
   });
 
+  // Fetch user's kliqs
+  const { data: userKliqs = [] } = useQuery({
+    queryKey: ["/api/kliqs"],
+  });
+
   // Fetch filters
   const { data: filters = [] } = useQuery({
     queryKey: ["/api/filters"],
@@ -918,9 +923,16 @@ export default function Home() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <p className="font-bold text-primary">
-                    {post.author.firstName} {post.author.lastName}
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    <p className="font-bold text-primary">
+                      {post.author.firstName} {post.author.lastName}
+                    </p>
+                    {post.kliq && (
+                      <Badge variant="secondary" className="text-xs">
+                        {post.kliq.name}
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {formatTimeAgo(post.createdAt)}
                   </p>
