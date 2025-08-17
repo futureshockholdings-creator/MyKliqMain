@@ -616,7 +616,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       if (existingConversation) {
-        return res.json(existingConversation);
+        return res.json({ id: participantId });
       }
 
       // Create new conversation
