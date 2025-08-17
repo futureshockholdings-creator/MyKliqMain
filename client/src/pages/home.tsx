@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit } from "lucide-react";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -48,6 +48,7 @@ export default function Home() {
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [locationName, setLocationName] = useState('');
   const [address, setAddress] = useState('');
+  const [eventAttendance, setEventAttendance] = useState<Record<string, 'going' | 'maybe' | 'not_going'>>({});
   const { user } = useAuth();
   const userData = user as any;
   const { toast } = useToast();
@@ -294,6 +295,67 @@ export default function Home() {
     },
   });
 
+  // Event attendance mutations
+  const updateAttendanceMutation = useMutation({
+    mutationFn: async ({ eventId, status }: { eventId: string; status: 'going' | 'maybe' | 'not_going' }) => {
+      await apiRequest("POST", `/api/events/${eventId}/attendance`, { status });
+    },
+    onSuccess: (_, { eventId, status }) => {
+      setEventAttendance(prev => ({ ...prev, [eventId]: status }));
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      toast({
+        title: "Attendance updated",
+        description: "Your attendance status has been saved",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update attendance",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Like toggle mutation for events and posts
+  const likeToggleMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      await apiRequest("POST", `/api/posts/${itemId}/like`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update like",
+        variant: "destructive",
+      });
+    },
+  });
+
   const getCurrentLocation = () => {
     setIsGettingLocation(true);
     
@@ -366,6 +428,16 @@ export default function Home() {
       [postId]: (prev[postId] || '') + emoji 
     }));
     setShowCommentEmojiPicker(null);
+  };
+
+  // Event attendance handler
+  const handleEventAttendance = (eventId: string, status: 'going' | 'maybe' | 'not_going') => {
+    updateAttendanceMutation.mutate({ eventId, status });
+  };
+
+  // Like toggle handler
+  const handleLikeToggle = (itemId: string) => {
+    likeToggleMutation.mutate(itemId);
   };
 
   const commonEmojis = [
@@ -921,65 +993,147 @@ export default function Home() {
             🔥 FORCED EVENT TEST - Pool Party Event Should Appear Below 🔥
           </div>
           
-          {/* SEPARATE EVENT RENDERING - isolate from main map */}
-          {(feedItems as any[]).filter((item: any) => item.type === 'event').map((eventItem: any) => {
-            console.log('🔥 SEPARATE EVENT RENDER:', eventItem.title);
+          {/* Event Posts - Rendered Separately to Avoid React Mixed-Type Issues */}
+          {(feedItems as any[]).filter((item: any) => item.type === 'event').map((item: any) => {
+            const userAttendance = eventAttendance[item.id];
             return (
-              <div key={`event-${eventItem.id}`} style={{
-                width: '100%',
-                backgroundColor: 'red',
-                border: '10px solid blue',
-                padding: '20px',
-                margin: '20px 0',
-                color: 'white',
-                fontSize: '24px',
-                fontWeight: 'bold'
-              }}>
-                <div>🚨 SEPARATE RENDER: {eventItem.title} 🚨</div>
-                <div style={{backgroundColor: 'yellow', color: 'black', padding: '10px', margin: '10px 0'}}>
-                  Event ID: {eventItem.id}<br/>
-                  User ID: {userData?.id}<br/>
-                  Status: SEPARATE RENDERING SUCCESS
-                </div>
-                <div style={{display: 'flex', gap: '10px'}}>
-                  <button style={{
-                    backgroundColor: 'green',
-                    color: 'white',
-                    padding: '15px 30px',
-                    fontSize: '18px',
-                    border: 'none',
-                    borderRadius: '5px'
-                  }}>
-                    GOING
-                  </button>
-                  <button style={{
-                    backgroundColor: 'orange',
-                    color: 'white',
-                    padding: '15px 30px',
-                    fontSize: '18px',
-                    border: 'none',
-                    borderRadius: '5px'
-                  }}>
-                    MAYBE
-                  </button>
-                  <button style={{
-                    backgroundColor: 'darkred',
-                    color: 'white',
-                    padding: '15px 30px',
-                    fontSize: '18px',
-                    border: 'none',
-                    borderRadius: '5px'
-                  }}>
-                    NOT GOING
-                  </button>
-                </div>
-              </div>
+              <Card key={`event-${item.id}`} className={cn(
+                "bg-gradient-to-br from-muted/50 to-muted/20 border border-muted-foreground/20"
+              )}>
+                <CardContent className="p-4">
+                  <div className="space-y-4">
+                    {/* Event Header */}
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="w-10 h-10 border-2 border-primary">
+                        <AvatarImage src={item.author.profileImageUrl} />
+                        <AvatarFallback className="bg-muted text-foreground">
+                          {item.author.firstName?.[0] || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-bold text-primary">
+                          {item.author.firstName} {item.author.lastName}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Created an event
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatTimeAgo(item.activityDate)}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        Event
+                      </Badge>
+                    </div>
+
+                    {/* Event Details */}
+                    <div className="bg-background/50 rounded-lg p-4 space-y-3">
+                      <h3 className="text-lg font-semibold text-primary">{item.title}</h3>
+                      
+                      {item.description && (
+                        <p className="text-muted-foreground">{item.description}</p>
+                      )}
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        {item.date && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-primary" />
+                            <span>{new Date(item.date).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                        
+                        {item.time && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-primary" />
+                            <span>{item.time}</span>
+                          </div>
+                        )}
+                        
+                        {item.location && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-primary" />
+                            <span>{item.location}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Attendance Buttons */}
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">Will you attend?</p>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button
+                          size="sm"
+                          variant={userAttendance === 'going' ? 'default' : 'outline'}
+                          onClick={() => handleEventAttendance(item.id, 'going')}
+                          disabled={updateAttendanceMutation.isPending}
+                          className={cn(
+                            "flex items-center gap-1",
+                            userAttendance === 'going' && "bg-green-600 hover:bg-green-700"
+                          )}
+                          data-testid={`button-attendance-going-${item.id}`}
+                        >
+                          <Check className="w-4 h-4" />
+                          Going
+                        </Button>
+                        
+                        <Button
+                          size="sm"
+                          variant={userAttendance === 'maybe' ? 'default' : 'outline'}
+                          onClick={() => handleEventAttendance(item.id, 'maybe')}
+                          disabled={updateAttendanceMutation.isPending}
+                          className={cn(
+                            "flex items-center gap-1",
+                            userAttendance === 'maybe' && "bg-yellow-600 hover:bg-yellow-700"
+                          )}
+                          data-testid={`button-attendance-maybe-${item.id}`}
+                        >
+                          <HelpCircle className="w-4 h-4" />
+                          Maybe
+                        </Button>
+                        
+                        <Button
+                          size="sm"
+                          variant={userAttendance === 'not_going' ? 'default' : 'outline'}
+                          onClick={() => handleEventAttendance(item.id, 'not_going')}
+                          disabled={updateAttendanceMutation.isPending}
+                          className={cn(
+                            "flex items-center gap-1",
+                            userAttendance === 'not_going' && "bg-red-600 hover:bg-red-700"
+                          )}
+                          data-testid={`button-attendance-not-going-${item.id}`}
+                        >
+                          <X className="w-4 h-4" />
+                          Can't Go
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Like Button */}
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleLikeToggle(item.id)}
+                        disabled={likeToggleMutation.isPending}
+                        className={cn(
+                          "flex items-center gap-2",
+                          item.userHasLiked && "text-red-500"
+                        )}
+                        data-testid={`button-like-${item.id}`}
+                      >
+                        <Heart className={cn("w-4 h-4", item.userHasLiked && "fill-current")} />
+                        <span>{item.likesCount || 0}</span>
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             );
           })}
           
-          {(feedItems as any[]).map((item: any) => {
+          {(feedItems as any[]).filter((item: any) => item.type !== 'event').map((item: any) => {
           console.log("Feed item processing:", item.type, item.title || item.content?.substring(0, 30));
-          console.log("🔥 ITEM MAP INDEX:", (feedItems as any[]).indexOf(item), "TYPE:", item.type);
           
           if (item.type === 'poll') {
             return (
@@ -994,61 +1148,7 @@ export default function Home() {
             );
           } 
           
-          if (item.type === 'event') {
-            console.log('🔥 EVENT PROCESSING START:', item.title);
-            console.log('🔥 RETURNING EVENT ELEMENT FOR KEY:', item.id);
-            return (
-              <div key={item.id} style={{
-                width: '100%',
-                backgroundColor: 'red',
-                border: '10px solid blue',
-                padding: '20px',
-                margin: '20px 0',
-                color: 'white',
-                fontSize: '24px',
-                fontWeight: 'bold'
-              }}>
-                <div>🚨 MAPPED EVENT: {item.title} 🚨</div>
-                <div style={{backgroundColor: 'yellow', color: 'black', padding: '10px', margin: '10px 0'}}>
-                  Event ID: {item.id}<br/>
-                  User ID: {userData?.id}<br/>
-                  Status: MAPPED SUCCESS
-                </div>
-                <div style={{display: 'flex', gap: '10px'}}>
-                  <button style={{
-                    backgroundColor: 'green',
-                    color: 'white',
-                    padding: '15px 30px',
-                    fontSize: '18px',
-                    border: 'none',
-                    borderRadius: '5px'
-                  }}>
-                    GOING
-                  </button>
-                  <button style={{
-                    backgroundColor: 'orange',
-                    color: 'white',
-                    padding: '15px 30px',
-                    fontSize: '18px',
-                    border: 'none',
-                    borderRadius: '5px'
-                  }}>
-                    MAYBE
-                  </button>
-                  <button style={{
-                    backgroundColor: 'darkred',
-                    color: 'white',
-                    padding: '15px 30px',
-                    fontSize: '18px',
-                    border: 'none',
-                    borderRadius: '5px'
-                  }}>
-                    NOT GOING
-                  </button>
-                </div>
-              </div>
-            );
-          } else if (item.type === 'post') {
+          if (item.type === 'post') {
             return (
           <Card
             key={item.id}
