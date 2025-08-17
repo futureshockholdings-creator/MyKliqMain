@@ -35,7 +35,8 @@ export function extractYouTubeVideoId(url: string): string | null {
 export function findYouTubeUrls(text: string): string[] {
   if (!text) return [];
   
-  const urlPattern = /https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)[\w-]+/g;
+  // More comprehensive pattern to capture full YouTube URLs including query parameters
+  const urlPattern = /https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)[\w-]+(?:[^\s]*)?/g;
   return text.match(urlPattern) || [];
 }
 
@@ -74,13 +75,20 @@ export function extractYouTubeUrlsFromText(text: string): { cleanText: string; y
   const youtubeUrls = findYouTubeUrls(text);
   let cleanText = text;
   
-  // Remove YouTube URLs from the text
+  // Remove YouTube URLs from the text - use global replace to catch all occurrences
   youtubeUrls.forEach(url => {
-    cleanText = cleanText.replace(url, '').trim();
+    // Escape special regex characters in the URL and replace globally
+    const escapedUrl = url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    cleanText = cleanText.replace(new RegExp(escapedUrl, 'g'), '');
   });
   
-  // Clean up extra whitespace and empty lines
+  // Additional cleanup for any remaining URL fragments
+  // Remove common URL patterns that might be left behind
   cleanText = cleanText
+    .replace(/https?:\/\/[^\s]*/g, '')  // Remove any remaining URLs
+    .replace(/www\.[^\s]*/g, '')  // Remove www fragments
+    .replace(/youtube\.com[^\s]*/g, '')  // Remove youtube.com fragments
+    .replace(/youtu\.be[^\s]*/g, '')  // Remove youtu.be fragments
     .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
     .replace(/^\s+|\s+$/g, '')  // Trim leading/trailing spaces
     .replace(/\n\s*\n/g, '\n')  // Remove empty lines
