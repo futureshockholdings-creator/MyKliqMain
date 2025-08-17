@@ -690,14 +690,7 @@ export default function Home() {
                   </Button>
                 }
               />
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="text-secondary hover:bg-secondary/10"
-                onClick={() => setShowStoryUpload(true)}
-              >
-                <Camera className="w-4 h-4" />
-              </Button>
+
               <Button 
                 size="sm" 
                 variant="ghost" 
