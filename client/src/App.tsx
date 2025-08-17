@@ -45,7 +45,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
   const navItems = [
     { path: "/profile", icon: User, label: "Profile", tab: "profile" },
     { path: "/", icon: HomeIcon, label: "Headlines", tab: "headlines" },
-    { path: "/kliq", icon: Users, label: "My Kliq", tab: "kliq", badgeType: "friends" as const },
+    { path: "/kliq", icon: Users, label: "My Kliq's", tab: "kliq", badgeType: "friends" as const },
     { path: "/messages", icon: MessageCircle, label: "IM", tab: "messages", badgeType: "messages" as const },
     { path: "/events", icon: Calendar, label: "Events", tab: "events", badgeType: "events" as const },
     { path: "/actions", icon: Video, label: "Action", tab: "actions" },
