@@ -839,7 +839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/events/:eventId/attendance', isAuthenticated, async (req: any, res) => {
+  app.post('/api/events/:eventId/attendance', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { eventId } = req.params;
