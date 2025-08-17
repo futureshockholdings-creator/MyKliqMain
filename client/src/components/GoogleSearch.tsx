@@ -132,11 +132,12 @@ export function GoogleSearch() {
           {results.map((result, index) => (
             <div
               key={index}
-              className="rounded-md p-2 transition-colors hover:opacity-80 border"
+              className="rounded-md p-2 transition-colors hover:opacity-80 border cursor-pointer"
               style={{ 
                 borderColor: 'var(--border)',
                 backgroundColor: 'var(--card)'
               }}
+              onClick={() => window.open(result.url, '_blank')}
               data-testid={`search-result-${index}`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -151,15 +152,9 @@ export function GoogleSearch() {
                     {result.source}
                   </Badge>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => window.open(result.url, '_blank')}
-                  className="shrink-0 h-6 w-6 p-0 hover:opacity-70"
-                  data-testid={`button-open-result-${index}`}
-                >
-                  <ExternalLink className="w-3 h-3" />
-                </Button>
+                <div className="shrink-0 flex items-center justify-center h-6 w-6">
+                  <ExternalLink className="w-3 h-3" style={{ color: 'var(--muted-foreground)' }} />
+                </div>
               </div>
             </div>
           ))}
