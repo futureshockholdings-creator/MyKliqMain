@@ -589,8 +589,9 @@ export default function Home() {
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
               placeholder="What's happening in your kliq?"
-              className="flex-1 bg-background/30 text-foreground placeholder-muted-foreground border-none resize-none"
+              className="flex-1 bg-white text-black placeholder-gray-500 border-none resize-none"
               rows={2}
+              data-testid="textarea-new-post"
             />
           </div>
           {selectedGif && (
@@ -1100,7 +1101,7 @@ export default function Home() {
                           value={commentInputs[post.id] || ""}
                           onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
                           placeholder="Write a comment..."
-                          className="flex-1 bg-input border-border text-foreground placeholder-muted-foreground resize-none"
+                          className="flex-1 bg-white text-black placeholder-gray-500 border-border resize-none"
                           rows={2}
                           data-testid={`input-comment-${post.id}`}
                           onKeyDown={(e) => {
