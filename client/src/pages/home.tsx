@@ -24,6 +24,7 @@ import { MovieconPicker } from "@/components/MovieconPicker";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { YouTubeEmbedList } from "@/components/YouTubeEmbed";
 import { extractYouTubeUrlsFromText } from "@/lib/youtubeUtils";
+import { PollCard } from "@/components/PollCard";
 import type { Gif, Moviecon } from "@shared/schema";
 
 
@@ -55,9 +56,10 @@ export default function Home() {
     queryKey: ["/api/kliq-feed"],
   });
 
-  // Separate regular posts from activity items
+  // Separate different types of feed items
   const posts = feedItems.filter((item: any) => item.type === 'post');
-  const activityItems = feedItems.filter((item: any) => item.type !== 'post');
+  const polls = feedItems.filter((item: any) => item.type === 'poll');
+  const activityItems = feedItems.filter((item: any) => item.type !== 'post' && item.type !== 'poll');
 
   // Fetch filters
   const { data: filters = [] } = useQuery({
@@ -898,8 +900,20 @@ export default function Home() {
           </CardContent>
         </Card>
       ) : (
-        feedItems.map((item: any) =>
-          item.type === 'post' ? (
+        feedItems.map((item: any) => {
+          if (item.type === 'poll') {
+            return (
+              <PollCard
+                key={item.id}
+                poll={{
+                  ...item,
+                  votes: [],
+                  totalVotes: 0,
+                }}
+              />
+            );
+          } else if (item.type === 'post') {
+            return (
           <Card
             key={item.id}
             className={cn(
@@ -1192,41 +1206,44 @@ export default function Home() {
               )}
             </CardContent>
           </Card>
-          ) : (
-            // Activity item display (polls, events, actions)
-            <Card
-              key={item.id}
-              className={cn(
-                "bg-gradient-to-br from-muted/50 to-muted/20 border border-muted-foreground/20"
-              )}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <Avatar className="w-10 h-10 border-2 border-primary">
-                    <AvatarImage src={item.author.profileImageUrl} />
-                    <AvatarFallback className="bg-muted text-foreground">
-                      {item.author.firstName?.[0] || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-bold text-primary">
-                      {item.author.firstName} {item.author.lastName}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {item.content}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatTimeAgo(item.activityDate)}
-                    </p>
+            );
+          } else {
+            // Activity item display (events, actions)
+            return (
+              <Card
+                key={item.id}
+                className={cn(
+                  "bg-gradient-to-br from-muted/50 to-muted/20 border border-muted-foreground/20"
+                )}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="w-10 h-10 border-2 border-primary">
+                      <AvatarImage src={item.author.profileImageUrl} />
+                      <AvatarFallback className="bg-muted text-foreground">
+                        {item.author.firstName?.[0] || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-bold text-primary">
+                        {item.author.firstName} {item.author.lastName}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.content}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatTimeAgo(item.activityDate)}
+                      </p>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {item.type}
+                    </Badge>
                   </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {item.type}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        )
+                </CardContent>
+              </Card>
+            );
+          }
+        })
       )}
 
       {/* Media Upload Modals */}

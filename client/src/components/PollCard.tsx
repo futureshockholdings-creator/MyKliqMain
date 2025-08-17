@@ -60,6 +60,7 @@ export function PollCard({ poll }: PollCardProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
       queryClient.invalidateQueries({ queryKey: ["/api/polls", poll.id, "results"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Vote recorded!",
         description: "Your vote has been saved successfully",
