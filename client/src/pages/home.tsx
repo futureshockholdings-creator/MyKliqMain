@@ -905,7 +905,23 @@ export default function Home() {
           </CardContent>
         </Card>
       ) : (
-        (feedItems as any[]).map((item: any) => {
+        <>
+          {/* DEBUG: Force render event test */}
+          <div style={{
+            width: '100%',
+            backgroundColor: 'purple',
+            border: '15px solid lime',
+            padding: '30px',
+            margin: '30px 0',
+            color: 'white',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            textAlign: 'center'
+          }}>
+            🔥 FORCED EVENT TEST - Pool Party Event Should Appear Below 🔥
+          </div>
+          
+          {(feedItems as any[]).map((item: any) => {
           console.log("Feed item processing:", item.type, item.title || item.content?.substring(0, 30));
           
           if (item.type === 'poll') {
@@ -1305,7 +1321,8 @@ export default function Home() {
               </Card>
             );
           }
-        })
+        })}
+        </>
       )}
 
       {/* Media Upload Modals */}
