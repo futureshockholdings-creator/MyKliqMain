@@ -148,8 +148,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
     eventId: event.id,
     eventTitle: event.title,
     currentUserId,
-    currentStatus,
-    attendanceData: attendanceData
+    currentStatus
   });
 
   return (
