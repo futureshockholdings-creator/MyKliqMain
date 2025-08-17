@@ -78,6 +78,8 @@ export default function Home() {
       toast({
         title: "Post created!",
         description: "Your post has been shared with your kliq",
+        duration: 2000,
+        className: "bg-white text-black border-gray-300",
       });
     },
     onError: (error) => {
@@ -509,6 +511,8 @@ export default function Home() {
         toast({
           title: "Post shared!",
           description: "The post has been shared successfully",
+          duration: 2000,
+          className: "bg-white text-black border-gray-300",
         });
       } else {
         // Fallback to clipboard
@@ -517,6 +521,8 @@ export default function Home() {
         toast({
           title: "Link copied!",
           description: "Post link copied to clipboard",
+          duration: 2000,
+          className: "bg-white text-black border-gray-300",
         });
       }
     } catch (error) {
@@ -526,6 +532,8 @@ export default function Home() {
         toast({
           title: "Link copied!",
           description: "App link copied to clipboard",
+          duration: 2000,
+          className: "bg-white text-black border-gray-300",
         });
       } catch (clipboardError) {
         toast({
