@@ -825,6 +825,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's attendance status for an event
+  app.get('/api/events/:eventId/attendance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { eventId } = req.params;
+      
+      const attendance = await storage.getUserEventAttendance(eventId, userId);
+      res.json(attendance || { status: null });
+    } catch (error) {
+      console.error("Error fetching attendance:", error);
+      res.status(500).json({ message: "Failed to fetch attendance" });
+    }
+  });
+
   app.put('/api/events/:eventId/attendance', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

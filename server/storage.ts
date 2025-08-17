@@ -153,6 +153,7 @@ export interface IStorage {
   getEventById(eventId: string): Promise<Event | undefined>;
   createEvent(event: InsertEvent): Promise<Event>;
   updateEvent(eventId: string, updates: Partial<InsertEvent>): Promise<Event>;
+  getUserEventAttendance(eventId: string, userId: string): Promise<{ status: string } | undefined>;
   updateEventAttendance(eventId: string, userId: string, status: string): Promise<void>;
 
   // Action (Live Stream) operations
@@ -1269,6 +1270,16 @@ export class DatabaseStorage implements IStorage {
     }
 
     return updatedEvent;
+  }
+
+  async getUserEventAttendance(eventId: string, userId: string): Promise<{ status: string } | undefined> {
+    const [attendance] = await db
+      .select()
+      .from(eventAttendees)
+      .where(and(eq(eventAttendees.eventId, eventId), eq(eventAttendees.userId, userId)))
+      .limit(1);
+    
+    return attendance && attendance.status ? { status: attendance.status } : undefined;
   }
 
   async updateEventAttendance(eventId: string, userId: string, status: string): Promise<void> {

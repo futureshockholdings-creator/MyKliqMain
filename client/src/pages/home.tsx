@@ -26,6 +26,7 @@ import { YouTubeEmbedList } from "@/components/YouTubeEmbed";
 import { extractYouTubeUrlsFromText } from "@/lib/youtubeUtils";
 import { PollCard } from "@/components/PollCard";
 import { GoogleSearch } from "@/components/GoogleSearch";
+import { EventCard } from "@/components/EventCard";
 import type { Gif, Moviecon } from "@shared/schema";
 
 
@@ -1211,8 +1212,17 @@ export default function Home() {
             </CardContent>
           </Card>
             );
+          } else if (item.type === 'event') {
+            // Event item display with interactive attendance
+            return (
+              <EventCard
+                key={item.id}
+                event={item}
+                currentUserId={userData?.id}
+              />
+            );
           } else {
-            // Activity item display (events, actions)
+            // Other activity item display (actions, etc.)
             return (
               <Card
                 key={item.id}
