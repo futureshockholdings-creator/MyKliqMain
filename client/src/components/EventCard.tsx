@@ -69,7 +69,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
   const updateAttendanceMutation = useMutation({
     mutationFn: async (status: string) => {
       const response = await fetch(`/api/events/${event.id}/attendance`, {
-        method: 'PUT',
+        method: 'POST',
         body: JSON.stringify({ status }),
         headers: { 'Content-Type': 'application/json' },
       });
