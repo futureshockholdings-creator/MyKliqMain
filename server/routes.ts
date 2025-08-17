@@ -894,6 +894,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const endedAction = await storage.endAction(actionId);
+      
+      // Auto-post to headlines when live stream ends
+      const streamDuration = Math.floor((Date.now() - new Date(action.createdAt).getTime()) / 60000); // Duration in minutes
+      const viewerCountText = action.viewerCount > 0 ? ` with ${action.viewerCount} viewer${action.viewerCount !== 1 ? 's' : ''}` : '';
+      
+      const postContent = `📺 Just finished streaming "${action.title}" for ${streamDuration} minute${streamDuration !== 1 ? 's' : ''}${viewerCountText}! ${action.description ? action.description : ''}`;
+      
+      // Create the auto-post
+      const autoPost = await storage.createPost({
+        userId: userId,
+        content: postContent.trim(),
+        mediaUrl: null,
+        mediaType: null,
+        gifId: null,
+        movieconId: null
+      });
+      
       res.json(endedAction);
     } catch (error) {
       console.error("Error ending action:", error);

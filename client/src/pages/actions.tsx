@@ -129,6 +129,7 @@ export default function Actions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] }); // Refresh posts to show the auto-post
       setSelectedAction(null);
       setIsStreaming(false);
       stopStream();
@@ -138,7 +139,7 @@ export default function Actions() {
       }
       toast({
         title: "Action ended",
-        description: "Your live stream has been stopped",
+        description: "Your live stream has been stopped and posted to headlines",
       });
     },
   });
