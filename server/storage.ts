@@ -1179,15 +1179,79 @@ export class DatabaseStorage implements IStorage {
       .set({ attendeeCount: 1 })
       .where(eq(events.id, newEvent.id));
 
+    // Auto-post to kliq feed about event creation
+    const eventDate = new Date(newEvent.eventDate);
+    const formattedDate = eventDate.toLocaleDateString("en-US", { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric',
+      year: eventDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+    });
+    const formattedTime = eventDate.toLocaleTimeString("en-US", { 
+      hour: 'numeric', 
+      minute: '2-digit' 
+    });
+    
+    let postContent = `📅 Created an event: "${newEvent.title}"`;
+    if (newEvent.location) {
+      postContent += `\n📍 ${newEvent.location}`;
+    }
+    postContent += `\n🕒 ${formattedDate} at ${formattedTime}`;
+    if (newEvent.description) {
+      postContent += `\n\n${newEvent.description}`;
+    }
+
+    await this.createPost({
+      userId: event.userId,
+      content: postContent,
+      mediaUrl: newEvent.mediaUrl || null,
+      mediaType: newEvent.mediaType || null,
+    });
+
     return newEvent;
   }
 
   async updateEvent(eventId: string, updates: Partial<InsertEvent>): Promise<Event> {
+    // Get the original event for comparison
+    const originalEvent = await this.getEventById(eventId);
+    
     const [updatedEvent] = await db
       .update(events)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(events.id, eventId))
       .returning();
+
+    // Auto-post to kliq feed about event update
+    if (originalEvent) {
+      const eventDate = new Date(updatedEvent.eventDate);
+      const formattedDate = eventDate.toLocaleDateString("en-US", { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric',
+        year: eventDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+      });
+      const formattedTime = eventDate.toLocaleTimeString("en-US", { 
+        hour: 'numeric', 
+        minute: '2-digit' 
+      });
+      
+      let postContent = `✏️ Updated event: "${updatedEvent.title}"`;
+      if (updatedEvent.location) {
+        postContent += `\n📍 ${updatedEvent.location}`;
+      }
+      postContent += `\n🕒 ${formattedDate} at ${formattedTime}`;
+      if (updatedEvent.description) {
+        postContent += `\n\n${updatedEvent.description}`;
+      }
+
+      await this.createPost({
+        userId: updatedEvent.userId,
+        content: postContent,
+        mediaUrl: updatedEvent.mediaUrl || null,
+        mediaType: updatedEvent.mediaType || null,
+      });
+    }
+
     return updatedEvent;
   }
 

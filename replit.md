@@ -6,6 +6,7 @@ MyKliq is a social media application designed for close-knit friend groups, focu
 - **Real-time Polling System**: Implemented comprehensive polling feature with kliq-wide participation, real-time vote tracking, and synchronized updates across headlines feed and My Kliq page
 - **Kliq-wide Content Aggregation**: Enhanced feed system to display polls, posts, events, and live streams from all kliq members with full interactive functionality
 - **Live Vote Updates**: Added optimistic updates, automatic result refreshing, and cache invalidation for instant poll result synchronization
+- **Event Auto-posting**: Events now automatically create posts in the kliq feed when created or updated, sharing event details (title, location, date/time, description) with all kliq members
 
 # User Preferences
 
@@ -61,6 +62,7 @@ The application includes a sophisticated content system:
 - **Moviecons**: Custom video uploads (MP4, up to 100MB) with manual play.
 - **Live Streaming ("Action")**: Real-time video streaming with chat and auto-posting to headlines when a stream starts.
 - **Meetups**: Simplified GPS-based check-in posting to the Bulletin feed.
+- **Event Auto-posting**: Automatically creates posts in kliq feed when events are created or updated, including formatted details like date/time, location, and description.
 
 ## UI Customization System
 Extensive theming system allows deep personalization:
