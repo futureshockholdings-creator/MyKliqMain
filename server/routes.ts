@@ -888,7 +888,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         await notificationService.createNotification({
           userId: event.userId,
-          type: 'event_attendance',
+          type: 'event_invite',
           title: 'Event Attendance Updated',
           message: `${user.firstName} ${user.lastName} responded ${statusText} to "${event.title}"`,
           relatedId: eventId,
@@ -908,7 +908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const notificationResult = await notificationService.createNotification({
           userId: userId,
-          type: 'event_attendance',
+          type: 'event_invite',
           title: 'Event Attendance Updated',
           message: `You updated your attendance to ${statusText} for "${event.title}"`,
           relatedId: eventId,
@@ -935,7 +935,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                             
           await notificationService.createNotification({
             userId: attendee.userId,
-            type: 'event_attendance',
+            type: 'event_invite',
             title: 'Event Attendance Update',
             message: `${user.firstName} ${user.lastName} ${statusText} to "${event.title}"`,
             relatedId: eventId,
@@ -949,7 +949,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('=== ATTENDANCE UPDATE COMPLETE ===');
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating attendance:", error);
       console.error("Error details:", error.stack);
       res.status(500).json({ message: "Failed to update attendance" });
