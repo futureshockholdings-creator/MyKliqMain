@@ -64,6 +64,71 @@ export default function Themes() {
     saveThemeMutation.mutate(defaultTheme);
   };
 
+  // Helper function to determine if a color is light or dark
+  const isLightColor = (hex: string) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 128;
+  };
+
+  // Generate random hex color
+  const getRandomColor = () => {
+    return "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+  };
+
+  // Generate contrasting text color for readability
+  const getContrastingTextColor = (backgroundColor: string) => {
+    return isLightColor(backgroundColor) ? "#000000" : "#FFFFFF";
+  };
+
+  const handleSurpriseMe = () => {
+    const primaryColor = getRandomColor();
+    const secondaryColor = getRandomColor();
+    
+    // Random background type
+    const backgroundTypes = ['solid', 'gradient', 'pattern'];
+    const backgroundType = backgroundTypes[Math.floor(Math.random() * backgroundTypes.length)];
+    
+    let backgroundColor = "#000000";
+    let backgroundGradientStart, backgroundGradientEnd, backgroundPattern;
+    
+    if (backgroundType === 'solid') {
+      backgroundColor = getRandomColor();
+    } else if (backgroundType === 'gradient') {
+      backgroundGradientStart = getRandomColor();
+      backgroundGradientEnd = getRandomColor();
+      // Use the start color to determine text contrast
+      backgroundColor = backgroundGradientStart;
+    } else if (backgroundType === 'pattern') {
+      backgroundColor = getRandomColor();
+      const patterns = ['dots', 'lines', 'waves', 'geometric'];
+      backgroundPattern = patterns[Math.floor(Math.random() * patterns.length)];
+    }
+
+    const fontFamilies = ['comic', 'retro', 'helvetica', 'times', 'impact'];
+    const borderStyles = ['retro', 'modern'];
+    
+    const randomTheme = {
+      primaryColor,
+      secondaryColor,
+      fontFamily: fontFamilies[Math.floor(Math.random() * fontFamilies.length)],
+      fontColor: getContrastingTextColor(backgroundColor),
+      navBgColor: getRandomColor(),
+      navActiveColor: primaryColor,
+      borderStyle: borderStyles[Math.floor(Math.random() * borderStyles.length)],
+      enableSparkles: Math.random() > 0.5,
+      backgroundType,
+      backgroundColor: backgroundType === 'solid' ? backgroundColor : undefined,
+      backgroundGradientStart,
+      backgroundGradientEnd,
+      backgroundPattern,
+    };
+    
+    saveThemeMutation.mutate(randomTheme);
+  };
+
   if (isLoading) {
     return (
       <div className="p-4">
@@ -89,6 +154,7 @@ export default function Themes() {
         theme={theme as any}
         onSave={handleSaveTheme}
         onReset={handleResetTheme}
+        onSurpriseMe={handleSurpriseMe}
       />
     </div>
   );

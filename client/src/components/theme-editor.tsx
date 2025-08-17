@@ -13,6 +13,7 @@ interface ThemeEditorProps {
   theme?: UserTheme | null;
   onSave: (theme: Partial<UserTheme>) => void;
   onReset: () => void;
+  onSurpriseMe?: () => void;
 }
 
 const defaultTheme = {
@@ -31,7 +32,7 @@ const defaultTheme = {
   backgroundPattern: "dots",
 };
 
-export function ThemeEditor({ theme, onSave, onReset }: ThemeEditorProps) {
+export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe }: ThemeEditorProps) {
   const [currentTheme, setCurrentTheme] = useState(theme || defaultTheme);
 
   useEffect(() => {
@@ -378,6 +379,7 @@ export function ThemeEditor({ theme, onSave, onReset }: ThemeEditorProps) {
         <Button
           onClick={handleSave}
           className="flex-1 bg-green-600 hover:bg-green-700 text-black font-bold"
+          data-testid="button-save-theme"
         >
           Save Theme
         </Button>
@@ -385,9 +387,20 @@ export function ThemeEditor({ theme, onSave, onReset }: ThemeEditorProps) {
           onClick={handleReset}
           variant="outline"
           className="flex-1 bg-gray-600 hover:bg-gray-700 text-white border-gray-600"
+          data-testid="button-reset-theme"
         >
           Reset
         </Button>
+        {onSurpriseMe && (
+          <Button
+            onClick={onSurpriseMe}
+            variant="outline"
+            className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-purple-600"
+            data-testid="button-surprise-me"
+          >
+            🎲 Surprise Me
+          </Button>
+        )}
       </div>
     </div>
   );
