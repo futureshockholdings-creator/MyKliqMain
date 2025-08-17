@@ -1212,8 +1212,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateEvent(eventId: string, updates: Partial<InsertEvent>): Promise<Event> {
+    console.log(`Updating event ${eventId} with:`, updates);
+    
     // Get the original event for comparison
     const originalEvent = await this.getEventById(eventId);
+    console.log(`Original event found:`, originalEvent);
     
     const [updatedEvent] = await db
       .update(events)
@@ -1221,35 +1224,48 @@ export class DatabaseStorage implements IStorage {
       .where(eq(events.id, eventId))
       .returning();
 
+    console.log(`Event updated successfully:`, updatedEvent);
+
     // Auto-post to kliq feed about event update
     if (originalEvent) {
-      const eventDate = new Date(updatedEvent.eventDate);
-      const formattedDate = eventDate.toLocaleDateString("en-US", { 
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric',
-        year: eventDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
-      });
-      const formattedTime = eventDate.toLocaleTimeString("en-US", { 
-        hour: 'numeric', 
-        minute: '2-digit' 
-      });
-      
-      let postContent = `✏️ Updated event: "${updatedEvent.title}"`;
-      if (updatedEvent.location) {
-        postContent += `\n📍 ${updatedEvent.location}`;
-      }
-      postContent += `\n🕒 ${formattedDate} at ${formattedTime}`;
-      if (updatedEvent.description) {
-        postContent += `\n\n${updatedEvent.description}`;
-      }
+      console.log(`Creating auto-post for event update...`);
+      try {
+        const eventDate = new Date(updatedEvent.eventDate);
+        const formattedDate = eventDate.toLocaleDateString("en-US", { 
+          weekday: 'short', 
+          month: 'short', 
+          day: 'numeric',
+          year: eventDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+        });
+        const formattedTime = eventDate.toLocaleTimeString("en-US", { 
+          hour: 'numeric', 
+          minute: '2-digit' 
+        });
+        
+        let postContent = `✏️ Updated event: "${updatedEvent.title}"`;
+        if (updatedEvent.location) {
+          postContent += `\n📍 ${updatedEvent.location}`;
+        }
+        postContent += `\n🕒 ${formattedDate} at ${formattedTime}`;
+        if (updatedEvent.description) {
+          postContent += `\n\n${updatedEvent.description}`;
+        }
 
-      await this.createPost({
-        userId: updatedEvent.userId,
-        content: postContent,
-        mediaUrl: updatedEvent.mediaUrl || null,
-        mediaType: updatedEvent.mediaType || null,
-      });
+        console.log(`Auto-post content:`, postContent);
+
+        const autoPost = await this.createPost({
+          userId: updatedEvent.userId,
+          content: postContent,
+          mediaUrl: updatedEvent.mediaUrl || null,
+          mediaType: updatedEvent.mediaType || null,
+        });
+
+        console.log(`Auto-post created successfully:`, autoPost);
+      } catch (error) {
+        console.error(`Error creating auto-post for event update:`, error);
+      }
+    } else {
+      console.log(`No original event found, skipping auto-post`);
     }
 
     return updatedEvent;
