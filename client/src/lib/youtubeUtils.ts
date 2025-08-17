@@ -79,8 +79,12 @@ export function extractYouTubeUrlsFromText(text: string): { cleanText: string; y
     cleanText = cleanText.replace(url, '').trim();
   });
   
-  // Clean up extra whitespace
-  cleanText = cleanText.replace(/\s+/g, ' ').trim();
+  // Clean up extra whitespace and empty lines
+  cleanText = cleanText
+    .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
+    .replace(/^\s+|\s+$/g, '')  // Trim leading/trailing spaces
+    .replace(/\n\s*\n/g, '\n')  // Remove empty lines
+    .trim();
   
   return { cleanText, youtubeUrls };
 }
