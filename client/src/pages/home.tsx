@@ -1215,12 +1215,20 @@ export default function Home() {
           } else if (item.type === 'event') {
             // Event item display with interactive attendance
             console.log('Rendering EventCard for event:', item.id, 'with currentUserId:', userData?.id);
+            console.log('Event item data:', item);
             return (
-              <EventCard
-                key={item.id}
-                event={item}
-                currentUserId={userData?.id}
-              />
+              <div key={item.id} className="w-full bg-red-100 border-4 border-red-500 p-4 mb-4">
+                <h2 className="text-2xl font-bold text-red-800 mb-4">EVENT DETECTED: {item.title}</h2>
+                <div className="bg-yellow-200 p-2 mb-4">
+                  <p>Event ID: {item.id}</p>
+                  <p>Event Type: {item.type}</p>
+                  <p>User ID: {userData?.id}</p>
+                </div>
+                <EventCard
+                  event={item}
+                  currentUserId={userData?.id}
+                />
+              </div>
             );
           } else {
             // Other activity item display (actions, etc.)
