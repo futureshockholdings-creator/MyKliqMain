@@ -144,6 +144,14 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
   const displayStatus = selectedAttendance || currentStatus;
   const isUpdating = updateAttendanceMutation.isPending;
 
+  console.log('EventCard rendering:', {
+    eventId: event.id,
+    eventTitle: event.title,
+    currentUserId,
+    currentStatus,
+    attendanceQuery: attendanceQuery.data
+  });
+
   return (
     <Card className="bg-gradient-to-br from-card to-card/80 border border-primary/30">
       <CardContent className="p-4">
