@@ -161,7 +161,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
                 {event.author.firstName} {event.author.lastName}
               </p>
               <p className="text-xs text-muted-foreground">
-                {formatTimeAgo(event.createdAt)}
+                {formatTimeAgo(event.activityDate || event.createdAt)}
               </p>
             </div>
             <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">

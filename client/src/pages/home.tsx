@@ -59,9 +59,9 @@ export default function Home() {
   });
 
   // Separate different types of feed items
-  const posts = feedItems.filter((item: any) => item.type === 'post');
-  const polls = feedItems.filter((item: any) => item.type === 'poll');
-  const activityItems = feedItems.filter((item: any) => item.type !== 'post' && item.type !== 'poll');
+  const posts = (feedItems as any[]).filter((item: any) => item.type === 'post');
+  const polls = (feedItems as any[]).filter((item: any) => item.type === 'poll');
+  const activityItems = (feedItems as any[]).filter((item: any) => item.type !== 'post' && item.type !== 'poll');
 
   // Fetch filters
   const { data: filters = [] } = useQuery({
@@ -508,8 +508,8 @@ export default function Home() {
 
   const handleSharePost = async (post: any) => {
     const shareData = {
-      title: `${item.author.firstName} ${item.author.lastName} on MyKliq`,
-      text: item.content || "Check out this post on MyKliq!",
+      title: `${post.author.firstName} ${post.author.lastName} on MyKliq`,
+      text: post.content || "Check out this post on MyKliq!",
       url: window.location.href
     };
 
@@ -887,7 +887,7 @@ export default function Home() {
             </Card>
           ))}
         </div>
-      ) : feedItems.length === 0 ? (
+      ) : (feedItems as any[]).length === 0 ? (
         <Card className="bg-card border-border">
           <CardContent className="p-8 text-center">
             <div className="text-4xl mb-4">🌟</div>
@@ -905,7 +905,7 @@ export default function Home() {
           </CardContent>
         </Card>
       ) : (
-        feedItems.map((item: any) => {
+        (feedItems as any[]).map((item: any) => {
           if (item.type === 'poll') {
             return (
               <PollCard
@@ -1214,7 +1214,6 @@ export default function Home() {
             );
           } else if (item.type === 'event') {
             // Event item display with interactive attendance
-            console.log('Event item data:', item);
             return (
               <EventCard
                 key={item.id}
