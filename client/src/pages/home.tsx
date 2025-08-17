@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -48,7 +49,7 @@ export default function Home() {
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [locationName, setLocationName] = useState('');
   const [address, setAddress] = useState('');
-  const [eventAttendance, setEventAttendance] = useState<Record<string, 'going' | 'maybe' | 'not_going'>>({});
+
   const { user } = useAuth();
   const userData = user as any;
   const { toast } = useToast();
@@ -295,39 +296,7 @@ export default function Home() {
     },
   });
 
-  // Event attendance mutations
-  const updateAttendanceMutation = useMutation({
-    mutationFn: async ({ eventId, status }: { eventId: string; status: 'going' | 'maybe' | 'not_going' }) => {
-      await apiRequest("POST", `/api/events/${eventId}/attendance`, { status });
-    },
-    onSuccess: (_, { eventId, status }) => {
-      setEventAttendance(prev => ({ ...prev, [eventId]: status }));
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
-      toast({
-        title: "Attendance updated",
-        description: "Your attendance status has been saved",
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to update attendance",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   // Like toggle mutation for events and posts
   const likeToggleMutation = useMutation({
@@ -431,10 +400,7 @@ export default function Home() {
     setShowCommentEmojiPicker(null);
   };
 
-  // Event attendance handler
-  const handleEventAttendance = (eventId: string, status: 'going' | 'maybe' | 'not_going') => {
-    updateAttendanceMutation.mutate({ eventId, status });
-  };
+
 
   // Like toggle handler
   const handleLikeToggle = (itemId: string) => {
@@ -980,145 +946,7 @@ export default function Home() {
       ) : (
         <>
 
-          
-          {/* Event Posts - Rendered Separately to Avoid React Mixed-Type Issues */}
-          {(feedItems as any[]).filter((item: any) => item.type === 'event').map((item: any) => {
-            const userAttendance = item.userAttendanceStatus || eventAttendance[item.id];
-            return (
-              <Card key={`event-${item.id}`} className={cn(
-                "bg-gradient-to-br from-muted/50 to-muted/20 border border-muted-foreground/20"
-              )}>
-                <CardContent className="p-4">
-                  <div className="space-y-4">
-                    {/* Event Header */}
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="w-10 h-10 border-2 border-primary">
-                        <AvatarImage src={item.author.profileImageUrl} />
-                        <AvatarFallback className="bg-muted text-foreground">
-                          {item.author.firstName?.[0] || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="font-bold text-primary">
-                          {item.author.firstName} {item.author.lastName}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Created an event
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatTimeAgo(item.activityDate)}
-                        </p>
-                      </div>
-                      <Badge variant="secondary" className="text-xs">
-                        Event
-                      </Badge>
-                    </div>
 
-                    {/* Event Details */}
-                    <div className="bg-background/50 rounded-lg p-4 space-y-3">
-                      <h3 className="text-lg font-semibold text-primary">{item.title}</h3>
-                      
-                      {item.description && (
-                        <p className="text-muted-foreground">{item.description}</p>
-                      )}
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        {item.date && (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-primary" />
-                            <span>{new Date(item.date).toLocaleDateString()}</span>
-                          </div>
-                        )}
-                        
-                        {item.time && (
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-primary" />
-                            <span>{item.time}</span>
-                          </div>
-                        )}
-                        
-                        {item.location && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-primary" />
-                            <span>{item.location}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Attendance Buttons */}
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Will you attend?</p>
-                      <div className="flex gap-2 flex-wrap">
-                        <Button
-                          size="sm"
-                          variant={userAttendance === 'going' ? 'default' : 'outline'}
-                          onClick={() => handleEventAttendance(item.id, 'going')}
-                          disabled={updateAttendanceMutation.isPending}
-                          className={cn(
-                            "flex items-center gap-1",
-                            userAttendance === 'going' && "bg-green-600 hover:bg-green-700"
-                          )}
-                          data-testid={`button-attendance-going-${item.id}`}
-                        >
-                          <Check className="w-4 h-4" />
-                          Going
-                        </Button>
-                        
-                        <Button
-                          size="sm"
-                          variant={userAttendance === 'maybe' ? 'default' : 'outline'}
-                          onClick={() => handleEventAttendance(item.id, 'maybe')}
-                          disabled={updateAttendanceMutation.isPending}
-                          className={cn(
-                            "flex items-center gap-1",
-                            userAttendance === 'maybe' && "bg-yellow-600 hover:bg-yellow-700"
-                          )}
-                          data-testid={`button-attendance-maybe-${item.id}`}
-                        >
-                          <HelpCircle className="w-4 h-4" />
-                          Maybe
-                        </Button>
-                        
-                        <Button
-                          size="sm"
-                          variant={userAttendance === 'not_going' ? 'default' : 'outline'}
-                          onClick={() => handleEventAttendance(item.id, 'not_going')}
-                          disabled={updateAttendanceMutation.isPending}
-                          className={cn(
-                            "flex items-center gap-1",
-                            userAttendance === 'not_going' && "bg-red-600 hover:bg-red-700"
-                          )}
-                          data-testid={`button-attendance-not-going-${item.id}`}
-                        >
-                          <X className="w-4 h-4" />
-                          Can't Go
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Like Button */}
-                    <div className="flex items-center justify-between pt-2 border-t border-border">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleLikeToggle(item.id)}
-                        disabled={likeToggleMutation.isPending}
-                        className={cn(
-                          "flex items-center gap-2",
-                          item.userHasLiked && "text-red-500"
-                        )}
-                        data-testid={`button-like-${item.id}`}
-                      >
-                        <Heart className={cn("w-4 h-4", item.userHasLiked && "fill-current")} />
-                        <span>{item.likesCount || 0}</span>
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
           
           {(feedItems as any[]).filter((item: any) => item.type !== 'event').map((item: any) => {
           console.log("Feed item processing:", item.type, item.title || item.content?.substring(0, 30));
@@ -1171,9 +999,20 @@ export default function Home() {
               {item.content && (
                 (() => {
                   const { cleanText, youtubeUrls } = extractYouTubeUrlsFromText(item.content);
+                  const isEventPost = cleanText?.includes('📅 New event:') || cleanText?.includes('✏️ Updated event:');
+                  
                   return (
                     <>
-                      {cleanText && <p className="text-foreground mb-3">{cleanText}</p>}
+                      {cleanText && (
+                        isEventPost ? (
+                          <Link href="/events" className="block cursor-pointer hover:bg-primary/5 rounded p-2 -m-2 transition-colors">
+                            <p className="text-foreground mb-3">{cleanText}</p>
+                            <p className="text-xs text-muted-foreground italic">Click to view event details and manage attendance</p>
+                          </Link>
+                        ) : (
+                          <p className="text-foreground mb-3">{cleanText}</p>
+                        )
+                      )}
                       {youtubeUrls.length > 0 && (
                         <div className="mb-3">
                           <YouTubeEmbedList urls={youtubeUrls} />
@@ -1186,22 +1025,37 @@ export default function Home() {
               
               {/* Media Content */}
               {item.mediaUrl && (
-                <div className="mb-3 rounded-lg overflow-hidden bg-black/20">
-                  {item.mediaType === 'video' ? (
-                    <video 
-                      src={item.mediaUrl} 
-                      controls 
-                      className="w-full max-h-96 object-cover"
-                      preload="metadata"
-                    />
+                (() => {
+                  const { cleanText } = extractYouTubeUrlsFromText(item.content || '');
+                  const isEventPost = cleanText?.includes('📅 New event:') || cleanText?.includes('✏️ Updated event:');
+                  
+                  const mediaElement = (
+                    <div className="mb-3 rounded-lg overflow-hidden bg-black/20">
+                      {item.mediaType === 'video' ? (
+                        <video 
+                          src={item.mediaUrl} 
+                          controls 
+                          className="w-full max-h-96 object-cover"
+                          preload="metadata"
+                        />
+                      ) : (
+                        <img 
+                          src={item.mediaUrl} 
+                          alt="Post media" 
+                          className="w-full max-h-96 object-cover"
+                        />
+                      )}
+                    </div>
+                  );
+                  
+                  return isEventPost ? (
+                    <Link href="/events" className="block cursor-pointer">
+                      {mediaElement}
+                    </Link>
                   ) : (
-                    <img 
-                      src={item.mediaUrl} 
-                      alt="Post media" 
-                      className="w-full max-h-96 object-cover"
-                    />
-                  )}
-                </div>
+                    mediaElement
+                  );
+                })()
               )}
               
               {/* GIF Content */}
