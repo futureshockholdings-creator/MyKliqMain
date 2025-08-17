@@ -1459,9 +1459,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/polls', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const { expiresAt, ...otherData } = req.body;
+      
       const pollData = insertPollSchema.parse({
-        ...req.body,
+        ...otherData,
         userId,
+        expiresAt: new Date(expiresAt), // Convert string to Date object
       });
 
       const poll = await storage.createPoll(pollData);

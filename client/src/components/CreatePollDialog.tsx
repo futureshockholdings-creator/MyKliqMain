@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -120,6 +120,9 @@ export function CreatePollDialog({ trigger }: CreatePollDialogProps) {
       <DialogContent className="bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600 max-w-md">
         <DialogHeader>
           <DialogTitle className="text-black dark:text-white">Create a New Poll</DialogTitle>
+          <DialogDescription className="text-gray-600 dark:text-gray-400">
+            Ask your friends a question with multiple choice options
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
