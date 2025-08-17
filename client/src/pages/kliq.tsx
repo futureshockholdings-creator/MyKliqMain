@@ -342,7 +342,7 @@ export default function Kliq() {
           </h1>
         </div>
         <p className="text-muted-foreground text-sm">
-          Drag friends to reorder your pyramid
+          Drag friends to reorder
         </p>
       </div>
 
