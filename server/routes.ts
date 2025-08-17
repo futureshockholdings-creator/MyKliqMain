@@ -849,7 +849,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid attendance status" });
       }
       
+      // Get event details and user info for notifications
+      const event = await storage.getEventById(eventId);
+      const user = await storage.getUser(userId);
+      
+      if (!event || !user) {
+        return res.status(404).json({ message: "Event or user not found" });
+      }
+      
       await storage.updateEventAttendance(eventId, userId, status);
+      
+      // Initialize notification service for creating attendance notifications
+      const { NotificationService } = await import("./notificationService");
+      const notificationService = new NotificationService();
+      
+      // Create notification for event creator (if they're not the one updating)
+      if (event.userId !== userId) {
+        const statusText = status === 'going' ? '✅ Going' : 
+                          status === 'maybe' ? '❓ Maybe' : 
+                          '❌ Can\'t Go';
+                          
+        await notificationService.createNotification({
+          userId: event.userId,
+          type: 'event_attendance',
+          title: 'Event Attendance Updated',
+          message: `${user.firstName} ${user.lastName} responded ${statusText} to "${event.title}"`,
+          relatedId: eventId,
+          relatedType: 'event'
+        });
+      }
+      
+      // Create notifications for other attendees (optional - can be enabled/disabled)
+      // Get all other attendees to notify them of the attendance change
+      const otherAttendees = await storage.getEventAttendees(eventId);
+      for (const attendee of otherAttendees) {
+        // Skip the user making the change and the event creator (already notified above)
+        if (attendee.userId !== userId && attendee.userId !== event.userId) {
+          const statusText = status === 'going' ? '✅ is going' : 
+                            status === 'maybe' ? '❓ might go' : 
+                            '❌ can\'t go';
+                            
+          await notificationService.createNotification({
+            userId: attendee.userId,
+            type: 'event_attendance',
+            title: 'Event Attendance Update',
+            message: `${user.firstName} ${user.lastName} ${statusText} to "${event.title}"`,
+            relatedId: eventId,
+            relatedType: 'event'
+          });
+        }
+      }
+      
       res.json({ success: true });
     } catch (error) {
       console.error("Error updating attendance:", error);
