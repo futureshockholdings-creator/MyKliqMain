@@ -58,43 +58,33 @@ export function PollCard({ poll }: PollCardProps) {
 
   const voteMutation = useMutation({
     mutationFn: async (option: number) => {
-      await apiRequest("POST", `/api/polls/${poll.id}/vote`, { selectedOption: option });
-      return option;
+      const response = await apiRequest("POST", `/api/polls/${poll.id}/vote`, { selectedOption: option });
+      return { option, response };
     },
     onMutate: async (option: number) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["/api/polls", poll.id, "results"] });
       
       // Snapshot the previous value
       const previousResults = queryClient.getQueryData(["/api/polls", poll.id, "results"]);
       
-      // Optimistically update to the new value
+      // Optimistically update UI immediately
       setSelectedOption(option);
       
-      // Optionally update results cache optimistically
-      if (previousResults && Array.isArray(previousResults)) {
-        const updatedResults = [...previousResults];
-        if (updatedResults[option]) {
-          updatedResults[option] = {
-            ...updatedResults[option],
-            votes: updatedResults[option].votes + 1,
-          };
-          // Recalculate percentages
-          const totalVotes = updatedResults.reduce((sum, result) => sum + result.votes, 0);
-          updatedResults.forEach(result => {
-            result.percentage = totalVotes > 0 ? (result.votes / totalVotes) * 100 : 0;
-          });
-          queryClient.setQueryData(["/api/polls", poll.id, "results"], updatedResults);
-        }
+      return { previousResults, option };
+    },
+    onSuccess: (data) => {
+      // Use server response if available, otherwise refetch
+      if (data.response?.results) {
+        queryClient.setQueryData(["/api/polls", poll.id, "results"], data.response.results);
+      } else {
+        refetchResults();
       }
       
-      return { previousResults };
-    },
-    onSuccess: () => {
-      // Immediately refetch results to get accurate data
-      refetchResults();
+      // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      
       toast({
         title: "Vote recorded!",
         description: "Your vote has been saved successfully",

@@ -1522,7 +1522,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const vote = await storage.votePoll(voteData);
-      res.json(vote);
+      console.log(`User ${userId} voted ${selectedOption} on poll ${pollId}`);
+      
+      // Get fresh poll results after the vote
+      const updatedResults = await storage.getPollResults(pollId);
+      console.log(`Updated poll results for ${pollId}:`, updatedResults);
+      
+      res.json({ vote, results: updatedResults });
     } catch (error) {
       console.error("Error voting on poll:", error);
       res.status(500).json({ message: "Failed to vote on poll" });
