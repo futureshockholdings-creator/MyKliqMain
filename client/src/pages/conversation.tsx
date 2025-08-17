@@ -321,23 +321,23 @@ export function Conversation() {
       </div>
 
       {/* Message Input */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+      <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white text-black">
         <div className="max-w-2xl mx-auto">
           {/* Selected media preview */}
           {selectedMedia && (
-            <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <div className="mb-3 p-3 bg-gray-100 text-black rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {selectedMedia.type === "gif" && (
                     <>
                       <span className="text-sm font-medium">🎭 GIF selected:</span>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{selectedMedia.data.title}</span>
+                      <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
                     </>
                   )}
                   {selectedMedia.type === "moviecon" && (
                     <>
                       <span className="text-sm font-medium">🎬 Moviecon selected:</span>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{selectedMedia.data.title}</span>
+                      <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
                     </>
                   )}
                   {(selectedMedia.type === "image" || selectedMedia.type === "video") && (
