@@ -979,20 +979,7 @@ export default function Home() {
         </Card>
       ) : (
         <>
-          {/* DEBUG: Force render event test */}
-          <div style={{
-            width: '100%',
-            backgroundColor: 'purple',
-            border: '15px solid lime',
-            padding: '30px',
-            margin: '30px 0',
-            color: 'white',
-            fontSize: '28px',
-            fontWeight: 'bold',
-            textAlign: 'center'
-          }}>
-            🔥 FORCED EVENT TEST - Pool Party Event Should Appear Below 🔥
-          </div>
+
           
           {/* Event Posts - Rendered Separately to Avoid React Mixed-Type Issues */}
           {(feedItems as any[]).filter((item: any) => item.type === 'event').map((item: any) => {
