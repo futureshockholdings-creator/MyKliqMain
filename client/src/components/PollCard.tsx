@@ -75,28 +75,6 @@ export function PollCard({ poll }: PollCardProps) {
     },
   });
 
-  const mockVotesMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", `/api/polls/${poll.id}/mock-votes`, {});
-    },
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/polls", poll.id, "results"] });
-      toast({
-        title: "Mock votes created!",
-        description: `Added ${data.votes} votes from friends`,
-      });
-    },
-    onError: (error) => {
-      console.error("Error creating mock votes:", error);
-      toast({
-        title: "Failed to create mock votes",
-        description: "Please try again",
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleVote = (optionIndex: number) => {
     setSelectedOption(optionIndex);
     voteMutation.mutate(optionIndex);
@@ -196,20 +174,6 @@ export function PollCard({ poll }: PollCardProps) {
               </div>
             );
           })}
-          
-          {/* Mock votes button for testing - only show for poll creator */}
-          <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => mockVotesMutation.mutate()}
-              disabled={mockVotesMutation.isPending}
-              className="w-full text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/30"
-              data-testid={`button-mock-votes-${poll.id}`}
-            >
-              {mockVotesMutation.isPending ? "Adding Mock Votes..." : "Add Mock Friend Votes (Testing)"}
-            </Button>
-          </div>
         </div>
       </CardContent>
     </Card>
