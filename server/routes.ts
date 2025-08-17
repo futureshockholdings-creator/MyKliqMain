@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { notificationService } from "./notificationService";
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 
@@ -1441,6 +1441,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting moviecon:", error);
       res.status(500).json({ message: "Failed to delete moviecon" });
+    }
+  });
+
+  // Poll routes
+  app.get('/api/polls', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const polls = await storage.getPolls(userId);
+      res.json(polls);
+    } catch (error) {
+      console.error("Error fetching polls:", error);
+      res.status(500).json({ message: "Failed to fetch polls" });
+    }
+  });
+
+  app.post('/api/polls', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const pollData = insertPollSchema.parse({
+        ...req.body,
+        userId,
+      });
+
+      const poll = await storage.createPoll(pollData);
+      res.json(poll);
+    } catch (error) {
+      console.error("Error creating poll:", error);
+      res.status(500).json({ message: "Failed to create poll" });
+    }
+  });
+
+  app.get('/api/polls/:pollId', isAuthenticated, async (req, res) => {
+    try {
+      const { pollId } = req.params;
+      const poll = await storage.getPollById(pollId);
+      
+      if (!poll) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
+      
+      res.json(poll);
+    } catch (error) {
+      console.error("Error fetching poll:", error);
+      res.status(500).json({ message: "Failed to fetch poll" });
+    }
+  });
+
+  app.post('/api/polls/:pollId/vote', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { pollId } = req.params;
+      const { selectedOption } = req.body;
+
+      if (typeof selectedOption !== 'number') {
+        return res.status(400).json({ message: "Selected option must be a number" });
+      }
+
+      const voteData = insertPollVoteSchema.parse({
+        pollId,
+        userId,
+        selectedOption,
+      });
+
+      const vote = await storage.votePoll(voteData);
+      res.json(vote);
+    } catch (error) {
+      console.error("Error voting on poll:", error);
+      res.status(500).json({ message: "Failed to vote on poll" });
+    }
+  });
+
+  app.get('/api/polls/:pollId/results', isAuthenticated, async (req, res) => {
+    try {
+      const { pollId } = req.params;
+      const results = await storage.getPollResults(pollId);
+      res.json(results);
+    } catch (error) {
+      console.error("Error fetching poll results:", error);
+      res.status(500).json({ message: "Failed to fetch poll results" });
     }
   });
 

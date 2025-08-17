@@ -67,6 +67,12 @@ import {
   moviecons,
   type Moviecon,
   type InsertMoviecon,
+  polls,
+  pollVotes,
+  type Poll,
+  type InsertPoll,
+  type PollVote,
+  type InsertPollVote,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, isNull, isNotNull } from "drizzle-orm";
@@ -197,6 +203,14 @@ export interface IStorage {
   createGif(gif: InsertGif): Promise<Gif>;
   updateGif(id: string, updates: Partial<Gif>): Promise<Gif>;
   deleteGif(id: string): Promise<void>;
+
+  // Poll operations
+  getPolls(userId: string): Promise<(Poll & { author: User; votes: PollVote[]; totalVotes: number; userVote?: PollVote })[]>;
+  getPollById(pollId: string): Promise<Poll | undefined>;
+  createPoll(poll: InsertPoll): Promise<Poll>;
+  votePoll(vote: InsertPollVote): Promise<PollVote>;
+  getUserPollVote(pollId: string, userId: string): Promise<PollVote | undefined>;
+  getPollResults(pollId: string): Promise<{ option: string; index: number; votes: number; percentage: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1579,6 +1593,92 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMoviecon(id: string): Promise<void> {
     await db.delete(moviecons).where(eq(moviecons.id, id));
+  }
+
+  // Poll operations
+  async getPolls(userId: string): Promise<(Poll & { author: User; votes: PollVote[]; totalVotes: number; userVote?: PollVote })[]> {
+    const userPolls = await db
+      .select({
+        poll: polls,
+        author: users,
+      })
+      .from(polls)
+      .innerJoin(users, eq(polls.userId, users.id))
+      .where(eq(polls.isActive, true))
+      .orderBy(desc(polls.createdAt));
+
+    const pollsWithVotes = await Promise.all(
+      userPolls.map(async ({ poll, author }) => {
+        const votes = await db.select().from(pollVotes).where(eq(pollVotes.pollId, poll.id));
+        const userVote = votes.find(vote => vote.userId === userId);
+        
+        return {
+          ...poll,
+          author,
+          votes,
+          totalVotes: votes.length,
+          userVote,
+        };
+      })
+    );
+
+    return pollsWithVotes;
+  }
+
+  async getPollById(pollId: string): Promise<Poll | undefined> {
+    const [poll] = await db.select().from(polls).where(eq(polls.id, pollId));
+    return poll;
+  }
+
+  async createPoll(poll: InsertPoll): Promise<Poll> {
+    const [newPoll] = await db.insert(polls).values(poll).returning();
+    return newPoll;
+  }
+
+  async votePoll(vote: InsertPollVote): Promise<PollVote> {
+    // First, check if user already voted on this poll
+    const existingVote = await this.getUserPollVote(vote.pollId, vote.userId);
+    if (existingVote) {
+      // Update existing vote
+      const [updatedVote] = await db
+        .update(pollVotes)
+        .set({ selectedOption: vote.selectedOption })
+        .where(and(eq(pollVotes.pollId, vote.pollId), eq(pollVotes.userId, vote.userId)))
+        .returning();
+      return updatedVote;
+    } else {
+      // Create new vote
+      const [newVote] = await db.insert(pollVotes).values(vote).returning();
+      return newVote;
+    }
+  }
+
+  async getUserPollVote(pollId: string, userId: string): Promise<PollVote | undefined> {
+    const [vote] = await db
+      .select()
+      .from(pollVotes)
+      .where(and(eq(pollVotes.pollId, pollId), eq(pollVotes.userId, userId)));
+    return vote;
+  }
+
+  async getPollResults(pollId: string): Promise<{ option: string; index: number; votes: number; percentage: number }[]> {
+    const poll = await this.getPollById(pollId);
+    if (!poll) return [];
+
+    const votes = await db.select().from(pollVotes).where(eq(pollVotes.pollId, pollId));
+    const totalVotes = votes.length;
+
+    return poll.options.map((option, index) => {
+      const optionVotes = votes.filter(vote => vote.selectedOption === index).length;
+      const percentage = totalVotes > 0 ? (optionVotes / totalVotes) * 100 : 0;
+      
+      return {
+        option,
+        index,
+        votes: optionVotes,
+        percentage: Math.round(percentage * 10) / 10, // Round to 1 decimal place
+      };
+    });
   }
 }
 

@@ -234,6 +234,31 @@ export const conversations = pgTable("conversations", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Polls table
+export const polls = pgTable("polls", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  options: text("options").array().notNull(), // Array of poll options
+  expiresAt: timestamp("expires_at").notNull(), // When the poll expires
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Poll votes table
+export const pollVotes = pgTable("poll_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pollId: varchar("poll_id").references(() => polls.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  selectedOption: integer("selected_option").notNull(), // Index of the selected option
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  // Ensure one vote per user per poll
+  index("unique_user_poll_vote").on(table.pollId, table.userId)
+]);
+
 // Events with countdown functionality
 export const events = pgTable("events", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -524,6 +549,25 @@ export const conversationsRelations = relations(conversations, ({ one }) => ({
   }),
 }));
 
+export const pollsRelations = relations(polls, ({ one, many }) => ({
+  author: one(users, {
+    fields: [polls.userId],
+    references: [users.id],
+  }),
+  votes: many(pollVotes),
+}));
+
+export const pollVotesRelations = relations(pollVotes, ({ one }) => ({
+  poll: one(polls, {
+    fields: [pollVotes.pollId],
+    references: [polls.id],
+  }),
+  voter: one(users, {
+    fields: [pollVotes.userId],
+    references: [users.id],
+  }),
+}));
+
 export const eventsRelations = relations(events, ({ one, many }) => ({
   author: one(users, {
     fields: [events.userId],
@@ -723,3 +767,12 @@ export type MeetupCheckIn = typeof meetupCheckIns.$inferSelect;
 export type InsertMeetupCheckIn = z.infer<typeof insertMeetupCheckInSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+// Poll types
+export const insertPollSchema = createInsertSchema(polls).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertPoll = z.infer<typeof insertPollSchema>;
+export type Poll = typeof polls.$inferSelect;
+
+export const insertPollVoteSchema = createInsertSchema(pollVotes).omit({ id: true, createdAt: true });
+export type InsertPollVote = z.infer<typeof insertPollVoteSchema>;
+export type PollVote = typeof pollVotes.$inferSelect;

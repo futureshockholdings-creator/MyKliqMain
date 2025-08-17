@@ -4,11 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PyramidChart } from "@/components/pyramid-chart";
 import { VideoCallComponent } from "@/components/video-call";
+import { PollCard } from "@/components/PollCard";
+import { CreatePollDialog } from "@/components/CreatePollDialog";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import { Badge } from "@/components/ui/badge";
-import { Users, Edit, Plus, Copy, MessageCircle, X } from "lucide-react";
+import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -56,6 +59,11 @@ export default function Kliq() {
     }; 
   }[]>({
     queryKey: ["/api/friends"],
+  });
+
+  // Fetch polls
+  const { data: polls = [], isLoading: pollsLoading } = useQuery<any[]>({
+    queryKey: ["/api/polls"],
   });
 
   // Update kliq name
@@ -346,137 +354,208 @@ export default function Kliq() {
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-secondary" data-testid="text-friend-count">
-              {friends.length}/15
-            </div>
-            <div className="text-sm text-muted-foreground">Friends</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-mykliq-purple" data-testid="text-open-spots">
-              {15 - friends.length}
-            </div>
-            <div className="text-sm text-muted-foreground">Open Spots</div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Tabs */}
+      <Tabs defaultValue="friends" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 bg-muted">
+          <TabsTrigger value="friends" className="flex items-center gap-2" data-testid="tab-friends">
+            <Users className="w-4 h-4" />
+            Friends ({friends.length}/15)
+          </TabsTrigger>
+          <TabsTrigger value="polls" className="flex items-center gap-2" data-testid="tab-polls">
+            <BarChart3 className="w-4 h-4" />
+            Polls ({polls.length})
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Pyramid Chart */}
-      {friendsLoading ? (
-        <Card className="bg-card border-border">
-          <CardContent className="p-8 text-center">
-            <div className="animate-pulse space-y-4">
-              <div className="w-16 h-16 bg-muted rounded-full mx-auto"></div>
-              <div className="space-y-2">
-                <div className="w-24 h-4 bg-muted rounded mx-auto"></div>
-                <div className="w-32 h-3 bg-muted rounded mx-auto"></div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : friends.length === 0 ? (
-        <Card className="bg-card border-border">
-          <CardContent className="p-8 text-center">
-            <div className="text-4xl mb-4">👥</div>
-            <h3 className="text-lg font-bold text-muted-foreground mb-2">No friends yet</h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Share your invite code or join someone else's kliq to get started!
-            </p>
-            <Button
-              onClick={() => setIsInviteDialogOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Join a Kliq
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <PyramidChart
-          friends={friends.map(f => ({
-            id: f.friend.id,
-            firstName: f.friend.firstName,
-            lastName: f.friend.lastName,
-            profileImageUrl: f.friend.profileImageUrl,
-            rank: f.rank
-          }))}
-          onRankChange={handleRankChange}
-          onMessage={handleMessageFriend}
-          onVideoCall={handleVideoCall}
-          onRemove={handleRemoveFriend}
-          maxFriends={15}
-          kliqName={userData?.kliqName}
-        />
-      )}
-
-      {/* Invite Code */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-mykliq-green text-lg">
-            📱 Your Invite Code
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between bg-muted rounded p-3">
-            <code className="text-mykliq-green font-mono font-bold" data-testid="text-invite-code">
-              {userData?.inviteCode || "Loading..."}
-            </code>
-            <Button
-              size="sm"
-              onClick={copyInviteCode}
-              className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground"
-              disabled={!userData?.inviteCode}
-              data-testid="button-copy-invite"
-            >
-              <Copy className="w-4 h-4" />
-            </Button>
+        <TabsContent value="friends" className="space-y-6">
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="bg-card border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-secondary" data-testid="text-friend-count">
+                  {friends.length}/15
+                </div>
+                <div className="text-sm text-muted-foreground">Friends</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-mykliq-purple" data-testid="text-open-spots">
+                  {15 - friends.length}
+                </div>
+                <div className="text-sm text-muted-foreground">Open Spots</div>
+              </CardContent>
+            </Card>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Share this code with friends to invite them to your kliq
-          </p>
-        </CardContent>
-      </Card>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground" data-testid="button-join-kliq">
-              <Plus className="w-4 h-4 mr-2" />
-              Join Kliq
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
-            <DialogHeader>
-              <DialogTitle className="text-primary">Join Another Kliq</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-muted-foreground">Invite Code</label>
-                <Input
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  placeholder="KLIQ-XXXX-XXXX"
-                  className="bg-input border-border text-foreground"
-                  data-testid="input-join-invite-code"
-                />
+          {/* Pyramid Chart */}
+          {friendsLoading ? (
+            <Card className="bg-card border-border">
+              <CardContent className="p-8 text-center">
+                <div className="animate-pulse space-y-4">
+                  <div className="w-16 h-16 bg-muted rounded-full mx-auto"></div>
+                  <div className="space-y-2">
+                    <div className="w-24 h-4 bg-muted rounded mx-auto"></div>
+                    <div className="w-32 h-3 bg-muted rounded mx-auto"></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : friends.length === 0 ? (
+            <Card className="bg-card border-border">
+              <CardContent className="p-8 text-center">
+                <div className="text-4xl mb-4">👥</div>
+                <h3 className="text-lg font-bold text-muted-foreground mb-2">No friends yet</h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Share your invite code or join someone else's kliq to get started!
+                </p>
+                <Button
+                  onClick={() => setIsInviteDialogOpen(true)}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Join a Kliq
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <PyramidChart
+              friends={friends.map(f => ({
+                id: f.friend.id,
+                firstName: f.friend.firstName,
+                lastName: f.friend.lastName,
+                profileImageUrl: f.friend.profileImageUrl,
+                rank: f.rank
+              }))}
+              onRankChange={handleRankChange}
+              onMessage={handleMessageFriend}
+              onVideoCall={handleVideoCall}
+              onRemove={handleRemoveFriend}
+              maxFriends={15}
+              kliqName={userData?.kliqName}
+            />
+          )}
+
+          {/* Invite Code */}
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-mykliq-green text-lg">
+                📱 Your Invite Code
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between bg-muted rounded p-3">
+                <code className="text-mykliq-green font-mono font-bold" data-testid="text-invite-code">
+                  {userData?.inviteCode || "Loading..."}
+                </code>
+                <Button
+                  size="sm"
+                  onClick={copyInviteCode}
+                  className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground"
+                  disabled={!userData?.inviteCode}
+                  data-testid="button-copy-invite"
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
               </div>
-              <Button
-                onClick={handleJoinKliq}
-                disabled={!inviteCode.trim() || joinKliqMutation.isPending}
-                className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-              >
-                {joinKliqMutation.isPending ? "Joining..." : "Join Kliq"}
-              </Button>
+              <p className="text-xs text-muted-foreground">
+                Share this code with friends to invite them to your kliq
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground" data-testid="button-join-kliq">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Join Kliq
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-primary">Join Another Kliq</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-muted-foreground">Invite Code</label>
+                    <Input
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value)}
+                      placeholder="KLIQ-XXXX-XXXX"
+                      className="bg-input border-border text-foreground"
+                      data-testid="input-join-invite-code"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleJoinKliq}
+                    disabled={!inviteCode.trim() || joinKliqMutation.isPending}
+                    className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
+                  >
+                    {joinKliqMutation.isPending ? "Joining..." : "Join Kliq"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="polls" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-semibold">Kliq Polls</h3>
+              <p className="text-sm text-muted-foreground">
+                Create polls and vote with your friends
+              </p>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+            <CreatePollDialog />
+          </div>
+
+          {pollsLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Card key={i} className="bg-card border-border">
+                  <CardContent className="p-6">
+                    <div className="animate-pulse space-y-4">
+                      <div className="h-4 bg-muted rounded w-3/4"></div>
+                      <div className="h-3 bg-muted rounded w-1/2"></div>
+                      <div className="space-y-2">
+                        <div className="h-10 bg-muted rounded"></div>
+                        <div className="h-10 bg-muted rounded"></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : polls.length === 0 ? (
+            <Card className="bg-card border-border">
+              <CardContent className="p-8 text-center">
+                <div className="text-4xl mb-4">📊</div>
+                <h3 className="text-lg font-bold text-muted-foreground mb-2">No polls yet</h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Create your first poll to get opinions from your friends!
+                </p>
+                <CreatePollDialog
+                  trigger={
+                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create First Poll
+                    </Button>
+                  }
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {polls.map((poll) => (
+                <PollCard key={poll.id} poll={poll} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Remove Friend Confirmation Dialog */}
       <Dialog open={!!friendToRemove} onOpenChange={() => setFriendToRemove(null)}>
