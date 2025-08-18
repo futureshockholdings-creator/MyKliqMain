@@ -73,6 +73,15 @@ import {
   type InsertPoll,
   type PollVote,
   type InsertPollVote,
+  sponsoredAds,
+  adInteractions,
+  userAdPreferences,
+  type SponsoredAd,
+  type InsertSponsoredAd,
+  type AdInteraction,
+  type InsertAdInteraction,
+  type UserAdPreferences,
+  type InsertUserAdPreferences,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, isNull, isNotNull } from "drizzle-orm";
@@ -216,6 +225,18 @@ export interface IStorage {
   votePoll(vote: InsertPollVote): Promise<PollVote>;
   getUserPollVote(pollId: string, userId: string): Promise<PollVote | undefined>;
   getPollResults(pollId: string): Promise<{ option: string; index: number; votes: number; percentage: number }[]>;
+
+  // Sponsored Ads operations
+  getTargetedAds(userId: string): Promise<SponsoredAd[]>;
+  getAllActiveAds(): Promise<SponsoredAd[]>;
+  createSponsoredAd(ad: InsertSponsoredAd): Promise<SponsoredAd>;
+  updateSponsoredAd(adId: string, updates: Partial<SponsoredAd>): Promise<SponsoredAd>;
+  deleteSponsoredAd(adId: string): Promise<void>;
+  recordAdImpression(interaction: InsertAdInteraction): Promise<AdInteraction>;
+  recordAdClick(interaction: InsertAdInteraction): Promise<AdInteraction>;
+  getUserAdPreferences(userId: string): Promise<UserAdPreferences | undefined>;
+  updateUserAdPreferences(userId: string, preferences: InsertUserAdPreferences): Promise<UserAdPreferences>;
+  getAdAnalytics(adId: string): Promise<{ impressions: number; clicks: number; ctr: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2046,6 +2067,250 @@ export class DatabaseStorage implements IStorage {
     
     console.log(`Calculated results for ${pollId}:`, results);
     return results;
+  }
+
+  // Sponsored Ads operations
+  async getTargetedAds(userId: string): Promise<SponsoredAd[]> {
+    const user = await this.getUser(userId);
+    if (!user) return [];
+
+    const userPrefs = await this.getUserAdPreferences(userId);
+    if (userPrefs && !userPrefs.enableTargetedAds) {
+      return [];
+    }
+
+    // Calculate user age if birthdate is available
+    let userAge: number | undefined;
+    if (user.birthdate) {
+      const today = new Date();
+      const birthDate = new Date(user.birthdate);
+      userAge = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        userAge--;
+      }
+    }
+
+    // Get all active ads
+    const allAds = await db
+      .select()
+      .from(sponsoredAds)
+      .where(
+        and(
+          eq(sponsoredAds.status, "active"),
+          or(
+            isNull(sponsoredAds.startDate),
+            lte(sponsoredAds.startDate, new Date())
+          ),
+          or(
+            isNull(sponsoredAds.endDate),
+            gte(sponsoredAds.endDate, new Date())
+          )
+        )
+      )
+      .orderBy(desc(sponsoredAds.priority), desc(sponsoredAds.createdAt));
+
+    // Filter ads based on user profile and preferences
+    const targetedAds = allAds.filter(ad => {
+      // Check blocked categories
+      if (userPrefs?.blockedCategories?.includes(ad.category)) {
+        return false;
+      }
+
+      let score = 0;
+
+      // Age targeting
+      if (ad.targetAgeMin || ad.targetAgeMax) {
+        if (!userAge) return false;
+        if (ad.targetAgeMin && userAge < ad.targetAgeMin) return false;
+        if (ad.targetAgeMax && userAge > ad.targetAgeMax) return false;
+        score += 2;
+      }
+
+      // Interest matching
+      if (ad.targetInterests?.length && user.interests?.length) {
+        const commonInterests = ad.targetInterests.filter(interest =>
+          user.interests?.some(userInterest =>
+            userInterest.toLowerCase().includes(interest.toLowerCase()) ||
+            interest.toLowerCase().includes(userInterest.toLowerCase())
+          )
+        );
+        if (commonInterests.length > 0) {
+          score += commonInterests.length * 3;
+        }
+      }
+
+      // Music genre matching
+      if (ad.targetMusicGenres?.length && user.musicGenres?.length) {
+        const commonGenres = ad.targetMusicGenres.filter(genre =>
+          user.musicGenres?.some(userGenre =>
+            userGenre.toLowerCase().includes(genre.toLowerCase()) ||
+            genre.toLowerCase().includes(userGenre.toLowerCase())
+          )
+        );
+        if (commonGenres.length > 0) {
+          score += commonGenres.length * 2;
+        }
+      }
+
+      // Hobby matching
+      if (ad.targetHobbies?.length && user.hobbies?.length) {
+        const commonHobbies = ad.targetHobbies.filter(hobby =>
+          user.hobbies?.some(userHobby =>
+            userHobby.toLowerCase().includes(hobby.toLowerCase()) ||
+            hobby.toLowerCase().includes(userHobby.toLowerCase())
+          )
+        );
+        if (commonHobbies.length > 0) {
+          score += commonHobbies.length * 2;
+        }
+      }
+
+      // Relationship status matching
+      if (ad.targetRelationshipStatus?.length && user.relationshipStatus) {
+        if (ad.targetRelationshipStatus.includes(user.relationshipStatus)) {
+          score += 2;
+        }
+      }
+
+      // Pet preferences matching
+      if (ad.targetPetPreferences?.length && user.petPreferences) {
+        if (ad.targetPetPreferences.includes(user.petPreferences)) {
+          score += 1;
+        }
+      }
+
+      // Lifestyle matching
+      if (ad.targetLifestyle?.length && user.lifestyle) {
+        if (ad.targetLifestyle.includes(user.lifestyle)) {
+          score += 1;
+        }
+      }
+
+      // Return ads with some targeting match or no targeting criteria
+      return score > 0 || (
+        !ad.targetInterests?.length &&
+        !ad.targetMusicGenres?.length &&
+        !ad.targetHobbies?.length &&
+        !ad.targetRelationshipStatus?.length &&
+        !ad.targetPetPreferences?.length &&
+        !ad.targetLifestyle?.length &&
+        !ad.targetAgeMin &&
+        !ad.targetAgeMax
+      );
+    });
+
+    // Limit ads per day based on user preferences
+    const maxAdsPerDay = userPrefs?.maxAdsPerDay || 5;
+    return targetedAds.slice(0, maxAdsPerDay);
+  }
+
+  async getAllActiveAds(): Promise<SponsoredAd[]> {
+    return await db
+      .select()
+      .from(sponsoredAds)
+      .where(eq(sponsoredAds.status, "active"))
+      .orderBy(desc(sponsoredAds.priority), desc(sponsoredAds.createdAt));
+  }
+
+  async createSponsoredAd(ad: InsertSponsoredAd): Promise<SponsoredAd> {
+    const [newAd] = await db.insert(sponsoredAds).values(ad).returning();
+    return newAd;
+  }
+
+  async updateSponsoredAd(adId: string, updates: Partial<SponsoredAd>): Promise<SponsoredAd> {
+    const [updatedAd] = await db
+      .update(sponsoredAds)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(sponsoredAds.id, adId))
+      .returning();
+    return updatedAd;
+  }
+
+  async deleteSponsoredAd(adId: string): Promise<void> {
+    await db.delete(sponsoredAds).where(eq(sponsoredAds.id, adId));
+  }
+
+  async recordAdImpression(interaction: InsertAdInteraction): Promise<AdInteraction> {
+    // Record the interaction
+    const [newInteraction] = await db
+      .insert(adInteractions)
+      .values(interaction)
+      .returning();
+
+    // Update impression count on the ad
+    await db
+      .update(sponsoredAds)
+      .set({
+        impressions: sql`${sponsoredAds.impressions} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(sponsoredAds.id, interaction.adId));
+
+    return newInteraction;
+  }
+
+  async recordAdClick(interaction: InsertAdInteraction): Promise<AdInteraction> {
+    // Record the interaction
+    const [newInteraction] = await db
+      .insert(adInteractions)
+      .values(interaction)
+      .returning();
+
+    // Update click count on the ad
+    await db
+      .update(sponsoredAds)
+      .set({
+        clicks: sql`${sponsoredAds.clicks} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(sponsoredAds.id, interaction.adId));
+
+    return newInteraction;
+  }
+
+  async getUserAdPreferences(userId: string): Promise<UserAdPreferences | undefined> {
+    const [prefs] = await db
+      .select()
+      .from(userAdPreferences)
+      .where(eq(userAdPreferences.userId, userId));
+    return prefs;
+  }
+
+  async updateUserAdPreferences(userId: string, preferences: InsertUserAdPreferences): Promise<UserAdPreferences> {
+    const [updatedPrefs] = await db
+      .insert(userAdPreferences)
+      .values({ ...preferences, userId })
+      .onConflictDoUpdate({
+        target: userAdPreferences.userId,
+        set: {
+          ...preferences,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return updatedPrefs;
+  }
+
+  async getAdAnalytics(adId: string): Promise<{ impressions: number; clicks: number; ctr: number }> {
+    const [ad] = await db
+      .select({
+        impressions: sponsoredAds.impressions,
+        clicks: sponsoredAds.clicks,
+      })
+      .from(sponsoredAds)
+      .where(eq(sponsoredAds.id, adId));
+
+    if (!ad) {
+      return { impressions: 0, clicks: 0, ctr: 0 };
+    }
+
+    const ctr = ad.impressions > 0 ? (ad.clicks / ad.impressions) * 100 : 0;
+    return {
+      impressions: ad.impressions || 0,
+      clicks: ad.clicks || 0,
+      ctr: Math.round(ctr * 100) / 100, // Round to 2 decimal places
+    };
   }
 }
 

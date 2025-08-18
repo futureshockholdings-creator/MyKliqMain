@@ -5,7 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 
@@ -1978,6 +1978,167 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating test notifications:", error);
       res.status(500).json({ message: "Failed to create test notifications" });
+    }
+  });
+
+  // Sponsored Ads routes
+  app.get('/api/ads/targeted', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const ads = await storage.getTargetedAds(userId);
+      res.json(ads);
+    } catch (error) {
+      console.error("Error fetching targeted ads:", error);
+      res.status(500).json({ message: "Failed to fetch ads" });
+    }
+  });
+
+  app.get('/api/ads', isAuthenticated, async (req, res) => {
+    try {
+      const ads = await storage.getAllActiveAds();
+      res.json(ads);
+    } catch (error) {
+      console.error("Error fetching ads:", error);
+      res.status(500).json({ message: "Failed to fetch ads" });
+    }
+  });
+
+  app.post('/api/ads', isAuthenticated, async (req: any, res) => {
+    try {
+      // Note: In a real app, this would be admin-only
+      const adData = insertSponsoredAdSchema.parse(req.body);
+      const ad = await storage.createSponsoredAd(adData);
+      res.json(ad);
+    } catch (error) {
+      console.error("Error creating ad:", error);
+      res.status(500).json({ message: "Failed to create ad" });
+    }
+  });
+
+  app.put('/api/ads/:adId', isAuthenticated, async (req, res) => {
+    try {
+      // Note: In a real app, this would be admin-only
+      const { adId } = req.params;
+      const updates = req.body;
+      const ad = await storage.updateSponsoredAd(adId, updates);
+      res.json(ad);
+    } catch (error) {
+      console.error("Error updating ad:", error);
+      res.status(500).json({ message: "Failed to update ad" });
+    }
+  });
+
+  app.delete('/api/ads/:adId', isAuthenticated, async (req, res) => {
+    try {
+      // Note: In a real app, this would be admin-only
+      const { adId } = req.params;
+      await storage.deleteSponsoredAd(adId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting ad:", error);
+      res.status(500).json({ message: "Failed to delete ad" });
+    }
+  });
+
+  app.post('/api/ads/:adId/impression', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { adId } = req.params;
+      
+      const interaction = await storage.recordAdImpression({
+        adId,
+        userId,
+        interactionType: 'impression' as const,
+      });
+      
+      res.json(interaction);
+    } catch (error) {
+      console.error("Error recording ad impression:", error);
+      res.status(500).json({ message: "Failed to record impression" });
+    }
+  });
+
+  app.post('/api/ads/:adId/click', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { adId } = req.params;
+      
+      const interaction = await storage.recordAdClick({
+        adId,
+        userId,
+        interactionType: 'click' as const,
+      });
+      
+      res.json(interaction);
+    } catch (error) {
+      console.error("Error recording ad click:", error);
+      res.status(500).json({ message: "Failed to record click" });
+    }
+  });
+
+  app.get('/api/ads/:adId/analytics', isAuthenticated, async (req, res) => {
+    try {
+      const { adId } = req.params;
+      const analytics = await storage.getAdAnalytics(adId);
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching ad analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  app.get('/api/user/ad-preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const preferences = await storage.getUserAdPreferences(userId);
+      res.json(preferences || {
+        enableTargetedAds: true,
+        maxAdsPerDay: 5,
+        blockedCategories: [],
+      });
+    } catch (error) {
+      console.error("Error fetching ad preferences:", error);
+      res.status(500).json({ message: "Failed to fetch preferences" });
+    }
+  });
+
+  app.put('/api/user/ad-preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const preferencesData = insertUserAdPreferencesSchema.parse(req.body);
+      const preferences = await storage.updateUserAdPreferences(userId, preferencesData);
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error updating ad preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences" });
+    }
+  });
+
+  // Maintenance routes (authorized access only)
+  app.get('/api/maintenance/status', async (req, res) => {
+    try {
+      const status = await maintenanceService.getSystemHealth();
+      res.json(status);
+    } catch (error) {
+      console.error("Error getting maintenance status:", error);
+      res.status(500).json({ message: "Failed to get system status" });
+    }
+  });
+
+  app.post('/api/maintenance/force-cleanup', async (req, res) => {
+    try {
+      const { password } = req.body;
+      
+      // Basic authentication for maintenance operations
+      if (password !== 'maintenance-secret-2024') {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const result = await maintenanceService.forceCleanup();
+      res.json(result);
+    } catch (error) {
+      console.error("Error during force cleanup:", error);
+      res.status(500).json({ message: "Failed to perform cleanup" });
     }
   });
 

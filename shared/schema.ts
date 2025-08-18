@@ -122,6 +122,78 @@ export const gifs = pgTable("gifs", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Sponsored Ads System
+export const adCategoryEnum = pgEnum("ad_category", [
+  "food", "fashion", "tech", "entertainment", "travel", "fitness", 
+  "beauty", "automotive", "education", "finance", "health", "home", 
+  "gaming", "music", "books", "pets", "lifestyle", "sports"
+]);
+
+export const adStatusEnum = pgEnum("ad_status", ["active", "paused", "expired", "pending"]);
+
+export const sponsoredAds = pgTable("sponsored_ads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: text("description").notNull(),
+  imageUrl: varchar("image_url"),
+  videoUrl: varchar("video_url"),
+  ctaText: varchar("cta_text").default("Learn More"), // Call-to-action text
+  ctaUrl: varchar("cta_url").notNull(), // URL to redirect when clicked
+  category: adCategoryEnum("category").notNull(),
+  
+  // Targeting criteria
+  targetInterests: text("target_interests").array().default(sql`'{}'::text[]`),
+  targetMusicGenres: text("target_music_genres").array().default(sql`'{}'::text[]`),
+  targetRelationshipStatus: varchar("target_relationship_status").array().default(sql`'{}'::varchar[]`),
+  targetHobbies: text("target_hobbies").array().default(sql`'{}'::text[]`),
+  targetPetPreferences: varchar("target_pet_preferences").array().default(sql`'{}'::varchar[]`),
+  targetLifestyle: varchar("target_lifestyle").array().default(sql`'{}'::varchar[]`),
+  targetAgeMin: integer("target_age_min"),
+  targetAgeMax: integer("target_age_max"),
+  
+  // Ad management
+  status: adStatusEnum("status").default("active"),
+  priority: integer("priority").default(1), // Higher number = higher priority
+  dailyBudget: numeric("daily_budget", { precision: 10, scale: 2 }),
+  costPerClick: numeric("cost_per_click", { precision: 10, scale: 2 }),
+  
+  // Scheduling
+  startDate: timestamp("start_date").defaultNow(),
+  endDate: timestamp("end_date"),
+  
+  // Performance tracking
+  impressions: integer("impressions").default(0),
+  clicks: integer("clicks").default(0),
+  
+  // Metadata
+  advertiserName: varchar("advertiser_name").notNull(),
+  advertiserEmail: varchar("advertiser_email").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Ad impressions and clicks tracking
+export const adInteractions = pgTable("ad_interactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  adId: varchar("ad_id").references(() => sponsoredAds.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  interactionType: varchar("interaction_type").notNull(), // 'impression', 'click'
+  timestamp: timestamp("timestamp").defaultNow(),
+  userAgent: text("user_agent"),
+  ipAddress: varchar("ip_address"),
+});
+
+// User ad preferences (allow users to control ad targeting)
+export const userAdPreferences = pgTable("user_ad_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
+  enableTargetedAds: boolean("enable_targeted_ads").default(true),
+  blockedCategories: text("blocked_categories").array().default(sql`'{}'::text[]`),
+  maxAdsPerDay: integer("max_ads_per_day").default(5),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Moviecons - short movie clips with sound (3-5 seconds)
 export const moviecons = pgTable("moviecons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -776,3 +848,32 @@ export type Poll = typeof polls.$inferSelect;
 export const insertPollVoteSchema = createInsertSchema(pollVotes).omit({ id: true, createdAt: true });
 export type InsertPollVote = z.infer<typeof insertPollVoteSchema>;
 export type PollVote = typeof pollVotes.$inferSelect;
+
+// Sponsored Ads types and schemas
+export const insertSponsoredAdSchema = createInsertSchema(sponsoredAds).omit({ 
+  id: true, 
+  impressions: true, 
+  clicks: true, 
+  createdAt: true, 
+  updatedAt: true 
+}).extend({
+  startDate: z.string().transform((val) => new Date(val)),
+  endDate: z.string().transform((val) => new Date(val)).optional(),
+});
+export type InsertSponsoredAd = z.infer<typeof insertSponsoredAdSchema>;
+export type SponsoredAd = typeof sponsoredAds.$inferSelect;
+
+export const insertAdInteractionSchema = createInsertSchema(adInteractions).omit({ 
+  id: true, 
+  timestamp: true 
+});
+export type InsertAdInteraction = z.infer<typeof insertAdInteractionSchema>;
+export type AdInteraction = typeof adInteractions.$inferSelect;
+
+export const insertUserAdPreferencesSchema = createInsertSchema(userAdPreferences).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertUserAdPreferences = z.infer<typeof insertUserAdPreferencesSchema>;
+export type UserAdPreferences = typeof userAdPreferences.$inferSelect;

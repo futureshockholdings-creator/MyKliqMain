@@ -26,6 +26,7 @@ import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { YouTubeEmbedList } from "@/components/YouTubeEmbed";
 import { extractYouTubeUrlsFromText } from "@/lib/youtubeUtils";
 import { PollCard } from "@/components/PollCard";
+import { SponsoredAd } from "@/components/SponsoredAd";
 import { GoogleSearch } from "@/components/GoogleSearch";
 import { EventCard } from "@/components/EventCard";
 import { trackEvent } from "@/lib/analytics";
@@ -59,6 +60,11 @@ export default function Home() {
   // Fetch kliq feed (posts, polls, events, actions from all kliq members)
   const { data: feedItems = [], isLoading: feedLoading } = useQuery({
     queryKey: ["/api/kliq-feed"],
+  });
+
+  // Fetch targeted ads for the user
+  const { data: targetedAds = [] } = useQuery({
+    queryKey: ["/api/ads/targeted"],
   });
 
   // Separate different types of feed items
@@ -955,8 +961,22 @@ export default function Home() {
 
 
           
-          {(feedItems as any[]).filter((item: any) => item.type !== 'event').map((item: any) => {
+          {(feedItems as any[]).filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
           console.log("Feed item processing:", item.type, item.title || item.content?.substring(0, 30));
+          
+          // Inject sponsored ads every 3 feed items
+          const shouldShowAd = index > 0 && (index + 1) % 4 === 0 && targetedAds.length > 0;
+          const adIndex = Math.floor((index + 1) / 4 - 1) % targetedAds.length;
+
+          return (
+            <div key={`feed-wrapper-${item.id}-${index}`}>
+              {/* Show sponsored ad before this item if conditions are met */}
+              {shouldShowAd && targetedAds[adIndex] && (
+                <div className="mb-4" key={`ad-${adIndex}-${index}`}>
+                  <SponsoredAd ad={targetedAds[adIndex]} />
+                </div>
+              )}
+              {(() => {
           
           if (item.type === 'poll') {
             return (
@@ -1328,6 +1348,9 @@ export default function Home() {
               </Card>
             );
           }
+        })()}
+            </div>
+          );
         })}
         </>
       )}
