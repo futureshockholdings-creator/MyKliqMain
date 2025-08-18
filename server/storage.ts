@@ -228,10 +228,11 @@ export interface IStorage {
 
   // Sponsored Ads operations
   getTargetedAds(userId: string): Promise<SponsoredAd[]>;
-  getAllActiveAds(): Promise<SponsoredAd[]>;
-  createSponsoredAd(ad: InsertSponsoredAd): Promise<SponsoredAd>;
-  updateSponsoredAd(adId: string, updates: Partial<SponsoredAd>): Promise<SponsoredAd>;
-  deleteSponsoredAd(adId: string): Promise<void>;
+  getAllAds(): Promise<SponsoredAd[]>;
+  createAd(ad: InsertSponsoredAd): Promise<SponsoredAd>;
+  updateAd(adId: string, updates: Partial<InsertSponsoredAd>): Promise<SponsoredAd>;
+  updateAdStatus(adId: string, status: 'active' | 'paused'): Promise<SponsoredAd>;
+  deleteAd(adId: string): Promise<void>;
   recordAdImpression(interaction: InsertAdInteraction): Promise<AdInteraction>;
   recordAdClick(interaction: InsertAdInteraction): Promise<AdInteraction>;
   getUserAdPreferences(userId: string): Promise<UserAdPreferences | undefined>;
@@ -2070,6 +2071,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Sponsored Ads operations
+  async getAllAds(): Promise<SponsoredAd[]> {
+    return await db.select().from(sponsoredAds).orderBy(desc(sponsoredAds.createdAt));
+  }
+
+  async createAd(adData: InsertSponsoredAd): Promise<SponsoredAd> {
+    const [ad] = await db.insert(sponsoredAds).values(adData).returning();
+    return ad;
+  }
+
+  async updateAd(id: string, adData: Partial<InsertSponsoredAd>): Promise<SponsoredAd> {
+    const [ad] = await db
+      .update(sponsoredAds)
+      .set({ ...adData, updatedAt: new Date() })
+      .where(eq(sponsoredAds.id, id))
+      .returning();
+    return ad;
+  }
+
+  async updateAdStatus(id: string, status: 'active' | 'paused'): Promise<SponsoredAd> {
+    const [ad] = await db
+      .update(sponsoredAds)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(sponsoredAds.id, id))
+      .returning();
+    return ad;
+  }
+
+  async deleteAd(id: string): Promise<void> {
+    await db.delete(sponsoredAds).where(eq(sponsoredAds.id, id));
+  }
+
   async getTargetedAds(userId: string): Promise<SponsoredAd[]> {
     const user = await this.getUser(userId);
     if (!user) return [];

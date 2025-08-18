@@ -24,6 +24,7 @@ import { Messages } from "@/pages/messages";
 import { Conversation } from "@/pages/conversation";
 import { MovieconManagerPage } from "@/pages/moviecon-manager";
 import MaintenanceDashboard from "@/pages/maintenance-dashboard";
+import AdsManager from "@/pages/ads-manager";
 import PrivacyPolicy from "./pages/privacy-policy";
 import Disclaimer from "./pages/disclaimer";
 
@@ -202,6 +203,7 @@ function Router() {
           <Route path="/themes" component={Themes} />
           <Route path="/moviecon-manager" component={MovieconManagerPage} />
           <Route path="/maintenance" component={MaintenanceDashboard} />
+          <Route path="/ads-manager" component={AdsManager} />
         </>
       )}
       

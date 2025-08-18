@@ -1995,6 +1995,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin ads management routes
+  app.get('/api/ads', isAuthenticated, async (req: any, res) => {
+    try {
+      const ads = await storage.getAllAds();
+      res.json(ads);
+    } catch (error) {
+      console.error("Error fetching ads:", error);
+      res.status(500).json({ message: "Failed to fetch ads" });
+    }
+  });
+
+  app.post('/api/ads', isAuthenticated, async (req: any, res) => {
+    try {
+      const ad = await storage.createAd(req.body);
+      res.json(ad);
+    } catch (error) {
+      console.error("Error creating ad:", error);
+      res.status(500).json({ message: "Failed to create ad" });
+    }
+  });
+
+  app.patch('/api/ads/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const ad = await storage.updateAd(req.params.id, req.body);
+      res.json(ad);
+    } catch (error) {
+      console.error("Error updating ad:", error);
+      res.status(500).json({ message: "Failed to update ad" });
+    }
+  });
+
+  app.patch('/api/ads/:id/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const { status } = req.body;
+      const ad = await storage.updateAdStatus(req.params.id, status);
+      res.json(ad);
+    } catch (error) {
+      console.error("Error updating ad status:", error);
+      res.status(500).json({ message: "Failed to update ad status" });
+    }
+  });
+
+  app.delete('/api/ads/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteAd(req.params.id);
+      res.json({ message: "Ad deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting ad:", error);
+      res.status(500).json({ message: "Failed to delete ad" });
+    }
+  });
+
   app.get('/api/ads', isAuthenticated, async (req, res) => {
     try {
       const ads = await storage.getAllActiveAds();
