@@ -224,9 +224,6 @@ export default function Landing() {
 
           {/* Footer */}
           <div className="text-center pt-6 border-t border-gray-800 space-y-3">
-            <p className="text-xs text-gray-500">
-              Relive the golden age of social networking with modern features
-            </p>
             
             {/* Privacy Policy and Disclaimer Links */}
             <div className="flex justify-center items-center gap-4 text-xs">
