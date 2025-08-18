@@ -17,6 +17,7 @@ MyKliq is a social media application designed for close-knit friend groups, focu
 - **Profile Picture Interface Enhancement**: Replaced large profile picture upload button with clean camera icon positioned at bottom-right of profile picture circle for more intuitive and space-efficient design
 - **Wallpaper Background System**: Implemented full wallpaper-style background container for profile section with dedicated camera icon for background image uploads, supporting all major image formats (JPEG, PNG, GIF, WebP, BMP, TIFF, SVG, AVIF, HEIC/HEIF) up to 15MB, with fallback gradient when no background is set - fully functional with proper object storage URL normalization for immediate display after upload
 - **Kliq Name Display in Posts**: Successfully implemented kliq name display in headlines feed author attribution using "firstName lastName - kliqName" format across all content types (posts, polls, events, actions) with comprehensive database query updates to include kliqName field
+- **Navigation Bar Text Correction**: Updated navigation menu label from "My Kliq's" back to "My Kliq" for proper branding consistency
 
 # User Preferences
 
