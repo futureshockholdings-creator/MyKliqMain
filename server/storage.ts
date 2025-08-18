@@ -416,6 +416,9 @@ export class DatabaseStorage implements IStorage {
       whereConditions.push(sql`NOT (${or(...filterConditions)})`);
     }
 
+    console.log(`Getting posts for user ${userId} and friends:`, friendIds);
+    console.log(`Using filters:`, filters);
+
     const postsQuery = db
       .select({
         id: posts.id,
@@ -444,6 +447,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(posts.createdAt));
 
     const postsData = await postsQuery;
+    console.log(`Raw posts query returned ${postsData.length} posts. Latest:`, postsData[0]?.createdAt);
 
     // Get likes and comments for each post
     const postsWithDetails = await Promise.all(
@@ -509,6 +513,7 @@ export class DatabaseStorage implements IStorage {
     try {
       // 1. Get regular posts
       const posts = await this.getPosts(userId, filters);
+      console.log(`Feed: Got ${posts.length} posts, latest:`, posts[0]?.createdAt);
       feedItems.push(...posts.map(post => ({
         ...post,
         type: 'post',
