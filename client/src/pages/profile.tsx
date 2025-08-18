@@ -93,7 +93,7 @@ export default function Profile() {
 
   // Background image upload handlers
   const handleBackgroundGetUploadParameters = async () => {
-    const response = await apiRequest("POST", "/api/objects/upload", {});
+    const response = await apiRequest("/api/objects/upload", "POST", {});
     return {
       method: "PUT" as const,
       url: response.uploadURL,
@@ -111,10 +111,11 @@ export default function Profile() {
         description: "Background image updated successfully",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Background update error:", error);
       toast({
         title: "Error",
-        description: "Failed to update background image",
+        description: error.message || "Failed to update background image",
         variant: "destructive",
       });
     },
@@ -148,7 +149,7 @@ export default function Profile() {
             <div 
               className="relative h-48 bg-gradient-to-br from-primary/20 to-secondary/20 bg-cover bg-center bg-no-repeat"
               style={{
-                backgroundImage: (typedUser.backgroundImageUrl ?? undefined) ? `url(${typedUser.backgroundImageUrl})` : undefined
+                backgroundImage: typedUser.backgroundImageUrl ? `url(${typedUser.backgroundImageUrl})` : undefined
               }}
             >
               {/* Background overlay for better text readability */}
