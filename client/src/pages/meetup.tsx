@@ -59,7 +59,7 @@ export default function MeetupPage() {
     onSuccess: async () => {
       toast({
         title: "Location Check-in Posted!",
-        description: "Your location has been shared with your kliq on the headlines",
+        description: "Your location has been shared with your kliq on the Headlines",
       });
       // Force immediate refetch of feed data
       console.log('Force refetching feed after check-in...');
@@ -133,7 +133,7 @@ export default function MeetupPage() {
         <div className="text-center">
           <h1 className="text-3xl font-bold mb-2">Location Check-in</h1>
           <p className="text-muted-foreground">
-            Share your current location with your kliq on the headlines
+            Share your current location with your kliq on the Headlines
           </p>
         </div>
         
@@ -144,7 +144,7 @@ export default function MeetupPage() {
               <span>Check In Now</span>
             </CardTitle>
             <CardDescription>
-              This will post your current location to the headlines for your kliq to see
+              This will post your current location to the Headlines for your kliq to see
             </CardDescription>
           </CardHeader>
           
@@ -243,7 +243,7 @@ export default function MeetupPage() {
         
         <div className="text-center text-sm text-muted-foreground max-w-md">
           <p>
-            When you check in, your location will be shared as a post on the headlines. 
+            When you check in, your location will be shared as a post on the Headlines. 
             Your kliq members will be able to see where you are and can join you if they want.
           </p>
         </div>
