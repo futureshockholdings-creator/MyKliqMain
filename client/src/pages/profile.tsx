@@ -137,9 +137,7 @@ export default function Profile() {
   const typedUser = user as User;
   
   // Debug: Log the background image URL
-  console.log("Background image URL:", typedUser.backgroundImageUrl);
-  const backgroundImagePath = typedUser.backgroundImageUrl ? `/objects/${typedUser.backgroundImageUrl.split('/').pop()}` : null;
-  console.log("Background image display URL:", backgroundImagePath);
+  console.log("Background image URL (normalized):", typedUser.backgroundImageUrl);
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
@@ -155,7 +153,7 @@ export default function Profile() {
               className="relative h-48 bg-gradient-to-br from-primary/20 to-secondary/20 bg-cover bg-center bg-no-repeat"
               style={{
                 backgroundImage: typedUser.backgroundImageUrl 
-                  ? `url("/objects/${typedUser.backgroundImageUrl.split('/').pop()}")` 
+                  ? `url("${typedUser.backgroundImageUrl}")` 
                   : undefined,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',

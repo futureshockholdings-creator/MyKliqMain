@@ -183,8 +183,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { backgroundImageUrl } = req.body;
 
+      const objectStorageService = new ObjectStorageService();
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(
+        backgroundImageUrl
+      );
+
       await storage.updateUser(userId, {
-        backgroundImageUrl,
+        backgroundImageUrl: normalizedPath,
       });
 
       const updatedUser = await storage.getUser(userId);
