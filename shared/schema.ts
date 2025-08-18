@@ -83,7 +83,7 @@ export const friendships = pgTable("friendships", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   friendId: varchar("friend_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  rank: integer("rank").notNull(), // 1-15, lower number = higher rank
+  rank: integer("rank").notNull(), // 1-28, lower number = higher rank
   status: varchar("status").default("pending"), // pending, accepted, declined
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

@@ -411,7 +411,7 @@ export default function Kliq() {
             <Card className="bg-card border-border">
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-secondary" data-testid="text-friend-count">
-                  {friends.length}/15
+                  {friends.length}/28
                 </div>
                 <div className="text-sm text-muted-foreground">Friends</div>
               </CardContent>
@@ -419,7 +419,7 @@ export default function Kliq() {
             <Card className="bg-card border-border">
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-mykliq-purple" data-testid="text-open-spots">
-                  {15 - friends.length}
+                  {28 - friends.length}
                 </div>
                 <div className="text-sm text-muted-foreground">Open Spots</div>
               </CardContent>
@@ -469,7 +469,7 @@ export default function Kliq() {
               onMessage={handleMessageFriend}
               onVideoCall={handleVideoCall}
               onRemove={handleRemoveFriend}
-              maxFriends={15}
+              maxFriends={28}
               kliqName={userData?.kliqName}
             />
           )}

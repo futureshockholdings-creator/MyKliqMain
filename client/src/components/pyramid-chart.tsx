@@ -24,7 +24,7 @@ interface PyramidChartProps {
   kliqName?: string;
 }
 
-export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 15, kliqName }: PyramidChartProps) {
+export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 28, kliqName }: PyramidChartProps) {
   const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
   const [showRemoveButton, setShowRemoveButton] = useState<string | null>(null);
   const [isHolding, setIsHolding] = useState<string | null>(null);
@@ -55,13 +55,15 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
   // Sort friends by rank for pyramid layout
   const sortedFriends = [...friends].sort((a, b) => a.rank - b.rank);
   
-  // Organize friends into pyramid rows: 1, 2, 3, 4, 5
+  // Organize friends into pyramid rows: 1, 2, 3, 4, 5, 6, 7 (total: 28)
   const pyramidRows = [
     sortedFriends.slice(0, 1),    // Top: 1 friend (rank 1)
     sortedFriends.slice(1, 3),    // Second: 2 friends (ranks 2-3)
     sortedFriends.slice(3, 6),    // Third: 3 friends (ranks 4-6)
     sortedFriends.slice(6, 10),   // Fourth: 4 friends (ranks 7-10)
-    sortedFriends.slice(10, 15)   // Bottom: 5 friends (ranks 11-15)
+    sortedFriends.slice(10, 15),  // Fifth: 5 friends (ranks 11-15)
+    sortedFriends.slice(15, 21),  // Sixth: 6 friends (ranks 16-21)
+    sortedFriends.slice(21, 28)   // Bottom: 7 friends (ranks 22-28)
   ].filter(row => row.length > 0);
 
   const handleDragStart = (friend: Friend) => {

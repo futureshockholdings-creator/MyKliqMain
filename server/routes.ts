@@ -326,7 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check friend limit
-      if (existingFriends.length >= 15) {
+      if (existingFriends.length >= 28) {
         return res.status(400).json({ message: "User has reached maximum friend limit" });
       }
 
