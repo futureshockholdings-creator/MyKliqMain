@@ -102,6 +102,7 @@ export interface IStorage {
   updateFriendRank(userId: string, friendId: string, rank: number): Promise<void>;
   acceptFriendship(userId: string, friendId: string): Promise<void>;
   removeFriend(userId: string, friendId: string): Promise<void>;
+  leaveKliq(userId: string): Promise<void>;
   
   // Post operations
   getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
@@ -389,6 +390,13 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(friendships)
       .where(and(eq(friendships.userId, userId), eq(friendships.friendId, friendId)));
+  }
+
+  async leaveKliq(userId: string): Promise<void> {
+    // Remove all friendships where the user is either the friend or the owner
+    await db
+      .delete(friendships)
+      .where(or(eq(friendships.userId, userId), eq(friendships.friendId, userId)));
   }
 
   // Post operations

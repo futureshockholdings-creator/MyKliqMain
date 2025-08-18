@@ -11,7 +11,7 @@ import { PollCard } from "@/components/PollCard";
 import { CreatePollDialog } from "@/components/CreatePollDialog";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import { Badge } from "@/components/ui/badge";
-import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3 } from "lucide-react";
+import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,6 +24,7 @@ export default function Kliq() {
   const [inviteCode, setInviteCode] = useState("");
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [friendToRemove, setFriendToRemove] = useState<string | null>(null);
+  const [isLeaveKliqDialogOpen, setIsLeaveKliqDialogOpen] = useState(false);
   const { user } = useAuth();
   const userData = user as { 
     id?: string; 
@@ -165,6 +166,39 @@ export default function Kliq() {
     },
   });
 
+  // Leave Kliq mutation - removes all friendships
+  const leaveKliqMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", "/api/friends/leave-kliq");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+      setIsLeaveKliqDialogOpen(false);
+      toast({
+        title: "Left kliq",
+        description: "You have successfully left your kliq",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to leave kliq",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Remove friend
   const removeFriendMutation = useMutation({
     mutationFn: async (friendId: string) => {
@@ -239,6 +273,10 @@ export default function Kliq() {
     if (friendToRemove) {
       removeFriendMutation.mutate(friendToRemove);
     }
+  };
+
+  const handleLeaveKliq = () => {
+    leaveKliqMutation.mutate();
   };
 
   const handleMessageFriend = async (friendId: string, friendName: string) => {
@@ -434,6 +472,52 @@ export default function Kliq() {
               maxFriends={15}
               kliqName={userData?.kliqName}
             />
+          )}
+
+          {/* Leave Kliq Button - only show if user has friends */}
+          {friends.length > 0 && (
+            <div className="flex justify-start">
+              <Dialog open={isLeaveKliqDialogOpen} onOpenChange={setIsLeaveKliqDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    data-testid="button-leave-kliq"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Leave Kliq
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-red-600">Leave Kliq</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Are you sure you want to leave your kliq? This will remove all your friends and cannot be undone.
+                    </p>
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsLeaveKliqDialogOpen(false)}
+                        className="bg-muted hover:bg-muted/80"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={handleLeaveKliq}
+                        disabled={leaveKliqMutation.isPending}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        {leaveKliqMutation.isPending ? "Leaving..." : "Leave Kliq"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           )}
 
           {/* Invite Code */}

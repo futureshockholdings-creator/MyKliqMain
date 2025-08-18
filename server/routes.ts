@@ -375,6 +375,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Leave kliq - removes all friendships for the user
+  app.delete('/api/friends/leave-kliq', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      await storage.leaveKliq(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error leaving kliq:", error);
+      res.status(500).json({ message: "Failed to leave kliq" });
+    }
+  });
+
   // Post routes
   app.get('/api/posts', isAuthenticated, async (req: any, res) => {
     try {
