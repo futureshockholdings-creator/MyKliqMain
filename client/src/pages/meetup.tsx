@@ -56,14 +56,16 @@ export default function MeetupPage() {
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Location Check-in Posted!",
         description: "Your location has been shared with your kliq on the bulletin",
       });
-      // Invalidate queries to refresh the headlines feed and bulletin
-      queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+      // Force refetch queries to refresh the headlines feed and bulletin immediately
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['/api/posts'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] })
+      ]);
       // Reset form
       setLocationName('');
       setAddress('');
