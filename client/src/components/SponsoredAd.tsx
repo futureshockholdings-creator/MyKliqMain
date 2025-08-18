@@ -74,14 +74,14 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
         <div className="flex items-center justify-between mb-3">
           <Badge 
             variant="secondary" 
-            className="text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
+            className="text-xs font-medium bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-200"
             data-testid="sponsored-badge"
           >
             Sponsored
           </Badge>
           <Badge 
             variant="outline" 
-            className="text-xs"
+            className="text-xs text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600"
             data-testid={`ad-category-${ad.category}`}
           >
             {ad.category}
@@ -103,14 +103,14 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
         {/* Ad Content */}
         <div className="space-y-2">
           <h3 
-            className="font-semibold text-lg leading-tight"
+            className="font-semibold text-lg leading-tight text-black dark:text-white"
             data-testid="ad-title"
           >
             {ad.title}
           </h3>
           
           <p 
-            className="text-sm text-muted-foreground line-clamp-3"
+            className="text-sm text-black dark:text-gray-200 line-clamp-3"
             data-testid="ad-description"
           >
             {ad.description}
@@ -129,7 +129,7 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
             </Button>
 
             {/* Ad Stats (for testing/debug) */}
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
               <div className="flex items-center gap-1">
                 <Eye className="w-3 h-3" />
                 <span data-testid="ad-impressions">{ad.impressions || 0}</span>
