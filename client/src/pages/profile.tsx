@@ -34,7 +34,7 @@ export default function Profile() {
 
   const sendBirthdayMessageMutation = useMutation({
     mutationFn: async ({ birthdayUserId, message }: { birthdayUserId: string, message: string }) => {
-      return await apiRequest("/api/birthdays/send-message", "POST", { birthdayUserId, message });
+      return await apiRequest("POST", "/api/birthdays/send-message", { birthdayUserId, message });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
@@ -57,7 +57,7 @@ export default function Profile() {
 
   // Profile picture upload handlers
   const handleGetUploadParameters = async () => {
-    const response = await apiRequest("/api/objects/upload", "POST", {});
+    const response = await apiRequest("POST", "/api/objects/upload", {});
     return {
       method: "PUT" as const,
       url: response.uploadURL,
@@ -66,7 +66,7 @@ export default function Profile() {
 
   const updateProfilePictureMutation = useMutation({
     mutationFn: async (profileImageURL: string) => {
-      await apiRequest("PUT", "/api/user/profile-picture", { profileImageURL });
+      await apiRequest("PUT", "/api/user/profile-picture", { profileImageUrl: profileImageURL });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -93,7 +93,7 @@ export default function Profile() {
 
   // Background image upload handlers
   const handleBackgroundGetUploadParameters = async () => {
-    const response = await apiRequest("/api/objects/upload", "POST", {});
+    const response = await apiRequest("POST", "/api/objects/upload", {});
     return {
       method: "PUT" as const,
       url: response.uploadURL,
@@ -102,7 +102,7 @@ export default function Profile() {
 
   const updateBackgroundMutation = useMutation({
     mutationFn: async (backgroundUrl: string) => {
-      return await apiRequest("/api/user/background", "PATCH", { backgroundImageUrl: backgroundUrl });
+      return await apiRequest("PATCH", "/api/user/background", { backgroundImageUrl: backgroundUrl });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
