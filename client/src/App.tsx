@@ -23,11 +23,12 @@ import NotFound from "@/pages/not-found";
 import { Messages } from "@/pages/messages";
 import { Conversation } from "@/pages/conversation";
 import { MovieconManagerPage } from "@/pages/moviecon-manager";
+import MaintenanceDashboard from "@/pages/maintenance-dashboard";
 import PrivacyPolicy from "./pages/privacy-policy";
 import Disclaimer from "./pages/disclaimer";
 
 // Navigation Component
-import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell } from "lucide-react";
+import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { NotificationPanel } from "@/components/NotificationPanel";
@@ -52,6 +53,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
     { path: "/events", icon: Calendar, label: "Events", tab: "events", badgeType: "events" as const },
     { path: "/actions", icon: Video, label: "Action", tab: "actions" },
     { path: "/themes", icon: Palette, label: "Themes", tab: "themes" },
+    { path: "/maintenance", icon: Settings, label: "Dashboard", tab: "maintenance" },
   ];
 
   const getBadgeCount = (badgeType?: "messages" | "friends" | "events") => {
@@ -200,6 +202,7 @@ function Router() {
           <Route path="/user/:userId" component={UserProfile} />
           <Route path="/themes" component={Themes} />
           <Route path="/moviecon-manager" component={MovieconManagerPage} />
+          <Route path="/maintenance" component={MaintenanceDashboard} />
         </>
       )}
       

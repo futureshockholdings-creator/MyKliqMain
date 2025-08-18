@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { notificationService } from "./notificationService";
+import { maintenanceService } from "./maintenanceService";
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
@@ -2145,6 +2146,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
     });
+  });
+
+  // Maintenance dashboard routes
+  app.get('/api/maintenance/metrics', isAuthenticated, async (req: any, res) => {
+    try {
+      const metrics = await maintenanceService.getMetrics();
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching maintenance metrics:", error);
+      res.status(500).json({ message: "Failed to fetch maintenance metrics" });
+    }
+  });
+
+  app.get('/api/maintenance/health', isAuthenticated, async (req: any, res) => {
+    try {
+      const healthStatus = maintenanceService.getHealthStatus();
+      res.json(healthStatus);
+    } catch (error) {
+      console.error("Error fetching health status:", error);
+      res.status(500).json({ message: "Failed to fetch health status" });
+    }
+  });
+
+  app.post('/api/maintenance/cleanup/manual', isAuthenticated, async (req: any, res) => {
+    try {
+      await maintenanceService.performDailyMaintenance();
+      res.json({ message: "Manual cleanup completed successfully" });
+    } catch (error) {
+      console.error("Error performing manual cleanup:", error);
+      res.status(500).json({ message: "Failed to perform manual cleanup" });
+    }
   });
 
   return httpServer;
