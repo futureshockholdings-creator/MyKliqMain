@@ -24,7 +24,7 @@ MyKliq is a social media application designed for close-knit friend groups, focu
 - **Landing Page Friend Limit Update**: Updated friend limit display from 15 to 28 friends to reflect expanded pyramid capacity
 - **Landing Page Content Updates**: Updated main heading to "Relive the Golden Age of Social Networking with Modern Features", removed duplicate footer text, and added Moviecons feature card highlighting custom video reactions and emotes
 - **Meetup Check-in Display Fix**: Resolved critical bug where recent check-ins weren't appearing in headlines feed due to frontend caching issues. Implemented complete cache disabling, automatic refresh every 10 seconds, and immediate refetch after check-ins to ensure real-time display of location posts
-- **User Support Chatbot**: Implemented comprehensive knowledge-based chatbot for user support accessible via floating chat button on all authenticated pages. Provides instant help with page functionality, features explanation, and general MyKliq questions without requiring AI APIs - uses built-in knowledge base covering all major app features and functionality
+- **User Support Chatbot**: Implemented comprehensive knowledge-based chatbot for user support accessible via floating chat button on all authenticated pages. Provides instant help with page functionality, features explanation, and general MyKliq questions without requiring AI APIs - uses built-in knowledge base covering all major app features and functionality. All conversations automatically emailed to futureshockholdings@gmail.com via SendGrid integration with improved scrollable chat interface for extended discussions
 
 # User Preferences
 

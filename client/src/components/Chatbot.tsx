@@ -207,12 +207,9 @@ export function Chatbot() {
 
       // Send conversation to backend for email forwarding
       try {
-        await apiRequest('/api/chatbot/conversation', {
-          method: 'POST',
-          body: {
-            userQuestion,
-            botResponse
-          }
+        await apiRequest('/api/chatbot/conversation', 'POST', {
+          userQuestion,
+          botResponse
         });
       } catch (error) {
         console.error('Failed to send conversation to backend:', error);
@@ -249,7 +246,7 @@ export function Chatbot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-96 h-96 shadow-xl z-50 flex flex-col">
+        <Card className="fixed bottom-6 right-6 w-96 h-[500px] shadow-xl z-50 flex flex-col">
           <CardHeader className="flex-shrink-0 pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -267,9 +264,9 @@ export function Chatbot() {
             </div>
           </CardHeader>
 
-          <CardContent className="flex-1 flex flex-col p-0">
-            <ScrollArea className="flex-1 px-4">
-              <div className="space-y-3 pb-3">
+          <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+            <ScrollArea className="flex-1 px-4 h-full">
+              <div className="space-y-3 pb-3 min-h-full">
                 {messages.map((message) => (
                   <div
                     key={message.id}
