@@ -84,7 +84,7 @@ export default function Landing() {
         <div className="p-6 space-y-6">
           <div className="text-center">
             <h2 className="text-xl font-bold text-primary mb-2">
-              Welcome to the Future of Social!
+              Relive the Golden Age of Social Networking with Modern Features
             </h2>
             <p className="text-muted-foreground text-sm">
               Connect with your closest friends in a private, customizable space.
