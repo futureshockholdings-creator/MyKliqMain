@@ -97,6 +97,8 @@ export default function Profile() {
     return <div>Loading...</div>;
   }
 
+  const typedUser = user as User;
+
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <div className="space-y-6">
@@ -107,39 +109,36 @@ export default function Profile() {
             <CardDescription>Upload and manage your profile picture</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center justify-center">
               <div className="relative">
                 <Avatar className="w-24 h-24 border-4 border-primary">
                   <AvatarImage 
-                    src={user.profileImageUrl} 
+                    src={typedUser.profileImageUrl} 
                     alt="Profile picture" 
                     className="object-cover"
                   />
                   <AvatarFallback className="bg-muted text-foreground text-2xl">
-                    {user.firstName?.[0] || "U"}
+                    {typedUser.firstName?.[0] || "U"}
                   </AvatarFallback>
                 </Avatar>
-              </div>
-              <div className="flex-1">
-                <ObjectUploader
-                  maxNumberOfFiles={1}
-                  maxFileSize={5242880} // 5MB limit for profile pictures
-                  onGetUploadParameters={handleGetUploadParameters}
-                  onComplete={handleProfilePictureComplete}
-                  buttonClassName="w-full"
-                >
-                  <div className="flex items-center justify-center space-x-2">
+                
+                {/* Camera Icon Button */}
+                <div className="absolute bottom-0 right-0">
+                  <ObjectUploader
+                    maxNumberOfFiles={1}
+                    maxFileSize={5242880} // 5MB limit for profile pictures
+                    onGetUploadParameters={handleGetUploadParameters}
+                    onComplete={handleProfilePictureComplete}
+                    buttonClassName="!p-2 !rounded-full !bg-primary !text-primary-foreground hover:!bg-primary/90 !border-2 !border-background"
+                  >
                     <Camera className="w-4 h-4" />
-                    <span>
-                      {user.profileImageUrl ? "Change Profile Picture" : "Upload Profile Picture"}
-                    </span>
-                  </div>
-                </ObjectUploader>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Upload a profile picture (max 5MB). Recommended size: 400x400px
-                </p>
+                  </ObjectUploader>
+                </div>
               </div>
             </div>
+            <p className="text-sm text-muted-foreground text-center mt-4">
+              Click the camera icon to upload or change your profile picture (max 5MB)
+            </p>
           </CardContent>
         </Card>
 
@@ -148,12 +147,12 @@ export default function Profile() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Profile Information</CardTitle>
-              <ProfileSettings user={user} />
+              <ProfileSettings user={typedUser} />
             </div>
             <CardDescription>Your personal details, interests, and preferences</CardDescription>
           </CardHeader>
           <CardContent>
-            <ProfileDetailsDisplay user={user} />
+            <ProfileDetailsDisplay user={typedUser} />
           </CardContent>
         </Card>
 
@@ -166,7 +165,7 @@ export default function Profile() {
             <CardContent>
               <div className="space-y-4">
                 {birthdayUsers.map((birthdayUser: User) => {
-                  if (birthdayUser.id === (user as User)?.id) return null; // Don't show own birthday
+                  if (birthdayUser.id === typedUser.id) return null; // Don't show own birthday
                   
                   return (
                     <div key={birthdayUser.id} className="flex items-center justify-between p-3 border rounded-lg">
