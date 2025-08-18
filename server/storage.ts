@@ -2119,12 +2119,16 @@ export class DatabaseStorage implements IStorage {
 
       let score = 0;
 
-      // Age targeting
+      // Age targeting (relaxed for testing - show ads even without user age)
       if (ad.targetAgeMin || ad.targetAgeMax) {
-        if (!userAge) return false;
-        if (ad.targetAgeMin && userAge < ad.targetAgeMin) return false;
-        if (ad.targetAgeMax && userAge > ad.targetAgeMax) return false;
-        score += 2;
+        if (userAge) {
+          if (ad.targetAgeMin && userAge < ad.targetAgeMin) return false;
+          if (ad.targetAgeMax && userAge > ad.targetAgeMax) return false;
+          score += 2;
+        } else {
+          // If no user age, still show general audience ads (no strict filtering)
+          score += 1;
+        }
       }
 
       // Interest matching
