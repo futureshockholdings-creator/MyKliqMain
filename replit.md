@@ -23,6 +23,7 @@ MyKliq is a social media application designed for close-knit friend groups, focu
 - **Toast Auto-dismiss Enhancement**: Updated toast notification system to automatically disappear after 2.5 seconds regardless of success or failure status across all pages
 - **Landing Page Friend Limit Update**: Updated friend limit display from 15 to 28 friends to reflect expanded pyramid capacity
 - **Landing Page Content Updates**: Updated main heading to "Relive the Golden Age of Social Networking with Modern Features", removed duplicate footer text, and added Moviecons feature card highlighting custom video reactions and emotes
+- **Meetup Check-in Display Fix**: Resolved critical bug where recent check-ins weren't appearing in headlines feed due to frontend caching issues. Implemented complete cache disabling, automatic refresh every 10 seconds, and immediate refetch after check-ins to ensure real-time display of location posts
 
 # User Preferences
 
