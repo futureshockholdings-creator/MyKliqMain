@@ -22,6 +22,7 @@ MyKliq is a social media application designed for close-knit friend groups, focu
 - **Kliq Closure Controls**: Implemented "Open Kliq"/"Close Kliq" toggle button positioned at bottom-right of pyramid component, allowing users to control new member access before reaching 28-friend maximum. Button dynamically changes between "Open Kliq" (green, when closed) and "Close Kliq" (orange, when open) with confirmation dialogs and backend validation to prevent new joins when kliq is closed.
 - **Toast Auto-dismiss Enhancement**: Updated toast notification system to automatically disappear after 2.5 seconds regardless of success or failure status across all pages
 - **Landing Page Friend Limit Update**: Updated friend limit display from 15 to 28 friends to reflect expanded pyramid capacity
+- **Landing Page Content Updates**: Updated main heading to "Relive the Golden Age of Social Networking with Modern Features", removed duplicate footer text, and added Moviecons feature card highlighting custom video reactions and emotes
 
 # User Preferences
 

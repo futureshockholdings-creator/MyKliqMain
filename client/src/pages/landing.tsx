@@ -105,6 +105,20 @@ export default function Landing() {
               </CardContent>
             </Card>
 
+            <Card className="bg-gradient-to-r from-mykliq-purple/20 to-primary/20 border-mykliq-purple/30">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-mykliq-purple rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">🎬</span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-mykliq-purple">Moviecons</h3>
+                    <p className="text-xs text-muted-foreground">Express yourself with custom video reactions and emotes</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="bg-gradient-to-r from-secondary/20 to-mykliq-green/20 border-secondary/30">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -129,12 +143,12 @@ export default function Landing() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-r from-mykliq-purple/20 to-primary/20 border-mykliq-purple/30">
+            <Card className="bg-gradient-to-r from-mykliq-green/20 to-secondary/20 border-mykliq-green/30">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Shield className="w-8 h-8 text-mykliq-purple" />
+                  <Shield className="w-8 h-8 text-mykliq-green" />
                   <div>
-                    <h3 className="font-bold text-mykliq-purple">Content Filtering</h3>
+                    <h3 className="font-bold text-mykliq-green">Content Filtering</h3>
                     <p className="text-xs text-muted-foreground">Filter out unwanted content with keyword blocking</p>
                   </div>
                 </div>
