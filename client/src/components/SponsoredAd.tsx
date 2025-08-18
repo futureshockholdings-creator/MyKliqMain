@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
 import { SponsoredAd as SponsoredAdType } from "@shared/schema";
+import { getTextColorForBackground } from "@/lib/colorUtils";
 
 interface SponsoredAdProps {
   ad: SponsoredAdType;
@@ -60,9 +61,17 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
     clickMutation.mutate();
   };
 
+  // Get the optimal text color based on background
+  const backgroundColor = ad.backgroundColor || "#ffffff";
+  const textColor = getTextColorForBackground(backgroundColor);
+
   return (
     <Card 
-      className="relative overflow-hidden cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border-l-4 border-l-blue-500"
+      className="relative overflow-hidden cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-blue-500"
+      style={{ 
+        backgroundColor: backgroundColor,
+        color: textColor 
+      }}
       onClick={handleAdClick}
       data-testid={`sponsored-ad-${ad.id}`}
     >
@@ -71,14 +80,16 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
         <div className="flex items-center justify-between mb-3">
           <Badge 
             variant="secondary" 
-            className="text-xs font-medium bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-200"
+            className="text-xs font-medium"
+            style={{ color: textColor, borderColor: textColor, backgroundColor: 'transparent' }}
             data-testid="sponsored-badge"
           >
             Sponsored
           </Badge>
           <Badge 
             variant="outline" 
-            className="text-xs text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600"
+            className="text-xs"
+            style={{ color: textColor, borderColor: textColor }}
             data-testid={`ad-category-${ad.category}`}
           >
             {ad.category}
@@ -100,14 +111,16 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
         {/* Ad Content */}
         <div className="space-y-2">
           <h3 
-            className="font-semibold text-lg leading-tight text-black dark:text-white"
+            className="font-semibold text-lg leading-tight"
+            style={{ color: textColor }}
             data-testid="ad-title"
           >
             {ad.title}
           </h3>
           
           <p 
-            className="text-sm text-black dark:text-gray-200 line-clamp-3"
+            className="text-sm line-clamp-3"
+            style={{ color: textColor }}
             data-testid="ad-description"
           >
             {ad.description}
@@ -126,7 +139,10 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
             </Button>
 
             {/* Ad Stats (for testing/debug) */}
-            <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
+            <div 
+              className="flex items-center gap-3 text-xs"
+              style={{ color: textColor }}
+            >
               <div className="flex items-center gap-1">
                 <Eye className="w-3 h-3" />
                 <span data-testid="ad-impressions">{ad.impressions || 0}</span>
