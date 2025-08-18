@@ -23,9 +23,9 @@ interface KnowledgeBase {
 
 const knowledgeBase: KnowledgeBase = {
   home: {
-    keywords: ['home', 'headlines', 'feed', 'post', 'create post', 'main page'],
-    response: "The Headlines page is your main feed where you can see all posts, polls, events, and activities from your kliq members. You can create new posts, add GIFs or moviecons, and interact with content from your friends.",
-    relatedTopics: ['posts', 'polls', 'feed']
+    keywords: ['home', 'headlines', 'feed', 'post', 'create post', 'main page', 'home icon'],
+    response: "The Headlines page (🏠 Home icon) is your main feed where you can see all posts, polls, events, and activities from your kliq members. You can create new posts, add GIFs or moviecons, and interact with content from your friends.",
+    relatedTopics: ['posts', 'polls', 'feed', 'navigation']
   },
   posts: {
     keywords: ['post', 'create post', 'share', 'content', 'writing'],
@@ -33,19 +33,19 @@ const knowledgeBase: KnowledgeBase = {
     relatedTopics: ['home', 'gifs', 'moviecons']
   },
   kliq: {
-    keywords: ['kliq', 'friends', 'pyramid', 'rank', 'add friends', 'friend ranking'],
-    response: "My Kliq page shows your friend pyramid with up to 28 friends ranked by closeness. You can drag friends to rerank them, add new friends with invite codes, and manage your kliq settings.",
-    relatedTopics: ['friends', 'invites', 'ranking']
+    keywords: ['kliq', 'friends', 'pyramid', 'rank', 'add friends', 'friend ranking', 'my kliq', 'users icon'],
+    response: "My Kliq page (👥 Users icon) shows your friend pyramid with up to 28 friends ranked by closeness. You can drag friends to rerank them, add new friends with invite codes, manage kliq closure settings, and remove friends.",
+    relatedTopics: ['friends', 'invites', 'ranking', 'navigation']
   },
   events: {
-    keywords: ['events', 'create event', 'attendance', 'going', 'maybe', 'event details'],
-    response: "Events page lets you create and manage kliq events. Set the title, date, time, location, and description. Other kliq members can mark their attendance as Going, Maybe, or Can't Go.",
-    relatedTopics: ['attendance', 'calendar']
+    keywords: ['events', 'create event', 'attendance', 'going', 'maybe', 'event details', 'calendar icon'],
+    response: "Events page (📅 Calendar icon) lets you create and manage kliq events. Set the title, date, time, location, and description. Other kliq members can mark their attendance as Going, Maybe, or Can't Go. Events automatically post to the Headlines feed when created.",
+    relatedTopics: ['attendance', 'calendar', 'navigation']
   },
   messages: {
-    keywords: ['messages', 'chat', 'dm', 'direct message', 'conversation'],
-    response: "Messages is for private conversations with individual kliq members. You can send text, photos, videos, GIFs, and moviecons in your chats.",
-    relatedTopics: ['chat', 'media']
+    keywords: ['messages', 'chat', 'dm', 'direct message', 'conversation', 'im', 'message circle icon'],
+    response: "Messages or IM page (💬 MessageCircle icon) is for private conversations with individual kliq members. You can send text, photos, videos, GIFs, and moviecons in your chats. Shows notification badges for unread messages.",
+    relatedTopics: ['chat', 'media', 'navigation']
   },
   meetup: {
     keywords: ['meetup', 'location', 'check in', 'gps', 'where'],
@@ -53,19 +53,19 @@ const knowledgeBase: KnowledgeBase = {
     relatedTopics: ['location', 'headlines']
   },
   actions: {
-    keywords: ['actions', 'live stream', 'streaming', 'go live'],
-    response: "Actions page is for live streaming to your kliq. Start a live stream to share real-time video with your friends, and they can join to watch and chat.",
-    relatedTopics: ['streaming', 'live']
+    keywords: ['actions', 'live stream', 'streaming', 'go live', 'video icon'],
+    response: "Actions page (🎥 Video icon) is for live streaming to your kliq. Start a live stream to share real-time video with your friends, and they can join to watch and chat. Streams automatically post to Headlines when started.",
+    relatedTopics: ['streaming', 'live', 'navigation']
   },
   profile: {
-    keywords: ['profile', 'edit profile', 'bio', 'avatar', 'profile picture'],
-    response: "Profile page lets you customize your personal information, upload profile pictures, set wallpaper backgrounds, and manage your account settings.",
-    relatedTopics: ['avatar', 'customization']
+    keywords: ['profile', 'edit profile', 'bio', 'avatar', 'profile picture', 'user icon'],
+    response: "Profile page (👤 User icon) lets you customize your personal information, upload profile pictures with camera icon, set wallpaper backgrounds, manage your bio, and update account settings. Located at the top of navigation.",
+    relatedTopics: ['avatar', 'customization', 'navigation']
   },
   themes: {
-    keywords: ['themes', 'customize', 'colors', 'appearance', 'design'],
-    response: "Themes page allows you to personalize your MyKliq experience with custom colors, fonts, backgrounds, and UI styles. Use 'Surprise Me' for random themes.",
-    relatedTopics: ['customization', 'colors']
+    keywords: ['themes', 'customize', 'colors', 'appearance', 'design', 'palette icon'],
+    response: "Themes page (🎨 Palette icon) allows you to personalize your MyKliq experience with custom colors, fonts, backgrounds, and UI styles. Use 'Surprise Me' for random themes that ensure readability.",
+    relatedTopics: ['customization', 'colors', 'navigation']
   },
   moviecons: {
     keywords: ['moviecons', 'video reactions', 'custom videos', 'emotes'],
@@ -96,6 +96,21 @@ const knowledgeBase: KnowledgeBase = {
     keywords: ['notifications', 'alerts', 'bell', 'updates'],
     response: "Notifications show you updates like new posts, event attendance changes, friend activities, and messages. Check the bell icon for recent alerts.",
     relatedTopics: ['alerts', 'updates']
+  },
+  navigation: {
+    keywords: ['navigation', 'nav', 'menu', 'sidebar', 'icons', 'layout', 'where', 'how to find', 'left side'],
+    response: "MyKliq navigation is on the left side with these icons from top to bottom: Profile (👤 User), Headlines (🏠 Home), My Kliq (👥 Users), Messages (💬 MessageCircle), Events (📅 Calendar), Actions (🎥 Video), and Themes (🎨 Palette). The notification bell (🔔) at the very top shows alerts.",
+    relatedTopics: ['icons', 'alerts', 'layout']
+  },
+  alerts: {
+    keywords: ['alerts', 'bell icon', 'notification bell', 'badge', 'unread', 'notification panel', 'red badge'],
+    response: "The Alerts system (🔔 Bell icon at top of navigation) shows all your notifications including friend requests, event invites, and messages. Red badges indicate unread items. Click the bell to open the notification panel and see all your alerts organized by type.",
+    relatedTopics: ['navigation', 'friends', 'events', 'messages']
+  },
+  badges: {
+    keywords: ['badges', 'red circles', 'notification badges', 'unread count', 'numbers', 'red numbers'],
+    response: "Red notification badges appear on navigation icons to show unread items: Messages icon shows unread chat count, My Kliq shows friend request count, Events shows event invite count, and the main Alerts bell shows total unread count across all categories.",
+    relatedTopics: ['alerts', 'navigation', 'notifications']
   }
 };
 
@@ -106,9 +121,10 @@ const greetingMessages = [
 ];
 
 const fallbackResponses = [
-  "I'm not sure about that specific question, but I can help you with information about MyKliq's pages like Headlines, My Kliq, Events, Messages, and more. What would you like to know?",
-  "That's not something I have information about. I can explain how to use MyKliq's features like creating posts, managing friends, or setting up events. What interests you?",
-  "I don't have details on that topic. I'm here to help with MyKliq functionality like the friend pyramid, live streaming, polls, and other features. What can I help you with?"
+  "I can help you with MyKliq features! Try asking about Headlines, My Kliq, Events, Messages, Profile, Themes, Actions, or the navigation icons and alert badges.",
+  "I'm here to help you navigate MyKliq! Ask me about any page, icon, notification badge, or feature you'd like to understand better.",
+  "Need help with MyKliq? I can explain how to use posts, polls, events, messaging, themes, navigation icons, notification badges, and more!",
+  "I can guide you through MyKliq features. Try asking about creating content, managing friends, customizing themes, or understanding the navigation layout and alert system."
 ];
 
 export function Chatbot() {
@@ -207,10 +223,20 @@ export function Chatbot() {
 
       // Send conversation to backend for email forwarding
       try {
-        await apiRequest('/api/chatbot/conversation', 'POST', {
-          userQuestion,
-          botResponse
+        const response = await fetch('/api/chatbot/conversation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userQuestion,
+            botResponse
+          }),
         });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
       } catch (error) {
         console.error('Failed to send conversation to backend:', error);
         // Don't show error to user - email forwarding is background functionality
