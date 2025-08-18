@@ -22,9 +22,12 @@ interface PyramidChartProps {
   onRemove?: (friendId: string) => void;
   maxFriends?: number;
   kliqName?: string;
+  kliqClosed?: boolean;
+  onCloseKliq?: () => void;
+  isClosingKliq?: boolean;
 }
 
-export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 28, kliqName }: PyramidChartProps) {
+export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 28, kliqName, kliqClosed, onCloseKliq, isClosingKliq }: PyramidChartProps) {
   const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
   const [showRemoveButton, setShowRemoveButton] = useState<string | null>(null);
   const [isHolding, setIsHolding] = useState<string | null>(null);
@@ -256,14 +259,40 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
         ))}
       </div>
 
-      {friends.length < maxFriends && (
-        <div className="text-center mt-6">
+      {/* Bottom section with invite and close kliq buttons */}
+      <div className="flex justify-between items-center mt-6">
+        {/* Invite Friend Button - left side or center if no friends */}
+        {friends.length < maxFriends && (
           <Button className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground font-bold">
             <Users className="w-4 h-4 mr-2" />
             Invite Friend ({maxFriends - friends.length} spots left)
           </Button>
-        </div>
-      )}
+        )}
+        
+        {/* Spacer when no invite button */}
+        {friends.length >= maxFriends && <div />}
+        
+        {/* Close Kliq Button - right side (only show if user has friends) */}
+        {friends.length > 0 && onCloseKliq && (
+          <Button 
+            variant={kliqClosed ? "default" : "outline"} 
+            size="sm"
+            onClick={onCloseKliq}
+            disabled={isClosingKliq}
+            className={kliqClosed 
+              ? "bg-green-600 hover:bg-green-700 text-white" 
+              : "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
+            }
+            data-testid="button-close-kliq"
+          >
+            <X className="w-4 h-4 mr-2" />
+            {isClosingKliq 
+              ? (kliqClosed ? "Reopening..." : "Closing...")
+              : (kliqClosed ? "Reopen Kliq" : "Close Kliq")
+            }
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

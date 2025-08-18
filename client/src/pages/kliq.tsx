@@ -317,6 +317,10 @@ export default function Kliq() {
   };
 
   const handleCloseKliq = () => {
+    setIsCloseKliqDialogOpen(true);
+  };
+
+  const confirmCloseKliq = () => {
     closeKliqMutation.mutate();
   };
 
@@ -512,13 +516,15 @@ export default function Kliq() {
               onRemove={handleRemoveFriend}
               maxFriends={28}
               kliqName={userData?.kliqName}
+              kliqClosed={userData?.kliqClosed}
+              onCloseKliq={handleCloseKliq}
+              isClosingKliq={false}
             />
           )}
 
-          {/* Leave Kliq and Close Kliq Buttons - only show if user has friends */}
+          {/* Leave Kliq Button - only show if user has friends */}
           {friends.length > 0 && (
-            <div className="flex justify-between items-center">
-              {/* Leave Kliq Button - left aligned */}
+            <div className="flex justify-start">
               <Dialog open={isLeaveKliqDialogOpen} onOpenChange={setIsLeaveKliqDialogOpen}>
                 <DialogTrigger asChild>
                   <Button 
@@ -559,64 +565,50 @@ export default function Kliq() {
                   </div>
                 </DialogContent>
               </Dialog>
-
-              {/* Close Kliq Button - right aligned */}
-              <Dialog open={isCloseKliqDialogOpen} onOpenChange={setIsCloseKliqDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    variant={userData?.kliqClosed ? "default" : "outline"} 
-                    size="sm"
-                    className={userData?.kliqClosed 
-                      ? "bg-mykliq-green hover:bg-mykliq-green/90 text-white" 
-                      : "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
-                    }
-                    data-testid="button-close-kliq"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    {userData?.kliqClosed ? "Reopen Kliq" : "Close Kliq"}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
-                  <DialogHeader>
-                    <DialogTitle className={userData?.kliqClosed ? "text-mykliq-green" : "text-orange-500"}>
-                      {userData?.kliqClosed ? "Reopen Kliq" : "Close Kliq"}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      {userData?.kliqClosed 
-                        ? "Are you sure you want to reopen your kliq? New members will be able to join using your invite code."
-                        : "Are you sure you want to close your kliq? No new members will be able to join, but existing friends will remain."
-                      }
-                    </p>
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsCloseKliqDialogOpen(false)}
-                        className="bg-muted hover:bg-muted/80"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        variant={userData?.kliqClosed ? "default" : "destructive"}
-                        onClick={handleCloseKliq}
-                        disabled={closeKliqMutation.isPending}
-                        className={userData?.kliqClosed 
-                          ? "bg-mykliq-green hover:bg-mykliq-green/90" 
-                          : "bg-orange-500 hover:bg-orange-600"
-                        }
-                      >
-                        {closeKliqMutation.isPending 
-                          ? (userData?.kliqClosed ? "Reopening..." : "Closing...")
-                          : (userData?.kliqClosed ? "Reopen Kliq" : "Close Kliq")
-                        }
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
             </div>
           )}
+
+          {/* Close Kliq Dialog (triggered from PyramidChart) */}
+          <Dialog open={isCloseKliqDialogOpen} onOpenChange={setIsCloseKliqDialogOpen}>
+            <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
+              <DialogHeader>
+                <DialogTitle className={userData?.kliqClosed ? "text-green-600" : "text-orange-500"}>
+                  {userData?.kliqClosed ? "Reopen Kliq" : "Close Kliq"}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  {userData?.kliqClosed 
+                    ? "Are you sure you want to reopen your kliq? New members will be able to join using your invite code."
+                    : "Are you sure you want to close your kliq? No new members will be able to join, but existing friends will remain."
+                  }
+                </p>
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCloseKliqDialogOpen(false)}
+                    className="bg-muted hover:bg-muted/80"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant={userData?.kliqClosed ? "default" : "destructive"}
+                    onClick={confirmCloseKliq}
+                    disabled={closeKliqMutation.isPending}
+                    className={userData?.kliqClosed 
+                      ? "bg-green-600 hover:bg-green-700" 
+                      : "bg-orange-500 hover:bg-orange-600"
+                    }
+                  >
+                    {closeKliqMutation.isPending 
+                      ? (userData?.kliqClosed ? "Reopening..." : "Closing...")
+                      : (userData?.kliqClosed ? "Reopen Kliq" : "Close Kliq")
+                    }
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Invite Code */}
           <Card className="bg-card border-border">
