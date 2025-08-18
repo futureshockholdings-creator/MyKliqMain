@@ -60,6 +60,8 @@ export default function Home() {
   // Fetch kliq feed (posts, polls, events, actions from all kliq members)
   const { data: feedItems = [], isLoading: feedLoading } = useQuery({
     queryKey: ["/api/kliq-feed"],
+    staleTime: 0, // Always consider data stale to get fresh posts
+    gcTime: 0, // Don't cache the data (replaces cacheTime in v5)
   });
 
   // Fetch targeted ads for the user
@@ -962,8 +964,7 @@ export default function Home() {
 
           
           {(feedItems as any[]).filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
-          console.log("Feed item processing:", item.type, item.title || item.content?.substring(0, 30));
-          console.log("Full item data:", JSON.stringify(item, null, 2));
+          console.log("Feed item processing:", item.type, item.title || item.content?.substring(0, 30), item.createdAt || item.activityDate);
           
           // Inject sponsored ads every 3 feed items
           const shouldShowAd = index > 0 && (index + 1) % 4 === 0 && targetedAds.length > 0;
