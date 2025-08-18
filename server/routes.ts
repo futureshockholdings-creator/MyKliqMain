@@ -64,6 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: user.firstName,
         lastName: user.lastName,
         profileImageUrl: user.profileImageUrl,
+        backgroundImageUrl: user.backgroundImageUrl,
         bio: user.bio,
         kliqName: user.kliqName,
         birthdate: user.birthdate,
@@ -173,6 +174,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error removing profile music:", error);
       res.status(500).json({ message: "Failed to remove profile music" });
+    }
+  });
+
+  // Background image update endpoint
+  app.patch("/api/user/background", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { backgroundImageUrl } = req.body;
+
+      await storage.updateUser(userId, {
+        backgroundImageUrl,
+      });
+
+      const updatedUser = await storage.getUser(userId);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating background image:", error);
+      res.status(500).json({ message: "Failed to update background image" });
     }
   });
 

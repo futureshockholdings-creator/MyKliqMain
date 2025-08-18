@@ -91,6 +91,42 @@ export default function Profile() {
     }
   };
 
+  // Background image upload handlers
+  const handleBackgroundGetUploadParameters = async () => {
+    const response = await apiRequest("POST", "/api/objects/upload", {});
+    return {
+      method: "PUT" as const,
+      url: response.uploadURL,
+    };
+  };
+
+  const updateBackgroundMutation = useMutation({
+    mutationFn: async (backgroundUrl: string) => {
+      return await apiRequest("/api/user/background", "PATCH", { backgroundImageUrl: backgroundUrl });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: "Success",
+        description: "Background image updated successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update background image",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleBackgroundComplete = (result: any) => {
+    if (result.successful && result.successful[0]) {
+      const uploadURL = result.successful[0].uploadURL;
+      updateBackgroundMutation.mutate(uploadURL);
+    }
+  };
+
 
 
   if (!user) {
@@ -102,43 +138,73 @@ export default function Profile() {
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       <div className="space-y-6">
-        {/* Profile Picture Section */}
+        {/* Profile Picture & Background Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Profile Picture</CardTitle>
-            <CardDescription>Upload and manage your profile picture</CardDescription>
+            <CardTitle>Profile Picture & Background</CardTitle>
+            <CardDescription>Upload and manage your profile picture and background wallpaper</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-end">
-              <div className="relative">
-                <Avatar className="w-24 h-24 border-4 border-primary">
-                  <AvatarImage 
-                    src={typedUser.profileImageUrl} 
-                    alt="Profile picture" 
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="bg-muted text-foreground text-2xl">
-                    {typedUser.firstName?.[0] || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                
-                {/* Camera Icon Button */}
-                <div className="absolute bottom-0 right-0">
-                  <ObjectUploader
-                    maxNumberOfFiles={1}
-                    maxFileSize={5242880} // 5MB limit for profile pictures
-                    onGetUploadParameters={handleGetUploadParameters}
-                    onComplete={handleProfilePictureComplete}
-                    buttonClassName="!p-2 !rounded-full !bg-primary !text-primary-foreground hover:!bg-primary/90 !border-2 !border-background"
-                  >
-                    <Camera className="w-4 h-4" />
-                  </ObjectUploader>
+          <CardContent className="p-0">
+            <div 
+              className="relative h-48 bg-gradient-to-br from-primary/20 to-secondary/20 bg-cover bg-center bg-no-repeat"
+              style={{
+                backgroundImage: (typedUser.backgroundImageUrl ?? undefined) ? `url(${typedUser.backgroundImageUrl})` : undefined
+              }}
+            >
+              {/* Background overlay for better text readability */}
+              <div className="absolute inset-0 bg-black/20"></div>
+              
+              {/* Profile Avatar positioned on the right */}
+              <div className="absolute bottom-4 right-4">
+                <div className="relative">
+                  <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
+                    <AvatarImage 
+                      src={typedUser.profileImageUrl} 
+                      alt="Profile picture" 
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="bg-white text-primary text-2xl">
+                      {typedUser.firstName?.[0] || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  {/* Camera Icon for Profile Picture */}
+                  <div className="absolute -bottom-1 -right-1">
+                    <ObjectUploader
+                      maxNumberOfFiles={1}
+                      maxFileSize={5242880} // 5MB limit for profile pictures
+                      onGetUploadParameters={handleGetUploadParameters}
+                      onComplete={handleProfilePictureComplete}
+                      buttonClassName="!p-2 !rounded-full !bg-primary !text-white hover:!bg-primary/90 !border-2 !border-white !shadow-lg"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </ObjectUploader>
+                  </div>
                 </div>
               </div>
+              
+              {/* Camera Icon for Background Wallpaper */}
+              <div className="absolute top-4 right-4">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={10485760} // 10MB limit for background images
+                  onGetUploadParameters={handleBackgroundGetUploadParameters}
+                  onComplete={handleBackgroundComplete}
+                  buttonClassName="!p-3 !rounded-full !bg-white/90 !text-primary hover:!bg-white !border-2 !border-primary/20 !shadow-lg backdrop-blur-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-4 h-4" />
+                    <span className="text-xs font-medium hidden sm:block">Background</span>
+                  </div>
+                </ObjectUploader>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground text-right mt-4">
-              Click the camera icon to upload or change your profile picture (max 5MB)
-            </p>
+            
+            <div className="p-4">
+              <p className="text-sm text-muted-foreground text-right">
+                Click the camera icons to upload your profile picture (5MB max) or background wallpaper (10MB max)
+              </p>
+            </div>
           </CardContent>
         </Card>
 
