@@ -57,7 +57,7 @@ export default function Profile() {
 
   // Profile picture upload handlers
   const handleGetUploadParameters = async () => {
-    const response = await apiRequest("POST", "/api/objects/upload", {});
+    const response = await apiRequest("/api/objects/upload", "POST", {});
     return {
       method: "PUT" as const,
       url: response.uploadURL,
