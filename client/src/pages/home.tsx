@@ -28,6 +28,7 @@ import { extractYouTubeUrlsFromText } from "@/lib/youtubeUtils";
 import { PollCard } from "@/components/PollCard";
 import { GoogleSearch } from "@/components/GoogleSearch";
 import { EventCard } from "@/components/EventCard";
+import { trackEvent } from "@/lib/analytics";
 import type { Gif, Moviecon } from "@shared/schema";
 
 
@@ -379,6 +380,9 @@ export default function Home() {
 
   const handleCreatePost = () => {
     if (newPost.trim() || selectedGif || selectedMoviecon) {
+      // Track post creation event
+      trackEvent('create_post', 'engagement', 'post_created');
+      
       createPostMutation.mutate({
         content: newPost.trim(),
         gifId: selectedGif?.id,
@@ -404,6 +408,9 @@ export default function Home() {
 
   // Like toggle handler
   const handleLikeToggle = (itemId: string) => {
+    // Track like event
+    trackEvent('like_post', 'engagement', 'post_liked');
+    
     likeToggleMutation.mutate(itemId);
   };
 
