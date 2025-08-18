@@ -136,8 +136,7 @@ export default function Profile() {
 
   const typedUser = user as User;
   
-  // Debug: Log the background image URL
-  console.log("Background image URL (normalized):", typedUser.backgroundImageUrl);
+
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
