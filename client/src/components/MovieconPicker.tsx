@@ -101,6 +101,14 @@ export function MovieconPicker({
 
   const { data: moviecons = [], isLoading } = useQuery<Moviecon[]>({
     queryKey: ['/api/moviecons', searchQuery],
+    queryFn: async () => {
+      const url = searchQuery ? `/api/moviecons?q=${encodeURIComponent(searchQuery)}` : '/api/moviecons';
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
     enabled: dialogOpen, // Only fetch when dialog is open
   });
 
