@@ -272,7 +272,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
         {/* Spacer when no invite button */}
         {friends.length >= maxFriends && <div />}
         
-        {/* Close Kliq Button - right side (only show if user has friends) */}
+        {/* Open/Close Kliq Button - right side (only show if user has friends) */}
         {friends.length > 0 && onCloseKliq && (
           <Button 
             variant={kliqClosed ? "default" : "outline"} 
@@ -283,13 +283,19 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
               ? "bg-green-600 hover:bg-green-700 text-white" 
               : "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
             }
-            data-testid="button-close-kliq"
+            data-testid="button-open-close-kliq"
           >
-            <X className="w-4 h-4 mr-2" />
-            {isClosingKliq 
-              ? (kliqClosed ? "Reopening..." : "Closing...")
-              : (kliqClosed ? "Reopen Kliq" : "Close Kliq")
-            }
+            {kliqClosed ? (
+              <>
+                <Users className="w-4 h-4 mr-2" />
+                {isClosingKliq ? "Opening..." : "Open Kliq"}
+              </>
+            ) : (
+              <>
+                <X className="w-4 h-4 mr-2" />
+                {isClosingKliq ? "Closing..." : "Close Kliq"}
+              </>
+            )}
           </Button>
         )}
       </div>

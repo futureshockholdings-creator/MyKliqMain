@@ -210,9 +210,9 @@ export default function Kliq() {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setIsCloseKliqDialogOpen(false);
       toast({
-        title: userData?.kliqClosed ? "Kliq reopened" : "Kliq closed",
+        title: userData?.kliqClosed ? "Kliq opened" : "Kliq closed",
         description: userData?.kliqClosed 
-          ? "Your kliq is now open to new members" 
+          ? "Your kliq is now open to new members until you reach 28 friends" 
           : "Your kliq is now closed to new members",
       });
     },
@@ -573,13 +573,13 @@ export default function Kliq() {
             <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
               <DialogHeader>
                 <DialogTitle className={userData?.kliqClosed ? "text-green-600" : "text-orange-500"}>
-                  {userData?.kliqClosed ? "Reopen Kliq" : "Close Kliq"}
+                  {userData?.kliqClosed ? "Open Kliq" : "Close Kliq"}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   {userData?.kliqClosed 
-                    ? "Are you sure you want to reopen your kliq? New members will be able to join using your invite code."
+                    ? "Are you sure you want to open your kliq? New members will be able to join using your invite code until you reach 28 friends total."
                     : "Are you sure you want to close your kliq? No new members will be able to join, but existing friends will remain."
                   }
                 </p>
@@ -601,8 +601,8 @@ export default function Kliq() {
                     }
                   >
                     {closeKliqMutation.isPending 
-                      ? (userData?.kliqClosed ? "Reopening..." : "Closing...")
-                      : (userData?.kliqClosed ? "Reopen Kliq" : "Close Kliq")
+                      ? (userData?.kliqClosed ? "Opening..." : "Closing...")
+                      : (userData?.kliqClosed ? "Open Kliq" : "Close Kliq")
                     }
                   </Button>
                 </div>

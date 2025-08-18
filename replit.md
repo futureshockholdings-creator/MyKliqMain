@@ -19,6 +19,7 @@ MyKliq is a social media application designed for close-knit friend groups, focu
 - **Kliq Name Display in Posts**: Successfully implemented kliq name display in headlines feed author attribution using "firstName lastName - kliqName" format across all content types (posts, polls, events, actions) with comprehensive database query updates to include kliqName field
 - **Navigation Bar Text Correction**: Updated navigation menu label from "My Kliq's" back to "My Kliq" for proper branding consistency
 - **Friend Pyramid Expansion**: Successfully upgraded friend pyramid from 15 to 28 total friends by adding two new rows (6 and 7 friends) while maintaining all existing functionality including drag-and-drop ranking, video calls, messaging, and friend removal. Tested with 25 friends across 7 rows - all features confirmed working correctly.
+- **Kliq Closure Controls**: Implemented "Open Kliq"/"Close Kliq" toggle button positioned at bottom-right of pyramid component, allowing users to control new member access before reaching 28-friend maximum. Button dynamically changes between "Open Kliq" (green, when closed) and "Close Kliq" (orange, when open) with confirmation dialogs and backend validation to prevent new joins when kliq is closed.
 
 # User Preferences
 
