@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { Users, Crown, Palette, Shield } from "lucide-react";
+import { Users, Crown, Palette, Shield, Video } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -108,9 +108,7 @@ export default function Landing() {
             <Card className="bg-gradient-to-r from-mykliq-purple/20 to-primary/20 border-mykliq-purple/30">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-mykliq-purple rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">🎬</span>
-                  </div>
+                  <Video className="w-8 h-8 text-mykliq-purple" />
                   <div>
                     <h3 className="font-bold text-mykliq-purple">Moviecons</h3>
                     <p className="text-xs text-muted-foreground">Express yourself with custom video reactions and emotes</p>
