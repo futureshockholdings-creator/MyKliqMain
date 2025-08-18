@@ -109,7 +109,7 @@ export default function Profile() {
             <CardDescription>Upload and manage your profile picture</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-end">
               <div className="relative">
                 <Avatar className="w-24 h-24 border-4 border-primary">
                   <AvatarImage 
@@ -136,7 +136,7 @@ export default function Profile() {
                 </div>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground text-center mt-4">
+            <p className="text-sm text-muted-foreground text-right mt-4">
               Click the camera icon to upload or change your profile picture (max 5MB)
             </p>
           </CardContent>
