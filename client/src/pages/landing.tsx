@@ -99,7 +99,7 @@ export default function Landing() {
                   <Users className="w-8 h-8 text-primary" />
                   <div>
                     <h3 className="font-bold text-primary">Exclusive Friend Limit</h3>
-                    <p className="text-xs text-muted-foreground">Only 15 friends max - quality over quantity!</p>
+                    <p className="text-xs text-muted-foreground">Only 28 friends max - quality over quantity!</p>
                   </div>
                 </div>
               </CardContent>
