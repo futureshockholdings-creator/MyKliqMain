@@ -123,7 +123,7 @@ export default function Events() {
       });
       toast({
         title: "Event created!",
-        description: "Your event has been shared with your kliq",
+        description: "Your event has been shared with your kliq on the Headlines",
       });
     },
     onError: (error) => {

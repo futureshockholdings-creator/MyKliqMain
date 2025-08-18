@@ -130,7 +130,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       
       toast({
         title: `${type === "post" ? "Post" : "Story"} created!`,
-        description: `Your ${type} has been shared with your kliq`
+        description: `Your ${type} has been shared with your kliq on the Headlines`
       });
 
       onSuccess();

@@ -101,7 +101,7 @@ export default function Home() {
       setSelectedMoviecon(null);
       toast({
         title: "Post created!",
-        description: "Your post has been shared with your kliq",
+        description: "Your post has been shared with your kliq on the Headlines",
         duration: 2000,
         className: "bg-white text-black border-gray-300",
       });
