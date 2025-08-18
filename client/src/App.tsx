@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { NotificationPanel } from "@/components/NotificationPanel";
 import { useNotifications } from "@/hooks/useNotifications";
+import { Chatbot } from "@/components/Chatbot";
 
 function Navigation({ currentPath }: { currentPath: string }) {
   const { 
@@ -253,6 +254,9 @@ function AppContent() {
             </div>
           </div>
         </div>
+        
+        {/* Chatbot - Only show when authenticated */}
+        {isAuthenticated && !isLoading && <Chatbot />}
       </div>
       <Toaster />
     </TooltipProvider>
