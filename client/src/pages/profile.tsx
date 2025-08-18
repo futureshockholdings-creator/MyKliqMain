@@ -176,6 +176,20 @@ export default function Profile() {
                       onGetUploadParameters={handleGetUploadParameters}
                       onComplete={handleProfilePictureComplete}
                       buttonClassName="!p-2 !rounded-full !bg-primary !text-white hover:!bg-primary/90 !border-2 !border-white !shadow-lg"
+                      allowedFileTypes={[
+                        'image/jpeg',
+                        'image/jpg', 
+                        'image/png',
+                        'image/gif',
+                        'image/webp',
+                        'image/bmp',
+                        'image/tiff',
+                        'image/tif',
+                        'image/svg+xml',
+                        'image/avif',
+                        'image/heic',
+                        'image/heif'
+                      ]}
                     >
                       <Camera className="w-4 h-4" />
                     </ObjectUploader>
@@ -187,10 +201,24 @@ export default function Profile() {
               <div className="absolute top-4 right-4">
                 <ObjectUploader
                   maxNumberOfFiles={1}
-                  maxFileSize={10485760} // 10MB limit for background images
+                  maxFileSize={15728640} // 15MB limit for background images
                   onGetUploadParameters={handleBackgroundGetUploadParameters}
                   onComplete={handleBackgroundComplete}
                   buttonClassName="!p-3 !rounded-full !bg-white/90 !text-primary hover:!bg-white !border-2 !border-primary/20 !shadow-lg backdrop-blur-sm"
+                  allowedFileTypes={[
+                    'image/jpeg',
+                    'image/jpg', 
+                    'image/png',
+                    'image/gif',
+                    'image/webp',
+                    'image/bmp',
+                    'image/tiff',
+                    'image/tif',
+                    'image/svg+xml',
+                    'image/avif',
+                    'image/heic',
+                    'image/heif'
+                  ]}
                 >
                   <div className="flex items-center gap-2">
                     <Camera className="w-4 h-4" />
@@ -202,7 +230,10 @@ export default function Profile() {
             
             <div className="p-4">
               <p className="text-sm text-muted-foreground text-right">
-                Click the camera icons to upload your profile picture (5MB max) or background wallpaper (10MB max)
+                Click the camera icons to upload your profile picture (5MB max) or background wallpaper (15MB max)
+              </p>
+              <p className="text-xs text-muted-foreground text-right mt-1">
+                Supported formats: JPEG, PNG, GIF, WebP, BMP, TIFF, SVG, AVIF, HEIC/HEIF
               </p>
             </div>
           </CardContent>
