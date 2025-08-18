@@ -111,7 +111,7 @@ export default function Landing() {
                   <Video className="w-8 h-8 text-mykliq-purple" />
                   <div>
                     <h3 className="font-bold text-mykliq-purple">Moviecons</h3>
-                    <p className="text-xs text-muted-foreground">Express yourself with custom video reactions and emotes</p>
+                    <p className="text-xs text-muted-foreground">Emoji's and GIF's are cool, but actual video and audio from your favorite shows and movies are better</p>
                   </div>
                 </div>
               </CardContent>
