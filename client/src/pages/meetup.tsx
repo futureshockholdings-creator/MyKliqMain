@@ -61,11 +61,10 @@ export default function MeetupPage() {
         title: "Location Check-in Posted!",
         description: "Your location has been shared with your kliq on the bulletin",
       });
-      // Aggressively refresh the page to show new check-in
-      console.log('Refreshing page to show check-in...');
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Use standard cache invalidation approach
+      console.log('Invalidating cache after check-in...');
+      queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
       // Reset form
       setLocationName('');
       setAddress('');

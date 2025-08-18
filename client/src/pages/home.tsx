@@ -963,6 +963,7 @@ export default function Home() {
           
           {(feedItems as any[]).filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
           console.log("Feed item processing:", item.type, item.title || item.content?.substring(0, 30));
+          console.log("Full item data:", JSON.stringify(item, null, 2));
           
           // Inject sponsored ads every 3 feed items
           const shouldShowAd = index > 0 && (index + 1) % 4 === 0 && targetedAds.length > 0;
