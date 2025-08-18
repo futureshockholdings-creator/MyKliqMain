@@ -135,6 +135,9 @@ export default function Profile() {
   }
 
   const typedUser = user as User;
+  
+  // Debug: Log the background image URL
+  console.log("Background image URL:", typedUser.backgroundImageUrl);
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
@@ -149,7 +152,12 @@ export default function Profile() {
             <div 
               className="relative h-48 bg-gradient-to-br from-primary/20 to-secondary/20 bg-cover bg-center bg-no-repeat"
               style={{
-                backgroundImage: typedUser.backgroundImageUrl ? `url(${typedUser.backgroundImageUrl})` : undefined
+                backgroundImage: typedUser.backgroundImageUrl 
+                  ? `url("${typedUser.backgroundImageUrl}")` 
+                  : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
               }}
             >
               {/* Background overlay for better text readability */}
