@@ -252,7 +252,7 @@ export default function AdsManager() {
       description: ad.description,
       imageUrl: ad.imageUrl ?? "",
       videoUrl: ad.videoUrl ?? "",
-      backgroundColor: ad.backgroundColor || "#ffffff",
+      backgroundColor: ad.backgroundColor ?? "#ffffff",
       ctaText: ad.ctaText,
       ctaUrl: ad.ctaUrl,
       category: ad.category as "fitness" | "tech" | "food" | "travel" | "fashion" | "entertainment" | "education" | "finance" | "health" | "lifestyle",
@@ -697,22 +697,52 @@ export default function AdsManager() {
             </CardContent>
           </Card>
         ) : (
-          ads.map((ad) => (
-            <Card key={ad.id} data-testid={`ad-card-${ad.id}`}>
+          ads.map((ad) => {
+            const backgroundColor = ad.backgroundColor || "#ffffff";
+            const textColor = getTextColorForBackground(backgroundColor);
+            
+            return (
+            <Card 
+              key={ad.id} 
+              data-testid={`ad-card-${ad.id}`}
+              className="border-l-4 border-l-blue-500"
+              style={{ backgroundColor }}
+            >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-semibold text-black dark:text-white">{ad.title}</h3>
-                      <Badge variant={ad.status === 'active' ? 'default' : 'secondary'}>
+                      <h3 
+                        className="text-lg font-semibold" 
+                        style={{ color: textColor }}
+                      >
+                        {ad.title}
+                      </h3>
+                      <Badge 
+                        variant={ad.status === 'active' ? 'default' : 'secondary'}
+                        style={{ color: textColor, borderColor: textColor }}
+                      >
                         {ad.status}
                       </Badge>
-                      <Badge variant="outline">{ad.category}</Badge>
+                      <Badge 
+                        variant="outline" 
+                        style={{ color: textColor, borderColor: textColor }}
+                      >
+                        {ad.category}
+                      </Badge>
                     </div>
                     
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{ad.description}</p>
+                    <p 
+                      className="text-sm mb-3" 
+                      style={{ color: textColor }}
+                    >
+                      {ad.description}
+                    </p>
                     
-                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                    <div 
+                      className="flex items-center gap-4 text-sm" 
+                      style={{ color: textColor }}
+                    >
                       <div className="flex items-center gap-1">
                         <Eye className="w-4 h-4" />
                         <span>{ad.impressions || 0} views</span>
@@ -728,7 +758,10 @@ export default function AdsManager() {
                     </div>
 
                     <div className="mt-2">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                      <span 
+                        className="text-sm" 
+                        style={{ color: textColor }}
+                      >
                         Advertiser: {ad.advertiserName} ({ad.advertiserEmail})
                       </span>
                     </div>
@@ -766,7 +799,8 @@ export default function AdsManager() {
                 </div>
               </CardContent>
             </Card>
-          ))
+            );
+          })
         )}
       </div>
     </div>
