@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Trash2, Upload } from "lucide-react";
+import { Trash2, Upload, Search, X } from "lucide-react";
 
 interface Moviecon {
   id: string;
@@ -24,7 +24,13 @@ interface MovieconUploaderProps {
 export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps) {
   const [title, setTitle] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+
+  // Filter moviecons based on search query
+  const filteredMoviecons = moviecons.filter(moviecon =>
+    moviecon.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleGetUploadParameters = async () => {
     try {
@@ -172,15 +178,44 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
           <CardTitle className="text-foreground">
             Your Moviecons ({moviecons.length})
           </CardTitle>
+          
+          {/* Search Bar */}
+          {moviecons.length > 0 && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search moviecons by title..."
+                className="pl-10 pr-10 bg-background border-border text-foreground"
+                data-testid="input-search-moviecons"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted"
+                  onClick={() => setSearchQuery("")}
+                  data-testid="button-clear-search"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {moviecons.length === 0 ? (
             <div className="text-muted-foreground text-center py-8">
               No moviecons uploaded yet. Upload your first video above!
             </div>
+          ) : filteredMoviecons.length === 0 ? (
+            <div className="text-muted-foreground text-center py-8">
+              No moviecons found matching "{searchQuery}". Try a different search term.
+            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {moviecons.map((moviecon) => (
+              {filteredMoviecons.map((moviecon) => (
                 <div
                   key={moviecon.id}
                   className="relative group bg-muted/30 rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow"
