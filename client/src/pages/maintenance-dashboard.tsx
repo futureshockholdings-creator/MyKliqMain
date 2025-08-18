@@ -67,7 +67,7 @@ export default function MaintenanceDashboard() {
   const [refreshing, setRefreshing] = useState(false);
 
   // Check if user is authorized (you can modify this logic as needed)
-  const isAuthorized = user?.email === "futureshockholding@gmail.com" || user?.id === "46297180";
+  const isAuthorized = (user as any)?.email === "futureshockholding@gmail.com" || (user as any)?.id === "46297180";
 
   if (!isAuthorized) {
     return (
