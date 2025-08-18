@@ -16,6 +16,69 @@ import { Switch } from "@/components/ui/switch";
 import { Trash2, Edit, Plus, Eye, MousePointer, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { SponsoredAd } from "@shared/schema";
+import { getTextColorForBackground, isBlackBackground } from "@/lib/colorUtils";
+
+// Ad Preview Component with dynamic text colors
+interface AdPreviewProps {
+  title: string;
+  description: string;
+  backgroundColor: string;
+  ctaText: string;
+  category: string;
+}
+
+function AdPreview({ title, description, backgroundColor, ctaText, category }: AdPreviewProps) {
+  const textColor = getTextColorForBackground(backgroundColor);
+  
+  return (
+    <Card 
+      className="relative overflow-hidden border-l-4 border-l-blue-500"
+      style={{ backgroundColor }}
+      data-testid="ad-preview"
+    >
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <Badge variant="secondary" className="text-xs">
+            Sponsored
+          </Badge>
+          <Badge variant="outline" className="text-xs">
+            {category}
+          </Badge>
+        </div>
+        
+        <div className="space-y-3">
+          <h3 
+            className="text-lg font-semibold leading-tight"
+            style={{ color: textColor }}
+            data-testid="preview-title"
+          >
+            {title}
+          </h3>
+          
+          <p 
+            className="text-sm leading-relaxed"
+            style={{ color: textColor }}
+            data-testid="preview-description"
+          >
+            {description}
+          </p>
+          
+          <Button 
+            size="sm" 
+            className="mt-3"
+            data-testid="preview-cta"
+          >
+            {ctaText}
+          </Button>
+        </div>
+        
+        <div className="text-xs mt-3 opacity-70" style={{ color: textColor }}>
+          Text color: {isBlackBackground(backgroundColor) ? 'White (black background)' : 'Black (colored background)'}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 const adFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title too long"),
@@ -24,6 +87,7 @@ const adFormSchema = z.object({
   videoUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   ctaText: z.string().min(1, "Call-to-action text is required").max(30, "CTA text too long"),
   ctaUrl: z.string().url("Must be a valid URL"),
+  backgroundColor: z.string().default("#ffffff"),
   category: z.enum(["fitness", "tech", "food", "travel", "fashion", "entertainment", "education", "finance", "health", "lifestyle"]),
   targetInterests: z.array(z.string()).default([]),
   targetMusicGenres: z.array(z.string()).default([]),
@@ -62,6 +126,7 @@ export default function AdsManager() {
       description: "",
       imageUrl: "",
       videoUrl: "",
+      backgroundColor: "#ffffff",
       ctaText: "Learn More",
       ctaUrl: "",
       category: "lifestyle",
@@ -84,15 +149,15 @@ export default function AdsManager() {
     mutationFn: async (data: AdFormData) => {
       const payload = {
         ...data,
-        imageUrl: data.imageUrl || null,
-        videoUrl: data.videoUrl || null,
-        dailyBudget: data.dailyBudget || null,
-        costPerClick: data.costPerClick || null,
-        targetAgeMin: data.targetAgeMin || null,
-        targetAgeMax: data.targetAgeMax || null,
+        imageUrl: data.imageUrl || undefined,
+        videoUrl: data.videoUrl || undefined,
+        dailyBudget: data.dailyBudget || undefined,
+        costPerClick: data.costPerClick || undefined,
+        targetAgeMin: data.targetAgeMin || undefined,
+        targetAgeMax: data.targetAgeMax || undefined,
         startDate: new Date(data.startDate).toISOString(),
         endDate: new Date(data.endDate).toISOString(),
-        status: 'active',
+        status: 'active' as const,
       };
       return apiRequest('/api/ads', 'POST', payload);
     },
@@ -116,12 +181,12 @@ export default function AdsManager() {
     mutationFn: async ({ id, data }: { id: string; data: AdFormData }) => {
       const payload = {
         ...data,
-        imageUrl: data.imageUrl || null,
-        videoUrl: data.videoUrl || null,
-        dailyBudget: data.dailyBudget || null,
-        costPerClick: data.costPerClick || null,
-        targetAgeMin: data.targetAgeMin || null,
-        targetAgeMax: data.targetAgeMax || null,
+        imageUrl: data.imageUrl || undefined,
+        videoUrl: data.videoUrl || undefined,
+        dailyBudget: data.dailyBudget || undefined,
+        costPerClick: data.costPerClick || undefined,
+        targetAgeMin: data.targetAgeMin || undefined,
+        targetAgeMax: data.targetAgeMax || undefined,
         startDate: new Date(data.startDate).toISOString(),
         endDate: new Date(data.endDate).toISOString(),
       };
@@ -185,22 +250,23 @@ export default function AdsManager() {
     form.reset({
       title: ad.title,
       description: ad.description,
-      imageUrl: ad.imageUrl || "",
-      videoUrl: ad.videoUrl || "",
+      imageUrl: ad.imageUrl ?? "",
+      videoUrl: ad.videoUrl ?? "",
+      backgroundColor: ad.backgroundColor || "#ffffff",
       ctaText: ad.ctaText,
       ctaUrl: ad.ctaUrl,
-      category: ad.category,
+      category: ad.category as "fitness" | "tech" | "food" | "travel" | "fashion" | "entertainment" | "education" | "finance" | "health" | "lifestyle",
       targetInterests: ad.targetInterests || [],
       targetMusicGenres: ad.targetMusicGenres || [],
       targetRelationshipStatus: ad.targetRelationshipStatus || [],
       targetHobbies: ad.targetHobbies || [],
       targetPetPreferences: ad.targetPetPreferences || [],
       targetLifestyle: ad.targetLifestyle || [],
-      targetAgeMin: ad.targetAgeMin || undefined,
-      targetAgeMax: ad.targetAgeMax || undefined,
-      priority: ad.priority,
-      dailyBudget: ad.dailyBudget || undefined,
-      costPerClick: ad.costPerClick || undefined,
+      targetAgeMin: ad.targetAgeMin ? Number(ad.targetAgeMin) : undefined,
+      targetAgeMax: ad.targetAgeMax ? Number(ad.targetAgeMax) : undefined,
+      priority: Number(ad.priority),
+      dailyBudget: ad.dailyBudget ? Number(ad.dailyBudget) : undefined,
+      costPerClick: ad.costPerClick ? Number(ad.costPerClick) : undefined,
       startDate: ad.startDate ? new Date(ad.startDate).toISOString().split('T')[0] : '',
       endDate: ad.endDate ? new Date(ad.endDate).toISOString().split('T')[0] : '',
       advertiserName: ad.advertiserName,
@@ -344,6 +410,20 @@ export default function AdsManager() {
                         )}
                       />
                     </div>
+
+                    <FormField
+                      control={form.control}
+                      name="backgroundColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Background Color</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="color" data-testid="ad-background-color-input" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
@@ -568,6 +648,18 @@ export default function AdsManager() {
                     </div>
                   </TabsContent>
                 </Tabs>
+
+                {/* Real-time Ad Preview */}
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-3">Preview</h3>
+                  <AdPreview 
+                    title={form.watch("title") || "Ad Title"}
+                    description={form.watch("description") || "Ad description will appear here"}
+                    backgroundColor={form.watch("backgroundColor") || "#ffffff"}
+                    ctaText={form.watch("ctaText") || "Learn More"}
+                    category={form.watch("category")}
+                  />
+                </div>
 
                 <div className="flex gap-2">
                   <Button 

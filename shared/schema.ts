@@ -137,6 +137,7 @@ export const sponsoredAds = pgTable("sponsored_ads", {
   description: text("description").notNull(),
   imageUrl: varchar("image_url"),
   videoUrl: varchar("video_url"),
+  backgroundColor: varchar("background_color").default("#ffffff"), // Background color for ad
   ctaText: varchar("cta_text").default("Learn More"), // Call-to-action text
   ctaUrl: varchar("cta_url").notNull(), // URL to redirect when clicked
   category: adCategoryEnum("category").notNull(),

@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,9 +20,7 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
   // Record impression when component mounts
   const impressionMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(`/api/ads/${ad.id}/impression`, {
-        method: 'POST',
-      });
+      await apiRequest(`/api/ads/${ad.id}/impression`, 'POST');
     },
     onSuccess: () => {
       // Silently track impression
@@ -32,9 +31,7 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
   // Record click when user clicks on ad
   const clickMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest(`/api/ads/${ad.id}/click`, {
-        method: 'POST',
-      });
+      await apiRequest(`/api/ads/${ad.id}/click`, 'POST');
     },
     onSuccess: () => {
       trackEvent('ad_click', 'ads', ad.category, 1);
@@ -153,5 +150,3 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
   );
 }
 
-// React import for useEffect
-import React from "react";
