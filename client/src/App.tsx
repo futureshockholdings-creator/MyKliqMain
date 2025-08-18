@@ -28,7 +28,7 @@ import PrivacyPolicy from "./pages/privacy-policy";
 import Disclaimer from "./pages/disclaimer";
 
 // Navigation Component
-import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell, Settings } from "lucide-react";
+import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { NotificationPanel } from "@/components/NotificationPanel";
@@ -53,7 +53,6 @@ function Navigation({ currentPath }: { currentPath: string }) {
     { path: "/events", icon: Calendar, label: "Events", tab: "events", badgeType: "events" as const },
     { path: "/actions", icon: Video, label: "Action", tab: "actions" },
     { path: "/themes", icon: Palette, label: "Themes", tab: "themes" },
-    { path: "/maintenance", icon: Settings, label: "Dashboard", tab: "maintenance" },
   ];
 
   const getBadgeCount = (badgeType?: "messages" | "friends" | "events") => {

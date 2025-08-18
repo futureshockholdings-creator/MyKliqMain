@@ -17,10 +17,13 @@ import {
   RefreshCw,
   Clock,
   HardDrive,
-  Zap
+  Zap,
+  ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 
 interface MaintenanceMetrics {
   database: {
@@ -60,7 +63,31 @@ interface HealthStatus {
 
 export default function MaintenanceDashboard() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+
+  // Check if user is authorized (you can modify this logic as needed)
+  const isAuthorized = user?.email === "futureshockholding@gmail.com" || user?.id === "46297180";
+
+  if (!isAuthorized) {
+    return (
+      <div className="container mx-auto p-6" data-testid="unauthorized-access">
+        <div className="flex items-center justify-between mb-6">
+          <Link href="/" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </Link>
+        </div>
+        <Card className="border-destructive">
+          <CardContent className="p-6 text-center">
+            <XCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+            <p className="text-muted-foreground">You don't have permission to access the maintenance dashboard.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const { data: metrics, isLoading, refetch } = useQuery<MaintenanceMetrics>({
     queryKey: ["/api/maintenance/metrics"],
@@ -136,9 +163,15 @@ export default function MaintenanceDashboard() {
     <div className="container mx-auto p-6 space-y-6" data-testid="maintenance-dashboard">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Maintenance Dashboard</h1>
-          <p className="text-muted-foreground">Monitor MyKliq system health and performance</p>
+        <div className="flex items-center space-x-4">
+          <Link href="/" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold">Maintenance Dashboard</h1>
+            <p className="text-muted-foreground">Monitor MyKliq system health and performance</p>
+          </div>
         </div>
         <div className="flex items-center space-x-4">
           {healthStatus && (
