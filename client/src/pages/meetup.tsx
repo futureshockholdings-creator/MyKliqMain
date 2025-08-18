@@ -61,11 +61,26 @@ export default function MeetupPage() {
         title: "Location Check-in Posted!",
         description: "Your location has been shared with your kliq on the bulletin",
       });
-      // Force refetch queries to refresh the headlines feed and bulletin immediately
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['/api/posts'] }),
-        queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] })
-      ]);
+      // Force complete cache reset and refetch
+      console.log('Resetting cache after check-in...');
+      try {
+        // Remove cached data completely
+        queryClient.removeQueries({ queryKey: ['/api/posts'] });
+        queryClient.removeQueries({ queryKey: ['/api/kliq-feed'] });
+        
+        // Wait a moment then refetch
+        setTimeout(() => {
+          queryClient.refetchQueries({ queryKey: ['/api/posts'] });
+          queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
+        }, 100);
+        
+        console.log('Cache reset and refetch triggered');
+      } catch (error) {
+        console.error('Error resetting cache:', error);
+        // Final fallback to invalidation
+        queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+      }
       // Reset form
       setLocationName('');
       setAddress('');
