@@ -61,10 +61,10 @@ export default function MeetupPage() {
         title: "Location Check-in Posted!",
         description: "Your location has been shared with your kliq on the bulletin",
       });
-      // Use standard cache invalidation approach
-      console.log('Invalidating cache after check-in...');
+      // Force immediate refetch of feed data
+      console.log('Force refetching feed after check-in...');
+      await queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
       queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
       // Reset form
       setLocationName('');
       setAddress('');

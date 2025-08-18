@@ -58,11 +58,16 @@ export default function Home() {
   const queryClient = useQueryClient();
 
   // Fetch kliq feed (posts, polls, events, actions from all kliq members)
-  const { data: feedItems = [], isLoading: feedLoading } = useQuery({
+  const { data: feedItems = [], isLoading: feedLoading, refetch: refetchFeed } = useQuery({
     queryKey: ["/api/kliq-feed"],
     staleTime: 0, // Always consider data stale to get fresh posts
     gcTime: 0, // Don't cache the data (replaces cacheTime in v5)
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchInterval: 10000, // Refetch every 10 seconds
   });
+
+  // Debug the actual feed data
+  console.log("Feed items received from API:", feedItems?.length, "Latest:", feedItems?.[0]?.createdAt || feedItems?.[0]?.activityDate);
 
   // Fetch targeted ads for the user
   const { data: targetedAds = [] } = useQuery({
