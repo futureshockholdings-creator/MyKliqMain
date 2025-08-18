@@ -1010,7 +1010,7 @@ export default function Home() {
                 </Avatar>
                 <div className="flex-1">
                   <p className="font-bold text-primary">
-                    {item.author.firstName} {item.author.lastName}
+                    {item.author.firstName} {item.author.lastName} - {item.author.kliqName}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {formatTimeAgo(item.createdAt)}

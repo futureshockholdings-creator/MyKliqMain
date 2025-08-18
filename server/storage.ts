@@ -523,6 +523,7 @@ export class DatabaseStorage implements IStorage {
             authorFirstName: users.firstName,
             authorLastName: users.lastName,
             authorProfileImageUrl: users.profileImageUrl,
+            authorKliqName: users.kliqName,
           })
           .from(polls)
           .innerJoin(users, eq(polls.userId, users.id))
@@ -544,6 +545,7 @@ export class DatabaseStorage implements IStorage {
             firstName: poll.authorFirstName,
             lastName: poll.authorLastName,
             profileImageUrl: poll.authorProfileImageUrl,
+            kliqName: poll.authorKliqName,
           },
           type: 'poll',
           activityDate: poll.createdAt,
@@ -568,6 +570,7 @@ export class DatabaseStorage implements IStorage {
             authorFirstName: users.firstName,
             authorLastName: users.lastName,
             authorProfileImageUrl: users.profileImageUrl,
+            authorKliqName: users.kliqName,
           })
           .from(events)
           .innerJoin(users, eq(events.userId, users.id))
@@ -630,6 +633,7 @@ export class DatabaseStorage implements IStorage {
                 firstName: event.authorFirstName,
                 lastName: event.authorLastName,
                 profileImageUrl: event.authorProfileImageUrl,
+                kliqName: event.authorKliqName,
               },
               attendance: attendanceStats,
               userAttendanceStatus,
@@ -657,6 +661,7 @@ export class DatabaseStorage implements IStorage {
             authorFirstName: users.firstName,
             authorLastName: users.lastName,
             authorProfileImageUrl: users.profileImageUrl,
+            authorKliqName: users.kliqName,
           })
           .from(actions)
           .innerJoin(users, eq(actions.userId, users.id))
@@ -678,6 +683,7 @@ export class DatabaseStorage implements IStorage {
             firstName: action.authorFirstName,
             lastName: action.authorLastName,
             profileImageUrl: action.authorProfileImageUrl,
+            kliqName: action.authorKliqName,
           },
           type: 'action',
           activityDate: action.createdAt,
