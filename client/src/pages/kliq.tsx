@@ -25,6 +25,7 @@ export default function Kliq() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [friendToRemove, setFriendToRemove] = useState<string | null>(null);
   const [isLeaveKliqDialogOpen, setIsLeaveKliqDialogOpen] = useState(false);
+  const [isCloseKliqDialogOpen, setIsCloseKliqDialogOpen] = useState(false);
   const { user } = useAuth();
   const userData = user as { 
     id?: string; 
@@ -32,6 +33,7 @@ export default function Kliq() {
     lastName?: string; 
     kliqName?: string; 
     inviteCode?: string; 
+    kliqClosed?: boolean;
   };
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -199,6 +201,41 @@ export default function Kliq() {
     },
   });
 
+  // Close Kliq mutation - toggles kliq closed status
+  const closeKliqMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PUT", "/api/user/profile", { kliqClosed: !userData?.kliqClosed });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      setIsCloseKliqDialogOpen(false);
+      toast({
+        title: userData?.kliqClosed ? "Kliq reopened" : "Kliq closed",
+        description: userData?.kliqClosed 
+          ? "Your kliq is now open to new members" 
+          : "Your kliq is now closed to new members",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update kliq status",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Remove friend
   const removeFriendMutation = useMutation({
     mutationFn: async (friendId: string) => {
@@ -277,6 +314,10 @@ export default function Kliq() {
 
   const handleLeaveKliq = () => {
     leaveKliqMutation.mutate();
+  };
+
+  const handleCloseKliq = () => {
+    closeKliqMutation.mutate();
   };
 
   const handleMessageFriend = async (friendId: string, friendName: string) => {
@@ -474,9 +515,10 @@ export default function Kliq() {
             />
           )}
 
-          {/* Leave Kliq Button - only show if user has friends */}
+          {/* Leave Kliq and Close Kliq Buttons - only show if user has friends */}
           {friends.length > 0 && (
-            <div className="flex justify-start">
+            <div className="flex justify-between items-center">
+              {/* Leave Kliq Button - left aligned */}
               <Dialog open={isLeaveKliqDialogOpen} onOpenChange={setIsLeaveKliqDialogOpen}>
                 <DialogTrigger asChild>
                   <Button 
@@ -517,14 +559,75 @@ export default function Kliq() {
                   </div>
                 </DialogContent>
               </Dialog>
+
+              {/* Close Kliq Button - right aligned */}
+              <Dialog open={isCloseKliqDialogOpen} onOpenChange={setIsCloseKliqDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant={userData?.kliqClosed ? "default" : "outline"} 
+                    size="sm"
+                    className={userData?.kliqClosed 
+                      ? "bg-mykliq-green hover:bg-mykliq-green/90 text-white" 
+                      : "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
+                    }
+                    data-testid="button-close-kliq"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    {userData?.kliqClosed ? "Reopen Kliq" : "Close Kliq"}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
+                  <DialogHeader>
+                    <DialogTitle className={userData?.kliqClosed ? "text-mykliq-green" : "text-orange-500"}>
+                      {userData?.kliqClosed ? "Reopen Kliq" : "Close Kliq"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      {userData?.kliqClosed 
+                        ? "Are you sure you want to reopen your kliq? New members will be able to join using your invite code."
+                        : "Are you sure you want to close your kliq? No new members will be able to join, but existing friends will remain."
+                      }
+                    </p>
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsCloseKliqDialogOpen(false)}
+                        className="bg-muted hover:bg-muted/80"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant={userData?.kliqClosed ? "default" : "destructive"}
+                        onClick={handleCloseKliq}
+                        disabled={closeKliqMutation.isPending}
+                        className={userData?.kliqClosed 
+                          ? "bg-mykliq-green hover:bg-mykliq-green/90" 
+                          : "bg-orange-500 hover:bg-orange-600"
+                        }
+                      >
+                        {closeKliqMutation.isPending 
+                          ? (userData?.kliqClosed ? "Reopening..." : "Closing...")
+                          : (userData?.kliqClosed ? "Reopen Kliq" : "Close Kliq")
+                        }
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 
           {/* Invite Code */}
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-mykliq-green text-lg">
+              <CardTitle className="text-mykliq-green text-lg flex items-center gap-2">
                 📱 Your Invite Code
+                {userData?.kliqClosed && (
+                  <Badge variant="outline" className="text-xs border-orange-500 text-orange-500">
+                    Kliq Closed
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -543,7 +646,10 @@ export default function Kliq() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Share this code with friends to invite them to your kliq
+                {userData?.kliqClosed 
+                  ? "Your kliq is closed to new members. Existing friends can still use your code but new people cannot join."
+                  : "Share this code with friends to invite them to your kliq"
+                }
               </p>
             </CardContent>
           </Card>

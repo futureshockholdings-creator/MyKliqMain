@@ -319,6 +319,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Invalid invite code" });
       }
 
+      // Check if kliq is closed to new members
+      if (inviter.kliqClosed) {
+        return res.status(400).json({ message: "This kliq is closed to new members" });
+      }
+
       // Check if friendship already exists
       const existingFriends = await storage.getFriends(inviter.id);
       if (existingFriends.find(f => f.friendId === userId)) {
