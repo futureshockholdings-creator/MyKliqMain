@@ -287,7 +287,7 @@ export default function Home() {
       setUserLocation(null);
       toast({
         title: "Location shared!",
-        description: "Your location has been posted to the bulletin",
+        description: "Your location has been posted to the headlines",
       });
     },
     onError: (error) => {
