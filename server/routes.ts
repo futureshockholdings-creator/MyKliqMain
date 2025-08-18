@@ -5,6 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
+import { sendChatbotConversation } from "./emailService";
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
@@ -1844,6 +1845,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending birthday message:", error);
       res.status(500).json({ message: "Failed to send birthday message" });
+    }
+  });
+
+  // Chatbot conversation routes
+  app.post('/api/chatbot/conversation', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { userQuestion, botResponse } = req.body;
+
+      if (!userQuestion || !botResponse) {
+        return res.status(400).json({ message: "Both userQuestion and botResponse are required" });
+      }
+
+      // Get user details for the email
+      const user = await storage.getUser(userId);
+      
+      // Prepare conversation data for email
+      const conversationData = {
+        userQuestion,
+        botResponse,
+        timestamp: new Date().toISOString(),
+        userId,
+        userEmail: user?.email || undefined
+      };
+
+      // Send email copy of the conversation
+      const emailSent = await sendChatbotConversation(conversationData);
+      
+      if (!emailSent) {
+        console.warn('Failed to send chatbot conversation email, but conversation was processed');
+      }
+
+      res.json({ 
+        success: true, 
+        emailSent,
+        message: "Conversation processed and email sent" 
+      });
+    } catch (error) {
+      console.error("Error processing chatbot conversation:", error);
+      res.status(500).json({ message: "Failed to process chatbot conversation" });
     }
   });
 

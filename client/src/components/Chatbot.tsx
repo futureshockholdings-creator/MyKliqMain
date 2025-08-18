@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ChatMessage {
   id: string;
@@ -176,13 +177,14 @@ export function Chatbot() {
     return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
+    const userQuestion = inputValue;
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       type: 'user',
-      message: inputValue,
+      message: userQuestion,
       timestamp: new Date()
     };
 
@@ -191,8 +193,8 @@ export function Chatbot() {
     setIsTyping(true);
 
     // Simulate typing delay for more natural feel
-    setTimeout(() => {
-      const botResponse = findBestMatch(inputValue);
+    setTimeout(async () => {
+      const botResponse = findBestMatch(userQuestion);
       const botMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
@@ -202,6 +204,20 @@ export function Chatbot() {
 
       setMessages(prev => [...prev, botMessage]);
       setIsTyping(false);
+
+      // Send conversation to backend for email forwarding
+      try {
+        await apiRequest('/api/chatbot/conversation', {
+          method: 'POST',
+          body: {
+            userQuestion,
+            botResponse
+          }
+        });
+      } catch (error) {
+        console.error('Failed to send conversation to backend:', error);
+        // Don't show error to user - email forwarding is background functionality
+      }
     }, 800);
   };
 
