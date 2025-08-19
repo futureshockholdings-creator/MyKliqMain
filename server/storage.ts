@@ -2360,7 +2360,7 @@ export class DatabaseStorage implements IStorage {
       return { impressions: 0, clicks: 0, ctr: 0 };
     }
 
-    const ctr = ad.impressions > 0 ? (ad.clicks / ad.impressions) * 100 : 0;
+    const ctr = (ad.impressions || 0) > 0 ? ((ad.clicks || 0) / (ad.impressions || 0)) * 100 : 0;
     return {
       impressions: ad.impressions || 0,
       clicks: ad.clicks || 0,

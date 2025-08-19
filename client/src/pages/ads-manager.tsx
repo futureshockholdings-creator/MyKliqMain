@@ -253,7 +253,7 @@ export default function AdsManager() {
       imageUrl: ad.imageUrl ?? "",
       videoUrl: ad.videoUrl ?? "",
       backgroundColor: ad.backgroundColor ?? "#ffffff",
-      ctaText: ad.ctaText,
+      ctaText: ad.ctaText ?? "Learn More",
       ctaUrl: ad.ctaUrl,
       category: ad.category as "fitness" | "tech" | "food" | "travel" | "fashion" | "entertainment" | "education" | "finance" | "health" | "lifestyle",
       targetInterests: ad.targetInterests || [],
