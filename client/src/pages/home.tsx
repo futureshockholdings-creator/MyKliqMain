@@ -624,12 +624,7 @@ export default function Home() {
     return `${Math.floor(diffMins / 1440)}d ago`;
   };
 
-  const getRankColor = (rank: number) => {
-    if (rank === 1) return "bg-primary text-primary-foreground";
-    if (rank <= 3) return "bg-secondary text-secondary-foreground";
-    if (rank <= 6) return "bg-mykliq-orange text-foreground";
-    return "bg-muted text-muted-foreground";
-  };
+
 
   const handleMediaUploadSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
@@ -1023,11 +1018,7 @@ export default function Home() {
                     {formatTimeAgo(item.createdAt)}
                   </p>
                 </div>
-                {item.author.id !== userData?.id && (
-                  <Badge className={cn("text-xs font-bold", getRankColor(1))}>
-                    #{1} {/* This would be the actual friend rank */}
-                  </Badge>
-                )}
+
               </div>
               
               {item.content && (
