@@ -281,10 +281,10 @@ export function Chatbot() {
       {!isOpen && (
         <Button
           onClick={toggleChatbot}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-50"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-50 text-xs font-semibold"
           data-testid="button-chatbot-toggle"
         >
-          <MessageCircle className="h-6 w-6" />
+          HELP
         </Button>
       )}
 
