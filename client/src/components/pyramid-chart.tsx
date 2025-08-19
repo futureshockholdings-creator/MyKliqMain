@@ -43,6 +43,37 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
     };
   }, []);
 
+  // Handle click outside to cancel remove action
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Check if we're in remove mode
+      if (showRemoveButton) {
+        const target = event.target as Element;
+        // Check if the click is outside any friend avatar or remove button
+        const isClickOnFriend = target.closest('[data-testid^="friend-avatar-"]');
+        const isClickOnRemoveButton = target.closest('[data-testid^="button-remove-"]');
+        
+        if (!isClickOnFriend && !isClickOnRemoveButton) {
+          // Cancel the remove action
+          setShowRemoveButton(null);
+          setIsHolding(null);
+          clearTimeout(holdTimer.current!);
+          clearInterval(vibrateTimer.current!);
+          
+          // Stop vibration if it was running
+          if (navigator.vibrate) {
+            navigator.vibrate(0);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showRemoveButton]);
+
   const getInitials = (friend: Friend) => {
     const first = friend.firstName?.[0] || "";
     const last = friend.lastName?.[0] || "";
