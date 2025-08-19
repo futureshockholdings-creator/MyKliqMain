@@ -59,7 +59,7 @@ export default function Home() {
 
   // Fetch kliq feed (posts, polls, events, actions from all kliq members)
   const { data: feedItems = [], isLoading: feedLoading, refetch: refetchFeed } = useQuery({
-    queryKey: ["/api/kliq-feed"],
+    queryKey: ["/api/kliq-feed", Date.now()], // Force cache invalidation
     staleTime: 0, // Always consider data stale to get fresh posts
     gcTime: 0, // Don't cache the data (replaces cacheTime in v5)
     refetchOnWindowFocus: true, // Refetch when window gains focus
