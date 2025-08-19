@@ -59,15 +59,15 @@ export default function Home() {
 
   // Fetch kliq feed (posts, polls, events, actions from all kliq members)
   const { data: feedItems = [], isLoading: feedLoading, refetch: refetchFeed } = useQuery({
-    queryKey: ["/api/kliq-feed", Date.now()], // Force cache invalidation
+    queryKey: ["/api/kliq-feed"],
     staleTime: 0, // Always consider data stale to get fresh posts
     gcTime: 0, // Don't cache the data (replaces cacheTime in v5)
     refetchOnWindowFocus: true, // Refetch when window gains focus
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 30000, // Refetch every 30 seconds (reduced from 10s)
   });
 
   // Debug the actual feed data
-  console.log("Feed items received from API:", feedItems?.length, "Latest:", feedItems?.[0]?.createdAt || feedItems?.[0]?.activityDate);
+  console.log("Feed items received from API:", (feedItems as any[])?.length, "Latest:", (feedItems as any[])?.[0]?.createdAt || (feedItems as any[])?.[0]?.activityDate);
 
   // Fetch targeted ads for the user
   const { data: targetedAds = [] } = useQuery({
@@ -972,15 +972,15 @@ export default function Home() {
           console.log("Feed item processing:", item.type, item.title || item.content?.substring(0, 30), item.createdAt || item.activityDate);
           
           // Inject sponsored ads every 3 feed items
-          const shouldShowAd = index > 0 && (index + 1) % 4 === 0 && targetedAds.length > 0;
-          const adIndex = Math.floor((index + 1) / 4 - 1) % targetedAds.length;
+          const shouldShowAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0;
+          const adIndex = Math.floor((index + 1) / 4 - 1) % (targetedAds as any[]).length;
 
           return (
             <div key={`feed-wrapper-${item.id}-${index}`}>
               {/* Show sponsored ad before this item if conditions are met */}
-              {shouldShowAd && targetedAds[adIndex] && (
+              {shouldShowAd && (targetedAds as any[])[adIndex] && (
                 <div className="mb-4" key={`ad-${adIndex}-${index}`}>
-                  <SponsoredAd ad={targetedAds[adIndex]} />
+                  <SponsoredAd ad={(targetedAds as any[])[adIndex]} />
                 </div>
               )}
               {(() => {
