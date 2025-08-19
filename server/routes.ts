@@ -1854,12 +1854,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { userQuestion, botResponse } = req.body;
 
+      console.log('Chatbot conversation endpoint called:', { userId, hasUserQuestion: !!userQuestion, hasBotResponse: !!botResponse });
+
       if (!userQuestion || !botResponse) {
         return res.status(400).json({ message: "Both userQuestion and botResponse are required" });
       }
 
       // Get user details for the email
       const user = await storage.getUser(userId);
+      console.log('Retrieved user for email:', { userId, hasUser: !!user, userEmail: user?.email });
       
       // Prepare conversation data for email
       const conversationData = {
@@ -1870,8 +1873,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userEmail: user?.email || undefined
       };
 
+      console.log('Attempting to send chatbot conversation email...');
+      
       // Send email copy of the conversation
       const emailSent = await sendChatbotConversation(conversationData);
+      
+      console.log('Email send result:', emailSent);
       
       if (!emailSent) {
         console.warn('Failed to send chatbot conversation email, but conversation was processed');
