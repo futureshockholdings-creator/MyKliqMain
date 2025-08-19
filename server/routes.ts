@@ -1852,12 +1852,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/chatbot/conversation', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { userQuestion, botResponse } = req.body;
+      const { conversationHistory, timestamp, messageCount } = req.body;
 
-      console.log('Chatbot conversation endpoint called:', { userId, hasUserQuestion: !!userQuestion, hasBotResponse: !!botResponse });
+      console.log('Chatbot conversation endpoint called:', { userId, hasConversation: !!conversationHistory, messageCount });
 
-      if (!userQuestion || !botResponse) {
-        return res.status(400).json({ message: "Both userQuestion and botResponse are required" });
+      if (!conversationHistory) {
+        return res.status(400).json({ message: "conversationHistory is required" });
       }
 
       // Get user details for the email
@@ -1866,14 +1866,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Prepare conversation data for email
       const conversationData = {
-        userQuestion,
-        botResponse,
-        timestamp: new Date().toISOString(),
+        conversationHistory,
+        timestamp: timestamp || new Date().toISOString(),
         userId,
-        userEmail: user?.email || undefined
+        userEmail: user?.email || undefined,
+        messageCount: messageCount || 0
       };
 
-      console.log('Attempting to send chatbot conversation email...');
+      console.log('Attempting to send complete chatbot conversation email...');
       
       // Send email copy of the conversation
       const emailSent = await sendChatbotConversation(conversationData);
@@ -1887,7 +1887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true, 
         emailSent,
-        message: "Conversation processed and email sent" 
+        message: "Complete conversation processed and email sent" 
       });
     } catch (error) {
       console.error("Error processing chatbot conversation:", error);

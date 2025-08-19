@@ -221,26 +221,7 @@ export function Chatbot() {
       setMessages(prev => [...prev, botMessage]);
       setIsTyping(false);
 
-      // Send conversation to backend for email forwarding
-      try {
-        const response = await fetch('/api/chatbot/conversation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userQuestion,
-            botResponse
-          }),
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-      } catch (error) {
-        console.error('Failed to send conversation to backend:', error);
-        // Don't show error to user - email forwarding is background functionality
-      }
+      // Email sending removed - will be handled when chatbot is closed
     }, 800);
   };
 
@@ -250,7 +231,44 @@ export function Chatbot() {
     }
   };
 
+  const sendConversationEmail = async () => {
+    // Only send if there's a meaningful conversation (more than just the greeting)
+    if (messages.length <= 1) return;
+    
+    try {
+      const conversationHistory = messages
+        .filter(msg => msg.type === 'user' || msg.type === 'bot')
+        .map(msg => `${msg.type.toUpperCase()}: ${msg.message}`)
+        .join('\n\n');
+      
+      const response = await fetch('/api/chatbot/conversation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationHistory,
+          timestamp: new Date().toISOString(),
+          messageCount: messages.length
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      console.log('Conversation email sent successfully');
+    } catch (error) {
+      console.error('Failed to send conversation email:', error);
+    }
+  };
+
   const toggleChatbot = () => {
+    if (isOpen) {
+      // Closing chatbot - send conversation email
+      sendConversationEmail();
+    }
+    
     setIsOpen(!isOpen);
     if (!isOpen && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100);
