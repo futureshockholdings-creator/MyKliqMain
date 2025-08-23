@@ -31,6 +31,8 @@ import { GoogleSearch } from "@/components/GoogleSearch";
 import { EventCard } from "@/components/EventCard";
 import { trackEvent } from "@/lib/analytics";
 import Footer from "@/components/Footer";
+import { PushNotificationSetup } from "@/components/PushNotificationSetup";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import type { Gif, Moviecon } from "@shared/schema";
 
 
@@ -56,11 +58,22 @@ export default function Home() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [showReflectDialog, setShowReflectDialog] = useState(false);
   const [reflectionData, setReflectionData] = useState<any>(null);
+  const [showPushNotificationSetup, setShowPushNotificationSetup] = useState(true);
 
   const { user } = useAuth();
   const userData = user as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Initialize push notifications
+  const { permission } = usePushNotifications();
+
+  // Hide push notification setup if already granted or dismissed
+  useEffect(() => {
+    if (permission === 'granted') {
+      setShowPushNotificationSetup(false);
+    }
+  }, [permission]);
 
   // Predefined mood options
   const moodOptions = [
@@ -1188,6 +1201,16 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
+
+      {/* Push Notification Setup */}
+      {showPushNotificationSetup && permission !== 'granted' && (
+        <div className="mb-4">
+          <PushNotificationSetup 
+            onDismiss={() => setShowPushNotificationSetup(false)}
+            compact={false}
+          />
+        </div>
+      )}
 
       {/* Feed */}
       {feedLoading ? (
