@@ -1,0 +1,110 @@
+{
+  "navigation": {
+    "headlines": "헤드라인",
+    "myKliq": "내 Kliq",
+    "messages": "메시지",
+    "alerts": "알림",
+    "events": "이벤트",
+    "profile": "프로필"
+  },
+  "common": {
+    "loading": "로딩 중...",
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "편집",
+    "submit": "제출",
+    "back": "뒤로",
+    "next": "다음",
+    "close": "닫기",
+    "confirm": "확인",
+    "yes": "예",
+    "no": "아니오",
+    "ok": "확인",
+    "search": "검색",
+    "filter": "필터",
+    "sort": "정렬"
+  },
+  "auth": {
+    "login": "로그인",
+    "logout": "로그아웃",
+    "signup": "회원가입",
+    "welcome": "MyKliq에 오신 것을 환영합니다",
+    "loginPrompt": "계속하려면 로그인하세요"
+  },
+  "posts": {
+    "newPost": "무엇을 생각하고 계신가요?",
+    "sharePost": "게시물 공유",
+    "likePost": "좋아요",
+    "commentOn": "댓글",
+    "shareWith": "공유하기",
+    "deletePost": "게시물 삭제",
+    "editPost": "게시물 편집",
+    "noPostsYet": "아직 게시물이 없습니다. 첫 번째로 무언가를 공유해보세요!"
+  },
+  "profile": {
+    "profilePicture": "프로필 사진",
+    "backgroundImage": "배경 이미지",
+    "profileInfo": "프로필 정보",
+    "personalDetails": "개인 정보",
+    "editProfile": "프로필 편집",
+    "profileMusic": "프로필 음악",
+    "currentMusic": "현재 프로필 음악",
+    "uploadMusic": "음악 업로드",
+    "musicSettings": "프로필 음악 설정"
+  },
+  "notifications": {
+    "pushNotifications": "푸시 알림",
+    "enableNotifications": "알림 활성화",
+    "receivingAlerts": "실시간 알림 수신 중",
+    "getInstantAlerts": "kliq 활동의 즉시 알림 받기",
+    "blockedNotifications": "차단됨 - 브라우저 설정 확인",
+    "notificationBlocked": "알림을 활성화하려면 브라우저 주소 표시줄의 알림 아이콘을 클릭하고 알림을 허용하세요.",
+    "stayConnected": "연결 유지",
+    "instantAlerts": "kliq 활동 즉시 알림",
+    "neverMiss": "친구 상호작용을 놓치지 마세요",
+    "realtimeInvitations": "실시간 이벤트 초대"
+  },
+  "messages": {
+    "newMessage": "새 메시지",
+    "sendMessage": "메시지 보내기",
+    "typeMessage": "메시지를 입력하세요...",
+    "noMessages": "아직 메시지가 없습니다",
+    "conversation": "대화",
+    "incognitoMode": "시크릿 모드"
+  },
+  "events": {
+    "newEvent": "새 이벤트",
+    "createEvent": "이벤트 만들기",
+    "eventTitle": "이벤트 제목",
+    "eventDescription": "이벤트 설명",
+    "eventLocation": "위치",
+    "eventDate": "날짜",
+    "eventTime": "시간",
+    "attending": "참석",
+    "notAttending": "불참",
+    "maybe": "미정",
+    "rsvp": "참석 여부 응답"
+  },
+  "language": {
+    "selectLanguage": "언어 선택",
+    "currentLanguage": "현재 언어",
+    "autoDetected": "자동 감지됨",
+    "changeLanguage": "언어 변경"
+  },
+  "errors": {
+    "somethingWrong": "문제가 발생했습니다",
+    "tryAgain": "다시 시도해 주세요",
+    "networkError": "네트워크 오류",
+    "unauthorized": "인증되지 않은 접근",
+    "notFound": "찾을 수 없음",
+    "serverError": "서버 오류"
+  },
+  "success": {
+    "saved": "성공적으로 저장됨",
+    "updated": "성공적으로 업데이트됨",
+    "deleted": "성공적으로 삭제됨",
+    "posted": "성공적으로 게시됨",
+    "sent": "성공적으로 전송됨"
+  }
+}

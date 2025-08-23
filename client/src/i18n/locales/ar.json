@@ -1,0 +1,110 @@
+{
+  "navigation": {
+    "headlines": "العناوين الرئيسية",
+    "myKliq": "مجموعتي",
+    "messages": "الرسائل",
+    "alerts": "التنبيهات",
+    "events": "الفعاليات",
+    "profile": "الملف الشخصي"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "submit": "إرسال",
+    "back": "العودة",
+    "next": "التالي",
+    "close": "إغلاق",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "ok": "موافق",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب"
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "signup": "إنشاء حساب",
+    "welcome": "مرحباً بك في MyKliq",
+    "loginPrompt": "يرجى تسجيل الدخول للمتابعة"
+  },
+  "posts": {
+    "newPost": "ما الذي تفكر فيه؟",
+    "sharePost": "مشاركة المنشور",
+    "likePost": "إعجاب",
+    "commentOn": "تعليق",
+    "shareWith": "مشاركة مع",
+    "deletePost": "حذف المنشور",
+    "editPost": "تعديل المنشور",
+    "noPostsYet": "لا توجد منشورات بعد. كن أول من يشارك شيئاً!"
+  },
+  "profile": {
+    "profilePicture": "صورة الملف الشخصي",
+    "backgroundImage": "صورة الخلفية",
+    "profileInfo": "معلومات الملف الشخصي",
+    "personalDetails": "التفاصيل الشخصية",
+    "editProfile": "تعديل الملف الشخصي",
+    "profileMusic": "موسيقى الملف الشخصي",
+    "currentMusic": "الموسيقى الحالية للملف الشخصي",
+    "uploadMusic": "رفع موسيقى",
+    "musicSettings": "إعدادات موسيقى الملف الشخصي"
+  },
+  "notifications": {
+    "pushNotifications": "الإشعارات الفورية",
+    "enableNotifications": "تفعيل الإشعارات",
+    "receivingAlerts": "استقبال التنبيهات في الوقت الفعلي",
+    "getInstantAlerts": "احصل على تنبيهات فورية لنشاط المجموعة",
+    "blockedNotifications": "محظور - تحقق من إعدادات المتصفح",
+    "notificationBlocked": "لتفعيل الإشعارات، انقر على أيقونة الإشعارات في شريط العناوين واسمح بالإشعارات.",
+    "stayConnected": "ابق متصلاً",
+    "instantAlerts": "تنبيهات فورية لنشاط المجموعة",
+    "neverMiss": "لا تفوت أبداً تفاعلات الأصدقاء",
+    "realtimeInvitations": "دعوات الفعاليات في الوقت الفعلي"
+  },
+  "messages": {
+    "newMessage": "رسالة جديدة",
+    "sendMessage": "إرسال رسالة",
+    "typeMessage": "اكتب رسالة...",
+    "noMessages": "لا توجد رسائل بعد",
+    "conversation": "محادثة",
+    "incognitoMode": "الوضع المخفي"
+  },
+  "events": {
+    "newEvent": "فعالية جديدة",
+    "createEvent": "إنشاء فعالية",
+    "eventTitle": "عنوان الفعالية",
+    "eventDescription": "وصف الفعالية",
+    "eventLocation": "الموقع",
+    "eventDate": "التاريخ",
+    "eventTime": "الوقت",
+    "attending": "حضور",
+    "notAttending": "عدم حضور",
+    "maybe": "ربما",
+    "rsvp": "تأكيد الحضور"
+  },
+  "language": {
+    "selectLanguage": "اختيار اللغة",
+    "currentLanguage": "اللغة الحالية",
+    "autoDetected": "تم الكشف تلقائياً",
+    "changeLanguage": "تغيير اللغة"
+  },
+  "errors": {
+    "somethingWrong": "حدث خطأ ما",
+    "tryAgain": "يرجى المحاولة مرة أخرى",
+    "networkError": "خطأ في الشبكة",
+    "unauthorized": "وصول غير مصرح",
+    "notFound": "غير موجود",
+    "serverError": "خطأ في الخادم"
+  },
+  "success": {
+    "saved": "تم الحفظ بنجاح",
+    "updated": "تم التحديث بنجاح",
+    "deleted": "تم الحذف بنجاح",
+    "posted": "تم النشر بنجاح",
+    "sent": "تم الإرسال بنجاح"
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "navigation": {
+    "headlines": "Notizie",
+    "myKliq": "Il Mio Kliq",
+    "messages": "Messaggi",
+    "alerts": "Avvisi",
+    "events": "Eventi",
+    "profile": "Profilo"
+  },
+  "common": {
+    "loading": "Caricamento...",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "submit": "Invia",
+    "back": "Indietro",
+    "next": "Avanti",
+    "close": "Chiudi",
+    "confirm": "Conferma",
+    "yes": "Sì",
+    "no": "No",
+    "ok": "OK",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "sort": "Ordina"
+  },
+  "auth": {
+    "login": "Accedi",
+    "logout": "Esci",
+    "signup": "Registrati",
+    "welcome": "Benvenuto su MyKliq",
+    "loginPrompt": "Per favore accedi per continuare"
+  },
+  "posts": {
+    "newPost": "A cosa stai pensando?",
+    "sharePost": "Condividi Post",
+    "likePost": "Mi Piace",
+    "commentOn": "Commenta",
+    "shareWith": "Condividi con",
+    "deletePost": "Elimina Post",
+    "editPost": "Modifica Post",
+    "noPostsYet": "Ancora nessun post. Sii il primo a condividere qualcosa!"
+  },
+  "profile": {
+    "profilePicture": "Foto Profilo",
+    "backgroundImage": "Immagine di Sfondo",
+    "profileInfo": "Informazioni Profilo",
+    "personalDetails": "Dettagli Personali",
+    "editProfile": "Modifica Profilo",
+    "profileMusic": "Musica del Profilo",
+    "currentMusic": "Musica Attuale del Profilo",
+    "uploadMusic": "Carica Musica",
+    "musicSettings": "Impostazioni Musica del Profilo"
+  },
+  "notifications": {
+    "pushNotifications": "Notifiche Push",
+    "enableNotifications": "Abilita Notifiche",
+    "receivingAlerts": "Ricevendo avvisi in tempo reale",
+    "getInstantAlerts": "Ricevi avvisi istantanei di attività del kliq",
+    "blockedNotifications": "Bloccato - controlla le impostazioni del browser",
+    "notificationBlocked": "Per abilitare le notifiche, clicca sull'icona delle notifiche nella barra degli indirizzi del browser e consenti le notifiche.",
+    "stayConnected": "Rimani Connesso",
+    "instantAlerts": "Avvisi istantanei di attività del kliq",
+    "neverMiss": "Non perdere mai le interazioni degli amici",
+    "realtimeInvitations": "Inviti a eventi in tempo reale"
+  },
+  "messages": {
+    "newMessage": "Nuovo Messaggio",
+    "sendMessage": "Invia Messaggio",
+    "typeMessage": "Scrivi un messaggio...",
+    "noMessages": "Ancora nessun messaggio",
+    "conversation": "Conversazione",
+    "incognitoMode": "Modalità Incognita"
+  },
+  "events": {
+    "newEvent": "Nuovo Evento",
+    "createEvent": "Crea Evento",
+    "eventTitle": "Titolo Evento",
+    "eventDescription": "Descrizione Evento",
+    "eventLocation": "Posizione",
+    "eventDate": "Data",
+    "eventTime": "Ora",
+    "attending": "Partecipando",
+    "notAttending": "Non Partecipando",
+    "maybe": "Forse",
+    "rsvp": "RSVP"
+  },
+  "language": {
+    "selectLanguage": "Seleziona Lingua",
+    "currentLanguage": "Lingua Attuale",
+    "autoDetected": "Rilevato automaticamente",
+    "changeLanguage": "Cambia Lingua"
+  },
+  "errors": {
+    "somethingWrong": "Qualcosa è andato storto",
+    "tryAgain": "Per favore riprova",
+    "networkError": "Errore di rete",
+    "unauthorized": "Accesso non autorizzato",
+    "notFound": "Non trovato",
+    "serverError": "Errore del server"
+  },
+  "success": {
+    "saved": "Salvato con successo",
+    "updated": "Aggiornato con successo",
+    "deleted": "Eliminato con successo",
+    "posted": "Pubblicato con successo",
+    "sent": "Inviato con successo"
+  }
+}

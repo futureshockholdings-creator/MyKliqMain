@@ -1,0 +1,110 @@
+{
+  "navigation": {
+    "headlines": "Headlines",
+    "myKliq": "My Kliq",
+    "messages": "Messages",
+    "alerts": "Alerts",
+    "events": "Events",
+    "profile": "Profile"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort"
+  },
+  "auth": {
+    "login": "Log In",
+    "logout": "Log Out",
+    "signup": "Sign Up",
+    "welcome": "Welcome to MyKliq",
+    "loginPrompt": "Please log in to continue"
+  },
+  "posts": {
+    "newPost": "What's on your mind?",
+    "sharePost": "Share Post",
+    "likePost": "Like",
+    "commentOn": "Comment",
+    "shareWith": "Share with",
+    "deletePost": "Delete Post",
+    "editPost": "Edit Post",
+    "noPostsYet": "No posts yet. Be the first to share something!"
+  },
+  "profile": {
+    "profilePicture": "Profile Picture",
+    "backgroundImage": "Background Image",
+    "profileInfo": "Profile Information",
+    "personalDetails": "Personal Details",
+    "editProfile": "Edit Profile",
+    "profileMusic": "Profile Music",
+    "currentMusic": "Current Profile Music",
+    "uploadMusic": "Upload Music",
+    "musicSettings": "Profile Music Settings"
+  },
+  "notifications": {
+    "pushNotifications": "Push Notifications",
+    "enableNotifications": "Enable Notifications",
+    "receivingAlerts": "Receiving real-time alerts",
+    "getInstantAlerts": "Get instant kliq activity alerts",
+    "blockedNotifications": "Blocked - check browser settings",
+    "notificationBlocked": "To enable notifications, click the notification icon in your browser's address bar and allow notifications.",
+    "stayConnected": "Stay Connected",
+    "instantAlerts": "Instant kliq activity alerts",
+    "neverMiss": "Never miss friend interactions",
+    "realtimeInvitations": "Real-time event invitations"
+  },
+  "messages": {
+    "newMessage": "New Message",
+    "sendMessage": "Send Message",
+    "typeMessage": "Type a message...",
+    "noMessages": "No messages yet",
+    "conversation": "Conversation",
+    "incognitoMode": "Incognito Mode"
+  },
+  "events": {
+    "newEvent": "New Event",
+    "createEvent": "Create Event",
+    "eventTitle": "Event Title",
+    "eventDescription": "Event Description",
+    "eventLocation": "Location",
+    "eventDate": "Date",
+    "eventTime": "Time",
+    "attending": "Attending",
+    "notAttending": "Not Attending",
+    "maybe": "Maybe",
+    "rsvp": "RSVP"
+  },
+  "language": {
+    "selectLanguage": "Select Language",
+    "currentLanguage": "Current Language",
+    "autoDetected": "Auto-detected",
+    "changeLanguage": "Change Language"
+  },
+  "errors": {
+    "somethingWrong": "Something went wrong",
+    "tryAgain": "Please try again",
+    "networkError": "Network error",
+    "unauthorized": "Unauthorized access",
+    "notFound": "Not found",
+    "serverError": "Server error"
+  },
+  "success": {
+    "saved": "Saved successfully",
+    "updated": "Updated successfully",
+    "deleted": "Deleted successfully",
+    "posted": "Posted successfully",
+    "sent": "Sent successfully"
+  }
+}

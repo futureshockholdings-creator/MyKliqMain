@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
+import { useTranslation } from "react-i18next";
+import "./i18n/config"; // Initialize i18n
 
 // Pages
 import Landing from "@/pages/landing";
@@ -35,8 +37,10 @@ import { NotificationBadge } from "@/components/NotificationBadge";
 import { NotificationPanel } from "@/components/NotificationPanel";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Chatbot } from "@/components/Chatbot";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 function Navigation({ currentPath }: { currentPath: string }) {
+  const { t } = useTranslation();
   const { 
     isNotificationPanelOpen,
     getTotalUnreadCount,
@@ -48,11 +52,11 @@ function Navigation({ currentPath }: { currentPath: string }) {
   } = useNotifications();
 
   const navItems = [
-    { path: "/profile", icon: User, label: "Profile", tab: "profile" },
-    { path: "/", icon: HomeIcon, label: "Headlines", tab: "headlines" },
-    { path: "/kliq", icon: Users, label: "My Kliq", tab: "kliq", badgeType: "friends" as const },
-    { path: "/messages", icon: MessageCircle, label: "IM", tab: "messages", badgeType: "messages" as const },
-    { path: "/events", icon: Calendar, label: "Events", tab: "events", badgeType: "events" as const },
+    { path: "/profile", icon: User, label: t('navigation.profile'), tab: "profile" },
+    { path: "/", icon: HomeIcon, label: t('navigation.headlines'), tab: "headlines" },
+    { path: "/kliq", icon: Users, label: t('navigation.myKliq'), tab: "kliq", badgeType: "friends" as const },
+    { path: "/messages", icon: MessageCircle, label: t('navigation.messages'), tab: "messages", badgeType: "messages" as const },
+    { path: "/events", icon: Calendar, label: t('navigation.events'), tab: "events", badgeType: "events" as const },
     { path: "/actions", icon: Video, label: "Action", tab: "actions" },
     { path: "/themes", icon: Palette, label: "Themes", tab: "themes" },
   ];
@@ -88,7 +92,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
               </div>
             )}
             <Bell className="w-6 h-6" />
-            <span className="text-xs mt-1">Alerts</span>
+            <span className="text-xs mt-1">{t('navigation.alerts')}</span>
           </button>
 
           {navItems.map((item) => {
@@ -117,6 +121,11 @@ function Navigation({ currentPath }: { currentPath: string }) {
               </Link>
             );
           })}
+          
+          {/* Language Selector at bottom */}
+          <div className="mt-auto mb-4">
+            <LanguageSelector variant="dropdown" className="w-16" />
+          </div>
         </div>
       </div>
 

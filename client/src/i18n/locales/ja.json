@@ -1,0 +1,110 @@
+{
+  "navigation": {
+    "headlines": "ヘッドライン",
+    "myKliq": "私のKliq",
+    "messages": "メッセージ",
+    "alerts": "アラート",
+    "events": "イベント",
+    "profile": "プロフィール"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "submit": "送信",
+    "back": "戻る",
+    "next": "次へ",
+    "close": "閉じる",
+    "confirm": "確認",
+    "yes": "はい",
+    "no": "いいえ",
+    "ok": "OK",
+    "search": "検索",
+    "filter": "フィルター",
+    "sort": "並び替え"
+  },
+  "auth": {
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "signup": "サインアップ",
+    "welcome": "MyKliqへようこそ",
+    "loginPrompt": "続行するにはログインしてください"
+  },
+  "posts": {
+    "newPost": "何を考えていますか？",
+    "sharePost": "投稿をシェア",
+    "likePost": "いいね",
+    "commentOn": "コメント",
+    "shareWith": "シェアする",
+    "deletePost": "投稿を削除",
+    "editPost": "投稿を編集",
+    "noPostsYet": "まだ投稿がありません。最初に何かをシェアしてください！"
+  },
+  "profile": {
+    "profilePicture": "プロフィール画像",
+    "backgroundImage": "背景画像",
+    "profileInfo": "プロフィール情報",
+    "personalDetails": "個人詳細",
+    "editProfile": "プロフィールを編集",
+    "profileMusic": "プロフィール音楽",
+    "currentMusic": "現在のプロフィール音楽",
+    "uploadMusic": "音楽をアップロード",
+    "musicSettings": "プロフィール音楽設定"
+  },
+  "notifications": {
+    "pushNotifications": "プッシュ通知",
+    "enableNotifications": "通知を有効にする",
+    "receivingAlerts": "リアルタイムアラートを受信中",
+    "getInstantAlerts": "kliqアクティビティの即座のアラートを取得",
+    "blockedNotifications": "ブロック済み - ブラウザ設定を確認",
+    "notificationBlocked": "通知を有効にするには、ブラウザのアドレスバーの通知アイコンをクリックして通知を許可してください。",
+    "stayConnected": "接続を維持",
+    "instantAlerts": "kliqアクティビティの即座のアラート",
+    "neverMiss": "友達のやり取りを見逃さない",
+    "realtimeInvitations": "リアルタイムイベント招待"
+  },
+  "messages": {
+    "newMessage": "新しいメッセージ",
+    "sendMessage": "メッセージを送信",
+    "typeMessage": "メッセージを入力...",
+    "noMessages": "まだメッセージがありません",
+    "conversation": "会話",
+    "incognitoMode": "シークレットモード"
+  },
+  "events": {
+    "newEvent": "新しいイベント",
+    "createEvent": "イベントを作成",
+    "eventTitle": "イベントタイトル",
+    "eventDescription": "イベント説明",
+    "eventLocation": "場所",
+    "eventDate": "日付",
+    "eventTime": "時間",
+    "attending": "参加",
+    "notAttending": "不参加",
+    "maybe": "多分",
+    "rsvp": "RSVP"
+  },
+  "language": {
+    "selectLanguage": "言語を選択",
+    "currentLanguage": "現在の言語",
+    "autoDetected": "自動検出",
+    "changeLanguage": "言語を変更"
+  },
+  "errors": {
+    "somethingWrong": "何かが間違っています",
+    "tryAgain": "もう一度お試しください",
+    "networkError": "ネットワークエラー",
+    "unauthorized": "認証されていないアクセス",
+    "notFound": "見つかりません",
+    "serverError": "サーバーエラー"
+  },
+  "success": {
+    "saved": "正常に保存されました",
+    "updated": "正常に更新されました",
+    "deleted": "正常に削除されました",
+    "posted": "正常に投稿されました",
+    "sent": "正常に送信されました"
+  }
+}
