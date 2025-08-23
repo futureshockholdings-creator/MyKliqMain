@@ -31,6 +31,7 @@ import { GoogleSearch } from "@/components/GoogleSearch";
 import { EventCard } from "@/components/EventCard";
 import { trackEvent } from "@/lib/analytics";
 import Footer from "@/components/Footer";
+import { usePostTranslation } from "@/lib/translationService";
 
 import type { Gif, Moviecon } from "@shared/schema";
 
@@ -62,6 +63,7 @@ export default function Home() {
   const userData = user as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { translatePost, translateMoodText } = usePostTranslation();
 
   // Predefined mood options
   const moodOptions = [
@@ -1305,11 +1307,11 @@ export default function Home() {
                       {cleanText && (
                         isEventPost ? (
                           <Link href="/events" className="block cursor-pointer hover:bg-primary/5 rounded p-2 -m-2 transition-colors">
-                            <p className="text-foreground mb-3">{cleanText}</p>
+                            <p className="text-foreground mb-3">{translatePost(cleanText)}</p>
                             <p className="text-xs text-muted-foreground italic">Click to view event details and manage attendance</p>
                           </Link>
                         ) : (
-                          <p className="text-foreground mb-3">{cleanText}</p>
+                          <p className="text-foreground mb-3">{translatePost(cleanText)}</p>
                         )
                       )}
                       {youtubeUrls.length > 0 && (
@@ -1428,7 +1430,7 @@ export default function Home() {
                                   const { cleanText, youtubeUrls } = extractYouTubeUrlsFromText(comment.content);
                                   return (
                                     <>
-                                      {cleanText && <p className="text-sm text-foreground">{cleanText}</p>}
+                                      {cleanText && <p className="text-sm text-foreground">{translatePost(cleanText)}</p>}
                                       {youtubeUrls.length > 0 && (
                                         <div className="mt-2">
                                           <YouTubeEmbedList urls={youtubeUrls} />
@@ -1606,7 +1608,7 @@ export default function Home() {
                         {item.author.firstName} {item.author.lastName}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {item.content}
+                        {translatePost(item.content)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {formatTimeAgo(item.activityDate)}

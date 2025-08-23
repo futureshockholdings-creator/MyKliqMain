@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Clock, Users, Check } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { usePostTranslation } from "@/lib/translationService";
 
 interface PollOption {
   option: string;
@@ -47,6 +48,7 @@ export function PollCard({ poll }: PollCardProps) {
   );
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { translatePost } = usePostTranslation();
 
   const { data: results = [], refetch: refetchResults } = useQuery<PollOption[]>({
     queryKey: ["/api/polls", poll.id, "results"],
@@ -121,10 +123,10 @@ export function PollCard({ poll }: PollCardProps) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg text-black dark:text-white">{poll.title}</CardTitle>
+            <CardTitle className="text-lg text-black dark:text-white">{translatePost(poll.title)}</CardTitle>
             {poll.description && (
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {poll.description}
+                {translatePost(poll.description)}
               </p>
             )}
           </div>
@@ -182,7 +184,7 @@ export function PollCard({ poll }: PollCardProps) {
                   >
                     <div className="flex items-center gap-2 w-full">
                       {isSelected && hasVoted && <Check className="w-4 h-4 text-green-600" />}
-                      <span className="flex-1">{option}</span>
+                      <span className="flex-1">{translatePost(option)}</span>
                       {showResults && (
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">
