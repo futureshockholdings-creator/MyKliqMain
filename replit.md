@@ -2,6 +2,12 @@
 
 MyKliq is a social media application designed for close-knit friend groups ("kliq"), emphasizing intimate social sharing. It provides a highly customizable and private social environment through features like hierarchical friend ranking, content filtering, extensive UI customization, and rich media sharing including photo/video sharing, disappearing stories, real-time polling, and live streaming. The platform aims to redefine social networking by focusing on quality interactions within smaller, private circles.
 
+## Recent Updates (August 2025)
+- **Complete Profile Translation System**: All profile sections, field labels, and user-generated content now auto-translate across 10 supported languages
+- **Enhanced Translation Dictionaries**: Expanded Spanish and Chinese vocabularies with 100+ terms covering entertainment, lifestyle, and personal preferences
+- **Field Label Translation**: Section headers like "Interests & Hobbies", "Favorites", "Lifestyle & Status", and "Entertainment" translate automatically
+- **Comprehensive Multi-language Support**: Bio text, interests, hobbies, and all profile details translate seamlessly when language is changed
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
