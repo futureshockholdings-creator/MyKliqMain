@@ -72,7 +72,16 @@ export default function Home() {
     { emoji: "🤗", label: "Grateful", color: "text-orange-500" },
     { emoji: "😍", label: "In Love", color: "text-rose-500" },
     { emoji: "🤪", label: "Silly", color: "text-indigo-500" },
-    { emoji: "💪", label: "Motivated", color: "text-amber-500" }
+    { emoji: "💪", label: "Motivated", color: "text-amber-500" },
+    { emoji: "😰", label: "Anxious", color: "text-yellow-600" },
+    { emoji: "🥺", label: "Nostalgic", color: "text-blue-400" },
+    { emoji: "😠", label: "Irritable", color: "text-red-600" },
+    { emoji: "💔", label: "Broken Hearted", color: "text-red-400" },
+    { emoji: "🤷", label: "Confused", color: "text-gray-600" },
+    { emoji: "😕", label: "Lost", color: "text-slate-500" },
+    { emoji: "🙏", label: "Blessed", color: "text-emerald-500" },
+    { emoji: "🍀", label: "Lucky", color: "text-green-400" },
+    { emoji: "😶", label: "Numb", color: "text-stone-500" }
   ];
 
   // Fetch kliq feed (posts, polls, events, actions from all kliq members)
@@ -911,7 +920,7 @@ export default function Home() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid grid-cols-3 gap-3 py-4">
+          <div className="grid grid-cols-3 gap-3 py-4 max-h-80 overflow-y-auto">
             {moodOptions.map((mood) => (
               <Button
                 key={mood.label}
