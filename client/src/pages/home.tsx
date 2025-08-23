@@ -122,15 +122,20 @@ export default function Home() {
   // Reflect mutation
   const reflectMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest("GET", "/api/posts/reflect");
-      return await response.json();
+      console.log("Starting reflection API call...");
+      const result = await apiRequest("GET", "/api/posts/reflect");
+      console.log("Reflection API result:", result);
+      return result;
     },
     onSuccess: (data) => {
+      console.log("Reflection success, data:", data);
       setReflectionData(data);
       setShowReflectDialog(true);
       toast({
         title: "Reflection Ready!",
         description: `Found ${data.posts?.length || 0} popular posts from the last 30 days`,
+        duration: 2500,
+        className: "bg-white text-black border-gray-300",
       });
     },
     onError: (error) => {
