@@ -9,9 +9,10 @@ import { cn } from '@/lib/utils';
 interface PushNotificationSetupProps {
   onDismiss?: () => void;
   compact?: boolean;
+  darkStyle?: boolean;
 }
 
-export function PushNotificationSetup({ onDismiss, compact = false }: PushNotificationSetupProps) {
+export function PushNotificationSetup({ onDismiss, compact = false, darkStyle = false }: PushNotificationSetupProps) {
   const { permission, requestPermission, isSupported } = usePushNotifications();
   const [isRequesting, setIsRequesting] = useState(false);
 
@@ -48,14 +49,27 @@ export function PushNotificationSetup({ onDismiss, compact = false }: PushNotifi
   }
 
   return (
-    <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50 border-blue-200 dark:border-blue-800">
+    <Card className={cn(
+      darkStyle 
+        ? "bg-black border-gray-700 text-white" 
+        : "bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50 border-blue-200 dark:border-blue-800"
+    )}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-blue-500 rounded-full">
-              <Smartphone className="w-4 h-4 text-white" />
+            <div className={cn(
+              "p-2 rounded-full",
+              darkStyle ? "bg-white" : "bg-blue-500"
+            )}>
+              <Smartphone className={cn(
+                "w-4 h-4",
+                darkStyle ? "text-black" : "text-white"
+              )} />
             </div>
-            <CardTitle className="text-lg">Stay Connected</CardTitle>
+            <CardTitle className={cn(
+              "text-lg",
+              darkStyle ? "text-white" : ""
+            )}>Stay Connected</CardTitle>
           </div>
           {onDismiss && (
             <Button
@@ -71,10 +85,19 @@ export function PushNotificationSetup({ onDismiss, compact = false }: PushNotifi
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-start gap-3">
-          <Bell className="w-5 h-5 text-blue-500 mt-0.5" />
+          <Bell className={cn(
+            "w-5 h-5 mt-0.5",
+            darkStyle ? "text-white" : "text-blue-500"
+          )} />
           <div>
-            <p className="text-sm font-medium">Enable Push Notifications</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className={cn(
+              "text-sm font-medium",
+              darkStyle ? "text-white" : ""
+            )}>Enable Push Notifications</p>
+            <p className={cn(
+              "text-xs mt-1",
+              darkStyle ? "text-gray-300" : "text-muted-foreground"
+            )}>
               Get instant alerts when friends like your posts, comment, send messages, or invite you to events
             </p>
           </div>
@@ -122,7 +145,10 @@ export function PushNotificationSetup({ onDismiss, compact = false }: PushNotifi
           )}
         </div>
 
-        <div className="text-xs text-muted-foreground">
+        <div className={cn(
+          "text-xs",
+          darkStyle ? "text-gray-300" : "text-muted-foreground"
+        )}>
           ✓ Instant kliq activity alerts  
           ✓ Never miss friend interactions  
           ✓ Real-time event invitations
