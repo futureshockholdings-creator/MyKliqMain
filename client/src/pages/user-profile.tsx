@@ -6,9 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
 import { CalendarDays, Music, User as UserIcon } from "lucide-react";
 import { type User } from "@shared/schema";
+import { usePostTranslation } from "@/lib/translationService";
 
 export default function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
+  const { translatePost } = usePostTranslation();
 
   const { data: profileUser, isLoading } = useQuery<User>({
     queryKey: ["/api/user/profile", userId],
@@ -73,7 +75,7 @@ export default function UserProfile() {
                 </div>
                 
                 {profileUser.bio && (
-                  <p className="text-pink-100">{profileUser.bio}</p>
+                  <p className="text-pink-100">{translatePost(profileUser.bio)}</p>
                 )}
                 
                 {profileUser.birthdate && (

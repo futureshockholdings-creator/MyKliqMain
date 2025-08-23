@@ -1,12 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, PawPrint } from "lucide-react";
+import { usePostTranslation } from "@/lib/translationService";
 
 interface ProfileDetailsDisplayProps {
   user: any;
 }
 
 export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
+  const { translatePost } = usePostTranslation();
   if (!user) return null;
 
   const hasAnyDetails = 
@@ -49,7 +51,7 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
             <Icon className="w-4 h-4" />
             {title}
           </div>
-          <div className="text-foreground">{singleValue}</div>
+          <div className="text-foreground">{translatePost(singleValue)}</div>
         </div>
       );
     }
@@ -69,7 +71,7 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
               variant="secondary"
               className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
             >
-              {item}
+              {translatePost(item)}
             </Badge>
           ))}
         </div>
