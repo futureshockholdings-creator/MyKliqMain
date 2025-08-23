@@ -113,12 +113,12 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
           <CardHeader>
             <CardTitle className="text-primary flex items-center gap-2">
               <Heart className="w-5 h-5" />
-              Interests & Hobbies
+              {translatePost("Interests & Hobbies")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <DetailSection title="Interests" items={user.interests} icon={Heart} />
-            <DetailSection title="Hobbies" items={user.hobbies} icon={Gamepad2} />
+            <DetailSection title={translatePost("Interests")} items={user.interests} icon={Heart} />
+            <DetailSection title={translatePost("Hobbies")} items={user.hobbies} icon={Gamepad2} />
           </CardContent>
         </Card>
       )}
@@ -129,13 +129,13 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
           <CardHeader>
             <CardTitle className="text-primary flex items-center gap-2">
               <MapPin className="w-5 h-5" />
-              Favorites
+              {translatePost("Favorites")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <DetailSection title="Places" items={user.favoriteLocations} icon={MapPin} />
-            <DetailSection title="Foods" items={user.favoriteFoods} icon={Utensils} />
-            <DetailSection title="Music Genres" items={user.musicGenres} icon={Music} />
+            <DetailSection title={translatePost("Places")} items={user.favoriteLocations} icon={MapPin} />
+            <DetailSection title={translatePost("Foods")} items={user.favoriteFoods} icon={Utensils} />
+            <DetailSection title={translatePost("Music Genres")} items={user.musicGenres} icon={Music} />
           </CardContent>
         </Card>
       )}
@@ -146,28 +146,28 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
           <CardHeader>
             <CardTitle className="text-primary flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Lifestyle & Status
+              {translatePost("Lifestyle & Status")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {user.relationshipStatus && (
               <DetailSection 
-                title="Relationship Status" 
-                singleValue={formatRelationshipStatus(user.relationshipStatus)} 
+                title={translatePost("Relationship Status")} 
+                singleValue={translatePost(formatRelationshipStatus(user.relationshipStatus))} 
                 icon={Heart} 
               />
             )}
             {user.petPreferences && (
               <DetailSection 
-                title="Pet Preferences" 
-                singleValue={formatPetPreferences(user.petPreferences)} 
+                title={translatePost("Pet Preferences")} 
+                singleValue={translatePost(formatPetPreferences(user.petPreferences))} 
                 icon={PawPrint} 
               />
             )}
             {user.lifestyle && (
               <DetailSection 
-                title="Lifestyle" 
-                singleValue={formatLifestyle(user.lifestyle)} 
+                title={translatePost("Lifestyle")} 
+                singleValue={translatePost(formatLifestyle(user.lifestyle))} 
                 icon={Users} 
               />
             )}
@@ -181,12 +181,12 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
           <CardHeader>
             <CardTitle className="text-primary flex items-center gap-2">
               <Film className="w-5 h-5" />
-              Entertainment
+              {translatePost("Entertainment")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <DetailSection title="Movies" items={user.favoriteMovies} icon={Film} />
-            <DetailSection title="Books" items={user.favoriteBooks} icon={BookOpen} />
+            <DetailSection title={translatePost("Movies")} items={user.favoriteMovies} icon={Film} />
+            <DetailSection title={translatePost("Books")} items={user.favoriteBooks} icon={BookOpen} />
           </CardContent>
         </Card>
       )}
