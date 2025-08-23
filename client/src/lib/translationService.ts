@@ -19,7 +19,53 @@ const commonTranslations: Record<string, Record<string, string>> = {
     'grinding': 'trabajando duro',
     'bored': 'aburrido',
     'test': 'prueba',
-    'hello everyone': 'hola a todos'
+    'hello everyone': 'hola a todos',
+    'music': 'música',
+    'reading': 'lectura',
+    'gaming': 'juegos',
+    'cooking': 'cocinar',
+    'travel': 'viajar',
+    'sports': 'deportes',
+    'movies': 'películas',
+    'photography': 'fotografía',
+    'art': 'arte',
+    'dancing': 'baile',
+    'coffee': 'café',
+    'pizza': 'pizza',
+    'chocolate': 'chocolate',
+    'pasta': 'pasta',
+    'sushi': 'sushi',
+    'tacos': 'tacos',
+    'burgers': 'hamburguesas',
+    'new york': 'nueva york',
+    'paris': 'parís',
+    'london': 'londres',
+    'tokyo': 'tokio',
+    'beach': 'playa',
+    'mountains': 'montañas',
+    'city': 'ciudad',
+    'rock': 'rock',
+    'pop': 'pop',
+    'jazz': 'jazz',
+    'classical': 'clásica',
+    'hip hop': 'hip hop',
+    'electronic': 'electrónica',
+    'single': 'soltero',
+    'taken': 'en una relación',
+    'married': 'casado',
+    'complicated': 'es complicado',
+    'prefer not to say': 'prefiero no decir',
+    'dog lover': 'amante de los perros',
+    'cat lover': 'amante de los gatos',
+    'loves dogs & cats': 'ama perros y gatos',
+    'other pets': 'otras mascotas',
+    'no pets': 'sin mascotas',
+    'active': 'activo',
+    'relaxed': 'relajado',
+    'adventurous': 'aventurero',
+    'homebody': 'hogareño',
+    'social': 'social',
+    'quiet': 'tranquilo'
   },
   fr: {
     'hello': 'bonjour',
@@ -99,7 +145,53 @@ const commonTranslations: Record<string, Record<string, string>> = {
     'grinding': '努力工作',
     'bored': '无聊',
     'test': '测试',
-    'hello everyone': '大家好'
+    'hello everyone': '大家好',
+    'music': '音乐',
+    'reading': '阅读',
+    'gaming': '游戏',
+    'cooking': '烹饪',
+    'travel': '旅行',
+    'sports': '运动',
+    'movies': '电影',
+    'photography': '摄影',
+    'art': '艺术',
+    'dancing': '舞蹈',
+    'coffee': '咖啡',
+    'pizza': '披萨',
+    'chocolate': '巧克力',
+    'pasta': '意大利面',
+    'sushi': '寿司',
+    'tacos': '玉米饼',
+    'burgers': '汉堡',
+    'new york': '纽约',
+    'paris': '巴黎',
+    'london': '伦敦',
+    'tokyo': '东京',
+    'beach': '海滩',
+    'mountains': '山脉',
+    'city': '城市',
+    'rock': '摇滚',
+    'pop': '流行',
+    'jazz': '爵士',
+    'classical': '古典',
+    'hip hop': '嘻哈',
+    'electronic': '电子',
+    'single': '单身',
+    'taken': '有对象',
+    'married': '已婚',
+    'complicated': '复杂',
+    'prefer not to say': '不愿说',
+    'dog lover': '狗狗爱好者',
+    'cat lover': '猫咪爱好者',
+    'loves dogs & cats': '喜欢狗和猫',
+    'other pets': '其他宠物',
+    'no pets': '没有宠物',
+    'active': '活跃',
+    'relaxed': '放松',
+    'adventurous': '冒险',
+    'homebody': '宅家',
+    'social': '社交',
+    'quiet': '安静'
   },
   ja: {
     'hello': 'こんにちは',
@@ -157,19 +249,25 @@ export function translateText(text: string, targetLanguage: string): string {
     return text;
   }
 
+  console.log('Translating:', text, 'to:', targetLanguage);
+
   // Check cache first
   const cacheKey = `${text}-${targetLanguage}`;
   if (translationCache.has(cacheKey)) {
-    return translationCache.get(cacheKey)!;
+    const cached = translationCache.get(cacheKey)!;
+    console.log('Using cached translation:', cached);
+    return cached;
   }
 
   // Skip translation for certain content types
   if (isUrl(text) || isSpecialContent(text)) {
+    console.log('Skipping translation for special content:', text);
     return text;
   }
 
   // Use simple word-based translation for now
   let translatedText = translateUsingDictionary(text, targetLanguage);
+  console.log('Translation result:', translatedText);
   
   // Cache the result
   translationCache.set(cacheKey, translatedText);
@@ -214,11 +312,15 @@ function isUrl(text: string): boolean {
 
 function isSpecialContent(text: string): boolean {
   // Don't translate emojis, numbers, special characters
-  const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/u;
-  const hasOnlyEmojisAndSpaces = /^[\p{Emoji_Presentation}\p{Extended_Pictographic}\s]*$/u;
+  const hasOnlyNumbers = /^\d+$/.test(text);
+  const hasCommonEmojis = text.includes('😀') || text.includes('😊') || text.includes('🎉') || 
+                         text.includes('📍') || text.includes('❤️') || text.includes('👍') ||
+                         text.includes('😂') || text.includes('😍') || text.includes('🙂');
+  const isShortAndProbablyEmoji = text.length <= 5 && hasCommonEmojis;
   
-  return emojiRegex.test(text) && hasOnlyEmojisAndSpaces.test(text);
+  return hasOnlyNumbers || isShortAndProbablyEmoji;
 }
+
 
 export function translateMood(mood: string, targetLanguage: string): string {
   const moodTranslations: Record<string, Record<string, string>> = {
