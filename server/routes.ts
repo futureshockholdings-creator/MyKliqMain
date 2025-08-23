@@ -531,6 +531,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Post reflection endpoint - analyze user's most popular posts from last 30 days
+  app.get('/api/posts/reflect', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const reflection = await storage.getUserReflection(userId);
+      res.json(reflection);
+    } catch (error) {
+      console.error("Error generating reflection:", error);
+      res.status(500).json({ message: "Failed to generate reflection" });
+    }
+  });
+
   // Content filter routes
   app.get('/api/filters', isAuthenticated, async (req: any, res) => {
     try {

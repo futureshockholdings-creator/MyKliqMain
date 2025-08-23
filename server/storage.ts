@@ -110,6 +110,7 @@ export interface IStorage {
   createPost(post: InsertPost): Promise<Post>;
   likePost(postId: string, userId: string): Promise<void>;
   unlikePost(postId: string, userId: string): Promise<void>;
+  getUserReflection(userId: string): Promise<{ posts: any[]; stats: any; message: string }>;
   
   // Feed operations
   getKliqFeed(userId: string, filters: string[]): Promise<any[]>;
@@ -738,6 +739,86 @@ export class DatabaseStorage implements IStorage {
       .update(posts)
       .set({ likes: sql`${posts.likes} - 1` })
       .where(eq(posts.id, postId));
+  }
+
+  async getUserReflection(userId: string): Promise<{ posts: any[]; stats: any; message: string }> {
+    try {
+      // Get user's posts from the last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      // Query for user's posts in last 30 days with engagement metrics
+      const userPosts = await db
+        .select({
+          id: posts.id,
+          content: posts.content,
+          mediaUrl: posts.mediaUrl,
+          mediaType: posts.mediaType,
+          likes: posts.likes,
+          createdAt: posts.createdAt,
+          commentCount: count(comments.id),
+        })
+        .from(posts)
+        .leftJoin(comments, eq(posts.id, comments.postId))
+        .where(
+          and(
+            eq(posts.userId, userId),
+            gte(posts.createdAt, thirtyDaysAgo)
+          )
+        )
+        .groupBy(posts.id, posts.content, posts.mediaUrl, posts.mediaType, posts.likes, posts.createdAt)
+        .orderBy(desc(posts.createdAt));
+
+      if (userPosts.length === 0) {
+        return {
+          posts: [],
+          stats: { totalPosts: 0, totalLikes: 0, totalComments: 0, avgEngagement: 0 },
+          message: "No posts found in the last 30 days. Start sharing to build your reflection!"
+        };
+      }
+
+      // Calculate engagement score (likes + comments * 2) for ranking
+      const postsWithEngagement = userPosts.map(post => ({
+        ...post,
+        engagementScore: post.likes + (post.commentCount * 2)
+      }));
+
+      // Sort by engagement score and get top posts
+      const topPosts = postsWithEngagement
+        .sort((a, b) => b.engagementScore - a.engagementScore)
+        .slice(0, 12); // Top 12 for collage
+
+      // Calculate stats
+      const totalLikes = userPosts.reduce((sum, post) => sum + post.likes, 0);
+      const totalComments = userPosts.reduce((sum, post) => sum + post.commentCount, 0);
+      const avgEngagement = userPosts.length > 0 ? (totalLikes + totalComments) / userPosts.length : 0;
+
+      const stats = {
+        totalPosts: userPosts.length,
+        totalLikes,
+        totalComments,
+        avgEngagement: Math.round(avgEngagement * 10) / 10,
+        topEngagementScore: topPosts.length > 0 ? topPosts[0].engagementScore : 0
+      };
+
+      let reflectionMessage = "";
+      if (topPosts.length >= 3) {
+        reflectionMessage = `🌟 Your top ${topPosts.length} posts from the last 30 days! Your best post got ${topPosts[0].engagementScore} engagement points. Keep creating amazing content!`;
+      } else if (topPosts.length > 0) {
+        reflectionMessage = `✨ Here are your ${topPosts.length} posts from the last 30 days. Keep sharing to build your reflection collage!`;
+      } else {
+        reflectionMessage = "Start posting more to see your viral content reflection!";
+      }
+
+      return {
+        posts: topPosts,
+        stats,
+        message: reflectionMessage
+      };
+    } catch (error) {
+      console.error('Error generating user reflection:', error);
+      throw new Error('Failed to generate reflection');
+    }
   }
 
   // Comment operations

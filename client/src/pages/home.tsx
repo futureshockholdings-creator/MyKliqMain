@@ -54,6 +54,8 @@ export default function Home() {
   const [address, setAddress] = useState('');
   const [showMoodDialog, setShowMoodDialog] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [showReflectDialog, setShowReflectDialog] = useState(false);
+  const [reflectionData, setReflectionData] = useState<any>(null);
 
   const { user } = useAuth();
   const userData = user as any;
@@ -115,6 +117,40 @@ export default function Home() {
   // Fetch stories
   const { data: stories = [] } = useQuery({
     queryKey: ["/api/stories"],
+  });
+
+  // Reflect mutation
+  const reflectMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("GET", "/api/posts/reflect");
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      setReflectionData(data);
+      setShowReflectDialog(true);
+      toast({
+        title: "Reflection Ready!",
+        description: `Found ${data.posts?.length || 0} popular posts from the last 30 days`,
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to generate reflection",
+        variant: "destructive",
+      });
+    },
   });
 
   // Create post mutation
@@ -443,6 +479,10 @@ export default function Home() {
         movieconId: selectedMoviecon?.id
       });
     }
+  };
+
+  const handleReflect = () => {
+    reflectMutation.mutate();
   };
 
   const handleEmojiClick = (emoji: string) => {
@@ -834,14 +874,25 @@ export default function Home() {
                 <Zap className="w-4 h-4" />
               </Button>
             </div>
-            <Button
-              onClick={handleCreatePost}
-              disabled={(!newPost.trim() && !selectedGif && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6"
-              style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
-            >
-              {createPostMutation.isPending ? "Posting..." : "Post!"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleReflect}
+                disabled={reflectMutation.isPending}
+                variant="outline"
+                className="px-4"
+                data-testid="button-lets-reflect"
+              >
+                {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
+              </Button>
+              <Button
+                onClick={handleCreatePost}
+                disabled={(!newPost.trim() && !selectedGif && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6"
+                style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
+              >
+                {createPostMutation.isPending ? "Posting..." : "Post!"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -948,6 +999,109 @@ export default function Home() {
               className="border-border text-foreground"
             >
               Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reflection Dialog */}
+      <Dialog open={showReflectDialog} onOpenChange={setShowReflectDialog}>
+        <DialogContent className="sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <span className="text-2xl">✨</span>
+              <span>Your Kliq Reflection</span>
+            </DialogTitle>
+            <DialogDescription>
+              Your most popular posts from the last 30 days
+            </DialogDescription>
+          </DialogHeader>
+          
+          {reflectionData && (
+            <div className="space-y-6">
+              {/* Stats Section */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold text-primary">{reflectionData.stats.totalPosts}</div>
+                  <div className="text-xs text-muted-foreground">Posts</div>
+                </div>
+                <div className="text-center p-4 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold text-red-500">{reflectionData.stats.totalLikes}</div>
+                  <div className="text-xs text-muted-foreground">Likes</div>
+                </div>
+                <div className="text-center p-4 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold text-blue-500">{reflectionData.stats.totalComments}</div>
+                  <div className="text-xs text-muted-foreground">Comments</div>
+                </div>
+                <div className="text-center p-4 bg-muted rounded-lg">
+                  <div className="text-2xl font-bold text-green-500">{reflectionData.stats.avgEngagement}</div>
+                  <div className="text-xs text-muted-foreground">Avg Engagement</div>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div className="text-center p-4 bg-accent rounded-lg">
+                <p className="text-sm text-accent-foreground">{reflectionData.message}</p>
+              </div>
+
+              {/* Posts Collage */}
+              {reflectionData.posts.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Your Top Posts</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                    {reflectionData.posts.map((post: any, index: number) => (
+                      <Card key={post.id} className="relative">
+                        <CardContent className="p-4">
+                          <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                            {index + 1}
+                          </div>
+                          <div className="space-y-2">
+                            {post.mediaUrl && (
+                              <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                {post.mediaType === 'video' ? (
+                                  <video className="w-full h-full object-cover">
+                                    <source src={post.mediaUrl} type="video/mp4" />
+                                  </video>
+                                ) : (
+                                  <img 
+                                    src={post.mediaUrl} 
+                                    alt="Post media" 
+                                    className="w-full h-full object-cover"
+                                  />
+                                )}
+                              </div>
+                            )}
+                            <p className="text-sm text-foreground line-clamp-2">{post.content}</p>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Heart className="w-3 h-3" />
+                                {post.likes}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageCircle className="w-3 h-3" />
+                                {post.commentCount}
+                              </span>
+                              <span className="font-medium">
+                                Score: {post.engagementScore}
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowReflectDialog(false)}
+              className="border-border text-foreground"
+            >
+              Close
             </Button>
           </div>
         </DialogContent>
