@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
 import Footer from "@/components/Footer";
 import { PushNotificationSetup } from "@/components/PushNotificationSetup";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
+
 
 import { type User } from "@shared/schema";
 
@@ -25,9 +25,6 @@ export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  // Initialize push notifications
-  const { permission } = usePushNotifications();
 
 
 
@@ -268,12 +265,10 @@ export default function Profile() {
         </Card>
 
         {/* Push Notification Setup */}
-        {permission !== 'granted' && (
-          <PushNotificationSetup 
-            darkStyle={true}
-            compact={false}
-          />
-        )}
+        <PushNotificationSetup 
+          darkStyle={true}
+          compact={false}
+        />
 
         {birthdayUsers.length > 0 && (
           <Card>
