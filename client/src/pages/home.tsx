@@ -419,7 +419,7 @@ export default function Home() {
       
       if (selectedMood) {
         const moodOption = moodOptions.find(m => m.label === selectedMood);
-        postContent = `${moodOption?.emoji} Feeling ${selectedMood.toLowerCase()}`;
+        postContent = `${moodOption?.emoji} MOOD: Feeling ${selectedMood.toLowerCase()}`;
         if (newPost.trim()) {
           postContent += ` - ${newPost.trim()}`;
         }
@@ -725,7 +725,7 @@ export default function Home() {
             <div className="mt-3 flex items-center gap-2">
               <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
                 <span className="text-lg">{moodOptions.find(m => m.label === selectedMood)?.emoji}</span>
-                <span className="text-sm font-medium">Feeling {selectedMood.toLowerCase()}</span>
+                <span className="text-sm font-medium">MOOD: Feeling {selectedMood.toLowerCase()}</span>
               </div>
               <Button
                 size="sm"
