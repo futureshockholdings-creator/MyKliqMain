@@ -15,6 +15,7 @@ import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
+import Footer from "@/components/Footer";
 
 import { type User } from "@shared/schema";
 
@@ -342,6 +343,8 @@ export default function Profile() {
         </Card>
 
       </div>
+      
+      <Footer />
     </div>
   );
 }

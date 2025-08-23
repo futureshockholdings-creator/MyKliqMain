@@ -30,6 +30,7 @@ import { SponsoredAd } from "@/components/SponsoredAd";
 import { GoogleSearch } from "@/components/GoogleSearch";
 import { EventCard } from "@/components/EventCard";
 import { trackEvent } from "@/lib/analytics";
+import Footer from "@/components/Footer";
 import type { Gif, Moviecon } from "@shared/schema";
 
 
@@ -1480,6 +1481,8 @@ export default function Home() {
         type="story"
         userId={userData?.id}
       />
+
+      <Footer />
     </div>
   );
 }

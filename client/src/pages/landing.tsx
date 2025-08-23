@@ -7,6 +7,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { Users, Crown, Palette, Shield, Video } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import Footer from "@/components/Footer";
 
 export default function Landing() {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -262,6 +263,8 @@ export default function Landing() {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

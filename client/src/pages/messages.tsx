@@ -5,6 +5,7 @@ import { MessageCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import Footer from "@/components/Footer";
 
 interface ConversationData {
   id: string;
@@ -142,6 +143,8 @@ export function Messages() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }

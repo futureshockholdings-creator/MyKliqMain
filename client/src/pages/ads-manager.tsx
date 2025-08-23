@@ -17,6 +17,7 @@ import { Trash2, Edit, Plus, Eye, MousePointer, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { SponsoredAd } from "@shared/schema";
 import { getTextColorForBackground, isBlackBackground } from "@/lib/colorUtils";
+import Footer from "@/components/Footer";
 
 // Ad Preview Component with dynamic text colors
 interface AdPreviewProps {
@@ -803,6 +804,8 @@ export default function AdsManager() {
           })
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }

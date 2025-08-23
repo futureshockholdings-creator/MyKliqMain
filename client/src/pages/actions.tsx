@@ -25,6 +25,7 @@ import {
   Camera,
   CameraOff
 } from "lucide-react";
+import Footer from "@/components/Footer";
 
 interface User {
   id: string;
@@ -679,6 +680,8 @@ export default function Actions() {
           </CardContent>
         </Card>
       )}
+
+      <Footer />
     </div>
   );
 }

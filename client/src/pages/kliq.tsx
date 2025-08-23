@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
+import Footer from "@/components/Footer";
 
 export default function Kliq() {
   const [kliqName, setKliqName] = useState("");
@@ -770,6 +771,8 @@ export default function Kliq() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Footer />
     </div>
   );
 }

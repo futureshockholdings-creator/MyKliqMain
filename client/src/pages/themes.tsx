@@ -3,6 +3,7 @@ import { ThemeEditor } from "@/components/theme-editor";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import Footer from "@/components/Footer";
 
 export default function Themes() {
   const { toast } = useToast();
@@ -156,6 +157,8 @@ export default function Themes() {
         onReset={handleResetTheme}
         onSurpriseMe={handleSurpriseMe}
       />
+
+      <Footer />
     </div>
   );
 }

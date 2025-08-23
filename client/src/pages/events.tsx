@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { cn } from "@/lib/utils";
 import { MediaUpload } from "@/components/MediaUpload";
+import Footer from "@/components/Footer";
 
 interface CountdownProps {
   targetDate: string;
@@ -760,6 +761,8 @@ export default function Events() {
         type="event"
         userId={userData?.id}
       />
+
+      <Footer />
     </div>
   );
 }

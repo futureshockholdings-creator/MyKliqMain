@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MessageMediaPicker } from "@/components/MessageMediaPicker";
 import { GifDisplay } from "@/components/GifDisplay";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
+import Footer from "@/components/Footer";
 
 interface MessageData {
   id: string;
@@ -408,6 +409,8 @@ export function Conversation() {
           </form>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
