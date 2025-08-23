@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X } from "lucide-react";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -51,11 +51,29 @@ export default function Home() {
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [locationName, setLocationName] = useState('');
   const [address, setAddress] = useState('');
+  const [showMoodDialog, setShowMoodDialog] = useState(false);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
 
   const { user } = useAuth();
   const userData = user as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Predefined mood options
+  const moodOptions = [
+    { emoji: "😊", label: "Happy", color: "text-yellow-500" },
+    { emoji: "😢", label: "Sad", color: "text-blue-500" },
+    { emoji: "😎", label: "Cool", color: "text-purple-500" },
+    { emoji: "😴", label: "Tired", color: "text-gray-500" },
+    { emoji: "😤", label: "Frustrated", color: "text-red-500" },
+    { emoji: "🤔", label: "Thoughtful", color: "text-green-500" },
+    { emoji: "🥳", label: "Excited", color: "text-pink-500" },
+    { emoji: "😌", label: "Peaceful", color: "text-teal-500" },
+    { emoji: "🤗", label: "Grateful", color: "text-orange-500" },
+    { emoji: "😍", label: "In Love", color: "text-rose-500" },
+    { emoji: "🤪", label: "Silly", color: "text-indigo-500" },
+    { emoji: "💪", label: "Motivated", color: "text-amber-500" }
+  ];
 
   // Fetch kliq feed (posts, polls, events, actions from all kliq members)
   const { data: feedItems = [], isLoading: feedLoading, refetch: refetchFeed } = useQuery({
@@ -99,6 +117,7 @@ export default function Home() {
       setNewPost("");
       setSelectedGif(null);
       setSelectedMoviecon(null);
+      setSelectedMood(null);
       toast({
         title: "Post created!",
         description: "Your post has been shared with your kliq on the Headlines",
@@ -392,12 +411,24 @@ export default function Home() {
   };
 
   const handleCreatePost = () => {
-    if (newPost.trim() || selectedGif || selectedMoviecon) {
+    if (newPost.trim() || selectedGif || selectedMoviecon || selectedMood) {
       // Track post creation event
       trackEvent('create_post', 'engagement', 'post_created');
       
+      let postContent = "";
+      
+      if (selectedMood) {
+        const moodOption = moodOptions.find(m => m.label === selectedMood);
+        postContent = `${moodOption?.emoji} Feeling ${selectedMood.toLowerCase()}`;
+        if (newPost.trim()) {
+          postContent += ` - ${newPost.trim()}`;
+        }
+      } else {
+        postContent = newPost.trim();
+      }
+      
       createPostMutation.mutate({
-        content: newPost.trim(),
+        content: postContent,
         gifId: selectedGif?.id,
         movieconId: selectedMoviecon?.id
       });
@@ -690,6 +721,22 @@ export default function Home() {
               </Button>
             </div>
           )}
+          {selectedMood && (
+            <div className="mt-3 flex items-center gap-2">
+              <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
+                <span className="text-lg">{moodOptions.find(m => m.label === selectedMood)?.emoji}</span>
+                <span className="text-sm font-medium">Feeling {selectedMood.toLowerCase()}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSelectedMood(null)}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                ×
+              </Button>
+            </div>
+          )}
           <div className="flex justify-between items-center">
             <div className="flex space-x-2">
               <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
@@ -766,10 +813,20 @@ export default function Home() {
                   <MapPin className="w-4 h-4" />
                 )}
               </Button>
+
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="text-yellow-500 hover:bg-yellow-500/10"
+                onClick={() => setShowMoodDialog(true)}
+                data-testid="button-mood-picker"
+              >
+                <Zap className="w-4 h-4" />
+              </Button>
             </div>
             <Button
               onClick={handleCreatePost}
-              disabled={(!newPost.trim() && !selectedGif && !selectedMoviecon) || createPostMutation.isPending}
+              disabled={(!newPost.trim() && !selectedGif && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6"
               style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
             >
@@ -837,6 +894,51 @@ export default function Home() {
                 {locationCheckInMutation.isPending ? "Posting meetup..." : "Post Meetup"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mood Selection Dialog */}
+      <Dialog open={showMoodDialog} onOpenChange={setShowMoodDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Zap className="h-5 w-5 text-yellow-500" />
+              <span>How are you feeling?</span>
+            </DialogTitle>
+            <DialogDescription>
+              Share your current mood with your kliq
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-3 gap-3 py-4">
+            {moodOptions.map((mood) => (
+              <Button
+                key={mood.label}
+                variant="outline"
+                className="flex flex-col gap-2 h-auto py-4 hover:bg-accent"
+                onClick={() => {
+                  setSelectedMood(mood.label);
+                  setShowMoodDialog(false);
+                }}
+                data-testid={`button-mood-${mood.label.toLowerCase()}`}
+              >
+                <span className="text-2xl">{mood.emoji}</span>
+                <span className={cn("text-xs font-medium", mood.color)}>
+                  {mood.label}
+                </span>
+              </Button>
+            ))}
+          </div>
+          
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowMoodDialog(false)}
+              className="border-border text-foreground"
+            >
+              Cancel
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
