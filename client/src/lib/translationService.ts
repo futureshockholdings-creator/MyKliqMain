@@ -65,7 +65,52 @@ const commonTranslations: Record<string, Record<string, string>> = {
     'adventurous': 'aventurero',
     'homebody': 'hogareño',
     'social': 'social',
-    'quiet': 'tranquilo'
+    'quiet': 'tranquilo',
+    'fishing': 'pesca',
+    'watching': 'viendo',
+    'netflix': 'netflix',
+    'wwe': 'wwe',
+    'call of duty': 'call of duty',
+    'sports cards': 'cartas deportivas',
+    'sneaker freak': 'fanático de zapatillas',
+    'steak': 'bistec',
+    'nachos': 'nachos',
+    'gospel': 'gospel',
+    'metal': 'metal',
+    'the matrix': 'matrix',
+    'wizard of oz': 'mago de oz',
+    'e.t.': 'e.t.',
+    'bible': 'biblia',
+    'stephen king': 'stephen king',
+    'love life': 'amo la vida',
+    'enjoy': 'disfruto',
+    'family': 'familia',
+    'friends': 'amigos',
+    'work': 'trabajo',
+    'life': 'vida',
+    'fun': 'diversión',
+    'time': 'tiempo',
+    'good': 'bueno',
+    'great': 'genial',
+    'amazing': 'increíble',
+    'awesome': 'impresionante',
+    'beautiful': 'hermoso',
+    'nice': 'agradable',
+    'cool': 'genial',
+    'funny': 'divertido',
+    'interesting': 'interesante',
+    'exciting': 'emocionante',
+    'relaxing': 'relajante',
+    'peaceful': 'pacífico',
+    'busy': 'ocupado',
+    'tired': 'cansado',
+    'stressed': 'estresado',
+    'worried': 'preocupado',
+    'excited': 'emocionado',
+    'nervous': 'nervioso',
+    'proud': 'orgulloso',
+    'grateful': 'agradecido',
+    'blessed': 'bendecido'
   },
   fr: {
     'hello': 'bonjour',
@@ -191,7 +236,52 @@ const commonTranslations: Record<string, Record<string, string>> = {
     'adventurous': '冒险',
     'homebody': '宅家',
     'social': '社交',
-    'quiet': '安静'
+    'quiet': '安静',
+    'fishing': '钓鱼',
+    'watching': '观看',
+    'netflix': '网飞',
+    'wwe': '摔跤',
+    'call of duty': '使命召唤',
+    'sports cards': '体育卡',
+    'sneaker freak': '球鞋迷',
+    'steak': '牛排',
+    'nachos': '玉米片',
+    'gospel': '福音',
+    'metal': '金属',
+    'the matrix': '黑客帝国',
+    'wizard of oz': '绿野仙踪',
+    'e.t.': '外星人',
+    'bible': '圣经',
+    'stephen king': '史蒂芬·金',
+    'love life': '热爱生活',
+    'enjoy': '享受',
+    'family': '家庭',
+    'friends': '朋友',
+    'work': '工作',
+    'life': '生活',
+    'fun': '乐趣',
+    'time': '时间',
+    'good': '好',
+    'great': '很棒',
+    'amazing': '惊人',
+    'awesome': '令人敬畏',
+    'beautiful': '美丽',
+    'nice': '不错',
+    'cool': '酷',
+    'funny': '有趣',
+    'interesting': '有意思',
+    'exciting': '令人兴奋',
+    'relaxing': '放松',
+    'peaceful': '平静',
+    'busy': '忙碌',
+    'tired': '累',
+    'stressed': '有压力',
+    'worried': '担心',
+    'excited': '兴奋',
+    'nervous': '紧张',
+    'proud': '自豪',
+    'grateful': '感激',
+    'blessed': '有福'
   },
   ja: {
     'hello': 'こんにちは',
@@ -249,25 +339,19 @@ export function translateText(text: string, targetLanguage: string): string {
     return text;
   }
 
-  console.log('Translating:', text, 'to:', targetLanguage);
-
   // Check cache first
   const cacheKey = `${text}-${targetLanguage}`;
   if (translationCache.has(cacheKey)) {
-    const cached = translationCache.get(cacheKey)!;
-    console.log('Using cached translation:', cached);
-    return cached;
+    return translationCache.get(cacheKey)!;
   }
 
   // Skip translation for certain content types
   if (isUrl(text) || isSpecialContent(text)) {
-    console.log('Skipping translation for special content:', text);
     return text;
   }
 
   // Use simple word-based translation for now
   let translatedText = translateUsingDictionary(text, targetLanguage);
-  console.log('Translation result:', translatedText);
   
   // Cache the result
   translationCache.set(cacheKey, translatedText);
@@ -290,7 +374,25 @@ function translateUsingDictionary(text: string, targetLanguage: string): string 
   
   for (const key of sortedKeys) {
     const translation = translations[key];
-    result = result.replace(new RegExp(key, 'gi'), translation);
+    // Use word boundaries to avoid partial matches
+    const regex = new RegExp(`\\b${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+    result = result.replace(regex, translation);
+  }
+  
+  // Handle comma-separated lists
+  if (text.includes(',')) {
+    const items = result.split(',').map(item => item.trim());
+    result = items.join(', ');
+  }
+  
+  // For free-form text, try to translate common words even if not exact matches
+  if (!translations[text.toLowerCase()]) {
+    const words = result.split(/\s+/);
+    const translatedWords = words.map(word => {
+      const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
+      return translations[cleanWord] || word;
+    });
+    result = translatedWords.join(' ');
   }
   
   // Preserve original capitalization for first word
