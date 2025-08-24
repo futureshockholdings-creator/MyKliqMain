@@ -3,12 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { LanguageSelector } from "@/components/LanguageSelector";
+
 import { 
   Instagram, 
   Twitter, 
@@ -18,8 +18,7 @@ import {
   Trash2,
   RefreshCw,
   ExternalLink,
-  Link2,
-  Users
+  Link2
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -72,7 +71,6 @@ const platformInfo = {
 };
 
 export default function Settings() {
-  const [activeTab, setActiveTab] = useState("social");
   const queryClient = useQueryClient();
 
   // Fetch connected social accounts
@@ -182,20 +180,9 @@ export default function Settings() {
           <p className="text-purple-200">Manage your preferences and connected accounts</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm">
-            <TabsTrigger value="social" className="data-[state=active]:bg-white/20 text-white">
-              <Link2 className="w-4 h-4 mr-2" />
-              Social Media
-            </TabsTrigger>
-            <TabsTrigger value="general" className="data-[state=active]:bg-white/20 text-white">
-              <Users className="w-4 h-4 mr-2" />
-              General
-            </TabsTrigger>
-          </TabsList>
+        <div className="space-y-6">
 
-          <TabsContent value="social" className="space-y-6">
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Link2 className="w-5 h-5" />
@@ -366,34 +353,7 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-
-
-          <TabsContent value="general" className="space-y-6">
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  General Settings
-                </CardTitle>
-                <CardDescription className="text-purple-200">
-                  Language and general preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="language" className="text-white font-medium mb-2 block">
-                      Language
-                    </Label>
-                    <LanguageSelector />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        </div>
       </div>
     </div>
   );
