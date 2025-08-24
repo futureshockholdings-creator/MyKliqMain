@@ -184,7 +184,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
     if (!birthdate) {
       toast({
         title: "Birthdate Required",
-        description: "Please provide your birthdate to unlock the Daily Horoscope feature and save your profile.",
+        description: "Please provide your birthdate to save your profile.",
         variant: "destructive",
       });
       return;
@@ -311,7 +311,6 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                     <Label className="text-foreground flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
                       Birthdate *
-                      <span className="text-xs text-muted-foreground">(Required for Daily Horoscope)</span>
                     </Label>
                     <Input
                       type="date"
@@ -321,11 +320,6 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       data-testid="input-birthdate"
                       required
                     />
-                    {!birthdate && (
-                      <p className="text-xs text-amber-500">
-                        ⚠️ Birthdate is required to unlock your Daily Horoscope feature
-                      </p>
-                    )}
                   </div>
                 </div>
               </CardContent>
