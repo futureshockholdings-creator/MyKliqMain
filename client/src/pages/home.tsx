@@ -180,7 +180,7 @@ export default function Home() {
         className: "bg-white text-black border-gray-300",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -192,11 +192,20 @@ export default function Home() {
         }, 500);
         return;
       }
-      toast({
-        title: "Error",
-        description: "Failed to get your horoscope",
-        variant: "destructive",
-      });
+      if (error.message?.includes("Birthdate required")) {
+        toast({
+          title: "Birthdate Required",
+          description: "Please add your birthdate in Profile Settings to unlock your Daily Horoscope.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to get your horoscope",
+          variant: "destructive",
+        });
+      }
     },
   });
 

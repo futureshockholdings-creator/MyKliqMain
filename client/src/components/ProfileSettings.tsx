@@ -181,6 +181,15 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   });
 
   const handleSave = () => {
+    if (!birthdate) {
+      toast({
+        title: "Birthdate Required",
+        description: "Please provide your birthdate to unlock the Daily Horoscope feature and save your profile.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     updateProfileMutation.mutate({
       // Basic profile fields
       bio,
@@ -301,7 +310,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   <div className="space-y-2">
                     <Label className="text-foreground flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Birthdate
+                      Birthdate *
+                      <span className="text-xs text-muted-foreground">(Required for Daily Horoscope)</span>
                     </Label>
                     <Input
                       type="date"
@@ -309,7 +319,13 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       onChange={(e) => setBirthdate(e.target.value)}
                       className="bg-input border-border text-foreground"
                       data-testid="input-birthdate"
+                      required
                     />
+                    {!birthdate && (
+                      <p className="text-xs text-amber-500">
+                        ⚠️ Birthdate is required to unlock your Daily Horoscope feature
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
