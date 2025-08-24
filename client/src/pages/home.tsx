@@ -1206,16 +1206,39 @@ export default function Home() {
                   Close
                 </Button>
                 <Button
-                  onClick={() => {
+                  onClick={async () => {
                     const horoscopePost = `🔮 My Daily Horoscope (${horoscopeData.sign}) 🔮\n\n${horoscopeData.horoscope}\n\n✨ Lucky Number: ${horoscopeData.luckyNumber}\n🎨 Lucky Color: ${horoscopeData.luckyColor}`;
-                    setNewPost(horoscopePost);
-                    setShowHoroscopeDialog(false);
-                    toast({
-                      title: "Horoscope Added",
-                      description: "Your horoscope has been added to your post",
-                      duration: 2000,
-                      className: "bg-white text-black border-gray-300",
-                    });
+                    
+                    try {
+                      await apiRequest('/api/posts', {
+                        method: 'POST',
+                        body: {
+                          content: horoscopePost,
+                          mediaUrl: null,
+                          mediaType: null,
+                          youtubeUrl: null,
+                          type: 'post'
+                        }
+                      });
+                      
+                      setShowHoroscopeDialog(false);
+                      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+                      
+                      toast({
+                        title: "Horoscope Posted",
+                        description: "Your daily horoscope has been shared with your kliq!",
+                        duration: 3000,
+                        className: "bg-white text-black border-gray-300",
+                      });
+                    } catch (error) {
+                      console.error('Error posting horoscope:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to post horoscope. Please try again.",
+                        variant: "destructive",
+                        duration: 3000,
+                      });
+                    }
                   }}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
