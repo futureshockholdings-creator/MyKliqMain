@@ -3,6 +3,7 @@
 MyKliq is a social media application designed for close-knit friend groups ("kliq"), emphasizing intimate social sharing. It provides a highly customizable and private social environment through features like hierarchical friend ranking, content filtering, extensive UI customization, and rich media sharing including photo/video sharing, disappearing stories, real-time polling, and live streaming. The platform aims to redefine social networking by focusing on quality interactions within smaller, private circles.
 
 ## Recent Updates (August 2025)
+- **Daily Bible Verse Feature**: Complete inspirational content system with 15 curated verses, daily reflections, timezone-aware date handling, and one-click posting to Headlines feed
 - **Daily Horoscope Feature**: Complete horoscope system with zodiac sign calculation from birthdate, personalized daily readings, lucky numbers/colors, and one-click posting to Headlines feed
 - **Required Birthdate Setting**: Birthdate is now a required profile field for accessing horoscope functionality with clean validation and user-friendly error handling
 - **Social Media Aggregation System**: Complete OAuth 2.0 framework for connecting Instagram, TikTok, YouTube, Twitch, Discord, and Reddit
@@ -36,6 +37,7 @@ Authentication is integrated with Replit's OAuth system using OpenID Connect. Se
 The application features a sophisticated content system:
 - **Hierarchical Feed**: Posts filtered by friend rankings and user-defined content filters.
 - **Kliq-wide Content Aggregation**: Displays all kliq member content (posts, polls, events, actions) in the headlines feed with full interactivity.
+- **Daily Content Features**: Includes daily horoscopes and bible verses with timezone-aware generation and one-click posting capabilities.
 - **Real-time Polling**: Allows creation of polls with customizable time limits, vote tracking, and live percentage-based results.
 - **Media Support**: Comprehensive photo, video, and YouTube URL embedding using object storage.
 - **Stories**: 24-hour disappearing content.
