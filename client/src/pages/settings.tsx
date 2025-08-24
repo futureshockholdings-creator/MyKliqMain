@@ -88,19 +88,28 @@ export default function Settings() {
       return response;
     },
     onSuccess: (data) => {
-      // Open OAuth window
-      window.open(data.authUrl, '_blank', 'width=600,height=700');
-      
-      // Listen for successful connection
-      const checkConnection = () => {
+      if (data.demo) {
+        // Demo mode - show success message and refresh accounts
+        toast({
+          title: "Demo Connection Successful",
+          description: data.message,
+        });
         queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
-      };
-      
-      // Check every 2 seconds for updates
-      const interval = setInterval(checkConnection, 2000);
-      
-      // Clear interval after 2 minutes
-      setTimeout(() => clearInterval(interval), 120000);
+      } else {
+        // Real OAuth - open popup window
+        window.open(data.authUrl, '_blank', 'width=600,height=700');
+        
+        // Listen for successful connection
+        const checkConnection = () => {
+          queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
+        };
+        
+        // Check every 2 seconds for updates
+        const interval = setInterval(checkConnection, 2000);
+        
+        // Clear interval after 2 minutes
+        setTimeout(() => clearInterval(interval), 120000);
+      }
     },
     onError: (error) => {
       toast({

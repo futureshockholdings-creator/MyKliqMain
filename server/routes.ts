@@ -2535,6 +2535,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store state in session for verification
       req.session.oauthState = state;
       
+      // For demo purposes, if no real credentials are configured, simulate the flow
+      const hasRealCredentials = (platform === 'twitch' && process.env.TWITCH_CLIENT_ID) || 
+                                (platform === 'discord' && process.env.DISCORD_CLIENT_ID);
+      
+      if (!hasRealCredentials) {
+        // Demo mode: simulate successful connection
+        console.log(`Demo mode: Simulating ${platform} OAuth connection for user ${userId}`);
+        
+        // Create demo credential
+        await storage.createSocialCredential({
+          userId,
+          platform,
+          platformUserId: `demo-${platform}-user-${Math.random().toString(36).substr(2, 6)}`,
+          platformUsername: `demo_${platform}_user`,
+          encryptedAccessToken: encryptForStorage('demo-access-token'),
+          encryptedRefreshToken: encryptForStorage('demo-refresh-token'),
+          tokenExpiresAt: new Date(Date.now() + 3600000), // 1 hour from now
+          scopes: [],
+          isActive: true,
+          lastSyncAt: new Date(),
+        });
+        
+        return res.json({ 
+          authUrl: `/settings?social=connected&platform=${platform}&demo=true`,
+          demo: true,
+          message: `Demo connection to ${platform} created successfully`
+        });
+      }
+      
       const authUrl = oauthService.generateAuthUrl(platform, userId);
       res.json({ authUrl });
     } catch (error) {
