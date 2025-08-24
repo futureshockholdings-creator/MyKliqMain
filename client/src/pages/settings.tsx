@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
+import { PushNotificationSetup } from "@/components/PushNotificationSetup";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 import { 
   Instagram, 
@@ -296,6 +298,27 @@ export default function Settings() {
                     </p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Push Notification Setup */}
+            <PushNotificationSetup 
+              darkStyle={true}
+              compact={false}
+            />
+
+            {/* Language Settings */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white">🌍 Language Settings</CardTitle>
+                <CardDescription className="text-purple-200">Choose your preferred language for the interface</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <LanguageSelector 
+                  variant="select" 
+                  showFlag={true} 
+                  className="w-full"
+                />
               </CardContent>
             </Card>
         </div>

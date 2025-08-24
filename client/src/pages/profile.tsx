@@ -16,8 +16,7 @@ import { ObjectUploader } from "@/components/ObjectUploader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
 import Footer from "@/components/Footer";
-import { PushNotificationSetup } from "@/components/PushNotificationSetup";
-import { LanguageSelector } from "@/components/LanguageSelector";
+
 
 
 import { type User } from "@shared/schema";
@@ -265,26 +264,7 @@ export default function Profile() {
           </CardContent>
         </Card>
 
-        {/* Push Notification Setup */}
-        <PushNotificationSetup 
-          darkStyle={true}
-          compact={false}
-        />
 
-        {/* Language Settings */}
-        <Card className="bg-black border-gray-700 text-white">
-          <CardHeader>
-            <CardTitle className="text-white">🌍 Language Settings</CardTitle>
-            <CardDescription className="text-gray-300">Choose your preferred language for the interface</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <LanguageSelector 
-              variant="select" 
-              showFlag={true} 
-              className="w-full"
-            />
-          </CardContent>
-        </Card>
 
         {birthdayUsers.length > 0 && (
           <Card>
