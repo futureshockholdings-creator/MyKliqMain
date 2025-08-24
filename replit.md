@@ -3,6 +3,8 @@
 MyKliq is a social media application designed for close-knit friend groups ("kliq"), emphasizing intimate social sharing. It provides a highly customizable and private social environment through features like hierarchical friend ranking, content filtering, extensive UI customization, and rich media sharing including photo/video sharing, disappearing stories, real-time polling, and live streaming. The platform aims to redefine social networking by focusing on quality interactions within smaller, private circles.
 
 ## Recent Updates (August 2025)
+- **Daily Horoscope Feature**: Complete horoscope system with zodiac sign calculation from birthdate, personalized daily readings, lucky numbers/colors, and one-click posting to Headlines feed
+- **Required Birthdate Setting**: Birthdate is now a required profile field for accessing horoscope functionality with clean validation and user-friendly error handling
 - **Social Media Aggregation System**: Complete OAuth 2.0 framework for connecting Instagram, TikTok, YouTube, Twitch, Discord, and Reddit
 - **Security Infrastructure**: AES-256 encryption for OAuth tokens, secure credential storage with crypto utilities
 - **Unified Social Feed**: Central hub displaying all connected social media content with platform-specific styling
