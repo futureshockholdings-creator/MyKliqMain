@@ -1219,15 +1219,12 @@ export default function Home() {
                     const horoscopePost = `🔮 My Daily Horoscope (${horoscopeData.sign}) 🔮\n\n${horoscopeData.horoscope}\n\n✨ Lucky Number: ${horoscopeData.luckyNumber}\n🎨 Lucky Color: ${horoscopeData.luckyColor}`;
                     
                     try {
-                      await apiRequest('/api/posts', {
-                        method: 'POST',
-                        body: {
-                          content: horoscopePost,
-                          mediaUrl: null,
-                          mediaType: null,
-                          youtubeUrl: null,
-                          type: 'post'
-                        }
+                      await apiRequest("POST", "/api/posts", {
+                        content: horoscopePost,
+                        mediaUrl: null,
+                        mediaType: null,
+                        youtubeUrl: null,
+                        type: 'post'
                       });
                       
                       setShowHoroscopeDialog(false);
