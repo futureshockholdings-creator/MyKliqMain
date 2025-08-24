@@ -1,301 +1,231 @@
-interface OAuthConfig {
-  clientId: string;
-  clientSecret: string;
-  redirectUri: string;
-  scopes: string[];
-  authUrl: string;
-  tokenUrl: string;
+import { encryptForStorage, decryptFromStorage } from './cryptoService';
+import { storage } from './storage';
+import { TwitchOAuth } from './platforms/twitch';
+import { DiscordOAuth } from './platforms/discord';
+import type { SocialCredential } from '@shared/schema';
+
+export interface OAuthTokens {
+  accessToken: string;
+  refreshToken?: string;
+  expiresIn?: number;
+  tokenType?: string;
 }
 
-interface OAuthTokens {
-  access_token: string;
-  refresh_token?: string;
-  expires_in?: number;
-  token_type?: string;
-}
-
-interface PlatformUserInfo {
+export interface SocialPost {
   id: string;
-  username: string;
-  displayName?: string;
-  profileImage?: string;
+  platform: string;
+  content: string;
+  mediaUrl?: string;
+  platformPostId: string;
+  originalUrl: string;
+  createdAt: Date;
+  metadata?: any;
+}
+
+export interface OAuthPlatform {
+  getAuthUrl(state: string): string;
+  exchangeCodeForTokens(code: string): Promise<OAuthTokens>;
+  refreshTokens(refreshToken: string): Promise<OAuthTokens>;
+  getUserInfo(accessToken: string): Promise<any>;
+  fetchUserPosts(accessToken: string, userId?: string): Promise<SocialPost[]>;
+  revokeTokens(accessToken: string): Promise<void>;
 }
 
 export class OAuthService {
-  private static configs: Record<string, OAuthConfig> = {
-    twitch: {
-      clientId: process.env.TWITCH_CLIENT_ID || '',
-      clientSecret: process.env.TWITCH_CLIENT_SECRET || '',
-      redirectUri: `${process.env.BASE_URL || 'http://localhost:3000'}/api/oauth/callback/twitch`,
-      scopes: ['user:read:email', 'channel:read:subscriptions'],
-      authUrl: 'https://id.twitch.tv/oauth2/authorize',
-      tokenUrl: 'https://id.twitch.tv/oauth2/token',
-    },
-    discord: {
-      clientId: process.env.DISCORD_CLIENT_ID || '',
-      clientSecret: process.env.DISCORD_CLIENT_SECRET || '',
-      redirectUri: `${process.env.BASE_URL || 'http://localhost:3000'}/api/oauth/callback/discord`,
-      scopes: ['identify', 'guilds.members.read'],
-      authUrl: 'https://discord.com/oauth2/authorize',
-      tokenUrl: 'https://discord.com/api/oauth2/token',
-    },
-    instagram: {
-      clientId: process.env.INSTAGRAM_CLIENT_ID || '',
-      clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || '',
-      redirectUri: `${process.env.BASE_URL || 'http://localhost:3000'}/api/oauth/callback/instagram`,
-      scopes: ['user_profile', 'user_media'],
-      authUrl: 'https://api.instagram.com/oauth/authorize',
-      tokenUrl: 'https://api.instagram.com/oauth/access_token',
-    },
-    tiktok: {
-      clientId: process.env.TIKTOK_CLIENT_ID || '',
-      clientSecret: process.env.TIKTOK_CLIENT_SECRET || '',
-      redirectUri: `${process.env.BASE_URL || 'http://localhost:3000'}/api/oauth/callback/tiktok`,
-      scopes: ['user.info.basic', 'video.list'],
-      authUrl: 'https://www.tiktok.com/v2/auth/authorize',
-      tokenUrl: 'https://open.tiktokapis.com/v2/oauth/token',
-    },
-    youtube: {
-      clientId: process.env.YOUTUBE_CLIENT_ID || '',
-      clientSecret: process.env.YOUTUBE_CLIENT_SECRET || '',
-      redirectUri: `${process.env.BASE_URL || 'http://localhost:3000'}/api/oauth/callback/youtube`,
-      scopes: ['https://www.googleapis.com/auth/youtube.readonly'],
-      authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-      tokenUrl: 'https://oauth2.googleapis.com/token',
-    },
-    reddit: {
-      clientId: process.env.REDDIT_CLIENT_ID || '',
-      clientSecret: process.env.REDDIT_CLIENT_SECRET || '',
-      redirectUri: `${process.env.BASE_URL || 'http://localhost:3000'}/api/oauth/callback/reddit`,
-      scopes: ['identity', 'mysubreddits', 'read'],
-      authUrl: 'https://www.reddit.com/api/v1/authorize',
-      tokenUrl: 'https://www.reddit.com/api/v1/access_token',
-    },
-  };
+  private platforms: Map<string, OAuthPlatform> = new Map();
 
-  static getAuthUrl(platform: string, state: string): string {
-    const config = this.configs[platform];
-    if (!config) {
-      throw new Error(`Unsupported platform: ${platform}`);
-    }
-
-    const params = new URLSearchParams({
-      client_id: config.clientId,
-      redirect_uri: config.redirectUri,
-      scope: config.scopes.join(' '),
-      response_type: 'code',
-      state,
-    });
-
-    return `${config.authUrl}?${params.toString()}`;
+  constructor() {
+    this.platforms.set('twitch', new TwitchOAuth());
+    this.platforms.set('discord', new DiscordOAuth());
+    // Add more platforms as they're implemented
   }
 
-  static async exchangeCodeForTokens(platform: string, code: string): Promise<OAuthTokens> {
-    const config = this.configs[platform];
-    if (!config) {
-      throw new Error(`Unsupported platform: ${platform}`);
-    }
-
-    const body = new URLSearchParams({
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
-      code,
-      grant_type: 'authorization_code',
-      redirect_uri: config.redirectUri,
-    });
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    };
-
-    // Reddit requires Basic Auth
-    if (platform === 'reddit') {
-      const auth = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
-      headers['Authorization'] = `Basic ${auth}`;
-    }
-
-    const response = await fetch(config.tokenUrl, {
-      method: 'POST',
-      headers,
-      body: body.toString(),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OAuth token exchange failed for ${platform}: ${errorText}`);
-    }
-
-    return await response.json();
+  getSupportedPlatforms(): string[] {
+    return Array.from(this.platforms.keys());
   }
 
-  static async getUserInfo(platform: string, accessToken: string): Promise<PlatformUserInfo> {
-    switch (platform) {
-      case 'twitch':
-        return this.getTwitchUserInfo(accessToken);
-      case 'discord':
-        return this.getDiscordUserInfo(accessToken);
-      case 'instagram':
-        return this.getInstagramUserInfo(accessToken);
-      case 'tiktok':
-        return this.getTikTokUserInfo(accessToken);
-      case 'youtube':
-        return this.getYouTubeUserInfo(accessToken);
-      case 'reddit':
-        return this.getRedditUserInfo(accessToken);
-      default:
-        throw new Error(`Unsupported platform: ${platform}`);
+  getPlatform(platform: string): OAuthPlatform | undefined {
+    return this.platforms.get(platform);
+  }
+
+  generateAuthUrl(platform: string, userId: string): string | null {
+    const platformImpl = this.platforms.get(platform);
+    if (!platformImpl) {
+      return null;
+    }
+
+    // Use userId as state to identify the user during callback
+    const state = Buffer.from(JSON.stringify({ userId, platform })).toString('base64');
+    return platformImpl.getAuthUrl(state);
+  }
+
+  async handleOAuthCallback(
+    platform: string,
+    code: string,
+    state: string
+  ): Promise<{ success: boolean; userId?: string; error?: string }> {
+    try {
+      const platformImpl = this.platforms.get(platform);
+      if (!platformImpl) {
+        return { success: false, error: 'Unsupported platform' };
+      }
+
+      // Decode state to get user info
+      const stateData = JSON.parse(Buffer.from(state, 'base64').toString());
+      const { userId } = stateData;
+
+      // Exchange code for tokens
+      const tokens = await platformImpl.exchangeCodeForTokens(code);
+
+      // Get user info from the platform
+      const userInfo = await platformImpl.getUserInfo(tokens.accessToken);
+
+      // Encrypt and store credentials
+      const encryptedAccessToken = encryptForStorage(tokens.accessToken);
+      const encryptedRefreshToken = tokens.refreshToken 
+        ? encryptForStorage(tokens.refreshToken) 
+        : null;
+
+      const credential: Omit<SocialCredential, 'id' | 'createdAt' | 'updatedAt'> = {
+        userId,
+        platform,
+        platformUserId: userInfo.id || userInfo.login || userInfo.username,
+        platformUsername: userInfo.username || userInfo.login || userInfo.display_name,
+        encryptedAccessToken,
+        encryptedRefreshToken,
+        tokenExpiresAt: tokens.expiresIn 
+          ? new Date(Date.now() + tokens.expiresIn * 1000) 
+          : null,
+        tokenType: tokens.tokenType || 'Bearer',
+        scopes: [], // Will be filled based on platform requirements
+        isActive: true,
+      };
+
+      await storage.createSocialCredential(credential);
+
+      return { success: true, userId };
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
     }
   }
 
-  private static async getTwitchUserInfo(accessToken: string): Promise<PlatformUserInfo> {
-    const response = await fetch('https://api.twitch.tv/helix/users', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Client-Id': this.configs.twitch.clientId,
-      },
-    });
+  async fetchUserPosts(userId: string, platform?: string): Promise<SocialPost[]> {
+    try {
+      const credentials = await storage.getSocialCredentials(userId);
+      const activeCreds = credentials.filter((cred: any) => 
+        cred.isActive && (!platform || cred.platform === platform)
+      );
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch Twitch user info');
+      const allPosts: SocialPost[] = [];
+
+      for (const cred of activeCreds) {
+        const platformImpl = this.platforms.get(cred.platform);
+        if (!platformImpl) continue;
+
+        try {
+          // Decrypt access token
+          const accessToken = decryptFromStorage(cred.encryptedAccessToken);
+
+          // Check if token needs refresh
+          if (cred.tokenExpiresAt && cred.tokenExpiresAt < new Date() && cred.encryptedRefreshToken) {
+            const refreshToken = decryptFromStorage(cred.encryptedRefreshToken);
+            const newTokens = await platformImpl.refreshTokens(refreshToken);
+            
+            // Update stored credentials
+            const updatedCred = {
+              ...cred,
+              encryptedAccessToken: encryptForStorage(newTokens.accessToken),
+              encryptedRefreshToken: newTokens.refreshToken 
+                ? encryptForStorage(newTokens.refreshToken) 
+                : cred.encryptedRefreshToken,
+              tokenExpiresAt: newTokens.expiresIn 
+                ? new Date(Date.now() + newTokens.expiresIn * 1000) 
+                : null,
+            };
+            
+            await storage.updateSocialCredential(cred.id, updatedCred);
+            
+            // Use new access token
+            const posts = await platformImpl.fetchUserPosts(newTokens.accessToken, cred.platformUserId);
+            allPosts.push(...posts);
+          } else {
+            // Use existing access token
+            const posts = await platformImpl.fetchUserPosts(accessToken, cred.platformUserId);
+            allPosts.push(...posts);
+          }
+        } catch (error) {
+          console.error(`Error fetching posts from ${cred.platform}:`, error);
+          // Mark credential as inactive if there's an auth error
+          if (error instanceof Error && error.message.includes('401')) {
+            await storage.updateSocialCredential(cred.id, { ...cred, isActive: false });
+          }
+        }
+      }
+
+      // Sort posts by creation date (newest first)
+      return allPosts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    } catch (error) {
+      console.error('Error fetching user posts:', error);
+      return [];
     }
-
-    const data = await response.json();
-    const user = data.data[0];
-    
-    return {
-      id: user.id,
-      username: user.login,
-      displayName: user.display_name,
-      profileImage: user.profile_image_url,
-    };
   }
 
-  private static async getDiscordUserInfo(accessToken: string): Promise<PlatformUserInfo> {
-    const response = await fetch('https://discord.com/api/users/@me', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
+  async disconnectPlatform(userId: string, platform: string): Promise<boolean> {
+    try {
+      const credentials = await storage.getSocialCredentials(userId);
+      const platformCred = credentials.find((cred: any) => cred.platform === platform && cred.isActive);
+      
+      if (!platformCred) {
+        return false;
+      }
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch Discord user info');
+      const platformImpl = this.platforms.get(platform);
+      if (platformImpl) {
+        try {
+          const accessToken = decryptFromStorage(platformCred.encryptedAccessToken);
+          await platformImpl.revokeTokens(accessToken);
+        } catch (error) {
+          console.error('Error revoking tokens:', error);
+          // Continue with disconnection even if revocation fails
+        }
+      }
+
+      // Mark credential as inactive
+      await storage.updateSocialCredential(platformCred.id, { 
+        ...platformCred, 
+        isActive: false 
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error disconnecting platform:', error);
+      return false;
     }
-
-    const user = await response.json();
-    
-    return {
-      id: user.id,
-      username: user.username,
-      displayName: user.global_name || user.username,
-      profileImage: user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : undefined,
-    };
   }
 
-  private static async getInstagramUserInfo(accessToken: string): Promise<PlatformUserInfo> {
-    const response = await fetch(`https://graph.instagram.com/me?fields=id,username&access_token=${accessToken}`);
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch Instagram user info');
+  async getUserConnections(userId: string): Promise<Array<{
+    platform: string;
+    username: string;
+    isActive: boolean;
+    connectedAt: Date;
+  }>> {
+    try {
+      const credentials = await storage.getSocialCredentials(userId);
+      return credentials.map((cred: any) => ({
+        platform: cred.platform,
+        username: cred.platformUsername,
+        isActive: cred.isActive,
+        connectedAt: cred.createdAt,
+      }));
+    } catch (error) {
+      console.error('Error getting user connections:', error);
+      return [];
     }
-
-    const user = await response.json();
-    
-    return {
-      id: user.id,
-      username: user.username,
-    };
-  }
-
-  private static async getTikTokUserInfo(accessToken: string): Promise<PlatformUserInfo> {
-    const response = await fetch('https://open.tiktokapis.com/v2/user/info/', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch TikTok user info');
-    }
-
-    const data = await response.json();
-    const user = data.data.user;
-    
-    return {
-      id: user.open_id,
-      username: user.union_id,
-      displayName: user.display_name,
-      profileImage: user.avatar_url,
-    };
-  }
-
-  private static async getYouTubeUserInfo(accessToken: string): Promise<PlatformUserInfo> {
-    const response = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch YouTube user info');
-    }
-
-    const data = await response.json();
-    const channel = data.items[0];
-    
-    return {
-      id: channel.id,
-      username: channel.snippet.customUrl || channel.snippet.title,
-      displayName: channel.snippet.title,
-      profileImage: channel.snippet.thumbnails?.default?.url,
-    };
-  }
-
-  private static async getRedditUserInfo(accessToken: string): Promise<PlatformUserInfo> {
-    const response = await fetch('https://oauth.reddit.com/api/v1/me', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'User-Agent': 'MyKliq/1.0',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch Reddit user info');
-    }
-
-    const user = await response.json();
-    
-    return {
-      id: user.id,
-      username: user.name,
-      profileImage: user.icon_img || undefined,
-    };
-  }
-
-  static async refreshToken(platform: string, refreshToken: string): Promise<OAuthTokens> {
-    const config = this.configs[platform];
-    if (!config) {
-      throw new Error(`Unsupported platform: ${platform}`);
-    }
-
-    const body = new URLSearchParams({
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
-      refresh_token: refreshToken,
-      grant_type: 'refresh_token',
-    });
-
-    const response = await fetch(config.tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: body.toString(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Token refresh failed for ${platform}`);
-    }
-
-    return await response.json();
   }
 }
+
+export const oauthService = new OAuthService();

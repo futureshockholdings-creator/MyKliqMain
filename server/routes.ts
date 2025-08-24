@@ -7,8 +7,8 @@ import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema } from "@shared/schema";
-import { OAuthService } from "./oauthService";
-import { encryptForStorage, decryptFromStorage } from "./cryptoService";
+import { oauthService } from "./oauthService";
+import { encryptForStorage, decryptFromStorage } from './cryptoService';
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 
@@ -2535,7 +2535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store state in session for verification
       req.session.oauthState = state;
       
-      const authUrl = OAuthService.getAuthUrl(platform, state);
+      const authUrl = oauthService.generateAuthUrl(platform, userId);
       res.json({ authUrl });
     } catch (error) {
       console.error(`Error starting OAuth for ${req.params.platform}:`, error);
@@ -2558,49 +2558,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Extract user ID from state
       const [userId] = state.split(':');
       
-      // Exchange code for tokens
-      const tokens = await OAuthService.exchangeCodeForTokens(platform, code);
-      
-      // Get user info from platform
-      const userInfo = await OAuthService.getUserInfo(platform, tokens.access_token);
-      
-      // Check if credential already exists
-      const existingCredential = await storage.getSocialCredential(userId, platform);
-      
-      if (existingCredential) {
-        // Update existing credential
-        await storage.updateSocialCredential(existingCredential.id, {
-          encryptedAccessToken: encryptForStorage(tokens.access_token),
-          encryptedRefreshToken: tokens.refresh_token ? encryptForStorage(tokens.refresh_token) : null,
-          tokenExpiresAt: tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null,
-          platformUsername: userInfo.username,
-          isActive: true,
-          lastSyncAt: new Date(),
-        });
-      } else {
-        // Create new credential
-        await storage.createSocialCredential({
-          userId,
-          platform,
-          platformUserId: userInfo.id,
-          platformUsername: userInfo.username,
-          encryptedAccessToken: encryptForStorage(tokens.access_token),
-          encryptedRefreshToken: tokens.refresh_token ? encryptForStorage(tokens.refresh_token) : null,
-          tokenExpiresAt: tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null,
-          scopes: [], // Will be filled based on platform
-          isActive: true,
-          lastSyncAt: new Date(),
-        });
-      }
+      // Handle OAuth callback through service
+      const result = await oauthService.handleOAuthCallback(platform, code, state);
       
       // Clear session state
       delete req.session.oauthState;
       
-      // Redirect to success page
-      res.redirect('/settings?social=connected');
+      if (result.success) {
+        res.redirect('/settings?social=connected');
+      } else {
+        res.redirect(`/settings?social=error&message=${encodeURIComponent(result.error || 'OAuth failed')}`);
+      }
     } catch (error) {
       console.error(`Error in OAuth callback for ${req.params.platform}:`, error);
-      res.redirect('/settings?social=error');
+      res.redirect('/settings?social=error&message=callback_error');
     }
   });
 
