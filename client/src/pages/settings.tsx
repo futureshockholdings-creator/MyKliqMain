@@ -18,7 +18,6 @@ import {
   Trash2,
   RefreshCw,
   ExternalLink,
-  Shield,
   Link2,
   Users
 } from "lucide-react";
@@ -184,14 +183,10 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white/10 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-2 bg-white/10 backdrop-blur-sm">
             <TabsTrigger value="social" className="data-[state=active]:bg-white/20 text-white">
               <Link2 className="w-4 h-4 mr-2" />
               Social Media
-            </TabsTrigger>
-            <TabsTrigger value="privacy" className="data-[state=active]:bg-white/20 text-white">
-              <Shield className="w-4 h-4 mr-2" />
-              Privacy
             </TabsTrigger>
             <TabsTrigger value="general" className="data-[state=active]:bg-white/20 text-white">
               <Users className="w-4 h-4 mr-2" />
@@ -318,62 +313,62 @@ export default function Settings() {
                     </p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="privacy" className="space-y-6">
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
-                  Privacy Settings
-                </CardTitle>
-                <CardDescription className="text-purple-200">
-                  Control your privacy and data sharing preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="social-sync" className="text-white font-medium">
-                        Auto-sync social content
-                      </Label>
-                      <p className="text-purple-200 text-sm">
-                        Automatically fetch new content from connected platforms
-                      </p>
+                {/* Integration Settings - Always On */}
+                <div className="border-t border-white/10 pt-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Integration Settings</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
+                      <div>
+                        <Label className="text-white font-medium">
+                          Auto-sync social content
+                        </Label>
+                        <p className="text-purple-200 text-sm">
+                          Automatically fetch new content from connected platforms
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch checked={true} disabled className="opacity-75" />
+                        <Badge variant="secondary" className="text-xs">Always On</Badge>
+                      </div>
                     </div>
-                    <Switch id="social-sync" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="cross-post" className="text-white font-medium">
-                        Enable cross-posting
-                      </Label>
-                      <p className="text-purple-200 text-sm">
-                        Allow posting from MyKliq to connected platforms
-                      </p>
+                    
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
+                      <div>
+                        <Label className="text-white font-medium">
+                          Cross-posting to platforms
+                        </Label>
+                        <p className="text-purple-200 text-sm">
+                          Allow posting from MyKliq to connected platforms
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch checked={false} disabled className="opacity-75" />
+                        <Badge variant="outline" className="text-xs">Disabled</Badge>
+                      </div>
                     </div>
-                    <Switch id="cross-post" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="data-retention" className="text-white font-medium">
-                        Keep social data locally
-                      </Label>
-                      <p className="text-purple-200 text-sm">
-                        Store aggregated content for faster loading
-                      </p>
+                    
+                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
+                      <div>
+                        <Label className="text-white font-medium">
+                          Keep social data locally
+                        </Label>
+                        <p className="text-purple-200 text-sm">
+                          Store aggregated content for faster loading
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Switch checked={true} disabled className="opacity-75" />
+                        <Badge variant="secondary" className="text-xs">Always On</Badge>
+                      </div>
                     </div>
-                    <Switch id="data-retention" defaultChecked />
                   </div>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
+
+
 
           <TabsContent value="general" className="space-y-6">
             <Card className="bg-white/10 backdrop-blur-sm border-white/20">
