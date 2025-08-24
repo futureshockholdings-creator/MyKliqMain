@@ -2,11 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 
 import { 
@@ -300,57 +296,6 @@ export default function Settings() {
                     </p>
                   </div>
                 )}
-
-                {/* Integration Settings - Always On */}
-                <div className="border-t border-white/10 pt-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">Integration Settings</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
-                      <div>
-                        <Label className="text-white font-medium">
-                          Auto-sync social content
-                        </Label>
-                        <p className="text-purple-200 text-sm">
-                          Automatically fetch new content from connected platforms
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Switch checked={true} disabled className="opacity-75" />
-                        <Badge variant="secondary" className="text-xs">Always On</Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
-                      <div>
-                        <Label className="text-white font-medium">
-                          Cross-posting to platforms
-                        </Label>
-                        <p className="text-purple-200 text-sm">
-                          Allow posting from MyKliq to connected platforms
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Switch checked={false} disabled className="opacity-75" />
-                        <Badge variant="outline" className="text-xs">Disabled</Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
-                      <div>
-                        <Label className="text-white font-medium">
-                          Keep social data locally
-                        </Label>
-                        <p className="text-purple-200 text-sm">
-                          Store aggregated content for faster loading
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Switch checked={true} disabled className="opacity-75" />
-                        <Badge variant="secondary" className="text-xs">Always On</Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
         </div>
