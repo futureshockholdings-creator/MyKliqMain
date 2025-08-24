@@ -27,11 +27,12 @@ import { Conversation } from "@/pages/conversation";
 import { MovieconManagerPage } from "@/pages/moviecon-manager";
 import MaintenanceDashboard from "@/pages/maintenance-dashboard";
 import AdsManager from "@/pages/ads-manager";
+import Settings from "@/pages/settings";
 import PrivacyPolicy from "./pages/privacy-policy";
 import Disclaimer from "./pages/disclaimer";
 
 // Navigation Component
-import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell } from "lucide-react";
+import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell, Settings as SettingsIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { NotificationPanel } from "@/components/NotificationPanel";
@@ -59,6 +60,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
     { path: "/events", icon: Calendar, label: t('navigation.events'), tab: "events", badgeType: "events" as const },
     { path: "/actions", icon: Video, label: "Action", tab: "actions" },
     { path: "/themes", icon: Palette, label: "Themes", tab: "themes" },
+    { path: "/settings", icon: SettingsIcon, label: "Settings", tab: "settings" },
   ];
 
   const getBadgeCount = (badgeType?: "messages" | "friends" | "events") => {
@@ -211,6 +213,7 @@ function Router() {
           <Route path="/profile" component={Profile} />
           <Route path="/user/:userId" component={UserProfile} />
           <Route path="/themes" component={Themes} />
+          <Route path="/settings" component={Settings} />
           <Route path="/moviecon-manager" component={MovieconManagerPage} />
           <Route path="/maintenance" component={MaintenanceDashboard} />
           <Route path="/ads-manager" component={AdsManager} />

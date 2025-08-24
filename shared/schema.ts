@@ -880,3 +880,55 @@ export const insertUserAdPreferencesSchema = createInsertSchema(userAdPreference
 });
 export type InsertUserAdPreferences = z.infer<typeof insertUserAdPreferencesSchema>;
 export type UserAdPreferences = typeof userAdPreferences.$inferSelect;
+
+// Social media credentials table for OAuth integration
+export const socialCredentials = pgTable("social_credentials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  platform: varchar("platform").notNull(), // 'instagram', 'tiktok', 'twitch', 'discord', 'youtube', 'reddit'
+  platformUserId: varchar("platform_user_id").notNull(),
+  platformUsername: varchar("platform_username").notNull(),
+  encryptedAccessToken: text("encrypted_access_token").notNull(),
+  encryptedRefreshToken: text("encrypted_refresh_token"),
+  tokenExpiresAt: timestamp("token_expires_at"),
+  scopes: text("scopes").array(), // OAuth scopes granted
+  isActive: boolean("is_active").default(true),
+  lastSyncAt: timestamp("last_sync_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// External posts aggregated from social media platforms
+export const externalPosts = pgTable("external_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  socialCredentialId: varchar("social_credential_id").references(() => socialCredentials.id, { onDelete: "cascade" }).notNull(),
+  platform: varchar("platform").notNull(),
+  platformPostId: varchar("platform_post_id").notNull(),
+  platformUserId: varchar("platform_user_id").notNull(),
+  platformUsername: varchar("platform_username").notNull(),
+  content: text("content"),
+  mediaUrls: text("media_urls").array(),
+  thumbnailUrl: varchar("thumbnail_url"),
+  postUrl: varchar("post_url").notNull(),
+  likes: integer("likes").default(0),
+  comments: integer("comments").default(0),
+  shares: integer("shares").default(0),
+  platformCreatedAt: timestamp("platform_created_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Social media integration schemas
+export const insertSocialCredentialSchema = createInsertSchema(socialCredentials).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertSocialCredential = z.infer<typeof insertSocialCredentialSchema>;
+export type SocialCredential = typeof socialCredentials.$inferSelect;
+
+export const insertExternalPostSchema = createInsertSchema(externalPosts).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type InsertExternalPost = z.infer<typeof insertExternalPostSchema>;
+export type ExternalPost = typeof externalPosts.$inferSelect;

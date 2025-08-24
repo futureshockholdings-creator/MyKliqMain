@@ -21,6 +21,8 @@ import {
   birthdayMessages,
   videoCalls,
   callParticipants,
+  socialCredentials,
+  externalPosts,
   type User,
   type UpsertUser,
   type UserTheme,
@@ -53,6 +55,10 @@ import {
   type InsertActionChatMessage,
   type Meetup,
   type InsertMeetup,
+  type SocialCredential,
+  type InsertSocialCredential,
+  type ExternalPost,
+  type InsertExternalPost,
   type MeetupCheckIn,
   type InsertMeetupCheckIn,
   type BirthdayMessage,
@@ -188,6 +194,19 @@ export interface IStorage {
   getNearbyMeetups(latitude: number, longitude: number, radiusKm: number): Promise<(Meetup & { organizer: User; checkIns: (MeetupCheckIn & { user: User })[] })[]>;
   verifyLocationCheckIn(meetupId: string, userId: string, latitude: number, longitude: number): Promise<boolean>;
   
+  // Social media integration operations
+  getSocialCredentials(userId: string): Promise<SocialCredential[]>;
+  getSocialCredential(userId: string, platform: string): Promise<SocialCredential | undefined>;
+  createSocialCredential(credential: InsertSocialCredential): Promise<SocialCredential>;
+  updateSocialCredential(id: string, updates: Partial<SocialCredential>): Promise<SocialCredential>;
+  deleteSocialCredential(id: string): Promise<void>;
+  
+  // External posts operations
+  getExternalPosts(userId: string): Promise<(ExternalPost & { socialCredential: SocialCredential })[]>;
+  createExternalPost(post: InsertExternalPost): Promise<ExternalPost>;
+  createExternalPosts(posts: InsertExternalPost[]): Promise<ExternalPost[]>;
+  deleteOldExternalPosts(platform: string, keepDays: number): Promise<void>;
+
   // Utility operations
   generateInviteCode(): Promise<string>;
   getUserByInviteCode(inviteCode: string): Promise<User | undefined>;
@@ -2447,6 +2466,98 @@ export class DatabaseStorage implements IStorage {
       clicks: ad.clicks || 0,
       ctr: Math.round(ctr * 100) / 100, // Round to 2 decimal places
     };
+  }
+
+  // Social media integration operations
+  async getSocialCredentials(userId: string): Promise<SocialCredential[]> {
+    return await db
+      .select()
+      .from(socialCredentials)
+      .where(eq(socialCredentials.userId, userId))
+      .orderBy(socialCredentials.platform);
+  }
+
+  async getSocialCredential(userId: string, platform: string): Promise<SocialCredential | undefined> {
+    const [credential] = await db
+      .select()
+      .from(socialCredentials)
+      .where(and(
+        eq(socialCredentials.userId, userId),
+        eq(socialCredentials.platform, platform)
+      ));
+    return credential;
+  }
+
+  async createSocialCredential(credential: InsertSocialCredential): Promise<SocialCredential> {
+    const [newCredential] = await db
+      .insert(socialCredentials)
+      .values(credential)
+      .returning();
+    return newCredential;
+  }
+
+  async updateSocialCredential(id: string, updates: Partial<SocialCredential>): Promise<SocialCredential> {
+    const [updatedCredential] = await db
+      .update(socialCredentials)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(socialCredentials.id, id))
+      .returning();
+    return updatedCredential;
+  }
+
+  async deleteSocialCredential(id: string): Promise<void> {
+    await db
+      .delete(socialCredentials)
+      .where(eq(socialCredentials.id, id));
+  }
+
+  // External posts operations
+  async getExternalPosts(userId: string): Promise<(ExternalPost & { socialCredential: SocialCredential })[]> {
+    const postsData = await db
+      .select({
+        post: externalPosts,
+        socialCredential: socialCredentials,
+      })
+      .from(externalPosts)
+      .innerJoin(socialCredentials, eq(externalPosts.socialCredentialId, socialCredentials.id))
+      .where(eq(socialCredentials.userId, userId))
+      .orderBy(desc(externalPosts.platformCreatedAt))
+      .limit(50); // Limit to recent posts
+
+    return postsData.map(({ post, socialCredential }) => ({
+      ...post,
+      socialCredential,
+    }));
+  }
+
+  async createExternalPost(post: InsertExternalPost): Promise<ExternalPost> {
+    const [newPost] = await db
+      .insert(externalPosts)
+      .values(post)
+      .returning();
+    return newPost;
+  }
+
+  async createExternalPosts(posts: InsertExternalPost[]): Promise<ExternalPost[]> {
+    if (posts.length === 0) return [];
+    
+    const newPosts = await db
+      .insert(externalPosts)
+      .values(posts)
+      .returning();
+    return newPosts;
+  }
+
+  async deleteOldExternalPosts(platform: string, keepDays: number): Promise<void> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - keepDays);
+    
+    await db
+      .delete(externalPosts)
+      .where(and(
+        eq(externalPosts.platform, platform),
+        sql`${externalPosts.platformCreatedAt} < ${cutoffDate}`
+      ));
   }
 }
 

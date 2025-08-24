@@ -6,7 +6,9 @@ import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema } from "@shared/schema";
+import { OAuthService } from "./oauthService";
+import { encryptForStorage, decryptFromStorage } from "./cryptoService";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 
@@ -2493,6 +2495,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error performing manual cleanup:", error);
       res.status(500).json({ message: "Failed to perform manual cleanup" });
+    }
+  });
+
+  // Social Media Integration OAuth Routes
+  
+  // Get user's connected social accounts
+  app.get('/api/social/accounts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const credentials = await storage.getSocialCredentials(userId);
+      
+      // Return public info only (no tokens)
+      const accounts = credentials.map(cred => ({
+        id: cred.id,
+        platform: cred.platform,
+        username: cred.platformUsername,
+        isActive: cred.isActive,
+        lastSyncAt: cred.lastSyncAt,
+        createdAt: cred.createdAt,
+      }));
+      
+      res.json(accounts);
+    } catch (error) {
+      console.error("Error fetching social accounts:", error);
+      res.status(500).json({ message: "Failed to fetch social accounts" });
+    }
+  });
+
+  // Start OAuth flow for a platform
+  app.get('/api/oauth/authorize/:platform', isAuthenticated, async (req: any, res) => {
+    try {
+      const { platform } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Generate state parameter for security
+      const state = `${userId}:${platform}:${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Store state in session for verification
+      req.session.oauthState = state;
+      
+      const authUrl = OAuthService.getAuthUrl(platform, state);
+      res.json({ authUrl });
+    } catch (error) {
+      console.error(`Error starting OAuth for ${req.params.platform}:`, error);
+      res.status(500).json({ message: "Failed to start OAuth flow" });
+    }
+  });
+
+  // OAuth callback handler
+  app.get('/api/oauth/callback/:platform', async (req: any, res) => {
+    try {
+      const { platform } = req.params;
+      const { code, state } = req.query;
+      
+      // Verify state parameter
+      const sessionState = req.session?.oauthState;
+      if (!sessionState || sessionState !== state) {
+        return res.status(400).json({ message: "Invalid state parameter" });
+      }
+      
+      // Extract user ID from state
+      const [userId] = state.split(':');
+      
+      // Exchange code for tokens
+      const tokens = await OAuthService.exchangeCodeForTokens(platform, code);
+      
+      // Get user info from platform
+      const userInfo = await OAuthService.getUserInfo(platform, tokens.access_token);
+      
+      // Check if credential already exists
+      const existingCredential = await storage.getSocialCredential(userId, platform);
+      
+      if (existingCredential) {
+        // Update existing credential
+        await storage.updateSocialCredential(existingCredential.id, {
+          encryptedAccessToken: encryptForStorage(tokens.access_token),
+          encryptedRefreshToken: tokens.refresh_token ? encryptForStorage(tokens.refresh_token) : null,
+          tokenExpiresAt: tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null,
+          platformUsername: userInfo.username,
+          isActive: true,
+          lastSyncAt: new Date(),
+        });
+      } else {
+        // Create new credential
+        await storage.createSocialCredential({
+          userId,
+          platform,
+          platformUserId: userInfo.id,
+          platformUsername: userInfo.username,
+          encryptedAccessToken: encryptForStorage(tokens.access_token),
+          encryptedRefreshToken: tokens.refresh_token ? encryptForStorage(tokens.refresh_token) : null,
+          tokenExpiresAt: tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null,
+          scopes: [], // Will be filled based on platform
+          isActive: true,
+          lastSyncAt: new Date(),
+        });
+      }
+      
+      // Clear session state
+      delete req.session.oauthState;
+      
+      // Redirect to success page
+      res.redirect('/settings?social=connected');
+    } catch (error) {
+      console.error(`Error in OAuth callback for ${req.params.platform}:`, error);
+      res.redirect('/settings?social=error');
+    }
+  });
+
+  // Remove a social media account
+  app.delete('/api/social/accounts/:accountId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { accountId } = req.params;
+      
+      // Verify ownership
+      const credentials = await storage.getSocialCredentials(userId);
+      const credential = credentials.find(c => c.id === accountId);
+      
+      if (!credential) {
+        return res.status(404).json({ message: "Account not found" });
+      }
+      
+      await storage.deleteSocialCredential(accountId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing social account:", error);
+      res.status(500).json({ message: "Failed to remove social account" });
+    }
+  });
+
+  // Get aggregated external posts
+  app.get('/api/social/posts', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const posts = await storage.getExternalPosts(userId);
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching external posts:", error);
+      res.status(500).json({ message: "Failed to fetch external posts" });
+    }
+  });
+
+  // Sync posts from a specific platform
+  app.post('/api/social/sync/:platform', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { platform } = req.params;
+      
+      const credential = await storage.getSocialCredential(userId, platform);
+      if (!credential || !credential.isActive) {
+        return res.status(404).json({ message: "Platform not connected" });
+      }
+      
+      // Decrypt access token
+      const accessToken = decryptFromStorage(credential.encryptedAccessToken);
+      
+      // TODO: Implement platform-specific content fetching
+      // This would involve calling each platform's API to fetch recent posts
+      
+      res.json({ message: `Sync initiated for ${platform}`, success: true });
+    } catch (error) {
+      console.error(`Error syncing ${req.params.platform}:`, error);
+      res.status(500).json({ message: "Failed to sync platform" });
     }
   });
 

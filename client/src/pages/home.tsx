@@ -32,6 +32,7 @@ import { EventCard } from "@/components/EventCard";
 import { trackEvent } from "@/lib/analytics";
 import Footer from "@/components/Footer";
 import { usePostTranslation } from "@/lib/translationService";
+import { SocialFeedDemo } from "@/components/SocialFeedDemo";
 
 import type { Gif, Moviecon } from "@shared/schema";
 
@@ -1192,7 +1193,8 @@ export default function Home() {
         </CardContent>
       </Card>
 
-
+      {/* Social Media Aggregation Demo */}
+      <SocialFeedDemo />
 
       {/* Feed */}
       {feedLoading ? (

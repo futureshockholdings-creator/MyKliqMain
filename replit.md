@@ -3,6 +3,10 @@
 MyKliq is a social media application designed for close-knit friend groups ("kliq"), emphasizing intimate social sharing. It provides a highly customizable and private social environment through features like hierarchical friend ranking, content filtering, extensive UI customization, and rich media sharing including photo/video sharing, disappearing stories, real-time polling, and live streaming. The platform aims to redefine social networking by focusing on quality interactions within smaller, private circles.
 
 ## Recent Updates (August 2025)
+- **Social Media Aggregation System**: Complete OAuth 2.0 framework for connecting Instagram, TikTok, YouTube, Twitch, Discord, and Reddit
+- **Security Infrastructure**: AES-256 encryption for OAuth tokens, secure credential storage with crypto utilities
+- **Unified Social Feed**: Central hub displaying all connected social media content with platform-specific styling
+- **Settings Interface**: Comprehensive social media integration controls with connection status indicators
 - **Complete Profile Translation System**: All profile sections, field labels, and user-generated content now auto-translate across 10 supported languages
 - **Enhanced Translation Dictionaries**: Expanded Spanish and Chinese vocabularies with 100+ terms covering entertainment, lifestyle, and personal preferences
 - **Field Label Translation**: Section headers like "Interests & Hobbies", "Favorites", "Lifestyle & Status", and "Entertainment" translate automatically
