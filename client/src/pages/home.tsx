@@ -59,6 +59,8 @@ export default function Home() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [showReflectDialog, setShowReflectDialog] = useState(false);
   const [reflectionData, setReflectionData] = useState<any>(null);
+  const [showHoroscopeDialog, setShowHoroscopeDialog] = useState(false);
+  const [horoscopeData, setHoroscopeData] = useState<any>(null);
 
   const { user } = useAuth();
   const userData = user as any;
@@ -157,6 +159,42 @@ export default function Home() {
       toast({
         title: "Error",
         description: "Failed to generate reflection",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Horoscope mutation
+  const horoscopeMutation = useMutation({
+    mutationFn: async () => {
+      const result = await apiRequest("GET", "/api/horoscope");
+      return result;
+    },
+    onSuccess: (data) => {
+      setHoroscopeData(data);
+      setShowHoroscopeDialog(true);
+      toast({
+        title: "Your Daily Horoscope",
+        description: "Your personalized horoscope is ready!",
+        duration: 2500,
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to get your horoscope",
         variant: "destructive",
       });
     },
@@ -894,6 +932,15 @@ export default function Home() {
                 {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
               </Button>
               <Button
+                onClick={() => horoscopeMutation.mutate()}
+                disabled={horoscopeMutation.isPending}
+                variant="outline"
+                className="px-4"
+                data-testid="button-daily-horoscope"
+              >
+                {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
+              </Button>
+              <Button
                 onClick={handleCreatePost}
                 disabled={(!newPost.trim() && !selectedGif && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6"
@@ -1113,6 +1160,70 @@ export default function Home() {
               Close
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Daily Horoscope Dialog */}
+      <Dialog open={showHoroscopeDialog} onOpenChange={setShowHoroscopeDialog}>
+        <DialogContent className="sm:max-w-2xl bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <span>🔮</span>
+              Your Daily Horoscope
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Get insights into your day and share your horoscope with your kliq
+            </DialogDescription>
+          </DialogHeader>
+          
+          {horoscopeData && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                <h3 className="font-semibold text-foreground mb-2 text-center">
+                  {horoscopeData.sign} - {horoscopeData.date}
+                </h3>
+                <p className="text-foreground leading-relaxed">
+                  {horoscopeData.horoscope}
+                </p>
+                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium text-muted-foreground">Lucky Number:</span>
+                    <span className="ml-2 text-foreground">{horoscopeData.luckyNumber}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">Lucky Color:</span>
+                    <span className="ml-2 text-foreground">{horoscopeData.luckyColor}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowHoroscopeDialog(false)}
+                  className="border-border text-foreground"
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={() => {
+                    const horoscopePost = `🔮 My Daily Horoscope (${horoscopeData.sign}) 🔮\n\n${horoscopeData.horoscope}\n\n✨ Lucky Number: ${horoscopeData.luckyNumber}\n🎨 Lucky Color: ${horoscopeData.luckyColor}`;
+                    setNewPost(horoscopePost);
+                    setShowHoroscopeDialog(false);
+                    toast({
+                      title: "Horoscope Added",
+                      description: "Your horoscope has been added to your post",
+                      duration: 2000,
+                      className: "bg-white text-black border-gray-300",
+                    });
+                  }}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  Post to Headlines
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

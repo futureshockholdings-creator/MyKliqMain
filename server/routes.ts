@@ -12,6 +12,105 @@ import { encryptForStorage, decryptFromStorage } from './cryptoService';
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 
+// Zodiac sign calculation helper
+function getZodiacSign(birthdate: string): string {
+  const date = new Date(birthdate);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return "Aries";
+  if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return "Taurus";
+  if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return "Gemini";
+  if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return "Cancer";
+  if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return "Leo";
+  if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return "Virgo";
+  if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return "Libra";
+  if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return "Scorpio";
+  if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return "Sagittarius";
+  if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return "Capricorn";
+  if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return "Aquarius";
+  return "Pisces";
+}
+
+// Daily horoscope generator
+function generateDailyHoroscope(sign: string): { reading: string; luckyNumber: number; luckyColor: string } {
+  const horoscopes = {
+    Aries: [
+      "Today brings exciting opportunities for new beginnings. Your natural leadership will shine through in unexpected ways.",
+      "Energy and enthusiasm guide your day. Take calculated risks and trust your instincts in important decisions.",
+      "A spontaneous adventure awaits. Your courage will help you overcome any obstacles that come your way."
+    ],
+    Taurus: [
+      "Stability and comfort are your themes today. Focus on building lasting foundations for your future goals.",
+      "Your practical nature serves you well in financial matters. Trust your steady approach to problem-solving.",
+      "Patience pays off as a long-term project finally shows promising results. Enjoy the fruits of your labor."
+    ],
+    Gemini: [
+      "Communication is key today. Your wit and charm open doors to new social and professional connections.",
+      "Curiosity leads to fascinating discoveries. Embrace variety and don't be afraid to multitask.",
+      "Mental agility helps you adapt to changing circumstances. Your flexible nature is your greatest asset today."
+    ],
+    Cancer: [
+      "Emotions run deep today, bringing clarity to personal relationships. Trust your intuitive guidance.",
+      "Home and family take center stage. Your nurturing nature brings comfort to those who need it most.",
+      "Memories from the past provide valuable insights for current situations. Honor your emotional wisdom."
+    ],
+    Leo: [
+      "The spotlight finds you naturally today. Your confidence and creativity inspire others to follow your lead.",
+      "Generous gestures bring unexpected rewards. Your warm heart attracts positive energy and new friendships.",
+      "Express yourself boldly and without fear. Your unique talents deserve recognition and appreciation."
+    ],
+    Virgo: [
+      "Attention to detail pays dividends today. Your methodical approach solves problems others couldn't crack.",
+      "Organization brings peace to chaotic situations. Your helpful nature makes you indispensable to your team.",
+      "Health and wellness deserve extra attention. Small improvements in your routine yield significant benefits."
+    ],
+    Libra: [
+      "Balance and harmony guide your decisions today. Your diplomatic skills help resolve ongoing conflicts.",
+      "Beauty and aesthetics inspire creative projects. Trust your excellent taste in all artistic endeavors.",
+      "Partnerships flourish under your fair and considerate approach. Collaboration brings mutual success."
+    ],
+    Scorpio: [
+      "Deep transformation occurs beneath the surface. Trust the process of renewal happening in your life.",
+      "Intensity and passion drive your pursuits today. Your determination overcomes seemingly impossible obstacles.",
+      "Hidden truths come to light, providing clarity about mysterious situations. Trust your investigative instincts."
+    ],
+    Sagittarius: [
+      "Adventure calls your name today. Your optimistic outlook opens doors to exciting new experiences.",
+      "Philosophical discussions expand your worldview. Share your wisdom and learn from diverse perspectives.",
+      "Freedom and independence fuel your happiness. Trust your wanderlust to guide you toward growth."
+    ],
+    Capricorn: [
+      "Hard work and discipline lead to tangible achievements. Your ambitious nature brings long-awaited recognition.",
+      "Traditional approaches prove most effective today. Your respect for structure helps you reach important goals.",
+      "Authority figures notice your reliable nature. Professional advancement opportunities may present themselves."
+    ],
+    Aquarius: [
+      "Innovation and originality set you apart today. Your unique perspective offers solutions others missed.",
+      "Humanitarian causes capture your attention. Your progressive ideals inspire positive change in your community.",
+      "Technology and the future fascinate you. Embrace new methods that streamline your daily routines."
+    ],
+    Pisces: [
+      "Intuition and creativity flow freely today. Your artistic sensibilities bring beauty to ordinary situations.",
+      "Compassion guides your interactions with others. Your empathetic nature heals emotional wounds.",
+      "Dreams and imagination provide valuable insights. Pay attention to subtle messages from your subconscious."
+    ]
+  };
+
+  const colors = ["Purple", "Gold", "Silver", "Blue", "Green", "Red", "Orange", "Pink", "Turquoise", "Coral"];
+  const readings = horoscopes[sign as keyof typeof horoscopes] || horoscopes.Aries;
+  
+  // Generate semi-random but consistent values based on current date and sign
+  const today = new Date();
+  const seedValue = today.getDate() + today.getMonth() + sign.length;
+  
+  return {
+    reading: readings[seedValue % readings.length],
+    luckyNumber: ((seedValue * 7) % 42) + 1,
+    luckyColor: colors[seedValue % colors.length]
+  };
+}
+
 // Extend WebSocket interface for custom properties
 interface ExtendedWebSocket extends WebSocket {
   action_id?: string;
@@ -542,6 +641,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating reflection:", error);
       res.status(500).json({ message: "Failed to generate reflection" });
+    }
+  });
+
+  // Daily horoscope endpoint
+  app.get('/api/horoscope', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.birthdate) {
+        return res.status(400).json({ message: "Birthdate required for horoscope" });
+      }
+
+      // Generate zodiac sign from birthdate
+      const zodiacSign = getZodiacSign(user.birthdate);
+      
+      // Generate daily horoscope
+      const horoscope = generateDailyHoroscope(zodiacSign);
+      
+      res.json({
+        sign: zodiacSign,
+        date: new Date().toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        horoscope: horoscope.reading,
+        luckyNumber: horoscope.luckyNumber,
+        luckyColor: horoscope.luckyColor
+      });
+    } catch (error) {
+      console.error("Error generating horoscope:", error);
+      res.status(500).json({ message: "Failed to generate horoscope" });
     }
   });
 
