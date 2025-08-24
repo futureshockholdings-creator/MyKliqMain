@@ -61,6 +61,8 @@ export default function Home() {
   const [reflectionData, setReflectionData] = useState<any>(null);
   const [showHoroscopeDialog, setShowHoroscopeDialog] = useState(false);
   const [horoscopeData, setHoroscopeData] = useState<any>(null);
+  const [showBibleVerseDialog, setShowBibleVerseDialog] = useState(false);
+  const [bibleVerseData, setBibleVerseData] = useState<any>(null);
 
   const { user } = useAuth();
   const userData = user as any;
@@ -208,6 +210,44 @@ export default function Home() {
           variant: "destructive",
         });
       }
+    },
+  });
+
+  // Bible verse mutation
+  const bibleVerseMutation = useMutation({
+    mutationFn: async () => {
+      // Detect user's timezone
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const result = await apiRequest("GET", `/api/bible-verse?timezone=${encodeURIComponent(userTimezone)}`);
+      return result;
+    },
+    onSuccess: (data) => {
+      setBibleVerseData(data);
+      setShowBibleVerseDialog(true);
+      toast({
+        title: "Daily Bible Verse",
+        description: "Your daily verse of encouragement is ready!",
+        duration: 2500,
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to get your daily bible verse",
+        variant: "destructive",
+      });
     },
   });
 
@@ -952,6 +992,15 @@ export default function Home() {
                 {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
               </Button>
               <Button
+                onClick={() => bibleVerseMutation.mutate()}
+                disabled={bibleVerseMutation.isPending}
+                variant="outline"
+                className="px-4"
+                data-testid="button-daily-bible-verse"
+              >
+                {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
+              </Button>
+              <Button
                 onClick={handleCreatePost}
                 disabled={(!newPost.trim() && !selectedGif && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6"
@@ -1243,6 +1292,89 @@ export default function Home() {
                       toast({
                         title: "Error",
                         description: "Failed to post horoscope. Please try again.",
+                        variant: "destructive",
+                        duration: 3000,
+                      });
+                    }
+                  }}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  Post to Headlines
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Daily Bible Verse Dialog */}
+      <Dialog open={showBibleVerseDialog} onOpenChange={setShowBibleVerseDialog}>
+        <DialogContent className="sm:max-w-2xl bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground flex items-center gap-2">
+              <span>📖</span>
+              Daily Bible Verse
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              A verse of encouragement and reflection for your day
+            </DialogDescription>
+          </DialogHeader>
+          
+          {bibleVerseData && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                <h3 className="font-semibold text-foreground mb-2 text-center">
+                  {bibleVerseData.date}
+                </h3>
+                <blockquote className="text-foreground leading-relaxed italic text-center mb-4 text-lg">
+                  "{bibleVerseData.verse}"
+                </blockquote>
+                <p className="text-center font-medium text-muted-foreground">
+                  — {bibleVerseData.reference}
+                </p>
+                <div className="mt-4 p-3 bg-background/50 rounded border">
+                  <h4 className="font-medium text-foreground mb-2">Today's Reflection:</h4>
+                  <p className="text-foreground leading-relaxed text-sm">
+                    {bibleVerseData.reflection}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBibleVerseDialog(false)}
+                  className="border-border text-foreground"
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={async () => {
+                    const versePost = `📖 Daily Bible Verse 📖\n\n"${bibleVerseData.verse}"\n\n— ${bibleVerseData.reference}\n\n💭 ${bibleVerseData.reflection}`;
+                    
+                    try {
+                      await apiRequest("POST", "/api/posts", {
+                        content: versePost,
+                        mediaUrl: null,
+                        mediaType: null,
+                        youtubeUrl: null,
+                        type: 'post'
+                      });
+                      
+                      setShowBibleVerseDialog(false);
+                      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+                      
+                      toast({
+                        title: "Bible Verse Posted",
+                        description: "Your daily verse has been shared with your kliq!",
+                        duration: 3000,
+                        className: "bg-white text-black border-gray-300",
+                      });
+                    } catch (error) {
+                      console.error('Error posting bible verse:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to post bible verse. Please try again.",
                         variant: "destructive",
                         duration: 3000,
                       });

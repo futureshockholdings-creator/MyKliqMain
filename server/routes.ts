@@ -32,6 +32,94 @@ function getZodiacSign(birthdate: string): string {
   return "Pisces";
 }
 
+// Daily Bible verse generator
+function generateDailyBibleVerse(): { verse: string; reference: string; reflection: string } {
+  const bibleVerses = [
+    {
+      verse: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, to give you hope and a future.",
+      reference: "Jeremiah 29:11",
+      reflection: "Today, trust in God's perfect plan for your life. Even when circumstances seem uncertain, remember that His plans are always for your good."
+    },
+    {
+      verse: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.",
+      reference: "Joshua 1:9",
+      reflection: "Face today's challenges with confidence, knowing that God's presence goes before you and His strength empowers you."
+    },
+    {
+      verse: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.",
+      reference: "Proverbs 3:5-6",
+      reflection: "Release control and trust God's wisdom over your own. He sees the bigger picture and will guide your steps."
+    },
+    {
+      verse: "I can do all this through him who gives me strength.",
+      reference: "Philippians 4:13",
+      reflection: "Whatever obstacles you face today, remember that Christ's strength is available to help you overcome every challenge."
+    },
+    {
+      verse: "And we know that in all things God works for the good of those who love him, who have been called according to his purpose.",
+      reference: "Romans 8:28",
+      reflection: "Even in difficult moments, trust that God is weaving all things together for your ultimate good and His glory."
+    },
+    {
+      verse: "The Lord your God is with you, the Mighty Warrior who saves. He will take great delight in you; in his love he will no longer rebuke you, but will rejoice over you with singing.",
+      reference: "Zephaniah 3:17",
+      reflection: "Remember today that you are deeply loved and cherished by God. He delights in you and celebrates your life."
+    },
+    {
+      verse: "Cast all your anxiety on him because he cares for you.",
+      reference: "1 Peter 5:7",
+      reflection: "Don't carry today's worries alone. Give them to God, knowing He cares deeply about every concern in your heart."
+    },
+    {
+      verse: "But those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint.",
+      reference: "Isaiah 40:31",
+      reflection: "When you feel tired or discouraged, look to the Lord for renewed strength and energy to continue your journey."
+    },
+    {
+      verse: "The Lord is my shepherd, I lack nothing.",
+      reference: "Psalm 23:1",
+      reflection: "Rest in the assurance that God provides for all your needs. He is your caring shepherd who watches over you."
+    },
+    {
+      verse: "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God.",
+      reference: "Philippians 4:6",
+      reflection: "Replace anxiety with prayer today. Bring every concern to God with a grateful heart, trusting in His care."
+    },
+    {
+      verse: "He has made everything beautiful in its time.",
+      reference: "Ecclesiastes 3:11",
+      reflection: "Trust God's timing in your life. What seems delayed or difficult now is being worked into something beautiful."
+    },
+    {
+      verse: "The Lord will fight for you; you need only to be still.",
+      reference: "Exodus 14:14",
+      reflection: "In today's battles, remember that God fights alongside you. Sometimes the most powerful thing you can do is rest in His strength."
+    },
+    {
+      verse: "But seek first his kingdom and his righteousness, and all these things will be given to you as well.",
+      reference: "Matthew 6:33",
+      reflection: "Prioritize your relationship with God today, and trust Him to take care of everything else you need."
+    },
+    {
+      verse: "Love is patient, love is kind. It does not envy, it does not boast, it is not proud.",
+      reference: "1 Corinthians 13:4",
+      reflection: "Let love guide your interactions today. Show patience and kindness to everyone you encounter."
+    },
+    {
+      verse: "Every good and perfect gift is from above, coming down from the Father of the heavenly lights.",
+      reference: "James 1:17",
+      reflection: "Notice and give thanks for the good gifts in your life today. Every blessing comes from God's loving hand."
+    }
+  ];
+
+  // Generate semi-random but consistent verse based on current date
+  const today = new Date();
+  const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000);
+  const verseIndex = dayOfYear % bibleVerses.length;
+  
+  return bibleVerses[verseIndex];
+}
+
 // Daily horoscope generator
 function generateDailyHoroscope(sign: string): { reading: string; luckyNumber: number; luckyColor: string } {
   const horoscopes = {
@@ -682,6 +770,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating horoscope:", error);
       res.status(500).json({ message: "Failed to generate horoscope" });
+    }
+  });
+
+  // Daily bible verse endpoint
+  app.get('/api/bible-verse', isAuthenticated, async (req: any, res) => {
+    try {
+      // Get user's timezone from query parameter, default to UTC
+      const userTimezone = req.query.timezone || 'UTC';
+      
+      // Generate daily bible verse
+      const bibleVerse = generateDailyBibleVerse();
+      
+      // Format date using user's timezone
+      const userDate = new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        timeZone: userTimezone
+      });
+      
+      res.json({
+        date: userDate,
+        verse: bibleVerse.verse,
+        reference: bibleVerse.reference,
+        reflection: bibleVerse.reflection
+      });
+    } catch (error) {
+      console.error("Error generating bible verse:", error);
+      res.status(500).json({ message: "Failed to generate bible verse" });
     }
   });
 
