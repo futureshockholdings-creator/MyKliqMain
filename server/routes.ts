@@ -654,20 +654,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Birthdate required for horoscope" });
       }
 
+      // Get user's timezone from query parameter, default to UTC
+      const userTimezone = req.query.timezone || 'UTC';
+      
       // Generate zodiac sign from birthdate
       const zodiacSign = getZodiacSign(user.birthdate);
       
       // Generate daily horoscope
       const horoscope = generateDailyHoroscope(zodiacSign);
       
+      // Format date using user's timezone
+      const userDate = new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        timeZone: userTimezone
+      });
+      
       res.json({
         sign: zodiacSign,
-        date: new Date().toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        }),
+        date: userDate,
         horoscope: horoscope.reading,
         luckyNumber: horoscope.luckyNumber,
         luckyColor: horoscope.luckyColor

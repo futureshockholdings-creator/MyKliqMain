@@ -167,7 +167,9 @@ export default function Home() {
   // Horoscope mutation
   const horoscopeMutation = useMutation({
     mutationFn: async () => {
-      const result = await apiRequest("GET", "/api/horoscope");
+      // Detect user's timezone
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const result = await apiRequest("GET", `/api/horoscope?timezone=${encodeURIComponent(userTimezone)}`);
       return result;
     },
     onSuccess: (data) => {
