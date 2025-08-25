@@ -23,6 +23,7 @@ import {
   callParticipants,
   socialCredentials,
   externalPosts,
+  passwordResetTokens,
   type User,
   type UpsertUser,
   type UserTheme,
