@@ -2546,32 +2546,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Maintenance routes (authorized access only)
+  // Basic maintenance endpoint
   app.get('/api/maintenance/status', async (req, res) => {
-    try {
-      const status = await maintenanceService.getSystemHealth();
-      res.json(status);
-    } catch (error) {
-      console.error("Error getting maintenance status:", error);
-      res.status(500).json({ message: "Failed to get system status" });
-    }
-  });
-
-  app.post('/api/maintenance/force-cleanup', async (req, res) => {
-    try {
-      const { password } = req.body;
-      
-      // Basic authentication for maintenance operations
-      if (password !== 'maintenance-secret-2024') {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      
-      const result = await maintenanceService.forceCleanup();
-      res.json(result);
-    } catch (error) {
-      console.error("Error during force cleanup:", error);
-      res.status(500).json({ message: "Failed to perform cleanup" });
-    }
+    res.json({ 
+      status: "operational", 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
   });
 
   const httpServer = createServer(app);
