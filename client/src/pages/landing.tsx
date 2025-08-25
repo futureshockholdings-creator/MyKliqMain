@@ -242,7 +242,7 @@ export default function Landing() {
             </Dialog>
 
             {/* Login Link */}
-            <div className="text-center pt-3">
+            <div className="text-center pt-3 space-y-2">
               <Link href="/login">
                 <Button 
                   variant="ghost" 
@@ -253,6 +253,19 @@ export default function Landing() {
                   Already have an account? Login here
                 </Button>
               </Link>
+              
+              {/* Forgot Password Link */}
+              <div>
+                <Link href="/forgot-password">
+                  <Button 
+                    variant="ghost" 
+                    className="text-muted-foreground hover:text-primary text-sm underline"
+                    data-testid="link-forgot-password"
+                  >
+                    Forgot Password?
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
 

@@ -32,6 +32,7 @@ import PrivacyPolicy from "./pages/privacy-policy";
 import Disclaimer from "./pages/disclaimer";
 import Signup from "@/pages/signup";
 import Login from "@/pages/login";
+import ForgotPassword from "@/pages/forgot-password";
 
 // Navigation Component
 import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell, Settings as SettingsIcon } from "lucide-react";
@@ -207,6 +208,7 @@ function Router() {
       <Route path="/landing" component={Landing} />
       <Route path="/signup" component={Signup} />
       <Route path="/login" component={Login} />
+      <Route path="/forgot-password" component={ForgotPassword} />
       
       {/* Protected routes - require authentication */}
       {isLoading || !isAuthenticated ? (
@@ -243,7 +245,7 @@ function AppContent() {
   useTheme();
 
   // Check if we're on a public page that doesn't require authentication
-  const isPublicPage = ['/signup', '/privacy-policy', '/disclaimer', '/landing'].includes(currentPath);
+  const isPublicPage = ['/signup', '/privacy-policy', '/disclaimer', '/landing', '/forgot-password'].includes(currentPath);
 
   return (
     <TooltipProvider>

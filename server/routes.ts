@@ -6,6 +6,7 @@ import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
+import twilio from "twilio";
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
@@ -484,6 +485,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Password reset endpoints
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const { phoneNumber } = req.body;
+      
+      if (!phoneNumber) {
+        return res.status(400).json({ message: "Phone number is required" });
+      }
+
+      // Find user by phone number
+      const user = await storage.getUserByPhone(phoneNumber);
+      if (!user) {
+        return res.status(404).json({ message: "No account found with this phone number" });
+      }
+
+      // Check if user has security questions set up
+      if (!user.securityAnswer1 || !user.securityAnswer2 || !user.securityAnswer3) {
+        return res.status(400).json({ message: "Security questions not set up for this account" });
+      }
+
+      // Generate reset token (valid for 1 hour)
+      const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+      // Store reset token in storage
+      await storage.createPasswordResetToken(user.id, resetToken, expiresAt);
+
+      // Send SMS with Twilio
+      const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      const resetUrl = `${req.protocol}://${req.get('host')}/forgot-password?token=${resetToken}`;
+      
+      await twilioClient.messages.create({
+        body: `MyKliq Password Reset: Click this link to reset your password: ${resetUrl} (expires in 1 hour)`,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: phoneNumber
+      });
+
+      res.json({ 
+        success: true, 
+        resetToken: resetToken, // Send token for frontend flow
+        message: "Reset instructions sent to your phone" 
+      });
+    } catch (error) {
+      console.error("Error sending password reset SMS:", error);
+      res.status(500).json({ message: "Failed to send reset SMS" });
+    }
+  });
+
+  app.post('/api/auth/verify-security', async (req, res) => {
+    try {
+      const { resetToken, securityAnswer1, securityAnswer2, securityAnswer3 } = req.body;
+      
+      if (!resetToken || !securityAnswer1 || !securityAnswer2 || !securityAnswer3) {
+        return res.status(400).json({ message: "All security answers are required" });
+      }
+
+      // Get reset token from storage
+      const tokenData = await storage.getPasswordResetToken(resetToken);
+      if (!tokenData || tokenData.expiresAt < new Date()) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+
+      // Get user to verify security questions
+      const user = await storage.getUser(tokenData.userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Verify security answers (case-insensitive)
+      const answer1Valid = await bcrypt.compare(securityAnswer1.toLowerCase().trim(), user.securityAnswer1!);
+      const answer2Valid = await bcrypt.compare(securityAnswer2.toLowerCase().trim(), user.securityAnswer2!);
+      const answer3Valid = await bcrypt.compare(securityAnswer3.toLowerCase().trim(), user.securityAnswer3!);
+
+      if (!answer1Valid || !answer2Valid || !answer3Valid) {
+        return res.status(400).json({ message: "Security answers do not match" });
+      }
+
+      res.json({ success: true, message: "Security questions verified" });
+    } catch (error) {
+      console.error("Error verifying security questions:", error);
+      res.status(500).json({ message: "Failed to verify security questions" });
+    }
+  });
+
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const { resetToken, newPassword } = req.body;
+      
+      if (!resetToken || !newPassword) {
+        return res.status(400).json({ message: "Reset token and new password are required" });
+      }
+
+      // Get reset token from storage
+      const tokenData = await storage.getPasswordResetToken(resetToken);
+      if (!tokenData || tokenData.expiresAt < new Date()) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+      // Update user password
+      await storage.updateUser(tokenData.userId, { password: hashedPassword });
+
+      // Delete used reset token
+      await storage.deletePasswordResetToken(resetToken);
+
+      res.json({ success: true, message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
 
   // Public user profile endpoint (for viewing other users' profiles)
   app.get('/api/user/profile/:userId', async (req: any, res) => {

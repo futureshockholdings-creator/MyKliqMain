@@ -110,6 +110,15 @@ export const mediaTypeEnum = pgEnum("media_type", ["image", "video"]);
 // Call status enum
 export const callStatusEnum = pgEnum("call_status", ["pending", "active", "ended", "declined"]);
 
+// Password reset tokens
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  token: varchar("token").unique().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // GIF database for posts and comments
 export const gifs = pgTable("gifs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -937,3 +946,7 @@ export const insertExternalPostSchema = createInsertSchema(externalPosts).omit({
 });
 export type InsertExternalPost = z.infer<typeof insertExternalPostSchema>;
 export type ExternalPost = typeof externalPosts.$inferSelect;
+
+// Password reset token types
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;

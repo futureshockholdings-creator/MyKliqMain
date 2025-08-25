@@ -59,6 +59,8 @@ import {
   type InsertSocialCredential,
   type ExternalPost,
   type InsertExternalPost,
+  type PasswordResetToken,
+  type InsertPasswordResetToken,
   type MeetupCheckIn,
   type InsertMeetupCheckIn,
   type BirthdayMessage,
@@ -98,6 +100,9 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByPhone(phoneNumber: string): Promise<User | undefined>;
+  createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<PasswordResetToken>;
+  getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
+  deletePasswordResetToken(token: string): Promise<void>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
   updateUser(userId: string, updates: Partial<User>): Promise<User>;
@@ -2545,6 +2550,33 @@ export class DatabaseStorage implements IStorage {
         eq(externalPosts.platform, platform),
         sql`${externalPosts.platformCreatedAt} < ${cutoffDate}`
       ));
+  }
+
+  // Password reset token methods
+  async createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<PasswordResetToken> {
+    const [resetToken] = await db
+      .insert(passwordResetTokens)
+      .values({
+        userId,
+        token,
+        expiresAt
+      })
+      .returning();
+    return resetToken;
+  }
+
+  async getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined> {
+    const [resetToken] = await db
+      .select()
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token));
+    return resetToken;
+  }
+
+  async deletePasswordResetToken(token: string): Promise<void> {
+    await db
+      .delete(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token));
   }
 }
 
