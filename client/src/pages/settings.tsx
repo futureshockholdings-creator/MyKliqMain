@@ -115,10 +115,7 @@ export default function Settings() {
   // Password setup mutation
   const setupPassword = useMutation({
     mutationFn: async (data: { password: string }) => {
-      return await apiRequest("/api/auth/setup-password", {
-        method: "POST",
-        body: JSON.stringify(data)
-      });
+      return await apiRequest("POST", "/api/auth/setup-password", data);
     },
     onSuccess: () => {
       toast({
@@ -148,7 +145,7 @@ export default function Settings() {
   // Connect social account mutation
   const connectAccount = useMutation({
     mutationFn: async (platform: string) => {
-      const response = await apiRequest(`/api/oauth/authorize/${platform}`);
+      const response = await apiRequest("GET", `/api/oauth/authorize/${platform}`);
       return response;
     },
     onSuccess: (data) => {
@@ -187,9 +184,7 @@ export default function Settings() {
   // Remove social account mutation
   const removeAccount = useMutation({
     mutationFn: async (accountId: string) => {
-      return await apiRequest(`/api/social/accounts/${accountId}`, {
-        method: "DELETE",
-      });
+      return await apiRequest("DELETE", `/api/social/accounts/${accountId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
@@ -210,9 +205,7 @@ export default function Settings() {
   // Sync account mutation
   const syncAccount = useMutation({
     mutationFn: async (platform: string) => {
-      return await apiRequest(`/api/social/sync/${platform}`, {
-        method: "POST",
-      });
+      return await apiRequest("POST", `/api/social/sync/${platform}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
