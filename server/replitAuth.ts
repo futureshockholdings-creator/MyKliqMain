@@ -14,10 +14,15 @@ if (!process.env.REPLIT_DOMAINS) {
 
 const getOidcConfig = memoize(
   async () => {
-    return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
-    );
+    try {
+      return await client.discovery(
+        new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
+        process.env.REPL_ID!
+      );
+    } catch (error) {
+      console.error("Failed to discover OIDC config:", error);
+      throw error;
+    }
   },
   { maxAge: 3600 * 1000 }
 );
@@ -72,7 +77,14 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  const config = await getOidcConfig();
+  let config;
+  try {
+    config = await getOidcConfig();
+    console.log("Successfully configured OIDC");
+  } catch (error) {
+    console.error("Failed to setup OIDC config:", error);
+    throw error;
+  }
 
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
@@ -86,16 +98,22 @@ export async function setupAuth(app: Express) {
 
   for (const domain of process.env
     .REPLIT_DOMAINS!.split(",")) {
-    const strategy = new Strategy(
-      {
-        name: `replitauth:${domain}`,
-        config,
-        scope: "openid email profile offline_access",
-        callbackURL: `https://${domain}/api/callback`,
-      },
-      verify,
-    );
-    passport.use(strategy);
+    try {
+      const strategy = new Strategy(
+        {
+          name: `replitauth:${domain}`,
+          config,
+          scope: "openid email profile offline_access",
+          callbackURL: `https://${domain}/api/callback`,
+        },
+        verify,
+      );
+      passport.use(strategy);
+      console.log(`Configured auth strategy for domain: ${domain}`);
+    } catch (error) {
+      console.error(`Failed to configure auth strategy for domain ${domain}:`, error);
+      throw error;
+    }
   }
 
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
