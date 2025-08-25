@@ -51,14 +51,14 @@ export default function ForgotPassword() {
   const verifySecurityQuestions = async () => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/auth/verify-security", {
+      const data = await apiRequest("POST", "/api/auth/verify-security", {
         resetToken,
         securityAnswer1: securityAnswers.answer1,
         securityAnswer2: securityAnswers.answer2,
         securityAnswer3: securityAnswers.answer3
       });
       
-      if (response.ok) {
+      if (data.success) {
         setStep('password');
         toast({
           title: "Security questions verified!",
