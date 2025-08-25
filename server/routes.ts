@@ -484,18 +484,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User profile routes
-  app.put('/api/user/profile', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const updates = req.body;
-      const user = await storage.updateUser(userId, updates);
-      res.json(user);
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      res.status(500).json({ message: "Failed to update profile" });
-    }
-  });
 
   // Public user profile endpoint (for viewing other users' profiles)
   app.get('/api/user/profile/:userId', async (req: any, res) => {
@@ -543,6 +531,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (profileData.phoneNumber !== undefined) cleanedData.phoneNumber = profileData.phoneNumber;
       if (profileData.kliqName !== undefined) cleanedData.kliqName = profileData.kliqName;
       if (profileData.birthdate !== undefined) cleanedData.birthdate = profileData.birthdate;
+      
+      // Handle security questions (hash them for security)
+      if (profileData.securityAnswer1) {
+        cleanedData.securityAnswer1 = await bcrypt.hash(profileData.securityAnswer1.toLowerCase().trim(), 12);
+      }
+      if (profileData.securityAnswer2) {
+        cleanedData.securityAnswer2 = await bcrypt.hash(profileData.securityAnswer2.toLowerCase().trim(), 12);
+      }
+      if (profileData.securityAnswer3) {
+        cleanedData.securityAnswer3 = await bcrypt.hash(profileData.securityAnswer3.toLowerCase().trim(), 12);
+      }
       
       // Handle array fields (filter out empty strings)
       if (profileData.interests) cleanedData.interests = profileData.interests.filter((item: string) => item.trim());

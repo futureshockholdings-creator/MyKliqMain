@@ -117,6 +117,11 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [kliqName, setKliqName] = useState("");
   const [birthdate, setBirthdate] = useState("");
+  
+  // Security questions for password recovery
+  const [securityAnswer1, setSecurityAnswer1] = useState(""); // First car
+  const [securityAnswer2, setSecurityAnswer2] = useState(""); // Mother's maiden name
+  const [securityAnswer3, setSecurityAnswer3] = useState(""); // Favorite teacher's last name
 
   // Extended profile details
   const [interests, setInterests] = useState<string[]>([]);
@@ -146,6 +151,9 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
       setPhoneNumber(user.phoneNumber || "");
       setKliqName(user.kliqName || "My Kliq");
       setBirthdate(user.birthdate || "");
+      setSecurityAnswer1(user.securityAnswer1 ? "****" : ""); // Don't show actual answers
+      setSecurityAnswer2(user.securityAnswer2 ? "****" : "");
+      setSecurityAnswer3(user.securityAnswer3 ? "****" : "");
       setInterests(user.interests || []);
       setFavoriteLocations(user.favoriteLocations || []);
       setFavoriteFoods(user.favoriteFoods || []);
@@ -190,7 +198,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
       return;
     }
 
-    updateProfileMutation.mutate({
+    const profileData: any = {
       // Basic profile fields
       bio,
       phoneNumber,
@@ -207,7 +215,20 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
       relationshipStatus,
       petPreferences,
       lifestyle,
-    });
+    };
+
+    // Only include security answers if they're not the placeholder "****" and not empty
+    if (securityAnswer1 && securityAnswer1 !== "****") {
+      profileData.securityAnswer1 = securityAnswer1;
+    }
+    if (securityAnswer2 && securityAnswer2 !== "****") {
+      profileData.securityAnswer2 = securityAnswer2;
+    }
+    if (securityAnswer3 && securityAnswer3 !== "****") {
+      profileData.securityAnswer3 = securityAnswer3;
+    }
+
+    updateProfileMutation.mutate(profileData);
   };
 
   const addItem = (items: string[], setItems: (items: string[]) => void, newItem: string, setNewItem: (item: string) => void) => {
@@ -319,6 +340,58 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       className="bg-input border-border text-foreground"
                       data-testid="input-birthdate"
                       required
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Security Questions Section */}
+            <Card className="bg-card/50 border-border">
+              <CardHeader>
+                <CardTitle className="text-primary flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  Security Questions (Password Recovery)
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-foreground">
+                      1. What was your very first car you owned?
+                    </Label>
+                    <Input
+                      value={securityAnswer1}
+                      onChange={(e) => setSecurityAnswer1(e.target.value)}
+                      placeholder="Enter your answer..."
+                      className="bg-input border-border text-foreground"
+                      data-testid="input-security-answer-1"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-foreground">
+                      2. What is your mother's maiden last name?
+                    </Label>
+                    <Input
+                      value={securityAnswer2}
+                      onChange={(e) => setSecurityAnswer2(e.target.value)}
+                      placeholder="Enter your answer..."
+                      className="bg-input border-border text-foreground"
+                      data-testid="input-security-answer-2"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-foreground">
+                      3. What is the last name of your favorite teacher in school?
+                    </Label>
+                    <Input
+                      value={securityAnswer3}
+                      onChange={(e) => setSecurityAnswer3(e.target.value)}
+                      placeholder="Enter your answer..."
+                      className="bg-input border-border text-foreground"
+                      data-testid="input-security-answer-3"
                     />
                   </div>
                 </div>
