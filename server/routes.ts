@@ -2546,6 +2546,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Force favicon route to bypass all caching (place before other routes)
+  app.get('/favicon.ico', (req, res) => {
+    res.setHeader('Content-Type', 'image/x-icon');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile('favicon.ico', { root: './client/public' });
+  });
+
   // Basic maintenance endpoint
   app.get('/api/maintenance/status', async (req, res) => {
     res.json({ 
