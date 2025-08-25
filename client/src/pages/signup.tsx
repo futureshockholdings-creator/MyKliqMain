@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,16 @@ import { User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, 
 export default function Signup() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+
+  // Get invite code from URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('inviteCode');
+    if (code) {
+      setInviteCode(code);
+    }
+  }, []);
 
   // Basic profile fields - required for signup
   const [firstName, setFirstName] = useState("");
@@ -87,7 +97,8 @@ export default function Signup() {
         favoriteBooks,
         relationshipStatus: relationshipStatus || null,
         petPreferences: petPreferences || null,
-        lifestyle: lifestyle || null
+        lifestyle: lifestyle || null,
+        inviteCode: inviteCode || undefined
       });
 
       toast({

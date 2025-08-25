@@ -231,7 +231,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         favoriteBooks,
         relationshipStatus,
         petPreferences,
-        lifestyle
+        lifestyle,
+        inviteCode: receivedInviteCode
       } = req.body;
 
       // Validate required fields
@@ -292,10 +293,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expires_at: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days from now
       };
 
-      req.login(userSession, (err) => {
+      req.login(userSession, async (err) => {
         if (err) {
           console.error("Session creation error:", err);
           return res.status(500).json({ message: "Failed to create session" });
+        }
+        
+        // If invite code was provided, create kliq membership
+        if (receivedInviteCode && receivedInviteCode.trim()) {
+          try {
+            const inviteCodeOwner = await storage.getUserByInviteCode(receivedInviteCode.trim());
+            if (inviteCodeOwner) {
+              // Create friendship between new user and invite code owner
+              await storage.addFriend({
+                userId: userId,
+                friendId: inviteCodeOwner.id,
+                status: "accepted",
+                rank: 1
+              });
+              await storage.addFriend({
+                userId: inviteCodeOwner.id,
+                friendId: userId,
+                status: "accepted",
+                rank: 1
+              });
+              
+              // Mark invite code as used
+              await storage.markInviteCodeAsUsed(receivedInviteCode.trim(), userId, inviteCodeOwner.id);
+              
+              console.log(`User ${userId} joined ${inviteCodeOwner.id}'s kliq via invite code ${receivedInviteCode}`);
+            }
+          } catch (error) {
+            console.error("Error creating kliq membership:", error);
+            // Don't fail the signup if kliq membership creation fails
+          }
         }
         
         res.json({ 
@@ -1540,7 +1571,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/verify-phone', async (req, res) => {
     try {
-      const { phoneNumber, verificationCode } = req.body;
+      const { phoneNumber, verificationCode, inviteCode } = req.body;
+      
+      // If invite code is provided, validate it again for final verification
+      if (inviteCode) {
+        const inviteCodeUser = await storage.getUserByInviteCode(inviteCode);
+        if (!inviteCodeUser) {
+          return res.status(400).json({ 
+            message: "Invalid invite code. Please check the code and try again." 
+          });
+        }
+        
+        const isUsed = await storage.isInviteCodeUsed(inviteCode);
+        if (isUsed) {
+          return res.status(400).json({ 
+            message: "This invite code has already been used." 
+          });
+        }
+      }
+      
       // Mock verification - in production, verify against SMS service
       res.json({ success: true, verified: true });
     } catch (error) {

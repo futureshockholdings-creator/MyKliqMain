@@ -46,11 +46,12 @@ export default function Landing() {
     try {
       await apiRequest("POST", "/api/auth/verify-phone", {
         phoneNumber,
-        verificationCode
+        verificationCode,
+        inviteCode: inviteCode.trim()
       });
 
-      // If successful, proceed to signup
-      window.location.href = "/signup";
+      // If successful, proceed to signup with invite code in URL
+      window.location.href = `/signup?inviteCode=${encodeURIComponent(inviteCode.trim())}`;
     } catch (error) {
       toast({
         title: "Error",
@@ -191,7 +192,7 @@ export default function Landing() {
                   />
                   
                   <div>
-                    <label className="text-sm text-gray-400">Invitation code (optional)</label>
+                    <label className="text-sm text-gray-400">Invitation code</label>
                     <Input
                       value={inviteCode}
                       onChange={(e) => setInviteCode(e.target.value)}
@@ -204,10 +205,10 @@ export default function Landing() {
                   {!isVerifying ? (
                     <Button
                       onClick={sendVerification}
-                      disabled={!phoneNumber}
+                      disabled={!phoneNumber || !inviteCode.trim()}
                       className="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold"
                     >
-                      Send Verification Code
+                      Join MyKliq
                     </Button>
                   ) : (
                     <div className="space-y-3">
