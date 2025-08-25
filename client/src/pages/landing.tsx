@@ -159,8 +159,8 @@ export default function Landing() {
           <div className="space-y-3">
             <Button 
               onClick={() => {
-                console.log("Join MyKliq Now clicked - redirecting to login");
-                window.location.href = "/api/login";
+                console.log("Join MyKliq Now clicked - redirecting to signup");
+                window.location.href = "/signup";
               }}
               className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-primary-foreground font-bold py-3"
               data-testid="button-join-now"

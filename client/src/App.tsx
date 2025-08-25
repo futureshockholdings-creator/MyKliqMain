@@ -30,6 +30,7 @@ import AdsManager from "@/pages/ads-manager";
 import Settings from "@/pages/settings";
 import PrivacyPolicy from "./pages/privacy-policy";
 import Disclaimer from "./pages/disclaimer";
+import Signup from "@/pages/signup";
 
 // Navigation Component
 import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell, Settings as SettingsIcon } from "lucide-react";
@@ -224,6 +225,7 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/disclaimer" component={Disclaimer} />
       <Route path="/landing" component={Landing} />
+      <Route path="/signup" component={Signup} />
       
       <Route component={NotFound} />
     </Switch>

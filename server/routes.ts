@@ -11,6 +11,7 @@ import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
+import crypto from "crypto";
 
 // Zodiac sign calculation helper
 function getZodiacSign(birthdate: string): string {
@@ -209,6 +210,107 @@ interface ExtendedWebSocket extends WebSocket {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
+
+  // Signup endpoint for new user registration
+  app.post('/api/auth/signup', async (req, res) => {
+    try {
+      const {
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        bio,
+        kliqName,
+        birthdate,
+        interests,
+        favoriteLocations,
+        favoriteFoods,
+        musicGenres,
+        hobbies,
+        favoriteMovies,
+        favoriteBooks,
+        relationshipStatus,
+        petPreferences,
+        lifestyle
+      } = req.body;
+
+      // Validate required fields
+      if (!firstName || !lastName || !email || !phoneNumber) {
+        return res.status(400).json({ 
+          message: "Missing required fields: firstName, lastName, email, phoneNumber" 
+        });
+      }
+
+      // Check if user already exists with this email or phone
+      const existingUserByEmail = await storage.getUserByEmail(email);
+      const existingUserByPhone = await storage.getUserByPhone(phoneNumber);
+      
+      if (existingUserByEmail) {
+        return res.status(400).json({ message: "User already exists with this email" });
+      }
+      
+      if (existingUserByPhone) {
+        return res.status(400).json({ message: "User already exists with this phone number" });
+      }
+
+      // Generate unique user ID and invite code
+      const userId = crypto.randomUUID();
+      const inviteCode = await storage.generateInviteCode();
+
+      // Create new user
+      const newUser = await storage.upsertUser({
+        id: userId,
+        email: email.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phoneNumber: phoneNumber.trim(),
+        bio: bio?.trim() || null,
+        inviteCode,
+        kliqName: kliqName?.trim() || "My Kliq",
+        birthdate: birthdate || null,
+        interests: interests?.filter((item: string) => item.trim()) || [],
+        favoriteLocations: favoriteLocations?.filter((item: string) => item.trim()) || [],
+        favoriteFoods: favoriteFoods?.filter((item: string) => item.trim()) || [],
+        musicGenres: musicGenres?.filter((item: string) => item.trim()) || [],
+        hobbies: hobbies?.filter((item: string) => item.trim()) || [],
+        favoriteMovies: favoriteMovies?.filter((item: string) => item.trim()) || [],
+        favoriteBooks: favoriteBooks?.filter((item: string) => item.trim()) || [],
+        relationshipStatus: relationshipStatus || null,
+        petPreferences: petPreferences || null,
+        lifestyle: lifestyle || null
+      });
+
+      // Create user session (authenticate them)
+      const userSession = {
+        claims: {
+          sub: userId,
+          email: email,
+          first_name: firstName,
+          last_name: lastName,
+          profile_image_url: null
+        },
+        expires_at: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days from now
+      };
+
+      req.login(userSession, (err) => {
+        if (err) {
+          console.error("Session creation error:", err);
+          return res.status(500).json({ message: "Failed to create session" });
+        }
+        
+        res.json({ 
+          message: "Profile created successfully", 
+          user: newUser 
+        });
+      });
+
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      res.status(500).json({ 
+        message: error.message || "Failed to create profile" 
+      });
+    }
+  });
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
