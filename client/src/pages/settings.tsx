@@ -350,7 +350,7 @@ export default function Settings() {
                   data-testid="button-logout"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  {t('nav.logout')}
+                  Logout
                 </Button>
               </CardContent>
             </Card>
