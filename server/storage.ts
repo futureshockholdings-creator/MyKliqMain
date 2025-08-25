@@ -642,141 +642,49 @@ export class DatabaseStorage implements IStorage {
 
       // Add events to feed
       feedItems.push(...eventsData.map(event => ({
-            id: events.id,
-            userId: events.userId,
-            title: events.title,
-            description: events.description,
-            location: events.location,
-            eventDate: events.eventDate,
-            mediaUrl: events.mediaUrl,
-            mediaType: events.mediaType,
-            isPublic: events.isPublic,
-            attendeeCount: events.attendeeCount,
-            createdAt: events.createdAt,
-            authorId: users.id,
-            authorFirstName: users.firstName,
-            authorLastName: users.lastName,
-            authorProfileImageUrl: users.profileImageUrl,
-            authorKliqName: users.kliqName,
-          })
-          .from(events)
-          .innerJoin(users, eq(events.userId, users.id))
-          .where(inArray(events.userId, friendIds))
-          .orderBy(desc(events.createdAt));
+        id: event.id,
+        userId: event.userId,
+        title: event.title,
+        description: event.description,
+        location: event.location,
+        eventDate: event.eventDate,
+        mediaUrl: event.mediaUrl,
+        mediaType: event.mediaType,
+        isPublic: event.isPublic,
+        attendeeCount: event.attendeeCount,
+        createdAt: event.createdAt,
+        author: {
+          id: event.authorId,
+          firstName: event.authorFirstName,
+          lastName: event.authorLastName,
+          profileImageUrl: event.authorProfileImageUrl,
+          kliqName: event.authorKliqName,
+        },
+        type: 'event',
+        activityDate: event.createdAt,
+        content: `📅 Created event: "${event.title}"`,
+      })));
 
-        const eventsData = await eventsQuery;
-        
-        // Get attendance statistics for each event
-        const eventsWithAttendance = await Promise.all(
-          eventsData.map(async (event) => {
-            // Get attendance breakdown
-            const attendanceQuery = await db
-              .select({
-                status: eventAttendees.status,
-                count: sql<number>`count(*)::int`
-              })
-              .from(eventAttendees)
-              .where(eq(eventAttendees.eventId, event.id))
-              .groupBy(eventAttendees.status);
-
-            const attendanceStats = {
-              going: 0,
-              maybe: 0,
-              not_going: 0
-            };
-
-            attendanceQuery.forEach(stat => {
-              if (stat.status === 'going') attendanceStats.going = stat.count;
-              else if (stat.status === 'maybe') attendanceStats.maybe = stat.count;  
-              else if (stat.status === 'not_going') attendanceStats.not_going = stat.count;
-            });
-
-            // Get user's attendance status if they've responded
-            const userAttendance = await db
-              .select({ status: eventAttendees.status })
-              .from(eventAttendees)
-              .where(and(
-                eq(eventAttendees.eventId, event.id),
-                eq(eventAttendees.userId, userId)
-              ))
-              .limit(1);
-
-            const userAttendanceStatus = userAttendance.length > 0 ? userAttendance[0].status : null;
-
-            return {
-              id: event.id,
-              userId: event.userId,
-              title: event.title,
-              description: event.description,
-              location: event.location,
-              eventDate: event.eventDate,
-              mediaUrl: event.mediaUrl,
-              mediaType: event.mediaType,
-              isPublic: event.isPublic,
-              attendeeCount: event.attendeeCount,
-              createdAt: event.createdAt,
-              author: {
-                id: event.authorId,
-                firstName: event.authorFirstName,
-                lastName: event.authorLastName,
-                profileImageUrl: event.authorProfileImageUrl,
-                kliqName: event.authorKliqName,
-              },
-              attendance: attendanceStats,
-              userAttendanceStatus,
-              type: 'event',
-              activityDate: event.createdAt,
-              content: `📅 Created an event: "${event.title}"`,
-            };
-          })
-        );
-        
-        feedItems.push(...eventsWithAttendance);
-
-        // 4. Get actions (live streams) from kliq members
-        const actionsQuery = db
-          .select({
-            id: actions.id,
-            userId: actions.userId,
-            title: actions.title,
-            description: actions.description,
-            status: actions.status,
-            viewerCount: actions.viewerCount,
-            thumbnailUrl: actions.thumbnailUrl,
-            createdAt: actions.createdAt,
-            authorId: users.id,
-            authorFirstName: users.firstName,
-            authorLastName: users.lastName,
-            authorProfileImageUrl: users.profileImageUrl,
-            authorKliqName: users.kliqName,
-          })
-          .from(actions)
-          .innerJoin(users, eq(actions.userId, users.id))
-          .where(inArray(actions.userId, friendIds))
-          .orderBy(desc(actions.createdAt));
-
-        const actionsData = await actionsQuery;
-        feedItems.push(...actionsData.map(action => ({
-          id: action.id,
-          userId: action.userId,
-          title: action.title,
-          description: action.description,
-          status: action.status,
-          viewerCount: action.viewerCount,
-          thumbnailUrl: action.thumbnailUrl,
-          createdAt: action.createdAt,
-          author: {
-            id: action.authorId,
-            firstName: action.authorFirstName,
-            lastName: action.authorLastName,
-            profileImageUrl: action.authorProfileImageUrl,
-            kliqName: action.authorKliqName,
-          },
-          type: 'action',
-          activityDate: action.createdAt,
-          content: `🔴 ${action.status === 'live' ? 'Started a live stream' : 'Ended a live stream'}: "${action.title}"`,
-        })));
-      }
+      // Add actions to feed
+      feedItems.push(...actionsData.map(action => ({
+        id: action.id,
+        userId: action.userId,
+        title: action.title,
+        description: action.description,
+        status: action.status,
+        streamUrl: action.streamUrl,
+        activityDate: action.activityDate,
+        createdAt: action.createdAt,
+        author: {
+          id: action.authorId,
+          firstName: action.authorFirstName,
+          lastName: action.authorLastName,
+          profileImageUrl: action.authorProfileImageUrl,
+          kliqName: action.authorKliqName,
+        },
+        type: 'action',
+        content: `🔴 ${action.status === 'live' ? 'Started a live stream' : 'Ended a live stream'}: "${action.title}"`,
+      })));
     } catch (error) {
       console.error('Error fetching kliq feed items:', error);
       // Return posts only if there are errors with other queries
