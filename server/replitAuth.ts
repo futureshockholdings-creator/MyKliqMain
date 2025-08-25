@@ -110,6 +110,7 @@ export async function setupAuth(app: Express) {
       );
       passport.use(strategy);
       console.log(`Configured auth strategy for domain: ${domain}`);
+      console.log(`Available strategies after registration:`, Object.keys((passport as any)._strategies || {}));
     } catch (error) {
       console.error(`Failed to configure auth strategy for domain ${domain}:`, error);
       throw error;
@@ -120,6 +121,7 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
+    console.log(`Login attempt - hostname: ${req.hostname}, looking for strategy: replitauth:${req.hostname}`);
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
