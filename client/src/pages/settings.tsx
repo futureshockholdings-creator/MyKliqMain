@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import { PushNotificationSetup } from "@/components/PushNotificationSetup";
@@ -16,9 +17,12 @@ import {
   Trash2,
   RefreshCw,
   ExternalLink,
-  Link2
+  Link2,
+  LogOut,
+  User
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation } from "react-i18next";
 
 interface SocialAccount {
   id: string;
@@ -70,6 +74,11 @@ const platformInfo = {
 
 export default function Settings() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+
+  const handleLogout = () => {
+    window.location.href = '/api/logout';
+  };
 
   // Fetch connected social accounts
   const { data: socialAccounts = [], isLoading: accountsLoading } = useQuery({
@@ -319,6 +328,30 @@ export default function Settings() {
                   showFlag={true} 
                   className="w-full"
                 />
+              </CardContent>
+            </Card>
+
+            {/* Account Management */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  Account Management
+                </CardTitle>
+                <CardDescription className="text-purple-200">
+                  Manage your account settings and session
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={handleLogout}
+                  variant="destructive"
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  data-testid="button-logout"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  {t('nav.logout')}
+                </Button>
               </CardContent>
             </Card>
         </div>
