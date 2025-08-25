@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { Users, Crown, Palette, Shield, Video } from "lucide-react";
+import { Users, Crown, Palette, Shield, Video, LogIn } from "lucide-react";
+import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Footer from "@/components/Footer";
@@ -239,6 +240,20 @@ export default function Landing() {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* Login Link */}
+            <div className="text-center pt-3">
+              <Link href="/login">
+                <Button 
+                  variant="ghost" 
+                  className="text-muted-foreground hover:text-primary text-sm underline"
+                  data-testid="link-login"
+                >
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Already have an account? Login here
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Footer */}

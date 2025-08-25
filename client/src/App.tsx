@@ -31,6 +31,7 @@ import Settings from "@/pages/settings";
 import PrivacyPolicy from "./pages/privacy-policy";
 import Disclaimer from "./pages/disclaimer";
 import Signup from "@/pages/signup";
+import Login from "@/pages/login";
 
 // Navigation Component
 import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell, Settings as SettingsIcon } from "lucide-react";
@@ -205,6 +206,7 @@ function Router() {
       <Route path="/disclaimer" component={Disclaimer} />
       <Route path="/landing" component={Landing} />
       <Route path="/signup" component={Signup} />
+      <Route path="/login" component={Login} />
       
       {/* Protected routes - require authentication */}
       {isLoading || !isAuthenticated ? (

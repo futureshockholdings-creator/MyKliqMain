@@ -403,6 +403,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Login endpoint using phone number and password
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { phoneNumber, password } = req.body;
+
+      if (!phoneNumber || !password) {
+        return res.status(400).json({ 
+          message: "Phone number and password are required" 
+        });
+      }
+
+      // Find user by phone number
+      const user = await storage.getUserByPhone(phoneNumber);
+      if (!user) {
+        return res.status(401).json({ 
+          message: "Invalid phone number or password" 
+        });
+      }
+
+      // Check if user has a password set
+      if (!user.password) {
+        return res.status(401).json({ 
+          message: "No password set for this account. Please set up your password first." 
+        });
+      }
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ 
+          message: "Invalid phone number or password" 
+        });
+      }
+
+      // Create session for the user
+      const userSession = {
+        claims: {
+          sub: user.id,
+          email: user.email,
+          first_name: user.firstName,
+          last_name: user.lastName,
+          profile_image_url: user.profileImageUrl
+        },
+        expires_at: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
+      };
+
+      // Authenticate the user in the session
+      req.login(userSession, (err: any) => {
+        if (err) {
+          console.error("Session login error:", err);
+          return res.status(500).json({ 
+            message: "Failed to create session" 
+          });
+        }
+        
+        res.json({ 
+          message: "Login successful",
+          user: {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            profileImageUrl: user.profileImageUrl
+          }
+        });
+      });
+
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ 
+        message: "Login failed. Please try again." 
+      });
+    }
+  });
+
   // User profile routes
   app.put('/api/user/profile', isAuthenticated, async (req: any, res) => {
     try {
