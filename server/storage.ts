@@ -532,7 +532,7 @@ export class DatabaseStorage implements IStorage {
 
     try {
       // Execute all queries in parallel for better performance
-      const [postsData, pollsData, eventsData, actionsData] = await Promise.all([
+      const [postsData, pollsData, eventsData] = await Promise.all([
         // 1. Get regular posts
         this.getPosts(userId, filters),
         
@@ -583,30 +583,31 @@ export class DatabaseStorage implements IStorage {
           .innerJoin(users, eq(events.userId, users.id))
           .where(inArray(events.userId, friendIds))
           .orderBy(desc(events.createdAt))
-          .limit(50) : [], // Limit results for performance
-          
-        // 4. Get actions from kliq members (optimized query)
-        friendIds.length > 0 ? db
-          .select({
-            id: actions.id,
-            userId: actions.userId,
-            title: actions.title,
-            description: actions.description,
-            status: actions.status,
-            streamUrl: actions.streamUrl,
-            createdAt: actions.createdAt,
-            authorId: users.id,
-            authorFirstName: users.firstName,
-            authorLastName: users.lastName,
-            authorProfileImageUrl: users.profileImageUrl,
-            authorKliqName: users.kliqName,
-          })
-          .from(actions)
-          .innerJoin(users, eq(actions.userId, users.id))
-          .where(inArray(actions.userId, friendIds))
-          .orderBy(desc(actions.createdAt))
           .limit(50) : [] // Limit results for performance
       ]);
+
+      // Get actions separately to avoid query issues
+      const actionsData = friendIds.length > 0 ? await db
+        .select({
+          id: actions.id,
+          userId: actions.userId,
+          title: actions.title,
+          description: actions.description,
+          status: actions.status,
+          viewerCount: actions.viewerCount,
+          thumbnailUrl: actions.thumbnailUrl,
+          createdAt: actions.createdAt,
+          authorId: users.id,
+          authorFirstName: users.firstName,
+          authorLastName: users.lastName,
+          authorProfileImageUrl: users.profileImageUrl,
+          authorKliqName: users.kliqName,
+        })
+        .from(actions)
+        .innerJoin(users, eq(actions.userId, users.id))
+        .where(inArray(actions.userId, friendIds))
+        .orderBy(desc(actions.createdAt))
+        .limit(50) : [];
 
       console.log(`Feed: Got ${postsData.length} posts, latest:`, postsData[0]?.createdAt);
       
@@ -671,7 +672,8 @@ export class DatabaseStorage implements IStorage {
         title: action.title,
         description: action.description,
         status: action.status,
-        streamUrl: action.streamUrl,
+        viewerCount: action.viewerCount,
+        thumbnailUrl: action.thumbnailUrl,
         activityDate: action.createdAt,
         createdAt: action.createdAt,
         author: {
@@ -709,7 +711,7 @@ export class DatabaseStorage implements IStorage {
     await db.insert(postLikes).values({ postId, userId });
     await db
       .update(posts)
-      .set({ likes: sql`${posts.likes} + 1` })
+      .set({ likes: sql`COALESCE(${posts.likes}, 0) + 1` })
       .where(eq(posts.id, postId));
   }
 
@@ -717,7 +719,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(postLikes).where(and(eq(postLikes.postId, postId), eq(postLikes.userId, userId)));
     await db
       .update(posts)
-      .set({ likes: sql`${posts.likes} - 1` })
+      .set({ likes: sql`GREATEST(COALESCE(${posts.likes}, 0) - 1, 0)` })
       .where(eq(posts.id, postId));
   }
 
