@@ -594,7 +594,6 @@ export class DatabaseStorage implements IStorage {
             description: actions.description,
             status: actions.status,
             streamUrl: actions.streamUrl,
-            activityDate: actions.activityDate,
             createdAt: actions.createdAt,
             authorId: users.id,
             authorFirstName: users.firstName,
@@ -605,7 +604,7 @@ export class DatabaseStorage implements IStorage {
           .from(actions)
           .innerJoin(users, eq(actions.userId, users.id))
           .where(inArray(actions.userId, friendIds))
-          .orderBy(desc(actions.activityDate))
+          .orderBy(desc(actions.createdAt))
           .limit(50) : [] // Limit results for performance
       ]);
 
@@ -673,7 +672,7 @@ export class DatabaseStorage implements IStorage {
         description: action.description,
         status: action.status,
         streamUrl: action.streamUrl,
-        activityDate: action.activityDate,
+        activityDate: action.createdAt,
         createdAt: action.createdAt,
         author: {
           id: action.authorId,
