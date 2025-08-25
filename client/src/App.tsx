@@ -200,6 +200,13 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes - accessible without authentication */}
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/disclaimer" component={Disclaimer} />
+      <Route path="/landing" component={Landing} />
+      <Route path="/signup" component={Signup} />
+      
+      {/* Protected routes - require authentication */}
       {isLoading || !isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
@@ -221,12 +228,6 @@ function Router() {
         </>
       )}
       
-      {/* Legal Pages - accessible to all users */}
-      <Route path="/privacy-policy" component={PrivacyPolicy} />
-      <Route path="/disclaimer" component={Disclaimer} />
-      <Route path="/landing" component={Landing} />
-      <Route path="/signup" component={Signup} />
-      
       <Route component={NotFound} />
     </Switch>
   );
@@ -239,28 +240,33 @@ function AppContent() {
   // Load and apply user theme globally
   useTheme();
 
+  // Check if we're on a public page that doesn't require authentication
+  const isPublicPage = ['/signup', '/privacy-policy', '/disclaimer', '/landing'].includes(currentPath);
+
   return (
     <TooltipProvider>
       <div className="bg-background min-h-screen h-screen text-foreground">
-        {/* Navigation - Only show when authenticated */}
-        {isAuthenticated && !isLoading && (
+        {/* Navigation - Only show when authenticated and not on public pages */}
+        {isAuthenticated && !isLoading && !isPublicPage && (
           <Navigation currentPath={currentPath} />
         )}
         
         {/* Main App Container with responsive margins */}
         <div className={cn(
           "min-h-screen h-screen bg-background relative",
-          isAuthenticated && !isLoading ? "md:ml-20" : ""
+          isAuthenticated && !isLoading && !isPublicPage ? "md:ml-20" : ""
         )}>
           {/* Full Screen App Container with scroll */}
           <div className="w-full h-full relative overflow-y-auto overflow-x-hidden">
-            {/* Animated Background Pattern */}
-            <div className="fixed inset-0 opacity-10 pointer-events-none z-0">
-              <div className="absolute top-10 left-10 w-20 h-20 bg-primary rounded-full animate-pulse"></div>
-              <div className="absolute top-32 right-8 w-16 h-16 bg-secondary rounded-full animate-bounce"></div>
-              <div className="absolute bottom-20 left-6 w-12 h-12 bg-mykliq-green rounded-full animate-pulse"></div>
-              <div className="absolute bottom-40 right-12 w-8 h-8 bg-mykliq-orange rounded-full animate-bounce"></div>
-            </div>
+            {/* Animated Background Pattern - Don't show on signup page */}
+            {!isPublicPage && (
+              <div className="fixed inset-0 opacity-10 pointer-events-none z-0">
+                <div className="absolute top-10 left-10 w-20 h-20 bg-primary rounded-full animate-pulse"></div>
+                <div className="absolute top-32 right-8 w-16 h-16 bg-secondary rounded-full animate-bounce"></div>
+                <div className="absolute bottom-20 left-6 w-12 h-12 bg-mykliq-green rounded-full animate-pulse"></div>
+                <div className="absolute bottom-40 right-12 w-8 h-8 bg-mykliq-orange rounded-full animate-bounce"></div>
+              </div>
+            )}
 
             {/* Main Content with proper scrolling and mobile padding */}
             <div className="relative z-10 min-h-full pb-20 md:pb-4">
@@ -269,8 +275,8 @@ function AppContent() {
           </div>
         </div>
         
-        {/* Chatbot - Only show when authenticated */}
-        {isAuthenticated && !isLoading && <Chatbot />}
+        {/* Chatbot - Only show when authenticated and not on public pages */}
+        {isAuthenticated && !isLoading && !isPublicPage && <Chatbot />}
       </div>
       <Toaster />
     </TooltipProvider>
