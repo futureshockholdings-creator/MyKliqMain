@@ -7,9 +7,19 @@ import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema } from "@shared/schema";
+import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
 import { z } from "zod";
+
+// Password setup schema
+const passwordSetupSchema = z.object({
+  password: z.string()
+    .min(10, "Password must be at least 10 characters long")
+    .regex(/[a-zA-Z]/, "Password must contain at least one letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[^a-zA-Z0-9]/, "Password must contain at least one special character")
+});
 import { WebSocketServer, WebSocket } from "ws";
 import crypto from "crypto";
 
@@ -355,6 +365,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Password setup endpoint
+  app.post('/api/auth/setup-password', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate the request body
+      const validation = passwordSetupSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid password format",
+          errors: validation.error.errors
+        });
+      }
+
+      const { password } = validation.data;
+
+      // Hash the password with bcrypt (salt rounds: 12 for good security)
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      // Update user with hashed password
+      await storage.updateUserPassword(userId, hashedPassword);
+
+      res.json({ 
+        message: "Password set up successfully",
+        success: true
+      });
+
+    } catch (error) {
+      console.error("Error setting up password:", error);
+      res.status(500).json({ 
+        message: "Failed to set up password. Please try again."
+      });
     }
   });
 
