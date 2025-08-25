@@ -43,25 +43,47 @@ export default function Login() {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/auth/login", {
-        phoneNumber: values.phoneNumber,
-        password: values.password,
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Important: include cookies for session
+        body: JSON.stringify({
+          phoneNumber: values.phoneNumber,
+          password: values.password,
+        }),
       });
 
-      const data = await response.json();
-      
-      if (data.success) {
+      if (response.ok) {
+        // Login successful - check if we got JSON or HTML
+        const contentType = response.headers.get("content-type");
+        
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          console.log("Login response:", data);
+        }
+
         toast({
-          title: "Login Successful",
+          title: "Login Successful", 
           description: "Welcome back to MyKliq!",
         });
 
-        // Small delay to ensure session is established, then redirect
+        // Force a complete page reload to ensure session is properly loaded
         setTimeout(() => {
           window.location.href = "/";
-        }, 500);
+        }, 1000);
       } else {
-        throw new Error(data.message || "Login failed");
+        // Handle error response
+        let errorMessage = "Invalid phone number or password";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = `Login failed (${response.status})`;
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (error: any) {
       console.error("Login error:", error);

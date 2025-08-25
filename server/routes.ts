@@ -460,6 +460,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
+        console.log("Login successful for user:", user.id);
+        res.setHeader('Content-Type', 'application/json');
         res.json({ 
           message: "Login successful",
           success: true,
@@ -475,6 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error("Login error:", error);
+      res.setHeader('Content-Type', 'application/json');
       res.status(500).json({ 
         message: "Login failed. Please try again." 
       });
