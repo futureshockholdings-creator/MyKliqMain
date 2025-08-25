@@ -1504,7 +1504,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // SMS verification routes (mocked for MVP)
   app.post('/api/auth/send-verification', async (req, res) => {
     try {
-      const { phoneNumber } = req.body;
+      const { phoneNumber, inviteCode } = req.body;
+      
+      // If invite code is provided, validate it exists and isn't used
+      if (inviteCode) {
+        const inviteCodeUser = await storage.getUserByInviteCode(inviteCode);
+        if (!inviteCodeUser) {
+          return res.status(400).json({ 
+            message: "Invalid invite code. Please check the code and try again." 
+          });
+        }
+        
+        const isUsed = await storage.isInviteCodeUsed(inviteCode);
+        if (isUsed) {
+          return res.status(400).json({ 
+            message: "This invite code has already been used." 
+          });
+        }
+      }
+      
       // Mock SMS sending - in production, integrate with SMS service
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       console.log(`Mock SMS to ${phoneNumber}: Your verification code is ${verificationCode}`);

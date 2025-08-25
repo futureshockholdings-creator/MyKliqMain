@@ -20,7 +20,8 @@ export default function Landing() {
   const sendVerification = async () => {
     try {
       const response = await apiRequest("POST", "/api/auth/send-verification", {
-        phoneNumber
+        phoneNumber,
+        inviteCode: inviteCode.trim() || undefined
       });
       const data = await response.json();
       
