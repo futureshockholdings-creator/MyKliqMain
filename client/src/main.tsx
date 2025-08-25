@@ -4,6 +4,6 @@ import App from "./App";
 import "./index.css";
 
 // Update page title dynamically for better tab recognition
-document.title = '👥 MyKliq';
+document.title = '[MK] MyKliq';
 
 createRoot(document.getElementById("root")!).render(<App />);
