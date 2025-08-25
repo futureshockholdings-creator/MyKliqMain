@@ -25,10 +25,9 @@ export default function ForgotPassword() {
   const sendResetSMS = async () => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("POST", "/api/auth/forgot-password", {
+      const data = await apiRequest("POST", "/api/auth/forgot-password", {
         phoneNumber
       });
-      const data = await response.json();
       
       if (data.success) {
         setResetToken(data.resetToken);
