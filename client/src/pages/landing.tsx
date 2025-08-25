@@ -48,8 +48,8 @@ export default function Landing() {
         verificationCode
       });
 
-      // If successful, proceed to login
-      window.location.href = "/api/login";
+      // If successful, proceed to signup
+      window.location.href = "/signup";
     } catch (error) {
       toast({
         title: "Error",
