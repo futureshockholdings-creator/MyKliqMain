@@ -762,7 +762,7 @@ export class DatabaseStorage implements IStorage {
       // Calculate engagement score (likes + comments * 2) for ranking
       const postsWithEngagement = userPosts.map(post => ({
         ...post,
-        engagementScore: post.likes + (post.commentCount * 2)
+        engagementScore: (post.likes || 0) + (post.commentCount * 2)
       }));
 
       // Sort by engagement score and get top posts
@@ -771,7 +771,7 @@ export class DatabaseStorage implements IStorage {
         .slice(0, 12); // Top 12 for collage
 
       // Calculate stats
-      const totalLikes = userPosts.reduce((sum, post) => sum + post.likes, 0);
+      const totalLikes = userPosts.reduce((sum, post) => sum + (post.likes || 0), 0);
       const totalComments = userPosts.reduce((sum, post) => sum + post.commentCount, 0);
       const avgEngagement = userPosts.length > 0 ? (totalLikes + totalComments) / userPosts.length : 0;
 
