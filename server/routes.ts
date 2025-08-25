@@ -437,7 +437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create session for the user
+      // Create session for the user (matching the OAuth session structure)
       const userSession = {
         claims: {
           sub: user.id,
@@ -446,6 +446,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           last_name: user.lastName,
           profile_image_url: user.profileImageUrl
         },
+        access_token: 'custom-password-login',
+        refresh_token: null,
         expires_at: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
       };
 
@@ -460,6 +462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         res.json({ 
           message: "Login successful",
+          success: true,
           user: {
             id: user.id,
             email: user.email,

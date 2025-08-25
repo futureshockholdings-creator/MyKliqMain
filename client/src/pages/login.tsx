@@ -43,19 +43,28 @@ export default function Login() {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
-      await apiRequest("POST", "/api/auth/login", {
+      const response = await apiRequest("POST", "/api/auth/login", {
         phoneNumber: values.phoneNumber,
         password: values.password,
       });
 
-      toast({
-        title: "Login Successful",
-        description: "Welcome back to MyKliq!",
-      });
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Login Successful",
+          description: "Welcome back to MyKliq!",
+        });
 
-      // Redirect to home page
-      window.location.href = "/";
+        // Small delay to ensure session is established, then redirect
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 500);
+      } else {
+        throw new Error(data.message || "Login failed");
+      }
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Login Failed",
         description: error.message || "Invalid phone number or password. Please try again.",
