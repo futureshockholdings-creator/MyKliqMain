@@ -38,8 +38,8 @@ export function NotificationBadge({
 
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/notifications", type === "all" ? undefined : type],
-    refetchInterval: 5000, // Refresh every 5 seconds for testing
-    staleTime: 0, // Always consider data stale
+    refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 15000, // Consider data fresh for 15 seconds
   });
 
   const unreadCount = notifications.filter((n: Notification) => !n.isRead && n.isVisible).length;

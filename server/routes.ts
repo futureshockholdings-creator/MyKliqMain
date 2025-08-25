@@ -601,9 +601,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/kliq-feed', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const filters = await storage.getContentFilters(userId);
-      const filterKeywords = filters.map(f => f.keyword);
-      const feed = await storage.getKliqFeed(userId, filterKeywords);
+      const cacheKey = `kliq-feed:${userId}`;
+      
+      // Try to get from cache first
+      const { getCachedOrFetch } = await import('./cache');
+      const feed = await getCachedOrFetch(
+        cacheKey,
+        async () => {
+          const filters = await storage.getContentFilters(userId);
+          const filterKeywords = filters.map(f => f.keyword);
+          return await storage.getKliqFeed(userId, filterKeywords);
+        },
+        60000 // Cache for 1 minute
+      );
+      
       res.json(feed);
     } catch (error) {
       console.error("Error fetching kliq feed:", error);
@@ -637,6 +648,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const post = await storage.createPost(postData);
+      
+      // Invalidate cache for feeds that need to show this new post
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed'); // Invalidate all kliq feed caches
+      invalidateCache('posts'); // Invalidate posts caches
       
       // Create notifications for post likes (for future likes)
       // Note: Actual like notifications will be created when someone likes the post

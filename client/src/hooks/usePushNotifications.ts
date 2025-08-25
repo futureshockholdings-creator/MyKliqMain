@@ -26,8 +26,8 @@ export function usePushNotifications(): PushNotificationHook {
   // Watch for new notifications and show banner alerts
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
-    refetchInterval: 3000, // Check every 3 seconds for new notifications
-    staleTime: 0,
+    refetchInterval: 30000, // Check every 30 seconds for new notifications
+    staleTime: 15000, // Consider data fresh for 15 seconds
     enabled: isSupported && permission === 'granted',
   });
 
