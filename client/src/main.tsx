@@ -3,31 +3,53 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// Force set favicon with data URI - bypasses all caching issues
+// Generate MyKliq favicon with canvas - most reliable method
 const setFavicon = () => {
-  // Remove existing favicons
-  const existingFavicons = document.querySelectorAll('link[rel*="icon"]');
-  existingFavicons.forEach(favicon => favicon.remove());
+  const canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = 32;
+  const ctx = canvas.getContext('2d');
   
-  // MyKliq logo as data URI - black background with green person + plus
-  const faviconDataUri = "data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='32' height='32' fill='%23000000'/%3E%3Cg stroke='%2300ff00' stroke-width='2' fill='none'%3E%3Ccircle cx='16' cy='10' r='3'/%3E%3Cpath d='M10 22 L10 18 Q10 15 13 15 L19 15 Q22 15 22 18 L22 22'/%3E%3Cpath d='M24 8 L24 16 M20 12 L28 12'/%3E%3C/g%3E%3C/svg%3E";
+  if (!ctx) {
+    console.error('Could not get canvas context');
+    return;
+  }
   
-  // Add favicon
+  // Black background
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, 32, 32);
+  
+  // Green person outline
+  ctx.strokeStyle = '#00ff00';
+  ctx.lineWidth = 2;
+  
+  // Head (circle)
+  ctx.beginPath();
+  ctx.arc(16, 10, 3, 0, 2 * Math.PI);
+  ctx.stroke();
+  
+  // Body (rectangle)
+  ctx.beginPath();
+  ctx.rect(10, 15, 12, 7);
+  ctx.stroke();
+  
+  // Plus sign
+  ctx.beginPath();
+  ctx.moveTo(24, 8);
+  ctx.lineTo(24, 16);
+  ctx.moveTo(20, 12);
+  ctx.lineTo(28, 12);
+  ctx.stroke();
+  
+  // Convert to data URL and set as favicon
   const favicon = document.createElement('link');
   favicon.rel = 'icon';
-  favicon.type = 'image/svg+xml';
-  favicon.href = faviconDataUri;
+  favicon.href = canvas.toDataURL('image/png');
   document.head.appendChild(favicon);
   
-  // Add shortcut icon
-  const shortcutIcon = document.createElement('link');
-  shortcutIcon.rel = 'shortcut icon';
-  shortcutIcon.type = 'image/svg+xml';
-  shortcutIcon.href = faviconDataUri;
-  document.head.appendChild(shortcutIcon);
+  console.log('MyKliq favicon set with canvas');
 };
 
-// Set favicon on load
 setFavicon();
 
 createRoot(document.getElementById("root")!).render(<App />);
