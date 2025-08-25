@@ -531,18 +531,13 @@ export class DatabaseStorage implements IStorage {
     const feedItems: any[] = [];
 
     try {
-      // 1. Get regular posts
-      const posts = await this.getPosts(userId, filters);
-      console.log(`Feed: Got ${posts.length} posts, latest:`, posts[0]?.createdAt);
-      feedItems.push(...posts.map(post => ({
-        ...post,
-        type: 'post',
-        activityDate: post.createdAt,
-      })));
-
-      // 2. Get polls from kliq members
-      if (friendIds.length > 0) {
-        const pollsQuery = db
+      // Execute all queries in parallel for better performance
+      const [postsData, pollsData, eventsData, actionsData] = await Promise.all([
+        // 1. Get regular posts
+        this.getPosts(userId, filters),
+        
+        // 2. Get polls from kliq members (optimized query)
+        friendIds.length > 0 ? db
           .select({
             id: polls.id,
             userId: polls.userId,
@@ -561,33 +556,92 @@ export class DatabaseStorage implements IStorage {
           .from(polls)
           .innerJoin(users, eq(polls.userId, users.id))
           .where(inArray(polls.userId, friendIds))
-          .orderBy(desc(polls.createdAt));
-
-        const pollsData = await pollsQuery;
-        feedItems.push(...pollsData.map(poll => ({
-          id: poll.id,
-          userId: poll.userId,
-          title: poll.title,
-          description: poll.description,
-          options: poll.options,
-          expiresAt: poll.expiresAt,
-          isActive: poll.isActive,
-          createdAt: poll.createdAt,
-          author: {
-            id: poll.authorId,
-            firstName: poll.authorFirstName,
-            lastName: poll.authorLastName,
-            profileImageUrl: poll.authorProfileImageUrl,
-            kliqName: poll.authorKliqName,
-          },
-          type: 'poll',
-          activityDate: poll.createdAt,
-          content: `🗳️ Created a poll: "${poll.title}"`,
-        })));
-
-        // 3. Get events from kliq members with attendance statistics
-        const eventsQuery = db
+          .orderBy(desc(polls.createdAt))
+          .limit(50) : [], // Limit results for performance
+          
+        // 3. Get events from kliq members (optimized query)
+        friendIds.length > 0 ? db
           .select({
+            id: events.id,
+            userId: events.userId,
+            title: events.title,
+            description: events.description,
+            location: events.location,
+            eventDate: events.eventDate,
+            mediaUrl: events.mediaUrl,
+            mediaType: events.mediaType,
+            isPublic: events.isPublic,
+            attendeeCount: events.attendeeCount,
+            createdAt: events.createdAt,
+            authorId: users.id,
+            authorFirstName: users.firstName,
+            authorLastName: users.lastName,
+            authorProfileImageUrl: users.profileImageUrl,
+            authorKliqName: users.kliqName,
+          })
+          .from(events)
+          .innerJoin(users, eq(events.userId, users.id))
+          .where(inArray(events.userId, friendIds))
+          .orderBy(desc(events.createdAt))
+          .limit(50) : [], // Limit results for performance
+          
+        // 4. Get actions from kliq members (optimized query)
+        friendIds.length > 0 ? db
+          .select({
+            id: actions.id,
+            userId: actions.userId,
+            title: actions.title,
+            description: actions.description,
+            status: actions.status,
+            streamUrl: actions.streamUrl,
+            activityDate: actions.activityDate,
+            createdAt: actions.createdAt,
+            authorId: users.id,
+            authorFirstName: users.firstName,
+            authorLastName: users.lastName,
+            authorProfileImageUrl: users.profileImageUrl,
+            authorKliqName: users.kliqName,
+          })
+          .from(actions)
+          .innerJoin(users, eq(actions.userId, users.id))
+          .where(inArray(actions.userId, friendIds))
+          .orderBy(desc(actions.activityDate))
+          .limit(50) : [] // Limit results for performance
+      ]);
+
+      console.log(`Feed: Got ${postsData.length} posts, latest:`, postsData[0]?.createdAt);
+      
+      // Add posts to feed
+      feedItems.push(...postsData.map(post => ({
+        ...post,
+        type: 'post',
+        activityDate: post.createdAt,
+      })));
+
+      // Add polls to feed
+      feedItems.push(...pollsData.map(poll => ({
+        id: poll.id,
+        userId: poll.userId,
+        title: poll.title,
+        description: poll.description,
+        options: poll.options,
+        expiresAt: poll.expiresAt,
+        isActive: poll.isActive,
+        createdAt: poll.createdAt,
+        author: {
+          id: poll.authorId,
+          firstName: poll.authorFirstName,
+          lastName: poll.authorLastName,
+          profileImageUrl: poll.authorProfileImageUrl,
+          kliqName: poll.authorKliqName,
+        },
+        type: 'poll',
+        activityDate: poll.createdAt,
+        content: `🗳️ Created a poll: "${poll.title}"`,
+      })));
+
+      // Add events to feed
+      feedItems.push(...eventsData.map(event => ({
             id: events.id,
             userId: events.userId,
             title: events.title,
