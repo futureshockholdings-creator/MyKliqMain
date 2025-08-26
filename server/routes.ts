@@ -915,6 +915,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check SMS message status
+  app.get('/api/twilio/status/:messageSid', isAuthenticated, async (req: any, res) => {
+    try {
+      const { messageSid } = req.params;
+      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      
+      const message = await client.messages(messageSid).fetch();
+      
+      res.json({
+        success: true,
+        message: {
+          sid: message.sid,
+          status: message.status,
+          errorCode: message.errorCode,
+          errorMessage: message.errorMessage,
+          dateCreated: message.dateCreated,
+          dateSent: message.dateSent,
+          dateUpdated: message.dateUpdated,
+          from: message.from,
+          to: message.to,
+          body: message.body,
+          direction: message.direction,
+          price: message.price,
+          priceUnit: message.priceUnit
+        }
+      });
+    } catch (error: any) {
+      console.error('Error fetching message status:', error);
+      res.status(500).json({ 
+        error: 'Failed to fetch message status',
+        message: error.message,
+        code: error.code
+      });
+    }
+  });
+
+  // Twilio webhook for message status updates
+  app.post('/api/twilio/webhook', (req, res) => {
+    console.log('Twilio webhook received:', req.body);
+    res.status(200).send('OK');
+  });
+
   // Test Twilio configuration
   app.get('/api/twilio/test', isAuthenticated, async (req: any, res) => {
     try {

@@ -263,6 +263,31 @@ export default function Kliq() {
     },
   });
 
+  // Check message status
+  const checkMessageStatusMutation = useMutation({
+    mutationFn: async (messageSid: string) => {
+      const response = await apiRequest("GET", `/api/twilio/status/${messageSid}`);
+      return response;
+    },
+    onSuccess: (data) => {
+      const msg = data.message;
+      toast({
+        title: "Message Status",
+        description: `Status: ${msg.status} | ${msg.errorMessage || 'No errors'}`,
+        variant: msg.status === 'failed' ? "destructive" : "default",
+      });
+      console.log("Message status:", data);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Status Check Failed",
+        description: "Could not fetch message status",
+        variant: "destructive",
+      });
+      console.error("Message status error:", error);
+    },
+  });
+
   // Leave Kliq mutation - removes all friendships
   const leaveKliqMutation = useMutation({
     mutationFn: async () => {
@@ -764,6 +789,15 @@ export default function Kliq() {
               className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
             >
               {testTwilioMutation.isPending ? "Testing..." : "Test SMS"}
+            </Button>
+            <Button
+              onClick={() => checkMessageStatusMutation.mutate("SMb3ee431c7dc2ea68fa881f75adae2cec")}
+              disabled={checkMessageStatusMutation.isPending}
+              variant="outline"
+              size="sm"
+              className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+            >
+              {checkMessageStatusMutation.isPending ? "Checking..." : "Check Status"}
             </Button>
             <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
               <DialogTrigger asChild>
