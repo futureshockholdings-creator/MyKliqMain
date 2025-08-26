@@ -915,6 +915,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test Twilio configuration
+  app.get('/api/twilio/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      
+      // Get account info to verify credentials
+      const account = await client.api.accounts(process.env.TWILIO_ACCOUNT_SID!).fetch();
+      
+      // Get phone numbers associated with account
+      const phoneNumbers = await client.incomingPhoneNumbers.list();
+      
+      res.json({
+        success: true,
+        account: {
+          sid: account.sid,
+          friendlyName: account.friendlyName,
+          status: account.status,
+          type: account.type
+        },
+        phoneNumbers: phoneNumbers.map(p => ({
+          phoneNumber: p.phoneNumber,
+          friendlyName: p.friendlyName,
+          capabilities: p.capabilities
+        })),
+        configuredFrom: process.env.TWILIO_PHONE_NUMBER
+      });
+    } catch (error: any) {
+      console.error('Twilio test error:', error);
+      res.status(500).json({ 
+        error: 'Twilio configuration test failed',
+        message: error.message,
+        code: error.code
+      });
+    }
+  });
+
   // Send SMS invites to phone numbers
   app.post('/api/friends/send-invites', isAuthenticated, async (req: any, res) => {
     try {
@@ -964,20 +1000,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                  cleanNumber.length === 10 ? `+1${cleanNumber}` : `+${cleanNumber}`;
           
           console.log(`Sending SMS to: ${phoneNumber} -> ${formattedNumber}`);
+          console.log(`Using Twilio from: ${process.env.TWILIO_PHONE_NUMBER}`);
           
           const message = `${firstName} has invited you to join their kliq on MyKliq! Use invite code: ${user.inviteCode}. Download the app and enter this code to connect: https://kliqlife.com`;
           
-          await client.messages.create({
+          const messageResult = await client.messages.create({
             body: message,
             from: process.env.TWILIO_PHONE_NUMBER,
             to: formattedNumber
           });
           
-          results.push({ phoneNumber, status: 'sent' });
-          console.log(`SMS sent successfully to ${formattedNumber}`);
+          console.log(`Twilio response for ${formattedNumber}:`, {
+            sid: messageResult.sid,
+            status: messageResult.status,
+            errorCode: messageResult.errorCode,
+            errorMessage: messageResult.errorMessage,
+            direction: messageResult.direction,
+            accountSid: messageResult.accountSid
+          });
+          
+          results.push({ 
+            phoneNumber, 
+            status: 'sent',
+            messageSid: messageResult.sid,
+            twilioStatus: messageResult.status
+          });
+          console.log(`SMS sent successfully to ${formattedNumber} - SID: ${messageResult.sid}, Status: ${messageResult.status}`);
         } catch (error: any) {
-          console.error(`Failed to send SMS to ${phoneNumber}:`, error.message);
-          results.push({ phoneNumber, status: 'failed', error: error.message });
+          console.error(`Failed to send SMS to ${phoneNumber}:`, {
+            message: error.message,
+            code: error.code,
+            moreInfo: error.moreInfo,
+            status: error.status,
+            details: error.details
+          });
+          results.push({ phoneNumber, status: 'failed', error: error.message, errorCode: error.code });
         }
       }
 

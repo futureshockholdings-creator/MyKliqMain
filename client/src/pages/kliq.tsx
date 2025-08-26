@@ -218,6 +218,51 @@ export default function Kliq() {
     },
   });
 
+  // Test Twilio configuration
+  const testTwilioMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("GET", "/api/twilio/test");
+      return response;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Twilio Test Successful",
+        description: `Account: ${data.account.status} | Phone: ${data.configuredFrom}`,
+      });
+      console.log("Twilio test results:", data);
+    },
+    onError: (error: any) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
+      let errorMessage = "Twilio configuration test failed";
+      if (error.message) {
+        try {
+          const parsed = JSON.parse(error.message.replace(/^\d+: /, ""));
+          errorMessage = parsed.message || parsed.error || errorMessage;
+        } catch {
+          errorMessage = error.message || errorMessage;
+        }
+      }
+      
+      toast({
+        title: "Twilio Test Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      console.error("Twilio test error:", error);
+    },
+  });
+
   // Leave Kliq mutation - removes all friendships
   const leaveKliqMutation = useMutation({
     mutationFn: async () => {
@@ -711,6 +756,15 @@ export default function Kliq() {
 
           {/* Action Buttons */}
           <div className="flex gap-3">
+            <Button
+              onClick={() => testTwilioMutation.mutate()}
+              disabled={testTwilioMutation.isPending}
+              variant="outline"
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+            >
+              {testTwilioMutation.isPending ? "Testing..." : "Test SMS"}
+            </Button>
             <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground" data-testid="button-send-invite">
