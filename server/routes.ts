@@ -921,14 +921,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { phoneNumbers } = req.body;
       const userId = req.user.claims.sub;
       
+      console.log('SMS Invite Request:', { phoneNumbers, userId });
+      
       // Validate input
       if (!phoneNumbers || !Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
+        console.log('Invalid phone numbers input:', phoneNumbers);
         return res.status(400).json({ error: 'Phone numbers array is required' });
+      }
+
+      // Basic phone number validation
+      const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+      const invalidNumbers = phoneNumbers.filter(num => !phoneRegex.test(num.replace(/[\s\-\(\)]/g, '')));
+      
+      if (invalidNumbers.length > 0) {
+        console.log('Invalid phone number format:', invalidNumbers);
+        return res.status(400).json({ 
+          error: 'Invalid phone number format. Please use format: +1234567890 or include country code',
+          invalidNumbers 
+        });
       }
 
       // Get user's invite code
       const user = await storage.getUser(userId);
       if (!user?.inviteCode) {
+        console.log('User has no invite code:', userId);
         return res.status(400).json({ error: 'User has no invite code' });
       }
 
@@ -941,25 +957,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Send SMS to each phone number
       for (const phoneNumber of phoneNumbers) {
         try {
+          // Clean phone number (remove spaces, dashes, parentheses)
+          const cleanNumber = phoneNumber.replace(/[\s\-\(\)]/g, '');
+          // Add +1 if no country code provided and it's 10 digits
+          const formattedNumber = cleanNumber.startsWith('+') ? cleanNumber : 
+                                 cleanNumber.length === 10 ? `+1${cleanNumber}` : `+${cleanNumber}`;
+          
+          console.log(`Sending SMS to: ${phoneNumber} -> ${formattedNumber}`);
+          
           const message = `${firstName} has invited you to join their kliq on MyKliq! Use invite code: ${user.inviteCode}. Download the app and enter this code to connect: https://kliqlife.com`;
           
           await client.messages.create({
             body: message,
             from: process.env.TWILIO_PHONE_NUMBER,
-            to: phoneNumber
+            to: formattedNumber
           });
           
           results.push({ phoneNumber, status: 'sent' });
+          console.log(`SMS sent successfully to ${formattedNumber}`);
         } catch (error: any) {
           console.error(`Failed to send SMS to ${phoneNumber}:`, error.message);
           results.push({ phoneNumber, status: 'failed', error: error.message });
         }
       }
 
+      const successCount = results.filter(r => r.status === 'sent').length;
+      console.log(`SMS Invite Results: ${successCount}/${phoneNumbers.length} sent successfully`);
+
       res.json({ 
         success: true, 
         results,
-        message: `Invites sent to ${results.filter(r => r.status === 'sent').length} of ${phoneNumbers.length} numbers`
+        message: `Invites sent to ${successCount} of ${phoneNumbers.length} numbers`
       });
     } catch (error) {
       console.error('Error sending SMS invites:', error);

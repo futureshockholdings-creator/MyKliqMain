@@ -174,17 +174,18 @@ export default function Kliq() {
   // Send SMS invites
   const sendInvitesMutation = useMutation({
     mutationFn: async (phoneNumbers: string[]) => {
-      await apiRequest("POST", "/api/friends/send-invites", { phoneNumbers });
+      const response = await apiRequest("POST", "/api/friends/send-invites", { phoneNumbers });
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       setPhoneNumbers("");
       setIsInviteDialogOpen(false);
       toast({
         title: "Invites sent!",
-        description: "SMS invites have been sent to the provided phone numbers",
+        description: data.message || "SMS invites have been sent to the provided phone numbers",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -196,9 +197,22 @@ export default function Kliq() {
         }, 500);
         return;
       }
+      
+      // Try to parse error message from server
+      let errorMessage = "Failed to send invites. Please check the phone numbers.";
+      if (error.message && error.message.includes("400: ")) {
+        const serverError = error.message.replace("400: ", "");
+        try {
+          const parsed = JSON.parse(serverError);
+          errorMessage = parsed.error || errorMessage;
+        } catch {
+          errorMessage = serverError || errorMessage;
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to send invites. Please check the phone numbers.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -714,13 +728,16 @@ export default function Kliq() {
                     <Textarea
                       value={phoneNumbers}
                       onChange={(e) => setPhoneNumbers(e.target.value)}
-                      placeholder="Enter phone numbers, one per line:\n+1234567890\n+0987654321"
+                      placeholder="Enter phone numbers, one per line:&#10;+1234567890&#10;+4478901234&#10;1234567890"
                       className="bg-input border-border text-foreground min-h-[100px]"
                       data-testid="input-phone-numbers"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Enter one phone number per line. Include country code (e.g., +1 for US)
-                    </p>
+                    <div className="text-xs text-muted-foreground mt-1 space-y-1">
+                      <p>• Enter one phone number per line</p>
+                      <p>• Include country code: +1 (US), +44 (UK), +49 (Germany), etc.</p>
+                      <p>• For US numbers, you can use: +1234567890 or 1234567890</p>
+                      <p>• Remove spaces, dashes, and parentheses</p>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm text-muted-foreground">Your Invite Code</label>
