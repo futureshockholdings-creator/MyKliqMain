@@ -119,7 +119,7 @@ export default function ForgotPassword() {
           <Link href="/">
             <Button variant="ghost" className="text-muted-foreground hover:text-primary">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
+              Back to Landing
             </Button>
           </Link>
         </div>
