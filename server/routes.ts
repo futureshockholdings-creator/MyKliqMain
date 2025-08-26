@@ -915,6 +915,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send SMS invites to phone numbers
+  app.post('/api/friends/send-invites', isAuthenticated, async (req: any, res) => {
+    try {
+      const { phoneNumbers } = req.body;
+      const userId = req.user.claims.sub;
+      
+      // Validate input
+      if (!phoneNumbers || !Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
+        return res.status(400).json({ error: 'Phone numbers array is required' });
+      }
+
+      // Get user's invite code
+      const user = await storage.getUser(userId);
+      if (!user?.inviteCode) {
+        return res.status(400).json({ error: 'User has no invite code' });
+      }
+
+      // Initialize Twilio client
+      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      
+      const results = [];
+      const firstName = user.firstName || 'A friend';
+      
+      // Send SMS to each phone number
+      for (const phoneNumber of phoneNumbers) {
+        try {
+          const message = `${firstName} has invited you to join their kliq on MyKliq! Use invite code: ${user.inviteCode}. Download the app and enter this code to connect: https://kliqlife.com`;
+          
+          await client.messages.create({
+            body: message,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: phoneNumber
+          });
+          
+          results.push({ phoneNumber, status: 'sent' });
+        } catch (error: any) {
+          console.error(`Failed to send SMS to ${phoneNumber}:`, error.message);
+          results.push({ phoneNumber, status: 'failed', error: error.message });
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        results,
+        message: `Invites sent to ${results.filter(r => r.status === 'sent').length} of ${phoneNumbers.length} numbers`
+      });
+    } catch (error) {
+      console.error('Error sending SMS invites:', error);
+      res.status(500).json({ error: 'Failed to send invites' });
+    }
+  });
+
   app.put('/api/friends/:friendId/rank', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +24,7 @@ export default function Kliq() {
   const [kliqName, setKliqName] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
+  const [phoneNumbers, setPhoneNumbers] = useState("");
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [friendToRemove, setFriendToRemove] = useState<string | null>(null);
   const [isLeaveKliqDialogOpen, setIsLeaveKliqDialogOpen] = useState(false);
@@ -169,6 +171,39 @@ export default function Kliq() {
     },
   });
 
+  // Send SMS invites
+  const sendInvitesMutation = useMutation({
+    mutationFn: async (phoneNumbers: string[]) => {
+      await apiRequest("POST", "/api/friends/send-invites", { phoneNumbers });
+    },
+    onSuccess: () => {
+      setPhoneNumbers("");
+      setIsInviteDialogOpen(false);
+      toast({
+        title: "Invites sent!",
+        description: "SMS invites have been sent to the provided phone numbers",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to send invites. Please check the phone numbers.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Leave Kliq mutation - removes all friendships
   const leaveKliqMutation = useMutation({
     mutationFn: async () => {
@@ -283,6 +318,19 @@ export default function Kliq() {
   const handleJoinKliq = () => {
     if (inviteCode.trim()) {
       joinKliqMutation.mutate(inviteCode.trim());
+    }
+  };
+
+  const handleSendInvites = () => {
+    if (phoneNumbers.trim()) {
+      const numbers = phoneNumbers
+        .split('\n')
+        .map(num => num.trim())
+        .filter(num => num.length > 0);
+      
+      if (numbers.length > 0) {
+        sendInvitesMutation.mutate(numbers);
+      }
     }
   };
 
@@ -651,32 +699,46 @@ export default function Kliq() {
           <div className="flex gap-3">
             <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground" data-testid="button-join-kliq">
+                <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground" data-testid="button-send-invite">
                   <Plus className="w-4 h-4 mr-2" />
-                  Join Kliq
+                  Send Invite
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
                 <DialogHeader>
-                  <DialogTitle className="text-primary">Join Another Kliq</DialogTitle>
+                  <DialogTitle className="text-primary">Invite Friends to Your Kliq</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm text-muted-foreground">Invite Code</label>
-                    <Input
-                      value={inviteCode}
-                      onChange={(e) => setInviteCode(e.target.value)}
-                      placeholder="KLIQ-XXXX-XXXX"
-                      className="bg-input border-border text-foreground"
-                      data-testid="input-join-invite-code"
+                    <label className="text-sm text-muted-foreground">Phone Numbers</label>
+                    <Textarea
+                      value={phoneNumbers}
+                      onChange={(e) => setPhoneNumbers(e.target.value)}
+                      placeholder="Enter phone numbers, one per line:\n+1234567890\n+0987654321"
+                      className="bg-input border-border text-foreground min-h-[100px]"
+                      data-testid="input-phone-numbers"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter one phone number per line. Include country code (e.g., +1 for US)
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">Your Invite Code</label>
+                    <div className="bg-muted rounded p-3 text-center">
+                      <code className="text-mykliq-green font-mono font-bold">
+                        {userData?.inviteCode || "Loading..."}
+                      </code>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      This code will be sent to the phone numbers above
+                    </p>
                   </div>
                   <Button
-                    onClick={handleJoinKliq}
-                    disabled={!inviteCode.trim() || joinKliqMutation.isPending}
+                    onClick={handleSendInvites}
+                    disabled={!phoneNumbers.trim() || sendInvitesMutation.isPending}
                     className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
                   >
-                    {joinKliqMutation.isPending ? "Joining..." : "Join Kliq"}
+                    {sendInvitesMutation.isPending ? "Sending..." : "Send Invite"}
                   </Button>
                 </div>
               </DialogContent>
