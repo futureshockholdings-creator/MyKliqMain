@@ -1000,13 +1000,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
                                  cleanNumber.length === 10 ? `+1${cleanNumber}` : `+${cleanNumber}`;
           
           console.log(`Sending SMS to: ${phoneNumber} -> ${formattedNumber}`);
-          console.log(`Using Twilio from: ${process.env.TWILIO_PHONE_NUMBER}`);
+          
+          // Ensure the from number is in proper international format
+          const fromNumber = process.env.TWILIO_PHONE_NUMBER!;
+          const formattedFromNumber = fromNumber.startsWith('+') ? fromNumber : 
+                                    fromNumber.replace(/[\s\-\(\)]/g, '').replace(/^1?/, '+1');
+          console.log(`Using Twilio from: ${fromNumber} -> ${formattedFromNumber}`);
           
           const message = `${firstName} has invited you to join their kliq on MyKliq! Use invite code: ${user.inviteCode}. Download the app and enter this code to connect: https://kliqlife.com`;
           
           const messageResult = await client.messages.create({
             body: message,
-            from: process.env.TWILIO_PHONE_NUMBER,
+            from: formattedFromNumber,
             to: formattedNumber
           });
           
