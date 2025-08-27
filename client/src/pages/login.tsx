@@ -124,7 +124,7 @@ export default function Login() {
         <div className="absolute bottom-40 right-12 w-8 h-8 bg-mykliq-orange rounded-full animate-bounce"></div>
       </div>
 
-      <div className="relative z-10 max-w-sm mx-auto bg-card min-h-screen">
+      <div className="relative z-10 w-full max-w-sm md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto bg-card min-h-screen">
         {/* Hero Banner */}
         <div className="bg-gradient-to-r from-primary via-secondary to-mykliq-green h-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>

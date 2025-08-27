@@ -72,31 +72,31 @@ export default function Landing() {
         <div className="absolute bottom-40 right-12 w-8 h-8 bg-mykliq-orange rounded-full animate-bounce"></div>
       </div>
 
-      <div className="relative z-10 max-w-sm mx-auto bg-card min-h-screen">
+      <div className="relative z-10 w-full max-w-sm md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto bg-card min-h-screen">
         {/* Hero Banner */}
-        <div className="bg-gradient-to-r from-primary via-secondary to-mykliq-green h-32 relative overflow-hidden">
+        <div className="bg-gradient-to-r from-primary via-secondary to-mykliq-green h-32 md:h-40 lg:h-48 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
-          <div className="absolute bottom-4 left-4">
-            <h1 className="text-3xl font-bold text-white">
+          <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 lg:bottom-8 lg:left-8">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
               MyKliq
             </h1>
-            <p className="text-white/90 text-sm">Your Exclusive Social Circle</p>
+            <p className="text-white/90 text-sm md:text-base lg:text-lg">Your Exclusive Social Circle</p>
           </div>
         </div>
 
         {/* Welcome Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 lg:p-8 space-y-6">
           <div className="text-center">
-            <h2 className="text-xl font-bold text-primary mb-2">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary mb-2">
               Relive the Golden Age of Social Networking with Modern Features
             </h2>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-sm md:text-base">
               Connect with your closest friends in a private, customizable space.
             </p>
           </div>
 
           {/* Features */}
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card className="bg-gradient-to-r from-primary/20 to-mykliq-purple/20 border-primary/30">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">

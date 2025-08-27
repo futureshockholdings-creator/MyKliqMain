@@ -188,7 +188,7 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen bg-background p-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="w-full max-w-sm md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-primary mb-2">Welcome to MyKliq!</h1>
           <p className="text-muted-foreground">Create your profile to join your exclusive social circle</p>
