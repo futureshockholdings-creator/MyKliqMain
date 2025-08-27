@@ -205,6 +205,11 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
         setSavedPassword(user.password);
         passwordForm.setValue('password', user.password);
         passwordForm.setValue('confirmPassword', user.password);
+      } else {
+        // Clear password fields if no password exists
+        setSavedPassword("");
+        passwordForm.setValue('password', '');
+        passwordForm.setValue('confirmPassword', '');
       }
     }
   }, [user, isOpen, passwordForm]);
@@ -240,7 +245,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
         title: "Password Set Successfully",
         description: "Your password has been set up and will be used for future logins.",
       });
-      passwordForm.reset();
+      // Refresh user data to load the new password
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
     onError: (error) => {
       toast({
