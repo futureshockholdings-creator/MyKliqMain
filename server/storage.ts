@@ -2823,6 +2823,17 @@ export class DatabaseStorage implements IStorage {
       if (user.securityPin) {
         user.securityPin = decryptFromStorage(user.securityPin);
       }
+      
+      // Decrypt security answers if they exist
+      if (user.securityAnswer1) {
+        user.securityAnswer1 = decryptFromStorage(user.securityAnswer1);
+      }
+      if (user.securityAnswer2) {
+        user.securityAnswer2 = decryptFromStorage(user.securityAnswer2);
+      }
+      if (user.securityAnswer3) {
+        user.securityAnswer3 = decryptFromStorage(user.securityAnswer3);
+      }
     } catch (error) {
       console.error("Error decrypting admin user data:", error);
       // Continue with encrypted data if decryption fails
