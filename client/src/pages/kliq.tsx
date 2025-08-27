@@ -543,7 +543,12 @@ export default function Kliq() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <div className="text-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded" 
-                       onClick={() => setKliqLeftEmoji(kliqLeftEmoji === '🏆' ? '🚀' : kliqLeftEmoji === '🚀' ? '🎆' : kliqLeftEmoji === '🎆' ? '✨' : kliqLeftEmoji === '✨' ? '🔥' : kliqLeftEmoji === '🔥' ? '💫' : kliqLeftEmoji === '💫' ? '❤️' : kliqLeftEmoji === '❤️' ? '👏' : '🏆')}
+                       onClick={() => {
+                         const emojis = ['🏆', '🚀', '🎆', '✨', '🔥', '💫', '❤️', '👏', '🌟', '💎', '🎉', '⚡', '🎯', '💪', '👑', '🦄'];
+                         const currentIndex = emojis.indexOf(kliqLeftEmoji);
+                         const nextIndex = (currentIndex + 1) % emojis.length;
+                         setKliqLeftEmoji(emojis[nextIndex]);
+                       }}
                        data-testid="emoji-left-selector">
                     {kliqLeftEmoji}
                   </div>
@@ -555,7 +560,12 @@ export default function Kliq() {
                     data-testid="input-kliq-name"
                   />
                   <div className="text-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded" 
-                       onClick={() => setKliqRightEmoji(kliqRightEmoji === '🏆' ? '🚀' : kliqRightEmoji === '🚀' ? '🎆' : kliqRightEmoji === '🎆' ? '✨' : kliqRightEmoji === '✨' ? '🔥' : kliqRightEmoji === '🔥' ? '💫' : kliqRightEmoji === '💫' ? '❤️' : kliqRightEmoji === '❤️' ? '👏' : '🏆')}
+                       onClick={() => {
+                         const emojis = ['🏆', '🚀', '🎆', '✨', '🔥', '💫', '❤️', '👏', '🌟', '💎', '🎉', '⚡', '🎯', '💪', '👑', '🦄'];
+                         const currentIndex = emojis.indexOf(kliqRightEmoji);
+                         const nextIndex = (currentIndex + 1) % emojis.length;
+                         setKliqRightEmoji(emojis[nextIndex]);
+                       }}
                        data-testid="emoji-right-selector">
                     {kliqRightEmoji}
                   </div>
