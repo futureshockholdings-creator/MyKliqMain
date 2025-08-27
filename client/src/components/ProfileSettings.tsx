@@ -552,7 +552,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       data-testid="input-security-pin"
                     />
                     <p className="text-xs text-muted-foreground">
-                      This PIN adds an extra layer of security for password recovery
+                      This PIN adds an extra layer of security for password recovery, DO NOT SHARE THIS PIN WITH ANYONE
                     </p>
                   </div>
                 </div>
