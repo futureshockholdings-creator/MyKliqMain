@@ -297,6 +297,12 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      toast({
+        title: "Like recorded!",
+        description: "Your like has been added to the post",
+        duration: 2000,
+        className: "bg-white text-black border-gray-300",
+      });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -1655,9 +1661,19 @@ export default function Home() {
                     size="sm"
                     variant="ghost"
                     onClick={() => handleLikePost(item.id)}
-                    className="text-primary hover:bg-primary/10 p-0 h-auto"
+                    className={`p-0 h-auto transition-colors ${
+                      Array.isArray(item.likes) && user && item.likes.some((like: any) => like.userId === user.id)
+                        ? "text-red-500 hover:bg-red-50" 
+                        : "text-primary hover:bg-primary/10"
+                    }`}
                   >
-                    <Heart className="w-4 h-4 mr-1" />
+                    <Heart 
+                      className={`w-4 h-4 mr-1 ${
+                        Array.isArray(item.likes) && user && item.likes.some((like: any) => like.userId === user.id)
+                          ? "fill-current" 
+                          : ""
+                      }`} 
+                    />
                     {Array.isArray(item.likes) ? item.likes.length : (item.likes || 0)}
                   </Button>
                   <Button
