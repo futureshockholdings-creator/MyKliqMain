@@ -409,7 +409,7 @@ export default function Home() {
         queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
       }
     },
-    onSuccess: (_, { postId }) => {
+    onSuccess: (response, { postId }) => {
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
       setCommentGifs(prev => ({ ...prev, [postId]: null }));
       setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
@@ -419,15 +419,33 @@ export default function Home() {
         newSet.delete(postId);
         return newSet;
       });
+      
+      // Update the cache with the real comment from the server response
+      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+        if (!old) return old;
+        return old.map((item: any) => {
+          if (item.id === postId) {
+            // Remove temporary comments and add the real one
+            const realComments = item.comments?.filter((c: any) => !c.id.startsWith('temp-')) || [];
+            const updatedComments = [...realComments, response.comment];
+            return {
+              ...item,
+              comments: updatedComments,
+              _commentsCount: updatedComments.length
+            };
+          }
+          return item;
+        });
+      });
+      
       toast({
         title: "Comment added!",
         description: "Your comment has been posted",
       });
     },
     onSettled: () => {
-      // Force a complete refresh by removing the cache and refetching
-      queryClient.removeQueries({ queryKey: ["/api/kliq-feed"] });
-      queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
+      // Light invalidation to keep data fresh but preserve optimistic updates
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
     },
   });
 
