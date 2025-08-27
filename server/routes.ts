@@ -703,6 +703,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (profileData.bio !== undefined) cleanedData.bio = profileData.bio;
       if (profileData.phoneNumber !== undefined) cleanedData.phoneNumber = profileData.phoneNumber;
       if (profileData.kliqName !== undefined) cleanedData.kliqName = profileData.kliqName;
+      if (profileData.kliqLeftEmoji !== undefined) cleanedData.kliqLeftEmoji = profileData.kliqLeftEmoji;
+      if (profileData.kliqRightEmoji !== undefined) cleanedData.kliqRightEmoji = profileData.kliqRightEmoji;
       if (profileData.birthdate !== undefined) cleanedData.birthdate = profileData.birthdate;
       
       // Handle security questions (hash them for security)

@@ -22,6 +22,8 @@ import Footer from "@/components/Footer";
 
 export default function Kliq() {
   const [kliqName, setKliqName] = useState("");
+  const [kliqLeftEmoji, setKliqLeftEmoji] = useState("🏆");
+  const [kliqRightEmoji, setKliqRightEmoji] = useState("🏆");
   const [editingName, setEditingName] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [phoneNumbers, setPhoneNumbers] = useState("");
@@ -35,6 +37,8 @@ export default function Kliq() {
     firstName?: string; 
     lastName?: string; 
     kliqName?: string; 
+    kliqLeftEmoji?: string;
+    kliqRightEmoji?: string;
     inviteCode?: string; 
     kliqClosed?: boolean;
   };
@@ -72,10 +76,10 @@ export default function Kliq() {
     queryKey: ["/api/polls"],
   });
 
-  // Update kliq name
+  // Update kliq name and emojis
   const updateNameMutation = useMutation({
-    mutationFn: async (name: string) => {
-      await apiRequest("PUT", "/api/user/profile", { kliqName: name });
+    mutationFn: async (data: { kliqName: string; kliqLeftEmoji: string; kliqRightEmoji: string }) => {
+      await apiRequest("PUT", "/api/user/profile", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -391,7 +395,11 @@ export default function Kliq() {
 
   const handleSaveKliqName = () => {
     if (kliqName.trim()) {
-      updateNameMutation.mutate(kliqName.trim());
+      updateNameMutation.mutate({
+        kliqName: kliqName.trim(),
+        kliqLeftEmoji: kliqLeftEmoji,
+        kliqRightEmoji: kliqRightEmoji
+      });
     }
   };
 
@@ -532,33 +540,55 @@ export default function Kliq() {
           <Users className="w-6 h-6 text-primary" />
           <h1 className="text-2xl font-bold text-primary">
             {editingName ? (
-              <div className="flex items-center gap-2">
-                <Input
-                  value={kliqName}
-                  onChange={(e) => setKliqName(e.target.value)}
-                  className="bg-input border-border text-foreground text-center"
-                  placeholder={userData?.kliqName || "My Kliq"}
-                />
-                <Button
-                  size="sm"
-                  onClick={handleSaveKliqName}
-                  disabled={updateNameMutation.isPending}
-                  className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground"
-                >
-                  Save
-                </Button>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="text-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded" 
+                       onClick={() => setKliqLeftEmoji(kliqLeftEmoji === '🏆' ? '🚀' : kliqLeftEmoji === '🚀' ? '🎆' : kliqLeftEmoji === '🎆' ? '✨' : kliqLeftEmoji === '✨' ? '🔥' : kliqLeftEmoji === '🔥' ? '💫' : kliqLeftEmoji === '💫' ? '❤️' : kliqLeftEmoji === '❤️' ? '👏' : '🏆')}
+                       data-testid="emoji-left-selector">
+                    {kliqLeftEmoji}
+                  </div>
+                  <Input
+                    value={kliqName}
+                    onChange={(e) => setKliqName(e.target.value)}
+                    className="bg-input border-border text-foreground text-center"
+                    placeholder={userData?.kliqName || "My Kliq"}
+                    data-testid="input-kliq-name"
+                  />
+                  <div className="text-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded" 
+                       onClick={() => setKliqRightEmoji(kliqRightEmoji === '🏆' ? '🚀' : kliqRightEmoji === '🚀' ? '🎆' : kliqRightEmoji === '🎆' ? '✨' : kliqRightEmoji === '✨' ? '🔥' : kliqRightEmoji === '🔥' ? '💫' : kliqRightEmoji === '💫' ? '❤️' : kliqRightEmoji === '❤️' ? '👏' : '🏆')}
+                       data-testid="emoji-right-selector">
+                    {kliqRightEmoji}
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground text-center">Click emojis to cycle through options</div>
+                <div className="flex justify-center">
+                  <Button
+                    size="sm"
+                    onClick={handleSaveKliqName}
+                    disabled={updateNameMutation.isPending}
+                    className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground"
+                    data-testid="button-save-kliq"
+                  >
+                    Save
+                  </Button>
+                </div>
               </div>
             ) : (
               <>
-                🏆 {userData?.kliqName || "My Kliq"} 🏆
+                <span data-testid="kliq-display">
+                  {userData?.kliqLeftEmoji || '🏆'} {userData?.kliqName || "My Kliq"} {userData?.kliqRightEmoji || '🏆'}
+                </span>
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() => {
                     setKliqName(userData?.kliqName || "");
+                    setKliqLeftEmoji(userData?.kliqLeftEmoji || '🏆');
+                    setKliqRightEmoji(userData?.kliqRightEmoji || '🏆');
                     setEditingName(true);
                   }}
                   className="ml-2 text-muted-foreground hover:text-foreground"
+                  data-testid="button-edit-kliq"
                 >
                   <Edit className="w-4 h-4" />
                 </Button>

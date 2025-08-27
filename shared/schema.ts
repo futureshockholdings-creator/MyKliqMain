@@ -45,6 +45,8 @@ export const users = pgTable("users", {
   bio: text("bio"),
   inviteCode: varchar("invite_code", { length: 20 }).unique(),
   kliqName: varchar("kliq_name").default("My Kliq"),
+  kliqLeftEmoji: varchar("kliq_left_emoji").default("🏆"),
+  kliqRightEmoji: varchar("kliq_right_emoji").default("🏆"),
   kliqClosed: boolean("kliq_closed").default(false),
   birthdate: date("birthdate"),
   profileMusicUrl: varchar("profile_music_url"),
