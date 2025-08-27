@@ -206,7 +206,7 @@ export function Conversation() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-black p-4">
+      <div className="min-h-screen bg-background text-foreground p-4">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-6">
             <Link to="/messages">
@@ -215,8 +215,8 @@ export function Conversation() {
               </Button>
             </Link>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
+              <div className="w-10 h-10 bg-muted rounded-full animate-pulse"></div>
+              <div className="h-4 bg-muted rounded w-32 animate-pulse"></div>
             </div>
           </div>
         </div>
@@ -231,9 +231,9 @@ export function Conversation() {
     null;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <div className="border-b border-gray-200 dark:border-gray-700 p-4">
+      <div className="border-b border-border p-4 bg-background">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-4">
             <Link to="/messages">
@@ -245,11 +245,11 @@ export function Conversation() {
               <div className="flex items-center gap-3">
                 <Avatar className="w-10 h-10">
                   <AvatarImage src={displayUser.profileImageUrl} />
-                  <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400">
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
                     {getInitials(displayUser)}
                   </AvatarFallback>
                 </Avatar>
-                <h1 className="text-lg font-semibold text-black dark:text-white" data-testid="text-conversation-title">
+                <h1 className="text-lg font-semibold text-foreground" data-testid="text-conversation-title">
                   {getDisplayName(displayUser)}
                 </h1>
               </div>
@@ -259,11 +259,11 @@ export function Conversation() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 bg-background">
         <div className="max-w-2xl mx-auto space-y-4">
           {(!conversation?.messages || conversation.messages.length === 0) ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className="text-muted-foreground">
                 No messages yet. Start the conversation!
               </p>
             </div>
@@ -279,7 +279,7 @@ export function Conversation() {
                   <div className={`flex gap-3 max-w-xs lg:max-w-md ${isOwn ? "flex-row-reverse" : ""}`}>
                     <Avatar className="w-8 h-8">
                       <AvatarImage src={message.sender.profileImageUrl} />
-                      <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-xs">
+                      <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
                         {getInitials(message.sender)}
                       </AvatarFallback>
                     </Avatar>
@@ -287,8 +287,8 @@ export function Conversation() {
                       <div
                         className={`rounded-lg ${
                           isOwn
-                            ? "bg-blue-500 text-white"
-                            : "bg-gray-100 dark:bg-gray-800 text-black dark:text-white"
+                            ? "bg-white text-black"
+                            : "bg-white text-black"
                         }`}
                         data-testid={`text-message-content-${message.id}`}
                       >
@@ -332,7 +332,7 @@ export function Conversation() {
                           </div>
                         )}
                       </div>
-                      <div className={`text-xs text-gray-500 dark:text-gray-400 mt-1 ${isOwn ? "text-right" : "text-left"}`}>
+                      <div className={`text-xs text-muted-foreground mt-1 ${isOwn ? "text-right" : "text-left"}`}>
                         {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
                       </div>
                     </div>
@@ -346,11 +346,11 @@ export function Conversation() {
       </div>
 
       {/* Message Input */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white text-black">
+      <div className="border-t border-border p-4 bg-background">
         <div className="max-w-2xl mx-auto">
           {/* Selected media preview */}
           {selectedMedia && (
-            <div className="mb-3 p-3 bg-gray-100 text-black rounded-lg">
+            <div className="mb-3 p-3 bg-white text-black rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {selectedMedia.type === "gif" && (
