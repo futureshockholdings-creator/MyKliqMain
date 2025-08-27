@@ -4,8 +4,9 @@ import { startBirthdayService } from "./birthdayService";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Optimize Express settings for production scaling
+app.use(express.json({ limit: '10mb' })); // Set reasonable payload limit
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -71,5 +72,21 @@ app.use((req, res, next) => {
     
     // Start the birthday service for automatic birthday messages
     startBirthdayService();
+    
+    // Setup graceful shutdown for production
+    const gracefulShutdown = (signal: string) => {
+      log(`Received ${signal}, shutting down gracefully`);
+      server.close(() => {
+        log('HTTP server closed');
+        const { pool } = require('./db');
+        pool.end(() => {
+          log('Database pool closed');
+          process.exit(0);
+        });
+      });
+    };
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
   });
 })();

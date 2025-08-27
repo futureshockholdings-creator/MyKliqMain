@@ -16,10 +16,12 @@ if (!process.env.DATABASE_URL) {
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
   ssl: true,
-  connectionTimeoutMillis: 10000,
-  idleTimeoutMillis: 30000,
-  max: 20, // Maximum connections in pool
-  min: 5,  // Minimum connections to maintain
+  connectionTimeoutMillis: 5000,   // Reduced from 10s for faster failover
+  idleTimeoutMillis: 20000,        // Reduced from 30s to free unused connections faster
+  max: 25,                         // Increased for higher concurrent load
+  min: 3,                          // Reduced minimum to save resources in low usage
+  acquireTimeoutMillis: 8000,      // Timeout for acquiring connections
+  createTimeoutMillis: 8000,       // Timeout for creating connections
 });
 
 // Add pool error handling for production resilience

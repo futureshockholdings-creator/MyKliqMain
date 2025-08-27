@@ -7,13 +7,20 @@ interface CacheItem {
 
 class SimpleCache {
   private cache: Map<string, CacheItem> = new Map();
-  private maxSize: number = 1000; // Prevent memory leaks
+  private maxSize: number = 2000; // Increased for better performance, prevent memory leaks
+
+  // Public method to access cache keys for invalidation
+  getKeys(): string[] {
+    return Array.from(this.cache.keys());
+  }
 
   set(key: string, data: any, ttlMs: number = 300000): void { // Default 5 minutes TTL
     // If cache is full, remove oldest entry
     if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
+      if (firstKey) {
+        this.cache.delete(firstKey);
+      }
     }
 
     this.cache.set(key, {
@@ -50,7 +57,8 @@ class SimpleCache {
   // Clean up expired items periodically
   cleanup(): void {
     const now = Date.now();
-    for (const [key, item] of this.cache.entries()) {
+    const entries = Array.from(this.cache.entries());
+    for (const [key, item] of entries) {
       if (now - item.timestamp > item.ttl) {
         this.cache.delete(key);
       }
@@ -68,10 +76,11 @@ class SimpleCache {
 // Global cache instance
 export const cache = new SimpleCache();
 
-// Clean up expired items every 5 minutes
+// Clean up expired items every 2 minutes for better memory management
 setInterval(() => {
   cache.cleanup();
-}, 5 * 60 * 1000);
+  console.log(`Cache stats: ${JSON.stringify(getCacheStats())}`);
+}, 2 * 60 * 1000);
 
 // Cache helper functions for common patterns
 export function getCachedOrFetch<T>(
@@ -91,10 +100,15 @@ export function getCachedOrFetch<T>(
 }
 
 export function invalidateCache(pattern: string): void {
-  const keys = Array.from(cache['cache'].keys());
+  const keys = cache.getKeys();
   keys.forEach(key => {
     if (key.includes(pattern)) {
       cache.delete(key);
     }
   });
+}
+
+// Add cache performance monitoring
+export function getCacheStats() {
+  return cache.getStats();
 }

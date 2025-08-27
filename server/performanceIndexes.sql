@@ -62,3 +62,59 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_posts_feed_optimization
 -- Index for filtering posts by content (for content filters)
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_posts_content_search 
   ON posts USING gin(to_tsvector('english', content));
+
+-- Additional performance indexes for MyKliq production scaling
+-- These indexes target the most critical query patterns after N+1 optimization
+
+-- Messages table optimization for conversation loading
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_messages_conversation_unread 
+  ON messages(receiver_id, is_read, expires_at) WHERE is_read = false;
+
+-- Story views for faster 'hasViewed' checks
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_story_views_user_story 
+  ON story_views(user_id, story_id);
+
+-- Event attendees for faster event details loading
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_event_attendees_event_user 
+  ON event_attendees(event_id, user_id);
+
+-- Action viewers for live stream viewer counts
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_action_viewers_action_active 
+  ON action_viewers(action_id) WHERE left_at IS NULL;
+
+-- Meetup check-ins for faster meetup details
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_meetup_checkins_meetup_user 
+  ON meetup_checkins(meetup_id, user_id);
+
+-- Video call participants for call management
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_call_participants_call_user 
+  ON call_participants(call_id, user_id);
+
+-- Conversations for faster IM loading
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_conversations_user1_activity 
+  ON conversations(user1_id, last_activity DESC);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_conversations_user2_activity 
+  ON conversations(user2_id, last_activity DESC);
+
+-- External posts for social media aggregation
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_external_posts_credential_created 
+  ON external_posts(social_credential_id, platform_created_at DESC);
+
+-- Birthday messages to avoid duplicates
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_birthday_messages_birthday_sender_year 
+  ON birthday_messages(birthday_user_id, sender_user_id, year);
+
+-- Active stories cleanup
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_stories_expires_at 
+  ON stories(expires_at) WHERE expires_at IS NOT NULL;
+
+-- Active polls cleanup
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_polls_active_expires 
+  ON polls(is_active, expires_at DESC) WHERE is_active = true;
+
+-- Optimized compound indexes for most frequent query patterns
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_posts_user_created_content 
+  ON posts(user_id, created_at DESC, content);
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_friendships_composite 
+  ON friendships(user1_id, user2_id, status, ranking);

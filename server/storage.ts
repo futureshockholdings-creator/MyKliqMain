@@ -502,53 +502,68 @@ export class DatabaseStorage implements IStorage {
     console.log(`Raw posts query returned ${postsData.length} posts. Latest:`, postsData[0]?.createdAt);
 
     // Get likes and comments for each post
-    const postsWithDetails = await Promise.all(
-      postsData.map(async (post) => {
-        const [likesData, commentsData] = await Promise.all([
-          db.select().from(postLikes).where(eq(postLikes.postId, post.id)),
-          db
-            .select({
-              id: comments.id,
-              postId: comments.postId,
-              userId: comments.userId,
-              content: comments.content,
-              gifId: comments.gifId,
-              movieconId: comments.movieconId,
-              createdAt: comments.createdAt,
-              author: users,
-              gif: gifs,
-              moviecon: moviecons,
-            })
-            .from(comments)
-            .innerJoin(users, eq(comments.userId, users.id))
-            .leftJoin(gifs, eq(comments.gifId, gifs.id))
-            .leftJoin(moviecons, eq(comments.movieconId, moviecons.id))
-            .where(eq(comments.postId, post.id))
-            .orderBy(comments.createdAt),
-        ]);
+    // Optimize N+1 queries: batch fetch likes and comments
+    const postIds = postsData.map(p => p.id);
+    
+    const [allLikes, allComments] = await Promise.all([
+      // Batch fetch all likes
+      postIds.length > 0 ? db.select().from(postLikes).where(inArray(postLikes.postId, postIds)) : [],
+      // Batch fetch all comments with joins
+      postIds.length > 0 ? db
+        .select({
+          id: comments.id,
+          postId: comments.postId,
+          userId: comments.userId,
+          content: comments.content,
+          gifId: comments.gifId,
+          movieconId: comments.movieconId,
+          createdAt: comments.createdAt,
+          author: users,
+          gif: gifs,
+          moviecon: moviecons,
+        })
+        .from(comments)
+        .innerJoin(users, eq(comments.userId, users.id))
+        .leftJoin(gifs, eq(comments.gifId, gifs.id))
+        .leftJoin(moviecons, eq(comments.movieconId, moviecons.id))
+        .where(inArray(comments.postId, postIds))
+        .orderBy(comments.createdAt) : []
+    ]);
 
-        return {
-          id: post.id,
-          userId: post.userId,
-          content: post.content,
-          mediaUrl: post.mediaUrl,
-          mediaType: post.mediaType,
-          gifId: post.gifId,
-          movieconId: post.movieconId,
-          gif: post.gif,
-          moviecon: post.moviecon,
-          likes: likesData,
-          latitude: post.latitude,
-          longitude: post.longitude,
-          locationName: post.locationName,
-          address: post.address,
-          createdAt: post.createdAt,
-          updatedAt: post.updatedAt,
-          author: post.author,
-          comments: commentsData,
-        };
-      })
-    );
+    // Group likes and comments by postId for O(1) lookup
+    const likesByPost = allLikes.reduce((acc, like) => {
+      if (!acc[like.postId]) acc[like.postId] = [];
+      acc[like.postId].push(like);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    const commentsByPost = allComments.reduce((acc, comment) => {
+      if (!acc[comment.postId]) acc[comment.postId] = [];
+      acc[comment.postId].push(comment);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    // Build posts with details using grouped data
+    const postsWithDetails = postsData.map((post) => ({
+      id: post.id,
+      userId: post.userId,
+      content: post.content,
+      mediaUrl: post.mediaUrl,
+      mediaType: post.mediaType,
+      gifId: post.gifId,
+      movieconId: post.movieconId,
+      gif: post.gif,
+      moviecon: post.moviecon,
+      likes: likesByPost[post.id] || [],
+      latitude: post.latitude,
+      longitude: post.longitude,
+      locationName: post.locationName,
+      address: post.address,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      author: post.author,
+      comments: commentsByPost[post.id] || [],
+    }));
 
     return postsWithDetails;
   }
@@ -922,29 +937,27 @@ export class DatabaseStorage implements IStorage {
       .where(and(inArray(stories.userId, friendIds), sql`${stories.expiresAt} > ${now}`))
       .orderBy(desc(stories.createdAt));
 
-    // Check if user has viewed each story
-    const storiesWithViewStatus = await Promise.all(
-      storiesData.map(async (story) => {
-        const [hasViewed] = await db
-          .select()
-          .from(storyViews)
-          .where(and(eq(storyViews.storyId, story.id), eq(storyViews.userId, userId)))
-          .limit(1);
+    // Optimize N+1: batch fetch all story views for current user
+    const storyIds = storiesData.map(s => s.id);
+    const userStoryViews = storyIds.length > 0 ? await db
+      .select({ storyId: storyViews.storyId })
+      .from(storyViews)
+      .where(and(inArray(storyViews.storyId, storyIds), eq(storyViews.userId, userId))) : [];
 
-        return {
-          id: story.id,
-          userId: story.userId,
-          content: story.content,
-          mediaUrl: story.mediaUrl,
-          mediaType: story.mediaType,
-          viewCount: story.viewCount || 0,
-          createdAt: story.createdAt,
-          expiresAt: story.expiresAt,
-          author: story.author,
-          hasViewed: !!hasViewed,
-        };
-      })
-    );
+    const viewedStoryIds = new Set(userStoryViews.map(v => v.storyId));
+
+    const storiesWithViewStatus = storiesData.map((story) => ({
+      id: story.id,
+      userId: story.userId,
+      content: story.content,
+      mediaUrl: story.mediaUrl,
+      mediaType: story.mediaType,
+      viewCount: story.viewCount || 0,
+      createdAt: story.createdAt,
+      expiresAt: story.expiresAt,
+      author: story.author,
+      hasViewed: viewedStoryIds.has(story.id),
+    }));
 
     return storiesWithViewStatus;
   }
@@ -1039,30 +1052,24 @@ export class DatabaseStorage implements IStorage {
       .where(or(eq(conversations.user1Id, userId), eq(conversations.user2Id, userId)))
       .orderBy(desc(conversations.lastActivity));
 
-    const conversationsWithDetails = await Promise.all(
-      userConversations.map(async (conv) => {
-        // Determine the other user
+    // Optimize N+1: batch fetch all data needed
+    const otherUserIds = userConversations.map(conv => 
+      conv.user1Id === userId ? conv.user2Id : conv.user1Id
+    );
+    const lastMessageIds = userConversations
+      .filter(conv => conv.lastMessageId)
+      .map(conv => conv.lastMessageId!);
+
+    const [allOtherUsers, allLastMessages, allUnreadCounts] = await Promise.all([
+      // Batch fetch all other users
+      otherUserIds.length > 0 ? db.select().from(users).where(inArray(users.id, otherUserIds)) : [],
+      // Batch fetch all last messages
+      lastMessageIds.length > 0 ? db.select().from(messages).where(inArray(messages.id, lastMessageIds)) : [],
+      // Batch fetch unread counts for all conversations
+      Promise.all(userConversations.map(async (conv) => {
         const otherUserId = conv.user1Id === userId ? conv.user2Id : conv.user1Id;
-        
-        // Get other user info
-        const [otherUser] = await db
-          .select()
-          .from(users)
-          .where(eq(users.id, otherUserId));
-
-        // Get last message if exists
-        let lastMessage: Message | undefined;
-        if (conv.lastMessageId) {
-          const [msg] = await db
-            .select()
-            .from(messages)
-            .where(eq(messages.id, conv.lastMessageId));
-          lastMessage = msg;
-        }
-
-        // Count unread, non-expired messages
         const now = new Date();
-        const unreadCount = await db
+        const result = await db
           .select({ count: sql<number>`count(*)` })
           .from(messages)
           .where(
@@ -1075,18 +1082,40 @@ export class DatabaseStorage implements IStorage {
                 sql`${messages.expiresAt} > ${now}`
               )
             )
-          )
-          .then(result => Number(result[0]?.count) || 0);
+          );
+        return { conversationId: conv.id, count: Number(result[0]?.count) || 0 };
+      }))
+    ]);
 
-        return {
-          ...conv,
-          otherParticipant: otherUser, // Use otherParticipant to match route expectation
-          otherUser,
-          lastMessage,
-          unreadCount,
-        };
-      })
-    );
+    // Create lookup maps
+    const userMap = allOtherUsers.reduce((acc, user) => {
+      acc[user.id] = user;
+      return acc;
+    }, {} as Record<string, typeof allOtherUsers[0]>);
+
+    const messageMap = allLastMessages.reduce((acc, msg) => {
+      acc[msg.id] = msg;
+      return acc;
+    }, {} as Record<string, typeof allLastMessages[0]>);
+
+    const unreadMap = allUnreadCounts.reduce((acc, item) => {
+      acc[item.conversationId] = item.count;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const conversationsWithDetails = userConversations.map((conv) => {
+      const otherUserId = conv.user1Id === userId ? conv.user2Id : conv.user1Id;
+      const otherUser = userMap[otherUserId];
+      const lastMessage = conv.lastMessageId ? messageMap[conv.lastMessageId] : undefined;
+
+      return {
+        ...conv,
+        otherParticipant: otherUser, // Use otherParticipant to match route expectation
+        otherUser,
+        lastMessage,
+        unreadCount: unreadMap[conv.id] || 0,
+      };
+    });
 
     return conversationsWithDetails.filter(conv => conv.otherUser);
   }
@@ -1363,30 +1392,29 @@ export class DatabaseStorage implements IStorage {
       .where(inArray(events.userId, userIds))
       .orderBy(events.eventDate);
 
-    // Get attendees for all events
-    const eventsWithAttendees = await Promise.all(
-      eventsData.map(async ({ event, author }) => {
-        const attendeesData = await db
-          .select({
-            attendee: eventAttendees,
-            user: users,
-          })
-          .from(eventAttendees)
-          .innerJoin(users, eq(eventAttendees.userId, users.id))
-          .where(eq(eventAttendees.eventId, event.id));
-
-        const attendees = attendeesData.map(({ attendee, user }) => ({
-          ...attendee,
-          user,
-        }));
-
-        return {
-          ...event,
-          author,
-          attendees,
-        };
+    // Optimize N+1: batch fetch all event attendees
+    const eventIds = eventsData.map(({ event }) => event.id);
+    const allAttendees = eventIds.length > 0 ? await db
+      .select({
+        attendee: eventAttendees,
+        user: users,
       })
-    );
+      .from(eventAttendees)
+      .innerJoin(users, eq(eventAttendees.userId, users.id))
+      .where(inArray(eventAttendees.eventId, eventIds)) : [];
+
+    // Group attendees by eventId
+    const attendeesByEvent = allAttendees.reduce((acc, { attendee, user }) => {
+      if (!acc[attendee.eventId]) acc[attendee.eventId] = [];
+      acc[attendee.eventId].push({ ...attendee, user });
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    const eventsWithAttendees = eventsData.map(({ event, author }) => ({
+      ...event,
+      author,
+      attendees: attendeesByEvent[event.id] || [],
+    }));
 
     return eventsWithAttendees;
   }
@@ -1570,22 +1598,29 @@ export class DatabaseStorage implements IStorage {
       .where(eq(actions.status, "live"))
       .orderBy(desc(actions.createdAt));
 
-    // Get viewers for each action
-    const actionsWithViewers = await Promise.all(
-      allActions.map(async ({ action, author }) => {
-        const viewers = await db
-          .select()
-          .from(actionViewers)
-          .where(and(eq(actionViewers.actionId, action.id), sql`left_at IS NULL`));
+    // Optimize N+1: batch fetch all action viewers
+    const actionIds = allActions.map(({ action }) => action.id);
+    const allViewers = actionIds.length > 0 ? await db
+      .select()
+      .from(actionViewers)
+      .where(and(inArray(actionViewers.actionId, actionIds), sql`left_at IS NULL`)) : [];
 
-        return {
-          ...action,
-          author: author!,
-          viewers,
-          viewerCount: viewers.length,
-        };
-      })
-    );
+    // Group viewers by actionId
+    const viewersByAction = allViewers.reduce((acc, viewer) => {
+      if (!acc[viewer.actionId]) acc[viewer.actionId] = [];
+      acc[viewer.actionId].push(viewer);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    const actionsWithViewers = allActions.map(({ action, author }) => {
+      const viewers = viewersByAction[action.id] || [];
+      return {
+        ...action,
+        author: author!,
+        viewers,
+        viewerCount: viewers.length,
+      };
+    });
 
     return actionsWithViewers;
   }
@@ -1724,30 +1759,29 @@ export class DatabaseStorage implements IStorage {
       .where(inArray(meetups.userId, userIds))
       .orderBy(desc(meetups.meetupTime));
 
-    // Get check-ins for all meetups
-    const meetupsWithCheckIns = await Promise.all(
-      meetupsData.map(async ({ meetup, organizer }) => {
-        const checkInsData = await db
-          .select({
-            checkIn: meetupCheckIns,
-            user: users,
-          })
-          .from(meetupCheckIns)
-          .innerJoin(users, eq(meetupCheckIns.userId, users.id))
-          .where(eq(meetupCheckIns.meetupId, meetup.id));
-
-        const checkIns = checkInsData.map(({ checkIn, user }) => ({
-          ...checkIn,
-          user,
-        }));
-
-        return {
-          ...meetup,
-          organizer,
-          checkIns,
-        };
+    // Optimize N+1: batch fetch all meetup check-ins
+    const meetupIds = meetupsData.map(({ meetup }) => meetup.id);
+    const allCheckIns = meetupIds.length > 0 ? await db
+      .select({
+        checkIn: meetupCheckIns,
+        user: users,
       })
-    );
+      .from(meetupCheckIns)
+      .innerJoin(users, eq(meetupCheckIns.userId, users.id))
+      .where(inArray(meetupCheckIns.meetupId, meetupIds)) : [];
+
+    // Group check-ins by meetupId
+    const checkInsByMeetup = allCheckIns.reduce((acc, { checkIn, user }) => {
+      if (!acc[checkIn.meetupId]) acc[checkIn.meetupId] = [];
+      acc[checkIn.meetupId].push({ ...checkIn, user });
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    const meetupsWithCheckIns = meetupsData.map(({ meetup, organizer }) => ({
+      ...meetup,
+      organizer,
+      checkIns: checkInsByMeetup[meetup.id] || [],
+    }));
 
     return meetupsWithCheckIns;
   }
@@ -2000,16 +2034,28 @@ export class DatabaseStorage implements IStorage {
         inArray(videoCalls.status, ['pending', 'active'])
       ));
 
-    // Get participants for each call
-    const callsWithParticipants = await Promise.all(
-      callsQuery.map(async ({ call }) => {
-        const participants = await this.getCallParticipants(call.id);
-        return {
-          ...call,
-          participants,
-        };
+    // Optimize N+1: batch fetch all call participants
+    const callIds = callsQuery.map(({ call }) => call.id);
+    const allParticipants = callIds.length > 0 ? await db
+      .select({
+        participant: callParticipants,
+        user: users,
       })
-    );
+      .from(callParticipants)
+      .innerJoin(users, eq(callParticipants.userId, users.id))
+      .where(inArray(callParticipants.callId, callIds)) : [];
+
+    // Group participants by callId
+    const participantsByCall = allParticipants.reduce((acc, { participant, user }) => {
+      if (!acc[participant.callId]) acc[participant.callId] = [];
+      acc[participant.callId].push({ ...participant, user });
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    const callsWithParticipants = callsQuery.map(({ call }) => ({
+      ...call,
+      participants: participantsByCall[call.id] || [],
+    }));
 
     return callsWithParticipants;
   }
@@ -2155,20 +2201,29 @@ export class DatabaseStorage implements IStorage {
       .where(eq(polls.isActive, true))
       .orderBy(desc(polls.createdAt));
 
-    const pollsWithVotes = await Promise.all(
-      userPolls.map(async ({ poll, author }) => {
-        const votes = await db.select().from(pollVotes).where(eq(pollVotes.pollId, poll.id));
-        const userVote = votes.find(vote => vote.userId === userId);
-        
-        return {
-          ...poll,
-          author,
-          votes,
-          totalVotes: votes.length,
-          userVote,
-        };
-      })
-    );
+    // Optimize N+1: batch fetch all poll votes
+    const pollIds = userPolls.map(({ poll }) => poll.id);
+    const allVotes = pollIds.length > 0 ? await db.select().from(pollVotes).where(inArray(pollVotes.pollId, pollIds)) : [];
+
+    // Group votes by pollId
+    const votesByPoll = allVotes.reduce((acc, vote) => {
+      if (!acc[vote.pollId]) acc[vote.pollId] = [];
+      acc[vote.pollId].push(vote);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    const pollsWithVotes = userPolls.map(({ poll, author }) => {
+      const votes = votesByPoll[poll.id] || [];
+      const userVote = votes.find(vote => vote.userId === userId);
+      
+      return {
+        ...poll,
+        author,
+        votes,
+        totalVotes: votes.length,
+        userVote,
+      };
+    });
 
     return pollsWithVotes;
   }

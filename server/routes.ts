@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { performanceMonitor, performanceMiddleware } from './performanceMonitor';
 import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
@@ -219,6 +220,9 @@ interface ExtendedWebSocket extends WebSocket {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Performance monitoring middleware
+  app.use(performanceMiddleware());
+
   // Auth middleware
   await setupAuth(app);
 
@@ -1339,6 +1343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auto-cleanup expired messages every 5 minutes
+  // Optimize cleanup intervals to reduce database load
   setInterval(async () => {
     try {
       await storage.deleteExpiredMessages();
@@ -1346,7 +1351,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error cleaning up expired messages:", error);
     }
-  }, 5 * 60 * 1000); // 5 minutes
+  }, 10 * 60 * 1000); // Increased to 10 minutes to reduce load
+
+  // Add periodic connection pool health check
+  setInterval(() => {
+    const { pool } = require('./db');
+    console.log(`Connection pool stats - Total: ${pool.totalCount}, Idle: ${pool.idleCount}, Waiting: ${pool.waitingCount}`);
+  }, 5 * 60 * 1000); // Every 5 minutes
+
+  // Performance monitoring endpoint for internal use
+  app.get('/internal/performance', (req, res) => {
+    res.json(performanceMonitor.getPerformanceReport());
+  });
 
   // Auto-cleanup old conversations (7+ days) every hour
   setInterval(async () => {
