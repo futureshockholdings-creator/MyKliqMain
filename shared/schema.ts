@@ -41,7 +41,7 @@ export const users = pgTable("users", {
   securityAnswer1: varchar("security_answer_1"), // First car
   securityAnswer2: varchar("security_answer_2"), // Mother's maiden name
   securityAnswer3: varchar("security_answer_3"), // Favorite teacher's last name
-  securityPin: varchar("security_pin", { length: 4 }), // 4-digit PIN (hashed)
+  securityPin: varchar("security_pin", { length: 60 }), // 4-digit PIN (hashed)
   bio: text("bio"),
   inviteCode: varchar("invite_code", { length: 20 }).unique(),
   kliqName: varchar("kliq_name").default("My Kliq"),
