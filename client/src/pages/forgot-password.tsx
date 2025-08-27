@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { ArrowLeft, Phone, Shield, Lock } from "lucide-react";
+import { ArrowLeft, Phone, Shield, Lock, Hash } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ForgotPassword() {
-  const [step, setStep] = useState<'phone' | 'questions' | 'password'>('phone');
+  const [step, setStep] = useState<'phone' | 'questions' | 'pin' | 'password'>('phone');
   const [phoneNumber, setPhoneNumber] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [securityAnswers, setSecurityAnswers] = useState({
@@ -17,6 +17,7 @@ export default function ForgotPassword() {
     answer2: "",
     answer3: ""
   });
+  const [pin, setPin] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -59,16 +60,42 @@ export default function ForgotPassword() {
       });
       
       if (data.success) {
-        setStep('password');
+        setStep('pin');
         toast({
           title: "Security questions verified!",
-          description: "Now you can set a new password",
+          description: "Now enter your 4-digit PIN",
         });
       }
     } catch (error: any) {
       toast({
         title: "Verification failed",
         description: error.message || "Security answers don't match",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyPin = async () => {
+    setIsLoading(true);
+    try {
+      const data = await apiRequest("POST", "/api/auth/verify-pin", {
+        resetToken,
+        pin
+      });
+      
+      if (data.success) {
+        setStep('password');
+        toast({
+          title: "PIN verified!",
+          description: "Now you can set a new password",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "PIN verification failed",
+        description: error.message || "Incorrect PIN",
         variant: "destructive",
       });
     } finally {
@@ -135,19 +162,25 @@ export default function ForgotPassword() {
               {step === 'phone' && (
                 <>
                   <Phone className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 1 of 3
+                  Reset Password - Step 1 of 4
                 </>
               )}
               {step === 'questions' && (
                 <>
                   <Shield className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 2 of 3
+                  Reset Password - Step 2 of 4
+                </>
+              )}
+              {step === 'pin' && (
+                <>
+                  <Hash className="w-8 h-8 mx-auto mb-2" />
+                  Reset Password - Step 3 of 4
                 </>
               )}
               {step === 'password' && (
                 <>
                   <Lock className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 3 of 3
+                  Reset Password - Step 4 of 4
                 </>
               )}
             </CardTitle>
@@ -223,6 +256,35 @@ export default function ForgotPassword() {
                   data-testid="button-verify-security"
                 >
                   {isLoading ? "Verifying..." : "Verify Answers"}
+                </Button>
+              </>
+            )}
+
+            {step === 'pin' && (
+              <>
+                <p className="text-muted-foreground text-sm text-center mb-4">
+                  Enter your 4-digit PIN to verify your identity
+                </p>
+                <Input
+                  type="password"
+                  maxLength={4}
+                  value={pin}
+                  onChange={(e) => {
+                    // Only allow digits
+                    const value = e.target.value.replace(/\D/g, '');
+                    setPin(value);
+                  }}
+                  placeholder="Enter your 4-digit PIN"
+                  className="text-center text-xl tracking-widest"
+                  data-testid="input-security-pin"
+                />
+                <Button
+                  onClick={verifyPin}
+                  disabled={pin.length !== 4 || isLoading}
+                  className="w-full"
+                  data-testid="button-verify-pin"
+                >
+                  {isLoading ? "Verifying..." : "Verify PIN"}
                 </Button>
               </>
             )}
