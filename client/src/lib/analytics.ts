@@ -11,13 +11,11 @@ export const initGA = () => {
   const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
 
   if (!measurementId) {
-    console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
     return;
   }
 
-  // Prevent duplicate initialization
-  if (typeof window !== 'undefined' && 'gtag' in window && window.gtag) {
-    console.log('Google Analytics already initialized');
+  // Prevent duplicate initialization  
+  if (typeof window !== 'undefined' && window.dataLayer) {
     return;
   }
 
@@ -38,7 +36,6 @@ export const initGA = () => {
   `;
   document.head.appendChild(script2);
   
-  console.log('Google Analytics initialized with ID:', measurementId);
 };
 
 // Track page views - useful for single-page applications
