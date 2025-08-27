@@ -401,26 +401,29 @@ export default function Home() {
       
       // Optimistically update the cache
       queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
-        if (!old) return old;
-        return old.map((item: any) => {
-          if (item.id === postId) {
-            const isAlreadyLiked = Array.isArray(item.likes) && user && item.likes.some((like: any) => like.userId === (user as any).id);
-            if (isAlreadyLiked) {
-              // Remove like
-              return {
-                ...item,
-                likes: item.likes.filter((like: any) => like.userId !== (user as any).id)
-              };
-            } else {
-              // Add like
-              return {
-                ...item,
-                likes: [...(Array.isArray(item.likes) ? item.likes : []), { userId: (user as any).id }]
-              };
+        if (!old || !old.items) return old;
+        return {
+          ...old,
+          items: old.items.map((item: any) => {
+            if (item.id === postId) {
+              const isAlreadyLiked = Array.isArray(item.likes) && user && item.likes.some((like: any) => like.userId === (user as any).id);
+              if (isAlreadyLiked) {
+                // Remove like
+                return {
+                  ...item,
+                  likes: item.likes.filter((like: any) => like.userId !== (user as any).id)
+                };
+              } else {
+                // Add like
+                return {
+                  ...item,
+                  likes: [...(Array.isArray(item.likes) ? item.likes : []), { userId: (user as any).id }]
+                };
+              }
             }
-          }
-          return item;
-        });
+            return item;
+          })
+        };
       });
       
       return { previousFeed };
@@ -433,12 +436,7 @@ export default function Home() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-      toast({
-        title: "Like recorded!",
-        description: "Your like has been added to the post",
-        duration: 2000,
-        className: "bg-white text-black border-gray-300",
-      });
+      // Removed like toast for immediate feedback
     },
     onSettled: () => {
       // Don't invalidate immediately to preserve optimistic updates
@@ -470,18 +468,21 @@ export default function Home() {
       
       // Optimistically update the cache
       queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
-        if (!old) return old;
-        return old.map((item: any) => {
-          if (item.id === postId) {
-            const updatedComments = [...(item.comments || []), optimisticComment];
-            return {
-              ...item,
-              comments: updatedComments,
-              _commentsCount: updatedComments.length // Update comment count for UI
-            };
-          }
-          return item;
-        });
+        if (!old || !old.items) return old;
+        return {
+          ...old,
+          items: old.items.map((item: any) => {
+            if (item.id === postId) {
+              const updatedComments = [...(item.comments || []), optimisticComment];
+              return {
+                ...item,
+                comments: updatedComments,
+                _commentsCount: updatedComments.length // Update comment count for UI
+              };
+            }
+            return item;
+          })
+        };
       });
       
       return { previousFeed };
@@ -509,10 +510,7 @@ export default function Home() {
       // Immediately refresh notifications to show comment notifications
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       
-      toast({
-        title: "Comment added!",
-        description: "Your comment has been posted",
-      });
+      // Removed comment toast for immediate feedback
     },
     onSettled: () => {
       // Don't invalidate immediately to preserve optimistic updates
