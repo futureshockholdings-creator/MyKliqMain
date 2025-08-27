@@ -7,6 +7,7 @@ import { performanceMonitor, performanceMiddleware } from './performanceMonitor'
 import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
+import { pool } from "./db";
 
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
@@ -1355,7 +1356,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Add periodic connection pool health check
   setInterval(() => {
-    const { pool } = require('./db');
     console.log(`Connection pool stats - Total: ${pool.totalCount}, Idle: ${pool.idleCount}, Waiting: ${pool.waitingCount}`);
   }, 5 * 60 * 1000); // Every 5 minutes
 

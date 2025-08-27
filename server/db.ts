@@ -20,7 +20,6 @@ export const pool = new Pool({
   idleTimeoutMillis: 20000,        // Reduced from 30s to free unused connections faster
   max: 25,                         // Increased for higher concurrent load
   min: 3,                          // Reduced minimum to save resources in low usage
-  acquireTimeoutMillis: 8000,      // Timeout for acquiring connections
   createTimeoutMillis: 8000,       // Timeout for creating connections
 });
 
