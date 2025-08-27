@@ -33,6 +33,7 @@ import Disclaimer from "./pages/disclaimer";
 import Signup from "@/pages/signup";
 import Login from "@/pages/login";
 import ForgotPassword from "@/pages/forgot-password";
+import AdminPage from "@/pages/admin";
 
 // Navigation Component
 import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell, Settings as SettingsIcon } from "lucide-react";
@@ -226,6 +227,7 @@ function Router() {
           <Route path="/moviecon-manager" component={MovieconManagerPage} />
           <Route path="/maintenance" component={MaintenanceDashboard} />
           <Route path="/ads-manager" component={AdsManager} />
+          <Route path="/admin" component={AdminPage} />
         </>
       )}
       

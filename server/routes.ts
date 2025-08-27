@@ -3532,5 +3532,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes for customer service
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "mykliq2025admin!";
+
+  // Admin authentication
+  app.post('/api/admin/auth', async (req, res) => {
+    try {
+      const { password } = req.body;
+      
+      if (password === ADMIN_PASSWORD) {
+        res.json({ success: true });
+      } else {
+        res.status(401).json({ message: "Invalid admin password" });
+      }
+    } catch (error) {
+      console.error("Error authenticating admin:", error);
+      res.status(500).json({ message: "Authentication failed" });
+    }
+  });
+
+  // Get all users for admin dashboard
+  app.get('/api/admin/users', async (req, res) => {
+    try {
+      const { password } = req.query;
+      
+      // Simple password check for API access
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      const users = await storage.getAllUsersForAdmin();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users for admin:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Get specific user details for admin
+  app.get('/api/admin/users/:userId', async (req, res) => {
+    try {
+      const { password } = req.query;
+      const { userId } = req.params;
+      
+      // Simple password check for API access
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      const user = await storage.getUserDetailsForAdmin(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user details for admin:", error);
+      res.status(500).json({ message: "Failed to fetch user details" });
+    }
+  });
+
   return httpServer;
 }

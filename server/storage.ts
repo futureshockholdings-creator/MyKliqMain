@@ -277,6 +277,10 @@ export interface IStorage {
   getUserAdPreferences(userId: string): Promise<UserAdPreferences | undefined>;
   updateUserAdPreferences(userId: string, preferences: InsertUserAdPreferences): Promise<UserAdPreferences>;
   getAdAnalytics(adId: string): Promise<{ impressions: number; clicks: number; ctr: number }>;
+
+  // Admin operations for customer service
+  getAllUsersForAdmin(): Promise<User[]>;
+  getUserDetailsForAdmin(userId: string): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2793,6 +2797,38 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(passwordResetTokens)
       .where(eq(passwordResetTokens.token, token));
+  }
+
+  // Admin operations for customer service
+  async getAllUsersForAdmin(): Promise<User[]> {
+    const allUsers = await db.select().from(users).orderBy(users.firstName, users.lastName);
+    // Don't decrypt data for the list view - only basic info needed
+    return allUsers;
+  }
+
+  async getUserDetailsForAdmin(userId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    if (!user) return undefined;
+    
+    // Decrypt sensitive data for admin view
+    const { decryptFromStorage } = await import('./cryptoService');
+    
+    try {
+      // Decrypt password if it exists and isn't an old bcrypt hash
+      if (user.password && !user.password.startsWith('$2b$')) {
+        user.password = decryptFromStorage(user.password);
+      }
+      
+      // Decrypt security PIN if it exists
+      if (user.securityPin) {
+        user.securityPin = decryptFromStorage(user.securityPin);
+      }
+    } catch (error) {
+      console.error("Error decrypting admin user data:", error);
+      // Continue with encrypted data if decryption fails
+    }
+    
+    return user;
   }
 }
 
