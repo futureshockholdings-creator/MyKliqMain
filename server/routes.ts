@@ -362,6 +362,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+      
+      // Decrypt password for UI display if it exists
+      if (user.password) {
+        try {
+          const { decryptFromStorage } = await import('./cryptoService');
+          user.password = decryptFromStorage(user.password);
+        } catch (error) {
+          // If decryption fails, remove password from response
+          console.error("Error decrypting password:", error);
+          user.password = null;
+        }
+      }
+      
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -385,11 +398,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { password } = validation.data;
 
-      // Hash the password with bcrypt (salt rounds: 12 for good security)
-      const hashedPassword = await bcrypt.hash(password, 12);
+      // Encrypt the password for secure storage (allows viewing in UI)
+      const { encryptForStorage } = await import('./cryptoService');
+      const encryptedPassword = encryptForStorage(password);
 
-      // Update user with hashed password
-      await storage.updateUserPassword(userId, hashedPassword);
+      // Update user with encrypted password
+      await storage.updateUserPassword(userId, encryptedPassword);
 
       res.json({ 
         message: "Password set up successfully",
@@ -430,9 +444,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Verify password
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
+      // Decrypt and verify password
+      const { decryptFromStorage } = await import('./cryptoService');
+      try {
+        const decryptedPassword = decryptFromStorage(user.password);
+        if (password !== decryptedPassword) {
+          return res.status(401).json({ 
+            message: "Invalid phone number or password" 
+          });
+        }
+      } catch (error) {
         return res.status(401).json({ 
           message: "Invalid phone number or password" 
         });
