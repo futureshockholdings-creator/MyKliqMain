@@ -70,6 +70,21 @@ export default function Home() {
   const queryClient = useQueryClient();
   const { translatePost, translateMoodText } = usePostTranslation();
 
+  // Add click outside to close comments
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Close all expanded comments when clicking outside
+      if (!event.target || !(event.target as Element).closest('.comments-section')) {
+        setExpandedComments(new Set());
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
   // Predefined mood options
   const moodOptions = [
     { emoji: "😊", label: "Happy", color: "text-yellow-500" },
@@ -1700,7 +1715,10 @@ export default function Home() {
 
               {/* Comments Section */}
               {expandedComments.has(item.id) && (
-                <div className="mt-4 border-t border-border pt-4">
+                <div 
+                  className="mt-4 border-t border-border pt-4 comments-section"
+                  onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+                >
                   {/* Existing Comments */}
                   {item.comments && item.comments.length > 0 && (
                     <div className="space-y-3 mb-4">
@@ -1875,51 +1893,20 @@ export default function Home() {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-            );
-          } else {
-            // Other activity item display (actions, etc.)
-            return (
-              <Card
-                key={item.id}
-                className={cn(
-                  "bg-gradient-to-br from-muted/50 to-muted/20 border border-muted-foreground/20"
-                )}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="w-10 h-10 border-2 border-primary">
-                      <AvatarImage src={item.author.profileImageUrl} />
-                      <AvatarFallback className="bg-muted text-foreground">
-                        {item.author.firstName?.[0] || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="font-bold text-primary">
-                        {item.author.firstName} {item.author.lastName}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {translatePost(item.content)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatTimeAgo(item.activityDate)}
-                      </p>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {item.type}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            );
+
+            </Card>
           }
+          
+          return null; // For unknown types
         })()}
-            </div>
-          );
-        })}
-        </>
-      )}
+      </div>
+    ))
+  ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            No posts yet. Create the first post!
+          </div>
+        )}
+      </div>
 
       {/* Media Upload Modals */}
       <MediaUpload
