@@ -417,6 +417,9 @@ export default function Home() {
       // Keep the optimistic update - don't revert the count
       // The comment was already added optimistically and will be synced in background
       
+      // Immediately refresh notifications to show comment notifications
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      
       toast({
         title: "Comment added!",
         description: "Your comment has been posted",
