@@ -118,15 +118,17 @@ export default function Home() {
     { emoji: "😶", label: "Numb", color: "text-stone-500" }
   ];
 
-  // Fetch kliq feed (posts, polls, events, actions from all kliq members)
-  const { data: feedItems = [], isLoading: feedLoading, refetch: refetchFeed } = useQuery({
+  // Fetch paginated kliq feed (posts, polls, events, actions from all kliq members)
+  const { data: feedData = { items: [], hasMore: false, totalPages: 1 }, isLoading: feedLoading, refetch: refetchFeed } = useQuery({
     queryKey: ["/api/kliq-feed"],
     staleTime: 60000, // Consider data fresh for 1 minute
     gcTime: 300000, // Keep cache for 5 minutes
     refetchOnWindowFocus: false, // Reduce unnecessary refetches
     refetchInterval: 120000, // Refetch every 2 minutes (reduced from 30s)
   });
-
+  
+  // Extract feed items from paginated response
+  const feedItems = feedData.items || [];
 
   // Fetch targeted ads for the user
   const { data: targetedAds = [] } = useQuery({
@@ -134,9 +136,9 @@ export default function Home() {
   });
 
   // Separate different types of feed items
-  const posts = (feedItems as any[]).filter((item: any) => item.type === 'post');
-  const polls = (feedItems as any[]).filter((item: any) => item.type === 'poll');
-  const activityItems = (feedItems as any[]).filter((item: any) => item.type !== 'post' && item.type !== 'poll');
+  const posts = feedItems.filter((item: any) => item.type === 'post');
+  const polls = feedItems.filter((item: any) => item.type === 'poll');
+  const activityItems = feedItems.filter((item: any) => item.type !== 'post' && item.type !== 'poll');
 
   // Fetch filters
   const { data: filters = [] } = useQuery({
@@ -1627,7 +1629,7 @@ export default function Home() {
 
 
           
-          {(feedItems as any[]).filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
+          {feedItems.filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
           
           // Inject sponsored ads every 3 feed items
           const shouldShowAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0;

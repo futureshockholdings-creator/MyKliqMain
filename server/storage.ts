@@ -135,7 +135,7 @@ export interface IStorage {
   getUserReflection(userId: string): Promise<{ posts: any[]; stats: any; message: string }>;
   
   // Feed operations
-  getKliqFeed(userId: string, filters: string[]): Promise<any[]>;
+  getKliqFeed(userId: string, filters: string[], page?: number, limit?: number): Promise<{ items: any[], hasMore: boolean, totalPages: number } | any[]>;
   
   // Story operations
   getActiveStories(userId: string): Promise<(Story & { author: User; viewCount: number; hasViewed: boolean })[]>;
@@ -604,8 +604,8 @@ export class DatabaseStorage implements IStorage {
     return postsWithDetails;
   }
 
-  // Get aggregated kliq feed including posts, polls, events, and actions
-  async getKliqFeed(userId: string, filters: string[]): Promise<any[]> {
+  // Get paginated aggregated kliq feed including posts, polls, events, and actions
+  async getKliqFeed(userId: string, filters: string[], page = 1, limit = 20): Promise<{ items: any[], hasMore: boolean, totalPages: number }> {
     // Get user's friends first
     const userFriends = await this.getFriends(userId);
     const friendIds = userFriends.map(f => f.friendId);
@@ -640,7 +640,7 @@ export class DatabaseStorage implements IStorage {
           .innerJoin(users, eq(polls.userId, users.id))
           .where(inArray(polls.userId, friendIds))
           .orderBy(desc(polls.createdAt))
-          .limit(50) : [], // Limit results for performance
+          .limit(limit * 2) : [], // Get more to account for filtering
           
         // 3. Get events from kliq members (optimized query)
         friendIds.length > 0 ? db
@@ -666,10 +666,10 @@ export class DatabaseStorage implements IStorage {
           .innerJoin(users, eq(events.userId, users.id))
           .where(inArray(events.userId, friendIds))
           .orderBy(desc(events.createdAt))
-          .limit(50) : [] // Limit results for performance
+          .limit(limit * 2) : [] // Get more to account for filtering
       ]);
 
-      // Get actions separately to avoid query issues
+      // Get actions separately to avoid query issues (paginated)
       const actionsData = friendIds.length > 0 ? await db
         .select({
           id: actions.id,
@@ -775,9 +775,23 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Sort all feed items by activity date (newest first)
-    return feedItems.sort((a, b) => 
+    feedItems.sort((a, b) => 
       new Date(b.activityDate).getTime() - new Date(a.activityDate).getTime()
     );
+
+    // Apply pagination
+    const totalItems = feedItems.length;
+    const totalPages = Math.ceil(totalItems / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedItems = feedItems.slice(startIndex, endIndex);
+    const hasMore = endIndex < totalItems;
+
+    return {
+      items: paginatedItems,
+      hasMore,
+      totalPages
+    };
   }
 
   async getPostById(postId: string): Promise<Post | undefined> {

@@ -1145,18 +1145,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/kliq-feed', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const cacheKey = `kliq-feed:${userId}`;
+      const page = Math.max(1, parseInt(req.query.page as string) || 1);
+      const limit = Math.min(50, Math.max(5, parseInt(req.query.limit as string) || 20)); // Between 5-50 items
       
-      // Try to get from cache first
-      const { getCachedOrFetch } = await import('./cache');
+      const cacheKey = `kliq-feed:${userId}:${page}:${limit}`;
+      
+      // Try to get from cache first (Redis)
+      const { getCachedOrFetch } = await import('./redis');
       const feed = await getCachedOrFetch(
         cacheKey,
         async () => {
           const filters = await storage.getContentFilters(userId);
           const filterKeywords = filters.map(f => f.keyword);
-          return await storage.getKliqFeed(userId, filterKeywords);
+          return await storage.getKliqFeed(userId, filterKeywords, page, limit);
         },
-        60000 // Cache for 1 minute
+        120 // Cache for 2 minutes (longer for paginated content)
       );
       
       res.json(feed);
@@ -2819,8 +2822,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { type } = req.query;
-      const notifications = await notificationService.getUserNotifications(userId, type);
-      // Notification fetch completed
+      // Try Redis cache first for notifications
+      const { getCachedOrFetch } = await import('./redis');
+      const cacheKey = `notifications:${userId}:${type || 'all'}`;
+      const notifications = await getCachedOrFetch(
+        cacheKey,
+        () => notificationService.getUserNotifications(userId, type),
+        60 // Cache notifications for 60 seconds
+      );
       res.json(notifications);
     } catch (error) {
       console.error("Error fetching notifications:", error);
