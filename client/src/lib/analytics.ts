@@ -14,27 +14,27 @@ export const initGA = () => {
     return;
   }
 
-  // Prevent duplicate initialization  
-  if (typeof window !== 'undefined' && window.dataLayer) {
+  // Prevent duplicate initialization
+  if (typeof window !== 'undefined' && document.querySelector(`script[src*="${measurementId}"]`)) {
     return;
   }
 
-  // Add Google Analytics script to the head
+  // Add Google Analytics script to the head exactly as Google provides
   const script1 = document.createElement('script');
   script1.async = true;
   script1.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
   document.head.appendChild(script1);
 
-  // Initialize dataLayer and gtag immediately
+  // Initialize dataLayer and gtag exactly as Google provides
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function(...args: any[]) {
+  function gtag(...args: any[]){
     window.dataLayer.push(arguments);
-  };
+  }
+  window.gtag = gtag;
   
-  // Initialize gtag with current timestamp
+  // Initialize with timestamp and config exactly as Google provides
   window.gtag('js', new Date());
   window.gtag('config', measurementId);
-  
 };
 
 // Track page views - useful for single-page applications
