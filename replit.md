@@ -4,11 +4,14 @@ MyKliq is a social media application designed for close-knit friend groups ("kli
 
 ## Recent Updates (August 2025)
 
-### **4-Digit Security PIN Feature (August 27, 2025)**
-- **Enhanced Security**: Added 4-digit PIN field to profile settings for additional password recovery security
-- **Secure Storage**: PIN is hashed using bcrypt before database storage, matching security standards of passwords
-- **User Interface**: Clean PIN input with validation (digits only, 4-character limit) in Profile Settings Basic Info tab
-- **Future Ready**: Foundation for multi-factor authentication and enhanced security features in upcoming upgrades
+### **Enhanced 4-Step Password Recovery System (August 27, 2025)**
+- **Complete Security Overhaul**: Redesigned password recovery as a comprehensive 4-step verification process
+- **Step 1**: Phone number verification for account identification
+- **Step 2**: Security questions verification (3 required questions)
+- **Step 3**: 4-digit PIN verification using hashed PIN from profile settings
+- **Step 4**: New password creation with strength requirements
+- **Removed SMS Dependency**: Eliminated SMS messaging from recovery flow for streamlined user experience
+- **Enhanced Security**: Multiple verification layers ensure only legitimate account owners can reset passwords
 
 ### **Auto-Delete Incognito Conversations (August 27, 2025)**
 - **Complete Privacy Protection**: Entire incognito conversations older than 7 days are automatically deleted from the database

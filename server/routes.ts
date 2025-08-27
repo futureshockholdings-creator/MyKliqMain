@@ -6,7 +6,7 @@ import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
-import twilio from "twilio";
+
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
@@ -512,24 +512,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store reset token in storage
       await storage.createPasswordResetToken(user.id, resetToken, expiresAt);
 
-      // Send SMS with Twilio
-      const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      const resetUrl = `${req.protocol}://${req.get('host')}/forgot-password?token=${resetToken}`;
-      
-      await twilioClient.messages.create({
-        body: `MyKliq Password Reset: Click this link to reset your password: ${resetUrl} (expires in 1 hour)`,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: phoneNumber
-      });
-
       res.json({ 
         success: true, 
         resetToken: resetToken, // Send token for frontend flow
-        message: "Reset instructions sent to your phone" 
+        message: "Account verified successfully" 
       });
     } catch (error) {
-      console.error("Error sending password reset SMS:", error);
-      res.status(500).json({ message: "Failed to send reset SMS" });
+      console.error("Error verifying account:", error);
+      res.status(500).json({ message: "Failed to verify account" });
     }
   });
 
@@ -963,189 +953,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Check SMS message status
-  app.get('/api/twilio/status/:messageSid', isAuthenticated, async (req: any, res) => {
-    try {
-      const { messageSid } = req.params;
-      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      
-      const message = await client.messages(messageSid).fetch();
-      
-      res.json({
-        success: true,
-        message: {
-          sid: message.sid,
-          status: message.status,
-          errorCode: message.errorCode,
-          errorMessage: message.errorMessage,
-          dateCreated: message.dateCreated,
-          dateSent: message.dateSent,
-          dateUpdated: message.dateUpdated,
-          from: message.from,
-          to: message.to,
-          body: message.body,
-          direction: message.direction,
-          price: message.price,
-          priceUnit: message.priceUnit
-        }
-      });
-    } catch (error: any) {
-      console.error('Error fetching message status:', error);
-      res.status(500).json({ 
-        error: 'Failed to fetch message status',
-        message: error.message,
-        code: error.code
-      });
-    }
-  });
 
-  // Twilio webhook for message status updates
-  app.post('/api/twilio/webhook', (req, res) => {
-    console.log('Twilio webhook received:', req.body);
-    res.status(200).send('OK');
-  });
 
-  // Test Twilio configuration
-  app.get('/api/twilio/test', isAuthenticated, async (req: any, res) => {
-    try {
-      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      
-      // Get account info to verify credentials
-      const account = await client.api.accounts(process.env.TWILIO_ACCOUNT_SID!).fetch();
-      
-      // Get phone numbers associated with account
-      const phoneNumbers = await client.incomingPhoneNumbers.list();
-      
-      res.json({
-        success: true,
-        account: {
-          sid: account.sid,
-          friendlyName: account.friendlyName,
-          status: account.status,
-          type: account.type
-        },
-        phoneNumbers: phoneNumbers.map(p => ({
-          phoneNumber: p.phoneNumber,
-          friendlyName: p.friendlyName,
-          capabilities: p.capabilities
-        })),
-        configuredFrom: process.env.TWILIO_PHONE_NUMBER
-      });
-    } catch (error: any) {
-      console.error('Twilio test error:', error);
-      res.status(500).json({ 
-        error: 'Twilio configuration test failed',
-        message: error.message,
-        code: error.code
-      });
-    }
-  });
 
-  // Send SMS invites to phone numbers
-  app.post('/api/friends/send-invites', isAuthenticated, async (req: any, res) => {
-    try {
-      const { phoneNumbers } = req.body;
-      const userId = req.user.claims.sub;
-      
-      console.log('SMS Invite Request:', { phoneNumbers, userId });
-      
-      // Validate input
-      if (!phoneNumbers || !Array.isArray(phoneNumbers) || phoneNumbers.length === 0) {
-        console.log('Invalid phone numbers input:', phoneNumbers);
-        return res.status(400).json({ error: 'Phone numbers array is required' });
-      }
-
-      // Basic phone number validation
-      const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-      const invalidNumbers = phoneNumbers.filter(num => !phoneRegex.test(num.replace(/[\s\-\(\)]/g, '')));
-      
-      if (invalidNumbers.length > 0) {
-        console.log('Invalid phone number format:', invalidNumbers);
-        return res.status(400).json({ 
-          error: 'Invalid phone number format. Please use format: +1234567890 or include country code',
-          invalidNumbers 
-        });
-      }
-
-      // Get user's invite code
-      const user = await storage.getUser(userId);
-      if (!user?.inviteCode) {
-        console.log('User has no invite code:', userId);
-        return res.status(400).json({ error: 'User has no invite code' });
-      }
-
-      // Initialize Twilio client
-      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      
-      const results = [];
-      const firstName = user.firstName || 'A friend';
-      
-      // Send SMS to each phone number
-      for (const phoneNumber of phoneNumbers) {
-        try {
-          // Clean phone number (remove spaces, dashes, parentheses)
-          const cleanNumber = phoneNumber.replace(/[\s\-\(\)]/g, '');
-          // Add +1 if no country code provided and it's 10 digits
-          const formattedNumber = cleanNumber.startsWith('+') ? cleanNumber : 
-                                 cleanNumber.length === 10 ? `+1${cleanNumber}` : `+${cleanNumber}`;
-          
-          console.log(`Sending SMS to: ${phoneNumber} -> ${formattedNumber}`);
-          
-          // Ensure the from number is in proper international format
-          const fromNumber = process.env.TWILIO_PHONE_NUMBER!;
-          const formattedFromNumber = fromNumber.startsWith('+') ? fromNumber : 
-                                    fromNumber.replace(/[\s\-\(\)]/g, '').replace(/^1?/, '+1');
-          console.log(`Using Twilio from: ${fromNumber} -> ${formattedFromNumber}`);
-          
-          const message = `${firstName} has invited you to join their kliq on MyKliq! Use invite code: ${user.inviteCode}. Download the app and enter this code to connect: https://kliqlife.com`;
-          
-          const messageResult = await client.messages.create({
-            body: message,
-            from: formattedFromNumber,
-            to: formattedNumber
-          });
-          
-          console.log(`Twilio response for ${formattedNumber}:`, {
-            sid: messageResult.sid,
-            status: messageResult.status,
-            errorCode: messageResult.errorCode,
-            errorMessage: messageResult.errorMessage,
-            direction: messageResult.direction,
-            accountSid: messageResult.accountSid
-          });
-          
-          results.push({ 
-            phoneNumber, 
-            status: 'sent',
-            messageSid: messageResult.sid,
-            twilioStatus: messageResult.status
-          });
-          console.log(`SMS sent successfully to ${formattedNumber} - SID: ${messageResult.sid}, Status: ${messageResult.status}`);
-        } catch (error: any) {
-          console.error(`Failed to send SMS to ${phoneNumber}:`, {
-            message: error.message,
-            code: error.code,
-            moreInfo: error.moreInfo,
-            status: error.status,
-            details: error.details
-          });
-          results.push({ phoneNumber, status: 'failed', error: error.message, errorCode: error.code });
-        }
-      }
-
-      const successCount = results.filter(r => r.status === 'sent').length;
-      console.log(`SMS Invite Results: ${successCount}/${phoneNumbers.length} sent successfully`);
-
-      res.json({ 
-        success: true, 
-        results,
-        message: `Invites sent to ${successCount} of ${phoneNumbers.length} numbers`
-      });
-    } catch (error) {
-      console.error('Error sending SMS invites:', error);
-      res.status(500).json({ error: 'Failed to send invites' });
-    }
-  });
 
   app.put('/api/friends/:friendId/rank', isAuthenticated, async (req: any, res) => {
     try {
