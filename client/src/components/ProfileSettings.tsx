@@ -122,6 +122,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   const [securityAnswer1, setSecurityAnswer1] = useState(""); // First car
   const [securityAnswer2, setSecurityAnswer2] = useState(""); // Mother's maiden name
   const [securityAnswer3, setSecurityAnswer3] = useState(""); // Favorite teacher's last name
+  const [securityPin, setSecurityPin] = useState(""); // 4-digit PIN
 
   // Extended profile details
   const [interests, setInterests] = useState<string[]>([]);
@@ -154,6 +155,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
       setSecurityAnswer1(user.securityAnswer1 ? "****" : ""); // Don't show actual answers
       setSecurityAnswer2(user.securityAnswer2 ? "****" : "");
       setSecurityAnswer3(user.securityAnswer3 ? "****" : "");
+      setSecurityPin(user.securityPin ? "****" : ""); // Don't show actual PIN
       setInterests(user.interests || []);
       setFavoriteLocations(user.favoriteLocations || []);
       setFavoriteFoods(user.favoriteFoods || []);
@@ -226,6 +228,10 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
     }
     if (securityAnswer3 && securityAnswer3 !== "****") {
       profileData.securityAnswer3 = securityAnswer3;
+    }
+    // Include security PIN if provided and not the placeholder
+    if (securityPin && securityPin !== "****") {
+      profileData.securityPin = securityPin;
     }
 
     updateProfileMutation.mutate(profileData);
@@ -393,6 +399,28 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       className="bg-input border-border text-foreground"
                       data-testid="input-security-answer-3"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-foreground">
+                      4-Digit Security PIN
+                    </Label>
+                    <Input
+                      type="password"
+                      value={securityPin}
+                      onChange={(e) => {
+                        // Only allow 4 digits
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        setSecurityPin(value);
+                      }}
+                      placeholder="Enter 4-digit PIN..."
+                      className="bg-input border-border text-foreground"
+                      maxLength={4}
+                      data-testid="input-security-pin"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      This PIN adds an extra layer of security for password recovery
+                    </p>
                   </div>
                 </div>
               </CardContent>

@@ -657,6 +657,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cleanedData.securityAnswer3 = await bcrypt.hash(profileData.securityAnswer3.toLowerCase().trim(), 12);
       }
       
+      // Handle security PIN (hash it for security)
+      if (profileData.securityPin) {
+        cleanedData.securityPin = await bcrypt.hash(profileData.securityPin.trim(), 12);
+      }
+      
       // Handle array fields (filter out empty strings)
       if (profileData.interests) cleanedData.interests = profileData.interests.filter((item: string) => item.trim());
       if (profileData.favoriteLocations) cleanedData.favoriteLocations = profileData.favoriteLocations.filter((item: string) => item.trim());
