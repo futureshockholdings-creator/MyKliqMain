@@ -113,11 +113,13 @@ export async function sendEventReminders(): Promise<void> {
           weekday: 'short', 
           month: 'short', 
           day: 'numeric',
-          year: eventDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+          year: eventDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
+          timeZone: 'America/New_York' // Use user's timezone - could be made configurable per user
         });
         const formattedTime = eventDate.toLocaleTimeString("en-US", { 
           hour: 'numeric', 
-          minute: '2-digit' 
+          minute: '2-digit',
+          timeZone: 'America/New_York' // Use user's timezone - could be made configurable per user
         });
         
         let reminderText = '';

@@ -225,9 +225,11 @@ export default function Events() {
     }
 
     // Convert datetime-local to ISO string to ensure proper timezone handling
+    // The datetime-local input gives us a local time, but we need to send it as the intended local time in ISO format
+    const localDateTime = new Date(newEvent.eventDate);
     const eventData = {
       ...newEvent,
-      eventDate: new Date(newEvent.eventDate).toISOString()
+      eventDate: localDateTime.toISOString()
     };
 
     createEventMutation.mutate(eventData);
