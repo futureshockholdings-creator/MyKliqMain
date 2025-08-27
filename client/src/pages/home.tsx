@@ -1677,14 +1677,14 @@ export default function Home() {
                     variant="ghost"
                     onClick={() => handleLikePost(item.id)}
                     className={`p-0 h-auto transition-colors ${
-                      Array.isArray(item.likes) && user && item.likes.some((like: any) => like.userId === user.id)
+                      Array.isArray(item.likes) && user && (user as any).id && item.likes.some((like: any) => like.userId === (user as any).id)
                         ? "text-red-500 hover:bg-red-50" 
                         : "text-primary hover:bg-primary/10"
                     }`}
                   >
                     <Heart 
                       className={`w-4 h-4 mr-1 ${
-                        Array.isArray(item.likes) && user && item.likes.some((like: any) => like.userId === user.id)
+                        Array.isArray(item.likes) && user && (user as any).id && item.likes.some((like: any) => like.userId === (user as any).id)
                           ? "fill-current" 
                           : ""
                       }`} 
@@ -1893,20 +1893,18 @@ export default function Home() {
                   </div>
                 </div>
               )}
-
+            </CardContent>
             </Card>
+            );
           }
           
           return null; // For unknown types
         })()}
       </div>
-    ))
-  ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            No posts yet. Create the first post!
-          </div>
-        )}
-      </div>
+    );
+  })}
+        </>
+      )}
 
       {/* Media Upload Modals */}
       <MediaUpload
