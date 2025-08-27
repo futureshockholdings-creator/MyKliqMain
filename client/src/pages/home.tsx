@@ -309,9 +309,46 @@ export default function Home() {
     mutationFn: async (postId: string) => {
       await apiRequest("POST", `/api/posts/${postId}/like`);
     },
+    onMutate: async (postId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
+      
+      // Snapshot the previous value
+      const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+        if (!old) return old;
+        return old.map((item: any) => {
+          if (item.id === postId) {
+            const isAlreadyLiked = Array.isArray(item.likes) && user && item.likes.some((like: any) => like.userId === (user as any).id);
+            if (isAlreadyLiked) {
+              // Remove like
+              return {
+                ...item,
+                likes: item.likes.filter((like: any) => like.userId !== (user as any).id)
+              };
+            } else {
+              // Add like
+              return {
+                ...item,
+                likes: [...(Array.isArray(item.likes) ? item.likes : []), { userId: (user as any).id }]
+              };
+            }
+          }
+          return item;
+        });
+      });
+      
+      return { previousFeed };
+    },
+    onError: (err, postId, context) => {
+      // Rollback on error
+      if (context?.previousFeed) {
+        queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
+      }
+    },
     onSuccess: () => {
-      console.log('Like posted successfully, invalidating cache');
-      queryClient.removeQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "Like recorded!",
@@ -320,23 +357,9 @@ export default function Home() {
         className: "bg-white text-black border-gray-300",
       });
     },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to like post",
-        variant: "destructive",
-      });
+    onSettled: () => {
+      // Always refetch after error or success
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
     },
   });
 
@@ -345,11 +368,46 @@ export default function Home() {
     mutationFn: async ({ postId, content, gifId, movieconId }: { postId: string; content: string; gifId?: string; movieconId?: string }) => {
       await apiRequest("POST", `/api/posts/${postId}/comments`, { content, gifId, movieconId });
     },
+    onMutate: async ({ postId, content, gifId, movieconId }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
+      
+      // Snapshot the previous value
+      const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
+      
+      // Create optimistic comment
+      const optimisticComment = {
+        id: `temp-${Date.now()}`,
+        content: content || '',
+        gifId,
+        movieconId,
+        author: userData,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+        if (!old) return old;
+        return old.map((item: any) => {
+          if (item.id === postId) {
+            return {
+              ...item,
+              comments: [...(item.comments || []), optimisticComment]
+            };
+          }
+          return item;
+        });
+      });
+      
+      return { previousFeed };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousFeed) {
+        queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
+      }
+    },
     onSuccess: (_, { postId }) => {
-      console.log('Comment posted successfully, forcing refresh');
-      // Force a complete refresh by removing all queries and refetching
-      queryClient.removeQueries();
-      queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"], type: 'active' });
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
       setCommentGifs(prev => ({ ...prev, [postId]: null }));
       setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
@@ -358,23 +416,9 @@ export default function Home() {
         description: "Your comment has been posted",
       });
     },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to add comment",
-        variant: "destructive",
-      });
+    onSettled: () => {
+      // Always refetch after error or success to get the real data
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
     },
   });
 
@@ -696,17 +740,13 @@ export default function Home() {
   };
 
   const handleToggleComments = (postId: string) => {
-    console.log('Toggling comments for post:', postId);
     setExpandedComments(prev => {
       const newSet = new Set(prev);
       if (newSet.has(postId)) {
-        console.log('Closing comments for:', postId);
         newSet.delete(postId);
       } else {
-        console.log('Opening comments for:', postId);
         newSet.add(postId);
       }
-      console.log('New expanded comments set:', Array.from(newSet));
       return newSet;
     });
   };
@@ -1686,7 +1726,6 @@ export default function Home() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('Like button clicked for post:', item.id);
                       handleLikePost(item.id);
                     }}
                     className={`p-0 h-auto transition-colors ${
@@ -1710,7 +1749,6 @@ export default function Home() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('Comment button clicked for post:', item.id);
                       handleToggleComments(item.id);
                     }}
                     className="text-secondary hover:bg-secondary/10 p-0 h-auto"
@@ -1732,11 +1770,7 @@ export default function Home() {
               </div>
 
               {/* Comments Section */}
-              {(() => {
-                const isExpanded = expandedComments.has(item.id);
-                console.log(`Comments expanded for ${item.id}:`, isExpanded);
-                return isExpanded;
-              })() && (
+              {expandedComments.has(item.id) && (
                 <div 
                   className="mt-4 border-t border-border pt-4 comments-section"
                   onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
