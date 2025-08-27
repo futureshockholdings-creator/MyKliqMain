@@ -174,6 +174,8 @@ export interface IStorage {
   sendMessage(message: InsertMessage): Promise<Message>;
   markMessageAsRead(messageId: string): Promise<void>;
   markConversationAsRead(conversationId: string, userId: string): Promise<void>;
+  deleteExpiredMessages(): Promise<void>;
+  deleteOldConversations(): Promise<void>;
   
   // Event operations
   getEvents(userId: string): Promise<(Event & { author: User; attendees: (EventAttendee & { user: User })[] })[]>;
@@ -1290,6 +1292,57 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(messages).where(sql`${messages.expiresAt} < ${now}`);
     
     console.log(`Cleaned up ${expiredMessages.length} expired messages at ${now.toISOString()}`);
+  }
+
+  async deleteOldConversations(): Promise<void> {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+    
+    // Find conversations older than 7 days based on lastActivity
+    const oldConversations = await db
+      .select({ 
+        id: conversations.id, 
+        user1Id: conversations.user1Id, 
+        user2Id: conversations.user2Id 
+      })
+      .from(conversations)
+      .where(lt(conversations.lastActivity, sevenDaysAgo));
+    
+    if (oldConversations.length === 0) {
+      console.log(`No old conversations to clean up at ${now.toISOString()}`);
+      return;
+    }
+    
+    const oldConversationIds = oldConversations.map(c => c.id);
+    
+    // First, clear last_message_id references for these conversations
+    await db
+      .update(conversations)
+      .set({ lastMessageId: null })
+      .where(inArray(conversations.id, oldConversationIds));
+    
+    let messagesDeletedCount = 0;
+    
+    // For each old conversation, delete all messages between those users
+    for (const conv of oldConversations) {
+      const messagesResult = await db
+        .delete(messages)
+        .where(
+          or(
+            and(eq(messages.senderId, conv.user1Id), eq(messages.receiverId, conv.user2Id)),
+            and(eq(messages.senderId, conv.user2Id), eq(messages.receiverId, conv.user1Id))
+          )
+        );
+      
+      messagesDeletedCount += messagesResult.rowCount || 0;
+    }
+    
+    // Delete the conversations
+    const conversationsResult = await db
+      .delete(conversations)
+      .where(lt(conversations.lastActivity, sevenDaysAgo));
+    
+    console.log(`Cleaned up ${oldConversations.length} old conversations and ${messagesDeletedCount} messages at ${now.toISOString()}`);
   }
 
   // Event operations

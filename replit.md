@@ -4,6 +4,12 @@ MyKliq is a social media application designed for close-knit friend groups ("kli
 
 ## Recent Updates (August 2025)
 
+### **Auto-Delete Incognito Conversations (August 27, 2025)**
+- **Complete Privacy Protection**: Entire incognito conversations older than 7 days are automatically deleted from the database
+- **Comprehensive Cleanup**: Removes both conversation records and all associated messages to maintain referential integrity
+- **Automated Scheduling**: Cleanup runs every hour to ensure consistent privacy protection without manual intervention
+- **Theme Integration**: Incognito messages pages now use user theme settings while keeping message boxes white for readability
+
 ### **Production Deployment Ready (August 25, 2025)**
 - **Critical Database Issues Resolved**: Fixed kliq feed query errors and null safety warnings
 - **Actions Table Schema Aligned**: Corrected field mapping for live streaming functionality

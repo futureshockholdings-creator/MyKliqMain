@@ -1490,6 +1490,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }, 5 * 60 * 1000); // 5 minutes
 
+  // Auto-cleanup old conversations (7+ days) every hour
+  setInterval(async () => {
+    try {
+      await storage.deleteOldConversations();
+      console.log("Cleaned up old conversations");
+    } catch (error) {
+      console.error("Error cleaning up old conversations:", error);
+    }
+  }, 60 * 60 * 1000); // 1 hour
+
   // Incognito Messages (IM) routes
   app.get('/api/messages/conversations', isAuthenticated, async (req: any, res) => {
     try {
@@ -1652,6 +1662,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error cleaning up expired messages:", error);
       res.status(500).json({ message: "Failed to cleanup expired messages" });
+    }
+  });
+
+  // Manual cleanup endpoint for testing old conversations
+  app.post('/api/messages/cleanup-old-conversations', isAuthenticated, async (req: any, res) => {
+    try {
+      await storage.deleteOldConversations();
+      res.json({ success: true, message: "Old conversations cleaned up" });
+    } catch (error) {
+      console.error("Error cleaning up old conversations:", error);
+      res.status(500).json({ message: "Failed to cleanup old conversations" });
     }
   });
 
