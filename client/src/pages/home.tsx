@@ -1679,7 +1679,12 @@ export default function Home() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleLikePost(item.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Like button clicked for post:', item.id);
+                      handleLikePost(item.id);
+                    }}
                     className={`p-0 h-auto transition-colors ${
                       Array.isArray(item.likes) && user && (user as any).id && item.likes.some((like: any) => like.userId === (user as any).id)
                         ? "text-red-500 hover:bg-red-50" 
@@ -1698,7 +1703,12 @@ export default function Home() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleToggleComments(item.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Comment button clicked for post:', item.id);
+                      handleToggleComments(item.id);
+                    }}
                     className="text-secondary hover:bg-secondary/10 p-0 h-auto"
                     data-testid={`button-toggle-comments-${item.id}`}
                   >
