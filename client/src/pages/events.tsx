@@ -181,6 +181,40 @@ export default function Events() {
     },
   });
 
+  // Delete event mutation
+  const deleteEventMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      await apiRequest("DELETE", `/api/events/${eventId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      setShowEditEvent(false);
+      setEditingEvent(null);
+      toast({
+        title: "Event deleted!",
+        description: "Your event has been cancelled and removed",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Update attendance mutation
   const updateAttendanceMutation = useMutation({
     mutationFn: async ({ eventId, status }: { eventId: string; status: string }) => {
@@ -264,6 +298,18 @@ export default function Events() {
         mediaType: editingEvent.mediaType,
       }
     });
+  };
+
+  const handleDeleteEvent = () => {
+    if (!editingEvent?.id) return;
+    
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${editingEvent.title}"? This action cannot be undone.`
+    );
+    
+    if (confirmDelete) {
+      deleteEventMutation.mutate(editingEvent.id);
+    }
   };
 
   const handleAttendanceUpdate = (eventId: string, status: string) => {
@@ -515,11 +561,20 @@ export default function Events() {
               <div className="flex space-x-2 pt-4">
                 <Button
                   onClick={handleUpdateEvent}
-                  disabled={updateEventMutation.isPending}
+                  disabled={updateEventMutation.isPending || deleteEventMutation.isPending}
                   className="flex-1 bg-gradient-to-r from-primary to-secondary text-primary-foreground"
                   data-testid="button-update-event"
                 >
                   {updateEventMutation.isPending ? "Updating..." : "Update Event"}
+                </Button>
+                <Button
+                  onClick={handleDeleteEvent}
+                  disabled={updateEventMutation.isPending || deleteEventMutation.isPending}
+                  variant="destructive"
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  data-testid="button-delete-event"
+                >
+                  {deleteEventMutation.isPending ? "Deleting..." : "Delete"}
                 </Button>
                 <Button
                   variant="outline"

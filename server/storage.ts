@@ -1582,6 +1582,17 @@ export class DatabaseStorage implements IStorage {
     return updatedEvent;
   }
 
+  async deleteEvent(eventId: string): Promise<void> {
+    // Delete event reminders first (to maintain referential integrity)
+    await db.delete(eventReminders).where(eq(eventReminders.eventId, eventId));
+    
+    // Delete event attendees
+    await db.delete(eventAttendees).where(eq(eventAttendees.eventId, eventId));
+    
+    // Delete the event itself
+    await db.delete(events).where(eq(events.id, eventId));
+  }
+
   async getUserEventAttendance(eventId: string, userId: string): Promise<{ status: string } | undefined> {
     const [attendance] = await db
       .select()

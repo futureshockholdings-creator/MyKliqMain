@@ -1631,6 +1631,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/events/:eventId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { eventId } = req.params;
+      
+      // Validate ownership
+      const existingEvent = await storage.getEventById(eventId);
+      if (!existingEvent || existingEvent.userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own events" });
+      }
+      
+      await storage.deleteEvent(eventId);
+      res.json({ message: "Event deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
   // Get user's attendance status for an event
   app.get('/api/events/:eventId/attendance', isAuthenticated, async (req: any, res) => {
     try {
