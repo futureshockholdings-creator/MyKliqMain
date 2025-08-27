@@ -101,6 +101,8 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByPhone(phoneNumber: string): Promise<User | undefined>;
+  getUserByName(firstName: string, lastName: string): Promise<User | undefined>;
+  getUserByNameAndPhone(firstName: string, lastName: string, phoneNumber: string): Promise<User | undefined>;
   createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<PasswordResetToken>;
   getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
   deletePasswordResetToken(token: string): Promise<void>;
@@ -287,6 +289,27 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByPhone(phoneNumber: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
+    return user;
+  }
+
+  async getUserByName(firstName: string, lastName: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(
+      and(
+        eq(sql`LOWER(${users.firstName})`, firstName.toLowerCase()),
+        eq(sql`LOWER(${users.lastName})`, lastName.toLowerCase())
+      )
+    );
+    return user;
+  }
+
+  async getUserByNameAndPhone(firstName: string, lastName: string, phoneNumber: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(
+      and(
+        eq(sql`LOWER(${users.firstName})`, firstName.toLowerCase()),
+        eq(sql`LOWER(${users.lastName})`, lastName.toLowerCase()),
+        eq(users.phoneNumber, phoneNumber)
+      )
+    );
     return user;
   }
 

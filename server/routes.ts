@@ -491,18 +491,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Password reset endpoints
-  app.post('/api/auth/forgot-password', async (req, res) => {
+  // Step 1: Verify name
+  app.post('/api/auth/verify-name', async (req, res) => {
     try {
-      const { phoneNumber } = req.body;
+      const { firstName, lastName } = req.body;
       
-      if (!phoneNumber) {
-        return res.status(400).json({ message: "Phone number is required" });
+      if (!firstName || !lastName) {
+        return res.status(400).json({ message: "First name and last name are required" });
       }
 
-      // Find user by phone number
-      const user = await storage.getUserByPhone(phoneNumber);
+      // Find user by name (case-insensitive)
+      const user = await storage.getUserByName(firstName.trim(), lastName.trim());
       if (!user) {
-        return res.status(404).json({ message: "No account found with this phone number" });
+        return res.status(404).json({ message: "No account found with this name" });
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Name verified successfully" 
+      });
+    } catch (error) {
+      console.error("Error verifying name:", error);
+      res.status(500).json({ message: "Failed to verify name" });
+    }
+  });
+
+  // Step 2: Verify phone number (requires name from step 1)
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const { firstName, lastName, phoneNumber } = req.body;
+      
+      if (!firstName || !lastName || !phoneNumber) {
+        return res.status(400).json({ message: "First name, last name, and phone number are required" });
+      }
+
+      // Find user by name and phone number for extra security
+      const user = await storage.getUserByNameAndPhone(firstName.trim(), lastName.trim(), phoneNumber);
+      if (!user) {
+        return res.status(404).json({ message: "Account information does not match our records" });
       }
 
       // Check if user has security questions set up
@@ -520,11 +546,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true, 
         resetToken: resetToken, // Send token for frontend flow
-        message: "Account verified successfully" 
+        message: "Phone number verified successfully" 
       });
     } catch (error) {
-      console.error("Error verifying account:", error);
-      res.status(500).json({ message: "Failed to verify account" });
+      console.error("Error verifying phone number:", error);
+      res.status(500).json({ message: "Failed to verify phone number" });
     }
   });
 

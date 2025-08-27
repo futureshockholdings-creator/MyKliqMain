@@ -3,13 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { ArrowLeft, Phone, Shield, Lock, Hash } from "lucide-react";
+import { ArrowLeft, Phone, Shield, Lock, Hash, User } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ForgotPassword() {
-  const [step, setStep] = useState<'phone' | 'questions' | 'pin' | 'password'>('phone');
+  const [step, setStep] = useState<'name' | 'phone' | 'questions' | 'pin' | 'password'>('name');
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [securityAnswers, setSecurityAnswers] = useState({
@@ -23,10 +25,38 @@ export default function ForgotPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  const verifyName = async () => {
+    setIsLoading(true);
+    try {
+      const data = await apiRequest("POST", "/api/auth/verify-name", {
+        firstName,
+        lastName
+      });
+      
+      if (data.success) {
+        setStep('phone');
+        toast({
+          title: "Name verified!",
+          description: "Please enter your phone number",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Name verification failed",
+        description: error.message || "Name doesn't match our records",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const verifyPhoneNumber = async () => {
     setIsLoading(true);
     try {
       const data = await apiRequest("POST", "/api/auth/forgot-password", {
+        firstName,
+        lastName,
         phoneNumber
       });
       
@@ -34,14 +64,14 @@ export default function ForgotPassword() {
         setResetToken(data.resetToken);
         setStep('questions');
         toast({
-          title: "Correct, moving to the next verification step",
-          description: "Account verified successfully",
+          title: "Phone number verified!",
+          description: "Please answer your security questions",
         });
       }
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to verify account",
+        title: "Phone verification failed",
+        description: error.message || "Phone number doesn't match our records",
         variant: "destructive",
       });
     } finally {
@@ -159,33 +189,79 @@ export default function ForgotPassword() {
         <Card className="bg-card border-border">
           <CardHeader className="text-center">
             <CardTitle className="text-primary text-2xl">
+              {step === 'name' && (
+                <>
+                  <User className="w-8 h-8 mx-auto mb-2" />
+                  Reset Password - Step 1 of 5
+                </>
+              )}
               {step === 'phone' && (
                 <>
                   <Phone className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 1 of 4
+                  Reset Password - Step 2 of 5
                 </>
               )}
               {step === 'questions' && (
                 <>
                   <Shield className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 2 of 4
+                  Reset Password - Step 3 of 5
                 </>
               )}
               {step === 'pin' && (
                 <>
                   <Hash className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 3 of 4
+                  Reset Password - Step 4 of 5
                 </>
               )}
               {step === 'password' && (
                 <>
                   <Lock className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 4 of 4
+                  Reset Password - Step 5 of 5
                 </>
               )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {step === 'name' && (
+              <>
+                <p className="text-muted-foreground text-sm text-center mb-4">
+                  Enter your first and last name for account verification
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm text-muted-foreground">
+                      First Name
+                    </label>
+                    <Input
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Enter your first name"
+                      data-testid="input-first-name"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">
+                      Last Name
+                    </label>
+                    <Input
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Enter your last name"
+                      data-testid="input-last-name"
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={verifyName}
+                  disabled={!firstName || !lastName || isLoading}
+                  className="w-full"
+                  data-testid="button-verify-name"
+                >
+                  {isLoading ? "Verifying..." : "Verify Name"}
+                </Button>
+              </>
+            )}
+
             {step === 'phone' && (
               <>
                 <p className="text-muted-foreground text-sm text-center mb-4">
