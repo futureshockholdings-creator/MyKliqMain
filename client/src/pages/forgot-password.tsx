@@ -116,10 +116,10 @@ export default function ForgotPassword() {
       <div className="max-w-md w-full">
         {/* Back Button */}
         <div className="mb-6">
-          <Link href="/">
+          <Link href="/login">
             <Button variant="ghost" className="text-muted-foreground hover:text-primary">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Landing
+              Back to Log In
             </Button>
           </Link>
         </div>
