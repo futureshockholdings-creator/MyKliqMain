@@ -690,6 +690,8 @@ export default function Kliq() {
               onRemove={handleRemoveFriend}
               maxFriends={28}
               kliqName={userData?.kliqName}
+              kliqLeftEmoji={userData?.kliqLeftEmoji}
+              kliqRightEmoji={userData?.kliqRightEmoji}
               kliqClosed={userData?.kliqClosed}
               onCloseKliq={handleCloseKliq}
               isClosingKliq={false}

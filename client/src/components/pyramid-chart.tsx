@@ -22,12 +22,14 @@ interface PyramidChartProps {
   onRemove?: (friendId: string) => void;
   maxFriends?: number;
   kliqName?: string;
+  kliqLeftEmoji?: string;
+  kliqRightEmoji?: string;
   kliqClosed?: boolean;
   onCloseKliq?: () => void;
   isClosingKliq?: boolean;
 }
 
-export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 28, kliqName, kliqClosed, onCloseKliq, isClosingKliq }: PyramidChartProps) {
+export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 28, kliqName, kliqLeftEmoji = '🏆', kliqRightEmoji = '🏆', kliqClosed, onCloseKliq, isClosingKliq }: PyramidChartProps) {
   const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
   const [showRemoveButton, setShowRemoveButton] = useState<string | null>(null);
   const [isHolding, setIsHolding] = useState<string | null>(null);
@@ -264,7 +266,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
     <div className="bg-card border border-border rounded-xl p-6 space-y-6">
       <div className="text-center">
         <h3 className="text-xl font-bold text-primary mb-2">
-          🏆 {kliqName || "My Kliq"} 🏆
+          {kliqLeftEmoji} {kliqName || "My Kliq"} {kliqRightEmoji}
         </h3>
         <p className="text-muted-foreground text-sm mb-4">
           Your friendship pyramid
