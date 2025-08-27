@@ -281,6 +281,7 @@ export interface IStorage {
   // Admin operations for customer service
   getAllUsersForAdmin(): Promise<User[]>;
   getUserDetailsForAdmin(userId: string): Promise<User | undefined>;
+  suspendUser(userId: string, suspensionType: string, expiresAt: Date | null): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2918,46 +2919,64 @@ export class DatabaseStorage implements IStorage {
   async deleteUser(userId: string): Promise<void> {
     try {
       // Delete in order due to foreign key constraints
-      await this.db.delete(birthdayMessages).where(eq(birthdayMessages.userId, userId));
-      await this.db.delete(callParticipants).where(eq(callParticipants.userId, userId));
-      await this.db.delete(videoCalls).where(eq(videoCalls.hostId, userId));
-      await this.db.delete(meetupCheckIns).where(eq(meetupCheckIns.userId, userId));
-      await this.db.delete(meetups).where(eq(meetups.creatorId, userId));
-      await this.db.delete(actionChatMessages).where(eq(actionChatMessages.userId, userId));
-      await this.db.delete(actionViewers).where(eq(actionViewers.userId, userId));
-      await this.db.delete(actions).where(eq(actions.userId, userId));
-      await this.db.delete(eventReminders).where(eq(eventReminders.userId, userId));
-      await this.db.delete(eventAttendees).where(eq(eventAttendees.userId, userId));
-      await this.db.delete(events).where(eq(events.creatorId, userId));
-      await this.db.delete(messages).where(eq(messages.senderId, userId));
-      await this.db.delete(conversations).where(eq(conversations.user1Id, userId));
-      await this.db.delete(conversations).where(eq(conversations.user2Id, userId));
-      await this.db.delete(contentFilters).where(eq(contentFilters.userId, userId));
-      await this.db.delete(postLikes).where(eq(postLikes.userId, userId));
-      await this.db.delete(comments).where(eq(comments.userId, userId));
-      await this.db.delete(storyViews).where(eq(storyViews.userId, userId));
-      await this.db.delete(stories).where(eq(stories.userId, userId));
-      await this.db.delete(posts).where(eq(posts.userId, userId));
-      await this.db.delete(friendships).where(eq(friendships.userId, userId));
-      await this.db.delete(friendships).where(eq(friendships.friendId, userId));
-      await this.db.delete(userThemes).where(eq(userThemes.userId, userId));
-      await this.db.delete(socialCredentials).where(eq(socialCredentials.userId, userId));
-      await this.db.delete(externalPosts).where(eq(externalPosts.userId, userId));
-      await this.db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
-      await this.db.delete(users).where(eq(users.id, userId));
+      await db.delete(birthdayMessages).where(eq(birthdayMessages.birthdayUserId, userId));
+      await db.delete(birthdayMessages).where(eq(birthdayMessages.senderUserId, userId));
+      await db.delete(callParticipants).where(eq(callParticipants.userId, userId));
+      await db.delete(videoCalls).where(eq(videoCalls.initiatorId, userId));
+      await db.delete(meetupCheckIns).where(eq(meetupCheckIns.userId, userId));
+      await db.delete(meetups).where(eq(meetups.userId, userId));
+      await db.delete(actionChatMessages).where(eq(actionChatMessages.userId, userId));
+      await db.delete(actionViewers).where(eq(actionViewers.userId, userId));
+      await db.delete(actions).where(eq(actions.userId, userId));
+      await db.delete(eventReminders).where(eq(eventReminders.userId, userId));
+      await db.delete(eventAttendees).where(eq(eventAttendees.userId, userId));
+      await db.delete(events).where(eq(events.userId, userId));
+      await db.delete(messages).where(eq(messages.senderId, userId));
+      await db.delete(conversations).where(eq(conversations.user1Id, userId));
+      await db.delete(conversations).where(eq(conversations.user2Id, userId));
+      await db.delete(contentFilters).where(eq(contentFilters.userId, userId));
+      await db.delete(postLikes).where(eq(postLikes.userId, userId));
+      await db.delete(comments).where(eq(comments.userId, userId));
+      await db.delete(storyViews).where(eq(storyViews.userId, userId));
+      await db.delete(stories).where(eq(stories.userId, userId));
+      await db.delete(posts).where(eq(posts.userId, userId));
+      await db.delete(friendships).where(eq(friendships.userId, userId));
+      await db.delete(friendships).where(eq(friendships.friendId, userId));
+      await db.delete(userThemes).where(eq(userThemes.userId, userId));
+      await db.delete(socialCredentials).where(eq(socialCredentials.userId, userId));
+      await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+      await db.delete(users).where(eq(users.id, userId));
     } catch (error) {
       console.error("Error deleting user:", error);
       throw error;
     }
   }
 
+  async suspendUser(userId: string, suspensionType: string, expiresAt: Date | null): Promise<void> {
+    try {
+      const now = new Date();
+      await db.update(users)
+        .set({
+          isSuspended: true,
+          suspensionType: suspensionType,
+          suspendedAt: now,
+          suspensionExpiresAt: expiresAt,
+          updatedAt: now
+        })
+        .where(eq(users.id, userId));
+    } catch (error) {
+      console.error("Error suspending user:", error);
+      throw error;
+    }
+  }
+
   async getAnalytics(): Promise<any> {
     try {
-      const totalUsers = await this.db.select({ count: sql<number>`count(*)` }).from(users);
-      const postsToday = await this.db.select({ count: sql<number>`count(*)` })
+      const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
+      const postsToday = await db.select({ count: sql<number>`count(*)` })
         .from(posts)
         .where(sql`DATE(${posts.createdAt}) = CURRENT_DATE`);
-      const activeStories = await this.db.select({ count: sql<number>`count(*)` })
+      const activeStories = await db.select({ count: sql<number>`count(*)` })
         .from(stories)
         .where(sql`${stories.expiresAt} > NOW()`);
 

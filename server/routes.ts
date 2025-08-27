@@ -3701,6 +3701,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Suspend user endpoint for admin
+  app.post('/api/admin/users/:userId/suspend', async (req, res) => {
+    try {
+      const { password, suspensionType } = req.body;
+      const { userId } = req.params;
+      
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      // Calculate expiration date based on suspension type
+      let expiresAt: Date | null = null;
+      const now = new Date();
+      
+      switch (suspensionType) {
+        case "24hours":
+          expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+          break;
+        case "7days":
+          expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          break;
+        case "30days":
+          expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+          break;
+        case "90days":
+          expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+          break;
+        case "180days":
+          expiresAt = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000);
+          break;
+        case "banned":
+          expiresAt = null; // Permanent ban
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid suspension type" });
+      }
+
+      await storage.suspendUser(userId, suspensionType, expiresAt);
+      res.json({ success: true, message: "User suspended successfully", expiresAt });
+    } catch (error) {
+      console.error("Error suspending user:", error);
+      res.status(500).json({ message: "Failed to suspend user" });
+    }
+  });
+
   // Analytics endpoint for admin
   app.get('/api/admin/analytics', async (req, res) => {
     try {

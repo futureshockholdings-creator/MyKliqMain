@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Search, Shield, Users, Database, Activity, AlertTriangle, BarChart3, Download, RefreshCw, Trash2, UserX, Calendar } from "lucide-react";
+import { Eye, EyeOff, Search, Shield, Users, Database, Activity, AlertTriangle, BarChart3, Download, RefreshCw, Trash2, UserX, Calendar, Ban } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import {
   Table,
@@ -22,6 +22,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -111,6 +118,38 @@ export default function AdminPage() {
       toast({
         title: "Error",
         description: "Failed to delete user.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Suspend user mutation
+  const suspendUser = useMutation({
+    mutationFn: async ({ userId, suspensionType }: { userId: string; suspensionType: string }) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/suspend`, { 
+        password: "mykliq2025admin!", 
+        suspensionType 
+      });
+    },
+    onSuccess: (data, { suspensionType }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      const typeLabels: { [key: string]: string } = {
+        "24hours": "24 hours",
+        "7days": "7 days", 
+        "30days": "30 days",
+        "90days": "90 days",
+        "180days": "180 days",
+        "banned": "permanently"
+      };
+      toast({
+        title: "User Suspended",
+        description: `User has been suspended for ${typeLabels[suspensionType] || suspensionType}.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to suspend user.",
         variant: "destructive",
       });
     },
@@ -370,6 +409,7 @@ export default function AdminPage() {
                     <TableHead className="text-foreground">Email</TableHead>
                     <TableHead className="text-foreground">Phone</TableHead>
                     <TableHead className="text-foreground">Kliq Name</TableHead>
+                    <TableHead className="text-foreground">Account Status</TableHead>
                     <TableHead className="text-foreground">Security Status</TableHead>
                     <TableHead className="text-foreground">Actions</TableHead>
                   </TableRow>
@@ -383,6 +423,29 @@ export default function AdminPage() {
                       <TableCell className="text-muted-foreground">{user.email}</TableCell>
                       <TableCell className="text-muted-foreground">{user.phoneNumber || "N/A"}</TableCell>
                       <TableCell className="text-muted-foreground">{user.kliqName || "N/A"}</TableCell>
+                      <TableCell>
+                        {user.isSuspended ? (
+                          <div className="space-y-1">
+                            <span className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded text-xs font-semibold">
+                              {user.suspensionType === "banned" ? "BANNED" : "SUSPENDED"}
+                            </span>
+                            {user.suspendedAt && (
+                              <p className="text-xs text-muted-foreground">
+                                Since: {new Date(user.suspendedAt).toLocaleDateString()}
+                              </p>
+                            )}
+                            {user.suspensionExpiresAt && user.suspensionType !== "banned" && (
+                              <p className="text-xs text-muted-foreground">
+                                Until: {new Date(user.suspensionExpiresAt).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs">
+                            Active
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
                           {user.password && (
@@ -498,6 +561,139 @@ export default function AdminPage() {
                             )}
                           </DialogContent>
                           </Dialog>
+                          
+                          {/* Suspension Dialog */}
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-orange-200 text-orange-600 hover:bg-orange-50 dark:border-orange-800 dark:text-orange-400 dark:hover:bg-orange-950"
+                                data-testid={`button-suspend-user-${user.id}`}
+                              >
+                                <Ban className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="bg-card border-border">
+                              <DialogHeader>
+                                <DialogTitle className="text-primary">Suspend User Account</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <p className="text-muted-foreground">
+                                  Select how long to suspend {user.firstName} {user.lastName}'s account:
+                                </p>
+                                
+                                <div className="space-y-3">
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (confirm(`Suspend ${user.firstName} ${user.lastName} for 24 hours?`)) {
+                                          suspendUser.mutate({ userId: user.id, suspensionType: "24hours" });
+                                        }
+                                      }}
+                                      disabled={suspendUser.isPending}
+                                      className="flex-1"
+                                    >
+                                      24 Hours
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (confirm(`Suspend ${user.firstName} ${user.lastName} for 7 days?`)) {
+                                          suspendUser.mutate({ userId: user.id, suspensionType: "7days" });
+                                        }
+                                      }}
+                                      disabled={suspendUser.isPending}
+                                      className="flex-1"
+                                    >
+                                      7 Days
+                                    </Button>
+                                  </div>
+                                  
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (confirm(`Suspend ${user.firstName} ${user.lastName} for 30 days?`)) {
+                                          suspendUser.mutate({ userId: user.id, suspensionType: "30days" });
+                                        }
+                                      }}
+                                      disabled={suspendUser.isPending}
+                                      className="flex-1"
+                                    >
+                                      30 Days
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (confirm(`Suspend ${user.firstName} ${user.lastName} for 90 days?`)) {
+                                          suspendUser.mutate({ userId: user.id, suspensionType: "90days" });
+                                        }
+                                      }}
+                                      disabled={suspendUser.isPending}
+                                      className="flex-1"
+                                    >
+                                      90 Days
+                                    </Button>
+                                  </div>
+                                  
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (confirm(`Suspend ${user.firstName} ${user.lastName} for 180 days?`)) {
+                                          suspendUser.mutate({ userId: user.id, suspensionType: "180days" });
+                                        }
+                                      }}
+                                      disabled={suspendUser.isPending}
+                                      className="flex-1"
+                                    >
+                                      180 Days
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => {
+                                        if (confirm(`PERMANENTLY BAN ${user.firstName} ${user.lastName}? This action cannot be undone.`)) {
+                                          suspendUser.mutate({ userId: user.id, suspensionType: "banned" });
+                                        }
+                                      }}
+                                      disabled={suspendUser.isPending}
+                                      className="flex-1"
+                                    >
+                                      Ban Forever
+                                    </Button>
+                                  </div>
+                                </div>
+                                
+                                {user.isSuspended && (
+                                  <div className="border-t pt-3">
+                                    <p className="text-sm text-orange-600 dark:text-orange-400">
+                                      <strong>Current Status:</strong> This user is currently suspended
+                                      {user.suspensionType && ` (${user.suspensionType})`}
+                                      {user.suspendedAt && (
+                                        <span className="block">
+                                          Suspended on: {new Date(user.suspendedAt).toLocaleDateString()}
+                                        </span>
+                                      )}
+                                      {user.suspensionExpiresAt && user.suspensionType !== "banned" && (
+                                        <span className="block">
+                                          Expires: {new Date(user.suspensionExpiresAt).toLocaleDateString()}
+                                        </span>
+                                      )}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+
                           <Button
                             variant="outline"
                             size="sm"
