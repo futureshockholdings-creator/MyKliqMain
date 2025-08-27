@@ -761,7 +761,19 @@ export default function Kliq() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="text-sm text-foreground font-medium flex-1" data-testid="text-invite-message">
                     {userData?.inviteCode && userData?.firstName 
-                      ? `${userData.firstName} wants you to join their Kliq. Use the following Invite Code ${userData.inviteCode} and go to https://kliqlife.com`
+                      ? (
+                          <>
+                            {userData.firstName} wants you to join their Kliq. Use the following Invite Code {userData.inviteCode} and go to{' '}
+                            <a 
+                              href="https://kliqlife.com" 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:text-blue-600 underline"
+                            >
+                              https://kliqlife.com
+                            </a>
+                          </>
+                        )
                       : "Loading..."
                     }
                   </div>
