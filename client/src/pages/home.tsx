@@ -390,9 +390,11 @@ export default function Home() {
         if (!old) return old;
         return old.map((item: any) => {
           if (item.id === postId) {
+            const updatedComments = [...(item.comments || []), optimisticComment];
             return {
               ...item,
-              comments: [...(item.comments || []), optimisticComment]
+              comments: updatedComments,
+              _commentsCount: updatedComments.length // Update comment count for UI
             };
           }
           return item;
@@ -423,8 +425,9 @@ export default function Home() {
       });
     },
     onSettled: () => {
-      // Always refetch after error or success to get the real data
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      // Force a complete refresh by removing the cache and refetching
+      queryClient.removeQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
     },
   });
 
@@ -1761,7 +1764,7 @@ export default function Home() {
                     data-testid={`button-toggle-comments-${item.id}`}
                   >
                     <MessageCircle className="w-4 h-4 mr-1" />
-                    {item.comments?.length || 0}
+                    {item._commentsCount || item.comments?.length || 0}
                   </Button>
                   <Button
                     size="sm"
