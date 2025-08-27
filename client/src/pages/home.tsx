@@ -311,8 +311,7 @@ export default function Home() {
     },
     onSuccess: () => {
       console.log('Like posted successfully, invalidating cache');
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.removeQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "Like recorded!",
@@ -348,8 +347,7 @@ export default function Home() {
     },
     onSuccess: (_, { postId }) => {
       console.log('Comment posted successfully, invalidating cache');
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.removeQueries({ queryKey: ["/api/kliq-feed"] });
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
       setCommentGifs(prev => ({ ...prev, [postId]: null }));
       setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
