@@ -1255,6 +1255,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Edit post endpoint
+  app.put('/api/posts/:postId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { postId } = req.params;
+      const { content } = req.body;
+      
+      // Verify that the user owns this post
+      const existingPost = await storage.getPostById(postId);
+      if (!existingPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      if (existingPost.userId !== userId) {
+        return res.status(403).json({ message: "You can only edit your own posts" });
+      }
+      
+      // Update the post content
+      const updatedPost = await storage.updatePost(postId, { content });
+      
+      // Invalidate cache for feeds
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed');
+      invalidateCache('posts');
+      
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Error updating post:", error);
+      res.status(500).json({ message: "Failed to update post" });
+    }
+  });
+
   app.post('/api/posts/:postId/like', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

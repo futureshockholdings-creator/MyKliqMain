@@ -130,6 +130,7 @@ export interface IStorage {
   getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
   getPostById(postId: string): Promise<Post | undefined>;
   createPost(post: InsertPost): Promise<Post>;
+  updatePost(postId: string, updates: Partial<Pick<Post, 'content'>>): Promise<Post>;
   likePost(postId: string, userId: string): Promise<void>;
   unlikePost(postId: string, userId: string): Promise<void>;
   getUserReflection(userId: string): Promise<{ posts: any[]; stats: any; message: string }>;
@@ -803,6 +804,15 @@ export class DatabaseStorage implements IStorage {
   async createPost(post: InsertPost): Promise<Post> {
     const [newPost] = await db.insert(posts).values(post).returning();
     return newPost;
+  }
+
+  async updatePost(postId: string, updates: Partial<Pick<Post, 'content'>>): Promise<Post> {
+    const [updatedPost] = await db
+      .update(posts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(posts.id, postId))
+      .returning();
+    return updatedPost;
   }
 
   async likePost(postId: string, userId: string): Promise<void> {

@@ -36,6 +36,84 @@ import { usePostTranslation } from "@/lib/translationService";
 
 import type { Gif, Moviecon } from "@shared/schema";
 
+// Edit Post Form Component
+function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
+  const [editContent, setEditContent] = useState(post.content || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const handleUpdate = async () => {
+    if (!editContent.trim()) {
+      toast({
+        title: "Error",
+        description: "Post content cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await apiRequest("PUT", `/api/posts/${post.id}`, {
+        content: editContent
+      });
+
+      toast({
+        title: "Post Updated",
+        description: "Your post has been successfully updated.",
+        className: "bg-white text-black border-gray-300",
+      });
+
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update post. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Textarea
+        value={editContent}
+        onChange={(e) => setEditContent(e.target.value)}
+        placeholder="What's on your mind?"
+        className="min-h-[120px] bg-background border-border text-foreground"
+        data-testid="textarea-edit-post"
+      />
+      <div className="flex gap-2 justify-end">
+        <Button
+          variant="outline"
+          onClick={() => setEditContent(post.content || '')}
+          disabled={isSubmitting}
+          className="border-border text-foreground"
+        >
+          Reset
+        </Button>
+        <Button
+          onClick={handleUpdate}
+          disabled={isSubmitting || !editContent.trim()}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          data-testid="button-update-post"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Updating...
+            </>
+          ) : (
+            "Update Post"
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [newPost, setNewPost] = useState("");
@@ -1683,6 +1761,33 @@ export default function Home() {
                     {formatTimeAgo(item.createdAt)}
                   </p>
                 </div>
+                
+                {/* Edit button - only show for post author */}
+                {item.author.id === userData?.id && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        data-testid={`button-edit-post-${item.id}`}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md bg-card border-border">
+                      <DialogHeader>
+                        <DialogTitle className="text-foreground">Edit Post</DialogTitle>
+                      </DialogHeader>
+                      <EditPostForm 
+                        post={item} 
+                        onUpdate={() => {
+                          queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+                        }}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                )}
 
               </div>
               
