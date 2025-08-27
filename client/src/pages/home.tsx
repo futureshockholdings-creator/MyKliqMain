@@ -346,8 +346,10 @@ export default function Home() {
       await apiRequest("POST", `/api/posts/${postId}/comments`, { content, gifId, movieconId });
     },
     onSuccess: (_, { postId }) => {
-      console.log('Comment posted successfully, invalidating cache');
-      queryClient.removeQueries({ queryKey: ["/api/kliq-feed"] });
+      console.log('Comment posted successfully, forcing refresh');
+      // Force a complete refresh by removing all queries and refetching
+      queryClient.removeQueries();
+      queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"], type: 'active' });
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
       setCommentGifs(prev => ({ ...prev, [postId]: null }));
       setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
