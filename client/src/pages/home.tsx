@@ -692,13 +692,17 @@ export default function Home() {
   };
 
   const handleToggleComments = (postId: string) => {
+    console.log('Toggling comments for post:', postId);
     setExpandedComments(prev => {
       const newSet = new Set(prev);
       if (newSet.has(postId)) {
+        console.log('Closing comments for:', postId);
         newSet.delete(postId);
       } else {
+        console.log('Opening comments for:', postId);
         newSet.add(postId);
       }
+      console.log('New expanded comments set:', Array.from(newSet));
       return newSet;
     });
   };
@@ -1714,7 +1718,11 @@ export default function Home() {
               </div>
 
               {/* Comments Section */}
-              {expandedComments.has(item.id) && (
+              {(() => {
+                const isExpanded = expandedComments.has(item.id);
+                console.log(`Comments expanded for ${item.id}:`, isExpanded);
+                return isExpanded;
+              })() && (
                 <div 
                   className="mt-4 border-t border-border pt-4 comments-section"
                   onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
