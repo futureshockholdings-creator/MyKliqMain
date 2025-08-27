@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { Users, Crown, Palette, Shield, Video, LogIn } from "lucide-react";
+import { Users, Crown, Palette, Shield, Video, LogIn, Link as LinkIcon } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -152,6 +152,18 @@ export default function Landing() {
                   <div>
                     <h3 className="font-bold text-mykliq-green">Content Filtering</h3>
                     <p className="text-xs text-muted-foreground">Filter out unwanted content with keyword blocking</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-mykliq-blue/20 to-mykliq-purple/20 border-mykliq-blue/30">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <LinkIcon className="w-8 h-8 text-mykliq-blue" />
+                  <div>
+                    <h3 className="font-bold text-mykliq-blue">Social Integration</h3>
+                    <p className="text-xs text-muted-foreground">Link other social accounts to create a one stop social experience</p>
                   </div>
                 </div>
               </CardContent>
