@@ -411,6 +411,12 @@ export default function Home() {
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
       setCommentGifs(prev => ({ ...prev, [postId]: null }));
       setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
+      // Close the comment box after posting
+      setExpandedComments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
       toast({
         title: "Comment added!",
         description: "Your comment has been posted",
