@@ -585,6 +585,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PIN verification for password viewing
+  app.post('/api/user/verify-pin', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { pin } = req.body;
+      
+      if (!pin) {
+        return res.status(400).json({ message: "PIN is required" });
+      }
+
+      // Validate PIN format (4 digits)
+      if (!/^\d{4}$/.test(pin)) {
+        return res.status(400).json({ message: "PIN must be exactly 4 digits" });
+      }
+
+      // Get user to verify PIN
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if user has a PIN set up
+      if (!user.securityPin) {
+        return res.status(400).json({ message: "Security PIN not set up for this account" });
+      }
+
+      // Verify PIN
+      const pinValid = await bcrypt.compare(pin, user.securityPin);
+      if (!pinValid) {
+        return res.status(400).json({ message: "Invalid PIN" });
+      }
+
+      res.json({ success: true, message: "PIN verified successfully" });
+    } catch (error) {
+      console.error("Error verifying PIN:", error);
+      res.status(500).json({ message: "Failed to verify PIN" });
+    }
+  });
+
   app.post('/api/auth/verify-pin', async (req, res) => {
     try {
       const { resetToken, pin } = req.body;

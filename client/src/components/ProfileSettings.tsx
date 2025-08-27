@@ -143,6 +143,9 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   // Password setup states
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinForField, setPinForField] = useState<'password' | 'confirmPassword'>('password');
 
   // Temporary input states for adding new items
   const [newInterest, setNewInterest] = useState("");
@@ -242,6 +245,65 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
 
   const onPasswordSubmit = (values: z.infer<typeof passwordSchema>) => {
     setupPassword.mutate({ password: values.password });
+  };
+
+  // PIN verification mutation
+  const verifyPin = useMutation({
+    mutationFn: async (pin: string) => {
+      return await apiRequest("POST", "/api/user/verify-pin", { pin });
+    },
+    onSuccess: () => {
+      if (pinForField === 'password') {
+        setShowPassword(true);
+      } else {
+        setShowConfirmPassword(true);
+      }
+      setShowPinDialog(false);
+      setPinInput("");
+      toast({
+        title: "PIN Verified",
+        description: "You can now view the password.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Invalid PIN",
+        description: "The PIN you entered is incorrect.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEyeClick = (field: 'password' | 'confirmPassword') => {
+    if (field === 'password' ? showPassword : showConfirmPassword) {
+      // Hide the password
+      if (field === 'password') {
+        setShowPassword(false);
+      } else {
+        setShowConfirmPassword(false);
+      }
+    } else {
+      // Show PIN dialog to verify before revealing password
+      setPinForField(field);
+      setShowPinDialog(true);
+    }
+  };
+
+  const handlePinSubmit = () => {
+    if (pinInput.length === 4) {
+      verifyPin.mutate(pinInput);
+    } else {
+      toast({
+        title: "Invalid PIN",
+        description: "PIN must be 4 digits.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Function to mask password with X's while preserving length
+  const maskPassword = (value: string) => {
+    return 'X'.repeat(value.length);
   };
 
   const handleSave = () => {
@@ -685,7 +747,29 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                             <div className="relative">
                               <Input
                                 {...field}
-                                type={showPassword ? "text" : "password"}
+                                type="text"
+                                value={showPassword ? field.value : maskPassword(field.value)}
+                                onChange={(e) => {
+                                  // Only allow changes if showing actual password or if it's backspace/delete
+                                  if (showPassword) {
+                                    field.onChange(e);
+                                  } else {
+                                    // For masked mode, handle input differently
+                                    const newValue = e.target.value;
+                                    const oldValue = field.value;
+                                    
+                                    if (newValue.length > oldValue.length) {
+                                      // Adding characters - replace X's with actual input
+                                      const addedChar = newValue[newValue.length - 1];
+                                      if (addedChar !== 'X') {
+                                        field.onChange(oldValue + addedChar);
+                                      }
+                                    } else if (newValue.length < oldValue.length) {
+                                      // Removing characters
+                                      field.onChange(oldValue.slice(0, newValue.length));
+                                    }
+                                  }
+                                }}
                                 placeholder="Enter your password"
                                 className="bg-input border-border text-foreground pr-10"
                                 data-testid="input-password"
@@ -695,7 +779,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                                 variant="ghost"
                                 size="sm"
                                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                onClick={() => setShowPassword(!showPassword)}
+                                onClick={() => handleEyeClick('password')}
                                 data-testid="button-toggle-password"
                               >
                                 {showPassword ? (
@@ -724,7 +808,29 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                             <div className="relative">
                               <Input
                                 {...field}
-                                type={showConfirmPassword ? "text" : "password"}
+                                type="text"
+                                value={showConfirmPassword ? field.value : maskPassword(field.value)}
+                                onChange={(e) => {
+                                  // Only allow changes if showing actual password or if it's backspace/delete
+                                  if (showConfirmPassword) {
+                                    field.onChange(e);
+                                  } else {
+                                    // For masked mode, handle input differently
+                                    const newValue = e.target.value;
+                                    const oldValue = field.value;
+                                    
+                                    if (newValue.length > oldValue.length) {
+                                      // Adding characters - replace X's with actual input
+                                      const addedChar = newValue[newValue.length - 1];
+                                      if (addedChar !== 'X') {
+                                        field.onChange(oldValue + addedChar);
+                                      }
+                                    } else if (newValue.length < oldValue.length) {
+                                      // Removing characters
+                                      field.onChange(oldValue.slice(0, newValue.length));
+                                    }
+                                  }
+                                }}
                                 placeholder="Confirm your password"
                                 className="bg-input border-border text-foreground pr-10"
                                 data-testid="input-confirm-password"
@@ -734,7 +840,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                                 variant="ghost"
                                 size="sm"
                                 className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                onClick={() => handleEyeClick('confirmPassword')}
                                 data-testid="button-toggle-confirm-password"
                               >
                                 {showConfirmPassword ? (
@@ -764,6 +870,58 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* PIN Verification Dialog */}
+        <Dialog open={showPinDialog} onOpenChange={setShowPinDialog}>
+          <DialogContent className="bg-card border-border max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-primary">Verify Your PIN</DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Enter your 4-digit PIN to view the password
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-foreground">PIN</Label>
+                <Input
+                  type="password"
+                  value={pinInput}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    setPinInput(value);
+                  }}
+                  placeholder="Enter 4-digit PIN"
+                  className="bg-input border-border text-foreground text-center text-lg tracking-widest"
+                  maxLength={4}
+                  data-testid="input-pin-verify"
+                />
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowPinDialog(false);
+                    setPinInput("");
+                  }}
+                  className="flex-1"
+                  data-testid="button-cancel-pin"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handlePinSubmit}
+                  disabled={pinInput.length !== 4 || verifyPin.isPending}
+                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                  data-testid="button-verify-pin"
+                >
+                  {verifyPin.isPending ? "Verifying..." : "Verify"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button
