@@ -8,13 +8,20 @@ export async function initializeRedis() {
     redis = Redis.createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379',
       socket: {
-        connectTimeout: 5000,
+        connectTimeout: 3000,
         lazyConnect: false,
+        keepAlive: true,
         reconnectStrategy: (retries) => {
-          if (retries > 3) return false;
-          return Math.min(retries * 100, 1000);
+          if (retries > 5) return false; // More resilient reconnection
+          return Math.min(retries * 50, 500); // Faster reconnect attempts
         }
-      }
+      },
+      // High-performance Redis settings
+      commandsQueueMaxLength: 1000,
+      enableOfflineQueue: true,
+      maxRetriesPerRequest: 3,
+      lazyConnect: false,
+      retryDelayOnFailover: 100
     });
 
     redis.on('error', (err) => {

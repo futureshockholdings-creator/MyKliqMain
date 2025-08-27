@@ -7,7 +7,7 @@ interface CacheItem {
 
 class SimpleCache {
   private cache: Map<string, CacheItem> = new Map();
-  private maxSize: number = 2000; // Increased for better performance, prevent memory leaks
+  private maxSize: number = 5000; // Massive cache size for maximum performance
 
   // Public method to access cache keys for invalidation
   getKeys(): string[] {

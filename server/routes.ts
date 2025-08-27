@@ -4,6 +4,10 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { performanceMonitor, performanceMiddleware } from './performanceMonitor';
+import { requestManagerMiddleware, getLoadBalancerStatus } from './loadBalancer';
+import { memoryOptimizer } from './memoryOptimizer';
+import { healthCheckHandler, scalabilityReportHandler } from './healthcheck';
+import { queryOptimizer } from './queryOptimizer';
 import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
@@ -221,8 +225,9 @@ interface ExtendedWebSocket extends WebSocket {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Performance monitoring middleware
-  app.use(performanceMiddleware());
+  // Maximum scalability middlewares
+  app.use(requestManagerMiddleware); // Advanced load balancing, rate limiting, and circuit breaker
+  app.use(performanceMiddleware()); // Performance monitoring and tracking
 
   // Auth middleware
   await setupAuth(app);
@@ -3202,6 +3207,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       timestamp: new Date().toISOString(),
       uptime: process.uptime()
     });
+  });
+
+  // Advanced scalability monitoring endpoints
+  app.get('/health', healthCheckHandler);
+  app.get('/internal/scalability', scalabilityReportHandler);
+  app.get('/internal/load-balancer', (req, res) => {
+    res.json(getLoadBalancerStatus());
+  });
+  app.get('/internal/memory', (req, res) => {
+    res.json(memoryOptimizer.getMemoryStats());
+  });
+  app.get('/internal/query-optimization', (req, res) => {
+    res.json(queryOptimizer.getOptimizationReport());
   });
 
   const httpServer = createServer(app);
