@@ -386,7 +386,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      res.json(user);
+      // Add security setup status to response
+      const securitySetupComplete = !!(user.password && user.securityAnswer1 && user.securityAnswer2 && user.securityAnswer3 && user.securityPin);
+      
+      res.json({
+        ...user,
+        securitySetupComplete,
+        requiresSecuritySetup: !securitySetupComplete
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
