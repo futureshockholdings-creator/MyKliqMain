@@ -1,13 +1,7 @@
-import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import { PushNotificationSetup } from "@/components/PushNotificationSetup";
@@ -25,9 +19,6 @@ import {
   Link2,
   LogOut,
   User,
-  Shield,
-  Eye,
-  EyeOff
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
@@ -84,58 +75,11 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleLogout = () => {
     window.location.href = '/api/logout';
   };
 
-  // Password setup form schema
-  const passwordSchema = z.object({
-    password: z.string()
-      .min(10, "Password must be at least 10 characters long")
-      .regex(/[a-zA-Z]/, "Password must contain at least one letter")
-      .regex(/[0-9]/, "Password must contain at least one number")
-      .regex(/[^a-zA-Z0-9]/, "Password must contain at least one special character"),
-    confirmPassword: z.string()
-  }).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
-
-  const passwordForm = useForm<z.infer<typeof passwordSchema>>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      password: "",
-      confirmPassword: ""
-    }
-  });
-
-  // Password setup mutation
-  const setupPassword = useMutation({
-    mutationFn: async (data: { password: string }) => {
-      return await apiRequest("POST", "/api/auth/setup-password", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Password Set Successfully",
-        description: "Your password has been set up and will be used for future logins.",
-      });
-      passwordForm.reset();
-    },
-    onError: (error) => {
-      toast({
-        title: "Error Setting Password",
-        description: "Failed to set up password. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onPasswordSubmit = (values: z.infer<typeof passwordSchema>) => {
-    setupPassword.mutate({ password: values.password });
-  };
 
   // Fetch connected social accounts
   const { data: socialAccounts = [], isLoading: accountsLoading } = useQuery({
@@ -384,107 +328,6 @@ export default function Settings() {
               </CardContent>
             </Card>
 
-            {/* Password Setup */}
-            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
-                  Password Setup
-                </CardTitle>
-                <CardDescription className="text-purple-200">
-                  Set up your password for future login access
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...passwordForm}>
-                  <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                    <FormField
-                      control={passwordForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-white">Password</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Input
-                                {...field}
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Enter your password"
-                                className="bg-white/5 border-white/20 text-white placeholder:text-purple-300 pr-10"
-                                data-testid="input-password"
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                onClick={() => setShowPassword(!showPassword)}
-                                data-testid="button-toggle-password"
-                              >
-                                {showPassword ? (
-                                  <EyeOff className="h-4 w-4 text-purple-300" />
-                                ) : (
-                                  <Eye className="h-4 w-4 text-purple-300" />
-                                )}
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormDescription className="text-purple-300 text-sm">
-                            Must be at least 10 characters with letters, numbers, and special characters
-                          </FormDescription>
-                          <FormMessage className="text-red-400" />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={passwordForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-white">Confirm Password</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Input
-                                {...field}
-                                type={showConfirmPassword ? "text" : "password"}
-                                placeholder="Confirm your password"
-                                className="bg-white/5 border-white/20 text-white placeholder:text-purple-300 pr-10"
-                                data-testid="input-confirm-password"
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                data-testid="button-toggle-confirm-password"
-                              >
-                                {showConfirmPassword ? (
-                                  <EyeOff className="h-4 w-4 text-purple-300" />
-                                ) : (
-                                  <Eye className="h-4 w-4 text-purple-300" />
-                                )}
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-red-400" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <Button
-                      type="submit"
-                      disabled={setupPassword.isPending}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                      data-testid="button-setup-password"
-                    >
-                      {setupPassword.isPending ? "Setting up..." : "Set Password"}
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
 
             {/* Account Management */}
             <Card className="bg-white/10 backdrop-blur-sm border-white/20">
