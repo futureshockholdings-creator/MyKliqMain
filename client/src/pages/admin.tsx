@@ -476,7 +476,7 @@ export default function AdminPage() {
                             </DialogTrigger>
                           <DialogContent className="max-w-2xl bg-card border-border max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
-                              <DialogTitle className="text-primary">User Details</DialogTitle>
+                              <DialogTitle className="text-foreground">User Details</DialogTitle>
                             </DialogHeader>
                             {selectedUser && (
                               <div className="space-y-4">
@@ -576,7 +576,7 @@ export default function AdminPage() {
                             </DialogTrigger>
                             <DialogContent className="bg-card border-border">
                               <DialogHeader>
-                                <DialogTitle className="text-primary">Suspend User Account</DialogTitle>
+                                <DialogTitle className="text-foreground">Suspend User Account</DialogTitle>
                               </DialogHeader>
                               <div className="space-y-4">
                                 <p className="text-muted-foreground">
