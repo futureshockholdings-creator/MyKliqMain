@@ -492,17 +492,18 @@ export default function Kliq() {
   };
 
   const copyInviteCode = async () => {
-    if (userData?.inviteCode) {
+    if (userData?.inviteCode && userData?.firstName) {
       try {
-        await navigator.clipboard.writeText(userData.inviteCode);
+        const fullMessage = `${userData.firstName} wants you to join their Kliq. Use the following Invite Code ${userData.inviteCode} and go to https://kliqlife.com`;
+        await navigator.clipboard.writeText(fullMessage);
         toast({
           title: "Copied!",
-          description: "Invite code copied to clipboard",
+          description: "Full invite message copied to clipboard",
         });
       } catch (err) {
         toast({
           title: "Error",
-          description: "Failed to copy invite code",
+          description: "Failed to copy invite message",
           variant: "destructive",
         });
       }
@@ -747,7 +748,7 @@ export default function Kliq() {
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-mykliq-green text-lg flex items-center gap-2">
-                📱 Your Invite Code
+                📱 Your Invite Message
                 {userData?.kliqClosed && (
                   <Badge variant="outline" className="text-xs border-orange-500 text-orange-500">
                     Kliq Closed
@@ -756,99 +757,35 @@ export default function Kliq() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between bg-muted rounded p-3">
-                <code className="text-mykliq-green font-mono font-bold" data-testid="text-invite-code">
-                  {userData?.inviteCode || "Loading..."}
-                </code>
-                <Button
-                  size="sm"
-                  onClick={copyInviteCode}
-                  className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground"
-                  disabled={!userData?.inviteCode}
-                  data-testid="button-copy-invite"
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
+              <div className="bg-muted rounded p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="text-sm text-foreground font-medium flex-1" data-testid="text-invite-message">
+                    {userData?.inviteCode && userData?.firstName 
+                      ? `${userData.firstName} wants you to join their Kliq. Use the following Invite Code ${userData.inviteCode} and go to https://kliqlife.com`
+                      : "Loading..."
+                    }
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={copyInviteCode}
+                    className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground shrink-0"
+                    disabled={!userData?.inviteCode || !userData?.firstName}
+                    data-testid="button-copy-invite"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
               <p className="text-xs text-muted-foreground">
                 {userData?.kliqClosed 
                   ? "Your kliq is closed to new members. Existing friends can still use your code but new people cannot join."
-                  : "Share this code with friends to invite them to your kliq"
+                  : "Copy and paste this complete message to invite friends to your kliq"
                 }
               </p>
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button
-              onClick={() => testTwilioMutation.mutate()}
-              disabled={testTwilioMutation.isPending}
-              variant="outline"
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
-            >
-              {testTwilioMutation.isPending ? "Testing..." : "Test SMS"}
-            </Button>
-            <Button
-              onClick={() => checkMessageStatusMutation.mutate("SMb3ee431c7dc2ea68fa881f75adae2cec")}
-              disabled={checkMessageStatusMutation.isPending}
-              variant="outline"
-              size="sm"
-              className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
-            >
-              {checkMessageStatusMutation.isPending ? "Checking..." : "Check Status"}
-            </Button>
-            <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="flex-1 bg-secondary hover:bg-secondary/90 text-secondary-foreground" data-testid="button-send-invite">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Send Invite
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-primary">Invite Friends to Your Kliq</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm text-muted-foreground">Phone Numbers</label>
-                    <Textarea
-                      value={phoneNumbers}
-                      onChange={(e) => setPhoneNumbers(e.target.value)}
-                      placeholder="Enter phone numbers, one per line:&#10;+1234567890&#10;+4478901234&#10;1234567890"
-                      className="bg-input border-border text-foreground min-h-[100px]"
-                      data-testid="input-phone-numbers"
-                    />
-                    <div className="text-xs text-muted-foreground mt-1 space-y-1">
-                      <p>• Enter one phone number per line</p>
-                      <p>• Include country code: +1 (US), +44 (UK), +49 (Germany), etc.</p>
-                      <p>• For US numbers, you can use: +1234567890 or 1234567890</p>
-                      <p>• Remove spaces, dashes, and parentheses</p>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-muted-foreground">Your Invite Code</label>
-                    <div className="bg-muted rounded p-3 text-center">
-                      <code className="text-mykliq-green font-mono font-bold">
-                        {userData?.inviteCode || "Loading..."}
-                      </code>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      This code will be sent to the phone numbers above
-                    </p>
-                  </div>
-                  <Button
-                    onClick={handleSendInvites}
-                    disabled={!phoneNumbers.trim() || sendInvitesMutation.isPending}
-                    className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
-                  >
-                    {sendInvitesMutation.isPending ? "Sending..." : "Send Invite"}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+
         </TabsContent>
 
         <TabsContent value="polls" className="space-y-6">
