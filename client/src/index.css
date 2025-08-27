@@ -181,6 +181,12 @@ p .emoji-large, span .emoji-large, div .emoji-large {
   /* Shadow definitions for retro effects */
   --shadow-retro: 4px 4px 0px hsl(22, 100%, 50%), 8px 8px 0px hsl(271, 81%, 56%);
   --shadow-neon: 0 0 10px hsl(180, 100%, 50%), 0 0 20px hsl(180, 100%, 50%), 0 0 30px hsl(180, 100%, 50%);
+  
+  /* Responsive breakpoints for consistent design */
+  --mobile-max: 767px;
+  --tablet-min: 768px;
+  --desktop-min: 1024px;
+  --desktop-xl: 1280px;
 }
 
 /* Utility classes for MyKliq theme colors */
@@ -433,4 +439,51 @@ p .emoji-large, span .emoji-large, div .emoji-large {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Responsive design utilities */
+@media (max-width: 767px) {
+  /* Mobile-specific styles */
+  .mobile-optimized {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .mobile-padding {
+    padding: 1rem;
+  }
+  
+  .mobile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  /* Tablet and desktop styles */
+  .desktop-optimized {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  
+  .desktop-padding {
+    padding: 1.5rem;
+  }
+  
+  .desktop-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Desktop-specific styles */
+  .desktop-large {
+    max-width: 1200px;
+  }
+}
+
+@media (min-width: 1280px) {
+  /* Large desktop styles */
+  .desktop-xl {
+    max-width: 1400px;
+  }
 }

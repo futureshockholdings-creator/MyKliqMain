@@ -49,7 +49,7 @@ export function Messages() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background text-foreground p-4">
-        <div className="max-w-2xl mx-auto">
+        <div className="w-full max-w-none md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="flex items-center gap-4 mb-6">
             <Link to="/">
               <Button variant="ghost" size="sm" data-testid="button-back">
@@ -78,7 +78,7 @@ export function Messages() {
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="w-full max-w-none md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex items-center gap-4 mb-6">
           <Link to="/">
             <Button variant="ghost" size="sm" data-testid="button-back">
