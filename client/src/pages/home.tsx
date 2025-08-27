@@ -119,7 +119,7 @@ export default function Home() {
   ];
 
   // Fetch paginated kliq feed (posts, polls, events, actions from all kliq members)
-  const { data: feedData = { items: [], hasMore: false, totalPages: 1 }, isLoading: feedLoading, refetch: refetchFeed } = useQuery({
+  const { data: feedData = { items: [], hasMore: false, totalPages: 1 }, isLoading: feedLoading, refetch: refetchFeed } = useQuery<{items: any[], hasMore: boolean, totalPages: number}>({
     queryKey: ["/api/kliq-feed"],
     staleTime: 60000, // Consider data fresh for 1 minute
     gcTime: 300000, // Keep cache for 5 minutes
@@ -128,7 +128,7 @@ export default function Home() {
   });
   
   // Extract feed items from paginated response
-  const feedItems = feedData.items || [];
+  const feedItems = feedData?.items || [];
 
   // Fetch targeted ads for the user
   const { data: targetedAds = [] } = useQuery({
