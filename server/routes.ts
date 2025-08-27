@@ -258,16 +258,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check if user already exists with this email or phone
+      // Check if user already exists with this email
       const existingUserByEmail = await storage.getUserByEmail(email);
-      const existingUserByPhone = await storage.getUserByPhone(phoneNumber);
       
       if (existingUserByEmail) {
         return res.status(400).json({ message: "User already exists with this email" });
-      }
-      
-      if (existingUserByPhone) {
-        return res.status(400).json({ message: "User already exists with this phone number" });
       }
 
       // Generate unique user ID and invite code

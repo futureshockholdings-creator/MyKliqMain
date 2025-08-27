@@ -35,7 +35,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   backgroundImageUrl: varchar("background_image_url"),
-  phoneNumber: varchar("phone_number").unique(),
+  phoneNumber: varchar("phone_number"),
   password: varchar("password"), // Hashed password
   // Security questions for password recovery (hashed)
   securityAnswer1: varchar("security_answer_1"), // First car

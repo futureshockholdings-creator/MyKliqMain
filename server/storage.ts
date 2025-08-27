@@ -101,6 +101,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByPhone(phoneNumber: string): Promise<User | undefined>;
+  getUsersByPhone(phoneNumber: string): Promise<User[]>;
   getUserByName(firstName: string, lastName: string): Promise<User | undefined>;
   getUserByNameAndPhone(firstName: string, lastName: string, phoneNumber: string): Promise<User | undefined>;
   createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<PasswordResetToken>;
@@ -290,6 +291,11 @@ export class DatabaseStorage implements IStorage {
   async getUserByPhone(phoneNumber: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
     return user;
+  }
+
+  async getUsersByPhone(phoneNumber: string): Promise<User[]> {
+    const userList = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
+    return userList;
   }
 
   async getUserByName(firstName: string, lastName: string): Promise<User | undefined> {
