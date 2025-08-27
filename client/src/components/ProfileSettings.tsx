@@ -409,13 +409,13 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       type="password"
                       value={securityPin}
                       onChange={(e) => {
-                        // Only allow 4 digits
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        // Allow normal typing, then filter to 4 digits
+                        const value = e.target.value.replace(/\D/g, '').substring(0, 4);
                         setSecurityPin(value);
                       }}
                       placeholder="Enter 4-digit PIN..."
                       className="bg-input border-border text-foreground"
-                      maxLength={4}
+                      maxLength={10}
                       data-testid="input-security-pin"
                     />
                     <p className="text-xs text-muted-foreground">
