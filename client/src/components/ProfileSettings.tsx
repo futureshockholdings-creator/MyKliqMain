@@ -146,6 +146,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [pinForField, setPinForField] = useState<'password' | 'confirmPassword'>('password');
+  const [savedPassword, setSavedPassword] = useState("");
 
   // Temporary input states for adding new items
   const [newInterest, setNewInterest] = useState("");
@@ -198,8 +199,15 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
       setRelationshipStatus(user.relationshipStatus || "");
       setPetPreferences(user.petPreferences || "");
       setLifestyle(user.lifestyle || "");
+      
+      // Load saved password if exists
+      if (user.password) {
+        setSavedPassword(user.password);
+        passwordForm.setValue('password', user.password);
+        passwordForm.setValue('confirmPassword', user.password);
+      }
     }
-  }, [user, isOpen]);
+  }, [user, isOpen, passwordForm]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (profileData: any) => {
@@ -253,11 +261,16 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
       return await apiRequest("POST", "/api/user/verify-pin", { pin });
     },
     onSuccess: () => {
+      if (pinForField === 'password') {
+        setShowPassword(true);
+      } else {
+        setShowConfirmPassword(true);
+      }
       setShowPinDialog(false);
       setPinInput("");
       toast({
         title: "PIN Verified",
-        description: "PIN verification successful. Password remains masked for security.",
+        description: "Password is now visible.",
       });
     },
     onError: () => {
@@ -270,9 +283,20 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   });
 
   const handleEyeClick = (field: 'password' | 'confirmPassword') => {
-    // Always show PIN dialog for verification (password stays masked)
-    setPinForField(field);
-    setShowPinDialog(true);
+    const isCurrentlyShowing = field === 'password' ? showPassword : showConfirmPassword;
+    
+    if (isCurrentlyShowing) {
+      // Hide the password
+      if (field === 'password') {
+        setShowPassword(false);
+      } else {
+        setShowConfirmPassword(false);
+      }
+    } else {
+      // Show PIN dialog to verify before revealing password
+      setPinForField(field);
+      setShowPinDialog(true);
+    }
   };
 
   const handlePinSubmit = () => {
@@ -734,21 +758,26 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                               <Input
                                 {...field}
                                 type="text"
-                                value={maskPassword(field.value)}
+                                value={showPassword ? field.value : maskPassword(field.value)}
                                 onChange={(e) => {
-                                  // Handle masked input - always show X's
-                                  const newValue = e.target.value;
-                                  const oldValue = field.value;
-                                  
-                                  if (newValue.length > oldValue.length) {
-                                    // Adding characters - replace X's with actual input
-                                    const addedChar = newValue[newValue.length - 1];
-                                    if (addedChar !== 'X') {
-                                      field.onChange(oldValue + addedChar);
+                                  if (showPassword) {
+                                    // Allow normal editing when password is visible
+                                    field.onChange(e);
+                                  } else {
+                                    // Handle masked input
+                                    const newValue = e.target.value;
+                                    const oldValue = field.value;
+                                    
+                                    if (newValue.length > oldValue.length) {
+                                      // Adding characters - replace X's with actual input
+                                      const addedChar = newValue[newValue.length - 1];
+                                      if (addedChar !== 'X') {
+                                        field.onChange(oldValue + addedChar);
+                                      }
+                                    } else if (newValue.length < oldValue.length) {
+                                      // Removing characters
+                                      field.onChange(oldValue.slice(0, newValue.length));
                                     }
-                                  } else if (newValue.length < oldValue.length) {
-                                    // Removing characters
-                                    field.onChange(oldValue.slice(0, newValue.length));
                                   }
                                 }}
                                 placeholder="Enter your password"
@@ -763,7 +792,11 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                                 onClick={() => handleEyeClick('password')}
                                 data-testid="button-toggle-password"
                               >
-                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                {showPassword ? (
+                                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <Eye className="h-4 w-4 text-muted-foreground" />
+                                )}
                               </Button>
                             </div>
                           </FormControl>
@@ -786,21 +819,26 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                               <Input
                                 {...field}
                                 type="text"
-                                value={maskPassword(field.value)}
+                                value={showConfirmPassword ? field.value : maskPassword(field.value)}
                                 onChange={(e) => {
-                                  // Handle masked input - always show X's
-                                  const newValue = e.target.value;
-                                  const oldValue = field.value;
-                                  
-                                  if (newValue.length > oldValue.length) {
-                                    // Adding characters - replace X's with actual input
-                                    const addedChar = newValue[newValue.length - 1];
-                                    if (addedChar !== 'X') {
-                                      field.onChange(oldValue + addedChar);
+                                  if (showConfirmPassword) {
+                                    // Allow normal editing when password is visible
+                                    field.onChange(e);
+                                  } else {
+                                    // Handle masked input
+                                    const newValue = e.target.value;
+                                    const oldValue = field.value;
+                                    
+                                    if (newValue.length > oldValue.length) {
+                                      // Adding characters - replace X's with actual input
+                                      const addedChar = newValue[newValue.length - 1];
+                                      if (addedChar !== 'X') {
+                                        field.onChange(oldValue + addedChar);
+                                      }
+                                    } else if (newValue.length < oldValue.length) {
+                                      // Removing characters
+                                      field.onChange(oldValue.slice(0, newValue.length));
                                     }
-                                  } else if (newValue.length < oldValue.length) {
-                                    // Removing characters
-                                    field.onChange(oldValue.slice(0, newValue.length));
                                   }
                                 }}
                                 placeholder="Confirm your password"
@@ -815,7 +853,11 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                                 onClick={() => handleEyeClick('confirmPassword')}
                                 data-testid="button-toggle-confirm-password"
                               >
-                                <Eye className="h-4 w-4 text-muted-foreground" />
+                                {showConfirmPassword ? (
+                                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <Eye className="h-4 w-4 text-muted-foreground" />
+                                )}
                               </Button>
                             </div>
                           </FormControl>
@@ -845,7 +887,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
             <DialogHeader>
               <DialogTitle className="text-primary">Verify Your PIN</DialogTitle>
               <DialogDescription className="text-muted-foreground">
-                Enter your 4-digit PIN for security verification
+                Enter your 4-digit PIN to view the password
               </DialogDescription>
             </DialogHeader>
             
