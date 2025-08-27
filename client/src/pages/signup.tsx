@@ -14,6 +14,7 @@ import { User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, 
 export default function Signup() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1); // 1: Basic Info, 2: Security Setup, 3: About You
   const [inviteCode, setInviteCode] = useState<string | null>(null);
 
   // Get invite code from URL params
@@ -72,6 +73,69 @@ export default function Signup() {
 
   const removeItem = (items: string[], setItems: (items: string[]) => void, itemToRemove: string) => {
     setItems(items.filter(item => item !== itemToRemove));
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 1) {
+      // Validate Basic Info before proceeding
+      if (!firstName.trim() || !lastName.trim() || !email.trim() || !phoneNumber.trim()) {
+        toast({
+          title: "Missing Information",
+          description: "Please fill in all required fields (name, email, phone number)",
+          variant: "destructive"
+        });
+        return;
+      }
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
+      // Validate Security Setup before proceeding
+      if (!password || !confirmPassword || !securityAnswer1 || !securityAnswer2 || !securityAnswer3 || !securityPin) {
+        toast({
+          title: "Missing Security Information",
+          description: "Please complete all security setup fields",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate password match
+      if (password !== confirmPassword) {
+        toast({
+          title: "Password Mismatch",
+          description: "Passwords do not match",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate password strength
+      if (password.length < 10 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
+        toast({
+          title: "Weak Password",
+          description: "Password must be at least 10 characters with letters, numbers, and special characters",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate PIN (4 digits)
+      if (!/^\d{4}$/.test(securityPin)) {
+        toast({
+          title: "Invalid PIN",
+          description: "Security PIN must be exactly 4 digits",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setCurrentStep(3);
+    }
+  };
+
+  const handlePreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
   };
 
   const handleSubmit = async () => {
@@ -255,14 +319,38 @@ export default function Signup() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="basic" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                <TabsTrigger value="security">Security Setup</TabsTrigger>
-                <TabsTrigger value="extended">About You</TabsTrigger>
-              </TabsList>
+            <div className="space-y-6">
+              {/* Progress indicator */}
+              <div className="flex items-center justify-center space-x-4">
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                  1
+                </div>
+                <div className={`h-1 w-12 ${currentStep >= 2 ? 'bg-primary' : 'bg-muted'}`}></div>
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                  2
+                </div>
+                <div className={`h-1 w-12 ${currentStep >= 3 ? 'bg-primary' : 'bg-muted'}`}></div>
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                  3
+                </div>
+              </div>
 
-              <TabsContent value="basic" className="space-y-4">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold">
+                  {currentStep === 1 && "Basic Information"}
+                  {currentStep === 2 && "Security Setup"}
+                  {currentStep === 3 && "About You"}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {currentStep === 1 && "Tell us who you are"}
+                  {currentStep === 2 && "Secure your account"}
+                  {currentStep === 3 && "Share your interests (optional)"}
+                </p>
+              </div>
+
+              {/* Step 1: Basic Info */}
+              {currentStep === 1 && (
+                <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-foreground flex items-center gap-2">
@@ -359,9 +447,12 @@ export default function Signup() {
                     />
                   </div>
                 </div>
-              </TabsContent>
+                </div>
+              )}
 
-              <TabsContent value="security" className="space-y-6">
+              {/* Step 2: Security Setup */}
+              {currentStep === 2 && (
+                <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-foreground">Password *</Label>
@@ -444,9 +535,12 @@ export default function Signup() {
                     </p>
                   </div>
                 </div>
-              </TabsContent>
+                </div>
+              )}
 
-              <TabsContent value="extended" className="space-y-6">
+              {/* Step 3: About You */}
+              {currentStep === 3 && (
+                <div className="space-y-6">
                 <div className="grid gap-6">
                   <TagInput
                     label="Interests & Hobbies"
@@ -569,26 +663,36 @@ export default function Signup() {
                     </div>
                   </div>
                 </div>
-              </TabsContent>
-            </Tabs>
+                </div>
+              )}
 
-            <div className="flex gap-4 mt-8">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => window.location.href = "/"}
-                data-testid="button-back-to-landing"
-              >
-                Back to Landing
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80"
-                data-testid="button-create-profile"
-              >
-                {isSubmitting ? "Creating Profile..." : "Create Profile"}
-              </Button>
+              {/* Navigation buttons */}
+              <div className="flex justify-between pt-6">
+                <Button
+                  type="button"
+                  onClick={handlePreviousStep}
+                  disabled={currentStep === 1}
+                  variant="outline"
+                  className={currentStep === 1 ? "invisible" : ""}
+                  data-testid="button-previous-step"
+                >
+                  Previous
+                </Button>
+                
+                <Button
+                  onClick={currentStep === 3 ? handleSubmit : handleNextStep}
+                  disabled={isSubmitting}
+                  className="px-8"
+                  data-testid={currentStep === 3 ? "button-create-profile" : "button-next-step"}
+                >
+                  {isSubmitting 
+                    ? "Creating Profile..." 
+                    : currentStep === 3 
+                      ? "Create Profile" 
+                      : "Next Step"
+                  }
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
