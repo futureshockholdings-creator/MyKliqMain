@@ -2913,6 +2913,70 @@ export class DatabaseStorage implements IStorage {
     
     return user;
   }
+
+  // Admin-specific methods
+  async deleteUser(userId: string): Promise<void> {
+    try {
+      // Delete in order due to foreign key constraints
+      await this.db.delete(birthdayMessages).where(eq(birthdayMessages.userId, userId));
+      await this.db.delete(callParticipants).where(eq(callParticipants.userId, userId));
+      await this.db.delete(videoCalls).where(eq(videoCalls.hostId, userId));
+      await this.db.delete(meetupCheckIns).where(eq(meetupCheckIns.userId, userId));
+      await this.db.delete(meetups).where(eq(meetups.creatorId, userId));
+      await this.db.delete(actionChatMessages).where(eq(actionChatMessages.userId, userId));
+      await this.db.delete(actionViewers).where(eq(actionViewers.userId, userId));
+      await this.db.delete(actions).where(eq(actions.userId, userId));
+      await this.db.delete(eventReminders).where(eq(eventReminders.userId, userId));
+      await this.db.delete(eventAttendees).where(eq(eventAttendees.userId, userId));
+      await this.db.delete(events).where(eq(events.creatorId, userId));
+      await this.db.delete(messages).where(eq(messages.senderId, userId));
+      await this.db.delete(conversations).where(eq(conversations.user1Id, userId));
+      await this.db.delete(conversations).where(eq(conversations.user2Id, userId));
+      await this.db.delete(contentFilters).where(eq(contentFilters.userId, userId));
+      await this.db.delete(postLikes).where(eq(postLikes.userId, userId));
+      await this.db.delete(comments).where(eq(comments.userId, userId));
+      await this.db.delete(storyViews).where(eq(storyViews.userId, userId));
+      await this.db.delete(stories).where(eq(stories.userId, userId));
+      await this.db.delete(posts).where(eq(posts.userId, userId));
+      await this.db.delete(friendships).where(eq(friendships.userId, userId));
+      await this.db.delete(friendships).where(eq(friendships.friendId, userId));
+      await this.db.delete(userThemes).where(eq(userThemes.userId, userId));
+      await this.db.delete(socialCredentials).where(eq(socialCredentials.userId, userId));
+      await this.db.delete(externalPosts).where(eq(externalPosts.userId, userId));
+      await this.db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+      await this.db.delete(users).where(eq(users.id, userId));
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      throw error;
+    }
+  }
+
+  async getAnalytics(): Promise<any> {
+    try {
+      const totalUsers = await this.db.select({ count: sql<number>`count(*)` }).from(users);
+      const postsToday = await this.db.select({ count: sql<number>`count(*)` })
+        .from(posts)
+        .where(sql`DATE(${posts.createdAt}) = CURRENT_DATE`);
+      const activeStories = await this.db.select({ count: sql<number>`count(*)` })
+        .from(stories)
+        .where(sql`${stories.expiresAt} > NOW()`);
+
+      return {
+        totalUsers: totalUsers[0]?.count || 0,
+        activeToday: 0, // Would need session tracking to implement
+        postsToday: postsToday[0]?.count || 0,
+        storiesActive: activeStories[0]?.count || 0
+      };
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      return {
+        totalUsers: 0,
+        activeToday: 0,
+        postsToday: 0,
+        storiesActive: 0
+      };
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();

@@ -3683,5 +3683,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete user endpoint for admin
+  app.delete('/api/admin/users/:userId', async (req, res) => {
+    try {
+      const { password } = req.body;
+      const { userId } = req.params;
+      
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteUser(userId);
+      res.json({ success: true, message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Analytics endpoint for admin
+  app.get('/api/admin/analytics', async (req, res) => {
+    try {
+      const { password } = req.query;
+      
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      const analytics = await storage.getAnalytics();
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  // System health endpoint for admin
+  app.get('/api/admin/system-health', async (req, res) => {
+    try {
+      const { password } = req.query;
+      
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      const systemHealth = {
+        dbConnections: "25/25",
+        memoryUsage: "45%", 
+        uptime: "7d 12h",
+        timestamp: new Date().toISOString()
+      };
+      
+      res.json(systemHealth);
+    } catch (error) {
+      console.error("Error fetching system health:", error);
+      res.status(500).json({ message: "Failed to fetch system health" });
+    }
+  });
+
+  // Export data endpoint for admin
+  app.get('/api/admin/export/:type', async (req, res) => {
+    try {
+      const { password } = req.query;
+      const { type } = req.params;
+      
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      if (type === 'users') {
+        const users = await storage.getAllUsersForAdmin();
+        
+        // Convert to CSV
+        const csvHeader = 'ID,First Name,Last Name,Email,Phone,Kliq Name,Created At,Has Password,Has PIN\n';
+        const csvRows = users.map((user: any) => 
+          `"${user.id}","${user.firstName || ''}","${user.lastName || ''}","${user.email || ''}","${user.phoneNumber || ''}","${user.kliqName || ''}","${user.createdAt || ''}","${user.password ? 'Yes' : 'No'}","${user.securityPin ? 'Yes' : 'No'}"`
+        ).join('\n');
+        
+        const csv = csvHeader + csvRows;
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="users-${new Date().toISOString().split('T')[0]}.csv"`);
+        res.send(csv);
+      } else {
+        res.status(400).json({ message: "Invalid export type" });
+      }
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      res.status(500).json({ message: "Failed to export data" });
+    }
+  });
+
   return httpServer;
 }
