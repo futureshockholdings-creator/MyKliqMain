@@ -494,7 +494,7 @@ export default function Kliq() {
   const copyInviteCode = async () => {
     if (userData?.inviteCode && userData?.firstName) {
       try {
-        const fullMessage = `${userData.firstName} wants you to join their Kliq. Use the following Invite Code ${userData.inviteCode} and go to https://kliqlife.com`;
+        const fullMessage = `${userData.firstName} wants you to join their Kliq. Use the following Invite Code ${userData.inviteCode} and go to https://kliqlife.com A Different Social Experience`;
         await navigator.clipboard.writeText(fullMessage);
         toast({
           title: "Copied!",
@@ -772,6 +772,7 @@ export default function Kliq() {
                             >
                               https://kliqlife.com
                             </a>
+                            {' '}A Different Social Experience
                           </>
                         )
                       : "Loading..."
