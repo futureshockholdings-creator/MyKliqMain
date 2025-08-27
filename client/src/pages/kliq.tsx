@@ -576,7 +576,7 @@ export default function Kliq() {
         <TabsList className="grid w-full grid-cols-2 bg-muted">
           <TabsTrigger value="friends" className="flex items-center gap-2" data-testid="tab-friends">
             <Users className="w-4 h-4" />
-            Friends ({friends.length}/15)
+            Friends ({friends.length}/28)
           </TabsTrigger>
           <TabsTrigger value="polls" className="flex items-center gap-2" data-testid="tab-polls">
             <BarChart3 className="w-4 h-4" />
