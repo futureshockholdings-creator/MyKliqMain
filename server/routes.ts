@@ -2820,7 +2820,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { type } = req.query;
       const notifications = await notificationService.getUserNotifications(userId, type);
-      console.log("Fetching notifications for user:", userId, "type:", type, "count:", notifications.length);
+      // Notification fetch completed
       res.json(notifications);
     } catch (error) {
       console.error("Error fetching notifications:", error);

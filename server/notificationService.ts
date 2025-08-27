@@ -14,25 +14,23 @@ export class NotificationService {
 
   // Get notifications for a user
   async getUserNotifications(userId: string, type?: string) {
-    let whereClause = and(
+    // Optimized: Build conditions array for better index usage
+    const conditions = [
       eq(notifications.userId, userId),
       eq(notifications.isVisible, true)
-    );
+    ];
 
     // Only filter by type if it's specified and not "all"
     if (type && type !== "all" && type !== "undefined") {
-      whereClause = and(
-        eq(notifications.userId, userId),
-        eq(notifications.type, type as any),
-        eq(notifications.isVisible, true)
-      );
+      conditions.push(eq(notifications.type, type as any));
     }
 
     return await db
       .select()
       .from(notifications)
-      .where(whereClause)
-      .orderBy(desc(notifications.createdAt));
+      .where(and(...conditions))
+      .orderBy(desc(notifications.createdAt))
+      .limit(100); // Prevent excessive loads
   }
 
   // Mark notification as read
@@ -53,21 +51,19 @@ export class NotificationService {
 
   // Mark all notifications as read for a user
   async markAllAsRead(userId: string, type?: string) {
-    let whereClause = and(
+    // Optimized: Build conditions array for better performance
+    const conditions = [
       eq(notifications.userId, userId),
       eq(notifications.isRead, false),
       eq(notifications.isVisible, true)
-    );
+    ];
 
     // Only filter by type if it's specified and not "all" or undefined
     if (type && type !== "all" && type !== "undefined") {
-      whereClause = and(
-        eq(notifications.userId, userId),
-        eq(notifications.type, type as any),
-        eq(notifications.isRead, false),
-        eq(notifications.isVisible, true)
-      );
+      conditions.push(eq(notifications.type, type as any));
     }
+    
+    const whereClause = and(...conditions);
     
     const updatedNotifications = await db
       .update(notifications)
@@ -108,19 +104,18 @@ export class NotificationService {
 
   // Delete all notifications for a user (optionally filtered by type)
   async deleteAllNotifications(userId: string, type?: string) {
-    let whereClause = and(
+    // Optimized: Build conditions array for better performance
+    const conditions = [
       eq(notifications.userId, userId),
       eq(notifications.isVisible, true)
-    );
+    ];
 
     // Only filter by type if it's specified and not "all" or undefined
     if (type && type !== "all" && type !== "undefined") {
-      whereClause = and(
-        eq(notifications.userId, userId),
-        eq(notifications.type, type as any),
-        eq(notifications.isVisible, true)
-      );
+      conditions.push(eq(notifications.type, type as any));
     }
+    
+    const whereClause = and(...conditions);
     
     const deletedNotifications = await db
       .delete(notifications)

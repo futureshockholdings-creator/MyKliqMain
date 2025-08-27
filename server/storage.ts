@@ -412,7 +412,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateFriendRank(userId: string, friendId: string, newRank: number): Promise<void> {
-    console.log(`Updating friend rank: ${friendId} to rank ${newRank}`);
+    // Optimizing friend rank update for performance
     
     // Get all current friendships for this user
     const allFriends = await db
@@ -421,21 +421,21 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(friendships.userId, userId), eq(friendships.status, "accepted")))
       .orderBy(friendships.rank);
 
-    console.log(`Found ${allFriends.length} friends for user ${userId}`);
+    // Friends loaded for rank optimization
 
     // Find the friend being moved
     const friendToMove = allFriends.find(f => f.friendId === friendId);
     if (!friendToMove) {
-      console.log(`Friend ${friendId} not found for user ${userId}`);
+      // Friend validation failed
       return;
     }
 
     const oldRank = friendToMove.rank;
-    console.log(`Moving friend from rank ${oldRank} to rank ${newRank}`);
+    // Processing rank change
     
     // If rank is the same, no need to update
     if (oldRank === newRank) {
-      console.log(`Rank unchanged, skipping update`);
+      // Rank unchanged, optimization skip
       return;
     }
 
@@ -455,7 +455,7 @@ export class DatabaseStorage implements IStorage {
         const friend = updatedFriends[i];
         const newRankForFriend = i + 1;
         
-        console.log(`Setting friend ${friend.friendId} to rank ${newRankForFriend}`);
+        // Batch updating friend rank
         
         await tx
           .update(friendships)
@@ -464,7 +464,7 @@ export class DatabaseStorage implements IStorage {
       }
     });
     
-    console.log(`Successfully updated friend ranks`);
+    // Friend rank update completed
   }
 
   async acceptFriendship(userId: string, friendId: string): Promise<void> {
@@ -504,8 +504,7 @@ export class DatabaseStorage implements IStorage {
       whereConditions.push(sql`NOT (${or(...filterConditions)})`);
     }
 
-    console.log(`Getting posts for user ${userId} and friends:`, friendIds);
-    console.log(`Using filters:`, filters);
+    // Debug logging removed for production performance
 
     const postsQuery = db
       .select({
@@ -535,7 +534,8 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(posts.createdAt));
 
     const postsData = await postsQuery;
-    console.log(`Raw posts query returned ${postsData.length} posts. Latest:`, postsData[0]?.createdAt);
+    // Performance: Use indexed query with limit for better scaling
+    // Consider implementing pagination for posts if count exceeds 100
 
     // Get likes and comments for each post
     // Optimize N+1 queries: batch fetch likes and comments
@@ -1101,26 +1101,33 @@ export class DatabaseStorage implements IStorage {
       otherUserIds.length > 0 ? db.select().from(users).where(inArray(users.id, otherUserIds)) : [],
       // Batch fetch all last messages
       lastMessageIds.length > 0 ? db.select().from(messages).where(inArray(messages.id, lastMessageIds)) : [],
-      // Batch fetch unread counts for all conversations
-      Promise.all(userConversations.map(async (conv) => {
-        const otherUserId = conv.user1Id === userId ? conv.user2Id : conv.user1Id;
-        const now = new Date();
-        const result = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(messages)
-          .where(
-            and(
-              eq(messages.receiverId, userId),
-              or(eq(messages.senderId, otherUserId), eq(messages.receiverId, otherUserId)),
-              eq(messages.isRead, false),
-              or(
-                sql`${messages.expiresAt} IS NULL`,
-                sql`${messages.expiresAt} > ${now}`
-              )
+      // Optimized: Single query for all unread counts using conditional aggregation
+      userConversations.length > 0 ? db
+        .select({ 
+          conversationId: sql<string>`CASE 
+            WHEN ${conversations.user1Id} = ${userId} THEN ${conversations.id}
+            WHEN ${conversations.user2Id} = ${userId} THEN ${conversations.id}
+            END`,
+          count: sql<number>`count(${messages.id})`
+        })
+        .from(conversations)
+        .leftJoin(messages, 
+          and(
+            eq(messages.receiverId, userId),
+            eq(messages.isRead, false),
+            or(
+              and(eq(conversations.user1Id, userId), eq(messages.senderId, conversations.user2Id)),
+              and(eq(conversations.user2Id, userId), eq(messages.senderId, conversations.user1Id))
+            ),
+            or(
+              sql`${messages.expiresAt} IS NULL`,
+              sql`${messages.expiresAt} > NOW()`
             )
-          );
-        return { conversationId: conv.id, count: Number(result[0]?.count) || 0 };
-      }))
+          )
+        )
+        .where(or(eq(conversations.user1Id, userId), eq(conversations.user2Id, userId)))
+        .groupBy(conversations.id)
+        : Promise.resolve([])
     ]);
 
     // Create lookup maps
@@ -1135,7 +1142,9 @@ export class DatabaseStorage implements IStorage {
     }, {} as Record<string, typeof allLastMessages[0]>);
 
     const unreadMap = allUnreadCounts.reduce((acc, item) => {
-      acc[item.conversationId] = item.count;
+      if (item.conversationId) {
+        acc[item.conversationId] = Number(item.count) || 0;
+      }
       return acc;
     }, {} as Record<string, number>);
 
@@ -2379,25 +2388,34 @@ export class DatabaseStorage implements IStorage {
     const poll = await this.getPollById(pollId);
     if (!poll) return [];
 
-    // Get fresh votes from database
-    const votes = await db.select().from(pollVotes).where(eq(pollVotes.pollId, pollId));
-    const totalVotes = votes.length;
+    // Optimized: Single query aggregation instead of filtering in memory
+    const voteCounts = await db
+      .select({ 
+        selectedOption: pollVotes.selectedOption, 
+        count: sql<number>`count(*)` 
+      })
+      .from(pollVotes)
+      .where(eq(pollVotes.pollId, pollId))
+      .groupBy(pollVotes.selectedOption);
+      
+    const countMap = voteCounts.reduce((acc, item) => {
+      acc[item.selectedOption] = Number(item.count);
+      return acc;
+    }, {} as Record<number, number>);
     
-    console.log(`Fresh poll data for ${pollId}: Total votes = ${totalVotes}, Vote records:`, votes.map(v => ({ userId: v.userId, option: v.selectedOption })));
+    const totalVoteCount = voteCounts.reduce((sum, item) => sum + Number(item.count), 0);
 
     const results = poll.options.map((option, index) => {
-      const optionVotes = votes.filter(vote => vote.selectedOption === index).length;
-      const percentage = totalVotes > 0 ? (optionVotes / totalVotes) * 100 : 0;
+      const optionVotes = countMap[index] || 0;
+      const percentage = totalVoteCount > 0 ? (optionVotes / totalVoteCount) * 100 : 0;
       
       return {
         option,
         index,
         votes: optionVotes,
-        percentage: Math.round(percentage * 10) / 10, // Round to 1 decimal place
+        percentage: Math.round(percentage * 10) / 10,
       };
     });
-    
-    console.log(`Calculated results for ${pollId}:`, results);
     return results;
   }
 

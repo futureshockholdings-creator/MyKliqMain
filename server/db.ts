@@ -12,23 +12,37 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Configure pool for high-performance scaling
+// Production-optimized connection pooling for scalability
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
   ssl: true,
-  connectionTimeoutMillis: 5000,   // Reduced from 10s for faster failover
-  idleTimeoutMillis: 20000,        // Reduced from 30s to free unused connections faster
-  max: 25,                         // Increased for higher concurrent load
-  min: 3,                          // Reduced minimum to save resources in low usage
+  connectionTimeoutMillis: 3000,   // Faster timeout for better UX
+  idleTimeoutMillis: 15000,        // Quick cleanup of idle connections
+  max: 30,                         // Higher concurrency support
+  min: 5,                          // Maintain warm connections
+  maxUses: 7500,                   // Prevent memory leaks by rotating connections
+  allowExitOnIdle: false,          // Keep pool alive for performance
 });
 
-// Add pool error handling for production resilience
+// Production error handling with reduced logging
+let connectionErrors = 0;
 pool.on('error', (err) => {
-  console.error('Unexpected error on idle database client:', err);
+  connectionErrors++;
+  if (connectionErrors % 20 === 0) { // Log every 20th error to reduce noise
+    console.error(`Database pool errors: ${connectionErrors}`);
+  }
 });
 
-pool.on('connect', () => {
-  console.log('New database connection established');
-});
+// Performance monitoring (production mode)
+setInterval(() => {
+  const memoryMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
+  if (memoryMB > 300 || pool.totalCount > 25) {
+    console.log(`Pool: ${pool.totalCount}/30, Memory: ${memoryMB}MB`);
+  }
+}, 180000); // Check every 3 minutes
+
+// Graceful shutdown
+process.on('SIGTERM', () => pool.end());
+process.on('SIGINT', () => pool.end());
 
 export const db = drizzle({ client: pool, schema });
