@@ -67,6 +67,8 @@ export const users = pgTable("users", {
   suspensionType: varchar("suspension_type"), // "24hours", "7days", "30days", "90days", "180days", "banned"
   suspendedAt: timestamp("suspended_at"),
   suspensionExpiresAt: timestamp("suspension_expires_at"),
+  // Admin role field
+  isAdmin: boolean("is_admin").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

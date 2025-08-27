@@ -410,6 +410,7 @@ export default function AdminPage() {
                     <TableHead className="text-foreground">Phone</TableHead>
                     <TableHead className="text-foreground">Kliq Name</TableHead>
                     <TableHead className="text-foreground">Account Status</TableHead>
+                    <TableHead className="text-foreground">Role</TableHead>
                     <TableHead className="text-foreground">Security Status</TableHead>
                     <TableHead className="text-foreground">Actions</TableHead>
                   </TableRow>
@@ -443,6 +444,17 @@ export default function AdminPage() {
                         ) : (
                           <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs">
                             Active
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {user.isAdmin ? (
+                          <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs font-semibold">
+                            ADMIN
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded text-xs">
+                            User
                           </span>
                         )}
                       </TableCell>
