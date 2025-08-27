@@ -358,8 +358,8 @@ export default function Home() {
       });
     },
     onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      // Don't invalidate immediately to preserve optimistic updates
+      // Let the background refetch happen naturally
     },
   });
 
