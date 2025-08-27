@@ -542,7 +542,7 @@ export default function Kliq() {
             {editingName ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <div className="text-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded" 
+                  <div className="text-2xl cursor-pointer hover:opacity-80 p-2 rounded transition-opacity" 
                        onClick={() => {
                          const emojis = ['🏆', '🚀', '🎆', '✨', '🔥', '💫', '❤️', '👏', '🌟', '💎', '🎉', '⚡', '🎯', '💪', '👑', '🦄'];
                          const currentIndex = emojis.indexOf(kliqLeftEmoji);
@@ -559,7 +559,7 @@ export default function Kliq() {
                     placeholder={userData?.kliqName || "My Kliq"}
                     data-testid="input-kliq-name"
                   />
-                  <div className="text-2xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded" 
+                  <div className="text-2xl cursor-pointer hover:opacity-80 p-2 rounded transition-opacity" 
                        onClick={() => {
                          const emojis = ['🏆', '🚀', '🎆', '✨', '🔥', '💫', '❤️', '👏', '🌟', '💎', '🎉', '⚡', '🎯', '💪', '👑', '🦄'];
                          const currentIndex = emojis.indexOf(kliqRightEmoji);
