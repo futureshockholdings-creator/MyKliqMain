@@ -87,6 +87,7 @@ export default function Events() {
   const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [showEditEvent, setShowEditEvent] = useState(false);
   const [showMediaUpload, setShowMediaUpload] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [newEvent, setNewEvent] = useState({
     title: "",
@@ -302,14 +303,13 @@ export default function Events() {
 
   const handleDeleteEvent = () => {
     if (!editingEvent?.id) return;
-    
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete "${editingEvent.title}"? This action cannot be undone.`
-    );
-    
-    if (confirmDelete) {
-      deleteEventMutation.mutate(editingEvent.id);
-    }
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteEvent = () => {
+    if (!editingEvent?.id) return;
+    deleteEventMutation.mutate(editingEvent.id);
+    setShowDeleteConfirm(false);
   };
 
   const handleAttendanceUpdate = (eventId: string, status: string) => {
@@ -580,6 +580,38 @@ export default function Events() {
                   variant="outline"
                   onClick={() => setShowEditEvent(false)}
                   className="border-border text-muted-foreground hover:bg-muted"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent className="bg-card border-border max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="text-foreground">Confirm Delete</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                Are you sure you want to delete "{editingEvent?.title}"? This action cannot be undone.
+              </p>
+              <div className="flex space-x-2 pt-4">
+                <Button
+                  onClick={confirmDeleteEvent}
+                  disabled={deleteEventMutation.isPending}
+                  variant="destructive"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  data-testid="button-confirm-delete"
+                >
+                  {deleteEventMutation.isPending ? "Deleting..." : "Delete Event"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 border-border text-muted-foreground hover:bg-muted"
                 >
                   Cancel
                 </Button>
