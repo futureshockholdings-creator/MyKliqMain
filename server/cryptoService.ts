@@ -19,30 +19,21 @@ export function encryptText(plaintext: string): EncryptedData {
   const key = getEncryptionKey();
   const iv = crypto.randomBytes(16);
   
-  const cipher = crypto.createCipherGCM(ALGORITHM, key, iv);
-  cipher.setAAD(Buffer.from('oauth-token'));
-  
+  const cipher = crypto.createCipher('aes-256-cbc', key);
   let encrypted = cipher.update(plaintext, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-  
-  const authTag = cipher.getAuthTag();
   
   return {
     encryptedText: encrypted,
     iv: iv.toString('hex'),
-    authTag: authTag.toString('hex')
+    authTag: '' // Not used with CBC mode
   };
 }
 
 export function decryptText(encryptedData: EncryptedData): string {
   const key = getEncryptionKey();
-  const iv = Buffer.from(encryptedData.iv, 'hex');
-  const authTag = Buffer.from(encryptedData.authTag, 'hex');
   
-  const decipher = crypto.createDecipherGCM(ALGORITHM, key, iv);
-  decipher.setAAD(Buffer.from('oauth-token'));
-  decipher.setAuthTag(authTag);
-  
+  const decipher = crypto.createDecipher('aes-256-cbc', key);
   let decrypted = decipher.update(encryptedData.encryptedText, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
   

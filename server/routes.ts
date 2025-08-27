@@ -367,9 +367,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (user.password) {
         try {
           const { decryptFromStorage } = await import('./cryptoService');
-          user.password = decryptFromStorage(user.password);
+          // Check if it's an old hashed password (starts with $2b$ for bcrypt)
+          if (user.password.startsWith('$2b$')) {
+            // Old hashed password, can't decrypt - clear it so user can set a new one
+            user.password = null;
+          } else {
+            user.password = decryptFromStorage(user.password);
+          }
         } catch (error) {
-          // If decryption fails, remove password from response
+          // If decryption fails, clear password so user can set a new one
           console.error("Error decrypting password:", error);
           user.password = null;
         }
@@ -444,19 +450,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Decrypt and verify password
-      const { decryptFromStorage } = await import('./cryptoService');
-      try {
-        const decryptedPassword = decryptFromStorage(user.password);
-        if (password !== decryptedPassword) {
+      // Check if it's an old hashed password or new encrypted password
+      if (user.password.startsWith('$2b$')) {
+        // Old bcrypt hashed password - use bcrypt comparison
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
           return res.status(401).json({ 
             message: "Invalid phone number or password" 
           });
         }
-      } catch (error) {
-        return res.status(401).json({ 
-          message: "Invalid phone number or password" 
-        });
+      } else {
+        // New encrypted password - decrypt and compare
+        const { decryptFromStorage } = await import('./cryptoService');
+        try {
+          const decryptedPassword = decryptFromStorage(user.password);
+          if (password !== decryptedPassword) {
+            return res.status(401).json({ 
+              message: "Invalid phone number or password" 
+            });
+          }
+        } catch (error) {
+          return res.status(401).json({ 
+            message: "Invalid phone number or password" 
+          });
+        }
       }
 
       // Create session for the user (matching the OAuth session structure)
