@@ -22,7 +22,7 @@ export default function ForgotPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const sendResetSMS = async () => {
+  const verifyPhoneNumber = async () => {
     setIsLoading(true);
     try {
       const data = await apiRequest("POST", "/api/auth/forgot-password", {
@@ -33,14 +33,14 @@ export default function ForgotPassword() {
         setResetToken(data.resetToken);
         setStep('questions');
         toast({
-          title: "SMS sent!",
-          description: "Check your phone for password reset instructions",
+          title: "Correct, moving to the next verification step",
+          description: "Account verified successfully",
         });
       }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to send reset SMS",
+        description: error.message || "Failed to verify account",
         variant: "destructive",
       });
     } finally {
@@ -135,19 +135,19 @@ export default function ForgotPassword() {
               {step === 'phone' && (
                 <>
                   <Phone className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password
+                  Reset Password - Step 1 of 3
                 </>
               )}
               {step === 'questions' && (
                 <>
                   <Shield className="w-8 h-8 mx-auto mb-2" />
-                  Security Questions
+                  Reset Password - Step 2 of 3
                 </>
               )}
               {step === 'password' && (
                 <>
                   <Lock className="w-8 h-8 mx-auto mb-2" />
-                  New Password
+                  Reset Password - Step 3 of 3
                 </>
               )}
             </CardTitle>
@@ -156,7 +156,7 @@ export default function ForgotPassword() {
             {step === 'phone' && (
               <>
                 <p className="text-muted-foreground text-sm text-center mb-4">
-                  Enter your phone number to receive a password reset link
+                  Enter your phone number for account verification
                 </p>
                 <PhoneInput
                   label="Phone number"
@@ -166,12 +166,12 @@ export default function ForgotPassword() {
                   data-testid="input-phone-reset"
                 />
                 <Button
-                  onClick={sendResetSMS}
+                  onClick={verifyPhoneNumber}
                   disabled={!phoneNumber || isLoading}
                   className="w-full"
                   data-testid="button-send-reset-sms"
                 >
-                  {isLoading ? "Sending..." : "Send Reset Link"}
+                  {isLoading ? "Verifying..." : "Verify Account"}
                 </Button>
               </>
             )}
