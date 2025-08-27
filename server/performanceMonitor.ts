@@ -108,7 +108,7 @@ class PerformanceMonitor {
       requestRates[endpoint] = Math.round((count / uptimeMinutes) * 100) / 100;
     }
 
-    return {
+    const reportData = {
       uptime: {
         minutes: uptimeMinutes,
         hours: Math.round(uptimeMinutes / 60 * 100) / 100,
@@ -129,22 +129,30 @@ class PerformanceMonitor {
       cache: {
         hitRate: this.metrics.cacheHitRate,
       },
-      health: this.getHealthStatus(),
+    };
+
+    return {
+      ...reportData,
+      health: this.calculateHealthStatus(reportData),
     };
   }
 
   // Determine overall system health
-  private getHealthStatus(): 'healthy' | 'warning' | 'critical' {
+  getHealthStatus(): 'healthy' | 'warning' | 'critical' {
     const report = this.getPerformanceReport();
-    
+    return report.health;
+  }
+
+  // Calculate health status based on report data (to avoid circular dependency)
+  private calculateHealthStatus(reportData: any): 'healthy' | 'warning' | 'critical' {
     // Check for critical issues
-    if (report.memory.currentUsageMB > 900) return 'critical'; // >900MB memory usage
-    if (report.database.avgQueryTime > 5000) return 'critical'; // >5s avg query time
+    if (reportData.memory.currentUsageMB > 900) return 'critical'; // >900MB memory usage
+    if (reportData.database.avgQueryTime > 5000) return 'critical'; // >5s avg query time
 
     // Check for warning conditions
-    if (report.memory.currentUsageMB > 500) return 'warning'; // >500MB memory usage
-    if (report.database.avgQueryTime > 1000) return 'warning'; // >1s avg query time
-    if (report.cache.hitRate < 0.7) return 'warning'; // <70% cache hit rate
+    if (reportData.memory.currentUsageMB > 500) return 'warning'; // >500MB memory usage
+    if (reportData.database.avgQueryTime > 1000) return 'warning'; // >1s avg query time
+    if (reportData.cache.hitRate < 0.7) return 'warning'; // <70% cache hit rate
 
     return 'healthy';
   }
