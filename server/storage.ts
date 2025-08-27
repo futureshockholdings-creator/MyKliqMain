@@ -2842,7 +2842,11 @@ export class DatabaseStorage implements IStorage {
     // Decrypt security answers if they exist
     if (user.securityAnswer1) {
       try {
-        user.securityAnswer1 = decryptFromStorage(user.securityAnswer1);
+        if (user.securityAnswer1.startsWith('$2b$')) {
+          user.securityAnswer1 = "[Legacy hashed answer - user must re-enter]";
+        } else {
+          user.securityAnswer1 = decryptFromStorage(user.securityAnswer1);
+        }
       } catch (error) {
         console.error("Error decrypting security answer 1 for user", userId, error);
         user.securityAnswer1 = "[Cannot decrypt - legacy data]";
@@ -2851,7 +2855,11 @@ export class DatabaseStorage implements IStorage {
     
     if (user.securityAnswer2) {
       try {
-        user.securityAnswer2 = decryptFromStorage(user.securityAnswer2);
+        if (user.securityAnswer2.startsWith('$2b$')) {
+          user.securityAnswer2 = "[Legacy hashed answer - user must re-enter]";
+        } else {
+          user.securityAnswer2 = decryptFromStorage(user.securityAnswer2);
+        }
       } catch (error) {
         console.error("Error decrypting security answer 2 for user", userId, error);
         user.securityAnswer2 = "[Cannot decrypt - legacy data]";
@@ -2860,7 +2868,11 @@ export class DatabaseStorage implements IStorage {
     
     if (user.securityAnswer3) {
       try {
-        user.securityAnswer3 = decryptFromStorage(user.securityAnswer3);
+        if (user.securityAnswer3.startsWith('$2b$')) {
+          user.securityAnswer3 = "[Legacy hashed answer - user must re-enter]";
+        } else {
+          user.securityAnswer3 = decryptFromStorage(user.securityAnswer3);
+        }
       } catch (error) {
         console.error("Error decrypting security answer 3 for user", userId, error);
         user.securityAnswer3 = "[Cannot decrypt - legacy data]";

@@ -623,6 +623,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check if user has legacy security data that needs updating
+  app.get('/api/user/security-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const hasLegacyData = {
+        pin: user.securityPin && user.securityPin.startsWith('$2b$'),
+        answer1: user.securityAnswer1 && user.securityAnswer1.startsWith('$2b$'),
+        answer2: user.securityAnswer2 && user.securityAnswer2.startsWith('$2b$'),
+        answer3: user.securityAnswer3 && user.securityAnswer3.startsWith('$2b$'),
+      };
+
+      const needsUpdate = hasLegacyData.pin || hasLegacyData.answer1 || hasLegacyData.answer2 || hasLegacyData.answer3;
+
+      res.json({ hasLegacyData, needsUpdate });
+    } catch (error) {
+      console.error("Error checking security status:", error);
+      res.status(500).json({ message: "Failed to check security status" });
+    }
+  });
+
   // PIN verification for password viewing
   app.post('/api/user/verify-pin', isAuthenticated, async (req: any, res) => {
     try {

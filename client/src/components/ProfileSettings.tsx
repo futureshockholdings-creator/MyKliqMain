@@ -9,16 +9,27 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, X, Plus, Settings, Calendar, Phone, Mail, Shield, Eye, EyeOff } from "lucide-react";
+import { User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, X, Plus, Settings, Calendar, Phone, Mail, Shield, Eye, EyeOff, AlertTriangle } from "lucide-react";
 
 interface ProfileSettingsProps {
   user: any;
+}
+
+interface SecurityStatus {
+  hasLegacyData: {
+    pin: boolean;
+    answer1: boolean;
+    answer2: boolean;
+    answer3: boolean;
+  };
+  needsUpdate: boolean;
 }
 
 // TagInput component moved outside to prevent re-creation on each render
@@ -115,6 +126,12 @@ const TagInput = ({
 export function ProfileSettings({ user }: ProfileSettingsProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+
+  // Query to check if user has legacy security data
+  const { data: securityStatus } = useQuery<SecurityStatus>({
+    queryKey: ['/api/user/security-status'],
+    enabled: isOpen, // Only query when dialog is open
+  });
 
   // Basic profile fields
   const [bio, setBio] = useState("");
@@ -484,6 +501,23 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Legacy Security Data Warning */}
+            {securityStatus?.needsUpdate && (
+              <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+                <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+                  <strong>Security Update Required:</strong> Some of your security information uses an old format that can't be viewed by customer service. Please re-enter your {
+                    [
+                      securityStatus.hasLegacyData.pin && 'security PIN',
+                      securityStatus.hasLegacyData.answer1 && 'first security answer',
+                      securityStatus.hasLegacyData.answer2 && 'second security answer', 
+                      securityStatus.hasLegacyData.answer3 && 'third security answer'
+                    ].filter(Boolean).join(', ')
+                  } below to enable customer service support.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Security Questions Section */}
             <Card className="bg-card/50 border-border">
