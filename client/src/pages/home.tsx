@@ -119,8 +119,6 @@ export default function Home() {
     refetchInterval: 120000, // Refetch every 2 minutes (reduced from 30s)
   });
 
-  // Debug the actual feed data
-  console.log("Feed items received from API:", (feedItems as any[])?.length, "Latest:", (feedItems as any[])?.[0]?.createdAt || (feedItems as any[])?.[0]?.activityDate);
 
   // Fetch targeted ads for the user
   const { data: targetedAds = [] } = useQuery({
@@ -145,13 +143,10 @@ export default function Home() {
   // Reflect mutation
   const reflectMutation = useMutation({
     mutationFn: async () => {
-      console.log("Starting reflection API call...");
       const result = await apiRequest("GET", "/api/posts/reflect");
-      console.log("Reflection API result:", result);
       return result;
     },
     onSuccess: (data) => {
-      console.log("Reflection success, data:", data);
       setReflectionData(data);
       setShowReflectDialog(true);
       toast({
@@ -1597,7 +1592,6 @@ export default function Home() {
 
           
           {(feedItems as any[]).filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
-          console.log("Feed item processing:", item.type, item.title || item.content?.substring(0, 30), item.createdAt || item.activityDate);
           
           // Inject sponsored ads every 3 feed items
           const shouldShowAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0;
