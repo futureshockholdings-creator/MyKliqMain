@@ -25,16 +25,15 @@ export const initGA = () => {
   script1.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
   document.head.appendChild(script1);
 
-  // Initialize gtag
-  const script2 = document.createElement('script');
-  script2.textContent = `
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    window.gtag = gtag;
-    gtag('js', new Date());
-    gtag('config', '${measurementId}');
-  `;
-  document.head.appendChild(script2);
+  // Initialize dataLayer and gtag immediately
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function(...args: any[]) {
+    window.dataLayer.push(arguments);
+  };
+  
+  // Initialize gtag with current timestamp
+  window.gtag('js', new Date());
+  window.gtag('config', measurementId);
   
 };
 
