@@ -420,23 +420,8 @@ export default function Home() {
         return newSet;
       });
       
-      // Update the cache with the real comment from the server response
-      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
-        if (!old) return old;
-        return old.map((item: any) => {
-          if (item.id === postId) {
-            // Remove temporary comments and add the real one
-            const realComments = item.comments?.filter((c: any) => !c.id.startsWith('temp-')) || [];
-            const updatedComments = [...realComments, response.comment];
-            return {
-              ...item,
-              comments: updatedComments,
-              _commentsCount: updatedComments.length
-            };
-          }
-          return item;
-        });
-      });
+      // Keep the optimistic update - don't revert the count
+      // The comment was already added optimistically and will be synced in background
       
       toast({
         title: "Comment added!",
@@ -444,8 +429,8 @@ export default function Home() {
       });
     },
     onSettled: () => {
-      // Light invalidation to keep data fresh but preserve optimistic updates
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      // Don't invalidate immediately to preserve optimistic updates
+      // Let the background refetch happen naturally
     },
   });
 
