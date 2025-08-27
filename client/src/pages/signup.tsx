@@ -34,6 +34,14 @@ export default function Signup() {
   const [kliqName, setKliqName] = useState("My Kliq");
   const [birthdate, setBirthdate] = useState("");
 
+  // Security setup fields - required for signup
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [securityAnswer1, setSecurityAnswer1] = useState("");
+  const [securityAnswer2, setSecurityAnswer2] = useState("");
+  const [securityAnswer3, setSecurityAnswer3] = useState("");
+  const [securityPin, setSecurityPin] = useState("");
+
   // Extended profile details - optional
   const [interests, setInterests] = useState<string[]>([]);
   const [favoriteLocations, setFavoriteLocations] = useState<string[]>([]);
@@ -77,6 +85,46 @@ export default function Signup() {
       return;
     }
 
+    // Validate security setup fields
+    if (!password || !confirmPassword || !securityAnswer1 || !securityAnswer2 || !securityAnswer3 || !securityPin) {
+      toast({
+        title: "Missing Security Information",
+        description: "Please complete all security setup fields (password, security questions, and PIN)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate password match
+    if (password !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "Passwords do not match",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate password strength
+    if (password.length < 10 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
+      toast({
+        title: "Weak Password",
+        description: "Password must be at least 10 characters with letters, numbers, and special characters",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate PIN (4 digits)
+    if (!/^\d{4}$/.test(securityPin)) {
+      toast({
+        title: "Invalid PIN",
+        description: "Security PIN must be exactly 4 digits",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -88,6 +136,11 @@ export default function Signup() {
         bio: bio.trim(),
         kliqName: kliqName.trim(),
         birthdate: birthdate || null,
+        password: password.trim(),
+        securityAnswer1: securityAnswer1.trim(),
+        securityAnswer2: securityAnswer2.trim(),
+        securityAnswer3: securityAnswer3.trim(),
+        securityPin: securityPin.trim(),
         interests,
         favoriteLocations,
         favoriteFoods,
@@ -203,8 +256,9 @@ export default function Signup() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="basic" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                <TabsTrigger value="security">Security Setup</TabsTrigger>
                 <TabsTrigger value="extended">About You</TabsTrigger>
               </TabsList>
 
@@ -303,6 +357,91 @@ export default function Signup() {
                       rows={3}
                       data-testid="input-bio"
                     />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="security" className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Password *</Label>
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter secure password"
+                      className="bg-input border-border text-foreground"
+                      data-testid="input-password"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      At least 10 characters with letters, numbers, and special characters
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-foreground">Confirm Password *</Label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm your password"
+                      className="bg-input border-border text-foreground"
+                      data-testid="input-confirm-password"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-foreground">Security Questions *</Label>
+                    <p className="text-sm text-muted-foreground">These will help you recover your account if needed</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-foreground">What was your first car? *</Label>
+                    <Input
+                      value={securityAnswer1}
+                      onChange={(e) => setSecurityAnswer1(e.target.value)}
+                      placeholder="Your answer"
+                      className="bg-input border-border text-foreground"
+                      data-testid="input-security-answer-1"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-foreground">What is your mother's maiden name? *</Label>
+                    <Input
+                      value={securityAnswer2}
+                      onChange={(e) => setSecurityAnswer2(e.target.value)}
+                      placeholder="Your answer"
+                      className="bg-input border-border text-foreground"
+                      data-testid="input-security-answer-2"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-foreground">What was your favorite teacher's last name? *</Label>
+                    <Input
+                      value={securityAnswer3}
+                      onChange={(e) => setSecurityAnswer3(e.target.value)}
+                      placeholder="Your answer"
+                      className="bg-input border-border text-foreground"
+                      data-testid="input-security-answer-3"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-foreground">4-Digit Security PIN *</Label>
+                    <Input
+                      type="password"
+                      value={securityPin}
+                      onChange={(e) => setSecurityPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      placeholder="1234"
+                      maxLength={4}
+                      className="bg-input border-border text-foreground"
+                      data-testid="input-security-pin"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      For additional account verification
+                    </p>
                   </div>
                 </div>
               </TabsContent>

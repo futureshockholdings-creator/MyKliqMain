@@ -243,6 +243,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         bio,
         kliqName,
         birthdate,
+        password,
+        securityAnswer1,
+        securityAnswer2,
+        securityAnswer3,
+        securityPin,
         interests,
         favoriteLocations,
         favoriteFoods,
@@ -257,9 +262,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } = req.body;
 
       // Validate required fields
-      if (!firstName || !lastName || !email || !phoneNumber) {
+      if (!firstName || !lastName || !email || !phoneNumber || !password || !securityAnswer1 || !securityAnswer2 || !securityAnswer3 || !securityPin) {
         return res.status(400).json({ 
-          message: "Missing required fields: firstName, lastName, email, phoneNumber" 
+          message: "Missing required fields: firstName, lastName, email, phoneNumber, password, security answers, and PIN" 
+        });
+      }
+
+      // Validate password strength
+      if (password.length < 10 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
+        return res.status(400).json({ 
+          message: "Password must be at least 10 characters with letters, numbers, and special characters" 
+        });
+      }
+
+      // Validate PIN (4 digits)
+      if (!/^\d{4}$/.test(securityPin)) {
+        return res.status(400).json({ 
+          message: "Security PIN must be exactly 4 digits" 
         });
       }
 
@@ -274,6 +293,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = crypto.randomUUID();
       const inviteCode = await storage.generateInviteCode();
 
+      // Encrypt security data
+      const { encryptForStorage } = await import('./cryptoService');
+      const encryptedPassword = encryptForStorage(password);
+      const hashedSecurityAnswer1 = await bcrypt.hash(securityAnswer1, 12);
+      const hashedSecurityAnswer2 = await bcrypt.hash(securityAnswer2, 12);
+      const hashedSecurityAnswer3 = await bcrypt.hash(securityAnswer3, 12);
+      const hashedSecurityPin = await bcrypt.hash(securityPin, 12);
+
       // Create new user
       const newUser = await storage.upsertUser({
         id: userId,
@@ -285,6 +312,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         inviteCode,
         kliqName: kliqName?.trim() || "My Kliq",
         birthdate: birthdate || null,
+        password: encryptedPassword,
+        securityAnswer1: hashedSecurityAnswer1,
+        securityAnswer2: hashedSecurityAnswer2,
+        securityAnswer3: hashedSecurityAnswer3,
+        securityPin: hashedSecurityPin,
         interests: interests?.filter((item: string) => item.trim()) || [],
         favoriteLocations: favoriteLocations?.filter((item: string) => item.trim()) || [],
         favoriteFoods: favoriteFoods?.filter((item: string) => item.trim()) || [],
