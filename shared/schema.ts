@@ -367,6 +367,17 @@ export const events = pgTable("events", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Event reminders for auto-posting daily reminders
+export const eventReminders = pgTable("event_reminders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventId: varchar("event_id").references(() => events.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  reminderTime: timestamp("reminder_time").notNull(), // Time to send reminder (same time as original post)
+  isActive: boolean("is_active").default(true),
+  lastReminderSent: timestamp("last_reminder_sent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Action (Live Streams)
 export const actionStreamStatusEnum = pgEnum("action_stream_status", ["live", "ended"]);
 
@@ -753,6 +764,7 @@ export const insertEventSchema = createInsertSchema(events).omit({ id: true, att
   eventDate: z.string().transform((val) => new Date(val))
 });
 export const insertEventAttendeeSchema = createInsertSchema(eventAttendees).omit({ id: true, createdAt: true });
+export const insertEventReminderSchema = createInsertSchema(eventReminders).omit({ id: true, createdAt: true });
 export const insertActionSchema = createInsertSchema(actions).omit({ id: true, viewerCount: true, createdAt: true, endedAt: true }).extend({
   streamKey: z.string().optional()
 });
@@ -847,6 +859,8 @@ export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type EventAttendee = typeof eventAttendees.$inferSelect;
 export type InsertEventAttendee = z.infer<typeof insertEventAttendeeSchema>;
+export type EventReminder = typeof eventReminders.$inferSelect;
+export type InsertEventReminder = z.infer<typeof insertEventReminderSchema>;
 export type Action = typeof actions.$inferSelect;
 export type InsertAction = z.infer<typeof insertActionSchema>;
 export type ActionViewer = typeof actionViewers.$inferSelect;

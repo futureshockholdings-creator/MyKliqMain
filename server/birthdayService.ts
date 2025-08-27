@@ -80,6 +80,85 @@ export async function sendAutomaticBirthdayMessages(): Promise<void> {
   }
 }
 
+// Send event reminders for upcoming events
+export async function sendEventReminders(): Promise<void> {
+  try {
+    console.log("Checking for event reminders...");
+    
+    // Get active event reminders that are ready to be sent
+    const activeReminders = await storage.getActiveEventReminders();
+    
+    if (activeReminders.length === 0) {
+      console.log("No event reminders to send");
+      return;
+    }
+    
+    console.log(`Found ${activeReminders.length} event reminder(s) to send`);
+    
+    // Send reminder posts for each event
+    for (const { reminder, event, user } of activeReminders) {
+      try {
+        const eventDate = new Date(event.eventDate);
+        const now = new Date();
+        const daysUntil = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        
+        // Skip if event has already passed
+        if (eventDate <= now) {
+          console.log(`Event "${event.title}" has passed, deactivating reminder`);
+          await storage.deactivateEventReminder(reminder.id);
+          continue;
+        }
+        
+        const formattedDate = eventDate.toLocaleDateString("en-US", { 
+          weekday: 'short', 
+          month: 'short', 
+          day: 'numeric',
+          year: eventDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+        });
+        const formattedTime = eventDate.toLocaleTimeString("en-US", { 
+          hour: 'numeric', 
+          minute: '2-digit' 
+        });
+        
+        let reminderText = '';
+        if (daysUntil === 0) {
+          reminderText = 'TODAY';
+        } else if (daysUntil === 1) {
+          reminderText = 'TOMORROW';
+        } else {
+          reminderText = `in ${daysUntil} days`;
+        }
+        
+        let postContent = `⏰ Event reminder: "${event.title}" is ${reminderText}!`;
+        if (event.location) {
+          postContent += `\n📍 ${event.location}`;
+        }
+        postContent += `\n🕒 ${formattedDate} at ${formattedTime}`;
+        if (event.description) {
+          postContent += `\n\n${event.description}`;
+        }
+        
+        // Create reminder post
+        await storage.createPost({
+          userId: reminder.userId,
+          content: postContent,
+          mediaUrl: event.mediaUrl || null,
+          mediaType: event.mediaType || null,
+        });
+        
+        // Update the last reminder sent time
+        await storage.updateReminderSentTime(reminder.id);
+        
+        console.log(`Sent event reminder for "${event.title}" to ${user.firstName}`);
+      } catch (error) {
+        console.error(`Failed to send event reminder for "${event.title}":`, error);
+      }
+    }
+  } catch (error) {
+    console.error("Error in event reminder service:", error);
+  }
+}
+
 // Combined cleanup service that handles all expired content
 async function runCleanupTasks(): Promise<void> {
   try {
@@ -88,6 +167,7 @@ async function runCleanupTasks(): Promise<void> {
     // Run all cleanup tasks in parallel
     await Promise.all([
       sendAutomaticBirthdayMessages(),
+      sendEventReminders(),
       storage.deleteExpiredStories(),
       storage.cleanUpExpiredPolls(),
       storage.cleanUpExpiredEvents()

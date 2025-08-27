@@ -13,6 +13,7 @@ import {
   conversations,
   events,
   eventAttendees,
+  eventReminders,
   actions,
   actionViewers,
   actionChatMessages,
@@ -48,6 +49,8 @@ import {
   type InsertEvent,
   type EventAttendee,
   type InsertEventAttendee,
+  type EventReminder,
+  type InsertEventReminder,
   type Action,
   type InsertAction,
   type ActionViewer,
@@ -1498,6 +1501,20 @@ export class DatabaseStorage implements IStorage {
       mediaType: newEvent.mediaType || null,
     });
 
+    // Create auto-reminder for the event (set to same time each day)
+    const reminderTime = new Date();
+    reminderTime.setHours(reminderTime.getHours());
+    reminderTime.setMinutes(reminderTime.getMinutes());
+    reminderTime.setSeconds(0);
+    reminderTime.setMilliseconds(0);
+
+    await this.createEventReminder({
+      eventId: newEvent.id,
+      userId: event.userId,
+      reminderTime: reminderTime,
+      isActive: true,
+    });
+
     return newEvent;
   }
 
@@ -1613,6 +1630,52 @@ export class DatabaseStorage implements IStorage {
       .from(eventAttendees)
       .where(eq(eventAttendees.eventId, eventId));
     return attendees;
+  }
+
+  // Event reminder operations
+  async createEventReminder(reminder: InsertEventReminder): Promise<EventReminder> {
+    const [newReminder] = await db.insert(eventReminders).values(reminder).returning();
+    return newReminder;
+  }
+
+  async getActiveEventReminders(): Promise<{ reminder: EventReminder; event: Event; user: User }[]> {
+    const now = new Date();
+    
+    // Get reminders that are active, for events that haven't passed, and it's time to send reminder
+    return await db
+      .select({
+        reminder: eventReminders,
+        event: events,
+        user: users,
+      })
+      .from(eventReminders)
+      .innerJoin(events, eq(eventReminders.eventId, events.id))
+      .innerJoin(users, eq(eventReminders.userId, users.id))
+      .where(
+        and(
+          eq(eventReminders.isActive, true),
+          gt(events.eventDate, now), // Event hasn't passed
+          lte(eventReminders.reminderTime, now), // It's time to send reminder
+          or(
+            isNull(eventReminders.lastReminderSent),
+            lt(eventReminders.lastReminderSent, sql`${eventReminders.reminderTime} + INTERVAL '23 hours'`) // Haven't sent in last 23 hours
+          )
+        )
+      );
+  }
+
+  async updateReminderSentTime(reminderId: string): Promise<void> {
+    await db
+      .update(eventReminders)
+      .set({ lastReminderSent: new Date() })
+      .where(eq(eventReminders.id, reminderId));
+  }
+
+  async deactivateEventReminder(reminderId: string): Promise<void> {
+    await db
+      .update(eventReminders)
+      .set({ isActive: false })
+      .where(eq(eventReminders.id, reminderId));
   }
 
   // Action (Live Stream) operations
