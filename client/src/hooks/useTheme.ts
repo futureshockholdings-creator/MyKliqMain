@@ -79,7 +79,14 @@ const applyTheme = (theme: Partial<UserTheme>) => {
 export function useTheme() {
   const { data: theme, isLoading } = useQuery({
     queryKey: ["/api/user/theme"],
+    enabled: false, // Temporarily disable this query to stop API spam
     retry: false,
+    staleTime: Infinity, // Never consider data stale
+    gcTime: Infinity, // Never garbage collect
+    refetchOnWindowFocus: false, // Don't refetch when window gains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchInterval: false, // Disable automatic refetching
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 
   // Apply theme when it loads or changes

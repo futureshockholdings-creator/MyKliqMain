@@ -9,9 +9,15 @@ export default function Themes() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch user theme
+  // Fetch user theme with aggressive caching to prevent excessive API calls
   const { data: theme, isLoading } = useQuery({
     queryKey: ["/api/user/theme"],
+    staleTime: Infinity, // Never consider data stale
+    gcTime: Infinity, // Never garbage collect
+    refetchOnWindowFocus: false, // Don't refetch when window gains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchInterval: false, // Disable automatic refetching
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 
   // Save theme mutation

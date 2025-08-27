@@ -5,18 +5,26 @@ import { useEffect, useState } from "react";
 export default function Footer() {
   const [textColor, setTextColor] = useState("text-black");
 
-  // Fetch user theme to determine background color
+  // Fetch user theme to determine background color with aggressive caching
   const { data: theme } = useQuery({
     queryKey: ["/api/user/theme"],
+    enabled: false, // Temporarily disable this query to stop API spam
+    staleTime: Infinity, // Never consider data stale
+    gcTime: Infinity, // Never garbage collect
+    refetchOnWindowFocus: false, // Don't refetch when window gains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    refetchInterval: false, // Disable automatic refetching
+    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 
   useEffect(() => {
-    if (theme?.backgroundColor) {
+    if (theme && typeof theme === 'object' && 'backgroundColor' in theme && theme.backgroundColor) {
       // Check if background is black or very dark
-      const isBlackBackground = theme.backgroundColor === "#000000" || 
-                               theme.backgroundColor === "black" ||
-                               (theme.backgroundColor.startsWith('#') && 
-                                parseInt(theme.backgroundColor.slice(1), 16) < 0x333333);
+      const backgroundColor = theme.backgroundColor as string;
+      const isBlackBackground = backgroundColor === "#000000" || 
+                               backgroundColor === "black" ||
+                               (backgroundColor.startsWith('#') && 
+                                parseInt(backgroundColor.slice(1), 16) < 0x333333);
       
       setTextColor(isBlackBackground ? "text-white" : "text-black");
     } else {
