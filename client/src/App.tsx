@@ -196,9 +196,6 @@ function Navigation({ currentPath }: { currentPath: string }) {
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
-  
-  // Track page views when routes change
-  useAnalytics();
 
   return (
     <Switch>
@@ -243,6 +240,9 @@ function AppContent() {
   
   // Load and apply user theme globally
   useTheme();
+  
+  // Track page views for all pages (including public pages)
+  useAnalytics();
 
   // Check if we're on a public page that doesn't require authentication
   const isPublicPage = ['/signup', '/privacy-policy', '/disclaimer', '/landing', '/forgot-password'].includes(currentPath);

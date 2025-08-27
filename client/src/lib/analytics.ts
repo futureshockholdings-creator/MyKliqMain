@@ -15,6 +15,12 @@ export const initGA = () => {
     return;
   }
 
+  // Prevent duplicate initialization
+  if (typeof window !== 'undefined' && 'gtag' in window && window.gtag) {
+    console.log('Google Analytics already initialized');
+    return;
+  }
+
   // Add Google Analytics script to the head
   const script1 = document.createElement('script');
   script1.async = true;
@@ -26,10 +32,13 @@ export const initGA = () => {
   script2.textContent = `
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+    window.gtag = gtag;
     gtag('js', new Date());
     gtag('config', '${measurementId}');
   `;
   document.head.appendChild(script2);
+  
+  console.log('Google Analytics initialized with ID:', measurementId);
 };
 
 // Track page views - useful for single-page applications
