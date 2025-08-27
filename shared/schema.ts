@@ -37,11 +37,11 @@ export const users = pgTable("users", {
   backgroundImageUrl: varchar("background_image_url"),
   phoneNumber: varchar("phone_number"),
   password: varchar("password"), // Hashed password
-  // Security questions for password recovery (hashed)
-  securityAnswer1: varchar("security_answer_1"), // First car
-  securityAnswer2: varchar("security_answer_2"), // Mother's maiden name
-  securityAnswer3: varchar("security_answer_3"), // Favorite teacher's last name
-  securityPin: varchar("security_pin", { length: 60 }), // 4-digit PIN (hashed)
+  // Security questions for password recovery (encrypted)
+  securityAnswer1: varchar("security_answer_1", { length: 255 }), // First car
+  securityAnswer2: varchar("security_answer_2", { length: 255 }), // Mother's maiden name
+  securityAnswer3: varchar("security_answer_3", { length: 255 }), // Favorite teacher's last name
+  securityPin: varchar("security_pin", { length: 255 }), // 4-digit PIN (encrypted)
   bio: text("bio"),
   inviteCode: varchar("invite_code", { length: 20 }).unique(),
   kliqName: varchar("kliq_name").default("My Kliq"),
