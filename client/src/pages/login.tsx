@@ -65,6 +65,14 @@ export default function Login() {
       
       console.log('Response status:', response.status);
       console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      // Add mobile debugging for response details
+      alert(`Response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const responseText = await response.text();
+        alert(`Response body: ${responseText.substring(0, 200)}`);
+      }
 
       if (response.ok) {
         // Login successful - check if we got JSON or HTML
