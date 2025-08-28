@@ -501,6 +501,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Simple test to see if mobile requests reach server
+  app.get('/api/mobile/test', (req, res) => {
+    console.log('=== MOBILE GET REQUEST RECEIVED ===');
+    console.log('Query params:', req.query);
+    console.log('User agent:', req.headers['user-agent']);
+    res.json({ 
+      message: 'Mobile request reached server!',
+      query: req.query
+    });
+  });
+
   // WORKAROUND: Mobile login via GET with query parameters (temporary solution)
   app.get('/api/mobile/login', async (req, res) => {
     console.log('=== MOBILE LOGIN VIA GET ===', new Date().toISOString());
