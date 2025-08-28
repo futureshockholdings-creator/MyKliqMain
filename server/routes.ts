@@ -512,24 +512,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // WORKAROUND: Mobile login via GET with query parameters (temporary solution)
-  app.get('/api/mobile/login', async (req, res) => {
-    console.log('=== MOBILE LOGIN VIA GET ===', new Date().toISOString());
+  // WORKAROUND: Mobile admin access via GET with different parameter names  
+  app.get('/api/admin/mobile-access', async (req, res) => {
+    console.log('=== MOBILE ADMIN ACCESS ===', new Date().toISOString());
     console.log('Query params:', req.query);
     console.log('User agent:', req.headers['user-agent']);
     
     try {
-      const { phone, pass } = req.query;
+      const { u, p } = req.query; // Use 'u' and 'p' instead of 'phone' and 'pass'
       
-      if (!phone || !pass) {
+      if (!u || !p) {
         return res.status(400).json({ 
-          message: "Phone number and password are required" 
+          message: "User and password are required" 
         });
       }
 
       // Find user by phone number
-      console.log('Looking for user with phone:', phone);
-      const user = await storage.getUserByPhone(phone as string);
+      console.log('Looking for user with phone:', u);
+      const user = await storage.getUserByPhone(u as string);
       console.log('User found:', !!user, user ? `ID: ${user.id}` : 'Not found');
       
       if (!user) {
@@ -548,7 +548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check bcrypt password (admin account uses bcrypt)
       if (user.password.startsWith('$2b$')) {
-        const isPasswordValid = await bcrypt.compare(pass as string, user.password);
+        const isPasswordValid = await bcrypt.compare(p as string, user.password);
         if (!isPasswordValid) {
           return res.status(401).json({ 
             message: "Invalid phone number or password" 
@@ -559,7 +559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { decryptFromStorage } = await import('./cryptoService');
         try {
           const decryptedPassword = decryptFromStorage(user.password);
-          if (decryptedPassword !== pass) {
+          if (decryptedPassword !== p) {
             return res.status(401).json({ 
               message: "Invalid phone number or password" 
             });
