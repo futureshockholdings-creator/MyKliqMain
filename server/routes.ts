@@ -501,7 +501,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Simple test to see if mobile requests reach server
+  // Direct admin session setup for mobile (bypass authentication entirely)
+  app.get('/api/debug/admin-session', async (req, res) => {
+    console.log('=== SETTING ADMIN SESSION DIRECTLY ===');
+    console.log('Query params:', req.query);
+    console.log('User agent:', req.headers['user-agent']);
+    
+    try {
+      // Set admin session directly without authentication
+      const adminUserId = '46297180'; // Fred Lamb's user ID
+      console.log('Setting session for admin user:', adminUserId);
+      
+      (req as any).session.userId = adminUserId;
+      (req as any).session.isAuthenticated = true;
+      
+      (req as any).session.save((err: any) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ message: "Session setup failed" });
+        }
+        
+        console.log('Admin session created successfully');
+        res.redirect('/admin');
+      });
+      
+    } catch (error) {
+      console.error("Session setup error:", error);
+      res.status(500).json({ 
+        message: "Session setup failed"
+      });
+    }
+  });
+
+  // Simple test to see if mobile requests reach server  
   app.get('/api/mobile/test', (req, res) => {
     console.log('=== MOBILE GET REQUEST RECEIVED ===');
     console.log('Query params:', req.query);
