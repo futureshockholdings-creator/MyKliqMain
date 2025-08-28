@@ -225,8 +225,9 @@ interface ExtendedWebSocket extends WebSocket {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Debug middleware for ALL requests to see what mobile is hitting
+  // Debug middleware for ALL requests to see what mobile is hitting - FIRST PRIORITY
   app.use((req, res, next) => {
+    console.log(`[DEBUG ALL] ${req.method} ${req.path}`);
     if (req.method === 'POST') {
       console.log(`[ALL POST] ${req.method} ${req.path} - User-Agent: ${req.headers['user-agent']?.substring(0, 50)}`);
       console.log(`[ALL POST] Body keys:`, Object.keys(req.body || {}));
