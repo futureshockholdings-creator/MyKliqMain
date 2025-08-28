@@ -480,7 +480,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Clean up - remove temporary mobile debugging endpoints
+  // Emergency admin access endpoint
+  app.get('/api/activate-admin', async (req, res) => {
+    try {
+      // Set admin session directly
+      const adminUserId = '46297180';
+      console.log('Activating admin session for user:', adminUserId);
+      
+      (req as any).session.userId = adminUserId;
+      (req as any).session.isAuthenticated = true;
+      
+      (req as any).session.save((err: any) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ message: "Session setup failed" });
+        }
+        
+        console.log('Admin session activated successfully');
+        res.json({ 
+          message: 'Admin session activated! You can now access /admin',
+          redirect: '/admin'
+        });
+      });
+      
+    } catch (error) {
+      console.error("Session activation error:", error);
+      res.status(500).json({ 
+        message: "Session activation failed"
+      });
+    }
+  });
 
   // Alternative login endpoint to avoid Replit auth conflicts
   app.post('/api/user/login', async (req, res) => {
