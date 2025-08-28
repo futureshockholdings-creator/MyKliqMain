@@ -51,7 +51,7 @@ export default function Login() {
       // Add visual feedback for mobile debugging
       alert(`Starting login attempt for ${values.phoneNumber}`);
       
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("/api/user/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
