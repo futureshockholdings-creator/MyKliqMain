@@ -43,6 +43,9 @@ export default function Login() {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
+      console.log('Attempting login from:', window.location.origin);
+      console.log('Phone number:', values.phoneNumber);
+      
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -54,6 +57,9 @@ export default function Login() {
           password: values.password,
         }),
       });
+      
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (response.ok) {
         // Login successful - check if we got JSON or HTML
