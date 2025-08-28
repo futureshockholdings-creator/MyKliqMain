@@ -227,10 +227,12 @@ interface ExtendedWebSocket extends WebSocket {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Debug middleware for ALL requests to see what mobile is hitting - FIRST PRIORITY
   app.use((req, res, next) => {
-    console.log(`[DEBUG ALL] ${req.method} ${req.path}`);
+    // Log ALL requests to catch mobile issues
+    console.log(`[DEBUG ALL] ${req.method} ${req.path} - Origin: ${req.headers.origin || 'none'}`);
     if (req.method === 'POST') {
       console.log(`[ALL POST] ${req.method} ${req.path} - User-Agent: ${req.headers['user-agent']?.substring(0, 50)}`);
       console.log(`[ALL POST] Body keys:`, Object.keys(req.body || {}));
+      console.log(`[ALL POST] Headers:`, Object.keys(req.headers));
     }
     next();
   });
@@ -499,15 +501,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // TEMPORARY: Test login as GET request for mobile debugging
-  app.get('/api/auth/mobile-login-test', async (req, res) => {
-    console.log('=== MOBILE LOGIN TEST (GET) ===', new Date().toISOString());
+  // WORKAROUND: Mobile login via GET with query parameters (temporary solution)
+  app.get('/api/mobile/login', async (req, res) => {
+    console.log('=== MOBILE LOGIN VIA GET ===', new Date().toISOString());
     console.log('Query params:', req.query);
-    res.json({ 
-      status: 'Mobile GET request reached server!',
-      query: req.query,
-      timestamp: new Date().toISOString()
-    });
+    console.log('User agent:', req.headers['user-agent']);
+    
+    try {
+      const { phone, pass } = req.query;
+      
+      if (!phone || !pass) {
+        return res.status(400).json({ 
+          message: "Phone number and password are required" 
+        });
+      }
+
+      // Find user by phone number
+      console.log('Looking for user with phone:', phone);
+      const user = await storage.getUserByPhone(phone as string);
+      console.log('User found:', !!user, user ? `ID: ${user.id}` : 'Not found');
+      
+      if (!user) {
+        return res.status(401).json({ 
+          message: "Invalid phone number or password" 
+        });
+      }
+
+      // Check if user has a password set
+      console.log('Password check for user:', user.id, 'Password exists:', !!user.password);
+      if (!user.password) {
+        return res.status(401).json({ 
+          message: "No password set for this account. Please set up your password first." 
+        });
+      }
+
+      // Check bcrypt password (admin account uses bcrypt)
+      if (user.password.startsWith('$2b$')) {
+        const isPasswordValid = await bcrypt.compare(pass as string, user.password);
+        if (!isPasswordValid) {
+          return res.status(401).json({ 
+            message: "Invalid phone number or password" 
+          });
+        }
+      } else {
+        // Encrypted password logic (if needed)
+        const { decryptFromStorage } = await import('./cryptoService');
+        try {
+          const decryptedPassword = decryptFromStorage(user.password);
+          if (decryptedPassword !== pass) {
+            return res.status(401).json({ 
+              message: "Invalid phone number or password" 
+            });
+          }
+        } catch (error) {
+          console.error('Password decryption failed:', error);
+          return res.status(401).json({ 
+            message: "Invalid phone number or password" 
+          });
+        }
+      }
+
+      // Authentication successful - create session
+      console.log('Login successful, creating session for user:', user.id);
+      
+      // Set session data
+      (req as any).session.userId = user.id;
+      (req as any).session.isAuthenticated = true;
+      
+      // Save session and redirect
+      (req as any).session.save((err: any) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ message: "Login failed" });
+        }
+        
+        console.log('Session saved successfully, redirecting to admin');
+        // Redirect to admin page for mobile
+        res.redirect('/admin');
+      });
+
+    } catch (error) {
+      console.error("Mobile login error:", error);
+      res.status(500).json({ 
+        message: "Login failed. Please try again."
+      });
+    }
   });
 
   // Alternative login endpoint to avoid Replit auth conflicts
