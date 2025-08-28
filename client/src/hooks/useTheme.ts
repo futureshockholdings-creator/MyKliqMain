@@ -79,7 +79,7 @@ const applyTheme = (theme: Partial<UserTheme>) => {
 export function useTheme() {
   const { data: theme, isLoading } = useQuery({
     queryKey: ["/api/user/theme"],
-    enabled: false, // Temporarily disable this query to stop API spam
+    enabled: true, // Re-enabled with proper caching
     retry: false,
     staleTime: Infinity, // Never consider data stale
     gcTime: Infinity, // Never garbage collect
