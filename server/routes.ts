@@ -225,6 +225,14 @@ interface ExtendedWebSocket extends WebSocket {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Debug middleware for all auth requests
+  app.use((req, res, next) => {
+    if (req.path.includes('/auth/') || req.method === 'POST') {
+      console.log(`[DEBUG] ${req.method} ${req.path} - Body keys:`, Object.keys(req.body || {}));
+    }
+    next();
+  });
+  
   // Maximum scalability middlewares
   app.use(requestManagerMiddleware); // Advanced load balancing, rate limiting, and circuit breaker
   app.use(performanceMiddleware()); // Performance monitoring and tracking
