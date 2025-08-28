@@ -486,6 +486,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Test POST endpoint for mobile
+  app.post('/api/test-mobile-post', (req, res) => {
+    console.log('=== MOBILE POST TEST ===', req.headers['user-agent']);
+    console.log('Body:', req.body);
+    res.json({ 
+      status: 'POST request successful',
+      timestamp: new Date().toISOString(),
+      receivedData: req.body
+    });
+  });
+
   // Login endpoint using phone number and password
   app.post('/api/auth/login', async (req, res) => {
     console.log('=== LOGIN ATTEMPT ===', new Date().toISOString());
