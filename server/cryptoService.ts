@@ -19,7 +19,7 @@ export function encryptText(plaintext: string): EncryptedData {
   const key = getEncryptionKey();
   const iv = crypto.randomBytes(16);
   
-  const cipher = crypto.createCipher('aes-256-cbc', key);
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
   let encrypted = cipher.update(plaintext, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   
@@ -32,8 +32,9 @@ export function encryptText(plaintext: string): EncryptedData {
 
 export function decryptText(encryptedData: EncryptedData): string {
   const key = getEncryptionKey();
+  const iv = Buffer.from(encryptedData.iv, 'hex');
   
-  const decipher = crypto.createDecipher('aes-256-cbc', key);
+  const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
   let decrypted = decipher.update(encryptedData.encryptedText, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
   
@@ -49,9 +50,28 @@ export function encryptForStorage(plaintext: string): string {
 export function decryptFromStorage(encryptedString: string): string {
   try {
     const encryptedData: EncryptedData = JSON.parse(encryptedString);
-    return decryptText(encryptedData);
+    
+    // Try new method first
+    try {
+      return decryptText(encryptedData);
+    } catch (newDecryptError) {
+      // If new method fails, try legacy decryption for backward compatibility
+      console.log('New decryption failed, trying legacy method');
+      return decryptTextLegacy(encryptedData);
+    }
   } catch (error) {
     console.error('Failed to decrypt data:', error);
     throw new Error('Invalid encrypted data');
   }
+}
+
+// Legacy decryption method for backward compatibility
+function decryptTextLegacy(encryptedData: EncryptedData): string {
+  const key = getEncryptionKey();
+  
+  const decipher = crypto.createDecipher('aes-256-cbc', key);
+  let decrypted = decipher.update(encryptedData.encryptedText, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  
+  return decrypted;
 }
