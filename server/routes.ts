@@ -480,7 +480,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Find user by phone number
+      console.log('Looking for user with phone:', phoneNumber);
       const user = await storage.getUserByPhone(phoneNumber);
+      console.log('User found:', !!user, user ? `ID: ${user.id}` : 'Not found');
       if (!user) {
         return res.status(401).json({ 
           message: "Invalid phone number or password" 
