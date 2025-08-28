@@ -43,8 +43,13 @@ export default function Login() {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
-      console.log('Attempting login from:', window.location.origin);
-      console.log('Phone number:', values.phoneNumber);
+      console.log('=== FRONTEND LOGIN START ===');
+      console.log('Origin:', window.location.origin);
+      console.log('Phone:', values.phoneNumber);
+      console.log('UserAgent:', navigator.userAgent);
+      
+      // Add visual feedback for mobile debugging
+      alert(`Starting login attempt for ${values.phoneNumber}`);
       
       const response = await fetch("/api/auth/login", {
         method: "POST",
@@ -92,7 +97,11 @@ export default function Login() {
         throw new Error(errorMessage);
       }
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error("=== FRONTEND LOGIN ERROR ===", error);
+      
+      // Add detailed error info for mobile debugging
+      alert(`Login error: ${error.message || 'Unknown error'}`);
+      
       toast({
         title: "Login Failed",
         description: error.message || "Invalid phone number or password. Please try again.",
