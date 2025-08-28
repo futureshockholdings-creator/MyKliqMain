@@ -488,6 +488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user has a password set
+      console.log('Password check for user:', user.id, 'Password exists:', !!user.password);
       if (!user.password) {
         return res.status(401).json({ 
           message: "No password set for this account. Please set up your password first." 
@@ -609,6 +610,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if user has security questions set up
+      console.log('Security questions check:', {
+        answer1: !!user.securityAnswer1,
+        answer2: !!user.securityAnswer2, 
+        answer3: !!user.securityAnswer3,
+        userId: user.id
+      });
+      
       if (!user.securityAnswer1 || !user.securityAnswer2 || !user.securityAnswer3) {
         return res.status(400).json({ message: "Security questions not set up for this account" });
       }
