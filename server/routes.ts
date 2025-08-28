@@ -470,6 +470,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Login endpoint using phone number and password
   app.post('/api/auth/login', async (req, res) => {
+    console.log('=== LOGIN ATTEMPT ===', new Date().toISOString());
+    console.log('Request body:', req.body);
+    console.log('User agent:', req.headers['user-agent']);
     try {
       const { phoneNumber, password } = req.body;
 
