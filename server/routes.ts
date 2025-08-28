@@ -499,6 +499,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // TEMPORARY: Test login as GET request for mobile debugging
+  app.get('/api/auth/mobile-login-test', async (req, res) => {
+    console.log('=== MOBILE LOGIN TEST (GET) ===', new Date().toISOString());
+    console.log('Query params:', req.query);
+    res.json({ 
+      status: 'Mobile GET request reached server!',
+      query: req.query,
+      timestamp: new Date().toISOString()
+    });
+  });
+
   // Login endpoint using phone number and password
   app.post('/api/auth/login', async (req, res) => {
     console.log('=== LOGIN ATTEMPT ===', new Date().toISOString());
