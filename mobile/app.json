@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "MyKliq",
+    "slug": "mykliq-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.yourcompany.mykliq",
+      "infoPlist": {
+        "NSCameraUsageDescription": "MyKliq needs camera access to take photos and videos for posts and stories.",
+        "NSPhotoLibraryUsageDescription": "MyKliq needs photo library access to select photos and videos for posts and stories.",
+        "NSMicrophoneUsageDescription": "MyKliq needs microphone access for video recording and voice messages."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      },
+      "package": "com.yourcompany.mykliq",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow MyKliq to access your camera to take photos and videos."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow MyKliq to access your photos to share with your kliq."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#00FF00"
+        }
+      ]
+    ]
+  }
+}
