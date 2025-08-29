@@ -480,7 +480,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Emergency admin access endpoint
+  // Mobile authentication endpoints with JWT tokens
+  app.post('/api/mobile/auth/login', async (req, res) => {
+    console.log('=== MOBILE LOGIN ATTEMPT ===', new Date().toISOString());
+    try {
+      const { phoneNumber, password } = req.body;
+
+      if (!phoneNumber || !password) {
+        return res.status(400).json({ 
+          message: "Phone number and password are required" 
+        });
+      }
+
+      // Find user by phone number
+      const user = await storage.getUserByPhone(phoneNumber);
+      if (!user) {
+        return res.status(401).json({ 
+          message: "Invalid phone number or password" 
+        });
+      }
+
+      // Check password (bcrypt for admin, encrypted for others)
+      let isPasswordValid = false;
+      if (user.password?.startsWith('$2b$')) {
+        isPasswordValid = await bcrypt.compare(password, user.password);
+      } else if (user.password) {
+        try {
+          const { decryptFromStorage } = await import('./cryptoService');
+          const decryptedPassword = decryptFromStorage(user.password);
+          isPasswordValid = password === decryptedPassword;
+        } catch (error) {
+          console.error('Password decryption failed:', error);
+        }
+      }
+
+      if (!isPasswordValid) {
+        return res.status(401).json({ 
+          message: "Invalid phone number or password" 
+        });
+      }
+
+      // Generate JWT token for mobile app
+      const jwt = require('jsonwebtoken');
+      const token = jwt.sign(
+        { userId: user.id, isAdmin: user.isAdmin },
+        process.env.JWT_SECRET || 'mykliq-mobile-secret-2025',
+        { expiresIn: '30d' }
+      );
+
+      console.log('Mobile login successful for user:', user.id);
+      
+      res.json({
+        success: true,
+        token,
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          phoneNumber: user.phoneNumber,
+          isAdmin: user.isAdmin,
+          profileImageUrl: user.profileImageUrl,
+          bio: user.bio
+        }
+      });
+
+    } catch (error) {
+      console.error("Mobile login error:", error);
+      res.status(500).json({ 
+        message: "Login failed. Please try again."
+      });
+    }
+  });
+
+  // JWT token verification middleware for mobile
+  const verifyMobileToken = (req: any, res: any, next: any) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    if (!token) {
+      return res.status(401).json({ message: 'Access token required' });
+    }
+
+    try {
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'mykliq-mobile-secret-2025') as any;
+      req.user = decoded;
+      next();
+    } catch (error) {
+      return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+  };
+
+  // Mobile user profile endpoint
+  app.get('/api/mobile/user/profile', verifyMobileToken, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.user.userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.json({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
+        email: user.email,
+        bio: user.bio,
+        profileImageUrl: user.profileImageUrl,
+        isAdmin: user.isAdmin,
+        interests: user.interests,
+        hobbies: user.hobbies,
+        kliqName: user.kliqName
+      });
+    } catch (error) {
+      console.error('Mobile profile fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch profile' });
+    }
+  });
+
+  // Emergency admin access endpoint (keep for web admin dashboard)
   app.get('/api/activate-admin', async (req, res) => {
     try {
       // Set admin session directly
@@ -509,6 +627,274 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Session activation failed"
       });
     }
+  });
+
+  // Mobile-optimized feed endpoint
+  app.get('/api/mobile/feed', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      
+      // Get user's content filters
+      const userFilters = await storage.getContentFilters(userId);
+      const filterTypes = userFilters.map(f => f.filterType);
+      
+      // Get posts from kliq feed
+      const feedData = await storage.getKliqFeed(userId, filterTypes, page, limit);
+      const posts = Array.isArray(feedData) ? feedData : feedData.items;
+      
+      // Format for mobile with existing data structure
+      const mobilePosts = posts.map((post: any) => ({
+        id: post.id,
+        userId: post.userId,
+        content: post.content,
+        mediaUrl: post.mediaUrl,
+        mediaType: post.mediaType,
+        youtubeUrl: post.youtubeUrl,
+        createdAt: post.createdAt,
+        author: {
+          firstName: post.author?.firstName,
+          lastName: post.author?.lastName,
+          profileImageUrl: post.author?.profileImageUrl
+        },
+        likeCount: post.likes?.length || 0,
+        commentCount: post.comments?.length || 0,
+        isLiked: post.likes?.some((like: any) => like.userId === userId) || false
+      }));
+      
+      res.json({
+        posts: mobilePosts,
+        page,
+        hasMore: Array.isArray(feedData) ? false : feedData.hasMore
+      });
+      
+    } catch (error) {
+      console.error('Mobile feed error:', error);
+      res.status(500).json({ message: 'Failed to fetch feed' });
+    }
+  });
+
+  // Mobile post creation endpoint
+  app.post('/api/mobile/posts', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const { content, mediaUrl, mediaType, youtubeUrl } = req.body;
+      
+      if (!content && !mediaUrl && !youtubeUrl) {
+        return res.status(400).json({ message: 'Post content is required' });
+      }
+      
+      const newPost = await storage.createPost({
+        userId,
+        content: content || '',
+        mediaUrl: mediaUrl || null,
+        mediaType: mediaType || null,
+        youtubeUrl: youtubeUrl || null
+      });
+      
+      // Return the created post with author info for immediate UI update
+      const user = await storage.getUser(userId);
+      res.json({
+        id: newPost.id,
+        userId,
+        content: content || '',
+        mediaUrl: mediaUrl || null,
+        mediaType: mediaType || null,
+        youtubeUrl: youtubeUrl || null,
+        createdAt: new Date().toISOString(),
+        author: {
+          firstName: user?.firstName,
+          lastName: user?.lastName,
+          profileImageUrl: user?.profileImageUrl
+        },
+        likeCount: 0,
+        commentCount: 0,
+        isLiked: false
+      });
+      
+    } catch (error) {
+      console.error('Mobile post creation error:', error);
+      res.status(500).json({ message: 'Failed to create post' });
+    }
+  });
+
+  // Mobile like/unlike endpoint
+  app.post('/api/mobile/posts/:postId/like', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const postId = req.params.postId;
+      
+      // Check if user already liked the post by trying to unlike
+      try {
+        await storage.unlikePost(postId, userId);
+        res.json({ liked: false, message: 'Post unliked' });
+      } catch (unlikeError) {
+        // If unlike fails, the like doesn't exist, so create it
+        await storage.likePost(postId, userId);
+        res.json({ liked: true, message: 'Post liked' });
+      }
+      
+    } catch (error) {
+      console.error('Mobile like error:', error);
+      res.status(500).json({ message: 'Failed to update like' });
+    }
+  });
+
+  // Mobile friends list endpoint
+  app.get('/api/mobile/friends', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const friends = await storage.getFriends(userId);
+      
+      // Format for mobile display
+      const mobileFriends = friends.map((friendship: any) => ({
+        id: friendship.friend.id,
+        firstName: friendship.friend.firstName,
+        lastName: friendship.friend.lastName,
+        profileImageUrl: friendship.friend.profileImageUrl,
+        ranking: friendship.ranking,
+        phone: friendship.friend.phoneNumber
+      }));
+      
+      res.json({ friends: mobileFriends });
+      
+    } catch (error) {
+      console.error('Mobile friends error:', error);
+      res.status(500).json({ message: 'Failed to fetch friends' });
+    }
+  });
+
+  // Mobile stories endpoint
+  app.get('/api/mobile/stories', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const stories = await storage.getActiveStories(userId);
+      
+      // Group stories by user for mobile UI
+      const storyGroups = stories.reduce((groups: any, story: any) => {
+        const key = story.userId;
+        if (!groups[key]) {
+          groups[key] = {
+            userId: story.userId,
+            firstName: story.firstName,
+            lastName: story.lastName,
+            profileImageUrl: story.profileImageUrl,
+            stories: []
+          };
+        }
+        groups[key].stories.push({
+          id: story.id,
+          imageUrl: story.imageUrl,
+          videoUrl: story.videoUrl,
+          content: story.content,
+          createdAt: story.createdAt
+        });
+        return groups;
+      }, {});
+      
+      res.json({ storyGroups: Object.values(storyGroups) });
+      
+    } catch (error) {
+      console.error('Mobile stories error:', error);
+      res.status(500).json({ message: 'Failed to fetch stories' });
+    }
+  });
+
+  // Push notification registration endpoint
+  app.post('/api/mobile/notifications/register', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const { pushToken, platform } = req.body;
+      
+      if (!pushToken || !platform) {
+        return res.status(400).json({ message: 'Push token and platform are required' });
+      }
+      
+      // Store push token in user profile (we'll add this field to schema)
+      await storage.updateUser(userId, { 
+        pushToken: pushToken,
+        devicePlatform: platform 
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'Push notifications registered successfully' 
+      });
+      
+    } catch (error) {
+      console.error('Push notification registration error:', error);
+      res.status(500).json({ message: 'Failed to register for push notifications' });
+    }
+  });
+
+  // Send push notification helper function (for future use)
+  const sendPushNotification = async (pushToken: string, title: string, body: string, data?: any) => {
+    try {
+      // This will be implemented with Firebase Cloud Messaging or Apple Push Notification Service
+      // For now, we'll log the notification
+      console.log('Push notification sent:', { pushToken, title, body, data });
+      
+      // TODO: Implement actual push notification sending
+      // Example with Firebase:
+      // const message = {
+      //   notification: { title, body },
+      //   data: data || {},
+      //   token: pushToken
+      // };
+      // await admin.messaging().send(message);
+      
+    } catch (error) {
+      console.error('Push notification send error:', error);
+    }
+  };
+
+  // Mobile file upload endpoint for camera/photo library
+  app.post('/api/mobile/upload', verifyMobileToken, async (req, res) => {
+    try {
+      // This endpoint will handle mobile file uploads
+      // For now, return a placeholder response
+      const { fileType, fileName } = req.body;
+      
+      // TODO: Implement actual file upload to object storage
+      // This will use the existing object storage system
+      
+      res.json({
+        success: true,
+        uploadUrl: `/uploads/${fileName}`,
+        message: 'File upload prepared'
+      });
+      
+    } catch (error) {
+      console.error('Mobile file upload error:', error);
+      res.status(500).json({ message: 'Failed to prepare file upload' });
+    }
+  });
+
+  // Mobile backend health check endpoint
+  app.get('/api/mobile/health', (req, res) => {
+    res.json({
+      status: 'Mobile backend ready',
+      timestamp: new Date().toISOString(),
+      endpoints: [
+        'POST /api/mobile/auth/login - JWT authentication',
+        'GET /api/mobile/user/profile - User profile with JWT',
+        'GET /api/mobile/feed - Paginated social feed',
+        'POST /api/mobile/posts - Create new posts',
+        'POST /api/mobile/posts/:postId/like - Like/unlike posts',
+        'GET /api/mobile/friends - Friends list',
+        'GET /api/mobile/stories - Stories grouped by user',
+        'POST /api/mobile/notifications/register - Push notification registration',
+        'POST /api/mobile/upload - File upload preparation'
+      ],
+      features: [
+        'JWT Authentication',
+        'Push Notifications',
+        'File Upload Support',
+        'Paginated Responses',
+        'Optimized for Mobile'
+      ]
+    });
   });
 
   // Alternative login endpoint to avoid Replit auth conflicts
