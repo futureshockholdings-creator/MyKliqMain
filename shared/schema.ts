@@ -469,7 +469,7 @@ export const eventAttendees = pgTable("event_attendees", {
 
 // Notification system for in-app alerts and badges
 export const notificationTypeEnum = pgEnum("notification_type", [
-  "message", "friend_request", "event_invite", "post_like", "comment", 
+  "message", "friend_request", "event_invite", "post_like", "comment", "comment_like",
   "story_view", "live_stream", "meetup_invite", "birthday"
 ]);
 

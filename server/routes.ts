@@ -1815,10 +1815,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const user = await storage.getUser(userId);
         if (user) {
           const commentPreview = comment.content.slice(0, 50) + (comment.content.length > 50 ? "..." : "");
-          await notificationService.notifyComment(
+          await notificationService.notifyCommentLike(
             comment.userId,
-            `${user.firstName || "Someone"} liked your comment`,
-            comment.postId,
+            user.firstName || "Someone",
+            comment.id,
             commentPreview
           );
         }

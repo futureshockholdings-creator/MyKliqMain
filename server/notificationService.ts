@@ -29,8 +29,7 @@ export class NotificationService {
       .select()
       .from(notifications)
       .where(and(...conditions))
-      .orderBy(desc(notifications.createdAt))
-      .limit(100); // Prevent excessive loads
+      .orderBy(desc(notifications.createdAt));
   }
 
   // Mark notification as read
@@ -202,6 +201,19 @@ export class NotificationService {
       relatedId: postId,
       relatedType: "post",
       priority: "normal",
+    });
+  }
+
+  async notifyCommentLike(userId: string, likerName: string, commentId: string, commentPreview: string) {
+    return this.createNotification({
+      userId,
+      type: "comment_like",
+      title: "Comment liked",
+      message: `${likerName} liked your comment: ${commentPreview}`,
+      actionUrl: `/bulletin`,
+      relatedId: commentId,
+      relatedType: "comment",
+      priority: "low",
     });
   }
 
