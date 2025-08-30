@@ -923,10 +923,28 @@ export default function Home() {
   };
 
   const handleLikeComment = (commentId: string) => {
+    // Don't allow liking temporary comments
+    if (commentId.startsWith('temp-')) {
+      toast({
+        title: "Please wait",
+        description: "Comment is still being posted...",
+        variant: "default",
+      });
+      return;
+    }
     likeCommentMutation.mutate(commentId);
   };
 
   const handleReplyToComment = (commentId: string) => {
+    // Don't allow replying to temporary comments
+    if (commentId.startsWith('temp-')) {
+      toast({
+        title: "Please wait",
+        description: "Comment is still being posted...",
+        variant: "default",
+      });
+      return;
+    }
     setReplyingToComment(commentId);
   };
 
@@ -2054,7 +2072,7 @@ export default function Home() {
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => handleLikeComment(comment.id)}
-                                  disabled={likeCommentMutation.isPending || comment.id.startsWith('temp-')}
+                                  disabled={likeCommentMutation.isPending}
                                   className="text-muted-foreground hover:text-red-500 p-0 h-auto text-xs"
                                   data-testid={`button-like-comment-${comment.id}`}
                                 >
@@ -2065,7 +2083,6 @@ export default function Home() {
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => handleReplyToComment(comment.id)}
-                                  disabled={comment.id.startsWith('temp-')}
                                   className="text-muted-foreground hover:text-primary p-0 h-auto text-xs"
                                   data-testid={`button-reply-comment-${comment.id}`}
                                 >
@@ -2076,7 +2093,7 @@ export default function Home() {
                             </div>
 
                             {/* Reply Input */}
-                            {replyingToComment === comment.id && !comment.id.startsWith('temp-') && (
+                            {replyingToComment === comment.id && (
                               <div className="mt-3 pl-4 border-l-2 border-muted">
                                 <div className="flex space-x-2">
                                   <Avatar className="w-6 h-6 border border-border">
