@@ -1811,9 +1811,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get comment details to notify the author
       const comment = await storage.getCommentById(commentId);
+      console.log("Comment like notification check:", { commentUserId: comment?.userId, currentUserId: userId, shouldNotify: comment && comment.userId !== userId });
+      
       if (comment && comment.userId !== userId) {
         const user = await storage.getUser(userId);
         if (user) {
+          console.log("Creating comment like notification for:", comment.userId, "from:", user.firstName);
           const commentPreview = comment.content.slice(0, 50) + (comment.content.length > 50 ? "..." : "");
           await notificationService.notifyCommentLike(
             comment.userId,
