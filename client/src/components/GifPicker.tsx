@@ -24,7 +24,7 @@ function GifImage({ gif, className }: { gif: Gif; className?: string }) {
   if (hasError) {
     return (
       <div className={`${className} relative h-24 bg-muted overflow-hidden gif-container cursor-pointer border border-border flex items-center justify-center`}>
-        <span className="text-xs text-muted-foreground">{gif.title}</span>
+        <span className="text-xs text-muted-foreground">Content not available</span>
       </div>
     );
   }
@@ -38,7 +38,7 @@ function GifImage({ gif, className }: { gif: Gif; className?: string }) {
       )}
       <img
         src={gif.url}
-        alt={gif.title}
+        alt=""
         className={`w-full h-full object-cover transition-opacity ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         onLoad={handleLoad}
         onError={handleError}
@@ -106,11 +106,6 @@ export function GifPicker({
             gif={gif} 
             className="w-full h-24 object-cover group-hover:scale-105 transition-transform" 
           />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-end">
-            <div className="p-2 bg-gradient-to-t from-black/60 to-transparent w-full opacity-0 group-hover:opacity-100 transition-opacity">
-              <p className="text-white text-xs font-medium truncate">{gif.title}</p>
-            </div>
-          </div>
         </div>
       ))}
     </div>
