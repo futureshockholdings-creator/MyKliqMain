@@ -550,7 +550,7 @@ export class DatabaseStorage implements IStorage {
     const [allLikes, allComments] = await Promise.all([
       // Batch fetch all likes
       postIds.length > 0 ? db.select().from(postLikes).where(inArray(postLikes.postId, postIds)) : [],
-      // Batch fetch all comments with joins
+      // Batch fetch all comments with joins and like counts
       postIds.length > 0 ? db
         .select({
           id: comments.id,
@@ -563,13 +563,16 @@ export class DatabaseStorage implements IStorage {
           author: users,
           gif: gifs,
           moviecon: moviecons,
+          likes_count: sql<number>`COALESCE(COUNT(${commentLikes.id}), 0)`.as('likes_count'),
         })
         .from(comments)
         .innerJoin(users, eq(comments.userId, users.id))
         .leftJoin(gifs, eq(comments.gifId, gifs.id))
         .leftJoin(moviecons, eq(comments.movieconId, moviecons.id))
+        .leftJoin(commentLikes, eq(comments.id, commentLikes.commentId))
         .where(inArray(comments.postId, postIds))
-        .orderBy(comments.createdAt) : []
+        .groupBy(comments.id, users.id, gifs.id, moviecons.id)
+        .orderBy(comments.createdAt) : [] as any[]
     ]);
 
     // Group likes and comments by postId for O(1) lookup
@@ -579,7 +582,7 @@ export class DatabaseStorage implements IStorage {
       return acc;
     }, {} as Record<string, any[]>);
 
-    const commentsByPost = allComments.reduce((acc, comment) => {
+    const commentsByPost = allComments.reduce((acc, comment: any) => {
       if (!acc[comment.postId]) acc[comment.postId] = [];
       acc[comment.postId].push(comment);
       return acc;
