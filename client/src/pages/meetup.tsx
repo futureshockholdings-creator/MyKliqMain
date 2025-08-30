@@ -204,16 +204,69 @@ export default function MeetupPage() {
   const handleLocationCheckIn = async () => {
     if (!userLocation) return;
     
-    console.log('🎯 Triggering location check-in mutation...');
+    alert('Location check-in function called!');
+    console.log('🎯 Starting location check-in process...');
+    
+    // Create content based on available information
+    let content = `📍 Checked in`;
+    if (locationName) {
+      content += ` at ${locationName}`;
+    }
+    if (address) {
+      content += ` (${address})`;
+    }
+    if (!locationName && !address) {
+      content += ` at ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}`;
+    }
+
+    console.log('📝 Content created:', content);
+    
     try {
-      locationCheckInMutation.mutate({
-        latitude: userLocation.lat,
-        longitude: userLocation.lng,
-        locationName: locationName,
-        address: address,
+      // Use direct API call instead of mutation
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          content: content,
+          latitude: userLocation.lat,
+          longitude: userLocation.lng,
+          locationName: locationName || null,
+          address: address || null,
+        }),
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create location post');
+      }
+      
+      const result = await response.json();
+      console.log('✅ Location post created successfully:', result);
+      
+      // Force refresh the feed
+      await queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+      console.log('🔄 Feed cache invalidated');
+      
+      toast({
+        title: "Location Check-in Posted!",
+        description: "Your location has been shared with your kliq on the Headlines",
+      });
+      
+      // Reset form and navigate
+      setLocationName('');
+      setAddress('');
+      setShowLocationDialog(false);
+      setLocation('/');
+      
     } catch (error) {
       console.error('❌ Error in location check-in:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check in. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
