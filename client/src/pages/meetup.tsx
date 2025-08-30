@@ -24,6 +24,8 @@ export default function MeetupPage() {
   // Location check-in mutation that creates a post with immediate optimistic update
   const locationCheckInMutation = useMutation({
     mutationFn: async (locationData: { latitude: number; longitude: number; locationName: string; address?: string }) => {
+      console.log('🌍 Location mutation function called with:', locationData);
+      
       // Create content based on available information
       let content = `📍 Checked in`;
       if (locationData.locationName) {
@@ -210,12 +212,17 @@ export default function MeetupPage() {
   const handleLocationCheckIn = async () => {
     if (!userLocation) return;
     
-    await locationCheckInMutation.mutateAsync({
-      latitude: userLocation.lat,
-      longitude: userLocation.lng,
-      locationName: locationName,
-      address: address,
-    });
+    console.log('🎯 Triggering location check-in mutation...');
+    try {
+      locationCheckInMutation.mutate({
+        latitude: userLocation.lat,
+        longitude: userLocation.lng,
+        locationName: locationName,
+        address: address,
+      });
+    } catch (error) {
+      console.error('❌ Error in location check-in:', error);
+    }
   };
 
   return (
