@@ -88,9 +88,9 @@ export default function MeetupPage() {
         type: 'post',
         user: {
           id: (user as any)?.id,
-          first_name: (user as any)?.firstName || '',
-          last_name: (user as any)?.lastName || '',
-          profile_image_url: (user as any)?.profileImageUrl || null,
+          first_name: (user as any)?.first_name || '',
+          last_name: (user as any)?.last_name || '',
+          profile_image_url: (user as any)?.profile_image_url || null,
         },
         likes_count: 0,
         comments_count: 0,
@@ -100,8 +100,13 @@ export default function MeetupPage() {
       };
 
       // Optimistically update the feed
+      console.log('Adding optimistic location post:', optimisticPost);
       queryClient.setQueryData(['/api/kliq-feed'], (old: any) => {
-        if (!old) return old;
+        if (!old) {
+          console.log('No existing feed data found');
+          return old;
+        }
+        console.log('Current feed has', old.items?.length, 'items, adding optimistic post');
         return {
           ...old,
           items: [optimisticPost, ...old.items],
