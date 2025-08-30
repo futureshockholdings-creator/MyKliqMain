@@ -24,107 +24,152 @@ interface KnowledgeBase {
 const knowledgeBase: KnowledgeBase = {
   home: {
     keywords: ['home', 'headlines', 'feed', 'post', 'create post', 'main page', 'home icon'],
-    response: "The Headlines page (🏠 Home icon) is your main feed where you can see all posts, polls, events, and activities from your kliq members. You can create new posts, add GIFs or moviecons, and interact with content from your friends.",
-    relatedTopics: ['posts', 'polls', 'feed', 'navigation']
+    response: "The Headlines page (🏠 Home icon) is your central social hub displaying all content from your kliq members. This includes posts, polls, events, live stream notifications, location check-ins, and auto-posted content. You can create new posts with text, photos, videos, GIFs, or moviecons. The feed shows real-time activity with like and comment interactions that update instantly.",
+    relatedTopics: ['posts', 'polls', 'feed', 'navigation', 'auto-posting']
   },
   posts: {
-    keywords: ['post', 'create post', 'share', 'content', 'writing'],
-    response: "To create a post, click the text area at the top of Headlines, write your message, and optionally add a GIF or moviecon. Your post will be shared with all your kliq members.",
-    relatedTopics: ['home', 'gifs', 'moviecons']
+    keywords: ['post', 'create post', 'share', 'content', 'writing', 'like', 'comment'],
+    response: "To create a post: 1) Click the text area at the top of Headlines, 2) Write your message, 3) Optionally add media (photos, videos, GIFs, moviecons), 4) Click Post. Your content is shared with all kliq members. Posts support real-time likes and comments with instant UI updates. You can also post daily horoscopes and bible verses with one-click from the daily content section.",
+    relatedTopics: ['home', 'gifs', 'moviecons', 'daily-content', 'interactions']
   },
   kliq: {
-    keywords: ['kliq', 'friends', 'pyramid', 'rank', 'add friends', 'friend ranking', 'my kliq', 'users icon'],
-    response: "My Kliq page (👥 Users icon) shows your friend pyramid with up to 28 friends ranked by closeness. You can drag friends to rerank them, add new friends with invite codes, manage kliq closure settings, and remove friends.",
-    relatedTopics: ['friends', 'invites', 'ranking', 'navigation']
+    keywords: ['kliq', 'friends', 'pyramid', 'rank', 'add friends', 'friend ranking', 'my kliq', 'users icon', 'emoji', 'close kliq', 'closure'],
+    response: "My Kliq page (👥 Users icon) shows your friend pyramid with up to 28 friends ranked 1-28 by closeness. Key features: 1) Drag friends to rerank them, 2) Add custom emoji to your kliq name (16 options: 🏆 🚀 🎆 ✨ 🔥 💫 ❤️ 👏 🌟 💎 🎉 ⚡ 🎯 💪 👑 🦄), 3) Manage kliq closure settings (open/closed for new members), 4) Add new friends with KLIQ-XXXX-XXXX invite codes, 5) Remove friends. The emoji appears in both the header and pyramid display.",
+    relatedTopics: ['friends', 'invites', 'ranking', 'navigation', 'closure']
   },
   events: {
-    keywords: ['events', 'create event', 'attendance', 'going', 'maybe', 'event details', 'calendar icon'],
-    response: "Events page (📅 Calendar icon) lets you create and manage kliq events. Set the title, date, time, location, and description. Other kliq members can mark their attendance as Going, Maybe, or Can't Go. Events automatically post to the Headlines feed when created.",
-    relatedTopics: ['attendance', 'calendar', 'navigation']
+    keywords: ['events', 'create event', 'attendance', 'going', 'maybe', 'event details', 'calendar icon', 'auto-post'],
+    response: "Events page (📅 Calendar icon) manages kliq gatherings and activities. To create: 1) Set title, date, time, location, description, 2) Event automatically posts to Headlines feed, 3) Members mark attendance (Going/Maybe/Can't Go), 4) View RSVP counts and attendee lists. Events have built-in auto-posting - when created or updated, they generate posts in the Headlines feed to keep everyone informed.",
+    relatedTopics: ['attendance', 'calendar', 'navigation', 'auto-posting']
   },
   messages: {
-    keywords: ['messages', 'chat', 'dm', 'direct message', 'conversation', 'im', 'message circle icon'],
-    response: "Messages or IM page (💬 MessageCircle icon) is for private conversations with individual kliq members. You can send text, photos, videos, GIFs, and moviecons in your chats. Shows notification badges for unread messages.",
-    relatedTopics: ['chat', 'media', 'navigation']
+    keywords: ['messages', 'chat', 'dm', 'direct message', 'conversation', 'im', 'message circle icon', 'incognito', 'private'],
+    response: "Messages/IM page (💬 MessageCircle icon) offers two types of private conversations: 1) Regular messaging - standard private chats with text, photos, videos, GIFs, and moviecons, 2) Incognito messaging - ultra-private conversations that auto-delete after 7 days for maximum privacy. All message types show notification badges for unread messages and support rich media sharing.",
+    relatedTopics: ['chat', 'media', 'navigation', 'incognito', 'privacy']
+  },
+  incognito: {
+    keywords: ['incognito', 'private', 'secret', 'auto-delete', 'temporary messages', 'disappearing', 'privacy'],
+    response: "Incognito messaging is MyKliq's ultra-private chat feature. Key features: 1) Complete auto-deletion - entire conversations and all messages are permanently deleted after 7 days, 2) Enhanced privacy protection - no permanent record kept in database, 3) Automatic cleanup runs hourly, 4) Same rich media support as regular messages, 5) Perfect for sensitive or temporary conversations that require maximum confidentiality.",
+    relatedTopics: ['messages', 'privacy', 'auto-delete', 'security']
   },
   meetup: {
-    keywords: ['meetup', 'location', 'check in', 'gps', 'where'],
-    response: "Meetup page lets you share your current location with your kliq. Click 'Share Location' to post your GPS coordinates to the Headlines feed for friends to see where you are.",
-    relatedTopics: ['location', 'headlines']
+    keywords: ['meetup', 'location', 'check in', 'gps', 'where', 'share location', 'bulletin'],
+    response: "Meetup page enables location sharing with your kliq. How it works: 1) Click 'Share Location' to access your GPS coordinates, 2) Your location automatically posts to the Headlines feed, 3) Friends can see where you are in real-time, 4) Great for coordinating meetups or letting friends know your whereabouts. Location posts appear in the Bulletin section of the Headlines feed.",
+    relatedTopics: ['location', 'headlines', 'gps', 'auto-posting']
   },
   actions: {
-    keywords: ['actions', 'live stream', 'streaming', 'go live', 'video icon'],
-    response: "Actions page (🎥 Video icon) is for live streaming to your kliq. Start a live stream to share real-time video with your friends, and they can join to watch and chat. Streams automatically post to Headlines when started.",
-    relatedTopics: ['streaming', 'live', 'navigation']
+    keywords: ['actions', 'live stream', 'streaming', 'go live', 'video icon', 'real-time'],
+    response: "Actions page (🎥 Video icon) is MyKliq's live streaming platform. Features: 1) Start live video streams to broadcast to your kliq, 2) Real-time chat during streams, 3) Automatic posting to Headlines when you go live, 4) Friends receive notifications about your stream, 5) Interactive viewing experience with live comments. Perfect for sharing live moments, events, or just hanging out virtually with your kliq.",
+    relatedTopics: ['streaming', 'live', 'navigation', 'auto-posting', 'real-time']
   },
   profile: {
-    keywords: ['profile', 'edit profile', 'bio', 'avatar', 'profile picture', 'user icon'],
-    response: "Profile page (👤 User icon) lets you customize your personal information, upload profile pictures with camera icon, set wallpaper backgrounds, manage your bio, and update account settings. Located at the top of navigation.",
-    relatedTopics: ['avatar', 'customization', 'navigation']
+    keywords: ['profile', 'edit profile', 'bio', 'avatar', 'profile picture', 'user icon', 'wallpaper', 'settings', 'birthdate', 'security'],
+    response: "Profile page (👤 User icon) is your personal customization hub. Key sections: 1) Profile Photo - upload with camera icon, 2) Wallpaper backgrounds - customize your profile backdrop, 3) Bio and personal information, 4) Birthdate (required for horoscope features), 5) Security settings including PIN and security questions for password recovery, 6) Account management. Located at the top of navigation for easy access.",
+    relatedTopics: ['avatar', 'customization', 'navigation', 'security', 'horoscope']
   },
   themes: {
-    keywords: ['themes', 'customize', 'colors', 'appearance', 'design', 'palette icon'],
-    response: "Themes page (🎨 Palette icon) allows you to personalize your MyKliq experience with custom colors, fonts, backgrounds, and UI styles. Use 'Surprise Me' for random themes that ensure readability.",
-    relatedTopics: ['customization', 'colors', 'navigation']
+    keywords: ['themes', 'customize', 'colors', 'appearance', 'design', 'palette icon', 'surprise me', 'fonts', 'backgrounds'],
+    response: "Themes page (🎨 Palette icon) offers extensive UI customization. Features: 1) Background options - solid colors, gradients, patterns, 2) Font customization - multiple typefaces and sizes, 3) Primary/secondary color schemes, 4) Border styles and visual effects, 5) 'Surprise Me' randomizer - generates random themes ensuring readability, 6) Real-time preview, 7) Global application across entire app using CSS variables. Create a truly personalized MyKliq experience.",
+    relatedTopics: ['customization', 'colors', 'navigation', 'personalization']
   },
   moviecons: {
-    keywords: ['moviecons', 'video reactions', 'custom videos', 'emotes'],
-    response: "Moviecons are custom video reactions you can upload and use in posts and messages. Manage your moviecon library on the Moviecon Manager page.",
-    relatedTopics: ['videos', 'reactions']
+    keywords: ['moviecons', 'video reactions', 'custom videos', 'emotes', 'upload', 'library'],
+    response: "Moviecons are MyKliq's custom video reaction system. How they work: 1) Upload your own short video clips as reactions, 2) Use them in posts and messages like emojis, 3) Build your personal moviecon library, 4) Access through Moviecon Manager page, 5) Perfect for personalized reactions, inside jokes, or expressing emotions with custom video content. They add a unique, personal touch to your communications.",
+    relatedTopics: ['videos', 'reactions', 'posts', 'messages', 'customization']
   },
   polls: {
-    keywords: ['polls', 'voting', 'create poll', 'survey', 'questions'],
-    response: "Create polls with multiple choice options and time limits. Your kliq members can vote, and results are shown in real-time with percentages.",
-    relatedTopics: ['voting', 'questions']
+    keywords: ['polls', 'voting', 'create poll', 'survey', 'questions', 'time limit', 'results', 'percentages'],
+    response: "Polls enable interactive decision-making within your kliq. Features: 1) Create multiple choice questions, 2) Set custom time limits for voting, 3) Real-time results with live percentages, 4) Vote tracking shows who participated, 5) Auto-posting to Headlines feed, 6) Perfect for group decisions, opinions, or fun questions. Results update instantly as members vote, creating engaging interactive content.",
+    relatedTopics: ['voting', 'questions', 'real-time', 'interaction', 'auto-posting']
   },
   stories: {
-    keywords: ['stories', 'temporary', '24 hours', 'disappearing'],
-    response: "Stories are temporary posts that disappear after 24 hours. Share photos, videos, or text that you want to be temporary rather than permanent.",
-    relatedTopics: ['temporary', 'media']
+    keywords: ['stories', 'temporary', '24 hours', 'disappearing', 'ephemeral'],
+    response: "Stories are temporary content that disappears after 24 hours. Perfect for: 1) Sharing moments you don't want to keep permanently, 2) Behind-the-scenes content, 3) Daily updates or thoughts, 4) Photos/videos with temporary relevance. Stories support the same media types as posts (photos, videos, text) but automatically delete, giving you freedom to share more casually without permanent record.",
+    relatedTopics: ['temporary', 'media', 'casual-sharing', 'privacy']
   },
   ads: {
-    keywords: ['ads', 'sponsored', 'advertising', 'promotions'],
-    response: "Sponsored ads appear in your feed based on your interests. Manage your ad preferences and view ad analytics on the Ads Manager page.",
-    relatedTopics: ['advertising', 'preferences']
+    keywords: ['ads', 'sponsored', 'advertising', 'promotions', 'manager'],
+    response: "MyKliq's advertising system delivers personalized sponsored content. Features: 1) Interest-based ad targeting, 2) Ads Manager page for admin control, 3) Analytics and performance tracking, 4) Preference management for users, 5) Non-intrusive integration with regular feed content. Admins can manage ad campaigns, while users can customize their ad experience through preference settings.",
+    relatedTopics: ['advertising', 'preferences', 'analytics', 'personalization']
   },
   invites: {
-    keywords: ['invite', 'invite code', 'join kliq', 'add friends'],
-    response: "Use unique invite codes (format: KLIQ-XXXX-XXXX) to invite new friends to your kliq. Each code can only be used once and connects you as friends.",
-    relatedTopics: ['kliq', 'friends']
+    keywords: ['invite', 'invite code', 'join kliq', 'add friends', 'KLIQ'],
+    response: "MyKliq uses unique invite codes for secure friend connections. System details: 1) Format: KLIQ-XXXX-XXXX (e.g., KLIQ-1234-5678), 2) One-time use only - each code works once, 3) Creates mutual friendship when used, 4) Secure method to control kliq growth, 5) Generate codes on My Kliq page, 6) Share codes outside the app to invite new members. This ensures your kliq remains close-knit and trusted.",
+    relatedTopics: ['kliq', 'friends', 'security', 'growth']
   },
   notifications: {
-    keywords: ['notifications', 'alerts', 'bell', 'updates'],
-    response: "Notifications show you updates like new posts, event attendance changes, friend activities, and messages. Check the bell icon for recent alerts.",
-    relatedTopics: ['alerts', 'updates']
+    keywords: ['notifications', 'alerts', 'bell', 'updates', 'badge'],
+    response: "MyKliq's comprehensive notification system keeps you updated. Types include: 1) Friend activities (posts, comments, likes), 2) Event invitations and updates, 3) Message notifications, 4) Live stream alerts, 5) Poll participation, 6) Kliq changes. The bell icon (🔔) shows total unread count, while individual page badges show specific counts (messages, events, etc.).",
+    relatedTopics: ['alerts', 'updates', 'badges', 'real-time']
   },
   navigation: {
     keywords: ['navigation', 'nav', 'menu', 'sidebar', 'icons', 'layout', 'where', 'how to find', 'left side'],
-    response: "MyKliq navigation is on the left side with these icons from top to bottom: Profile (👤 User), Headlines (🏠 Home), My Kliq (👥 Users), Messages (💬 MessageCircle), Events (📅 Calendar), Actions (🎥 Video), and Themes (🎨 Palette). The notification bell (🔔) at the very top shows alerts.",
-    relatedTopics: ['icons', 'alerts', 'layout']
+    response: "MyKliq navigation is a left sidebar with clear icons from top to bottom: 1) Profile (👤 User) - your personal settings, 2) Headlines (🏠 Home) - main social feed, 3) My Kliq (👥 Users) - friend pyramid and management, 4) Messages (💬 MessageCircle) - private conversations, 5) Events (📅 Calendar) - kliq gatherings, 6) Actions (🎥 Video) - live streaming, 7) Themes (🎨 Palette) - visual customization. Notification bell (🔔) at top shows alerts.",
+    relatedTopics: ['icons', 'alerts', 'layout', 'organization']
   },
   alerts: {
     keywords: ['alerts', 'bell icon', 'notification bell', 'badge', 'unread', 'notification panel', 'red badge'],
-    response: "The Alerts system (🔔 Bell icon at top of navigation) shows all your notifications including friend requests, event invites, and messages. Red badges indicate unread items. Click the bell to open the notification panel and see all your alerts organized by type.",
-    relatedTopics: ['navigation', 'friends', 'events', 'messages']
+    response: "The Alerts system (🔔 Bell icon) is your notification command center. Features: 1) Centralized view of all notifications, 2) Organized by type (friends, events, messages, activities), 3) Red badges indicate unread counts, 4) Click to open notification panel, 5) Mark all as read functionality, 6) Delete all option for cleanup, 7) Real-time updates for new alerts. Essential for staying connected with your kliq's activity.",
+    relatedTopics: ['navigation', 'friends', 'events', 'messages', 'real-time']
   },
   badges: {
     keywords: ['badges', 'red circles', 'notification badges', 'unread count', 'numbers', 'red numbers'],
-    response: "Red notification badges appear on navigation icons to show unread items: Messages icon shows unread chat count, My Kliq shows friend request count, Events shows event invite count, and the main Alerts bell shows total unread count across all categories.",
-    relatedTopics: ['alerts', 'navigation', 'notifications']
+    response: "Red notification badges provide instant visual feedback across MyKliq. Locations: 1) Messages icon - unread chat count, 2) My Kliq icon - friend request count, 3) Events icon - event invite count, 4) Main Alerts bell - total unread across all categories. Badges update in real-time and help you quickly identify where attention is needed without opening each section.",
+    relatedTopics: ['alerts', 'navigation', 'notifications', 'visual-feedback']
+  },
+  'daily-content': {
+    keywords: ['daily', 'horoscope', 'bible verse', 'inspiration', 'zodiac', 'astrology', 'spiritual'],
+    response: "MyKliq offers daily inspirational content features: 1) Daily Horoscope - personalized readings based on your birthdate/zodiac sign, includes lucky numbers and colors, 2) Daily Bible Verse - curated inspirational verses with reflections, 3) One-click posting to Headlines feed to share with your kliq, 4) Timezone-aware generation ensures fresh content daily, 5) Requires birthdate in profile for horoscope functionality.",
+    relatedTopics: ['posts', 'profile', 'inspiration', 'sharing']
+  },
+  horoscope: {
+    keywords: ['horoscope', 'zodiac', 'astrology', 'sign', 'birthdate', 'lucky numbers', 'colors'],
+    response: "Daily Horoscope system provides personalized astrological content. Features: 1) Zodiac sign auto-calculated from your profile birthdate, 2) Daily personalized readings, 3) Lucky numbers and colors, 4) One-click posting to Headlines, 5) Fresh content generated daily with timezone awareness. Note: Birthdate is required in your profile to access horoscope features - update your profile if you haven't set it yet.",
+    relatedTopics: ['daily-content', 'profile', 'zodiac', 'personalization']
+  },
+  'bible-verse': {
+    keywords: ['bible', 'verse', 'spiritual', 'inspiration', 'daily verse', 'christian', 'faith'],
+    response: "Daily Bible Verse feature provides spiritual inspiration. Includes: 1) 15 carefully curated inspirational verses, 2) Daily reflections and commentary, 3) Timezone-aware rotation ensuring fresh content, 4) One-click posting to Headlines to share inspiration with your kliq, 5) Perfect for users seeking daily spiritual encouragement and community sharing of faith-based content.",
+    relatedTopics: ['daily-content', 'inspiration', 'spiritual', 'sharing']
+  },
+  'auto-posting': {
+    keywords: ['auto-post', 'automatic', 'automated posting', 'feed updates', 'kliq feed'],
+    response: "MyKliq's intelligent auto-posting system keeps your kliq informed of important activities. Auto-posts include: 1) Event creation and updates, 2) Live stream notifications when someone goes live, 3) Location check-ins from Meetup, 4) Poll creations, 5) System activities. All auto-posts appear in the Headlines feed with clear indicators of their source, ensuring your kliq stays connected without manual updates.",
+    relatedTopics: ['events', 'actions', 'meetup', 'polls', 'headlines']
+  },
+  'social-media': {
+    keywords: ['social media', 'integration', 'instagram', 'tiktok', 'youtube', 'twitch', 'discord', 'reddit', 'oauth'],
+    response: "MyKliq features comprehensive social media integration. Supported platforms: 1) Instagram, 2) TikTok, 3) YouTube, 4) Twitch, 5) Discord, 6) Reddit. Features include: OAuth 2.0 secure connection, AES-256 encryption for tokens, unified social feed displaying all connected content, platform-specific styling, connection status indicators, and settings interface for management. Aggregate all your social presence in one place.",
+    relatedTopics: ['integration', 'oauth', 'security', 'aggregation']
+  },
+  closure: {
+    keywords: ['closure', 'kliq closure', 'open kliq', 'closed kliq', 'new members', 'privacy'],
+    response: "Kliq Closure settings control who can join your kliq. Options: 1) Open Kliq - anyone with an invite code can join, 2) Closed Kliq - no new members allowed, existing members only. Manage this setting on the My Kliq page. Closure helps maintain your desired group size and privacy level, ensuring your kliq remains as intimate or open as you prefer.",
+    relatedTopics: ['kliq', 'privacy', 'members', 'settings']
+  },
+  security: {
+    keywords: ['security', 'password', 'recovery', 'pin', 'security questions', 'authentication'],
+    response: "MyKliq employs multi-layer security for account protection. Security features: 1) 4-step password recovery (phone → security questions → PIN → new password), 2) Security PIN for account verification, 3) Three required security questions, 4) No SMS dependency for recovery, 5) Encrypted credential storage, 6) Session management. Set up all security features in your Profile page for maximum protection.",
+    relatedTopics: ['profile', 'recovery', 'authentication', 'privacy']
+  },
+  'mobile-app': {
+    keywords: ['mobile', 'app', 'ios', 'android', 'app store', 'google play', 'native', 'react native'],
+    response: "MyKliq is developing native mobile apps for iOS and Android. Features: 1) Full feature parity with web version, 2) JWT authentication for mobile, 3) Optimized mobile API endpoints, 4) Push notification support, 5) Native camera and photo integration, 6) Planned App Store and Google Play release. The mobile experience will provide all MyKliq features optimized for touch interfaces and mobile usage patterns.",
+    relatedTopics: ['ios', 'android', 'native', 'notifications']
   }
 };
 
 const greetingMessages = [
-  "Hi! I'm here to help you understand MyKliq's features. What would you like to know?",
-  "Hello! Ask me about any page or feature in MyKliq and I'll explain how it works.",
-  "Hey there! I can help you navigate MyKliq's functionality. What questions do you have?"
+  "Hi! I'm your MyKliq expert assistant. I can help you with everything from basic navigation to advanced features like incognito messaging, live streaming, auto-posting, and social media integration. What would you like to know?",
+  "Hello! I know all about MyKliq's features - from the friend pyramid and kliq customization to daily horoscopes, polls, themes, and mobile app development. Ask me anything!",
+  "Hey there! I'm here to help you master MyKliq. Whether you need help with messaging, events, live streaming, security settings, or any other feature, I've got detailed answers for you!"
 ];
 
 const fallbackResponses = [
-  "I can help you with MyKliq features! Try asking about Headlines, My Kliq, Events, Messages, Profile, Themes, Actions, or the navigation icons and alert badges.",
-  "I'm here to help you navigate MyKliq! Ask me about any page, icon, notification badge, or feature you'd like to understand better.",
-  "Need help with MyKliq? I can explain how to use posts, polls, events, messaging, themes, navigation icons, notification badges, and more!",
-  "I can guide you through MyKliq features. Try asking about creating content, managing friends, customizing themes, or understanding the navigation layout and alert system."
+  "I have comprehensive knowledge about MyKliq! Try asking about: Headlines feed, friend pyramid, incognito messaging, live streaming, auto-posting, daily horoscopes, polls, events, themes, security settings, social media integration, kliq closure, or mobile app features.",
+  "I can provide detailed help with all MyKliq features! Ask about: navigation, notification badges, kliq customization with emojis, password recovery, moviecons, stories, meetup location sharing, bible verses, or any specific functionality you're curious about.",
+  "Need detailed guidance? I know about: posting and interactions, real-time features, privacy settings, auto-deletion, live streaming with chat, event management, theme customization, security PINs, social media connections, or the upcoming mobile apps for iOS and Android.",
+  "I'm your complete MyKliq guide! I can explain: friend ranking system, kliq closure settings, incognito conversations, daily content features, notification system, profile customization, live actions, poll creation, or any advanced functionality step-by-step."
 ];
 
 export function Chatbot() {
