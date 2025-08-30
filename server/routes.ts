@@ -13,7 +13,7 @@ import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
 import { pool } from "./db";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
@@ -1798,6 +1798,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error adding comment:", error);
       res.status(500).json({ message: "Failed to add comment" });
+    }
+  });
+
+  // Like a comment
+  app.post('/api/comments/:commentId/like', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { commentId } = req.params;
+      
+      await storage.likeComment(commentId, userId);
+      
+      // Get comment details to notify the author
+      const comment = await storage.getCommentById(commentId);
+      if (comment && comment.userId !== userId) {
+        const user = await storage.getUser(userId);
+        if (user) {
+          const commentPreview = comment.content.slice(0, 50) + (comment.content.length > 50 ? "..." : "");
+          await notificationService.notifyComment(
+            comment.userId,
+            `${user.firstName || "Someone"} liked your comment`,
+            comment.postId,
+            commentPreview
+          );
+        }
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error liking comment:", error);
+      res.status(500).json({ message: "Failed to like comment" });
+    }
+  });
+
+  // Unlike a comment
+  app.delete('/api/comments/:commentId/like', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { commentId } = req.params;
+      
+      await storage.unlikeComment(commentId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error unliking comment:", error);
+      res.status(500).json({ message: "Failed to unlike comment" });
+    }
+  });
+
+  // Reply to a comment (nested comment)
+  app.post('/api/comments/:commentId/reply', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { commentId } = req.params;
+      
+      // Get parent comment to get the postId
+      const parentComment = await storage.getCommentById(commentId);
+      if (!parentComment) {
+        return res.status(404).json({ message: "Parent comment not found" });
+      }
+      
+      const replyData = insertCommentSchema.parse({ 
+        ...req.body, 
+        userId, 
+        postId: parentComment.postId,
+        parentCommentId: commentId 
+      });
+      
+      const reply = await storage.addComment(replyData);
+      
+      // Notify the parent comment author
+      if (parentComment.userId !== userId) {
+        const user = await storage.getUser(userId);
+        if (user) {
+          const replyPreview = reply.content.slice(0, 50) + (reply.content.length > 50 ? "..." : "");
+          await notificationService.notifyComment(
+            parentComment.userId,
+            `${user.firstName || "Someone"} replied to your comment`,
+            parentComment.postId,
+            replyPreview
+          );
+        }
+      }
+      
+      res.json(reply);
+    } catch (error) {
+      console.error("Error adding reply:", error);
+      res.status(500).json({ message: "Failed to add reply" });
     }
   });
 

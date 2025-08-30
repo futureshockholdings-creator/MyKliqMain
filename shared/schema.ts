@@ -280,6 +280,7 @@ export const comments = pgTable("comments", {
   content: text("content").notNull(),
   gifId: varchar("gif_id").references(() => gifs.id),
   movieconId: varchar("moviecon_id").references(() => moviecons.id),
+  parentCommentId: varchar("parent_comment_id").references(() => comments.id, { onDelete: "cascade" }), // For nested replies
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -287,6 +288,14 @@ export const comments = pgTable("comments", {
 export const postLikes = pgTable("post_likes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Comment likes
+export const commentLikes = pgTable("comment_likes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  commentId: varchar("comment_id").references(() => comments.id, { onDelete: "cascade" }).notNull(),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -489,6 +498,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   stories: many(stories),
   comments: many(comments),
   postLikes: many(postLikes),
+  commentLikes: many(commentLikes),
   storyViews: many(storyViews),
   contentFilters: many(contentFilters),
   userTheme: one(userThemes),
@@ -584,7 +594,7 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
   likes: many(postLikes),
 }));
 
-export const commentsRelations = relations(comments, ({ one }) => ({
+export const commentsRelations = relations(comments, ({ one, many }) => ({
   post: one(posts, {
     fields: [comments.postId],
     references: [posts.id],
@@ -601,6 +611,15 @@ export const commentsRelations = relations(comments, ({ one }) => ({
     fields: [comments.movieconId],
     references: [moviecons.id],
   }),
+  parentComment: one(comments, {
+    fields: [comments.parentCommentId],
+    references: [comments.id],
+    relationName: "nestedComments",
+  }),
+  replies: many(comments, {
+    relationName: "nestedComments",
+  }),
+  likes: many(commentLikes),
 }));
 
 export const postLikesRelations = relations(postLikes, ({ one }) => ({
@@ -610,6 +629,17 @@ export const postLikesRelations = relations(postLikes, ({ one }) => ({
   }),
   user: one(users, {
     fields: [postLikes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const commentLikesRelations = relations(commentLikes, ({ one }) => ({
+  comment: one(comments, {
+    fields: [commentLikes.commentId],
+    references: [comments.id],
+  }),
+  user: one(users, {
+    fields: [commentLikes.userId],
     references: [users.id],
   }),
 }));
@@ -764,6 +794,7 @@ export const insertStorySchema = createInsertSchema(stories).omit({ id: true, vi
   expiresAt: z.string().transform((val) => new Date(val))
 });
 export const insertCommentSchema = createInsertSchema(comments).omit({ id: true, createdAt: true });
+export const insertCommentLikeSchema = createInsertSchema(commentLikes).omit({ id: true, createdAt: true });
 export const insertContentFilterSchema = createInsertSchema(contentFilters).omit({ id: true, createdAt: true });
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, isRead: true, createdAt: true });
 export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true, lastMessageId: true, lastActivity: true, createdAt: true });
@@ -855,6 +886,8 @@ export type InsertStory = z.infer<typeof insertStorySchema>;
 export type StoryView = typeof storyViews.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type CommentLike = typeof commentLikes.$inferSelect;
+export type InsertCommentLike = z.infer<typeof insertCommentLikeSchema>;
 export type PostLike = typeof postLikes.$inferSelect;
 export type ContentFilter = typeof contentFilters.$inferSelect;
 export type InsertContentFilter = z.infer<typeof insertContentFilterSchema>;

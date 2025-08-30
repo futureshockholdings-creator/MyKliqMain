@@ -124,6 +124,8 @@ export default function Home() {
   const [showCommentEmojiPicker, setShowCommentEmojiPicker] = useState<string | null>(null);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [replyingToComment, setReplyingToComment] = useState<string | null>(null);
+  const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
   const [selectedGif, setSelectedGif] = useState<Gif | null>(null);
   const [commentGifs, setCommentGifs] = useState<Record<string, Gif | null>>({});
   const [selectedMoviecon, setSelectedMoviecon] = useState<Moviecon | null>(null);
@@ -518,6 +520,68 @@ export default function Home() {
     },
   });
 
+  // Like comment mutation
+  const likeCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      await apiRequest("POST", `/api/comments/${commentId}/like`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to like comment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Reply to comment mutation
+  const replyCommentMutation = useMutation({
+    mutationFn: async ({ commentId, content }: { commentId: string; content: string }) => {
+      await apiRequest("POST", `/api/comments/${commentId}/reply`, { content });
+    },
+    onSuccess: (response, { commentId }) => {
+      setReplyInputs(prev => ({ ...prev, [commentId]: "" }));
+      setReplyingToComment(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      toast({
+        title: "Reply posted!",
+        description: "Your reply has been added to the conversation",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to post reply",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Add filter mutation
   const addFilterMutation = useMutation({
     mutationFn: async (keyword: string) => {
@@ -856,6 +920,21 @@ export default function Home() {
     if (content || gifId || movieconId) {
       addCommentMutation.mutate({ postId, content: content || '', gifId, movieconId });
     }
+  };
+
+  const handleLikeComment = (commentId: string) => {
+    likeCommentMutation.mutate(commentId);
+  };
+
+  const handleReplyToComment = (commentId: string) => {
+    setReplyingToComment(commentId);
+  };
+
+  const handleReplySubmit = (commentId: string) => {
+    const content = replyInputs[commentId]?.trim();
+    if (!content) return;
+
+    replyCommentMutation.mutate({ commentId, content });
   };
 
   const handleCommentInputChange = (postId: string, value: string) => {
@@ -1966,9 +2045,81 @@ export default function Home() {
                                 </div>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {formatTimeAgo(comment.createdAt)}
-                            </p>
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-xs text-muted-foreground">
+                                {formatTimeAgo(comment.createdAt)}
+                              </p>
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleLikeComment(comment.id)}
+                                  disabled={likeCommentMutation.isPending}
+                                  className="text-muted-foreground hover:text-red-500 p-0 h-auto text-xs"
+                                  data-testid={`button-like-comment-${comment.id}`}
+                                >
+                                  <Heart className="w-3 h-3 mr-1" />
+                                  {comment.likes_count || 0}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleReplyToComment(comment.id)}
+                                  className="text-muted-foreground hover:text-primary p-0 h-auto text-xs"
+                                  data-testid={`button-reply-comment-${comment.id}`}
+                                >
+                                  <MessageCircle className="w-3 h-3 mr-1" />
+                                  Reply
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Reply Input */}
+                            {replyingToComment === comment.id && (
+                              <div className="mt-3 pl-4 border-l-2 border-muted">
+                                <div className="flex space-x-2">
+                                  <Avatar className="w-6 h-6 border border-border">
+                                    <AvatarImage src={userData?.profileImageUrl} />
+                                    <AvatarFallback className="bg-muted text-foreground text-xs">
+                                      {userData?.firstName?.[0] || "U"}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 flex space-x-2">
+                                    <Textarea
+                                      placeholder="Write a reply..."
+                                      className="resize-none bg-muted border-border text-sm"
+                                      rows={2}
+                                      value={replyInputs[comment.id] || ""}
+                                      onChange={(e) => setReplyInputs(prev => ({ ...prev, [comment.id]: e.target.value }))}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                          e.preventDefault();
+                                          handleReplySubmit(comment.id);
+                                        }
+                                      }}
+                                    />
+                                    <div className="flex flex-col space-y-1">
+                                      <Button
+                                        onClick={() => handleReplySubmit(comment.id)}
+                                        disabled={!replyInputs[comment.id]?.trim() || replyCommentMutation.isPending}
+                                        size="sm"
+                                        className="bg-secondary hover:bg-secondary/90 text-secondary-foreground h-6 text-xs"
+                                      >
+                                        {replyCommentMutation.isPending ? "..." : "Reply"}
+                                      </Button>
+                                      <Button
+                                        onClick={() => setReplyingToComment(null)}
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 text-xs"
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}

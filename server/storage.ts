@@ -8,6 +8,7 @@ import {
   storyViews,
   comments,
   postLikes,
+  commentLikes,
   contentFilters,
   messages,
   conversations,
@@ -146,6 +147,9 @@ export interface IStorage {
   
   // Comment operations
   addComment(comment: InsertComment): Promise<Comment>;
+  getCommentById(commentId: string): Promise<Comment | undefined>;
+  likeComment(commentId: string, userId: string): Promise<void>;
+  unlikeComment(commentId: string, userId: string): Promise<void>;
   
   // Filter operations
   getContentFilters(userId: string): Promise<ContentFilter[]>;
@@ -915,6 +919,29 @@ export class DatabaseStorage implements IStorage {
   async addComment(comment: InsertComment): Promise<Comment> {
     const [newComment] = await db.insert(comments).values(comment).returning();
     return newComment;
+  }
+
+  async getCommentById(commentId: string): Promise<Comment | undefined> {
+    const [comment] = await db.select().from(comments).where(eq(comments.id, commentId));
+    return comment;
+  }
+
+  async likeComment(commentId: string, userId: string): Promise<void> {
+    // Check if already liked
+    const [existingLike] = await db
+      .select()
+      .from(commentLikes)
+      .where(and(eq(commentLikes.commentId, commentId), eq(commentLikes.userId, userId)));
+
+    if (!existingLike) {
+      await db.insert(commentLikes).values({ commentId, userId });
+    }
+  }
+
+  async unlikeComment(commentId: string, userId: string): Promise<void> {
+    await db
+      .delete(commentLikes)
+      .where(and(eq(commentLikes.commentId, commentId), eq(commentLikes.userId, userId)));
   }
 
   // Filter operations
