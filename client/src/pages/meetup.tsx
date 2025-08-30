@@ -59,11 +59,14 @@ export default function MeetupPage() {
       return response.json();
     },
     onMutate: async (locationData) => {
+      console.log('🚀 Starting optimistic update for location:', locationData);
+      
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['/api/kliq-feed'] });
 
       // Snapshot the previous value
       const previousFeed = queryClient.getQueryData(['/api/kliq-feed']);
+      console.log('📊 Previous feed data:', previousFeed);
 
       // Create optimistic location post
       let content = `📍 Checked in`;
@@ -76,6 +79,8 @@ export default function MeetupPage() {
       if (!locationData.locationName && !locationData.address) {
         content += ` at ${locationData.latitude.toFixed(4)}, ${locationData.longitude.toFixed(4)}`;
       }
+
+      console.log('👤 User data:', user);
 
       const optimisticPost = {
         id: `temp-location-${Date.now()}`,
@@ -101,18 +106,22 @@ export default function MeetupPage() {
         post_filters: [],
       };
 
+      console.log('✨ Optimistic post created:', optimisticPost);
+
       // Optimistically update the feed
-      console.log('Adding optimistic location post:', optimisticPost);
       queryClient.setQueryData(['/api/kliq-feed'], (old: any) => {
+        console.log('📝 Updating feed cache. Old data:', old);
         if (!old) {
-          console.log('No existing feed data found');
+          console.log('❌ No existing feed data found - cannot add optimistic post');
           return old;
         }
-        console.log('Current feed has', old.items?.length, 'items, adding optimistic post');
-        return {
+        console.log('✅ Current feed has', old.items?.length, 'items, adding optimistic post');
+        const newFeed = {
           ...old,
           items: [optimisticPost, ...old.items],
         };
+        console.log('🔄 New feed after optimistic update:', newFeed);
+        return newFeed;
       });
 
       // Return context object with snapshot
