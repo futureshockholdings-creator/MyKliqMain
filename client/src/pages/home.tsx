@@ -451,49 +451,23 @@ export default function Home() {
     mutationFn: async ({ postId, content, gifId, movieconId }: { postId: string; content: string; gifId?: string; movieconId?: string }) => {
       await apiRequest("POST", `/api/posts/${postId}/comments`, { content, gifId, movieconId });
     },
-    onMutate: async ({ postId, content, gifId, movieconId }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
-      
-      // Snapshot the previous value
-      const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
-      
-      // Create optimistic comment
-      const optimisticComment = {
-        id: `temp-${Date.now()}`,
-        content: content || '',
-        gifId,
-        movieconId,
-        author: userData,
-        createdAt: new Date().toISOString()
-      };
-      
-      // Optimistically update the cache
-      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
-        if (!old || !old.items) return old;
-        return {
-          ...old,
-          items: old.items.map((item: any) => {
-            if (item.id === postId) {
-              const updatedComments = [...(item.comments || []), optimisticComment];
-              return {
-                ...item,
-                comments: updatedComments,
-                _commentsCount: updatedComments.length // Update comment count for UI
-              };
-            }
-            return item;
-          })
-        };
-      });
-      
-      return { previousFeed };
-    },
-    onError: (err, variables, context) => {
-      // Rollback on error
-      if (context?.previousFeed) {
-        queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
+    onError: (err) => {
+      if (isUnauthorizedError(err)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
       }
+      toast({
+        title: "Error", 
+        description: "Failed to post comment",
+        variant: "destructive",
+      });
     },
     onSuccess: (response, { postId }) => {
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
@@ -506,17 +480,14 @@ export default function Home() {
         return newSet;
       });
       
-      // Keep the optimistic update - don't revert the count
-      // The comment was already added optimistically and will be synced in background
-      
-      // Immediately refresh notifications to show comment notifications
+      // Immediately refresh to get real comment with proper ID
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       
-      // Removed comment toast for immediate feedback
-    },
-    onSettled: () => {
-      // Don't invalidate immediately to preserve optimistic updates
-      // Let the background refetch happen naturally
+      toast({
+        title: "Comment posted!",
+        description: "Your comment has been added to the conversation",
+      });
     },
   });
 
