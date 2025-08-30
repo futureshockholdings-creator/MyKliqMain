@@ -607,15 +607,17 @@ export default function Home() {
         address: locationData.address || null,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    onSuccess: async () => {
+      // Fix: Invalidate the correct feed cache key
+      await queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       setShowLocationDialog(false);
       setLocationName('');
       setAddress('');
       setUserLocation(null);
       toast({
-        title: "Location shared!",
-        description: "Your location has been posted to the Headlines",
+        title: "Location Check-in Posted!",
+        description: "Your location has been shared with your kliq on the Headlines",
       });
     },
     onError: (error) => {
