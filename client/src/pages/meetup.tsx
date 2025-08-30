@@ -58,7 +58,9 @@ export default function MeetupPage() {
         throw new Error(error.message || 'Failed to check in');
       }
       
-      return response.json();
+      const result = await response.json();
+      console.log('✅ Location post API response:', result);
+      return result;
     },
     onMutate: async (locationData) => {
       console.log('🚀 Starting optimistic update for location:', locationData);
@@ -130,21 +132,11 @@ export default function MeetupPage() {
       return { previousFeed };
     },
     onSuccess: async (data) => {
-      console.log('Location check-in successful, data:', data);
+      console.log('✅ Location check-in successful, data:', data);
       
-      // Replace the optimistic post with the real one from server
-      queryClient.setQueryData(['/api/kliq-feed'], (old: any) => {
-        if (!old) return old;
-        return {
-          ...old,
-          items: old.items.map((item: any) => 
-            item.id.startsWith('temp-location-') 
-              ? { ...data, type: 'post', user: item.user, likes_count: 0, comments_count: 0, has_liked: false, comments: [], post_filters: [] }
-              : item
-          ),
-        };
-      });
-
+      // Force refresh the feed to show the new post immediately
+      await queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+      
       toast({
         title: "Location Check-in Posted!",
         description: "Your location has been shared with your kliq on the Headlines",
