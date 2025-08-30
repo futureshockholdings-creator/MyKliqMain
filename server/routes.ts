@@ -1870,9 +1870,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reply = await storage.addComment(replyData);
       
       // Notify the parent comment author
+      console.log("Comment reply notification check:", { parentCommentUserId: parentComment.userId, currentUserId: userId, shouldNotify: parentComment.userId !== userId });
+      
       if (parentComment.userId !== userId) {
         const user = await storage.getUser(userId);
         if (user) {
+          console.log("Creating comment reply notification for:", parentComment.userId, "from:", user.firstName);
           const replyPreview = reply.content.slice(0, 50) + (reply.content.length > 50 ? "..." : "");
           await notificationService.notifyComment(
             parentComment.userId,
