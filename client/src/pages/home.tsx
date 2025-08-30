@@ -609,67 +609,8 @@ export default function Home() {
       
       return result;
     },
-    onMutate: async (locationData) => {
-      // Skip optimistic update if user is not loaded
-      if (!user) {
-        return { previousFeed: null };
-      }
-      
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
-      
-      // Snapshot the previous value
-      const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
-      
-      // Create optimistic location post
-      let content = `📍 Checked in`;
-      if (locationData.locationName) {
-        content += ` at ${locationData.locationName}`;
-      }
-      if (locationData.address) {
-        content += ` (${locationData.address})`;
-      }
-      if (!locationData.locationName && !locationData.address) {
-        content += ` at ${locationData.latitude.toFixed(4)}, ${locationData.longitude.toFixed(4)}`;
-      }
-      
-      const typedUser = user as any;
-      const optimisticPost = {
-        id: `temp-location-${Date.now()}`,
-        content,
-        user_id: typedUser?.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        latitude: locationData.latitude.toString(),
-        longitude: locationData.longitude.toString(),
-        location_name: locationData.locationName || null,
-        address: locationData.address || null,
-        type: 'post',
-        user: {
-          id: typedUser?.id,
-          first_name: typedUser?.first_name || '',
-          last_name: typedUser?.last_name || '',
-          profile_image_url: typedUser?.profile_image_url || null,
-        },
-        likes_count: 0,
-        comments_count: 0,
-        has_liked: false,
-        comments: [],
-        post_filters: [],
-      };
-      
-      // Optimistically update the feed
-      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
-        if (!old || !old.items) return old;
-        return {
-          ...old,
-          items: [optimisticPost, ...old.items],
-        };
-      });
-      
-      return { previousFeed };
-    },
     onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       setShowLocationDialog(false);
       setLocationName('');
       setAddress('');
@@ -679,11 +620,7 @@ export default function Home() {
         description: "Your location has been shared with your kliq on the Headlines",
       });
     },
-    onError: (error, variables, context) => {
-      // Revert optimistic update on error
-      if (context?.previousFeed) {
-        queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
-      }
+    onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
