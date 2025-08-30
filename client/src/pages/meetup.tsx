@@ -245,9 +245,10 @@ export default function MeetupPage() {
       const result = await response.json();
       console.log('✅ Location post created successfully:', result);
       
-      // Force refresh the feed
+      // Force refresh the feed immediately and aggressively
       await queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
-      console.log('🔄 Feed cache invalidated');
+      await queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
+      console.log('🔄 Feed cache invalidated and refetched');
       
       toast({
         title: "Location Check-in Posted!",
