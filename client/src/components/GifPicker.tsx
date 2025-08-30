@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Smile } from 'lucide-react';
+import { Smile } from 'lucide-react';
 import type { Gif } from '@shared/schema';
 
 // Force image loading with proper error handling
@@ -62,7 +61,6 @@ export function GifPicker({
   isOpen, 
   onOpenChange 
 }: GifPickerProps) {
-  const [searchQuery, setSearchQuery] = useState('');
   const [open, setOpen] = useState(false);
 
   // Control dialog state
@@ -75,22 +73,14 @@ export function GifPicker({
     }
   };
 
-  // Fetch all GIFs when no search query, or search results when there is a query
+  // Fetch all GIFs
   const { data: allGifs = [], isLoading: isLoadingAll } = useQuery<Gif[]>({
-    queryKey: ['/api/gifs'],
-    enabled: searchQuery.length <= 2
-  });
-
-  // Search GIFs
-  const { data: searchResults = [], isLoading: isSearching } = useQuery<Gif[]>({
-    queryKey: [`/api/gifs/search?q=${encodeURIComponent(searchQuery)}`],
-    enabled: searchQuery.length > 2
+    queryKey: ['/api/gifs']
   });
 
   const handleGifSelect = (gif: Gif) => {
     onSelectGif(gif);
     handleOpenChange(false);
-    setSearchQuery('');
   };
 
   const renderGifGrid = (gifs: Gif[]) => (
@@ -134,18 +124,6 @@ export function GifPicker({
         </DialogHeader>
         
         <div className="flex flex-col h-full">
-          {/* Search bar */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search for GIFs (e.g., 'birthday', 'happy', 'christmas', 'thumbs up')..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-background border-border"
-              data-testid="gif-search-input"
-            />
-          </div>
-
           {/* Content */}
           <div className="flex-1 overflow-hidden">
             <div 
@@ -156,43 +134,23 @@ export function GifPicker({
               }}
             >
               <div className="pr-2">
-                {searchQuery.length > 2 ? (
-                  // Search results
+                {isLoadingAll ? (
+                  <div className="flex items-center justify-center h-32">
+                    <p className="text-muted-foreground">Loading GIFs...</p>
+                  </div>
+                ) : allGifs.length > 0 ? (
                   <>
-                    {isSearching ? (
-                      <div className="flex items-center justify-center h-32">
-                        <p className="text-muted-foreground">Searching...</p>
-                      </div>
-                    ) : searchResults.length > 0 ? (
-                      renderGifGrid(searchResults)
-                    ) : (
-                      <div className="flex items-center justify-center h-32">
-                        <p className="text-muted-foreground">No GIFs found for "{searchQuery}"</p>
-                      </div>
-                    )}
+                    <div className="mb-4 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Browse all {allGifs.length} GIFs
+                      </p>
+                    </div>
+                    {renderGifGrid(allGifs)}
                   </>
                 ) : (
-                  // Show all GIFs when no search query
-                  <>
-                    {isLoadingAll ? (
-                      <div className="flex items-center justify-center h-32">
-                        <p className="text-muted-foreground">Loading GIFs...</p>
-                      </div>
-                    ) : allGifs.length > 0 ? (
-                      <>
-                        <div className="mb-4 text-center">
-                          <p className="text-sm text-muted-foreground">
-                            Browse all {allGifs.length} GIFs or search for specific ones above
-                          </p>
-                        </div>
-                        {renderGifGrid(allGifs)}
-                      </>
-                    ) : (
-                      <div className="flex items-center justify-center h-32">
-                        <p className="text-muted-foreground">No GIFs available</p>
-                      </div>
-                    )}
-                  </>
+                  <div className="flex items-center justify-center h-32">
+                    <p className="text-muted-foreground">No GIFs available</p>
+                  </div>
                 )}
               </div>
             </div>
