@@ -2054,7 +2054,7 @@ export default function Home() {
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => handleLikeComment(comment.id)}
-                                  disabled={likeCommentMutation.isPending}
+                                  disabled={likeCommentMutation.isPending || comment.id.startsWith('temp-')}
                                   className="text-muted-foreground hover:text-red-500 p-0 h-auto text-xs"
                                   data-testid={`button-like-comment-${comment.id}`}
                                 >
@@ -2065,6 +2065,7 @@ export default function Home() {
                                   size="sm"
                                   variant="ghost"
                                   onClick={() => handleReplyToComment(comment.id)}
+                                  disabled={comment.id.startsWith('temp-')}
                                   className="text-muted-foreground hover:text-primary p-0 h-auto text-xs"
                                   data-testid={`button-reply-comment-${comment.id}`}
                                 >
@@ -2075,7 +2076,7 @@ export default function Home() {
                             </div>
 
                             {/* Reply Input */}
-                            {replyingToComment === comment.id && (
+                            {replyingToComment === comment.id && !comment.id.startsWith('temp-') && (
                               <div className="mt-3 pl-4 border-l-2 border-muted">
                                 <div className="flex space-x-2">
                                   <Avatar className="w-6 h-6 border border-border">
