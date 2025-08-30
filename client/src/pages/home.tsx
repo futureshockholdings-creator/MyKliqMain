@@ -894,28 +894,10 @@ export default function Home() {
   };
 
   const handleLikeComment = (commentId: string) => {
-    // Don't allow liking temporary comments
-    if (commentId.startsWith('temp-')) {
-      toast({
-        title: "Please wait",
-        description: "Comment is still being posted...",
-        variant: "default",
-      });
-      return;
-    }
     likeCommentMutation.mutate(commentId);
   };
 
   const handleReplyToComment = (commentId: string) => {
-    // Don't allow replying to temporary comments
-    if (commentId.startsWith('temp-')) {
-      toast({
-        title: "Please wait",
-        description: "Comment is still being posted...",
-        variant: "default",
-      });
-      return;
-    }
     setReplyingToComment(commentId);
   };
 
