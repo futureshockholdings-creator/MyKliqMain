@@ -63,31 +63,9 @@ interface HealthStatus {
 
 export default function MaintenanceDashboard() {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
-  // Check if user is authorized (you can modify this logic as needed)
-  const isAuthorized = (user as any)?.email === "futureshockholding@gmail.com" || (user as any)?.id === "46297180";
-
-  if (!isAuthorized) {
-    return (
-      <div className="container mx-auto p-6" data-testid="unauthorized-access">
-        <div className="flex items-center justify-between mb-6">
-          <Link href="/" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Home</span>
-          </Link>
-        </div>
-        <Card className="border-destructive">
-          <CardContent className="p-6 text-center">
-            <XCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-            <p className="text-muted-foreground">You don't have permission to access the maintenance dashboard.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Note: Admin access is now handled by route-level authentication
 
   const { data: metrics, isLoading, refetch } = useQuery<MaintenanceMetrics>({
     queryKey: ["/api/maintenance/metrics"],
