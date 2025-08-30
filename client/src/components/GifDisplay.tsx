@@ -61,7 +61,7 @@ export function GifDisplay({
       
       <img
         src={autoPlay ? gif.url : (gif.thumbnailUrl || gif.url)}
-        alt={gif.title}
+        alt=""
         className={cn(
           "w-full h-auto object-cover",
           isLoading && "opacity-0"
