@@ -20,6 +20,7 @@ export default function MeetupPage() {
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [locationName, setLocationName] = useState('');
   const [address, setAddress] = useState('');
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
 
   // Location check-in mutation that creates a post with immediate optimistic update
   const locationCheckInMutation = useMutation({
@@ -204,6 +205,7 @@ export default function MeetupPage() {
   const handleLocationCheckIn = async () => {
     if (!userLocation) return;
     
+    setIsCheckingIn(true);
     alert('Location check-in function called!');
     console.log('🎯 Starting location check-in process...');
     
@@ -270,6 +272,8 @@ export default function MeetupPage() {
         description: "Failed to check in. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsCheckingIn(false);
     }
   };
 
@@ -368,10 +372,10 @@ export default function MeetupPage() {
                     </Button>
                     <Button
                       onClick={handleLocationCheckIn}
-                      disabled={locationCheckInMutation.isPending}
+                      disabled={isCheckingIn}
                       data-testid="button-confirm-checkin"
                     >
-                      {locationCheckInMutation.isPending ? (
+                      {isCheckingIn ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Posting...
