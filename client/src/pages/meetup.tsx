@@ -248,7 +248,9 @@ export default function MeetupPage() {
       // Force refresh the feed immediately and aggressively
       await queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
       await queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
-      console.log('🔄 Feed cache invalidated and refetched');
+      // Also clear the stale data completely
+      queryClient.removeQueries({ queryKey: ['/api/kliq-feed'] });
+      console.log('🔄 Feed cache invalidated, refetched, and cleared');
       
       toast({
         title: "Location Check-in Posted!",
