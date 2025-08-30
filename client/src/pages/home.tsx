@@ -633,10 +633,11 @@ export default function Home() {
         content += ` at ${locationData.latitude.toFixed(4)}, ${locationData.longitude.toFixed(4)}`;
       }
       
+      const typedUser = user as any;
       const optimisticPost = {
         id: `temp-location-${Date.now()}`,
         content,
-        user_id: user.id,
+        user_id: typedUser?.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         latitude: locationData.latitude.toString(),
@@ -645,10 +646,10 @@ export default function Home() {
         address: locationData.address || null,
         type: 'post',
         user: {
-          id: user.id,
-          first_name: user.first_name || '',
-          last_name: user.last_name || '',
-          profile_image_url: user.profile_image_url || null,
+          id: typedUser?.id,
+          first_name: typedUser?.first_name || '',
+          last_name: typedUser?.last_name || '',
+          profile_image_url: typedUser?.profile_image_url || null,
         },
         likes_count: 0,
         comments_count: 0,
