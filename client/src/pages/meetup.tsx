@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ export default function MeetupPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
@@ -117,6 +119,8 @@ export default function MeetupPage() {
       return { previousFeed };
     },
     onSuccess: async (data) => {
+      console.log('Location check-in successful, data:', data);
+      
       // Replace the optimistic post with the real one from server
       queryClient.setQueryData(['/api/kliq-feed'], (old: any) => {
         if (!old) return old;
@@ -139,6 +143,9 @@ export default function MeetupPage() {
       setLocationName('');
       setAddress('');
       setShowLocationDialog(false);
+      
+      // Navigate to Headlines to show the post immediately
+      setLocation('/');
     },
     onError: (error: any, variables, context) => {
       // Revert optimistic update on error
