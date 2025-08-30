@@ -202,11 +202,20 @@ export default function MeetupPage() {
     );
   };
 
-  const handleLocationCheckIn = async () => {
-    if (!userLocation) return;
+  const handleLocationCheckIn = () => {
+    alert('BUTTON CLICKED - Function is running!');
+    console.log('BUTTON CLICKED - Function is running!');
     
+    if (!userLocation) {
+      alert('No user location available');
+      return;
+    }
+    
+    performLocationCheckIn();
+  };
+
+  const performLocationCheckIn = async () => {
     setIsCheckingIn(true);
-    alert('Location check-in function called!');
     console.log('🎯 Starting location check-in process...');
     
     // Create content based on available information
