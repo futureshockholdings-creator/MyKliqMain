@@ -19,7 +19,7 @@ export default function MeetupPage() {
   const [locationName, setLocationName] = useState('');
   const [address, setAddress] = useState('');
 
-  // Location check-in mutation that creates a post
+  // Location check-in mutation that creates a post with immediate optimistic update
   const locationCheckInMutation = useMutation({
     mutationFn: async (locationData: { latitude: number; longitude: number; locationName: string; address?: string }) => {
       // Create content based on available information
@@ -56,21 +56,91 @@ export default function MeetupPage() {
       
       return response.json();
     },
-    onSuccess: async () => {
+    onMutate: async (locationData) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['/api/kliq-feed'] });
+
+      // Snapshot the previous value
+      const previousFeed = queryClient.getQueryData(['/api/kliq-feed']);
+
+      // Create optimistic location post
+      let content = `📍 Checked in`;
+      if (locationData.locationName) {
+        content += ` at ${locationData.locationName}`;
+      }
+      if (locationData.address) {
+        content += ` (${locationData.address})`;
+      }
+      if (!locationData.locationName && !locationData.address) {
+        content += ` at ${locationData.latitude.toFixed(4)}, ${locationData.longitude.toFixed(4)}`;
+      }
+
+      const optimisticPost = {
+        id: `temp-location-${Date.now()}`,
+        content,
+        user_id: (user as any)?.id,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        latitude: locationData.latitude.toString(),
+        longitude: locationData.longitude.toString(),
+        location_name: locationData.locationName || null,
+        address: locationData.address || null,
+        type: 'post',
+        user: {
+          id: (user as any)?.id,
+          first_name: (user as any)?.firstName || '',
+          last_name: (user as any)?.lastName || '',
+          profile_image_url: (user as any)?.profileImageUrl || null,
+        },
+        likes_count: 0,
+        comments_count: 0,
+        has_liked: false,
+        comments: [],
+        post_filters: [],
+      };
+
+      // Optimistically update the feed
+      queryClient.setQueryData(['/api/kliq-feed'], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          items: [optimisticPost, ...old.items],
+        };
+      });
+
+      // Return context object with snapshot
+      return { previousFeed };
+    },
+    onSuccess: async (data) => {
+      // Replace the optimistic post with the real one from server
+      queryClient.setQueryData(['/api/kliq-feed'], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          items: old.items.map((item: any) => 
+            item.id.startsWith('temp-location-') 
+              ? { ...data, type: 'post', user: item.user, likes_count: 0, comments_count: 0, has_liked: false, comments: [], post_filters: [] }
+              : item
+          ),
+        };
+      });
+
       toast({
         title: "Location Check-in Posted!",
         description: "Your location has been shared with your kliq on the Headlines",
       });
-      // Force immediate refetch of feed data
-      console.log('Force refetching feed after check-in...');
-      await queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
+      
       // Reset form
       setLocationName('');
       setAddress('');
       setShowLocationDialog(false);
     },
-    onError: (error: any) => {
+    onError: (error: any, variables, context) => {
+      // Revert optimistic update on error
+      if (context?.previousFeed) {
+        queryClient.setQueryData(['/api/kliq-feed'], context.previousFeed);
+      }
+      
       toast({
         title: "Check-in Failed",
         description: error.message || "Failed to check in",
