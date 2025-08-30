@@ -610,6 +610,11 @@ export default function Home() {
       return result;
     },
     onMutate: async (locationData) => {
+      // Skip optimistic update if user is not loaded
+      if (!user) {
+        return { previousFeed: null };
+      }
+      
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
       
@@ -631,7 +636,7 @@ export default function Home() {
       const optimisticPost = {
         id: `temp-location-${Date.now()}`,
         content,
-        user_id: (user as any)?.id,
+        user_id: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         latitude: locationData.latitude.toString(),
@@ -640,10 +645,10 @@ export default function Home() {
         address: locationData.address || null,
         type: 'post',
         user: {
-          id: (user as any)?.id,
-          first_name: (user as any)?.first_name || '',
-          last_name: (user as any)?.last_name || '',
-          profile_image_url: (user as any)?.profile_image_url || null,
+          id: user.id,
+          first_name: user.first_name || '',
+          last_name: user.last_name || '',
+          profile_image_url: user.profile_image_url || null,
         },
         likes_count: 0,
         comments_count: 0,
