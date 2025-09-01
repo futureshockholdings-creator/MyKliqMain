@@ -18,7 +18,9 @@ import {
   ArrowRight,
   PlayCircle,
   Download,
-  Smartphone
+  Smartphone,
+  X,
+  User
 } from "lucide-react";
 import Footer from "@/components/Footer";
 
@@ -26,6 +28,7 @@ export default function Marketing() {
   const [email, setEmail] = useState("");
   const [currentFeature, setCurrentFeature] = useState(0);
   const [userCount, setUserCount] = useState(10000);
+  const [showDemo, setShowDemo] = useState(false);
 
   // Simulate growing user count for social proof
   useEffect(() => {
@@ -120,7 +123,12 @@ export default function Marketing() {
               <Download className="h-5 w-5 mr-2" />
               Download Now
             </Button>
-            <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg"
+              onClick={() => setShowDemo(true)}
+            >
               <PlayCircle className="h-5 w-5 mr-2" />
               Watch Demo
             </Button>
@@ -391,6 +399,97 @@ export default function Marketing() {
           </div>
         </div>
       </section>
+
+      {/* Demo Video Modal */}
+      {showDemo && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-black rounded-2xl border border-gray-700 max-w-5xl w-full max-h-[90vh] overflow-hidden relative">
+            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <h3 className="text-2xl font-bold text-white">MyKliq App Demo</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowDemo(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="h-6 w-6" />
+              </Button>
+            </div>
+            
+            <div className="p-6">
+              <div className="aspect-video bg-gray-900 rounded-lg relative overflow-hidden">
+                {/* Demo Video Container */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mb-4 mx-auto">
+                      <PlayCircle className="h-10 w-10 text-white" />
+                    </div>
+                    <h4 className="text-xl font-semibold text-white mb-2">Interactive App Walkthrough</h4>
+                    <p className="text-gray-400 mb-6">See MyKliq in action with this comprehensive demo</p>
+                    
+                    {/* Demo Sections */}
+                    <div className="grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+                      <div className="bg-gray-800 rounded-lg p-4">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mb-3 mx-auto">
+                          <span className="text-white font-bold text-sm">1</span>
+                        </div>
+                        <h5 className="font-semibold text-white mb-2">Landing Experience</h5>
+                        <p className="text-gray-400 text-sm">Beautiful onboarding and sign-up flow</p>
+                      </div>
+                      
+                      <div className="bg-gray-800 rounded-lg p-4">
+                        <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center mb-3 mx-auto">
+                          <span className="text-white font-bold text-sm">2</span>
+                        </div>
+                        <h5 className="font-semibold text-white mb-2">Profile Setup</h5>
+                        <p className="text-gray-400 text-sm">Customization and personalization features</p>
+                      </div>
+                      
+                      <div className="bg-gray-800 rounded-lg p-4">
+                        <div className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center mb-3 mx-auto">
+                          <span className="text-white font-bold text-sm">3</span>
+                        </div>
+                        <h5 className="font-semibold text-white mb-2">MyKliq Features</h5>
+                        <p className="text-gray-400 text-sm">Friend ranking, posts, polls, and more</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-8 space-y-3">
+                      <Button 
+                        onClick={() => window.open('/', '_blank')}
+                        className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white mr-4"
+                      >
+                        <PlayCircle className="h-4 w-4 mr-2" />
+                        Try Landing Page
+                      </Button>
+                      
+                      <Button 
+                        onClick={() => window.open('/profile', '_blank')}
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white mr-4"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        View Profile Page
+                      </Button>
+                      
+                      <Button 
+                        onClick={() => window.open('/kliq', '_blank')}
+                        className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Explore MyKliq
+                      </Button>
+                    </div>
+                    
+                    <p className="text-gray-500 text-sm mt-6">
+                      💡 Tip: Open each page in a new tab to explore the full experience
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
