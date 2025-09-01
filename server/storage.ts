@@ -287,6 +287,7 @@ export interface IStorage {
   getAllUsersForAdmin(): Promise<User[]>;
   getUserDetailsForAdmin(userId: string): Promise<User | undefined>;
   suspendUser(userId: string, suspensionType: string, expiresAt: Date | null): Promise<void>;
+  checkAndUnsuspendExpiredUsers(): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3007,6 +3008,47 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error suspending user:", error);
       throw error;
+    }
+  }
+
+  async checkAndUnsuspendExpiredUsers(): Promise<number> {
+    try {
+      const now = new Date();
+      
+      // Find all suspended users whose suspension has expired
+      const expiredSuspensions = await db.select()
+        .from(users)
+        .where(
+          and(
+            eq(users.isSuspended, true),
+            isNotNull(users.suspensionExpiresAt),
+            sql`${users.suspensionExpiresAt} <= ${now}`
+          )
+        );
+
+      if (expiredSuspensions.length === 0) {
+        return 0;
+      }
+
+      // Unsuspend all expired users
+      const userIds = expiredSuspensions.map(user => user.id);
+      for (const userId of userIds) {
+        await db.update(users)
+          .set({
+            isSuspended: false,
+            suspensionType: null,
+            suspendedAt: null,
+            suspensionExpiresAt: null,
+            updatedAt: now
+          })
+          .where(eq(users.id, userId));
+      }
+
+      console.log(`Auto-unsuspended ${expiredSuspensions.length} users whose suspension periods have expired`);
+      return expiredSuspensions.length;
+    } catch (error) {
+      console.error("Error checking and unsuspending expired users:", error);
+      return 0;
     }
   }
 

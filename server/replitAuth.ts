@@ -154,6 +154,36 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
+  // Check if user is suspended
+  try {
+    const dbUser = await storage.getUser(user.claims?.sub || user.id);
+    if (dbUser && dbUser.isSuspended) {
+      // Auto-check if suspension has expired
+      if (dbUser.suspensionExpiresAt && new Date() > new Date(dbUser.suspensionExpiresAt)) {
+        // Suspension has expired, unsuspend the user
+        await storage.checkAndUnsuspendExpiredUsers();
+        // Re-fetch user to get updated status
+        const updatedUser = await storage.getUser(user.claims?.sub || user.id);
+        if (updatedUser && updatedUser.isSuspended) {
+          return res.status(403).json({ message: "Account suspended" });
+        }
+      } else {
+        // User is still suspended
+        const expiresAt = dbUser.suspensionExpiresAt 
+          ? new Date(dbUser.suspensionExpiresAt).toLocaleDateString()
+          : "permanently";
+        return res.status(403).json({ 
+          message: "Account suspended",
+          details: `Your account is suspended until ${expiresAt}`,
+          suspensionType: dbUser.suspensionType
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error checking user suspension status:", error);
+    // Continue with authentication check rather than blocking on error
+  }
+
   const now = Math.floor(Date.now() / 1000);
   if (now <= user.expires_at) {
     return next();

@@ -172,7 +172,8 @@ async function runCleanupTasks(): Promise<void> {
       sendEventReminders(),
       storage.deleteExpiredStories(),
       storage.cleanUpExpiredPolls(),
-      storage.cleanUpExpiredEvents()
+      storage.cleanUpExpiredEvents(),
+      storage.checkAndUnsuspendExpiredUsers()
     ]);
     
     console.log("Cleanup tasks completed");
