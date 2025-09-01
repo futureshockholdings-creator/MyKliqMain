@@ -145,7 +145,7 @@ export class FriendRankingIntelligence {
    */
   async generateRankingSuggestions(userId: string): Promise<InsertFriendRankingSuggestion[]> {
     // Get all current friendships with their analytics
-    const friendships = await db
+    const userFriendships = await db
       .select({
         friendId: friendships.friendId,
         currentRank: friendships.rank,
@@ -164,15 +164,20 @@ export class FriendRankingIntelligence {
 
     const suggestions: InsertFriendRankingSuggestion[] = [];
 
+    // Early return if user has no friends
+    if (userFriendships.length === 0) {
+      return suggestions;
+    }
+
     // Analyze each friendship for ranking optimization opportunities
-    for (const friendship of friendships) {
+    for (const friendship of userFriendships) {
       if (!friendship.analytics) continue;
 
       const overallScore = parseFloat(friendship.analytics.overallScore || '0');
       const currentRank = friendship.currentRank;
       
       // Calculate suggested rank based on score relative to other friends
-      const suggestedRank = this.calculateSuggestedRank(overallScore, friendships);
+      const suggestedRank = this.calculateSuggestedRank(overallScore, userFriendships);
       
       // Only suggest changes if there's a significant difference
       const rankDifference = Math.abs(suggestedRank - currentRank);
