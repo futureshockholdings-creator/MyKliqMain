@@ -461,7 +461,7 @@ export default function Marketing() {
                       </Button>
                       
                       <Button 
-                        onClick={() => window.open('/user/46297180', '_blank')}
+                        onClick={() => window.open('/user/58add0ed-aeeb-4911-b7be-5131b1b8dc29', '_blank')}
                         className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white mr-4"
                       >
                         <User className="h-4 w-4 mr-2" />
