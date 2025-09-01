@@ -10,6 +10,7 @@ import { PyramidChart } from "@/components/pyramid-chart";
 import { VideoCallComponent } from "@/components/video-call";
 import { PollCard } from "@/components/PollCard";
 import { CreatePollDialog } from "@/components/CreatePollDialog";
+import { RankingSuggestions } from "@/components/ranking-suggestions";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import { Badge } from "@/components/ui/badge";
 import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut } from "lucide-react";
@@ -613,10 +614,14 @@ export default function Kliq() {
 
       {/* Tabs */}
       <Tabs defaultValue="friends" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-muted">
+        <TabsList className="grid w-full grid-cols-3 bg-muted">
           <TabsTrigger value="friends" className="flex items-center gap-2" data-testid="tab-friends">
             <Users className="w-4 h-4" />
             Friends ({friends.length}/28)
+          </TabsTrigger>
+          <TabsTrigger value="smart-ranking" className="flex items-center gap-2" data-testid="tab-smart-ranking">
+            <MessageCircle className="w-4 h-4" />
+            Smart Ranking
           </TabsTrigger>
           <TabsTrigger value="polls" className="flex items-center gap-2" data-testid="tab-polls">
             <BarChart3 className="w-4 h-4" />
@@ -841,6 +846,14 @@ export default function Kliq() {
           </Card>
 
 
+        </TabsContent>
+
+        <TabsContent value="smart-ranking" className="space-y-6">
+          <RankingSuggestions 
+            onRankingChange={() => {
+              queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="polls" className="space-y-6">

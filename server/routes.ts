@@ -12,8 +12,9 @@ import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
 import { pool } from "./db";
+import { friendRankingIntelligence } from "./friendRankingIntelligence";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
@@ -4382,6 +4383,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error exporting data:", error);
       res.status(500).json({ message: "Failed to export data" });
+    }
+  });
+
+  // =====================================
+  // SMART FRIEND RANKING INTELLIGENCE API
+  // =====================================
+
+  // Get pending ranking suggestions for current user
+  app.get('/api/friend-ranking/suggestions', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const suggestions = await friendRankingIntelligence.getPendingRankingSuggestions(userId);
+      res.json(suggestions);
+    } catch (error) {
+      console.error("Error fetching ranking suggestions:", error);
+      res.status(500).json({ message: "Failed to fetch ranking suggestions" });
+    }
+  });
+
+  // Generate new ranking suggestions for current user
+  app.post('/api/friend-ranking/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Update analytics for all friends first
+      const friendships = await storage.getUserFriendships(userId);
+      
+      // Update interaction analytics for each friendship
+      for (const friendship of friendships) {
+        await friendRankingIntelligence.updateInteractionAnalytics(userId, friendship.friendId);
+      }
+      
+      // Generate new ranking suggestions
+      const suggestions = await friendRankingIntelligence.generateRankingSuggestions(userId);
+      
+      // Store the suggestions
+      await friendRankingIntelligence.storeRankingSuggestions(suggestions);
+      
+      res.json({ 
+        message: "Ranking suggestions generated successfully", 
+        count: suggestions.length,
+        suggestions 
+      });
+    } catch (error) {
+      console.error("Error generating ranking suggestions:", error);
+      res.status(500).json({ message: "Failed to generate ranking suggestions" });
+    }
+  });
+
+  // Accept a ranking suggestion
+  app.post('/api/friend-ranking/suggestions/:suggestionId/accept', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { suggestionId } = req.params;
+      
+      // Get the suggestion details
+      const suggestion = await storage.getFriendRankingSuggestion(suggestionId, userId);
+      if (!suggestion) {
+        return res.status(404).json({ message: "Suggestion not found" });
+      }
+      
+      // Update the friendship rank
+      await storage.updateFriendshipRank(userId, suggestion.friendId, suggestion.suggestedRank);
+      
+      // Mark suggestion as accepted
+      await storage.updateRankingSuggestionStatus(suggestionId, 'accepted');
+      
+      res.json({ message: "Ranking suggestion accepted successfully" });
+    } catch (error) {
+      console.error("Error accepting ranking suggestion:", error);
+      res.status(500).json({ message: "Failed to accept ranking suggestion" });
+    }
+  });
+
+  // Dismiss a ranking suggestion
+  app.post('/api/friend-ranking/suggestions/:suggestionId/dismiss', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { suggestionId } = req.params;
+      
+      // Mark suggestion as dismissed
+      await storage.updateRankingSuggestionStatus(suggestionId, 'dismissed');
+      
+      res.json({ message: "Ranking suggestion dismissed successfully" });
+    } catch (error) {
+      console.error("Error dismissing ranking suggestion:", error);
+      res.status(500).json({ message: "Failed to dismiss ranking suggestion" });
+    }
+  });
+
+  // Track content engagement (time spent viewing content)
+  app.post('/api/friend-ranking/track-engagement', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const engagementData = insertContentEngagementSchema.parse(req.body);
+      
+      // Add the current user ID to the engagement data
+      const engagement = {
+        ...engagementData,
+        userId,
+      };
+      
+      await friendRankingIntelligence.trackContentEngagement(engagement);
+      
+      res.json({ message: "Content engagement tracked successfully" });
+    } catch (error) {
+      console.error("Error tracking content engagement:", error);
+      res.status(500).json({ message: "Failed to track content engagement" });
+    }
+  });
+
+  // Get interaction analytics for a specific friend
+  app.get('/api/friend-ranking/analytics/:friendId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { friendId } = req.params;
+      
+      // Update analytics first
+      await friendRankingIntelligence.updateInteractionAnalytics(userId, friendId);
+      
+      // Get the updated analytics
+      const analytics = await storage.getUserInteractionAnalytics(userId, friendId);
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching interaction analytics:", error);
+      res.status(500).json({ message: "Failed to fetch interaction analytics" });
     }
   });
 

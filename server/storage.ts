@@ -95,6 +95,12 @@ import {
   type InsertAdInteraction,
   type UserAdPreferences,
   type InsertUserAdPreferences,
+  friendRankingSuggestions,
+  userInteractionAnalytics,
+  type UserInteractionAnalytics,
+  type InsertUserInteractionAnalytics,
+  type FriendRankingSuggestion,
+  type InsertFriendRankingSuggestion,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, isNull, isNotNull } from "drizzle-orm";
@@ -288,6 +294,14 @@ export interface IStorage {
   getUserDetailsForAdmin(userId: string): Promise<User | undefined>;
   suspendUser(userId: string, suspensionType: string, expiresAt: Date | null): Promise<void>;
   checkAndUnsuspendExpiredUsers(): Promise<number>;
+
+  // Smart Friend Ranking Intelligence
+  getUserInteractionAnalytics(userId: string, friendId: string): Promise<UserInteractionAnalytics | undefined>;
+  getFriendRankingSuggestion(suggestionId: string, userId: string): Promise<FriendRankingSuggestion | undefined>;
+  updateRankingSuggestionStatus(suggestionId: string, status: string): Promise<void>;
+  updateFriendshipRank(userId: string, friendId: string, rank: number): Promise<void>;
+  getActiveUsersForRankingAnalysis(): Promise<User[]>;
+  getUserFriendships(userId: string): Promise<Friendship[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3077,6 +3091,85 @@ export class DatabaseStorage implements IStorage {
         storiesActive: 0
       };
     }
+  }
+
+  // Smart Friend Ranking Intelligence methods
+  async getUserInteractionAnalytics(userId: string, friendId: string): Promise<UserInteractionAnalytics | undefined> {
+    const [analytics] = await db
+      .select()
+      .from(userInteractionAnalytics)
+      .where(
+        and(
+          eq(userInteractionAnalytics.userId, userId),
+          eq(userInteractionAnalytics.friendId, friendId)
+        )
+      );
+    return analytics;
+  }
+
+  async getFriendRankingSuggestion(suggestionId: string, userId: string): Promise<FriendRankingSuggestion | undefined> {
+    const [suggestion] = await db
+      .select()
+      .from(friendRankingSuggestions)
+      .where(
+        and(
+          eq(friendRankingSuggestions.id, suggestionId),
+          eq(friendRankingSuggestions.userId, userId)
+        )
+      );
+    return suggestion;
+  }
+
+  async updateRankingSuggestionStatus(suggestionId: string, status: string): Promise<void> {
+    await db
+      .update(friendRankingSuggestions)
+      .set({ 
+        status,
+        actionTakenAt: new Date(),
+        isViewed: true,
+        viewedAt: new Date()
+      })
+      .where(eq(friendRankingSuggestions.id, suggestionId));
+  }
+
+  async updateFriendshipRank(userId: string, friendId: string, rank: number): Promise<void> {
+    await db
+      .update(friendships)
+      .set({ 
+        rank,
+        updatedAt: new Date()
+      })
+      .where(
+        and(
+          eq(friendships.userId, userId),
+          eq(friendships.friendId, friendId)
+        )
+      );
+  }
+
+  async getActiveUsersForRankingAnalysis(): Promise<User[]> {
+    // Get users who have been active in the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    return await db
+      .select()
+      .from(users)
+      .where(
+        and(
+          gte(users.updatedAt, thirtyDaysAgo),
+          isNull(users.suspendedAt) // Not suspended
+        )
+      )
+      .limit(100); // Limit for performance
+  }
+
+  async getUserFriendships(userId: string): Promise<Friendship[]> {
+    return await db
+      .select()
+      .from(friendships)
+      .where(eq(friendships.userId, userId))
+      .orderBy(asc(friendships.rank));
   }
 }
 

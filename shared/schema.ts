@@ -490,6 +490,102 @@ export const notifications = pgTable("notifications", {
   readAt: timestamp("read_at"),
 });
 
+// User Interaction Analytics for Smart Friend Ranking
+export const userInteractionAnalytics = pgTable("user_interaction_analytics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  friendId: varchar("friend_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  
+  // Interaction counts (last 30 days)
+  messagesSent: integer("messages_sent").default(0),
+  messagesReceived: integer("messages_received").default(0),
+  postLikesGiven: integer("post_likes_given").default(0),
+  postLikesReceived: integer("post_likes_received").default(0),
+  commentsGiven: integer("comments_given").default(0),
+  commentsReceived: integer("comments_received").default(0),
+  commentLikesGiven: integer("comment_likes_given").default(0),
+  commentLikesReceived: integer("comment_likes_received").default(0),
+  storyViewsGiven: integer("story_views_given").default(0),
+  storyViewsReceived: integer("story_views_received").default(0),
+  videoCalls: integer("video_calls").default(0),
+  liveStreamViews: integer("live_stream_views").default(0),
+  meetupAttendanceTogether: integer("meetup_attendance_together").default(0),
+  eventAttendanceTogether: integer("event_attendance_together").default(0),
+  
+  // Time-based metrics (last 30 days)
+  totalInteractionTime: integer("total_interaction_time").default(0), // seconds
+  averageResponseTime: integer("average_response_time").default(0), // seconds
+  lastInteractionAt: timestamp("last_interaction_at"),
+  
+  // Computed scores
+  interactionScore: numeric("interaction_score", { precision: 8, scale: 2 }).default("0.00"),
+  consistencyScore: numeric("consistency_score", { precision: 8, scale: 2 }).default("0.00"),
+  engagementScore: numeric("engagement_score", { precision: 8, scale: 2 }).default("0.00"),
+  overallScore: numeric("overall_score", { precision: 8, scale: 2 }).default("0.00"),
+  
+  // Ranking suggestion data
+  suggestedRank: integer("suggested_rank"),
+  currentRank: integer("current_rank"),
+  rankChangeJustification: text("rank_change_justification"),
+  
+  // Metadata
+  lastCalculatedAt: timestamp("last_calculated_at").defaultNow(),
+  calculationPeriodDays: integer("calculation_period_days").default(30),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Friend Ranking Suggestions System
+export const friendRankingSuggestions = pgTable("friend_ranking_suggestions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  friendId: varchar("friend_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  
+  // Suggestion details
+  currentRank: integer("current_rank").notNull(),
+  suggestedRank: integer("suggested_rank").notNull(),
+  confidence: numeric("confidence", { precision: 5, scale: 2 }).notNull(), // 0-100%
+  
+  // Justification and reasoning
+  primaryReason: varchar("primary_reason").notNull(), // "high_engagement", "frequent_communication", "decreased_activity", etc.
+  justificationMessage: text("justification_message").notNull(),
+  supportingMetrics: jsonb("supporting_metrics"), // Store detailed metrics as JSON
+  
+  // Suggestion status
+  status: varchar("status").default("pending"), // pending, accepted, dismissed, expired
+  isViewed: boolean("is_viewed").default(false),
+  
+  // Timing
+  expiresAt: timestamp("expires_at").notNull(), // Suggestions expire after 7 days
+  viewedAt: timestamp("viewed_at"),
+  actionTakenAt: timestamp("action_taken_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Content Engagement Tracking (for time spent viewing)
+export const contentEngagements = pgTable("content_engagements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  contentOwnerId: varchar("content_owner_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  contentType: varchar("content_type").notNull(), // "post", "story", "profile", "live_stream"
+  contentId: varchar("content_id").notNull(), // ID of the content (post, story, etc.)
+  
+  // Engagement metrics
+  viewDuration: integer("view_duration").notNull(), // seconds
+  interactionType: varchar("interaction_type"), // "like", "comment", "share", "view_only"
+  scrollDepth: numeric("scroll_depth", { precision: 5, scale: 2 }), // 0-100% for posts
+  
+  // Context
+  deviceType: varchar("device_type").default("mobile"), // mobile, desktop, tablet
+  sessionId: varchar("session_id"), // For grouping related views
+  
+  // Timestamps
+  startedAt: timestamp("started_at").defaultNow(),
+  endedAt: timestamp("ended_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   friendships: many(friendships, { relationName: "userFriendships" }),
@@ -516,6 +612,13 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   uploadedGifs: many(gifs),
   uploadedMoviecons: many(moviecons),
   notifications: many(notifications),
+  // Smart ranking analytics
+  interactionAnalytics: many(userInteractionAnalytics, { relationName: "userInteractionAnalytics" }),
+  friendInteractionAnalytics: many(userInteractionAnalytics, { relationName: "friendInteractionAnalytics" }),
+  rankingSuggestions: many(friendRankingSuggestions, { relationName: "userRankingSuggestions" }),
+  friendRankingSuggestions: many(friendRankingSuggestions, { relationName: "friendRankingSuggestions" }),
+  contentEngagements: many(contentEngagements, { relationName: "userContentEngagements" }),
+  receivedContentEngagements: many(contentEngagements, { relationName: "contentOwnerEngagements" }),
 }));
 
 // GIF Relations
@@ -784,6 +887,46 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+// Smart Ranking Analytics Relations
+export const userInteractionAnalyticsRelations = relations(userInteractionAnalytics, ({ one }) => ({
+  user: one(users, {
+    fields: [userInteractionAnalytics.userId],
+    references: [users.id],
+    relationName: "userInteractionAnalytics",
+  }),
+  friend: one(users, {
+    fields: [userInteractionAnalytics.friendId],
+    references: [users.id],
+    relationName: "friendInteractionAnalytics",
+  }),
+}));
+
+export const friendRankingSuggestionsRelations = relations(friendRankingSuggestions, ({ one }) => ({
+  user: one(users, {
+    fields: [friendRankingSuggestions.userId],
+    references: [users.id],
+    relationName: "userRankingSuggestions",
+  }),
+  friend: one(users, {
+    fields: [friendRankingSuggestions.friendId],
+    references: [users.id],
+    relationName: "friendRankingSuggestions",
+  }),
+}));
+
+export const contentEngagementsRelations = relations(contentEngagements, ({ one }) => ({
+  user: one(users, {
+    fields: [contentEngagements.userId],
+    references: [users.id],
+    relationName: "userContentEngagements",
+  }),
+  contentOwner: one(users, {
+    fields: [contentEngagements.contentOwnerId],
+    references: [users.id],
+    relationName: "contentOwnerEngagements",
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users);
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true, readAt: true });
@@ -812,6 +955,32 @@ export const insertMeetupSchema = createInsertSchema(meetups).omit({ id: true, i
   meetupTime: z.string().transform((val) => new Date(val))
 });
 export const insertMeetupCheckInSchema = createInsertSchema(meetupCheckIns).omit({ id: true, checkInTime: true, checkOutTime: true, isVerified: true });
+
+// Smart Friend Ranking Schemas
+export const insertUserInteractionAnalyticsSchema = createInsertSchema(userInteractionAnalytics).omit({ 
+  id: true, 
+  lastCalculatedAt: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+
+export const insertFriendRankingSuggestionSchema = createInsertSchema(friendRankingSuggestions).omit({ 
+  id: true, 
+  isViewed: true, 
+  viewedAt: true, 
+  actionTakenAt: true, 
+  createdAt: true 
+}).extend({
+  expiresAt: z.string().transform((val) => new Date(val))
+});
+
+export const insertContentEngagementSchema = createInsertSchema(contentEngagements).omit({ 
+  id: true, 
+  startedAt: true, 
+  createdAt: true 
+}).extend({
+  endedAt: z.string().optional().transform((val) => val ? new Date(val) : undefined)
+});
 
 // Types
 // Birthday messages to track sent birthday wishes
@@ -1003,6 +1172,14 @@ export const insertExternalPostSchema = createInsertSchema(externalPosts).omit({
 });
 export type InsertExternalPost = z.infer<typeof insertExternalPostSchema>;
 export type ExternalPost = typeof externalPosts.$inferSelect;
+
+// Smart Friend Ranking Types
+export type UserInteractionAnalytics = typeof userInteractionAnalytics.$inferSelect;
+export type InsertUserInteractionAnalytics = z.infer<typeof insertUserInteractionAnalyticsSchema>;
+export type FriendRankingSuggestion = typeof friendRankingSuggestions.$inferSelect;
+export type InsertFriendRankingSuggestion = z.infer<typeof insertFriendRankingSuggestionSchema>;
+export type ContentEngagement = typeof contentEngagements.$inferSelect;
+export type InsertContentEngagement = z.infer<typeof insertContentEngagementSchema>;
 
 // Password reset token types
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
