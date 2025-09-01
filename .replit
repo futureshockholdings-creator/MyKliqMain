@@ -44,3 +44,4 @@ localPort = 8000
 externalPort = 8000
 
 [agent]
+integrations = ["javascript_google_analytics==1.0.0"]
