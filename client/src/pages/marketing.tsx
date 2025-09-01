@@ -85,9 +85,9 @@ export default function Marketing() {
           <span className="text-2xl font-bold">MyKliq</span>
         </div>
         <div className="flex items-center space-x-4">
-          <Badge variant="secondary" className="bg-green-500/20 text-green-300 animate-pulse">
-            <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-            {userCount.toLocaleString()} users joined
+          <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 animate-pulse">
+            <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+            Coming Soon
           </Badge>
           <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
             Sign In
@@ -138,15 +138,15 @@ export default function Marketing() {
           <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-400">
             <div className="flex items-center">
               <Star className="h-4 w-4 text-yellow-400 mr-1" />
-              <span>4.9/5 App Store Rating</span>
+              <span>N/A App Store Rating</span>
             </div>
             <div className="flex items-center">
               <TrendingUp className="h-4 w-4 text-green-400 mr-1" />
-              <span>Featured in App Store</span>
+              <span>Coming to App Store</span>
             </div>
             <div className="flex items-center">
               <Users className="h-4 w-4 text-blue-400 mr-1" />
-              <span>{userCount.toLocaleString()}+ Active Users</span>
+              <span>N/A Active Users</span>
             </div>
           </div>
         </div>
