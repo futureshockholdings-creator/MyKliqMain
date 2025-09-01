@@ -456,7 +456,7 @@ export default function Marketing() {
                     
                     <div className="mt-8 space-y-3">
                       <Button 
-                        onClick={() => window.open('/', '_blank')}
+                        onClick={() => window.open('/landing', '_blank')}
                         className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white mr-4"
                       >
                         <PlayCircle className="h-4 w-4 mr-2" />
@@ -464,19 +464,23 @@ export default function Marketing() {
                       </Button>
                       
                       <Button 
-                        onClick={() => window.open('/profile', '_blank')}
+                        onClick={() => window.open('/user/46297180', '_blank')}
                         className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white mr-4"
                       >
                         <User className="h-4 w-4 mr-2" />
-                        View Profile Page
+                        View Demo Profile
                       </Button>
                       
                       <Button 
-                        onClick={() => window.open('/kliq', '_blank')}
+                        onClick={() => {
+                          // First login as admin, then navigate to kliq
+                          const demoUrl = `${window.location.origin}`;
+                          window.open(demoUrl, '_blank');
+                        }}
                         className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white"
                       >
                         <Users className="h-4 w-4 mr-2" />
-                        Explore MyKliq
+                        Explore Demo App
                       </Button>
                     </div>
                     
