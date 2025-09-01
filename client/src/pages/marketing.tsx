@@ -39,7 +39,7 @@ export default function Marketing() {
   const features = [
     { icon: Crown, text: "Rank your closest friends 1-28", color: "text-yellow-500" },
     { icon: MessageCircle, text: "Private circle conversations", color: "text-blue-500" },
-    { icon: Zap, text: "Real-time polls & decisions", color: "text-purple-500" },
+    { icon: Shield, text: "Smart content filtering", color: "text-purple-500" },
     { icon: Camera, text: "Stories that actually matter", color: "text-pink-500" }
   ];
 
@@ -70,8 +70,14 @@ export default function Marketing() {
       {/* Navigation */}
       <nav className="relative z-50 flex justify-between items-center p-6">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
-            <Crown className="h-5 w-5 text-white" />
+          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center border border-green-500">
+            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g stroke="#00ff00" strokeWidth="2" fill="none">
+                <circle cx="16" cy="10" r="3"/>
+                <path d="M10 22 L10 18 Q10 15 13 15 L19 15 Q22 15 22 18 L22 22"/>
+                <path d="M24 8 L24 16 M20 12 L28 12"/>
+              </g>
+            </svg>
           </div>
           <span className="text-2xl font-bold">MyKliq</span>
         </div>
@@ -162,25 +168,25 @@ export default function Marketing() {
               </CardContent>
             </Card>
 
-            {/* Real-time Polls */}
+            {/* Content Filtering */}
             <Card className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 border-blue-500/20 backdrop-blur-sm hover:scale-105 transition-transform">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mb-4">
-                  <Zap className="h-6 w-6 text-white" />
+                  <Shield className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white">Live Decisions</h3>
-                <p className="text-gray-300">Make group decisions instantly with real-time polls. No more endless group chats.</p>
+                <h3 className="text-xl font-semibold mb-2 text-white">Content Filtering</h3>
+                <p className="text-gray-300">Customize what content you see based on friend rankings and personal preferences.</p>
               </CardContent>
             </Card>
 
-            {/* Privacy First */}
+            {/* Moviecons */}
             <Card className="bg-gradient-to-br from-green-900/50 to-green-800/30 border-green-500/20 backdrop-blur-sm hover:scale-105 transition-transform">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
-                  <Shield className="h-6 w-6 text-white" />
+                  <PlayCircle className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white">Privacy First</h3>
-                <p className="text-gray-300">Your circle, your rules. Share authentically without worrying about strangers.</p>
+                <h3 className="text-xl font-semibold mb-2 text-white">Moviecons</h3>
+                <p className="text-gray-300">Create custom video reactions and emotes to express yourself uniquely in conversations.</p>
               </CardContent>
             </Card>
 
@@ -206,14 +212,14 @@ export default function Marketing() {
               </CardContent>
             </Card>
 
-            {/* No Ads */}
+            {/* Social Media Integration */}
             <Card className="bg-gradient-to-br from-indigo-900/50 to-indigo-800/30 border-indigo-500/20 backdrop-blur-sm hover:scale-105 transition-transform">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center mb-4">
-                  <Heart className="h-6 w-6 text-white" />
+                  <TrendingUp className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white">No BS</h3>
-                <p className="text-gray-300">No random ads, no fake followers, no algorithm manipulation. Just real friends.</p>
+                <h3 className="text-xl font-semibold mb-2 text-white">Social Integration</h3>
+                <p className="text-gray-300">Connect your Instagram, TikTok, YouTube and other platforms in one unified feed.</p>
               </CardContent>
             </Card>
           </div>
