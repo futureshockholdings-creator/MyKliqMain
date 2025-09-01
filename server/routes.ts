@@ -811,6 +811,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             timeSpent: 2, // Estimated 2 seconds for a like action
             engagedAt: new Date(),
           });
+
+          // Generate intelligent notification for post author
+          const { NotificationIntelligence } = await import('./notificationIntelligence');
+          const notificationService = new NotificationIntelligence();
+          
+          await notificationService.generateSmartNotifications({
+            type: 'new_like',
+            userId,
+            targetUserId: post.userId,
+            data: {
+              liker: `${req.user.firstName} ${req.user.lastName}`,
+              postId: postId
+            }
+          });
         } catch (trackingError) {
           // Silent fail for engagement tracking - don't affect user experience
           console.warn('Engagement tracking failed:', trackingError);
@@ -846,6 +860,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Mobile friends error:', error);
       res.status(500).json({ message: 'Failed to fetch friends' });
+    }
+  });
+
+  // Mobile intelligent insights endpoint - comprehensive intelligence dashboard
+  app.get('/api/mobile/insights', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      
+      // Get all intelligent insights in parallel for maximum efficiency
+      const [connectionHealth, conversationSuggestions, notificationTiming, groupDynamics] = await Promise.all([
+        (async () => {
+          try {
+            const { ConnectionHealthMonitoring } = await import('./connectionHealthMonitoring');
+            const healthService = new ConnectionHealthMonitoring();
+            return await healthService.getConnectionAlerts(userId);
+          } catch (error) {
+            console.warn('Connection health analysis failed:', error);
+            return [];
+          }
+        })(),
+        
+        (async () => {
+          try {
+            const { ConnectionHealthMonitoring } = await import('./connectionHealthMonitoring');
+            const healthService = new ConnectionHealthMonitoring();
+            const healthData = await healthService.analyzeConnectionHealth(userId);
+            
+            // Get conversation suggestions for friends who need attention
+            const needsAttention = healthData.filter(h => h.healthStatus === 'dormant' || h.healthStatus === 'weak').slice(0, 3);
+            const suggestions = await Promise.all(
+              needsAttention.map(friend => healthService.generateConversationSuggestions(userId, friend.friendId))
+            );
+            
+            return suggestions.flat();
+          } catch (error) {
+            console.warn('Conversation suggestions failed:', error);
+            return [];
+          }
+        })(),
+        
+        (async () => {
+          try {
+            const { NotificationIntelligence } = await import('./notificationIntelligence');
+            const notificationService = new NotificationIntelligence();
+            return await notificationService.analyzeUserActivityPatterns(userId);
+          } catch (error) {
+            console.warn('Notification timing analysis failed:', error);
+            return { optimalHours: [9, 12, 18, 20], timezone: 'America/New_York' };
+          }
+        })(),
+        
+        (async () => {
+          try {
+            const { ConnectionHealthMonitoring } = await import('./connectionHealthMonitoring');
+            const healthService = new ConnectionHealthMonitoring();
+            return await healthService.analyzeGroupDynamics(userId);
+          } catch (error) {
+            console.warn('Group dynamics analysis failed:', error);
+            return { totalMembers: 0, activeMembers: 0, engagementBalance: 0, recommendations: [] };
+          }
+        })()
+      ]);
+
+      res.json({
+        connectionHealth,
+        conversationSuggestions,
+        notificationTiming,
+        groupDynamics,
+        generatedAt: new Date(),
+        
+        // Mobile-specific optimizations
+        cacheExpiry: Date.now() + (30 * 60 * 1000), // 30 minutes
+        intelligenceVersion: '1.0',
+        features: ['feed_curation', 'notification_timing', 'connection_health', 'conversation_suggestions']
+      });
+      
+    } catch (error) {
+      console.error('Mobile insights error:', error);
+      res.status(500).json({ message: 'Failed to fetch intelligent insights' });
     }
   });
 

@@ -173,7 +173,17 @@ async function runCleanupTasks(): Promise<void> {
       storage.deleteExpiredStories(),
       storage.cleanUpExpiredPolls(),
       storage.cleanUpExpiredEvents(),
-      storage.checkAndUnsuspendExpiredUsers()
+      storage.checkAndUnsuspendExpiredUsers(),
+      // Process intelligent notifications
+      (async () => {
+        try {
+          const { NotificationIntelligence } = await import('./notificationIntelligence');
+          const notificationService = new NotificationIntelligence();
+          await notificationService.processPendingNotifications();
+        } catch (error) {
+          console.warn('Failed to process intelligent notifications:', error);
+        }
+      })()
     ]);
     
     console.log("Cleanup tasks completed");
