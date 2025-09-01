@@ -69,10 +69,10 @@ export default function Marketing() {
 
       {/* Navigation */}
       <nav className="relative z-50 flex justify-between items-center p-6">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center border border-green-500">
-            <svg width="20" height="20" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g stroke="#00ff00" strokeWidth="2" fill="none">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center border border-green-500">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g stroke="#00ff00" strokeWidth="2.5" fill="none">
                 <circle cx="16" cy="10" r="3"/>
                 <path d="M10 22 L10 18 Q10 15 13 15 L19 15 Q22 15 22 18 L22 22"/>
                 <path d="M24 8 L24 16 M20 12 L28 12"/>
