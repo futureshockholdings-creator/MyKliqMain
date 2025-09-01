@@ -6,7 +6,7 @@ import { ExternalLink, Eye, MousePointer } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { trackEvent } from "@/lib/analytics";
+import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import { SponsoredAd as SponsoredAdType } from "@shared/schema";
 import { getTextColorForBackground } from "@/lib/colorUtils";
 
@@ -25,7 +25,7 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
     },
     onSuccess: () => {
       // Silently track impression
-      trackEvent('ad_impression', 'ads', ad.category, 1);
+      trackMobileEvent('ad_impression', { category: ad.category, ad_id: ad.id });
     },
   });
 
@@ -35,7 +35,7 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
       await apiRequest(`/api/ads/${ad.id}/click`, 'POST');
     },
     onSuccess: () => {
-      trackEvent('ad_click', 'ads', ad.category, 1);
+      trackMobileEvent('ad_click', { category: ad.category, ad_id: ad.id, cta_url: ad.ctaUrl });
       
       // Open ad URL in new tab
       if (ad.ctaUrl) {

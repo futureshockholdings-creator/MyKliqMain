@@ -6,8 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
-import { initGA } from "./lib/analytics";
-import { useAnalytics } from "./hooks/use-analytics";
+import { mobileAnalytics } from "./lib/mobileAnalytics";
 import { useTranslation } from "react-i18next";
 import "./i18n/config"; // Initialize i18n
 
@@ -294,9 +293,10 @@ function AppContent() {
 }
 
 function App() {
-  // Initialize Google Analytics when app loads
+  // Mobile Analytics initialization (for React Native)
   useEffect(() => {
-    initGA();
+    // This will be replaced with actual Firebase Analytics in React Native build
+    mobileAnalytics.initialize();
   }, []);
 
   return (
