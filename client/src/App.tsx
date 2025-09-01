@@ -211,7 +211,7 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPassword} />
       
       {/* Admin routes - accessible without authentication for emergency access */}
-      <Route path="/admin" component={AdminPage} />
+      <Route path="/support-admin" component={AdminPage} />
       <Route path="/ads-manager" component={AdsManager} />
       <Route path="/moviecon-manager" component={MovieconManagerPage} />
       <Route path="/maintenance" component={MaintenanceDashboard} />
