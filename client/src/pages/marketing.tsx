@@ -89,9 +89,6 @@ export default function Marketing() {
             <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
             Coming Soon
           </Badge>
-          <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
-            Sign In
-          </Button>
         </div>
       </nav>
 
