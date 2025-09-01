@@ -630,49 +630,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mobile-optimized feed endpoint
+  // Mobile-optimized intelligent feed endpoint with curation and battery efficiency
   app.get('/api/mobile/feed', verifyMobileToken, async (req, res) => {
     try {
       const userId = req.user.userId;
       const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = Math.min(50, Math.max(5, parseInt(req.query.limit as string) || 20)); // Mobile-optimized limits
+      const lastSeenId = req.query.lastSeenId as string; // For battery-efficient pagination
       
-      // Get user's content filters
-      const userFilters = await storage.getContentFilters(userId);
-      const filterTypes = userFilters.map(f => f.filterType);
+      // Mobile-optimized cache key with user-specific intelligent curation
+      const cacheKey = `mobile-curated-feed:${userId}:${page}:${limit}:${lastSeenId || 'initial'}`;
       
-      // Get posts from kliq feed
-      const feedData = await storage.getKliqFeed(userId, filterTypes, page, limit);
-      const posts = Array.isArray(feedData) ? feedData : feedData.items;
-      
-      // Format for mobile with existing data structure
-      const mobilePosts = posts.map((post: any) => ({
-        id: post.id,
-        userId: post.userId,
-        content: post.content,
-        mediaUrl: post.mediaUrl,
-        mediaType: post.mediaType,
-        youtubeUrl: post.youtubeUrl,
-        createdAt: post.createdAt,
-        author: {
-          firstName: post.author?.firstName,
-          lastName: post.author?.lastName,
-          profileImageUrl: post.author?.profileImageUrl
+      // Get from cache first for battery efficiency (shorter cache time for real-time feel)
+      const { getCachedOrFetch } = await import('./redis');
+      const feedResult = await getCachedOrFetch(
+        cacheKey,
+        async () => {
+          // Get user's content filters
+          const userFilters = await storage.getContentFilters(userId);
+          const filterTypes = userFilters.map(f => f.filterType);
+          
+          // Get intelligently curated feed (now with rank-weighting, engagement prediction, and content balancing)
+          const feedData = await storage.getKliqFeed(userId, filterTypes, page, limit);
+          const posts = Array.isArray(feedData) ? feedData : feedData.items;
+          
+          // Mobile-optimized formatting with enhanced metadata for better UX
+          const mobilePosts = posts.map((post: any) => ({
+            id: post.id,
+            userId: post.userId,
+            content: post.content,
+            mediaUrl: post.mediaUrl,
+            mediaType: post.mediaType,
+            youtubeUrl: post.youtubeUrl,
+            createdAt: post.createdAt,
+            type: post.type || 'post', // Include content type for mobile UI optimization
+            
+            // Enhanced author info for mobile
+            author: {
+              id: post.author?.id,
+              firstName: post.author?.firstName,
+              lastName: post.author?.lastName,
+              profileImageUrl: post.author?.profileImageUrl,
+              kliqName: post.author?.kliqName
+            },
+            
+            // Engagement metrics for mobile UI
+            likeCount: post.likes?.length || 0,
+            commentCount: post.comments?.length || 0,
+            isLiked: post.likes?.some((like: any) => like.userId === userId) || false,
+            
+            // Intelligent curation metadata (hidden from user, used for analytics)
+            curationScore: post.finalScore || 0,
+            curationType: post.curationType || 'chronological',
+            
+            // Mobile-specific optimizations
+            title: post.title, // For polls, events, actions
+            description: post.description, // Additional context
+            status: post.status, // For live streams
+            viewerCount: post.viewerCount, // For actions
+            thumbnailUrl: post.thumbnailUrl, // For media optimization
+            
+            // Battery-efficient loading hints
+            priority: post.finalScore > 5 ? 'high' : post.finalScore > 2 ? 'medium' : 'low',
+          }));
+          
+          return {
+            posts: mobilePosts,
+            page,
+            hasMore: Array.isArray(feedData) ? false : feedData.hasMore,
+            totalPages: feedData.totalPages || 1,
+            
+            // Mobile-specific metadata for optimization
+            curationApplied: true,
+            cacheTimestamp: Date.now(),
+            batteryOptimized: true
+          };
         },
-        likeCount: post.likes?.length || 0,
-        commentCount: post.comments?.length || 0,
-        isLiked: post.likes?.some((like: any) => like.userId === userId) || false
-      }));
+        90 // 1.5 minute cache for mobile (balance between freshness and battery life)
+      );
       
-      res.json({
-        posts: mobilePosts,
-        page,
-        hasMore: Array.isArray(feedData) ? false : feedData.hasMore
+      // Add mobile-specific headers for battery optimization
+      res.set({
+        'Cache-Control': 'public, max-age=60', // Client-side caching for mobile
+        'X-Mobile-Optimized': 'true',
+        'X-Curation-Applied': 'true',
+        'X-Content-Types': feedResult.posts.map((p: any) => p.type).join(',')
       });
       
+      res.json(feedResult);
+      
     } catch (error) {
-      console.error('Mobile feed error:', error);
-      res.status(500).json({ message: 'Failed to fetch feed' });
+      console.error('Mobile intelligent feed error:', error);
+      res.status(500).json({ 
+        message: 'Failed to fetch feed',
+        curationApplied: false,
+        fallbackMode: true
+      });
     }
   });
 
@@ -720,25 +773,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mobile like/unlike endpoint
+  // Mobile like/unlike endpoint with automatic engagement tracking
   app.post('/api/mobile/posts/:postId/like', verifyMobileToken, async (req, res) => {
     try {
       const userId = req.user.userId;
       const postId = req.params.postId;
       
+      // Get post info for engagement tracking
+      const post = await storage.getPostById(postId);
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+      
       // Check if user already liked the post by trying to unlike
+      let liked = false;
       try {
         await storage.unlikePost(postId, userId);
-        res.json({ liked: false, message: 'Post unliked' });
+        liked = false;
       } catch (unlikeError) {
         // If unlike fails, the like doesn't exist, so create it
         await storage.likePost(postId, userId);
-        res.json({ liked: true, message: 'Post liked' });
+        liked = true;
+        
+        // Automatically track engagement for intelligent feed curation (background)
+        try {
+          const { FeedCurationIntelligence } = await import('./feedCurationIntelligence');
+          const curationService = new FeedCurationIntelligence();
+          
+          // Track this engagement for future curation improvements
+          await curationService.trackContentEngagement({
+            id: require('crypto').randomUUID(),
+            userId,
+            contentId: postId,
+            contentType: 'post',
+            authorId: post.userId,
+            interactionType: 'like',
+            timeSpent: 2, // Estimated 2 seconds for a like action
+            engagedAt: new Date(),
+          });
+        } catch (trackingError) {
+          // Silent fail for engagement tracking - don't affect user experience
+          console.warn('Engagement tracking failed:', trackingError);
+        }
       }
+      
+      res.json({ liked, message: liked ? 'Post liked' : 'Post unliked' });
       
     } catch (error) {
       console.error('Mobile like error:', error);
-      res.status(500).json({ message: 'Failed to update like' });
+      res.status(500).json({ message: 'Failed to like/unlike post' });
     }
   });
 

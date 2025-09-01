@@ -104,6 +104,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, isNull, isNotNull } from "drizzle-orm";
+import { FeedCurationIntelligence } from './feedCurationIntelligence';
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -628,7 +629,7 @@ export class DatabaseStorage implements IStorage {
     return postsWithDetails;
   }
 
-  // Get paginated aggregated kliq feed including posts, polls, events, and actions
+  // Get paginated aggregated kliq feed including posts, polls, events, and actions with intelligent curation
   async getKliqFeed(userId: string, filters: string[], page = 1, limit = 20): Promise<{ items: any[], hasMore: boolean, totalPages: number }> {
     // Get user's friends first
     const userFriends = await this.getFriends(userId);
@@ -798,23 +799,33 @@ export class DatabaseStorage implements IStorage {
       // Return posts only if there are errors with other queries
     }
 
-    // Sort all feed items by activity date (newest first)
-    feedItems.sort((a, b) => 
-      new Date(b.activityDate).getTime() - new Date(a.activityDate).getTime()
+    // Apply intelligent feed curation instead of simple chronological sort
+    const curationIntelligence = new FeedCurationIntelligence();
+    
+    // Convert feed items to the format expected by the curation engine
+    const standardizedFeedItems = feedItems.map(item => ({
+      id: item.id,
+      userId: item.userId,
+      type: item.type,
+      content: item.content || item.title || item.description || '',
+      createdAt: new Date(item.createdAt),
+      activityDate: new Date(item.activityDate),
+      author: item.author,
+      ...item // Pass through all other properties
+    }));
+
+    // Apply intelligent curation with rank-weighting, engagement prediction, and content balancing
+    const curatedResult = await curationIntelligence.getCuratedFeed(
+      userId, 
+      standardizedFeedItems, 
+      page, 
+      limit
     );
 
-    // Apply pagination
-    const totalItems = feedItems.length;
-    const totalPages = Math.ceil(totalItems / limit);
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedItems = feedItems.slice(startIndex, endIndex);
-    const hasMore = endIndex < totalItems;
-
     return {
-      items: paginatedItems,
-      hasMore,
-      totalPages
+      items: curatedResult.items,
+      hasMore: curatedResult.hasMore,
+      totalPages: curatedResult.totalPages
     };
   }
 
