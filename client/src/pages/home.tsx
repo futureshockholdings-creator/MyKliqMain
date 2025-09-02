@@ -30,7 +30,7 @@ import { PollCard } from "@/components/PollCard";
 import { SponsoredAd } from "@/components/SponsoredAd";
 import { GoogleSearch } from "@/components/GoogleSearch";
 import { EventCard } from "@/components/EventCard";
-import { trackEvent } from "@/lib/analytics";
+import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import Footer from "@/components/Footer";
 import { usePostTranslation } from "@/lib/translationService";
 
@@ -759,7 +759,7 @@ export default function Home() {
   const handleCreatePost = () => {
     if (newPost.trim() || selectedGif || selectedMoviecon || selectedMood) {
       // Track post creation event
-      trackEvent('create_post', 'engagement', 'post_created');
+      trackMobileEvent('create_post', { has_media: !!(selectedFiles?.length || selectedGif || selectedMoviecon), mood: selectedMood });
       
       let postContent = "";
       
@@ -803,7 +803,7 @@ export default function Home() {
   // Like toggle handler
   const handleLikeToggle = (itemId: string) => {
     // Track like event
-    trackEvent('like_post', 'engagement', 'post_liked');
+    trackMobileEvent('like_post', { item_id: itemId });
     
     likeToggleMutation.mutate(itemId);
   };

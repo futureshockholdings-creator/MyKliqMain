@@ -246,8 +246,7 @@ function AppContent() {
   // Load and apply user theme globally
   useTheme();
   
-  // Track page views for all pages (including public pages)
-  useAnalytics();
+  // Mobile analytics will handle screen tracking in React Native app
 
   // Check if we're on a public page that doesn't require authentication
   const isPublicPage = ['/signup', '/privacy-policy', '/disclaimer', '/landing', '/marketing', '/forgot-password'].includes(currentPath);
