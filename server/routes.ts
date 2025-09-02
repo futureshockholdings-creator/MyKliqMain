@@ -522,8 +522,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Generate JWT token for mobile app
-      const jwt = require('jsonwebtoken');
-      const token = jwt.sign(
+      const jwt = await import('jsonwebtoken');
+      const token = jwt.default.sign(
         { userId: user.id, isAdmin: user.isAdmin },
         process.env.JWT_SECRET || 'mykliq-mobile-secret-2025',
         { expiresIn: '30d' }
@@ -554,7 +554,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // JWT token verification middleware for mobile
-  const verifyMobileToken = (req: any, res: any, next: any) => {
+  const verifyMobileToken = async (req: any, res: any, next: any) => {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -563,8 +563,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const jwt = require('jsonwebtoken');
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'mykliq-mobile-secret-2025') as any;
+      const jwt = await import('jsonwebtoken');
+      const decoded = jwt.default.verify(token, process.env.JWT_SECRET || 'mykliq-mobile-secret-2025') as any;
       req.user = decoded;
       next();
     } catch (error) {

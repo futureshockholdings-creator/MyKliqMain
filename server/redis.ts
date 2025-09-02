@@ -5,11 +5,16 @@ let redis: Redis.RedisClientType | null = null;
 // Initialize Redis connection with production optimizations
 export async function initializeRedis() {
   try {
+    // Skip Redis initialization in development if not available
+    if (!process.env.REDIS_URL && process.env.NODE_ENV === 'development') {
+      console.log('Redis not available in development, using memory cache fallback');
+      return null;
+    }
+    
     redis = Redis.createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379',
       socket: {
         connectTimeout: 3000,
-        lazyConnect: false,
         keepAlive: true,
         reconnectStrategy: (retries) => {
           if (retries > 5) return false; // More resilient reconnection
