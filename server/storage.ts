@@ -2390,13 +2390,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchMemes(query: string): Promise<Meme[]> {
-    const searchTerm = `%${query}%`;
+    const searchTerm = `%${query.toLowerCase()}%`;
     return await db
       .select()
       .from(memes)
       .where(or(
-        like(memes.title, searchTerm),
-        like(memes.category, searchTerm)
+        sql`LOWER(${memes.title}) LIKE ${searchTerm}`,
+        sql`LOWER(${memes.category}) LIKE ${searchTerm}`,
+        sql`LOWER(${memes.description}) LIKE ${searchTerm}`
       ))
       .orderBy(memes.title);
   }
