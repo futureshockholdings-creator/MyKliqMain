@@ -41,6 +41,7 @@ function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
   const [editContent, setEditContent] = useState(post.content || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
 
   const handleUpdate = async () => {
@@ -79,10 +80,6 @@ function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Confirm delete?')) {
-      return;
-    }
-
     setIsDeleting(true);
     try {
       await apiRequest("DELETE", `/api/posts/${post.id}`);
@@ -93,6 +90,7 @@ function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
         className: "bg-white text-black border-gray-300",
       });
 
+      setShowDeleteDialog(false);
       onUpdate();
     } catch (error) {
       console.error('Error deleting post:', error);
@@ -116,22 +114,49 @@ function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
         data-testid="textarea-edit-post"
       />
       <div className="flex gap-2 justify-between">
-        <Button
-          variant="destructive"
-          onClick={handleDelete}
-          disabled={isDeleting || isSubmitting}
-          className="text-white"
-          data-testid="button-delete-post"
-        >
-          {isDeleting ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Deleting...
-            </>
-          ) : (
-            "Delete Post"
-          )}
-        </Button>
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogTrigger asChild>
+            <Button
+              variant="destructive"
+              disabled={isDeleting || isSubmitting}
+              className="text-white"
+              data-testid="button-delete-post"
+            >
+              Delete Post
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md bg-card border-border">
+            <DialogHeader>
+              <DialogTitle className="text-foreground">Confirm Delete</DialogTitle>
+            </DialogHeader>
+            <div className="flex gap-2 justify-end pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteDialog(false)}
+                disabled={isDeleting}
+                className="border-border text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="text-white"
+                data-testid="button-confirm-delete"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
         <div className="flex gap-2">
           <Button
             variant="outline"
