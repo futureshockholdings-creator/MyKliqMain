@@ -583,7 +583,7 @@ export class DatabaseStorage implements IStorage {
     
     const [allLikes, allComments] = await Promise.all([
       // Batch fetch all likes
-      postIds.length > 0 ? db.select().from(postLikes).where(inArray(postLikes.postId, postIds)) : [],
+      postIds.length > 0 ? db.select().from(postLikes).where(inArray(postLikes.postId, postIds)) : [] as any[],
       // Batch fetch all comments with joins and like counts
       postIds.length > 0 ? db
         .select({
@@ -609,7 +609,7 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(commentLikes, eq(comments.id, commentLikes.commentId))
         .where(inArray(comments.postId, postIds))
         .groupBy(comments.id, users.id, gifs.id, memes.id, moviecons.id)
-        .orderBy(comments.createdAt) : []
+        .orderBy(comments.createdAt) : [] as any[]
     ]);
 
     // Group likes and comments by postId for O(1) lookup
@@ -981,13 +981,16 @@ export class DatabaseStorage implements IStorage {
 
   // Comment operations
   async addComment(comment: InsertComment): Promise<Comment> {
-    const [newComment] = await db.insert(comments).values(comment).returning();
-    return newComment;
+    const result = await db.insert(comments).values(comment).returning() as Comment[];
+    if (!result || result.length === 0) {
+      throw new Error('Failed to create comment');
+    }
+    return result[0];
   }
 
   async getCommentById(commentId: string): Promise<Comment | undefined> {
     const [comment] = await db.select().from(comments).where(eq(comments.id, commentId));
-    return comment;
+    return comment as Comment | undefined;
   }
 
   async likeComment(commentId: string, userId: string): Promise<void> {
