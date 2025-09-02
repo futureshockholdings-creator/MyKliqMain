@@ -1,6 +1,7 @@
 import { db } from './db';
 import { friendships, userInteractionAnalytics, posts, postLikes, comments, polls, events, actions, users, contentEngagements, type InsertContentEngagement } from '@shared/schema';
 import { eq, and, inArray, desc, gte } from 'drizzle-orm';
+import { contentRecommendationEngine } from './contentRecommendationEngine.js';
 
 interface FeedItem {
   id: string;
@@ -122,8 +123,8 @@ export class FeedCurationIntelligence {
     // Calculate content type weight
     const contentTypeWeight = FeedCurationIntelligence.CONTENT_TYPE_WEIGHTS[item.type] || 1.0;
 
-    // Calculate relevance score
-    const relevanceScore = this.calculateRelevanceScore(item, userAnalytics);
+    // Calculate relevance score with content recommendations
+    const relevanceScore = await this.calculateRelevanceScore(item, userAnalytics, userId);
 
     // Calculate final weighted score
     const finalScore = 
@@ -218,7 +219,7 @@ export class FeedCurationIntelligence {
   /**
    * Calculate relevance score based on user interests and interaction patterns
    */
-  private calculateRelevanceScore(item: FeedItem, userAnalytics: any): number {
+  private async calculateRelevanceScore(item: FeedItem, userAnalytics: any, userId: string): Promise<number> {
     // Base relevance score
     let score = 0.5;
 
@@ -230,7 +231,37 @@ export class FeedCurationIntelligence {
     const authorInteractionScore = userAnalytics?.authorInteractions?.[item.userId] || 0.5;
     score += authorInteractionScore * 0.2;
 
+    // Get content recommendations to boost relevance
+    try {
+      const recommendations = await contentRecommendationEngine.generateRecommendations(userId);
+      
+      // Check if this item matches any user recommendations
+      const matchingRecommendations = recommendations.filter(rec => 
+        this.contentMatchesRecommendation(item, rec)
+      );
+      
+      if (matchingRecommendations.length > 0) {
+        // Boost relevance based on highest recommendation score
+        const bestMatch = Math.max(...matchingRecommendations.map(r => r.score));
+        score += (bestMatch / 100) * 0.4; // Up to 40% boost
+      }
+      
+    } catch (error) {
+      console.warn('Failed to get content recommendations for relevance scoring:', error);
+    }
+
     return Math.min(1.0, Math.max(0.0, score));
+  }
+
+  /**
+   * Check if content item matches a recommendation
+   */
+  private contentMatchesRecommendation(item: FeedItem, recommendation: any): boolean {
+    const content = item.content?.toLowerCase() || '';
+    
+    return recommendation.keywords.some((keyword: string) => 
+      content.includes(keyword.toLowerCase())
+    );
   }
 
   /**

@@ -1026,6 +1026,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  // Mobile content recommendations endpoint - personalized content discovery
+  app.get('/api/mobile/recommendations', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const category = req.query.category as string; // Optional filter: 'interests', 'hobbies', 'entertainment', 'lifestyle'
+      
+      const { contentRecommendationEngine } = await import('./contentRecommendationEngine.js');
+      const recommendations = await contentRecommendationEngine.generateRecommendations(userId);
+      
+      // Filter by category if specified
+      const filteredRecommendations = category 
+        ? recommendations.filter(rec => rec.category === category)
+        : recommendations;
+      
+      // Mobile-optimized response with actionable recommendations
+      const mobileRecommendations = filteredRecommendations.map(rec => ({
+        id: `${rec.type}_${rec.category}_${Date.now()}`,
+        type: rec.type,
+        category: rec.category,
+        title: generateRecommendationTitle(rec),
+        description: rec.reason,
+        score: Math.round(rec.score),
+        keywords: rec.keywords,
+        actionType: getRecommendationAction(rec.category),
+        priority: rec.score > 80 ? 'high' : rec.score > 60 ? 'medium' : 'low'
+      }));
+      
+      res.json({
+        recommendations: mobileRecommendations,
+        totalCount: mobileRecommendations.length,
+        categories: [...new Set(mobileRecommendations.map(r => r.category))],
+        userEngagementLevel: calculateUserEngagementLevel(recommendations)
+      });
+      
+    } catch (error) {
+      console.error('Content recommendations error:', error);
+      res.status(500).json({ message: 'Failed to generate content recommendations' });
+    }
+  });
+
+  // Mobile recommendation stats for analytics
+  app.get('/api/mobile/recommendations/stats', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      
+      const { contentRecommendationEngine } = await import('./contentRecommendationEngine.js');
+      const stats = await contentRecommendationEngine.getRecommendationStats(userId);
+      
+      res.json({
+        ...stats,
+        personalizedContentScore: Math.round(stats.averageScore),
+        profileCompleteness: await calculateProfileCompleteness(userId),
+        recommendationQuality: stats.averageScore > 70 ? 'excellent' : stats.averageScore > 50 ? 'good' : 'developing'
+      });
+      
+    } catch (error) {
+      console.error('Recommendation stats error:', error);
+      res.status(500).json({ message: 'Failed to fetch recommendation statistics' });
+    }
+  });
+
   // Mobile file upload endpoint for camera/photo library
   app.post('/api/mobile/upload', verifyMobileToken, async (req, res) => {
     try {
@@ -4690,4 +4751,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   return httpServer;
+}
+
+// Helper functions for content recommendations
+function generateRecommendationTitle(rec: any): string {
+  const titleMap: Record<string, string> = {
+    'interests': `Explore ${rec.keywords[0]} content`,
+    'hobbies': `${rec.keywords[0]} activities near you`,
+    'music': `New ${rec.keywords[0]} releases`,
+    'movies': `Films like ${rec.keywords[0]}`,
+    'books': `Books similar to ${rec.keywords[0]}`,
+    'food': `${rec.keywords[0]} recipes & restaurants`,
+    'location': `Events in ${rec.keywords[0]}`,
+    'lifestyle': `${rec.keywords[0]} lifestyle tips`,
+    'career': `${rec.keywords[0]} professional development`
+  };
+  
+  return titleMap[rec.category] || `Recommended ${rec.category} content`;
+}
+
+function getRecommendationAction(category: string): string {
+  const actionMap: Record<string, string> = {
+    'interests': 'explore',
+    'hobbies': 'discover',
+    'music': 'listen',
+    'movies': 'watch',
+    'books': 'read',
+    'food': 'cook',
+    'location': 'visit',
+    'lifestyle': 'try',
+    'career': 'learn'
+  };
+  
+  return actionMap[category] || 'explore';
+}
+
+function calculateUserEngagementLevel(recommendations: any[]): string {
+  const avgScore = recommendations.reduce((sum, rec) => sum + rec.score, 0) / recommendations.length;
+  
+  if (avgScore > 75) return 'highly_engaged';
+  if (avgScore > 50) return 'moderately_engaged';
+  return 'developing_profile';
+}
+
+async function calculateProfileCompleteness(userId: string): Promise<number> {
+  try {
+    const user = await storage.getUser(userId);
+    if (!user) return 0;
+    
+    let completeness = 0;
+    const totalFields = 10;
+    
+    if (user.bio) completeness++;
+    if (user.interests && user.interests.length > 0) completeness++;
+    if (user.hobbies && user.hobbies.length > 0) completeness++;
+    if (user.favoriteMusic && user.favoriteMusic.length > 0) completeness++;
+    if (user.favoriteMovies && user.favoriteMovies.length > 0) completeness++;
+    if (user.favoriteBooks && user.favoriteBooks.length > 0) completeness++;
+    if (user.favoriteFoods && user.favoriteFoods.length > 0) completeness++;
+    if (user.currentLocation) completeness++;
+    if (user.hometown) completeness++;
+    if (user.profileImageUrl) completeness++;
+    
+    return Math.round((completeness / totalFields) * 100);
+  } catch (error) {
+    console.warn('Failed to calculate profile completeness:', error);
+    return 0;
+  }
 }
