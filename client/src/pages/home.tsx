@@ -20,8 +20,8 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { cn } from "@/lib/utils";
 import { MediaUpload } from "@/components/MediaUpload";
 import { PyramidChart } from "@/components/pyramid-chart";
-import { GifPicker } from "@/components/GifPicker";
-import { GifDisplay } from "@/components/GifDisplay";
+import { MemePicker } from "@/components/MemePicker";
+import { MemeDisplay } from "@/components/MemeDisplay";
 import { MovieconPicker } from "@/components/MovieconPicker";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { YouTubeEmbedList } from "@/components/YouTubeEmbed";
@@ -34,7 +34,7 @@ import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import Footer from "@/components/Footer";
 import { usePostTranslation } from "@/lib/translationService";
 
-import type { Gif, Moviecon } from "@shared/schema";
+import type { Meme, Moviecon } from "@shared/schema";
 
 // Edit Post Form Component
 function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
@@ -126,8 +126,8 @@ export default function Home() {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [replyingToComment, setReplyingToComment] = useState<string | null>(null);
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
-  const [selectedGif, setSelectedGif] = useState<Gif | null>(null);
-  const [commentGifs, setCommentGifs] = useState<Record<string, Gif | null>>({});
+  const [selectedMeme, setSelectedMeme] = useState<Meme | null>(null);
+  const [commentMemes, setCommentMemes] = useState<Record<string, Meme | null>>({});
   const [selectedMoviecon, setSelectedMoviecon] = useState<Moviecon | null>(null);
   const [commentMoviecons, setCommentMoviecons] = useState<Record<string, Moviecon | null>>({});
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -359,7 +359,7 @@ export default function Home() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       setNewPost("");
-      setSelectedGif(null);
+      setSelectedMeme(null);
       setSelectedMoviecon(null);
       setSelectedMood(null);
       toast({
@@ -471,7 +471,7 @@ export default function Home() {
     },
     onSuccess: (response, { postId }) => {
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
-      setCommentGifs(prev => ({ ...prev, [postId]: null }));
+      setCommentMemes(prev => ({ ...prev, [postId]: null }));
       setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
       // Close the comment box after posting
       setExpandedComments(prev => {
@@ -757,9 +757,9 @@ export default function Home() {
   };
 
   const handleCreatePost = () => {
-    if (newPost.trim() || selectedGif || selectedMoviecon || selectedMood) {
+    if (newPost.trim() || selectedMeme || selectedMoviecon || selectedMood) {
       // Track post creation event
-      trackMobileEvent('create_post', { has_media: !!(selectedFiles?.length || selectedGif || selectedMoviecon), mood: selectedMood });
+      trackMobileEvent('create_post', { has_media: !!(selectedMeme || selectedMoviecon), mood: selectedMood });
       
       let postContent = "";
       
@@ -775,7 +775,7 @@ export default function Home() {
       
       createPostMutation.mutate({
         content: postContent,
-        gifId: selectedGif?.id,
+        gifId: selectedMeme?.id,
         movieconId: selectedMoviecon?.id
       });
     }
@@ -886,10 +886,10 @@ export default function Home() {
 
   const handleCommentSubmit = (postId: string) => {
     const content = commentInputs[postId]?.trim();
-    const gifId = commentGifs[postId]?.id;
+    const memeId = commentMemes[postId]?.id;
     const movieconId = commentMoviecons[postId]?.id;
-    if (content || gifId || movieconId) {
-      addCommentMutation.mutate({ postId, content: content || '', gifId, movieconId });
+    if (content || memeId || movieconId) {
+      addCommentMutation.mutate({ postId, content: content || '', gifId: memeId, movieconId });
     }
   };
 
@@ -912,12 +912,12 @@ export default function Home() {
     setCommentInputs(prev => ({ ...prev, [postId]: value }));
   };
 
-  const handleCommentGifSelect = (postId: string, gif: Gif) => {
-    setCommentGifs(prev => ({ ...prev, [postId]: gif }));
+  const handleCommentMemeSelect = (postId: string, meme: Meme) => {
+    setCommentMemes(prev => ({ ...prev, [postId]: meme }));
   };
 
-  const handleCommentGifRemove = (postId: string) => {
-    setCommentGifs(prev => ({ ...prev, [postId]: null }));
+  const handleCommentMemeRemove = (postId: string) => {
+    setCommentMemes(prev => ({ ...prev, [postId]: null }));
   };
 
   const handleCommentMovieconSelect = (postId: string, moviecon: Moviecon) => {
@@ -1087,13 +1087,13 @@ export default function Home() {
               data-testid="textarea-new-post"
             />
           </div>
-          {selectedGif && (
+          {selectedMeme && (
             <div className="mt-3 flex items-center gap-2">
-              <GifDisplay gif={selectedGif} className="max-w-xs" />
+              <MemeDisplay meme={selectedMeme} className="max-w-xs" />
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => setSelectedGif(null)}
+                onClick={() => setSelectedMeme(null)}
                 className="text-muted-foreground hover:text-destructive"
               >
                 ×
@@ -1167,15 +1167,15 @@ export default function Home() {
               >
                 <ImageIcon className="w-4 h-4" />
               </Button>
-              <GifPicker
-                onSelectGif={setSelectedGif}
+              <MemePicker
+                onSelectMeme={setSelectedMeme}
                 trigger={
                   <Button 
                     size="sm" 
                     variant="ghost" 
                     className="text-mykliq-purple hover:bg-mykliq-purple/10"
                   >
-                    <span className="text-xs font-bold">GIF</span>
+                    <span className="text-xs font-bold">MEME</span>
                   </Button>
                 }
               />
@@ -1246,7 +1246,7 @@ export default function Home() {
               </Button>
               <Button
                 onClick={handleCreatePost}
-                disabled={(!newPost.trim() && !selectedGif && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
+                disabled={(!newPost.trim() && !selectedMeme && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6"
                 style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
               >
@@ -1906,7 +1906,7 @@ export default function Home() {
               {/* GIF Content */}
               {item.gif && (
                 <div className="mb-3">
-                  <GifDisplay gif={item.gif} className="max-w-md" />
+                  <MemeDisplay meme={item.gif} className="max-w-md" />
                 </div>
               )}
 
@@ -2007,7 +2007,7 @@ export default function Home() {
                               )}
                               {comment.gif && (
                                 <div className="mt-2">
-                                  <GifDisplay gif={comment.gif} className="max-w-xs" />
+                                  <MemeDisplay meme={comment.gif} className="max-w-xs" />
                                 </div>
                               )}
                               {comment.moviecon && (
@@ -2106,13 +2106,13 @@ export default function Home() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      {commentGifs[item.id] && (
+                      {commentMemes[item.id] && (
                         <div className="mb-2 flex items-center gap-2">
-                          <GifDisplay gif={commentGifs[item.id]!} className="max-w-xs" />
+                          <MemeDisplay meme={commentMemes[item.id]!} className="max-w-xs" />
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleCommentGifRemove(item.id)}
+                            onClick={() => handleCommentMemeRemove(item.id)}
                             className="text-muted-foreground hover:text-destructive"
                           >
                             ×
@@ -2148,16 +2148,16 @@ export default function Home() {
                           }}
                         />
                         <div className="flex flex-col justify-end space-y-1">
-                          <GifPicker
-                            onSelectGif={(gif) => handleCommentGifSelect(item.id, gif)}
+                          <MemePicker
+                            onSelectMeme={(meme) => handleCommentMemeSelect(item.id, meme)}
                             trigger={
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 className="text-mykliq-purple hover:bg-mykliq-purple/10 h-8 w-8 p-0"
-                                data-testid={`button-comment-gif-${item.id}`}
+                                data-testid={`button-comment-meme-${item.id}`}
                               >
-                                <span className="text-xs font-bold">GIF</span>
+                                <span className="text-xs font-bold">MEME</span>
                               </Button>
                             }
                           />
@@ -2207,7 +2207,7 @@ export default function Home() {
                           </Popover>
                           <Button
                             onClick={() => handleCommentSubmit(item.id)}
-                            disabled={(!commentInputs[item.id]?.trim() && !commentGifs[item.id] && !commentMoviecons[item.id]) || addCommentMutation.isPending}
+                            disabled={(!commentInputs[item.id]?.trim() && !commentMemes[item.id] && !commentMoviecons[item.id]) || addCommentMutation.isPending}
                             size="sm"
                             className="bg-secondary hover:bg-secondary/90 text-secondary-foreground h-8"
                             data-testid={`button-submit-comment-${item.id}`}
