@@ -551,6 +551,7 @@ export class DatabaseStorage implements IStorage {
         mediaUrl: posts.mediaUrl,
         mediaType: posts.mediaType,
         gifId: posts.gifId,
+        memeId: posts.memeId,
         movieconId: posts.movieconId,
         likes: posts.likes,
         latitude: posts.latitude,
@@ -561,11 +562,13 @@ export class DatabaseStorage implements IStorage {
         updatedAt: posts.updatedAt,
         author: users,
         gif: gifs,
+        meme: memes,
         moviecon: moviecons,
       })
       .from(posts)
       .innerJoin(users, eq(posts.userId, users.id))
       .leftJoin(gifs, eq(posts.gifId, gifs.id))
+      .leftJoin(memes, eq(posts.memeId, memes.id))
       .leftJoin(moviecons, eq(posts.movieconId, moviecons.id))
       .where(and(...whereConditions))
       .orderBy(desc(posts.createdAt));
@@ -589,21 +592,24 @@ export class DatabaseStorage implements IStorage {
           userId: comments.userId,
           content: comments.content,
           gifId: comments.gifId,
+          memeId: comments.memeId,
           movieconId: comments.movieconId,
           createdAt: comments.createdAt,
           author: users,
           gif: gifs,
+          meme: memes,
           moviecon: moviecons,
           likes_count: sql<number>`COALESCE(COUNT(${commentLikes.id}), 0)`.as('likes_count'),
         })
         .from(comments)
         .innerJoin(users, eq(comments.userId, users.id))
         .leftJoin(gifs, eq(comments.gifId, gifs.id))
+        .leftJoin(memes, eq(comments.memeId, memes.id))
         .leftJoin(moviecons, eq(comments.movieconId, moviecons.id))
         .leftJoin(commentLikes, eq(comments.id, commentLikes.commentId))
         .where(inArray(comments.postId, postIds))
-        .groupBy(comments.id, users.id, gifs.id, moviecons.id)
-        .orderBy(comments.createdAt) : [] as any[]
+        .groupBy(comments.id, users.id, gifs.id, memes.id, moviecons.id)
+        .orderBy(comments.createdAt) : []
     ]);
 
     // Group likes and comments by postId for O(1) lookup
@@ -627,8 +633,10 @@ export class DatabaseStorage implements IStorage {
       mediaUrl: post.mediaUrl,
       mediaType: post.mediaType,
       gifId: post.gifId,
+      memeId: post.memeId,
       movieconId: post.movieconId,
       gif: post.gif,
+      meme: post.meme,
       moviecon: post.moviecon,
       likes: likesByPost[post.id] || [],
       latitude: post.latitude,

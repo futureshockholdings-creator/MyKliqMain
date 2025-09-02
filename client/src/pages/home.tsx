@@ -961,7 +961,7 @@ export default function Home() {
     const memeId = commentMemes[postId]?.id;
     const movieconId = commentMoviecons[postId]?.id;
     if (content || memeId || movieconId) {
-      addCommentMutation.mutate({ postId, content: content || '', gifId: memeId, movieconId });
+      addCommentMutation.mutate({ postId, content: content || '', memeId: memeId, movieconId });
     }
   };
 
@@ -1975,10 +1975,10 @@ export default function Home() {
                 })()
               )}
               
-              {/* GIF Content */}
-              {item.gif && (
+              {/* Meme Content */}
+              {item.meme && (
                 <div className="mb-3">
-                  <MemeDisplay meme={item.gif} className="max-w-md" />
+                  <MemeDisplay meme={item.meme} className="max-w-md" />
                 </div>
               )}
 
@@ -2077,9 +2077,9 @@ export default function Home() {
                                   );
                                 })()
                               )}
-                              {comment.gif && (
+                              {comment.meme && (
                                 <div className="mt-2">
-                                  <MemeDisplay meme={comment.gif} className="max-w-xs" />
+                                  <MemeDisplay meme={comment.meme} className="max-w-xs" />
                                 </div>
                               )}
                               {comment.moviecon && (
