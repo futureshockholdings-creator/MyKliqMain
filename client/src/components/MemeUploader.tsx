@@ -31,7 +31,16 @@ export function MemeUploader({ memes, onRefresh }: MemeUploaderProps) {
 
   const handleGetUploadParameters = async () => {
     try {
-      const response = await apiRequest("POST", "/api/objects/upload");
+      // Try public upload first for better visibility
+      let response;
+      try {
+        response = await apiRequest("POST", "/api/objects/upload-public-meme");
+      } catch (publicError) {
+        console.warn("Public upload not available, falling back to private upload:", publicError);
+        // Fallback to regular upload if public is not configured
+        response = await apiRequest("POST", "/api/objects/upload");
+      }
+      
       return {
         method: "PUT" as const,
         url: response.uploadURL,

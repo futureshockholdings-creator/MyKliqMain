@@ -1675,6 +1675,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public upload endpoint for memes
+  app.post("/api/objects/upload-public-meme", isAuthenticated, async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getPublicMemeUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Failed to get public meme upload URL:", error);
+      res.status(500).json({ error: "Failed to get public meme upload URL" });
+    }
+  });
+
   // Serve uploaded objects (profile pictures, etc.)
   app.get("/objects/:objectPath(*)", async (req, res) => {
     const objectStorageService = new ObjectStorageService();
@@ -1689,6 +1701,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.sendStatus(404);
       }
       return res.sendStatus(500);
+    }
+  });
+
+  // Proxy endpoint for meme images (to make private URLs accessible)
+  app.get("/api/meme-proxy", async (req, res) => {
+    const { url } = req.query;
+    
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: "URL parameter is required" });
+    }
+
+    // Only allow Google Cloud Storage URLs for security
+    if (!url.startsWith('https://storage.googleapis.com/')) {
+      return res.status(400).json({ error: "Invalid URL" });
+    }
+
+    try {
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        return res.status(response.status).json({ error: "Failed to fetch image" });
+      }
+
+      // Copy headers
+      const contentType = response.headers.get('content-type') || 'image/jpeg';
+      const contentLength = response.headers.get('content-length');
+      
+      res.set({
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+      });
+      
+      if (contentLength) {
+        res.set('Content-Length', contentLength);
+      }
+
+      // Stream the image
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.send(buffer);
+    } catch (error) {
+      console.error("Error proxying meme image:", error);
+      res.status(500).json({ error: "Failed to proxy image" });
     }
   });
 

@@ -38,10 +38,15 @@ function MemeImage({ meme, className }: { meme: Meme; className?: string }) {
     );
   }
   
+  // Use proxy for private URLs, direct URL for public ones
+  const imageUrl = meme.imageUrl.includes('/.private/') 
+    ? `/api/meme-proxy?url=${encodeURIComponent(meme.imageUrl)}`
+    : meme.imageUrl;
+
   return (
     <div className={`${className} relative h-24 overflow-hidden meme-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
       <img
-        src={meme.imageUrl}
+        src={imageUrl}
         alt={meme.title}
         className="w-full h-full object-cover"
         onError={() => setImageError(true)}
