@@ -24,6 +24,7 @@ import NotFound from "@/pages/not-found";
 import { Messages } from "@/pages/messages";
 import { Conversation } from "@/pages/conversation";
 import { MovieconManagerPage } from "@/pages/moviecon-manager";
+import { MemeManagerPage } from "@/pages/meme-manager";
 import MaintenanceDashboard from "@/pages/maintenance-dashboard";
 import AdsManager from "@/pages/ads-manager";
 import Settings from "@/pages/settings";
@@ -213,6 +214,7 @@ function Router() {
       <Route path="/support-admin" component={AdminPage} />
       <Route path="/ads-manager" component={AdsManager} />
       <Route path="/moviecon-manager" component={MovieconManagerPage} />
+      <Route path="/meme-manager" component={MemeManagerPage} />
       <Route path="/maintenance" component={MaintenanceDashboard} />
       
       {/* Protected routes - require authentication */}
