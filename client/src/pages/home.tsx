@@ -425,7 +425,7 @@ export default function Home() {
 
   // Create post mutation
   const createPostMutation = useMutation({
-    mutationFn: async (postData: { content: string; gifId?: string; movieconId?: string }) => {
+    mutationFn: async (postData: { content: string; memeId?: string; movieconId?: string }) => {
       await apiRequest("POST", "/api/posts", postData);
     },
     onSuccess: () => {
@@ -847,7 +847,7 @@ export default function Home() {
       
       createPostMutation.mutate({
         content: postContent,
-        gifId: selectedMeme?.id,
+        memeId: selectedMeme?.id,
         movieconId: selectedMoviecon?.id
       });
     }

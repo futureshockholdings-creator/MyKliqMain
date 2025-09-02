@@ -38,9 +38,9 @@ function MemeImage({ meme, className }: { meme: Meme; className?: string }) {
     );
   }
   
-  // Use proxy for private URLs, direct URL for public ones
-  const imageUrl = meme.imageUrl.includes('/.private/') 
-    ? `/api/meme-proxy?url=${encodeURIComponent(meme.imageUrl)}`
+  // Convert Google Cloud Storage URLs to local object serving URLs
+  const imageUrl = meme.imageUrl.startsWith('https://storage.googleapis.com/') 
+    ? meme.imageUrl.replace(/^https:\/\/storage\.googleapis\.com\/[^\/]+\/\.private\//, '/objects/')
     : meme.imageUrl;
 
   return (
