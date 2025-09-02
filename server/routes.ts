@@ -575,7 +575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile user profile endpoint
   app.get('/api/mobile/user/profile', verifyMobileToken, async (req, res) => {
     try {
-      const user = await storage.getUser(req.user.userId);
+      const user = await storage.getUser(req.user?.userId || req.user?.id);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
@@ -633,7 +633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile-optimized intelligent feed endpoint with curation and battery efficiency
   app.get('/api/mobile/feed', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.userId || req.user?.id;
       const page = parseInt(req.query.page as string) || 1;
       const limit = Math.min(50, Math.max(5, parseInt(req.query.limit as string) || 20)); // Mobile-optimized limits
       const lastSeenId = req.query.lastSeenId as string; // For battery-efficient pagination
@@ -648,7 +648,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         async () => {
           // Get user's content filters
           const userFilters = await storage.getContentFilters(userId);
-          const filterTypes = userFilters.map(f => f.filterType);
+          const filterTypes = userFilters.map(f => f.keyword);
           
           // Get intelligently curated feed (now with rank-weighting, engagement prediction, and content balancing)
           const feedData = await storage.getKliqFeed(userId, filterTypes, page, limit);
@@ -732,10 +732,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile post creation endpoint
   app.post('/api/mobile/posts', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user.userId;
-      const { content, mediaUrl, mediaType, youtubeUrl } = req.body;
+      const userId = req.user?.userId || req.user?.id;
+      const { content, mediaUrl, mediaType } = req.body;
       
-      if (!content && !mediaUrl && !youtubeUrl) {
+      if (!content && !mediaUrl) {
         return res.status(400).json({ message: 'Post content is required' });
       }
       
@@ -743,19 +743,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         content: content || '',
         mediaUrl: mediaUrl || null,
-        mediaType: mediaType || null,
-        youtubeUrl: youtubeUrl || null
+        mediaType: mediaType || null
       });
       
       // Return the created post with author info for immediate UI update
       const user = await storage.getUser(userId);
       res.json({
-        id: newPost.id,
         userId,
         content: content || '',
         mediaUrl: mediaUrl || null,
         mediaType: mediaType || null,
-        youtubeUrl: youtubeUrl || null,
         createdAt: new Date().toISOString(),
         author: {
           firstName: user?.firstName,
@@ -776,7 +773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile like/unlike endpoint with automatic engagement tracking
   app.post('/api/mobile/posts/:postId/like', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.userId || req.user?.id;
       const postId = req.params.postId;
       
       // Get post info for engagement tracking
@@ -821,7 +818,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId,
             targetUserId: post.userId,
             data: {
-              liker: `${req.user.firstName} ${req.user.lastName}`,
+              liker: `${req.user?.firstName || 'User'} ${req.user?.lastName || ''}`,
               postId: postId
             }
           });
@@ -842,7 +839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile friends list endpoint
   app.get('/api/mobile/friends', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.userId || req.user?.id;
       const friends = await storage.getFriends(userId);
       
       // Format for mobile display
@@ -866,7 +863,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile intelligent insights endpoint - comprehensive intelligence dashboard
   app.get('/api/mobile/insights', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.userId || req.user?.id;
       
       // Get all intelligent insights in parallel for maximum efficiency
       const [connectionHealth, conversationSuggestions, notificationTiming, groupDynamics] = await Promise.all([
@@ -945,7 +942,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile stories endpoint
   app.get('/api/mobile/stories', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.userId || req.user?.id;
       const stories = await storage.getActiveStories(userId);
       
       // Group stories by user for mobile UI
@@ -981,18 +978,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Push notification registration endpoint
   app.post('/api/mobile/notifications/register', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.userId || req.user?.id;
       const { pushToken, platform } = req.body;
       
       if (!pushToken || !platform) {
         return res.status(400).json({ message: 'Push token and platform are required' });
       }
       
-      // Store push token in user profile (we'll add this field to schema)
-      await storage.updateUser(userId, { 
-        pushToken: pushToken,
-        devicePlatform: platform 
-      });
+      // Store push token in user profile (commented out - not in schema yet)
+      // await storage.updateUser(userId, { 
+      //   pushToken: pushToken,
+      //   devicePlatform: platform 
+      // });
       
       res.json({ 
         success: true, 
@@ -1029,7 +1026,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile content recommendations endpoint - personalized content discovery
   app.get('/api/mobile/recommendations', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.userId || req.user?.id;
       const category = req.query.category as string; // Optional filter: 'interests', 'hobbies', 'entertainment', 'lifestyle'
       
       const { contentRecommendationEngine } = await import('./contentRecommendationEngine.js');
@@ -1069,7 +1066,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile recommendation stats for analytics
   app.get('/api/mobile/recommendations/stats', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.user?.userId || req.user?.id;
       
       const { contentRecommendationEngine } = await import('./contentRecommendationEngine.js');
       const stats = await contentRecommendationEngine.getRecommendationStats(userId);
@@ -4805,12 +4802,12 @@ async function calculateProfileCompleteness(userId: string): Promise<number> {
     if (user.bio) completeness++;
     if (user.interests && user.interests.length > 0) completeness++;
     if (user.hobbies && user.hobbies.length > 0) completeness++;
-    if (user.favoriteMusic && user.favoriteMusic.length > 0) completeness++;
+    if (user.musicGenres && user.musicGenres.length > 0) completeness++;
     if (user.favoriteMovies && user.favoriteMovies.length > 0) completeness++;
     if (user.favoriteBooks && user.favoriteBooks.length > 0) completeness++;
     if (user.favoriteFoods && user.favoriteFoods.length > 0) completeness++;
-    if (user.currentLocation) completeness++;
-    if (user.hometown) completeness++;
+    if (user.favoriteLocations && user.favoriteLocations.length > 0) completeness++;
+    if (user.lifestyle) completeness++;
     if (user.profileImageUrl) completeness++;
     
     return Math.round((completeness / totalFields) * 100);

@@ -175,7 +175,7 @@ export class ContentRecommendationEngine {
       const hourPosts = hourlyData.get(hour) || [];
       if (hourPosts.length > 0) {
         const avgLikes = hourPosts.reduce((sum, post) => sum + (post.likes || 0), 0) / hourPosts.length;
-        const contentTypes = [...new Set(hourPosts.map(post => post.type))];
+        const contentTypes = Array.from(new Set(hourPosts.map(post => post.type)));
         
         patterns.push({
           timeOfDay: hour,

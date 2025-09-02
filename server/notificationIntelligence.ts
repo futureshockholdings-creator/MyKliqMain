@@ -252,7 +252,7 @@ export class NotificationIntelligence {
       .from(notifications)
       .where(and(
         eq(notifications.sent, false),
-        gte(notifications.scheduledFor, now)
+        sql`${notifications.scheduledFor} <= ${now}`
       ))
       .limit(50);
 
