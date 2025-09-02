@@ -2327,7 +2327,7 @@ export class DatabaseStorage implements IStorage {
 
   // Moviecon operations
   async getAllMoviecons(): Promise<Moviecon[]> {
-    return await db.select().from(moviecons).orderBy(desc(moviecons.createdAt));
+    return await db.select().from(moviecons).orderBy(moviecons.title);
   }
 
   async getMovieconsByCategory(category: string): Promise<Moviecon[]> {
@@ -2335,7 +2335,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(moviecons)
       .where(eq(moviecons.category, category))
-      .orderBy(desc(moviecons.createdAt));
+      .orderBy(moviecons.title);
   }
 
   async getTrendingMoviecons(): Promise<Moviecon[]> {
@@ -2343,7 +2343,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(moviecons)
       .where(eq(moviecons.trending, true))
-      .orderBy(desc(moviecons.createdAt));
+      .orderBy(moviecons.title);
   }
 
   async getFeaturedMoviecons(): Promise<Moviecon[]> {
@@ -2351,7 +2351,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(moviecons)
       .where(eq(moviecons.featured, true))
-      .orderBy(desc(moviecons.createdAt));
+      .orderBy(moviecons.title);
   }
 
   async searchMoviecons(query: string): Promise<Moviecon[]> {
@@ -2364,7 +2364,7 @@ export class DatabaseStorage implements IStorage {
         like(moviecons.category, searchTerm),
         like(moviecons.movieSource, searchTerm)
       ))
-      .orderBy(desc(moviecons.createdAt));
+      .orderBy(moviecons.title);
   }
 
   async getMovieconById(id: string): Promise<Moviecon | undefined> {
