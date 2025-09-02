@@ -2397,7 +2397,7 @@ export class DatabaseStorage implements IStorage {
       .where(or(
         sql`LOWER(${memes.title}) LIKE ${searchTerm}`,
         sql`LOWER(${memes.category}) LIKE ${searchTerm}`,
-        sql`LOWER(${memes.description}) LIKE ${searchTerm}`
+        sql`LOWER(COALESCE(${memes.description}, '')) LIKE ${searchTerm}`
       ))
       .orderBy(memes.title);
   }
