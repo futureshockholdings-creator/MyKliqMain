@@ -142,6 +142,7 @@ export interface IStorage {
   getPostById(postId: string): Promise<Post | undefined>;
   createPost(post: InsertPost): Promise<Post>;
   updatePost(postId: string, updates: Partial<Pick<Post, 'content'>>): Promise<Post>;
+  deletePost(postId: string): Promise<void>;
   likePost(postId: string, userId: string): Promise<void>;
   unlikePost(postId: string, userId: string): Promise<void>;
   getUserReflection(userId: string): Promise<{ posts: any[]; stats: any; message: string }>;
@@ -860,6 +861,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(posts.id, postId))
       .returning();
     return updatedPost;
+  }
+
+  async deletePost(postId: string): Promise<void> {
+    // Delete associated data first (comments, likes)
+    await db.delete(commentLikes).where(
+      sql`${commentLikes.commentId} IN (SELECT ${comments.id} FROM ${comments} WHERE ${comments.postId} = ${postId})`
+    );
+    await db.delete(comments).where(eq(comments.postId, postId));
+    await db.delete(postLikes).where(eq(postLikes.postId, postId));
+    
+    // Finally delete the post
+    await db.delete(posts).where(eq(posts.id, postId));
   }
 
   async likePost(postId: string, userId: string): Promise<void> {

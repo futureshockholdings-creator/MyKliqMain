@@ -1964,6 +1964,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete Post (author only)
+  app.delete('/api/posts/:postId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { postId } = req.params;
+      
+      // Check if post exists and user is the author
+      const existingPost = await storage.getPostById(postId);
+      if (!existingPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      if (existingPost.userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own posts" });
+      }
+      
+      // Delete the post
+      await storage.deletePost(postId);
+      
+      // Invalidate cache for feeds
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed');
+      invalidateCache('posts');
+      
+      res.json({ success: true, message: "Post deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      res.status(500).json({ message: "Failed to delete post" });
+    }
+  });
+
   app.post('/api/posts/:postId/like', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

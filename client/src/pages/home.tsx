@@ -40,6 +40,7 @@ import type { Meme, Moviecon } from "@shared/schema";
 function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
   const [editContent, setEditContent] = useState(post.content || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   const handleUpdate = async () => {
@@ -77,6 +78,34 @@ function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await apiRequest("DELETE", `/api/posts/${post.id}`);
+
+      toast({
+        title: "Post Deleted",
+        description: "Your post has been successfully deleted.",
+        className: "bg-white text-black border-gray-300",
+      });
+
+      onUpdate();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete post. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Textarea
@@ -86,30 +115,48 @@ function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
         className="min-h-[120px] bg-background border-border text-foreground"
         data-testid="textarea-edit-post"
       />
-      <div className="flex gap-2 justify-end">
+      <div className="flex gap-2 justify-between">
         <Button
-          variant="outline"
-          onClick={() => setEditContent(post.content || '')}
-          disabled={isSubmitting}
-          className="border-border text-foreground"
+          variant="destructive"
+          onClick={handleDelete}
+          disabled={isDeleting || isSubmitting}
+          className="text-white"
+          data-testid="button-delete-post"
         >
-          Reset
-        </Button>
-        <Button
-          onClick={handleUpdate}
-          disabled={isSubmitting || !editContent.trim()}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          data-testid="button-update-post"
-        >
-          {isSubmitting ? (
+          {isDeleting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Updating...
+              Deleting...
             </>
           ) : (
-            "Update Post"
+            "Delete Post"
           )}
         </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setEditContent(post.content || '')}
+            disabled={isSubmitting || isDeleting}
+            className="border-border text-foreground"
+          >
+            Reset
+          </Button>
+          <Button
+            onClick={handleUpdate}
+            disabled={isSubmitting || isDeleting || !editContent.trim()}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            data-testid="button-update-post"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Update Post"
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
