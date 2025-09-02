@@ -10,6 +10,11 @@ interface MemeDisplayProps {
 export function MemeDisplay({ meme, className = "" }: MemeDisplayProps) {
   const [imageError, setImageError] = useState(false);
   
+  // Convert Google Cloud Storage URLs to local object serving URLs
+  const imageUrl = meme.imageUrl.startsWith('https://storage.googleapis.com/') 
+    ? meme.imageUrl.replace(/^https:\/\/storage\.googleapis\.com\/[^\/]+\/\.private\//, '/objects/')
+    : meme.imageUrl;
+  
   if (imageError) {
     // Fallback display if image fails to load
     return (
@@ -24,7 +29,7 @@ export function MemeDisplay({ meme, className = "" }: MemeDisplayProps) {
     <div className={`inline-block ${className}`}>
       <div className="relative max-w-xs">
         <img
-          src={meme.imageUrl}
+          src={imageUrl}
           alt={meme.title}
           className="rounded-lg max-h-48 object-contain"
           onError={() => setImageError(true)}
