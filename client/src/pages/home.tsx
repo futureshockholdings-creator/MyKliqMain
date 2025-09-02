@@ -79,7 +79,7 @@ function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+    if (!window.confirm('Confirm delete?')) {
       return;
     }
 
