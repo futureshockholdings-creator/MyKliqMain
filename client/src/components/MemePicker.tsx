@@ -29,7 +29,7 @@ function MemeImage({ meme, className }: { meme: Meme; className?: string }) {
   if (imageError) {
     // Fallback to gradient design if image fails to load
     return (
-      <div className={`${className} relative h-24 overflow-hidden meme-container cursor-pointer border-2 border-primary rounded-lg`}>
+      <div className={`${className} relative h-32 overflow-hidden meme-container cursor-pointer border-2 border-primary rounded-lg`}>
         <div className={`relative w-full h-full bg-gradient-to-br ${getMemeColor(meme)} flex flex-col items-center justify-center text-white`}>
           <ImageIcon className="w-8 h-8 mb-1 opacity-70" />
           <div className="text-xs font-bold text-center px-2">{meme.title}</div>
@@ -44,7 +44,7 @@ function MemeImage({ meme, className }: { meme: Meme; className?: string }) {
     : meme.imageUrl;
 
   return (
-    <div className={`${className} relative h-24 overflow-hidden meme-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
+    <div className={`${className} relative h-40 overflow-hidden meme-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
       <img
         src={imageUrl}
         alt={meme.title}
@@ -160,7 +160,7 @@ export function MemePicker({
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 p-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-2">
                 {memes.map((meme: Meme) => (
                   <div
                     key={meme.id}
