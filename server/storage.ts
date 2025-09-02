@@ -77,6 +77,9 @@ import {
   gifs,
   type Gif,
   type InsertGif,
+  memes,
+  type Meme,
+  type InsertMeme,
   moviecons,
   type Moviecon,
   type InsertMoviecon,
@@ -173,6 +176,17 @@ export interface IStorage {
   createGif(gif: InsertGif): Promise<Gif>;
   updateGif(id: string, updates: Partial<Gif>): Promise<Gif>;
   deleteGif(id: string): Promise<void>;
+  
+  // Meme operations
+  getAllMemes(): Promise<Meme[]>;
+  getTrendingMemes(): Promise<Meme[]>;
+  getFeaturedMemes(): Promise<Meme[]>;
+  searchMemes(query: string): Promise<Meme[]>;
+  getMemesByCategory(category: string): Promise<Meme[]>;
+  getMemeById(id: string): Promise<Meme | undefined>;
+  createMeme(meme: InsertMeme): Promise<Meme>;
+  updateMeme(id: string, updates: Partial<Meme>): Promise<Meme>;
+  deleteMeme(id: string): Promise<void>;
   
   // Moviecon operations
   getAllMoviecons(): Promise<Moviecon[]>;
@@ -2323,6 +2337,70 @@ export class DatabaseStorage implements IStorage {
 
   async deleteGif(id: string): Promise<void> {
     await db.delete(gifs).where(eq(gifs.id, id));
+  }
+
+  // Meme operations
+  async getAllMemes(): Promise<Meme[]> {
+    return await db.select().from(memes).orderBy(memes.title);
+  }
+
+  async getMemesByCategory(category: string): Promise<Meme[]> {
+    return await db
+      .select()
+      .from(memes)
+      .where(eq(memes.category, category))
+      .orderBy(memes.title);
+  }
+
+  async getTrendingMemes(): Promise<Meme[]> {
+    return await db
+      .select()
+      .from(memes)
+      .where(eq(memes.trending, true))
+      .orderBy(memes.title);
+  }
+
+  async getFeaturedMemes(): Promise<Meme[]> {
+    return await db
+      .select()
+      .from(memes)
+      .where(eq(memes.featured, true))
+      .orderBy(memes.title);
+  }
+
+  async searchMemes(query: string): Promise<Meme[]> {
+    const searchTerm = `%${query}%`;
+    return await db
+      .select()
+      .from(memes)
+      .where(or(
+        like(memes.title, searchTerm),
+        like(memes.category, searchTerm)
+      ))
+      .orderBy(memes.title);
+  }
+
+  async getMemeById(id: string): Promise<Meme | undefined> {
+    const [meme] = await db.select().from(memes).where(eq(memes.id, id));
+    return meme;
+  }
+
+  async createMeme(meme: InsertMeme): Promise<Meme> {
+    const [newMeme] = await db.insert(memes).values(meme).returning();
+    return newMeme;
+  }
+
+  async updateMeme(id: string, updates: Partial<Meme>): Promise<Meme> {
+    const [updatedMeme] = await db
+      .update(memes)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(memes.id, id))
+      .returning();
+    return updatedMeme;
+  }
+
+  async deleteMeme(id: string): Promise<void> {
+    await db.delete(memes).where(eq(memes.id, id));
   }
 
   // Moviecon operations

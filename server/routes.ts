@@ -3196,6 +3196,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Meme API routes
+  
+  // Get all Memes
+  app.get('/api/memes', async (req, res) => {
+    try {
+      const { q } = req.query;
+      let memes;
+      
+      if (q && typeof q === 'string') {
+        // If search query provided, search memes
+        memes = await storage.searchMemes(q);
+      } else {
+        // Otherwise get all memes
+        memes = await storage.getAllMemes();
+      }
+      
+      res.json(memes);
+    } catch (error) {
+      console.error("Error fetching memes:", error);
+      res.status(500).json({ message: "Failed to fetch memes" });
+    }
+  });
+
+  // Get Memes by category
+  app.get('/api/memes/category/:category', async (req, res) => {
+    try {
+      const { category } = req.params;
+      const memes = await storage.getMemesByCategory(category);
+      res.json(memes);
+    } catch (error) {
+      console.error("Error fetching memes by category:", error);
+      res.status(500).json({ message: "Failed to fetch memes by category" });
+    }
+  });
+
+  // Get trending Memes
+  app.get('/api/memes/trending', async (req, res) => {
+    try {
+      const memes = await storage.getTrendingMemes();
+      res.json(memes);
+    } catch (error) {
+      console.error("Error fetching trending memes:", error);
+      res.status(500).json({ message: "Failed to fetch trending memes" });
+    }
+  });
+
+  // Get featured Memes
+  app.get('/api/memes/featured', async (req, res) => {
+    try {
+      const memes = await storage.getFeaturedMemes();
+      res.json(memes);
+    } catch (error) {
+      console.error("Error fetching featured memes:", error);
+      res.status(500).json({ message: "Failed to fetch featured memes" });
+    }
+  });
+
+  // Search Memes
+  app.get('/api/memes/search', async (req, res) => {
+    try {
+      const { q } = req.query;
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+      const memes = await storage.searchMemes(q);
+      res.json(memes);
+    } catch (error) {
+      console.error("Error searching memes:", error);
+      res.status(500).json({ message: "Failed to search memes" });
+    }
+  });
+
+  // Get Meme by ID
+  app.get('/api/memes/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const meme = await storage.getMemeById(id);
+      if (!meme) {
+        return res.status(404).json({ message: "Meme not found" });
+      }
+      res.json(meme);
+    } catch (error) {
+      console.error("Error fetching meme:", error);
+      res.status(500).json({ message: "Failed to fetch meme" });
+    }
+  });
+
+  // Create new Meme (admin only)
+  app.post('/api/memes', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { title, imageUrl, description, category, isAnimated } = req.body;
+      
+      if (!title || !imageUrl) {
+        return res.status(400).json({ message: "Title and image URL are required" });
+      }
+
+      const meme = await storage.createMeme({
+        title,
+        imageUrl,
+        description: description || '',
+        category: category || 'general',
+        isAnimated: isAnimated || false,
+        uploadedBy: userId
+      });
+      
+      res.json(meme);
+    } catch (error) {
+      console.error("Error creating meme:", error);
+      res.status(500).json({ message: "Failed to create meme" });
+    }
+  });
+
+  // Update Meme (admin only)
+  app.put('/api/memes/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const meme = await storage.updateMeme(id, updates);
+      res.json(meme);
+    } catch (error) {
+      console.error("Error updating meme:", error);
+      res.status(500).json({ message: "Failed to update meme" });
+    }
+  });
+
+  // Delete Meme (admin only)
+  app.delete('/api/memes/:id', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteMeme(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting meme:", error);
+      res.status(500).json({ message: "Failed to delete meme" });
+    }
+  });
+
   // Moviecon API routes
   
   // Get all Moviecons

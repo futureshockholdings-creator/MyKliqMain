@@ -3,28 +3,28 @@ import { Camera, Image, Film, MessageSquare, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { GifPicker } from '@/components/GifPicker';
+import { MemePicker } from '@/components/MemePicker';
 import { MovieconPicker } from '@/components/MovieconPicker';
 import { MediaUpload } from '@/components/MediaUpload';
-import type { Gif, Moviecon } from '@shared/schema';
+import type { Meme, Moviecon } from '@shared/schema';
 
 interface MessageMediaPickerProps {
-  onSelectGif: (gif: Gif) => void;
+  onSelectMeme: (meme: Meme) => void;
   onSelectMoviecon: (moviecon: Moviecon) => void;
   onSelectMedia: (mediaUrl: string, mediaType: "image" | "video") => void;
 }
 
-export function MessageMediaPicker({ onSelectGif, onSelectMoviecon, onSelectMedia }: MessageMediaPickerProps) {
+export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMedia }: MessageMediaPickerProps) {
   const [showPicker, setShowPicker] = useState(false);
-  const [activeTab, setActiveTab] = useState("gif");
+  const [activeTab, setActiveTab] = useState("meme");
 
   const handleMediaUpload = (mediaUrl: string, mediaType: "image" | "video") => {
     onSelectMedia(mediaUrl, mediaType);
     setShowPicker(false);
   };
 
-  const handleGifSelect = (gif: Gif) => {
-    onSelectGif(gif);
+  const handleMemeSelect = (meme: Meme) => {
+    onSelectMeme(meme);
     setShowPicker(false);
   };
 
@@ -63,9 +63,9 @@ export function MessageMediaPicker({ onSelectGif, onSelectMoviecon, onSelectMedi
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="gif" className="flex items-center gap-2" data-testid="tab-gif">
+              <TabsTrigger value="meme" className="flex items-center gap-2" data-testid="tab-meme">
                 <MessageSquare className="w-4 h-4" />
-                GIFs
+                MEMEs
               </TabsTrigger>
               <TabsTrigger value="moviecon" className="flex items-center gap-2" data-testid="tab-moviecon">
                 <Film className="w-4 h-4" />
@@ -82,8 +82,8 @@ export function MessageMediaPicker({ onSelectGif, onSelectMoviecon, onSelectMedi
             </TabsList>
 
             <div className="mt-6 max-h-[60vh] overflow-y-auto">
-              <TabsContent value="gif" className="mt-0">
-                <GifPicker onSelectGif={handleGifSelect} />
+              <TabsContent value="meme" className="mt-0">
+                <MemePicker onSelectMeme={handleMemeSelect} />
               </TabsContent>
 
               <TabsContent value="moviecon" className="mt-0">

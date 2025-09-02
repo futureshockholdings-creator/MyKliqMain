@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import type { User, Gif, Moviecon } from "@shared/schema";
+import type { User, Meme, Moviecon } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { MessageMediaPicker } from "@/components/MessageMediaPicker";
-import { GifDisplay } from "@/components/GifDisplay";
+import { MemeDisplay } from "@/components/MemeDisplay";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
 import Footer from "@/components/Footer";
 
@@ -22,7 +22,7 @@ interface MessageData {
   receiverId: string;
   mediaUrl?: string;
   mediaType?: "image" | "video";
-  gifId?: string;
+  memeId?: string;
   movieconId?: string;
   isRead: boolean;
   createdAt: string;
@@ -40,7 +40,7 @@ interface MessageData {
     lastName?: string;
     profileImageUrl?: string;
   };
-  gif?: {
+  meme?: {
     id: string;
     createdAt: Date | null;
     updatedAt: Date | null;
@@ -92,7 +92,7 @@ export function Conversation() {
   const queryClient = useQueryClient();
   const [messageText, setMessageText] = useState("");
   const [selectedMedia, setSelectedMedia] = useState<{
-    type: "gif" | "moviecon" | "image" | "video";
+    type: "meme" | "moviecon" | "image" | "video";
     data: any;
   } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -109,7 +109,7 @@ export function Conversation() {
       content?: string;
       mediaUrl?: string;
       mediaType?: "image" | "video";
-      gifId?: string;
+      memeId?: string;
       movieconId?: string;
     }) => {
       return apiRequest("POST", `/api/messages/send`, {
@@ -154,8 +154,8 @@ export function Conversation() {
       
       if (selectedMedia) {
         switch (selectedMedia.type) {
-          case "gif":
-            messageData.gifId = selectedMedia.data.id;
+          case "meme":
+            messageData.memeId = selectedMedia.data.id;
             break;
           case "moviecon":
             messageData.movieconId = selectedMedia.data.id;
@@ -172,8 +172,8 @@ export function Conversation() {
     }
   };
 
-  const handleGifSelect = (gif: Gif) => {
-    setSelectedMedia({ type: "gif", data: gif });
+  const handleMemeSelect = (meme: Meme) => {
+    setSelectedMedia({ type: "meme", data: meme });
   };
 
   const handleMovieconSelect = (moviecon: Moviecon) => {
@@ -318,10 +318,10 @@ export function Conversation() {
                           </div>
                         )}
                         
-                        {/* GIF content */}
-                        {message.gif && (
+                        {/* MEME content */}
+                        {message.meme && (
                           <div className="rounded-lg overflow-hidden">
-                            <GifDisplay gif={message.gif} className="max-w-xs" />
+                            <MemeDisplay meme={message.meme} className="max-w-xs" />
                           </div>
                         )}
                         
@@ -353,9 +353,9 @@ export function Conversation() {
             <div className="mb-3 p-3 bg-white text-black rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {selectedMedia.type === "gif" && (
+                  {selectedMedia.type === "meme" && (
                     <>
-                      <span className="text-sm font-medium">🎭 GIF selected:</span>
+                      <span className="text-sm font-medium">😂 MEME selected:</span>
                       <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
                     </>
                   )}
@@ -387,7 +387,7 @@ export function Conversation() {
           
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <MessageMediaPicker
-              onSelectGif={handleGifSelect}
+              onSelectMeme={handleMemeSelect}
               onSelectMoviecon={handleMovieconSelect}
               onSelectMedia={handleMediaSelect}
             />

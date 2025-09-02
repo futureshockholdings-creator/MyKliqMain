@@ -221,6 +221,26 @@ export const userAdPreferences = pgTable("user_ad_preferences", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Memes - custom uploaded meme images and GIFs
+export const memes = pgTable("memes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: varchar("description"),
+  imageUrl: varchar("image_url").notNull(), // Can be static image or animated GIF
+  thumbnailUrl: varchar("thumbnail_url"),
+  tags: varchar("tags").array().default(sql`'{}'::varchar[]`),
+  category: varchar("category").notNull().default("general"),
+  width: integer("width"),
+  height: integer("height"),
+  fileSize: integer("file_size"),
+  isAnimated: boolean("is_animated").default(false), // true for GIFs, false for static images
+  trending: boolean("trending").default(false),
+  featured: boolean("featured").default(false),
+  uploadedBy: varchar("uploaded_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Moviecons - short movie clips with sound (3-5 seconds)
 export const moviecons = pgTable("moviecons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -250,6 +270,7 @@ export const posts = pgTable("posts", {
   mediaUrl: varchar("media_url"),
   mediaType: mediaTypeEnum("media_type"),
   gifId: varchar("gif_id").references(() => gifs.id),
+  memeId: varchar("meme_id").references(() => memes.id),
   movieconId: varchar("moviecon_id").references(() => moviecons.id),
   likes: integer("likes").default(0),
   latitude: numeric("latitude", { precision: 10, scale: 7 }),
@@ -279,6 +300,7 @@ export const comments = pgTable("comments", {
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   content: text("content").notNull(),
   gifId: varchar("gif_id").references(() => gifs.id),
+  memeId: varchar("meme_id").references(() => memes.id),
   movieconId: varchar("moviecon_id").references(() => moviecons.id),
   parentCommentId: varchar("parent_comment_id").references(() => comments.id, { onDelete: "cascade" }), // For nested replies
   createdAt: timestamp("created_at").defaultNow(),
@@ -1034,12 +1056,18 @@ export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Gif = typeof gifs.$inferSelect;
 export type InsertGif = typeof gifs.$inferInsert;
+export type Meme = typeof memes.$inferSelect;
+export type InsertMeme = typeof memes.$inferInsert;
 export type Moviecon = typeof moviecons.$inferSelect;
 export type InsertMoviecon = typeof moviecons.$inferInsert;
 
 // GIF Zod schemas
 export const insertGifSchema = createInsertSchema(gifs).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertGifForm = z.infer<typeof insertGifSchema>;
+
+// Meme Zod schemas
+export const insertMemeSchema = createInsertSchema(memes).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertMemeForm = z.infer<typeof insertMemeSchema>;
 
 // Moviecon Zod schemas
 export const insertMovieconSchema = createInsertSchema(moviecons).omit({ id: true, createdAt: true, updatedAt: true });
