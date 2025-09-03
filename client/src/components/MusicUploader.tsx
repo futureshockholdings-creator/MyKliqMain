@@ -171,7 +171,7 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
                 variant="outline"
                 size="sm"
                 onClick={addTrack}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 text-foreground"
                 data-testid="button-add-track"
               >
                 <Plus className="w-4 h-4" />
@@ -212,7 +212,7 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
                   variant="ghost"
                   size="sm"
                   onClick={() => removeTrack(index)}
-                  className="text-destructive hover:text-destructive"
+                  className="text-destructive hover:text-destructive bg-transparent"
                   data-testid={`button-remove-${index}`}
                 >
                   <X className="w-4 h-4" />
@@ -236,6 +236,7 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
                 variant="destructive"
                 onClick={handleRemoveAll}
                 disabled={deleteMusicMutation.isPending}
+                className="text-destructive-foreground bg-destructive hover:bg-destructive/90"
                 data-testid="button-remove-all"
               >
                 {deleteMusicMutation.isPending ? (
@@ -254,12 +255,18 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
           </div>
           
           <div className="space-x-2">
-            <Button variant="outline" onClick={() => setIsOpen(false)} data-testid="button-cancel">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsOpen(false)} 
+              className="text-foreground border-border hover:bg-accent hover:text-accent-foreground"
+              data-testid="button-cancel"
+            >
               Cancel
             </Button>
             <Button
               onClick={handleSave}
               disabled={!hasValidTracks || saveMusicMutation.isPending}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
               data-testid="button-save"
             >
               {saveMusicMutation.isPending ? (
