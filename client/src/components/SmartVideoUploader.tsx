@@ -155,7 +155,9 @@ export function SmartVideoUploader({
           '.mov',
           '.mp4',
           '.avi',
-          '.mkv'
+          '.mkv',
+          '.3gp',
+          '.webm'
         ]}
         onGetUploadParameters={onGetUploadParameters}
         onComplete={handleUploadComplete}

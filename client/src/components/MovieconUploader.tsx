@@ -132,7 +132,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
         <CardHeader>
           <CardTitle className="text-foreground">Upload New Moviecon</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Upload multiple video files (up to 50 files, 100MB each). Supported formats: .mp4, .mov, .hevc, .h265, .avi, .mkv
+            Upload multiple video files (up to 50 files, 100MB each). Supported formats: .mp4, .mov, .hevc, .h265, .avi, .mkv, .3gp, .webm
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -161,7 +161,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
               >
                 <div className="flex items-center gap-2">
                   <Upload className="h-4 w-4" />
-                  <span>📹 Upload Video Files (.mp4, .mov, .hevc, .h265, .avi, .mkv)</span>
+                  <span>📹 Upload Video Files (.mp4, .mov, .hevc, .h265, .avi, .mkv, .3gp, .webm)</span>
                 </div>
               </SmartVideoUploader>
             ))}
