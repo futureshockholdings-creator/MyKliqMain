@@ -1704,6 +1704,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve public objects (public memes, etc.)
+  app.get("/public-objects/:filePath(*)", async (req, res) => {
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const file = await objectStorageService.searchPublicObject(req.params.filePath);
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      objectStorageService.downloadObject(file, res);
+    } catch (error) {
+      console.error("Error searching for public object:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Proxy endpoint for meme images (to make private URLs accessible)
   app.get("/api/meme-proxy", async (req, res) => {
     const { url } = req.query;
