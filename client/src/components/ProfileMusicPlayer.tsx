@@ -20,7 +20,10 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
   const [hasError, setHasError] = useState(false);
   const [isYouTubeUrl, setIsYouTubeUrl] = useState(false);
   const [showEmbedPlayer, setShowEmbedPlayer] = useState(false);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(() => {
+    // Start with a random track when component mounts
+    return musicUrls.length > 0 ? Math.floor(Math.random() * musicUrls.length) : 0;
+  });
 
   // Get current track info
   const currentMusicUrl = musicUrls[currentTrackIndex] || '';
