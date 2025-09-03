@@ -3460,9 +3460,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Title and image URL are required" });
       }
 
+      // Normalize the image URL for public memes
+      let normalizedImageUrl = imageUrl;
+      if (imageUrl.startsWith('https://storage.googleapis.com/')) {
+        // Extract the file path from the Google Cloud Storage URL
+        const url = new URL(imageUrl);
+        const pathParts = url.pathname.split('/');
+        // Format: /bucket/public/memes/filename -> /public-objects/memes/filename
+        if (pathParts.length >= 4 && pathParts[2] === 'public' && pathParts[3] === 'memes') {
+          const filename = pathParts.slice(4).join('/');
+          normalizedImageUrl = `/public-objects/memes/${filename}`;
+        }
+      }
+
       const meme = await storage.createMeme({
         title,
-        imageUrl,
+        imageUrl: normalizedImageUrl,
         description: description || '',
         category: category || 'general',
         isAnimated: isAnimated || false,
