@@ -27,22 +27,31 @@ export default function Landing() {
     setIsValidating(true);
     try {
       // Check if invite code exists and is valid
-      const response = await apiRequest("POST", "/api/auth/validate-invite-code", {
+      const data = await apiRequest("POST", "/api/auth/validate-invite-code", {
         inviteCode: inviteCode.trim()
       });
 
-      if (response.ok) {
+      if (data.success) {
         toast({
           title: "Valid invitation!",
-          description: "Redirecting to profile setup...",
+          description: `Joining ${data.kliqOwner?.firstName}'s kliq...`,
         });
         // Redirect to signup with invite code
-        window.location.href = `/signup?inviteCode=${encodeURIComponent(inviteCode.trim())}`;
+        setTimeout(() => {
+          window.location.href = `/signup?inviteCode=${encodeURIComponent(inviteCode.trim())}`;
+        }, 1000);
+      } else {
+        toast({
+          title: "Invalid invitation code",
+          description: data.message || "Please check your invitation code and try again.",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Invite code validation error:", error);
       toast({
         title: "Invalid invitation code",
-        description: "Please check your invitation code and try again.",
+        description: error.message || "Please check your invitation code and try again.",
         variant: "destructive",
       });
     } finally {
