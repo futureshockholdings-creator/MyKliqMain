@@ -151,7 +151,7 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
           {currentMusicUrls.length > 0 ? `Manage Music (${currentMusicUrls.length} tracks)` : "Add Profile Music"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background text-foreground border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Music className="w-5 h-5" />
@@ -164,7 +164,7 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">YouTube Music Tracks</Label>
+            <Label className="text-sm font-medium text-foreground">YouTube Music Tracks</Label>
             {tracks.length < MAX_TRACKS && (
               <Button
                 type="button"
@@ -181,7 +181,7 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
           </div>
 
           {tracks.map((track, index) => (
-            <div key={index} className="flex gap-2 items-start p-3 border rounded-lg">
+            <div key={index} className="flex gap-2 items-start p-3 border border-border rounded-lg bg-card">
               <div className="flex-1 space-y-2">
                 <div>
                   <Label className="text-xs text-muted-foreground">Song Title</Label>
@@ -199,10 +199,10 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
                     value={track.url}
                     onChange={(e) => updateTrack(index, 'url', e.target.value)}
                     data-testid={`input-url-${index}`}
-                    className={track.url && !isValidYouTubeUrl(track.url) ? "border-red-500" : ""}
+                    className={track.url && !isValidYouTubeUrl(track.url) ? "border-destructive" : ""}
                   />
                   {track.url && !isValidYouTubeUrl(track.url) && (
-                    <p className="text-xs text-red-500 mt-1">Please enter a valid YouTube URL</p>
+                    <p className="text-xs text-destructive mt-1">Please enter a valid YouTube URL</p>
                   )}
                 </div>
               </div>
