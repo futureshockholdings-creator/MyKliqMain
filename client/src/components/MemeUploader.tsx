@@ -83,7 +83,7 @@ export function MemeUploader({ memes, onRefresh }: MemeUploaderProps) {
           description: description.trim() || undefined,
           imageUrl: imageUrl,
           category: "general",
-          isAnimated: fileName.toLowerCase().includes('.gif'),
+          isAnimated: fileName.toLowerCase().includes('.gif') || fileName.toLowerCase().includes('.webp'),
         });
       }) || [];
 
@@ -137,7 +137,7 @@ export function MemeUploader({ memes, onRefresh }: MemeUploaderProps) {
             Upload New Meme
           </CardTitle>
           <CardDescription>
-            Add new memes to your collection. Supports JPEG, PNG, GIF, and WebP formats.
+            Add new memes to your collection. Supports all popular formats: JPEG, JPG, PNG, GIF, WebP, HEIC, HEIF, BMP, TIFF from iOS and Android devices.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -172,14 +172,26 @@ export function MemeUploader({ memes, onRefresh }: MemeUploaderProps) {
           <ObjectUploader
             maxNumberOfFiles={50}
             maxFileSize={50 * 1024 * 1024} // 50MB
-            allowedFileTypes={['image/*']}
+            allowedFileTypes={[
+              'image/*',
+              '.jpg',
+              '.jpeg',
+              '.png',
+              '.gif',
+              '.webp',
+              '.heic',
+              '.heif',
+              '.bmp',
+              '.tiff',
+              '.tif'
+            ]}
             onGetUploadParameters={handleGetUploadParameters}
             onComplete={handleUploadComplete}
             buttonClassName="w-full"
           >
             <div className="flex items-center justify-center gap-2 p-4">
               <Image className="w-5 h-5" />
-              {isUploading ? "Uploading..." : "Select Meme Files"}
+              {isUploading ? "Uploading..." : "📸 Select Image Files (JPEG, PNG, GIF, WebP, HEIC, etc.)"}
             </div>
           </ObjectUploader>
         </CardContent>
