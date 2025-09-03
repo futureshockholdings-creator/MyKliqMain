@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PhoneInput } from "@/components/ui/phone-input";
 import { Users, Crown, Palette, Shield, Video, LogIn, Link as LinkIcon } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
@@ -11,56 +10,46 @@ import { useToast } from "@/hooks/use-toast";
 import Footer from "@/components/Footer";
 
 export default function Landing() {
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [inviteCode, setInviteCode] = useState("");
-  const [verificationCode, setVerificationCode] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [mockCode, setMockCode] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
 
-  const sendVerification = async () => {
-    try {
-      const response = await apiRequest("POST", "/api/auth/send-verification", {
-        phoneNumber,
-        inviteCode: inviteCode.trim() || undefined
-      });
-      const data = await response.json();
-      
-      if (data.success) {
-        setIsVerifying(true);
-        setMockCode(data.mockCode); // For MVP - remove in production
-        toast({
-          title: "Verification code sent!",
-          description: `Code sent to ${phoneNumber}${data.mockCode ? ` (Mock: ${data.mockCode})` : ''}`,
-        });
-      }
-    } catch (error) {
+  const validateInviteCode = async () => {
+    if (!inviteCode.trim()) {
       toast({
         title: "Error",
-        description: "Failed to send verification code",
+        description: "Please enter an invitation code",
         variant: "destructive",
       });
+      return;
     }
-  };
 
-  const verifyAndJoin = async () => {
+    setIsValidating(true);
     try {
-      await apiRequest("POST", "/api/auth/verify-phone", {
-        phoneNumber,
-        verificationCode,
+      // Check if invite code exists and is valid
+      const response = await apiRequest("POST", "/api/auth/validate-invite-code", {
         inviteCode: inviteCode.trim()
       });
 
-      // If successful, proceed to signup with invite code in URL
-      window.location.href = `/signup?inviteCode=${encodeURIComponent(inviteCode.trim())}`;
+      if (response.ok) {
+        toast({
+          title: "Valid invitation!",
+          description: "Redirecting to profile setup...",
+        });
+        // Redirect to signup with invite code
+        window.location.href = `/signup?inviteCode=${encodeURIComponent(inviteCode.trim())}`;
+      }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Verification failed. Please try again.",
+        title: "Invalid invitation code",
+        description: "Please check your invitation code and try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsValidating(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden relative">
@@ -188,6 +177,7 @@ export default function Landing() {
                 <Button 
                   variant="outline" 
                   className="w-full bg-card border-border text-card-foreground hover:bg-accent"
+                  data-testid="button-join-with-invite"
                 >
                   Join with Invite Code
                 </Button>
@@ -197,58 +187,29 @@ export default function Landing() {
                   <DialogTitle className="text-primary">Join a Kliq!</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <PhoneInput
-                    label="Your phone number"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    disabled={isVerifying}
-                  />
-                  
                   <div>
-                    <label className="text-sm text-gray-400">Invitation code</label>
+                    <label className="text-sm font-medium text-foreground">Invitation Code</label>
                     <Input
                       value={inviteCode}
                       onChange={(e) => setInviteCode(e.target.value)}
                       placeholder="KLIQ-XXXX-XXXX"
-                      className="bg-gray-700 border-gray-600 text-white"
-                      disabled={isVerifying}
+                      className="mt-1"
+                      disabled={isValidating}
+                      data-testid="input-invite-code"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter the invitation code you received from a friend
+                    </p>
                   </div>
 
-                  {!isVerifying ? (
-                    <Button
-                      onClick={sendVerification}
-                      disabled={!phoneNumber || !inviteCode.trim()}
-                      className="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold"
-                    >
-                      Join MyKliq
-                    </Button>
-                  ) : (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm text-gray-400">Enter 6-digit code</label>
-                        <Input
-                          value={verificationCode}
-                          onChange={(e) => setVerificationCode(e.target.value)}
-                          placeholder="000000"
-                          maxLength={6}
-                          className="bg-gray-700 border-gray-600 text-white text-center text-lg"
-                        />
-                        {mockCode && (
-                          <p className="text-xs text-yellow-400 mt-1">
-                            Mock code for testing: {mockCode}
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        onClick={verifyAndJoin}
-                        disabled={verificationCode.length !== 6}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold"
-                      >
-                        Verify & Join MyKliq
-                      </Button>
-                    </div>
-                  )}
+                  <Button
+                    onClick={validateInviteCode}
+                    disabled={!inviteCode.trim() || isValidating}
+                    className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-primary-foreground font-bold"
+                    data-testid="button-validate-invite"
+                  >
+                    {isValidating ? "Validating..." : "Join MyKliq"}
+                  </Button>
                 </div>
               </DialogContent>
             </Dialog>

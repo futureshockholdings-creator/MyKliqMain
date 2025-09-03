@@ -2927,6 +2927,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Validate invite code endpoint (no authentication required)
+  app.post('/api/auth/validate-invite-code', async (req, res) => {
+    try {
+      const { inviteCode } = req.body;
+      
+      if (!inviteCode || !inviteCode.trim()) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invite code is required" 
+        });
+      }
+
+      // Check if invite code exists and get the owner
+      const inviteCodeOwner = await storage.getUserByInviteCode(inviteCode.trim());
+      if (!inviteCodeOwner) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "Invalid invite code" 
+        });
+      }
+
+      // Check if invite code has been used
+      const isUsed = await storage.isInviteCodeUsed(inviteCode.trim());
+      if (isUsed) {
+        return res.status(409).json({ 
+          success: false, 
+          message: "This invite code has already been used" 
+        });
+      }
+
+      // Check if the kliq is closed
+      if (inviteCodeOwner.kliqClosed) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "This kliq is no longer accepting new members" 
+        });
+      }
+
+      // Check friend limit (28 max)
+      const friends = await storage.getFriends(inviteCodeOwner.id);
+      if (friends.length >= 28) {
+        return res.status(403).json({ 
+          success: false, 
+          message: "This kliq has reached the maximum number of members (28)" 
+        });
+      }
+
+      // If we get here, the invite code is valid
+      res.json({ 
+        success: true, 
+        message: "Valid invite code",
+        kliqOwner: {
+          firstName: inviteCodeOwner.firstName,
+          lastName: inviteCodeOwner.lastName,
+          kliqName: inviteCodeOwner.kliqName
+        }
+      });
+
+    } catch (error) {
+      console.error("Error validating invite code:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to validate invite code" 
+      });
+    }
+  });
+
   // SMS verification routes (mocked for MVP)
   app.post('/api/auth/send-verification', async (req, res) => {
     try {
