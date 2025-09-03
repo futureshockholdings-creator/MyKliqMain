@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SmartVideoUploader } from "./SmartVideoUploader";
 import { ObjectUploader } from "./ObjectUploader";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -203,16 +204,31 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
           )}
 
           <div className="flex justify-between items-center">
-            <ObjectUploader
-              maxNumberOfFiles={1}
-              maxFileSize={50485760} // 50MB
-              onGetUploadParameters={handleGetUploadParameters}
-              onComplete={handleUploadComplete}
-              buttonClassName="bg-white text-black border-2 border-black hover:bg-gray-50"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Add Media
-            </ObjectUploader>
+            <div className="space-y-2">
+              <ObjectUploader
+                maxNumberOfFiles={1}
+                maxFileSize={50485760} // 50MB
+                allowedFileTypes={[
+                  // Image formats
+                  'image/*',
+                  '.jpg', '.jpeg', '.png', '.gif', '.webp',
+                  '.heic', '.heif', '.bmp', '.tiff', '.tif',
+                  // Video formats  
+                  'video/*',
+                  '.mp4', '.mov', '.hevc', '.h265', '.avi',
+                  '.mkv', '.3gp', '.webm'
+                ]}
+                onGetUploadParameters={handleGetUploadParameters}
+                onComplete={handleUploadComplete}
+                buttonClassName="bg-white text-black border-2 border-black hover:bg-gray-50"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                📸📹 Add Photos & Videos
+              </ObjectUploader>
+              <p className="text-xs text-muted-foreground text-center">
+                Supports: JPEG, PNG, GIF, WebP, HEIC, MP4, MOV, HEVC, 3GP, WebM + more
+              </p>
+            </div>
 
             <div className="flex space-x-2">
               <Button
