@@ -1574,33 +1574,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/user/profile-music", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { musicUrl, musicTitle } = req.body;
+      const { musicUrl, musicTitle, musicUrls, musicTitles } = req.body;
 
-      if (!musicUrl || !musicTitle) {
-        return res.status(400).json({ message: "Music URL and title are required" });
-      }
+      // Handle both single URL/title and array format for backward compatibility
+      let finalMusicUrls: string[] = [];
+      let finalMusicTitles: string[] = [];
 
-      // Handle different types of URLs
-      let finalMusicUrl = musicUrl;
-      
-      // For URLs from object storage, normalize the path
-      if (musicUrl.includes('storage.googleapis.com') || musicUrl.startsWith('/objects/')) {
-        try {
-          const objectStorageService = new ObjectStorageService();
-          finalMusicUrl = objectStorageService.normalizeObjectEntityPath(musicUrl);
-        } catch (error) {
-          console.log("Error normalizing object path, using original URL:", error);
-          finalMusicUrl = musicUrl;
+      if (musicUrls && musicTitles) {
+        // New array format
+        finalMusicUrls = musicUrls;
+        finalMusicTitles = musicTitles;
+      } else if (musicUrl && musicTitle) {
+        // Legacy single format - add to existing arrays
+        const user = await storage.getUser(userId);
+        finalMusicUrls = [...(user?.profileMusicUrls || [])];
+        finalMusicTitles = [...(user?.profileMusicTitles || [])];
+        
+        // Handle different types of URLs
+        let processedUrl = musicUrl;
+        
+        // For URLs from object storage, normalize the path
+        if (musicUrl.includes('storage.googleapis.com') || musicUrl.startsWith('/objects/')) {
+          try {
+            const objectStorageService = new ObjectStorageService();
+            processedUrl = objectStorageService.normalizeObjectEntityPath(musicUrl);
+          } catch (error) {
+            console.log("Error normalizing object path, using original URL:", error);
+            processedUrl = musicUrl;
+          }
         }
-      }
-      // For external URLs (YouTube, SoundCloud, etc.), use them directly
-      else {
-        finalMusicUrl = musicUrl;
+        
+        finalMusicUrls.push(processedUrl);
+        finalMusicTitles.push(musicTitle);
+      } else {
+        return res.status(400).json({ message: "Music URL(s) and title(s) are required" });
       }
 
       await storage.updateUser(userId, {
-        profileMusicUrl: finalMusicUrl,
-        profileMusicTitle: musicTitle,
+        profileMusicUrls: finalMusicUrls,
+        profileMusicTitles: finalMusicTitles,
       });
 
       const updatedUser = await storage.getUser(userId);
@@ -1614,11 +1626,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/user/profile-music", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const { index } = req.body; // Optional: remove specific track by index
       
-      await storage.updateUser(userId, {
-        profileMusicUrl: null,
-        profileMusicTitle: null,
-      });
+      if (index !== undefined && index >= 0) {
+        // Remove specific track by index
+        const user = await storage.getUser(userId);
+        const musicUrls = [...(user?.profileMusicUrls || [])];
+        const musicTitles = [...(user?.profileMusicTitles || [])];
+        
+        if (index < musicUrls.length) {
+          musicUrls.splice(index, 1);
+          musicTitles.splice(index, 1);
+        }
+        
+        await storage.updateUser(userId, {
+          profileMusicUrls: musicUrls,
+          profileMusicTitles: musicTitles,
+        });
+      } else {
+        // Remove all music
+        await storage.updateUser(userId, {
+          profileMusicUrls: [],
+          profileMusicTitles: [],
+        });
+      }
 
       const updatedUser = await storage.getUser(userId);
       res.json(updatedUser);

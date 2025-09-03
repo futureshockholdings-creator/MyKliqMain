@@ -319,13 +319,13 @@ export default function Profile() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Current Profile Music Player (if music exists) */}
-            {(user as User)?.profileMusicUrl && (user as User)?.profileMusicTitle && (
+            {(user as User)?.profileMusicUrls && (user as User)?.profileMusicUrls?.length > 0 && (user as User)?.profileMusicTitles && (
               <div>
                 <Label className="text-sm font-medium text-foreground">Current Profile Music</Label>
                 <div className="mt-2">
                   <ProfileMusicPlayer
-                    musicUrl={(user as User).profileMusicUrl!}
-                    musicTitle={(user as User).profileMusicTitle!}
+                    musicUrls={(user as User).profileMusicUrls!}
+                    musicTitles={(user as User).profileMusicTitles!}
                     autoPlay={true}
                   />
                 </div>
@@ -337,8 +337,8 @@ export default function Profile() {
               <Label className="text-sm font-medium text-foreground">Profile Music Settings</Label>
               <div className="mt-2">
                 <MusicUploader
-                  currentMusicUrl={(user as User)?.profileMusicUrl || undefined}
-                  currentMusicTitle={(user as User)?.profileMusicTitle || undefined}
+                  currentMusicUrls={(user as User)?.profileMusicUrls || []}
+                  currentMusicTitles={(user as User)?.profileMusicTitles || []}
                   userId={(user as User)?.id!}
                 />
               </div>

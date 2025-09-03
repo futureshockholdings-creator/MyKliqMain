@@ -49,8 +49,8 @@ export const users = pgTable("users", {
   kliqRightEmoji: varchar("kliq_right_emoji").default("🏆"),
   kliqClosed: boolean("kliq_closed").default(false),
   birthdate: date("birthdate"),
-  profileMusicUrl: varchar("profile_music_url"),
-  profileMusicTitle: varchar("profile_music_title"),
+  profileMusicUrls: text("profile_music_urls").array(),
+  profileMusicTitles: text("profile_music_titles").array(),
   // Extended profile details
   interests: text("interests").array(),
   favoriteLocations: text("favorite_locations").array(),

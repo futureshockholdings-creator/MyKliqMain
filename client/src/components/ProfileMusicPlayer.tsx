@@ -1,16 +1,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX, Music, ExternalLink, AlertTriangle } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Music, ExternalLink, AlertTriangle, SkipForward } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ProfileMusicPlayerProps {
-  musicUrl: string;
-  musicTitle: string;
+  musicUrls: string[];
+  musicTitles: string[];
   autoPlay?: boolean;
 }
 
-export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = true }: ProfileMusicPlayerProps) {
+export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: ProfileMusicPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -20,10 +20,25 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = true }: Pr
   const [hasError, setHasError] = useState(false);
   const [isYouTubeUrl, setIsYouTubeUrl] = useState(false);
   const [showEmbedPlayer, setShowEmbedPlayer] = useState(false);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+
+  // Get current track info
+  const currentMusicUrl = musicUrls[currentTrackIndex] || '';
+  const currentMusicTitle = musicTitles[currentTrackIndex] || 'Unknown Track';
+
+  // Function to select a random track
+  const selectRandomTrack = () => {
+    if (musicUrls.length <= 1) return;
+    let newIndex;
+    do {
+      newIndex = Math.floor(Math.random() * musicUrls.length);
+    } while (newIndex === currentTrackIndex);
+    setCurrentTrackIndex(newIndex);
+  };
 
   useEffect(() => {
     // Check if URL is YouTube
-    const isYT = musicUrl.includes('youtube.com') || musicUrl.includes('youtu.be');
+    const isYT = currentMusicUrl.includes('youtube.com') || currentMusicUrl.includes('youtu.be');
     setIsYouTubeUrl(isYT);
     setHasError(false);
     
@@ -40,20 +55,19 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = true }: Pr
     audio.addEventListener("timeupdate", updateTime);
     audio.addEventListener("loadedmetadata", updateDuration);
     audio.addEventListener("ended", () => {
-      // Auto-restart playback for seamless looping
-      audio.currentTime = 0;
-      audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      // Select random track and play next
+      selectRandomTrack();
     });
     audio.addEventListener("error", handleError);
     
-    // Enable looping
-    audio.loop = true;
+    // Disable looping since we want to play random tracks
+    audio.loop = false;
 
     // Reset error state when URL changes
     setHasError(false);
 
     // Auto-play for non-YouTube URLs
-    if (!isYT) {
+    if (!isYT && currentMusicUrl) {
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise
@@ -72,7 +86,23 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = true }: Pr
       audio.removeEventListener("loadedmetadata", updateDuration);
       audio.removeEventListener("error", handleError);
     };
-  }, [musicUrl, autoPlay]);
+  }, [currentMusicUrl, autoPlay]);
+
+  // Auto-play when track changes (for manual track switching)
+  useEffect(() => {
+    if (isYouTubeUrl || !currentMusicUrl) return;
+    
+    const audio = audioRef.current;
+    if (audio && isPlaying) {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.log("Auto-play after track change failed:", error);
+          setIsPlaying(false);
+        });
+      }
+    }
+  }, [currentTrackIndex]);
 
   const togglePlay = () => {
     if (isYouTubeUrl) {
@@ -146,18 +176,35 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = true }: Pr
   };
 
   const openExternalUrl = () => {
-    window.open(musicUrl, '_blank', 'noopener,noreferrer');
+    window.open(currentMusicUrl, '_blank', 'noopener,noreferrer');
   };
 
+  // Handle empty URLs
+  if (!musicUrls.length || !currentMusicUrl) {
+    return (
+      <div className="bg-card border-border rounded-lg p-4 border">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Music className="w-5 h-5" />
+          <span className="text-sm">No music URLs configured</span>
+        </div>
+      </div>
+    );
+  }
+
   if (isYouTubeUrl) {
-    const videoId = getYouTubeVideoId(musicUrl);
+    const videoId = getYouTubeVideoId(currentMusicUrl);
     
     return (
       <div className="bg-card border-border rounded-lg p-4 border">
         <div className="space-y-3">
           <div className="flex items-center gap-2 mb-3">
             <Music className="w-5 h-5 text-primary" />
-            <span className="text-primary font-medium flex-1 truncate">{musicTitle}</span>
+            <span className="text-primary font-medium flex-1 truncate">{currentMusicTitle}</span>
+            {musicUrls.length > 1 && (
+              <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
+                {currentTrackIndex + 1}/{musicUrls.length}
+              </span>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -176,7 +223,7 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = true }: Pr
                 width="100%"
                 height="300"
                 src={`https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&rel=0&modestbranding=1&mute=0`}
-                title={musicTitle}
+                title={currentMusicTitle}
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
@@ -234,12 +281,11 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = true }: Pr
     <div className="bg-card border-border rounded-lg p-4 border">
       <audio
         ref={audioRef}
-        src={musicUrl}
+        src={currentMusicUrl}
         preload="metadata"
-        loop
         autoPlay
         onError={(e) => {
-          console.log("Audio playback error for:", musicUrl, e);
+          console.log("Audio playback error for:", currentMusicUrl, e);
           setIsPlaying(false);
           setHasError(true);
         }}
@@ -253,9 +299,14 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = true }: Pr
       <div className="flex items-center gap-3 mb-3">
         <Music className="w-5 h-5 text-primary" />
         <span className="text-primary font-medium flex-1 truncate">
-          {musicTitle}
+          {currentMusicTitle}
         </span>
-        {musicUrl.toLowerCase().endsWith('.m4p') && (
+        {musicUrls.length > 1 && (
+          <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
+            {currentTrackIndex + 1}/{musicUrls.length}
+          </span>
+        )}
+        {currentMusicUrl.toLowerCase().endsWith('.m4p') && (
           <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
             M4P
           </span>
@@ -264,7 +315,7 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = true }: Pr
       
       {hasError && (
         <div className="mb-3 p-2 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
-          {musicUrl.toLowerCase().endsWith('.m4p') ? 
+          {currentMusicUrl.toLowerCase().endsWith('.m4p') ? 
             "M4P files may have playback restrictions. Some protected iTunes files cannot be played in browsers." :
             "Unable to play this audio file. The format may not be supported."
           }
@@ -298,6 +349,19 @@ export function ProfileMusicPlayer({ musicUrl, musicTitle, autoPlay = true }: Pr
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
         </Button>
+        
+        {musicUrls.length > 1 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={selectRandomTrack}
+            className="text-primary hover:text-primary/80"
+            title="Next random track"
+            data-testid="button-next-track"
+          >
+            <SkipForward className="w-4 h-4" />
+          </Button>
+        )}
         
         <Button
           variant="ghost"
