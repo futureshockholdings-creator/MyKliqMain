@@ -76,17 +76,16 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
       // Filter out empty tracks and validate YouTube URLs
       const validTracks = tracksToSave.filter(track => {
         const hasUrl = track.url.trim();
-        const hasTitle = track.title.trim();
         const isValidUrl = hasUrl ? isValidYouTubeUrl(track.url) : false;
-        return hasUrl && hasTitle && isValidUrl;
+        return hasUrl && isValidUrl;
       });
       
       if (validTracks.length === 0) {
-        throw new Error("Please enter at least one valid YouTube URL and title");
+        throw new Error("Please enter at least one valid YouTube URL");
       }
       
       const musicUrls = validTracks.map(track => track.url);
-      const musicTitles = validTracks.map(track => track.title);
+      const musicTitles = validTracks.map(track => track.title || `YouTube Track ${validTracks.indexOf(track) + 1}`);
       
       return await apiRequest("PUT", "/api/user/profile-music", {
         musicUrls,
@@ -140,12 +139,11 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
     deleteMusicMutation.mutate();
   };
 
-  // Check if we have at least one valid track
+  // Check if we have at least one valid track (only URL required)
   const hasValidTracks = tracks.some(track => {
     const hasUrl = track.url && track.url.trim();
-    const hasTitle = track.title && track.title.trim();
     const isValidUrl = hasUrl ? isValidYouTubeUrl(track.url) : false;
-    return hasUrl && hasTitle && isValidUrl;
+    return hasUrl && isValidUrl;
   });
 
   const hasChanges = JSON.stringify(tracks) !== JSON.stringify(
@@ -193,15 +191,6 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
             <div key={index} className="flex gap-2 items-start p-3 border border-border rounded-lg bg-card">
               <div className="flex-1 space-y-2">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Song Title</Label>
-                  <Input
-                    placeholder="Enter song title"
-                    value={track.title}
-                    onChange={(e) => updateTrack(index, 'title', e.target.value)}
-                    data-testid={`input-title-${index}`}
-                  />
-                </div>
-                <div>
                   <Label className="text-xs text-muted-foreground">YouTube URL</Label>
                   <Input
                     placeholder="https://youtube.com/watch?v=..."
@@ -213,6 +202,15 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
                   {track.url && !isValidYouTubeUrl(track.url) && (
                     <p className="text-xs text-destructive mt-1">Please enter a valid YouTube URL</p>
                   )}
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Song Title (Optional)</Label>
+                  <Input
+                    placeholder="Optional - will auto-generate if empty"
+                    value={track.title}
+                    onChange={(e) => updateTrack(index, 'title', e.target.value)}
+                    data-testid={`input-title-${index}`}
+                  />
                 </div>
               </div>
               {tracks.length > 1 && (
@@ -233,7 +231,7 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
           <Alert>
             <Info className="w-4 h-4" />
             <AlertDescription>
-              Add YouTube music links for your profile playlist. Songs will play randomly when people visit your profile. You can add 1-10 tracks maximum.
+              Add YouTube music links for your profile playlist. Songs will play randomly when people visit your profile. Only YouTube URL is required - song titles are optional and will auto-generate if empty. You can add 1-10 tracks maximum.
             </AlertDescription>
           </Alert>
         </div>
