@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ObjectUploader } from "./ObjectUploader";
+import { SmartVideoUploader } from "./SmartVideoUploader";
 import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -132,7 +132,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
         <CardHeader>
           <CardTitle className="text-foreground">Upload New Moviecon</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Upload multiple MP4 video files (up to 50 files, 100MB each). Supported format: .mp4
+            Upload multiple video files (up to 50 files, 100MB each). Supported formats: .mp4, .mov, .hevc, .h265, .avi, .mkv
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -150,19 +150,25 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
             />
           </div>
 
-          <ObjectUploader
-            maxNumberOfFiles={50} // Allow up to 50 files at once
-            maxFileSize={100 * 1024 * 1024} // 100MB limit per MP4 video file
-            onGetUploadParameters={handleGetUploadParameters}
-            onComplete={handleUploadComplete}
-            buttonClassName="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-            allowedFileTypes={['.mp4', 'video/mp4']}
-          >
-            <div className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              <span>📹 Upload MP4 Video Files (up to 50)</span>
-            </div>
-          </ObjectUploader>
+          <div className="space-y-2">
+            {Array.from({ length: 1 }, (_, i) => (
+              <SmartVideoUploader
+                key={i}
+                onGetUploadParameters={handleGetUploadParameters}
+                onUploadComplete={handleUploadComplete}
+                maxFileSize={100 * 1024 * 1024} // 100MB limit per video file
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <div className="flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  <span>📹 Upload Video Files (.mp4, .mov, .hevc, .h265, .avi, .mkv)</span>
+                </div>
+              </SmartVideoUploader>
+            ))}
+            <p className="text-xs text-muted-foreground">
+              💡 HEVC/H.265 files will be automatically detected and can be converted to MP4 for better compatibility
+            </p>
+          </div>
 
           {isUploading && (
             <div className="text-muted-foreground text-sm">

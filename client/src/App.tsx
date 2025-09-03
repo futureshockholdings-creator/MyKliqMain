@@ -35,7 +35,6 @@ import Login from "@/pages/login";
 import ForgotPassword from "@/pages/forgot-password";
 import AdminPage from "@/pages/admin";
 import Marketing from "@/pages/marketing";
-import VideoTest from "@/pages/video-test";
 
 // Navigation Component
 import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell, Settings as SettingsIcon } from "lucide-react";
@@ -207,7 +206,6 @@ function Router() {
       <Route path="/disclaimer" component={Disclaimer} />
       <Route path="/landing" component={Landing} />
       <Route path="/marketing" component={Marketing} />
-      <Route path="/video-test" component={VideoTest} />
       <Route path="/signup" component={Signup} />
       <Route path="/login" component={Login} />
       <Route path="/forgot-password" component={ForgotPassword} />
