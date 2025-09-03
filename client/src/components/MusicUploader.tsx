@@ -58,8 +58,9 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
   };
 
   const isValidYouTubeUrl = (url: string) => {
+    if (!url || !url.trim()) return false;
     const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-    return youtubeRegex.test(url);
+    return youtubeRegex.test(url.trim());
   };
 
   const saveMusicMutation = useMutation({
@@ -133,11 +134,14 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
 
   // Check if we have at least one valid track
   const hasValidTracks = tracks.some(track => {
-    const hasUrl = track.url.trim();
-    const hasTitle = track.title.trim();
+    const hasUrl = track.url && track.url.trim();
+    const hasTitle = track.title && track.title.trim();
     const isValidUrl = hasUrl ? isValidYouTubeUrl(track.url) : false;
+    console.log('Track validation:', { url: track.url, title: track.title, hasUrl, hasTitle, isValidUrl });
     return hasUrl && hasTitle && isValidUrl;
   });
+
+  console.log('hasValidTracks:', hasValidTracks);
 
   const hasChanges = JSON.stringify(tracks) !== JSON.stringify(
     currentMusicUrls.map((url, i) => ({ url, title: currentMusicTitles[i] || "" }))
