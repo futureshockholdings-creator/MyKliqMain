@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { getInviteMessage, getAppStoreUrl, getDownloadText } from "@/lib/deviceDetection";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
@@ -503,7 +504,7 @@ export default function Kliq() {
   const copyInviteCode = async () => {
     if (userData?.inviteCode && userData?.firstName) {
       try {
-        const fullMessage = `${userData.firstName} wants you to join their Kliq. Use the following Invite Code ${userData.inviteCode} and go to https://kliqlife.com - "A Different Social Experience"`;
+        const fullMessage = getInviteMessage(userData.firstName, userData.inviteCode);
         await navigator.clipboard.writeText(fullMessage);
         toast({
           title: "Copied!",
@@ -810,14 +811,14 @@ export default function Kliq() {
                     {userData?.inviteCode && userData?.firstName 
                       ? (
                           <>
-                            {userData.firstName} wants you to join their Kliq. Use the following Invite Code {userData.inviteCode} and go to{' '}
+                            {userData.firstName} wants you to join their Kliq. Use the following Invite Code {userData.inviteCode} and{' '}
                             <a 
-                              href="https://kliqlife.com" 
+                              href={getAppStoreUrl()} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="text-blue-500 hover:text-blue-600 underline"
                             >
-                              https://kliqlife.com
+                              {getDownloadText()}
                             </a>
                             {' '}- "A Different Social Experience"
                           </>
