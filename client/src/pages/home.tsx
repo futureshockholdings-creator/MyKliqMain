@@ -1201,137 +1201,138 @@ export default function Home() {
               </Button>
             </div>
           )}
-          <div className="flex justify-between items-center">
-            <div className="flex space-x-2">
-              <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
-                <PopoverTrigger asChild>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="text-mykliq-orange hover:bg-mykliq-orange/10"
-                    data-testid="button-emoji-picker"
-                  >
-                    <Smile className="w-4 h-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-96 max-h-72 overflow-y-auto">
-                  <div className="grid grid-cols-7 gap-1 p-2">
-                    {commonEmojis.map((emoji, index) => (
-                      <Button
-                        key={index}
-                        variant="ghost"
-                        size="sm"
-                        className="h-10 w-10 p-0 text-xl hover:bg-accent emoji-large"
-                        onClick={() => handleEmojiClick(emoji)}
-                        data-testid={`emoji-${index}`}
-                      >
-                        {emoji}
-                      </Button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="text-mykliq-green hover:bg-mykliq-green/10"
-                onClick={() => setShowMediaUpload(true)}
-              >
-                <ImageIcon className="w-4 h-4" />
-              </Button>
-              <MemePicker
-                onSelectMeme={setSelectedMeme}
-                trigger={
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="text-mykliq-purple hover:bg-mykliq-purple/10"
-                  >
-                    <span className="text-xs font-bold">MEME</span>
-                  </Button>
-                }
-              />
-              <MovieconPicker
-                onSelectMoviecon={setSelectedMoviecon}
-                trigger={
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="text-blue-500 hover:bg-blue-500/10"
-                  >
-                    <Clapperboard className="w-4 h-4" />
-                  </Button>
-                }
-              />
+          {/* Action Icons Row */}
+          <div className="flex space-x-2 mb-3">
+            <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+              <PopoverTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="text-mykliq-orange hover:bg-mykliq-orange/10"
+                  data-testid="button-emoji-picker"
+                >
+                  <Smile className="w-4 h-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-96 max-h-72 overflow-y-auto">
+                <div className="grid grid-cols-7 gap-1 p-2">
+                  {commonEmojis.map((emoji, index) => (
+                    <Button
+                      key={index}
+                      variant="ghost"
+                      size="sm"
+                      className="h-10 w-10 p-0 text-xl hover:bg-accent emoji-large"
+                      onClick={() => handleEmojiClick(emoji)}
+                      data-testid={`emoji-${index}`}
+                    >
+                      {emoji}
+                    </Button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="text-mykliq-green hover:bg-mykliq-green/10"
+              onClick={() => setShowMediaUpload(true)}
+            >
+              <ImageIcon className="w-4 h-4" />
+            </Button>
+            <MemePicker
+              onSelectMeme={setSelectedMeme}
+              trigger={
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="text-mykliq-purple hover:bg-mykliq-purple/10"
+                >
+                  <span className="text-xs font-bold">MEME</span>
+                </Button>
+              }
+            />
+            <MovieconPicker
+              onSelectMoviecon={setSelectedMoviecon}
+              trigger={
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="text-blue-500 hover:bg-blue-500/10"
+                >
+                  <Clapperboard className="w-4 h-4" />
+                </Button>
+              }
+            />
 
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="text-destructive hover:bg-destructive/10"
-                onClick={getCurrentLocation}
-                disabled={isGettingLocation}
-              >
-                {isGettingLocation ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <MapPin className="w-4 h-4" />
-                )}
-              </Button>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="text-destructive hover:bg-destructive/10"
+              onClick={getCurrentLocation}
+              disabled={isGettingLocation}
+            >
+              {isGettingLocation ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <MapPin className="w-4 h-4" />
+              )}
+            </Button>
 
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="text-yellow-500 hover:bg-yellow-500/10"
-                onClick={() => setShowMoodDialog(true)}
-                data-testid="button-mood-picker"
-              >
-                <Zap className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            {/* Daily Content Buttons - Positioned under the main action icons */}
-            <div className="flex flex-wrap gap-2 items-start mt-3 justify-start">
-              <Button
-                onClick={() => horoscopeMutation.mutate()}
-                disabled={horoscopeMutation.isPending}
-                variant="outline"
-                size="sm"
-                className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
-                data-testid="button-daily-horoscope"
-              >
-                {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
-              </Button>
-              <Button
-                onClick={() => bibleVerseMutation.mutate()}
-                disabled={bibleVerseMutation.isPending}
-                variant="outline"
-                size="sm"
-                className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
-                data-testid="button-daily-bible-verse"
-              >
-                {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
-              </Button>
-              <Button
-                onClick={handleReflect}
-                disabled={reflectMutation.isPending}
-                variant="outline"
-                size="sm"
-                className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
-                data-testid="button-lets-reflect"
-              >
-                {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
-              </Button>
-            </div>
-            <div className="flex justify-end">
-              <Button
-                onClick={handleCreatePost}
-                disabled={(!newPost.trim() && !selectedMeme && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 flex-shrink-0"
-                style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
-              >
-                {createPostMutation.isPending ? "Posting..." : "Post!"}
-              </Button>
-            </div>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="text-yellow-500 hover:bg-yellow-500/10"
+              onClick={() => setShowMoodDialog(true)}
+              data-testid="button-mood-picker"
+            >
+              <Zap className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          {/* Daily Content Buttons - Positioned directly under the action icons */}
+          <div className="flex flex-wrap gap-2 items-start mb-3">
+            <Button
+              onClick={() => horoscopeMutation.mutate()}
+              disabled={horoscopeMutation.isPending}
+              variant="outline"
+              size="sm"
+              className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
+              data-testid="button-daily-horoscope"
+            >
+              {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
+            </Button>
+            <Button
+              onClick={() => bibleVerseMutation.mutate()}
+              disabled={bibleVerseMutation.isPending}
+              variant="outline"
+              size="sm"
+              className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
+              data-testid="button-daily-bible-verse"
+            >
+              {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
+            </Button>
+            <Button
+              onClick={handleReflect}
+              disabled={reflectMutation.isPending}
+              variant="outline"
+              size="sm"
+              className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
+              data-testid="button-lets-reflect"
+            >
+              {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
+            </Button>
+          </div>
+
+          {/* Post Button */}
+          <div className="flex justify-end">
+            <Button
+              onClick={handleCreatePost}
+              disabled={(!newPost.trim() && !selectedMeme && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 flex-shrink-0"
+              style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
+            >
+              {createPostMutation.isPending ? "Posting..." : "Post!"}
+            </Button>
           </div>
         </CardContent>
       </Card>
