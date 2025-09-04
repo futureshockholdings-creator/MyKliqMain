@@ -1288,18 +1288,18 @@ export default function Home() {
                 <Zap className="w-4 h-4" />
               </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 items-start">
               <Button
                 onClick={() => horoscopeMutation.mutate()}
                 disabled={horoscopeMutation.isPending}
                 variant="outline"
                 size="sm"
-                className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px]"
+                className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
                 data-testid="button-daily-horoscope"
               >
                 {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
               </Button>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 flex-shrink-0">
                 <Button
                   onClick={() => bibleVerseMutation.mutate()}
                   disabled={bibleVerseMutation.isPending}
@@ -1324,7 +1324,7 @@ export default function Home() {
               <Button
                 onClick={handleCreatePost}
                 disabled={(!newPost.trim() && !selectedMeme && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 flex-shrink-0"
                 style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
               >
                 {createPostMutation.isPending ? "Posting..." : "Post!"}
