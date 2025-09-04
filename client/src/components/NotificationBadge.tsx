@@ -54,6 +54,11 @@ export function NotificationBadge({
   // Force yellow for messages badge ALWAYS when there are notifications
   const hasIncognitoMessages = (type === "messages");
   const hasNotifications = unreadCount > 0;
+  
+  // Emergency debug
+  if (type === "messages" && hasNotifications) {
+    console.log("MESSAGES BADGE DEBUG:", { type, hasNotifications, hasIncognitoMessages, unreadCount });
+  }
 
   useEffect(() => {
     if (hasNotifications) {
