@@ -4714,32 +4714,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store state in session for verification
       req.session.oauthState = state;
       
-      // For demo purposes, if no real credentials are configured, simulate the flow
-      const hasRealCredentials = (platform === 'twitch' && process.env.TWITCH_CLIENT_ID) || 
-                                (platform === 'discord' && process.env.DISCORD_CLIENT_ID);
-      
-      if (!hasRealCredentials) {
-        // Demo mode: simulate successful connection
-        console.log(`Demo mode: Simulating ${platform} OAuth connection for user ${userId}`);
-        
-        // Create demo credential
-        await storage.createSocialCredential({
-          userId,
-          platform,
-          platformUserId: `demo-${platform}-user-${Math.random().toString(36).substr(2, 6)}`,
-          platformUsername: `demo_${platform}_user`,
-          encryptedAccessToken: encryptForStorage('demo-access-token'),
-          encryptedRefreshToken: encryptForStorage('demo-refresh-token'),
-          tokenExpiresAt: new Date(Date.now() + 3600000), // 1 hour from now
-          scopes: [],
-          isActive: true,
-          lastSyncAt: new Date(),
-        });
-        
-        return res.json({ 
-          authUrl: `/settings?social=connected&platform=${platform}&demo=true`,
-          demo: true,
-          message: `Demo connection to ${platform} created successfully`
+      // Check if OAuth credentials are configured for this platform
+      const credentialMap: Record<string, { clientId: string; clientSecret: string }> = {
+        instagram: { 
+          clientId: process.env.INSTAGRAM_CLIENT_ID || '', 
+          clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || '' 
+        },
+        tiktok: { 
+          clientId: process.env.TIKTOK_CLIENT_ID || '', 
+          clientSecret: process.env.TIKTOK_CLIENT_SECRET || '' 
+        },
+        youtube: { 
+          clientId: process.env.YOUTUBE_CLIENT_ID || '', 
+          clientSecret: process.env.YOUTUBE_CLIENT_SECRET || '' 
+        },
+        twitch: { 
+          clientId: process.env.TWITCH_CLIENT_ID || '', 
+          clientSecret: process.env.TWITCH_CLIENT_SECRET || '' 
+        },
+        discord: { 
+          clientId: process.env.DISCORD_CLIENT_ID || '', 
+          clientSecret: process.env.DISCORD_CLIENT_SECRET || '' 
+        },
+        reddit: { 
+          clientId: process.env.REDDIT_CLIENT_ID || '', 
+          clientSecret: process.env.REDDIT_CLIENT_SECRET || '' 
+        }
+      };
+
+      const credentials = credentialMap[platform];
+      if (!credentials || !credentials.clientId || !credentials.clientSecret) {
+        return res.status(400).json({
+          message: `${platform} OAuth credentials not configured. Please add ${platform.toUpperCase()}_CLIENT_ID and ${platform.toUpperCase()}_CLIENT_SECRET environment variables.`
         });
       }
       
