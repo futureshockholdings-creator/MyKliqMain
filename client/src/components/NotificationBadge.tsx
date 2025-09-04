@@ -92,7 +92,7 @@ export function NotificationBadge({
           variant={hasIncognitoMessages ? "secondary" : "destructive"}
           className={cn(
             "absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center p-0 text-xs font-bold",
-            hasIncognitoMessages && "bg-yellow-400 text-black hover:bg-yellow-500",
+            hasIncognitoMessages && "!bg-yellow-400 !text-black hover:!bg-yellow-500",
             isVisible && "animate-bounce",
             size === "sm" && "h-4 w-4 text-[10px]",
             size === "lg" && "h-6 w-6 text-sm"
