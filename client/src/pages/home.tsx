@@ -1289,39 +1289,37 @@ export default function Home() {
             </Button>
           </div>
           
-          {/* Daily Content Buttons - Positioned directly under the action icons */}
-          <div className="flex flex-wrap gap-2 items-start mb-3">
-            <Button
-              onClick={() => horoscopeMutation.mutate()}
-              disabled={horoscopeMutation.isPending}
-              variant="outline"
-              size="sm"
-              data-testid="button-daily-horoscope"
-            >
-              {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
-            </Button>
-            <Button
-              onClick={() => bibleVerseMutation.mutate()}
-              disabled={bibleVerseMutation.isPending}
-              variant="outline"
-              size="sm"
-              data-testid="button-daily-bible-verse"
-            >
-              {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
-            </Button>
-            <Button
-              onClick={handleReflect}
-              disabled={reflectMutation.isPending}
-              variant="outline"
-              size="sm"
-              data-testid="button-lets-reflect"
-            >
-              {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
-            </Button>
-          </div>
-
-          {/* Post Button */}
-          <div className="flex justify-end">
+          {/* Daily Content Buttons and Post Button - Row 2 */}
+          <div className="flex flex-wrap gap-2 items-center justify-between mb-3">
+            <div className="flex flex-wrap gap-2 items-center">
+              <Button
+                onClick={() => horoscopeMutation.mutate()}
+                disabled={horoscopeMutation.isPending}
+                variant="outline"
+                size="sm"
+                data-testid="button-daily-horoscope"
+              >
+                {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
+              </Button>
+              <Button
+                onClick={() => bibleVerseMutation.mutate()}
+                disabled={bibleVerseMutation.isPending}
+                variant="outline"
+                size="sm"
+                data-testid="button-daily-bible-verse"
+              >
+                {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
+              </Button>
+              <Button
+                onClick={handleReflect}
+                disabled={reflectMutation.isPending}
+                variant="outline"
+                size="sm"
+                data-testid="button-lets-reflect"
+              >
+                {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
+              </Button>
+            </div>
             <Button
               onClick={handleCreatePost}
               disabled={(!newPost.trim() && !selectedMeme && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
