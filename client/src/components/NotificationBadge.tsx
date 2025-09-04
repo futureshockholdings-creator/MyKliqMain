@@ -37,13 +37,20 @@ export function NotificationBadge({
   const [isVisible, setIsVisible] = useState(false);
 
   const { data: notifications = [] } = useQuery<Notification[]>({
-    queryKey: ["/api/notifications", type === "all" ? undefined : type],
+    queryKey: ["/api/notifications"],
     refetchInterval: 2000, // Refresh every 2 seconds
     staleTime: 1000, // Consider data fresh for 1 second
   });
 
-  const unreadCount = notifications.filter((n: Notification) => !n.isRead && n.isVisible).length;
-  const hasIncognitoMessages = (type === "messages") && notifications.filter((n: Notification) => !n.isRead && n.isVisible && n.type === "incognito_message").length > 0;
+  // Filter notifications based on badge type
+  const filteredNotifications = type === "all" 
+    ? notifications.filter((n: Notification) => !n.isRead && n.isVisible)
+    : type === "messages"
+    ? notifications.filter((n: Notification) => !n.isRead && n.isVisible && (n.type === "message" || n.type === "incognito_message"))
+    : notifications.filter((n: Notification) => !n.isRead && n.isVisible && n.type === type);
+  
+  const unreadCount = filteredNotifications.length;
+  const hasIncognitoMessages = (type === "messages") && filteredNotifications.some((n: Notification) => n.type === "incognito_message");
   const hasNotifications = unreadCount > 0;
   
   // Debug logging (remove in production)
