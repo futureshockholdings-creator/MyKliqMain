@@ -1135,8 +1135,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Test endpoint to send mock incognito message notifications
   app.post('/api/test/incognito-message', async (req: any, res) => {
     try {
-      // Use the demo user ID for testing (hardcoded for testing purposes)
-      const userId = '58add0ed-aeeb-4911-b7be-5131b1b8dc29';
+      // Use your actual user ID for testing (from the logs)
+      const userId = '46297180';
 
       // Create dual notifications for testing incognito message system
       const result = await notificationService.notifyIncognitoMessage(
