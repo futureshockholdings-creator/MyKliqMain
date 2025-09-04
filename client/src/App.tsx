@@ -66,8 +66,6 @@ function Navigation({ currentPath }: { currentPath: string }) {
     { path: "/", icon: HomeIcon, label: t('navigation.headlines'), tab: "headlines" },
     { path: "/kliq", icon: Users, label: t('navigation.myKliq'), tab: "kliq", badgeType: "friends" as const },
     { path: "/messages", icon: MessageCircle, label: t('navigation.messages'), tab: "messages", badgeType: "messages" as const },
-    { path: "/events", icon: Calendar, label: t('navigation.events'), tab: "events", badgeType: "events" as const },
-    { path: "/actions", icon: Video, label: "Action", tab: "actions" },
     { path: "/themes", icon: Palette, label: "Themes", tab: "themes" },
     { path: "/settings", icon: SettingsIcon, label: "Settings", tab: "settings" },
   ];
