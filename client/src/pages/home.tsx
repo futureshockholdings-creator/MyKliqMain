@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink } from "lucide-react";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video } from "lucide-react";
 import { SiX, SiFacebook, SiInstagram, SiTiktok, SiYoutube, SiTwitch, SiDiscord, SiReddit } from "react-icons/si";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
@@ -1287,6 +1287,28 @@ export default function Home() {
             >
               <Zap className="w-4 h-4" />
             </Button>
+
+            <Link href="/events">
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="text-cyan-500 hover:bg-cyan-500/10"
+                data-testid="button-events"
+              >
+                <Calendar className="w-4 h-4" />
+              </Button>
+            </Link>
+
+            <Link href="/actions">
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="text-red-500 hover:bg-red-500/10"
+                data-testid="button-actions"
+              >
+                <Video className="w-4 h-4" />
+              </Button>
+            </Link>
           </div>
           
           {/* Daily Content Buttons and Post Button - Row 2 */}
