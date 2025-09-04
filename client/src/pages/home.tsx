@@ -520,8 +520,8 @@ export default function Home() {
 
   // Add comment mutation
   const addCommentMutation = useMutation({
-    mutationFn: async ({ postId, content, gifId, movieconId }: { postId: string; content: string; gifId?: string; movieconId?: string }) => {
-      await apiRequest("POST", `/api/posts/${postId}/comments`, { content, gifId, movieconId });
+    mutationFn: async ({ postId, content, gifId, memeId, movieconId }: { postId: string; content: string; gifId?: string; memeId?: string; movieconId?: string }) => {
+      await apiRequest("POST", `/api/posts/${postId}/comments`, { content, gifId, memeId, movieconId });
     },
     onError: (err) => {
       if (isUnauthorizedError(err)) {
@@ -961,7 +961,7 @@ export default function Home() {
     const memeId = commentMemes[postId]?.id;
     const movieconId = commentMoviecons[postId]?.id;
     if (content || memeId || movieconId) {
-      addCommentMutation.mutate({ postId, content: content || '', memeId: memeId, movieconId });
+      addCommentMutation.mutate({ postId, content: content || '', memeId, movieconId });
     }
   };
 
@@ -1325,6 +1325,7 @@ export default function Home() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2 items-start">
+            </div>
             <div className="flex justify-end">
               <Button
                 onClick={handleCreatePost}
