@@ -18,7 +18,7 @@ The server follows a RESTful API design using Express.js with TypeScript. It use
 PostgreSQL with Drizzle ORM provides type-safe database operations. Key tables manage users, user themes, friendships (with a 1-28 ranking hierarchy), posts, comments, content filters, messages, stories, sessions, and used invite codes. The system features comprehensive database indexing and connection pooling for performance.
 
 ## Authentication & Authorization
-Authentication is integrated with Replit's OAuth system using OpenID Connect, utilizing JWT token-based authentication for mobile apps. Secure cookie-based sessions are stored in PostgreSQL. The system supports automatic user creation and management and uses unique, one-time invite codes for friend connections. A secure 5-step password recovery system is implemented, requiring name, phone, security questions, PIN, and new password without SMS dependency.
+Authentication is integrated with Replit's OAuth system using OpenID Connect, utilizing JWT token-based authentication for mobile apps. Secure cookie-based sessions are stored in PostgreSQL. The system supports automatic user creation and management and uses unique, one-time invite codes for friend connections. A secure 4-step password recovery system is implemented, requiring phone, security questions, PIN, and new password using PIN-based verification instead of SMS.
 
 ## Content Management
 The application features a sophisticated content system including:

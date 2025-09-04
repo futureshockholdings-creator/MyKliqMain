@@ -278,7 +278,7 @@ export default function ForgotPassword() {
                   onClick={verifyPhoneNumber}
                   disabled={!phoneNumber || isLoading}
                   className="w-full"
-                  data-testid="button-send-reset-sms"
+                  data-testid="button-verify-account"
                 >
                   {isLoading ? "Verifying..." : "Verify Account"}
                 </Button>

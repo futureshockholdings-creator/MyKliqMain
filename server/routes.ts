@@ -3081,70 +3081,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SMS verification routes (mocked for MVP)
-  app.post('/api/auth/send-verification', async (req, res) => {
+  // PIN-based verification for account security
+  app.post('/api/auth/verify-pin', async (req, res) => {
     try {
-      const { phoneNumber, inviteCode } = req.body;
+      const { phoneNumber, pin } = req.body;
       
-      // If invite code is provided, validate it exists and isn't used
-      if (inviteCode) {
-        const inviteCodeUser = await storage.getUserByInviteCode(inviteCode);
-        if (!inviteCodeUser) {
-          return res.status(400).json({ 
-            message: "Invalid invite code. Please check the code and try again." 
-          });
-        }
-        
-        const isUsed = await storage.isInviteCodeUsed(inviteCode);
-        if (isUsed) {
-          return res.status(400).json({ 
-            message: "This invite code has already been used." 
-          });
-        }
+      if (!phoneNumber || !pin) {
+        return res.status(400).json({ message: "Phone number and PIN are required" });
+      }
+
+      // Find user by phone number and verify their PIN
+      const user = await storage.getUserByPhone(phoneNumber);
+      if (!user) {
+        return res.status(404).json({ message: "No account found with this phone number" });
       }
       
-      // SMS verification implementation - requires SMS service integration
-      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      if (!user.pinHash) {
+        return res.status(400).json({ message: "PIN not set for this account" });
+      }
       
-      // TODO: Integrate with actual SMS service (Twilio, AWS SNS, etc.)
-      // For now, skip SMS sending for production demo
+      const isValidPin = await bcrypt.compare(pin, user.pinHash);
+      
+      if (!isValidPin) {
+        return res.status(400).json({ message: "Invalid PIN" });
+      }
       
       res.json({ 
         success: true, 
-        message: "Verification code sent"
+        verified: true,
+        userId: user.id
       });
     } catch (error) {
-      console.error("Error sending verification:", error);
-      res.status(500).json({ message: "Failed to send verification" });
-    }
-  });
-
-  app.post('/api/auth/verify-phone', async (req, res) => {
-    try {
-      const { phoneNumber, verificationCode, inviteCode } = req.body;
-      
-      // If invite code is provided, validate it again for final verification
-      if (inviteCode) {
-        const inviteCodeUser = await storage.getUserByInviteCode(inviteCode);
-        if (!inviteCodeUser) {
-          return res.status(400).json({ 
-            message: "Invalid invite code. Please check the code and try again." 
-          });
-        }
-        
-        const isUsed = await storage.isInviteCodeUsed(inviteCode);
-        if (isUsed) {
-          return res.status(400).json({ 
-            message: "This invite code has already been used." 
-          });
-        }
-      }
-      
-      // Mock verification - in production, verify against SMS service
-      res.json({ success: true, verified: true });
-    } catch (error) {
-      console.error("Error verifying phone:", error);
-      res.status(500).json({ message: "Failed to verify phone" });
+      console.error("Error verifying PIN:", error);
+      res.status(500).json({ message: "Failed to verify PIN" });
     }
   });
 

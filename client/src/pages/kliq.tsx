@@ -177,7 +177,7 @@ export default function Kliq() {
     },
   });
 
-  // Send SMS invites
+  // Send friend invites
   const sendInvitesMutation = useMutation({
     mutationFn: async (phoneNumbers: string[]) => {
       const response = await apiRequest("POST", "/api/friends/send-invites", { phoneNumbers });
@@ -188,7 +188,7 @@ export default function Kliq() {
       setIsInviteDialogOpen(false);
       toast({
         title: "Invites sent!",
-        description: data.message || "SMS invites have been sent to the provided phone numbers",
+        description: data.message || "Invites have been sent to the provided phone numbers",
       });
     },
     onError: (error: any) => {

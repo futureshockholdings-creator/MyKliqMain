@@ -149,7 +149,7 @@ const knowledgeBase: KnowledgeBase = {
   },
   security: {
     keywords: ['security', 'password', 'recovery', 'pin', 'security questions', 'authentication'],
-    response: "MyKliq employs multi-layer security for account protection. Security features: 1) 4-step password recovery (phone → security questions → PIN → new password), 2) Security PIN for account verification, 3) Three required security questions, 4) No SMS dependency for recovery, 5) Encrypted credential storage, 6) Session management. Set up all security features in your Profile page for maximum protection.",
+    response: "MyKliq employs multi-layer security for account protection. Security features: 1) 4-step password recovery (phone → security questions → PIN → new password), 2) Security PIN for account verification, 3) Three required security questions, 4) PIN-based secure verification, 5) Encrypted credential storage, 6) Session management. Set up all security features in your Profile page for maximum protection.",
     relatedTopics: ['profile', 'recovery', 'authentication', 'privacy']
   },
   'mobile-app': {
