@@ -55,10 +55,6 @@ export function NotificationBadge({
   const hasIncognitoMessages = (type === "messages");
   const hasNotifications = unreadCount > 0;
   
-  // Debug only when there are notifications
-  if (type === "messages" && hasNotifications) {
-    console.log("🟡 YELLOW MESSAGES BADGE:", { unreadCount, hasIncognitoMessages });
-  }
 
   useEffect(() => {
     if (hasNotifications) {
