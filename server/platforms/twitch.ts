@@ -6,13 +6,13 @@ export class TwitchOAuth implements OAuthPlatform {
   private redirectUri: string;
 
   constructor() {
-    this.clientId = process.env.TWITCH_CLIENT_ID!;
-    this.clientSecret = process.env.TWITCH_CLIENT_SECRET!;
+    this.clientId = process.env.TWITCH_CLIENT_ID || '';
+    this.clientSecret = process.env.TWITCH_CLIENT_SECRET || '';
     this.redirectUri = `${process.env.BASE_URL || 'http://localhost:5000'}/api/oauth/callback/twitch`;
-    
-    if (!this.clientId || !this.clientSecret) {
-      throw new Error('Twitch OAuth credentials not configured. Please set TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET environment variables.');
-    }
+  }
+  
+  isConfigured(): boolean {
+    return !!(this.clientId && this.clientSecret);
   }
 
   getAuthUrl(state: string): string {

@@ -75,13 +75,11 @@ export function SmartVideoUploader({
     setConversionProgress(0);
 
     try {
-      // For this demo, we'll create a mock converted file
-      // In practice, you'd use the actual file from the upload result
-      const mockFile = new File(['mock content'], originalFile.name || 'video.mov', {
-        type: originalFile.type || 'video/quicktime'
-      });
+      // Production video conversion would integrate with media processing service
+      // For mobile deployment, this would use native video conversion APIs
+      const originalFileData = originalFile.file || originalFile;
 
-      const converted = await convertVideoToMP4(mockFile, (progress) => {
+      const converted = await convertVideoToMP4(originalFileData, (progress) => {
         setConversionProgress(progress);
       });
 

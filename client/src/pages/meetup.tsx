@@ -25,7 +25,6 @@ export default function MeetupPage() {
   // Location check-in mutation that creates a post with immediate optimistic update
   const locationCheckInMutation = useMutation({
     mutationFn: async (locationData: { latitude: number; longitude: number; locationName: string; address?: string }) => {
-      console.log('🌍 Location mutation function called with:', locationData);
       
       // Create content based on available information
       let content = `📍 Checked in`;
@@ -60,18 +59,15 @@ export default function MeetupPage() {
       }
       
       const result = await response.json();
-      console.log('✅ Location post API response:', result);
       return result;
     },
     onMutate: async (locationData) => {
-      console.log('🚀 Starting optimistic update for location:', locationData);
       
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['/api/kliq-feed'] });
 
       // Snapshot the previous value
       const previousFeed = queryClient.getQueryData(['/api/kliq-feed']);
-      console.log('📊 Previous feed data:', previousFeed);
 
       // Create optimistic location post
       let content = `📍 Checked in`;
@@ -85,7 +81,6 @@ export default function MeetupPage() {
         content += ` at ${locationData.latitude.toFixed(4)}, ${locationData.longitude.toFixed(4)}`;
       }
 
-      console.log('👤 User data:', user);
 
       const optimisticPost = {
         id: `temp-location-${Date.now()}`,
@@ -111,21 +106,16 @@ export default function MeetupPage() {
         post_filters: [],
       };
 
-      console.log('✨ Optimistic post created:', optimisticPost);
 
       // Optimistically update the feed
       queryClient.setQueryData(['/api/kliq-feed'], (old: any) => {
-        console.log('📝 Updating feed cache. Old data:', old);
         if (!old) {
-          console.log('❌ No existing feed data found - cannot add optimistic post');
           return old;
         }
-        console.log('✅ Current feed has', old.items?.length, 'items, adding optimistic post');
         const newFeed = {
           ...old,
           items: [optimisticPost, ...old.items],
         };
-        console.log('🔄 New feed after optimistic update:', newFeed);
         return newFeed;
       });
 
@@ -133,7 +123,6 @@ export default function MeetupPage() {
       return { previousFeed };
     },
     onSuccess: async (data) => {
-      console.log('✅ Location check-in successful, data:', data);
       
       // Force refresh the feed to show the new post immediately
       await queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
@@ -203,11 +192,12 @@ export default function MeetupPage() {
   };
 
   const handleLocationCheckIn = () => {
-    alert('BUTTON CLICKED - Function is running!');
-    console.log('BUTTON CLICKED - Function is running!');
-    
     if (!userLocation) {
-      alert('No user location available');
+      toast({
+        title: "Location Required",
+        description: "Please get your location first before checking in.",
+        variant: "destructive",
+      });
       return;
     }
     
@@ -216,7 +206,6 @@ export default function MeetupPage() {
 
   const performLocationCheckIn = async () => {
     setIsCheckingIn(true);
-    console.log('🎯 Starting location check-in process...');
     
     // Create content based on available information
     let content = `📍 Checked in`;
@@ -230,7 +219,6 @@ export default function MeetupPage() {
       content += ` at ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}`;
     }
 
-    console.log('📝 Content created:', content);
     
     try {
       // Use direct API call instead of mutation
@@ -254,14 +242,12 @@ export default function MeetupPage() {
       }
       
       const result = await response.json();
-      console.log('✅ Location post created successfully:', result);
       
       // Force refresh the feed immediately and aggressively
       await queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
       await queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
       // Also clear the stale data completely
       queryClient.removeQueries({ queryKey: ['/api/kliq-feed'] });
-      console.log('🔄 Feed cache invalidated, refetched, and cleared');
       
       toast({
         title: "Location Check-in Posted!",

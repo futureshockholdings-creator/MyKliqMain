@@ -1,92 +1,6 @@
 # Overview
 
-MyKliq is a social media application designed for close-knit friend groups ("kliq"), emphasizing intimate social sharing. It provides a highly customizable and private social environment through features like hierarchical friend ranking, content filtering, extensive UI customization, and rich media sharing including photo/video sharing, disappearing stories, real-time polling, and live streaming. The platform aims to redefine social networking by focusing on quality interactions within smaller, private circles.
-
-## Recent Updates (September 2025)
-
-### **Mobile-First Analytics & App Store Optimization (September 1, 2025)**
-- **Firebase Analytics Integration**: Replaced web Google Analytics with Firebase Analytics framework optimized for React Native mobile deployment
-- **Mobile Analytics Class**: Comprehensive analytics system tracking social intelligence effectiveness, user engagement patterns, and app performance
-- **App Store Optimization Strategy**: Complete ASO framework with keyword research, visual assets guidelines, and competitive positioning for iOS App Store and Google Play Store
-- **Mobile Deployment Guide**: Step-by-step React Native/Expo development and app store submission process
-- **Intelligence Analytics**: Specialized tracking for feed curation effectiveness, notification timing optimization, and connection health improvements
-- **App Store Positioning**: Positioned as "AI-Powered Friend Group Social Network" targeting "intelligent social network" keywords
-
-### **Mobile App Development Infrastructure (August 29, 2025)**
-- **JWT Authentication System**: Implemented comprehensive JWT token-based authentication for mobile apps replacing web sessions
-- **Mobile-Optimized API Endpoints**: Created dedicated mobile endpoints (`/api/mobile/*`) for feed, posts, likes, friends, stories, and user profiles
-- **Push Notification Infrastructure**: Added push notification registration and framework for Firebase Cloud Messaging and Apple Push Notifications
-- **Mobile File Upload System**: Prepared mobile-specific file upload endpoints for camera and photo library integration
-- **Optimized Data Responses**: Mobile endpoints provide paginated, bandwidth-optimized responses with pre-calculated counts and relationships
-- **Cross-Platform Ready**: Backend fully prepared for React Native/Expo development supporting both iOS and Android deployment
-- **Secure Token Management**: 30-day JWT tokens with proper verification middleware for all mobile operations
-- **Mobile User Experience**: Structured data responses optimized for native mobile UI patterns and offline capability
-
-## Recent Updates (August 2025)
-
-### **Enhanced Kliq Customization & Production Optimization (August 27, 2025)**
-- **Custom Emoji Selection for Kliq Names**: Users can now personalize their kliq with 16 different emoji options (🏆 🚀 🎆 ✨ 🔥 💫 ❤️ 👏 🌟 💎 🎉 ⚡ 🎯 💪 👑 🦄) that appear both in the header and pyramid display
-- **Real-time Like & Comment System**: Implemented optimistic updates for instant UI feedback on social interactions with automatic cache invalidation
-- **Production Code Optimization**: Cleaned up debug console logs, optimized analytics initialization, and ensured TypeScript compliance for deployment readiness
-- **Synchronized Emoji Display**: Emoji changes in the kliq name editor instantly update across all UI components including the pyramid chart
-- **Improved User Experience**: Auto-closing comment boxes, smooth hover effects without background interference, and intuitive click-to-cycle emoji selection
-
-### **Responsive Design Implementation (August 27, 2025)**
-- **Complete Responsive Layout System**: All major pages now adapt seamlessly between mobile and desktop views
-- **Enhanced 5-Step Password Recovery**: Secure multi-layer verification (name → phone → security questions → PIN → new password) without SMS dependency
-- **Flexible Phone Number Management**: Removed uniqueness constraint to allow multiple accounts per phone number for users who change numbers
-- **Desktop-Optimized Containers**: Pages stretch to utilize full screen real estate on larger displays while maintaining mobile-friendly compact layouts
-- **Responsive Navigation**: Desktop sidebar navigation for large screens, mobile bottom navigation for touch devices
-- **Enhanced CSS Framework**: Added responsive breakpoints, utilities, and media queries for consistent cross-device experience
-- **Optimized Public Pages**: Landing, signup, and login pages now provide optimal viewing experience on all device sizes
-
-### **Comprehensive Production Scaling Optimization (August 27, 2025)**
-- **Critical N+1 Query Performance Fixes**: Eliminated all major N+1 query bottlenecks in posts, stories, conversations, events, meetups, polls, actions, and video calls
-- **Database Query Optimization**: Implemented batch queries with lookup maps for O(1) performance instead of nested Promise.all loops
-- **Advanced Connection Pooling**: Optimized database pool settings (max: 25, timeout: 5s) with connection health monitoring
-- **Performance Monitoring System**: Complete real-time monitoring with memory tracking, query timing, and health status reporting
-- **Enhanced Caching**: Increased cache size to 2000 items with 2-minute cleanup cycles and cache hit rate monitoring  
-- **Frontend Query Optimization**: Improved TanStack Query settings with smart retry logic and memory management (5min stale time, 10min garbage collection)
-- **Graceful Shutdown**: Production-ready shutdown handling with proper database connection cleanup
-- **Comprehensive Database Indexes**: 45+ optimized indexes covering all critical query patterns for maximum performance
-- **Memory Leak Prevention**: Added payload limits (10MB), periodic cleanup, and resource monitoring
-- **Production Monitoring**: Internal performance endpoint, connection pool stats, and automated health reporting
-
-### **Enhanced 4-Step Password Recovery System (August 27, 2025)**
-- **Complete Security Overhaul**: Redesigned password recovery as a comprehensive 4-step verification process
-- **Step 1**: Phone number verification for account identification
-- **Step 2**: Security questions verification (3 required questions)
-- **Step 3**: 4-digit PIN verification using hashed PIN from profile settings
-- **Step 4**: New password creation with strength requirements
-- **Removed SMS Dependency**: Eliminated SMS messaging from recovery flow for streamlined user experience
-- **Enhanced Security**: Multiple verification layers ensure only legitimate account owners can reset passwords
-
-### **Auto-Delete Incognito Conversations (August 27, 2025)**
-- **Complete Privacy Protection**: Entire incognito conversations older than 7 days are automatically deleted from the database
-- **Comprehensive Cleanup**: Removes both conversation records and all associated messages to maintain referential integrity
-- **Automated Scheduling**: Cleanup runs every hour to ensure consistent privacy protection without manual intervention
-- **Theme Integration**: Incognito messages pages now use user theme settings while keeping message boxes white for readability
-
-### **Production Deployment Ready (August 25, 2025)**
-- **Critical Database Issues Resolved**: Fixed kliq feed query errors and null safety warnings
-- **Actions Table Schema Aligned**: Corrected field mapping for live streaming functionality
-- **Performance Optimizations Complete**: 80% reduction in API calls, connection pooling, smart caching
-- **SSL Certificate Issues Resolved**: Fixed "Not Secure" warnings by removing mixed content sources and adding security headers
-- **Favicon Implementation**: Comprehensive technical solution implemented (SVG data URI, JavaScript force-update, ICO files, anti-cache headers). Browser caching may require 24 hours to resolve - check again on August 26, 2025
-- **Production-Ready Status**: App running smoothly with all optimizations active, deployed on custom domain with valid SSL certificate
-
-## Earlier Updates
-- **Daily Bible Verse Feature**: Complete inspirational content system with 15 curated verses, daily reflections, timezone-aware date handling, and one-click posting to Headlines feed
-- **Daily Horoscope Feature**: Complete horoscope system with zodiac sign calculation from birthdate, personalized daily readings, lucky numbers/colors, and one-click posting to Headlines feed
-- **Required Birthdate Setting**: Birthdate is now a required profile field for accessing horoscope functionality with clean validation and user-friendly error handling
-- **Social Media Aggregation System**: Complete OAuth 2.0 framework for connecting Instagram, TikTok, YouTube, Twitch, Discord, and Reddit
-- **Security Infrastructure**: AES-256 encryption for OAuth tokens, secure credential storage with crypto utilities
-- **Unified Social Feed**: Central hub displaying all connected social media content with platform-specific styling
-- **Settings Interface**: Comprehensive social media integration controls with connection status indicators
-- **Complete Profile Translation System**: All profile sections, field labels, and user-generated content now auto-translate across 10 supported languages
-- **Enhanced Translation Dictionaries**: Expanded Spanish and Chinese vocabularies with 100+ terms covering entertainment, lifestyle, and personal preferences
-- **Field Label Translation**: Section headers like "Interests & Hobbies", "Favorites", "Lifestyle & Status", and "Entertainment" translate automatically
-- **Comprehensive Multi-language Support**: Bio text, interests, hobbies, and all profile details translate seamlessly when language is changed
+MyKliq is a social media application designed for close-knit friend groups ("kliq"), focusing on intimate social sharing and privacy. It offers a highly customizable environment with features like hierarchical friend ranking, content filtering, extensive UI customization, and rich media sharing including photo/video, disappearing stories, real-time polling, and live streaming. The platform aims to redefine social networking by prioritizing quality interactions within smaller, private circles, with a vision to be an AI-powered intelligent social network.
 
 # User Preferences
 
@@ -95,37 +9,42 @@ Preferred communication style: Simple, everyday language.
 # System Architecture
 
 ## Frontend Architecture
-The client is a React-based Single Page Application (SPA) using TypeScript, following a component-based design. It utilizes Vite for building, Wouter for routing, TanStack Query for server state management, Radix UI primitives with shadcn/ui for UI components, Tailwind CSS for styling, and React Hook Form with Zod for form handling.
+The client is a React-based Single Page Application (SPA) using TypeScript, built with Vite. It uses Wouter for routing, TanStack Query for server state management, Radix UI primitives with shadcn/ui for UI components, Tailwind CSS for styling, and React Hook Form with Zod for form handling. The design emphasizes responsiveness, adapting seamlessly between mobile and desktop views.
 
 ## Backend Architecture
-The server follows a RESTful API design using Express.js with TypeScript. It uses Drizzle ORM with PostgreSQL for the database layer, Replit-integrated OAuth for authentication, and PostgreSQL-backed sessions for session management.
+The server follows a RESTful API design using Express.js with TypeScript. It uses Drizzle ORM with PostgreSQL for the database layer and PostgreSQL-backed sessions for session management. Mobile-optimized API endpoints (`/api/mobile/*`) are provided for various functionalities, ensuring paginated and bandwidth-optimized responses.
 
 ## Database Design
-PostgreSQL with Drizzle ORM provides type-safe database operations. Key tables manage users, user themes, friendships (with a 1-28 ranking hierarchy), posts, comments, content filters, messages, stories, sessions, and used invite codes.
+PostgreSQL with Drizzle ORM provides type-safe database operations. Key tables manage users, user themes, friendships (with a 1-28 ranking hierarchy), posts, comments, content filters, messages, stories, sessions, and used invite codes. The system features comprehensive database indexing and connection pooling for performance.
 
 ## Authentication & Authorization
-Authentication is integrated with Replit's OAuth system using OpenID Connect. Secure cookie-based sessions are stored in PostgreSQL. The system supports automatic user creation and management, and uses unique, one-time invite codes for friend connections.
+Authentication is integrated with Replit's OAuth system using OpenID Connect, utilizing JWT token-based authentication for mobile apps. Secure cookie-based sessions are stored in PostgreSQL. The system supports automatic user creation and management and uses unique, one-time invite codes for friend connections. A secure 5-step password recovery system is implemented, requiring name, phone, security questions, PIN, and new password without SMS dependency.
 
 ## Content Management
-The application features a sophisticated content system:
+The application features a sophisticated content system including:
 - **Hierarchical Feed**: Posts filtered by friend rankings and user-defined content filters.
-- **Kliq-wide Content Aggregation**: Displays all kliq member content (posts, polls, events, actions) in the headlines feed with full interactivity.
-- **Daily Content Features**: Includes daily horoscopes and bible verses with timezone-aware generation and one-click posting capabilities.
-- **Real-time Polling**: Allows creation of polls with customizable time limits, vote tracking, and live percentage-based results.
-- **Media Support**: Comprehensive photo, video, and YouTube URL embedding using object storage.
+- **Kliq-wide Content Aggregation**: Displays all kliq member content (posts, polls, events, actions) in the headlines feed.
+- **Daily Content Features**: Daily horoscopes and Bible verses with timezone-aware generation and one-click posting.
+- **Real-time Polling**: Customizable polls with live results.
+- **Media Support**: Photo, video, and YouTube URL embedding with object storage.
 - **Stories**: 24-hour disappearing content.
-- **Incognito Messaging (IM)**: Private direct messaging with rich media support and message auto-deletion.
-- **Moviecons**: Custom video uploads for reactions and emotes.
-- **Live Streaming ("Action")**: Real-time video streaming with chat and auto-posting to headlines.
-- **Meetups**: GPS-based check-in posting to the Bulletin feed.
-- **Event Auto-posting**: Automatically creates posts in the kliq feed when events are created or updated.
+- **Incognito Messaging (IM)**: Private direct messaging with message auto-deletion after 7 days.
+- **Moviecons**: Custom video uploads for reactions.
+- **Live Streaming ("Action")**: Real-time video streaming with chat and auto-posting.
+- **Meetups**: GPS-based check-in posting.
+- **Event Auto-posting**: Automatically creates posts for events.
+- **Social Media Aggregation**: OAuth 2.0 framework for connecting Instagram, TikTok, YouTube, Twitch, Discord, and Reddit, displaying aggregated content in a unified feed.
 
 ## UI Customization System
 Extensive theming allows deep personalization:
 - **Global Theme System**: Applies changes across the entire app using CSS variables.
 - **Dynamic Themes**: Real-time theme switching.
-- **Customization Options**: Includes background customization (solid colors, gradients, patterns), font customization, primary/secondary color schemes, and border styles.
-- **"Surprise Me" Randomizer**: Generates random themes ensuring readability.
+- **Customization Options**: Backgrounds (solid, gradients, patterns), fonts, primary/secondary color schemes, border styles.
+- **"Surprise Me" Randomizer**: Generates random, readable themes.
+- **Kliq Customization**: Custom emoji selection for kliq names.
+
+## Technical Implementations
+Production code is optimized with removal of demo modes, console logs, and mock implementations. N+1 query issues are eliminated, and advanced caching is implemented. The application supports comprehensive profile translation across 10 supported languages. Push notification infrastructure for Firebase Cloud Messaging and Apple Push Notifications is included.
 
 # External Dependencies
 
@@ -148,4 +67,7 @@ Extensive theming allows deep personalization:
 - **PostCSS**: CSS processing.
 - **Drizzle Kit**: Database migrations and schema management.
 - **TanStack Query**: Server state management.
-- **SendGrid**: Email delivery for chatbot conversation history.
+
+## Other Integrations
+- **Firebase Analytics**: Mobile analytics framework.
+- **SendGrid**: Email delivery.

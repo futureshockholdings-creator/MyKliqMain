@@ -6,13 +6,13 @@ export class DiscordOAuth implements OAuthPlatform {
   private redirectUri: string;
 
   constructor() {
-    this.clientId = process.env.DISCORD_CLIENT_ID!;
-    this.clientSecret = process.env.DISCORD_CLIENT_SECRET!;
+    this.clientId = process.env.DISCORD_CLIENT_ID || '';
+    this.clientSecret = process.env.DISCORD_CLIENT_SECRET || '';
     this.redirectUri = `${process.env.BASE_URL || 'http://localhost:5000'}/api/oauth/callback/discord`;
-    
-    if (!this.clientId || !this.clientSecret) {
-      throw new Error('Discord OAuth credentials not configured. Please set DISCORD_CLIENT_ID and DISCORD_CLIENT_SECRET environment variables.');
-    }
+  }
+  
+  isConfigured(): boolean {
+    return !!(this.clientId && this.clientSecret);
   }
 
   getAuthUrl(state: string): string {
