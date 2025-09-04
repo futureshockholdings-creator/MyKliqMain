@@ -1,8 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { PushNotificationSetup } from "@/components/PushNotificationSetup";
 import { LanguageSelector } from "@/components/LanguageSelector";
@@ -74,7 +78,12 @@ const platformInfo = {
 export default function Settings() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
-
+  
+  // Delete account state management
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<'confirm' | 'pin' | 'final'>('confirm');
+  const [pin, setPin] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const handleLogout = () => {
     window.location.href = '/api/logout';
@@ -174,6 +183,89 @@ export default function Settings() {
   const getAvailablePlatforms = () => {
     const connected = getConnectedPlatforms();
     return Object.keys(platformInfo).filter(platform => !connected.includes(platform));
+  };
+
+  // PIN verification for delete account
+  const verifyPin = useMutation({
+    mutationFn: async (pinCode: string) => {
+      return await apiRequest("POST", "/api/user/verify-pin", { pin: pinCode });
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        setDeleteStep('final');
+        setPin('');
+      } else {
+        toast({
+          title: "Invalid PIN",
+          description: "The PIN you entered is incorrect.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to verify PIN. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete account mutation
+  const deleteAccount = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("DELETE", "/api/user/account");
+    },
+    onSuccess: () => {
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been permanently deleted.",
+      });
+      // Redirect to login page after deletion
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete account. Please try again.",
+        variant: "destructive",
+      });
+      setIsDeletingAccount(false);
+    },
+  });
+
+  const handleDeleteAccount = () => {
+    setShowDeleteDialog(true);
+    setDeleteStep('confirm');
+    setPin('');
+  };
+
+  const handleDeleteStep = () => {
+    if (deleteStep === 'confirm') {
+      setDeleteStep('pin');
+    } else if (deleteStep === 'pin') {
+      if (pin.length === 4) {
+        verifyPin.mutate(pin);
+      } else {
+        toast({
+          title: "Invalid PIN",
+          description: "Please enter a 4-digit PIN.",
+          variant: "destructive",
+        });
+      }
+    } else if (deleteStep === 'final') {
+      setIsDeletingAccount(true);
+      deleteAccount.mutate();
+    }
+  };
+
+  const handleDialogClose = () => {
+    setShowDeleteDialog(false);
+    setDeleteStep('confirm');
+    setPin('');
+    setIsDeletingAccount(false);
   };
 
   return (
@@ -340,7 +432,7 @@ export default function Settings() {
                   Manage your account settings and session
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <Button
                   onClick={handleLogout}
                   variant="destructive"
@@ -350,10 +442,93 @@ export default function Settings() {
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
                 </Button>
+                
+                {/* Delete Account Button */}
+                <div className="pt-4 border-t border-white/20">
+                  <Button
+                    onClick={handleDeleteAccount}
+                    variant="destructive"
+                    className="w-full bg-red-800 hover:bg-red-900 text-white"
+                    data-testid="button-delete-account"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Account
+                  </Button>
+                  <p className="text-purple-300 text-xs mt-2 text-center">
+                    This action cannot be undone
+                  </p>
+                </div>
               </CardContent>
             </Card>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={handleDialogClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">
+              {deleteStep === 'confirm' && "Delete Account?"}
+              {deleteStep === 'pin' && "Enter PIN"}
+              {deleteStep === 'final' && "Final Confirmation"}
+            </DialogTitle>
+            <DialogDescription>
+              {deleteStep === 'confirm' && 
+                "Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data."
+              }
+              {deleteStep === 'pin' && 
+                "Please enter your 4-digit PIN to verify your identity."
+              }
+              {deleteStep === 'final' && 
+                "This is your final warning. Clicking 'Delete Forever' will permanently delete your account and all associated data. This action cannot be undone."
+              }
+            </DialogDescription>
+          </DialogHeader>
+          
+          {deleteStep === 'pin' && (
+            <div className="space-y-4">
+              <Label htmlFor="delete-pin">PIN</Label>
+              <Input
+                id="delete-pin"
+                type="password"
+                maxLength={4}
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                placeholder="Enter 4-digit PIN"
+                className="text-center text-lg tracking-widest"
+                data-testid="input-delete-pin"
+              />
+            </div>
+          )}
+          
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDialogClose}
+              disabled={isDeletingAccount || verifyPin.isPending}
+              data-testid="button-cancel-delete"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteStep}
+              disabled={
+                isDeletingAccount || 
+                verifyPin.isPending || 
+                (deleteStep === 'pin' && pin.length !== 4)
+              }
+              className="bg-red-600 hover:bg-red-700"
+              data-testid="button-confirm-delete"
+            >
+              {isDeletingAccount && "Deleting..."}
+              {!isDeletingAccount && deleteStep === 'confirm' && "Yes, Continue"}
+              {!isDeletingAccount && deleteStep === 'pin' && (verifyPin.isPending ? "Verifying..." : "Verify PIN")}
+              {!isDeletingAccount && deleteStep === 'final' && "Delete Forever"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

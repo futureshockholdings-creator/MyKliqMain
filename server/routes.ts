@@ -4422,6 +4422,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User self-delete account endpoint
+  app.delete('/api/user/account', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Verify user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Delete the user and all associated data
+      await storage.deleteUser(userId);
+      
+      res.json({ 
+        success: true, 
+        message: "Account deleted successfully" 
+      });
+    } catch (error) {
+      console.error("Error deleting user account:", error);
+      res.status(500).json({ 
+        message: "Failed to delete account. Please try again." 
+      });
+    }
+  });
+
   // Force favicon route to bypass all caching (place before other routes)
   app.get('/favicon.ico', (req, res) => {
     res.setHeader('Content-Type', 'image/x-icon');
