@@ -1288,7 +1288,9 @@ export default function Home() {
                 <Zap className="w-4 h-4" />
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2 items-start">
+            
+            {/* Daily Content Buttons */}
+            <div className="flex flex-wrap gap-2 items-start mt-3">
               <Button
                 onClick={() => horoscopeMutation.mutate()}
                 disabled={horoscopeMutation.isPending}
@@ -1321,6 +1323,8 @@ export default function Home() {
                   {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
                 </Button>
               </div>
+            </div>
+            <div className="flex justify-end">
               <Button
                 onClick={handleCreatePost}
                 disabled={(!newPost.trim() && !selectedMeme && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
