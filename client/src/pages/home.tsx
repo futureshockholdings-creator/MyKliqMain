@@ -1293,7 +1293,8 @@ export default function Home() {
                 onClick={handleReflect}
                 disabled={reflectMutation.isPending}
                 variant="outline"
-                className="px-4"
+                size="sm"
+                className="px-2 py-1 text-xs"
                 data-testid="button-lets-reflect"
               >
                 {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
@@ -1302,7 +1303,8 @@ export default function Home() {
                 onClick={() => horoscopeMutation.mutate()}
                 disabled={horoscopeMutation.isPending}
                 variant="outline"
-                className="px-4"
+                size="sm"
+                className="px-2 py-1 text-xs"
                 data-testid="button-daily-horoscope"
               >
                 {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
@@ -1311,7 +1313,8 @@ export default function Home() {
                 onClick={() => bibleVerseMutation.mutate()}
                 disabled={bibleVerseMutation.isPending}
                 variant="outline"
-                className="px-4"
+                size="sm"
+                className="px-2 py-1 text-xs"
                 data-testid="button-daily-bible-verse"
               >
                 {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
