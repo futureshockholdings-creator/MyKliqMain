@@ -118,7 +118,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
               >
                 {item.badgeType && (
                   <div className="absolute -top-1 -right-1">
-                    <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className="h-5 w-5" />
+                    <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className={cn("h-5 w-5", item.badgeType === "messages" && "-right-0.5")} />
                   </div>
                 )}
                 <item.icon className="w-6 h-6" />
@@ -172,7 +172,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
               >
                 {item.badgeType && (
                   <div className="absolute -top-1 -right-1">
-                    <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className="h-5 w-5" />
+                    <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className={cn("h-5 w-5", item.badgeType === "messages" && "-right-0.5")} />
                   </div>
                 )}
                 <item.icon className="w-5 h-5" />
