@@ -43,7 +43,7 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
   const queryClient = useQueryClient();
 
   // Fetch pending ranking suggestions
-  const { data: suggestions = [], isLoading } = useQuery({
+  const { data: suggestions = [], isLoading } = useQuery<RankingSuggestion[]>({
     queryKey: ['/api/friend-ranking/suggestions'],
     refetchInterval: 300000, // Refresh every 5 minutes
   });

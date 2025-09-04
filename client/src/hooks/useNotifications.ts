@@ -12,15 +12,15 @@ export function useNotifications(type?: string) {
   // Get all notifications for calculating totals
   const { data: allNotifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
-    refetchInterval: 2000,
-    staleTime: 1000,
+    refetchInterval: 30000, // Changed from 2000ms to 30000ms (30 seconds)
+    staleTime: 15000, // Changed from 1000ms to 15000ms (15 seconds)
   });
 
   // Get specific type notifications if requested
   const { data: notifications = [], isLoading, refetch } = useQuery<Notification[]>({
     queryKey: ["/api/notifications", type === "all" ? undefined : type],
-    refetchInterval: 2000,
-    staleTime: 1000,
+    refetchInterval: 30000, // Changed from 2000ms to 30000ms (30 seconds)
+    staleTime: 15000, // Changed from 1000ms to 15000ms (15 seconds)
     enabled: !!type,
   });
 

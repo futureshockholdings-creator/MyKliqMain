@@ -302,7 +302,7 @@ export const comments = pgTable("comments", {
   gifId: varchar("gif_id").references(() => gifs.id),
   memeId: varchar("meme_id").references(() => memes.id),
   movieconId: varchar("moviecon_id").references(() => moviecons.id),
-  parentCommentId: varchar("parent_comment_id").references(() => comments.id, { onDelete: "cascade" }), // For nested replies
+  parentCommentId: varchar("parent_comment_id"), // For nested replies
   createdAt: timestamp("created_at").defaultNow(),
 });
 

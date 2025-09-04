@@ -38,16 +38,29 @@ export function NotificationBadge({
 
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
-    refetchInterval: 2000, // Refresh every 2 seconds
-    staleTime: 1000, // Consider data fresh for 1 second
+    refetchInterval: 30000, // Changed from 2000ms to 30000ms (30 seconds)
+    staleTime: 15000, // Changed from 1000ms to 15000ms (15 seconds)
   });
+
+  // Map badge types to actual notification types
+  const getNotificationTypes = (badgeType: string) => {
+    switch (badgeType) {
+      case "messages": return ["message", "incognito_message"];
+      case "friends": return ["friend_request"];
+      case "events": return ["event_invite"];
+      case "likes": return ["post_like"];
+      case "comments": return ["comment", "comment_like"];
+      case "streams": return ["live_stream"];
+      case "meetups": return ["meetup_invite"];
+      case "birthdays": return ["birthday"];
+      default: return [];
+    }
+  };
 
   // Filter notifications based on badge type
   const filteredNotifications = type === "all" 
     ? notifications.filter((n: Notification) => !n.isRead && n.isVisible)
-    : type === "messages"
-    ? notifications.filter((n: Notification) => !n.isRead && n.isVisible && (n.type === "message" || n.type === "incognito_message"))
-    : notifications.filter((n: Notification) => !n.isRead && n.isVisible && n.type === type);
+    : notifications.filter((n: Notification) => !n.isRead && n.isVisible && getNotificationTypes(type).includes(n.type));
   
   const unreadCount = filteredNotifications.length;
   
