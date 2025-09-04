@@ -1208,7 +1208,7 @@ export default function Home() {
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="text-mykliq-orange hover:bg-mykliq-orange/10"
+                  className="text-mykliq-orange hover:bg-mykliq-orange/10 bg-white border border-gray-200 shadow-sm"
                   data-testid="button-emoji-picker"
                 >
                   <Smile className="w-4 h-4" />
@@ -1234,7 +1234,7 @@ export default function Home() {
             <Button 
               size="sm" 
               variant="ghost" 
-              className="text-mykliq-green hover:bg-mykliq-green/10"
+              className="text-mykliq-green hover:bg-mykliq-green/10 bg-white border border-gray-200 shadow-sm"
               onClick={() => setShowMediaUpload(true)}
             >
               <ImageIcon className="w-4 h-4" />
@@ -1245,7 +1245,7 @@ export default function Home() {
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="text-mykliq-purple hover:bg-mykliq-purple/10"
+                  className="text-mykliq-purple hover:bg-mykliq-purple/10 bg-white border border-gray-200 shadow-sm"
                 >
                   <span className="text-xs font-bold">MEME</span>
                 </Button>
@@ -1257,7 +1257,7 @@ export default function Home() {
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="text-blue-500 hover:bg-blue-500/10"
+                  className="text-blue-500 hover:bg-blue-500/10 bg-white border border-gray-200 shadow-sm"
                 >
                   <Clapperboard className="w-4 h-4" />
                 </Button>
@@ -1267,7 +1267,7 @@ export default function Home() {
             <Button 
               size="sm" 
               variant="ghost" 
-              className="text-destructive hover:bg-destructive/10"
+              className="text-destructive hover:bg-destructive/10 bg-white border border-gray-200 shadow-sm"
               onClick={getCurrentLocation}
               disabled={isGettingLocation}
             >
@@ -1281,7 +1281,7 @@ export default function Home() {
             <Button 
               size="sm" 
               variant="ghost" 
-              className="text-yellow-500 hover:bg-yellow-500/10"
+              className="text-yellow-500 hover:bg-yellow-500/10 bg-white border border-gray-200 shadow-sm"
               onClick={() => setShowMoodDialog(true)}
               data-testid="button-mood-picker"
             >
@@ -1292,7 +1292,7 @@ export default function Home() {
               <Button 
                 size="sm" 
                 variant="ghost" 
-                className="text-cyan-500 hover:bg-cyan-500/10"
+                className="text-cyan-500 hover:bg-cyan-500/10 bg-white border border-gray-200 shadow-sm"
                 data-testid="button-events"
               >
                 <Calendar className="w-4 h-4" />
@@ -1303,7 +1303,7 @@ export default function Home() {
               <Button 
                 size="sm" 
                 variant="ghost" 
-                className="text-red-500 hover:bg-red-500/10"
+                className="text-red-500 hover:bg-red-500/10 bg-white border border-gray-200 shadow-sm"
                 data-testid="button-actions"
               >
                 <Video className="w-4 h-4" />
