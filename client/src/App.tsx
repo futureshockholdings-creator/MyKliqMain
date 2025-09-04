@@ -116,11 +116,9 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 )}
                 data-testid={`nav-${item.tab}`}
               >
-                {item.badgeType && getBadgeCount(item.badgeType) > 0 && (
-                  <div className="absolute -top-1 -right-1 h-4 w-4 bg-destructive rounded-full flex items-center justify-center">
-                    <span className="text-[10px] text-destructive-foreground font-bold">
-                      {getBadgeCount(item.badgeType) > 9 ? "9+" : getBadgeCount(item.badgeType)}
-                    </span>
+                {item.badgeType && (
+                  <div className="absolute -top-2 -right-2">
+                    <NotificationBadge type={item.badgeType} showIcon={false} size="sm" />
                   </div>
                 )}
                 <item.icon className="w-6 h-6" />
@@ -172,11 +170,9 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 )}
                 data-testid={`nav-mobile-${item.tab}`}
               >
-                {item.badgeType && getBadgeCount(item.badgeType) > 0 && (
-                  <div className="absolute -top-1 -right-1 h-3 w-3 bg-destructive rounded-full flex items-center justify-center">
-                    <span className="text-[8px] text-destructive-foreground font-bold">
-                      {getBadgeCount(item.badgeType) > 9 ? "9+" : getBadgeCount(item.badgeType)}
-                    </span>
+                {item.badgeType && (
+                  <div className="absolute -top-2 -right-2">
+                    <NotificationBadge type={item.badgeType} showIcon={false} size="sm" />
                   </div>
                 )}
                 <item.icon className="w-5 h-5" />
