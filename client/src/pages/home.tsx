@@ -1290,16 +1290,6 @@ export default function Home() {
             </div>
             <div className="flex gap-2">
               <Button
-                onClick={handleReflect}
-                disabled={reflectMutation.isPending}
-                variant="outline"
-                size="sm"
-                className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px]"
-                data-testid="button-lets-reflect"
-              >
-                {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
-              </Button>
-              <Button
                 onClick={() => horoscopeMutation.mutate()}
                 disabled={horoscopeMutation.isPending}
                 variant="outline"
@@ -1309,16 +1299,28 @@ export default function Home() {
               >
                 {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
               </Button>
-              <Button
-                onClick={() => bibleVerseMutation.mutate()}
-                disabled={bibleVerseMutation.isPending}
-                variant="outline"
-                size="sm"
-                className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px]"
-                data-testid="button-daily-bible-verse"
-              >
-                {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
-              </Button>
+              <div className="flex flex-col gap-1">
+                <Button
+                  onClick={() => bibleVerseMutation.mutate()}
+                  disabled={bibleVerseMutation.isPending}
+                  variant="outline"
+                  size="sm"
+                  className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px]"
+                  data-testid="button-daily-bible-verse"
+                >
+                  {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
+                </Button>
+                <Button
+                  onClick={handleReflect}
+                  disabled={reflectMutation.isPending}
+                  variant="outline"
+                  size="sm"
+                  className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px]"
+                  data-testid="button-lets-reflect"
+                >
+                  {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
+                </Button>
+              </div>
               <Button
                 onClick={handleCreatePost}
                 disabled={(!newPost.trim() && !selectedMeme && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
