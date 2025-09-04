@@ -350,7 +350,7 @@ export function Chatbot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-64 h-[350px] shadow-xl z-50 flex flex-col">
+        <Card className="fixed bottom-6 right-6 w-48 h-[250px] shadow-xl z-50 flex flex-col">
           <CardHeader className="flex-shrink-0 pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
