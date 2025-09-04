@@ -107,14 +107,14 @@ function Navigation({ currentPath }: { currentPath: string }) {
 
   return (
     <>
-      {/* Mobile Navigation - Bottom bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t-2 border-primary z-50 h-16">
-        <div className="flex items-center justify-around h-full px-2">
+      {/* Left Side Navigation */}
+      <div className="fixed left-0 top-0 bottom-0 bg-card border-r-2 border-primary z-50 w-20">
+        <div className="flex flex-col items-center py-4 h-full">
           {/* Notification Bell */}
           <button
             onClick={toggleNotificationPanel}
             className={cn(
-              "flex flex-col items-center p-2 transition-colors rounded-lg relative",
+              "flex flex-col items-center p-3 mb-6 transition-colors rounded-lg w-16 relative",
               "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
             data-testid="notification-bell"
@@ -126,7 +126,8 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 </span>
               </div>
             )}
-            <Bell className="w-5 h-5" />
+            <Bell className="w-6 h-6" />
+            <span className="text-xs mt-1">{t('navigation.alerts')}</span>
           </button>
 
           {navItems.map((item) => {
@@ -138,7 +139,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 key={item.path}
                 onClick={() => handleNavigation(item.path, item.path === "/settings")}
                 className={cn(
-                  "flex flex-col items-center p-2 transition-colors rounded-lg relative",
+                  "flex flex-col items-center p-3 mb-4 transition-colors rounded-lg w-16 relative",
                   isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
                 data-testid={`nav-${item.tab}`}
@@ -148,11 +149,16 @@ function Navigation({ currentPath }: { currentPath: string }) {
                     <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className={cn("h-5 w-5", item.badgeType === "messages" && "-right-0.5")} />
                   </div>
                 )}
-                <item.icon className="w-5 h-5" />
-                <span className="text-[10px] mt-0.5 text-center leading-tight break-words whitespace-pre-line max-w-12">{item.label}</span>
+                <item.icon className="w-6 h-6" />
+                <span className="text-xs mt-1 text-center leading-tight break-words whitespace-pre-line max-w-14">{item.label}</span>
               </button>
             );
           })}
+          
+          {/* Language Selector at bottom */}
+          <div className="mt-auto mb-4">
+            <LanguageSelector variant="dropdown" className="w-16" />
+          </div>
         </div>
       </div>
 
