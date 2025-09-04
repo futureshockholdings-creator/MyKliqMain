@@ -248,7 +248,7 @@ function AppContent() {
         {/* Main App Container with responsive margins */}
         <div className={cn(
           "min-h-screen h-screen bg-background relative",
-          isAuthenticated && !isLoading && !isPublicPage ? "ml-20" : ""
+          isAuthenticated && !isLoading && !isPublicPage ? "ml-20 w-[calc(100vw-5rem)]" : ""
         )}>
           {/* Full Screen App Container with scroll */}
           <div className="w-full h-full relative overflow-y-auto overflow-x-hidden">
