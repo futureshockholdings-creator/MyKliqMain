@@ -43,6 +43,7 @@ export function NotificationBadge({
   });
 
   const unreadCount = notifications.filter((n: Notification) => !n.isRead && n.isVisible).length;
+  const hasIncognitoMessages = notifications.filter((n: Notification) => !n.isRead && n.isVisible && n.type === "incognito_message").length > 0;
   const hasNotifications = unreadCount > 0;
   
   // Debug logging (remove in production)
@@ -82,9 +83,10 @@ export function NotificationBadge({
       
       {hasNotifications && showCount && (
         <Badge 
-          variant="destructive"
+          variant={hasIncognitoMessages ? "secondary" : "destructive"}
           className={cn(
             "absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center p-0 text-xs font-bold",
+            hasIncognitoMessages && "bg-yellow-400 text-black hover:bg-yellow-500",
             isVisible && "animate-bounce",
             size === "sm" && "h-4 w-4 text-[10px]",
             size === "lg" && "h-6 w-6 text-sm"
@@ -97,7 +99,8 @@ export function NotificationBadge({
 
       {hasNotifications && (
         <div className={cn(
-          "absolute top-0 right-0 h-2 w-2 rounded-full bg-destructive",
+          "absolute top-0 right-0 h-2 w-2 rounded-full",
+          hasIncognitoMessages ? "bg-yellow-400" : "bg-destructive",
           isVisible && "animate-ping"
         )} />
       )}

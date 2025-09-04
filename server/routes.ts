@@ -2578,7 +2578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const message = await storage.sendMessage(messageData);
       
-      // Send notification to the receiver
+      // Send incognito message notifications to the receiver (creates both alert and message notifications)
       if (receiverId !== userId) {
         const sender = await storage.getUser(userId);
         if (sender) {
@@ -2593,7 +2593,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             messagePreview = "🎬 Moviecon";
           }
           
-          await notificationService.notifyNewMessage(
+          // Since all messages in this system are incognito (auto-delete), create dual notifications
+          await notificationService.notifyIncognitoMessage(
             receiverId,
             userId,
             sender.firstName || "Someone",

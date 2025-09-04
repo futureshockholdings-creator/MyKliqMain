@@ -152,6 +152,35 @@ export class NotificationService {
     });
   }
 
+  // Create dual notifications for incognito messages (both alert and message notifications)
+  async notifyIncognitoMessage(receiverId: string, senderId: string, senderName: string, messagePreview: string) {
+    // Create the alert notification (yellow bubble)
+    const alertNotification = await this.createNotification({
+      userId: receiverId,
+      type: "incognito_message",
+      title: `🔒 Incognito message from ${senderName}`,
+      message: messagePreview,
+      actionUrl: "/messages",
+      relatedId: senderId,
+      relatedType: "user",
+      priority: "high",
+    });
+
+    // Create the regular message notification (for messages tab)
+    const messageNotification = await this.createNotification({
+      userId: receiverId,
+      type: "message",
+      title: `New message from ${senderName}`,
+      message: messagePreview,
+      actionUrl: "/messages",
+      relatedId: senderId,
+      relatedType: "user",
+      priority: "normal",
+    });
+
+    return { alertNotification, messageNotification };
+  }
+
   async notifyFriendRequest(userId: string, fromUserId: string, fromUserName: string) {
     return this.createNotification({
       userId,
