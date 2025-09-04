@@ -55,9 +55,9 @@ export function NotificationBadge({
   const hasIncognitoMessages = (type === "messages");
   const hasNotifications = unreadCount > 0;
   
-  // Emergency debug
+  // Debug only when there are notifications
   if (type === "messages" && hasNotifications) {
-    console.log("MESSAGES BADGE DEBUG:", { type, hasNotifications, hasIncognitoMessages, unreadCount });
+    console.log("🟡 YELLOW MESSAGES BADGE:", { unreadCount, hasIncognitoMessages });
   }
 
   useEffect(() => {
@@ -97,7 +97,7 @@ export function NotificationBadge({
           variant={hasIncognitoMessages ? "secondary" : "destructive"}
           className={cn(
             "absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center p-0 text-xs font-bold",
-            hasIncognitoMessages && "!bg-yellow-400 !text-black hover:!bg-yellow-500",
+            hasIncognitoMessages && "!bg-yellow-400 !text-black !border-yellow-400 hover:!bg-yellow-500 [&>*]:!text-black",
             isVisible && "animate-bounce",
             size === "sm" && "h-4 w-4 text-[10px]",
             size === "lg" && "h-6 w-6 text-sm"
