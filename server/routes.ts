@@ -1133,6 +1133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+
   // Alternative login endpoint to avoid Replit auth conflicts
   app.post('/api/user/login', async (req, res) => {
     console.log('=== LOGIN ATTEMPT ===', new Date().toISOString());
