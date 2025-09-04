@@ -458,32 +458,3 @@ p .emoji-large, span .emoji-large, div .emoji-large {
   }
 }
 
-@media (min-width: 768px) {
-  /* Tablet and desktop styles */
-  .desktop-optimized {
-    font-size: 1rem;
-    line-height: 1.5rem;
-  }
-  
-  .desktop-padding {
-    padding: 1.5rem;
-  }
-  
-  .desktop-grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
-  /* Desktop-specific styles */
-  .desktop-large {
-    max-width: 1200px;
-  }
-}
-
-@media (min-width: 1280px) {
-  /* Large desktop styles */
-  .desktop-xl {
-    max-width: 1400px;
-  }
-}
