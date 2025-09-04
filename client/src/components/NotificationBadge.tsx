@@ -43,7 +43,7 @@ export function NotificationBadge({
   });
 
   const unreadCount = notifications.filter((n: Notification) => !n.isRead && n.isVisible).length;
-  const hasIncognitoMessages = notifications.filter((n: Notification) => !n.isRead && n.isVisible && (n.type === "incognito_message" || (type === "messages" && n.type === "message"))).length > 0;
+  const hasIncognitoMessages = (type === "messages") && notifications.filter((n: Notification) => !n.isRead && n.isVisible && n.type === "message").length > 0;
   const hasNotifications = unreadCount > 0;
   
   // Debug logging (remove in production)
