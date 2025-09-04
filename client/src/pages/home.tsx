@@ -1202,7 +1202,7 @@ export default function Home() {
             </div>
           )}
           {/* Action Icons Row */}
-          <div className="flex space-x-2 mb-3">
+          <div className="flex space-x-4 mb-3">
             <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
               <PopoverTrigger asChild>
                 <Button 
