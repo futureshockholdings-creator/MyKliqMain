@@ -44,9 +44,13 @@ import { NotificationPanel } from "@/components/NotificationPanel";
 import { useNotifications } from "@/hooks/useNotifications";
 import { Chatbot } from "@/components/Chatbot";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { PinVerificationModal } from "@/components/PinVerificationModal";
+import { useState } from "react";
 
 function Navigation({ currentPath }: { currentPath: string }) {
   const { t } = useTranslation();
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pendingSettingsNavigation, setPendingSettingsNavigation] = useState(false);
   const { 
     isNotificationPanelOpen,
     getTotalUnreadCount,
@@ -75,6 +79,30 @@ function Navigation({ currentPath }: { currentPath: string }) {
       case "events": return getEventInviteCount();
       default: return 0;
     }
+  };
+
+  const [, navigate] = useLocation();
+
+  const handleNavigation = (path: string, requiresPin: boolean = false) => {
+    if (requiresPin && path === "/settings") {
+      setPendingSettingsNavigation(true);
+      setShowPinModal(true);
+    } else {
+      navigate(path);
+    }
+  };
+
+  const handlePinSuccess = () => {
+    setShowPinModal(false);
+    if (pendingSettingsNavigation) {
+      setPendingSettingsNavigation(false);
+      navigate("/settings");
+    }
+  };
+
+  const handlePinModalClose = () => {
+    setShowPinModal(false);
+    setPendingSettingsNavigation(false);
   };
 
   return (
@@ -107,9 +135,9 @@ function Navigation({ currentPath }: { currentPath: string }) {
             const badgeCount = getBadgeCount(item.badgeType);
             
             return (
-              <Link
+              <button
                 key={item.path}
-                to={item.path}
+                onClick={() => handleNavigation(item.path, item.path === "/settings")}
                 className={cn(
                   "flex flex-col items-center p-3 mb-4 transition-colors rounded-lg w-16 relative",
                   isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -123,7 +151,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 )}
                 <item.icon className="w-6 h-6" />
                 <span className="text-xs mt-1 text-center leading-tight break-words whitespace-pre-line max-w-14">{item.label}</span>
-              </Link>
+              </button>
             );
           })}
           
@@ -161,9 +189,9 @@ function Navigation({ currentPath }: { currentPath: string }) {
             const badgeCount = getBadgeCount(item.badgeType);
             
             return (
-              <Link
+              <button
                 key={item.path}
-                to={item.path}
+                onClick={() => handleNavigation(item.path, item.path === "/settings")}
                 className={cn(
                   "flex flex-col items-center p-2 transition-colors rounded-lg relative",
                   isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -177,7 +205,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 )}
                 <item.icon className="w-5 h-5" />
                 <span className="text-[10px] mt-0.5 text-center leading-tight break-words whitespace-pre-line max-w-12">{item.label}</span>
-              </Link>
+              </button>
             );
           })}
         </div>
@@ -187,6 +215,15 @@ function Navigation({ currentPath }: { currentPath: string }) {
       <NotificationPanel 
         isOpen={isNotificationPanelOpen} 
         onClose={closeNotificationPanel} 
+      />
+      
+      {/* PIN Verification Modal */}
+      <PinVerificationModal
+        isOpen={showPinModal}
+        onClose={handlePinModalClose}
+        onSuccess={handlePinSuccess}
+        title="Settings Access"
+        description="Please enter your 4-digit PIN to access settings for additional security."
       />
     </>
   );
