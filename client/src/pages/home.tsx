@@ -1289,7 +1289,7 @@ export default function Home() {
               </Button>
             </div>
             
-            {/* Daily Content Buttons */}
+            {/* Daily Content Buttons - Moved under emojis, moviecons, and mood icons */}
             <div className="flex flex-wrap gap-2 items-start mt-3">
               <Button
                 onClick={() => horoscopeMutation.mutate()}
@@ -1324,6 +1324,7 @@ export default function Home() {
                 </Button>
               </div>
             </div>
+            <div className="flex flex-wrap gap-2 items-start">
             <div className="flex justify-end">
               <Button
                 onClick={handleCreatePost}
