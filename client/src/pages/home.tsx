@@ -1296,7 +1296,6 @@ export default function Home() {
               disabled={horoscopeMutation.isPending}
               variant="outline"
               size="sm"
-              className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
               data-testid="button-daily-horoscope"
             >
               {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
@@ -1306,7 +1305,6 @@ export default function Home() {
               disabled={bibleVerseMutation.isPending}
               variant="outline"
               size="sm"
-              className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
               data-testid="button-daily-bible-verse"
             >
               {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
@@ -1316,7 +1314,6 @@ export default function Home() {
               disabled={reflectMutation.isPending}
               variant="outline"
               size="sm"
-              className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
               data-testid="button-lets-reflect"
             >
               {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
