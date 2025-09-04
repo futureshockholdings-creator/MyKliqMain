@@ -50,11 +50,10 @@ export function NotificationBadge({
     : notifications.filter((n: Notification) => !n.isRead && n.isVisible && n.type === type);
   
   const unreadCount = filteredNotifications.length;
-  const hasIncognitoMessages = (type === "messages") && filteredNotifications.some((n: Notification) => n.type === "incognito_message");
-  const hasNotifications = unreadCount > 0;
   
-  // Debug logging (remove in production)
-  console.log(`NotificationBadge [${type}]: total=`, notifications.length, 'filtered=', filteredNotifications.length, 'hasIncognitoMessages=', hasIncognitoMessages, 'types:', filteredNotifications.map(n => n.type));
+  // Force yellow for messages badge when there are ANY notifications
+  const hasIncognitoMessages = (type === "messages") && unreadCount > 0;
+  const hasNotifications = unreadCount > 0;
 
   useEffect(() => {
     if (hasNotifications) {
