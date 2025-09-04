@@ -54,7 +54,7 @@ export function NotificationBadge({
   const hasNotifications = unreadCount > 0;
   
   // Debug logging (remove in production)
-  // console.log(`NotificationBadge [${type}]: notifications=`, notifications.length, 'unread=', unreadCount, 'hasIncognitoMessages=', hasIncognitoMessages, 'types:', notifications.map(n => n.type));
+  console.log(`NotificationBadge [${type}]: total=`, notifications.length, 'filtered=', filteredNotifications.length, 'hasIncognitoMessages=', hasIncognitoMessages, 'types:', filteredNotifications.map(n => n.type));
 
   useEffect(() => {
     if (hasNotifications) {
