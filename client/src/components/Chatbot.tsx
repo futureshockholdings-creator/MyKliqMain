@@ -156,20 +156,35 @@ const knowledgeBase: KnowledgeBase = {
     keywords: ['mobile', 'app', 'ios', 'android', 'app store', 'google play', 'native', 'react native'],
     response: "MyKliq is developing native mobile apps for iOS and Android. Features: 1) Full feature parity with web version, 2) JWT authentication for mobile, 3) Optimized mobile API endpoints, 4) Push notification support, 5) Native camera and photo integration, 6) Planned App Store and Google Play release. The mobile experience will provide all MyKliq features optimized for touch interfaces and mobile usage patterns.",
     relatedTopics: ['ios', 'android', 'native', 'notifications']
+  },
+  'video-calls': {
+    keywords: ['video call', 'video calling', 'call', 'calling', 'video chat', 'webrtc', 'camera', 'microphone'],
+    response: "MyKliq features WebRTC-based video calling for face-to-face conversations with friends. How it works: 1) Click on friends in the pyramid chart to start a video call, 2) Uses browser camera and microphone (permission required), 3) Real-time video and audio streaming, 4) Call controls include mute, video toggle, and end call, 5) Supports multiple participants in group calls, 6) Video calls boost your friendship ranking scores significantly (8.0 weight). No phone system access needed - works entirely through your web browser.",
+    relatedTopics: ['kliq', 'friends', 'webrtc', 'real-time', 'ranking']
+  },
+  'gifs': {
+    keywords: ['gifs', 'animated images', 'gif library', 'reactions', 'giphy', 'animated'],
+    response: "GIF support enhances your messaging and posting experience. Features: 1) Extensive GIF library integration, 2) Search for perfect animated reactions, 3) Use in posts and messages, 4) Popular categories and trending GIFs, 5) Easy integration with posts and comments. GIFs add fun and expressiveness to your communications, perfect for reactions, emotions, or just adding humor to conversations.",
+    relatedTopics: ['posts', 'messages', 'reactions', 'media']
+  },
+  'friend-ranking': {
+    keywords: ['friend ranking', 'ranking system', 'friendship score', 'pyramid ranking', 'closest friends', 'rank friends'],
+    response: "MyKliq's intelligent friend ranking system automatically calculates friendship closeness using advanced algorithms. Factors include: 1) Message exchanges (highest weight), 2) Video calls (8.0 weight - very important), 3) Post interactions (likes, comments), 4) Story views, 5) Live stream participation, 6) Meetup attendance together, 7) Response time patterns. The system learns from your interactions and suggests optimal friend positions in your 1-28 pyramid, but you can always drag to manually rerank.",
+    relatedTopics: ['kliq', 'pyramid', 'algorithms', 'interactions', 'video-calls']
   }
 };
 
 const greetingMessages = [
-  "Hi! I'm your MyKliq expert assistant. I can help you with everything from basic navigation to advanced features like incognito messaging, live streaming, auto-posting, and social media integration. What would you like to know?",
-  "Hello! I know all about MyKliq's features - from the friend pyramid and kliq customization to daily horoscopes, polls, themes, and mobile app development. Ask me anything!",
-  "Hey there! I'm here to help you master MyKliq. Whether you need help with messaging, events, live streaming, security settings, or any other feature, I've got detailed answers for you!"
+  "Hi! I'm your MyKliq expert assistant. I can help you with everything from basic navigation to advanced features like video calling, incognito messaging, live streaming, auto-posting, and social media integration. What would you like to know?",
+  "Hello! I know all about MyKliq's features - from the friend pyramid and video calling to daily horoscopes, polls, themes, GIFs, and mobile app development. Ask me anything!",
+  "Hey there! I'm here to help you master MyKliq. Whether you need help with video calls, messaging, events, live streaming, friend ranking algorithms, or any other feature, I've got detailed answers for you!"
 ];
 
 const fallbackResponses = [
-  "I have comprehensive knowledge about MyKliq! Try asking about: Headlines feed, friend pyramid, incognito messaging, live streaming, auto-posting, daily horoscopes, polls, events, themes, security settings, social media integration, kliq closure, or mobile app features.",
-  "I can provide detailed help with all MyKliq features! Ask about: navigation, notification badges, kliq customization with emojis, password recovery, moviecons, stories, meetup location sharing, bible verses, or any specific functionality you're curious about.",
-  "Need detailed guidance? I know about: posting and interactions, real-time features, privacy settings, auto-deletion, live streaming with chat, event management, theme customization, security PINs, social media connections, or the upcoming mobile apps for iOS and Android.",
-  "I'm your complete MyKliq guide! I can explain: friend ranking system, kliq closure settings, incognito conversations, daily content features, notification system, profile customization, live actions, poll creation, or any advanced functionality step-by-step."
+  "I have comprehensive knowledge about MyKliq! Try asking about: Headlines feed, friend pyramid, video calling, incognito messaging, live streaming, auto-posting, daily horoscopes, polls, events, themes, security settings, social media integration, kliq closure, or mobile app features.",
+  "I can provide detailed help with all MyKliq features! Ask about: navigation, notification badges, kliq customization with emojis, video calls, password recovery, moviecons, stories, meetup location sharing, bible verses, GIFs, or any specific functionality you're curious about.",
+  "Need detailed guidance? I know about: video calling with WebRTC, posting and interactions, real-time features, privacy settings, auto-deletion, live streaming with chat, event management, theme customization, friend ranking algorithms, security PINs, social media connections, or the upcoming mobile apps for iOS and Android.",
+  "I'm your complete MyKliq guide! I can explain: video calling system, friend ranking algorithms, kliq closure settings, incognito conversations, daily content features, notification system, profile customization, live actions, poll creation, GIF integration, or any advanced functionality step-by-step."
 ];
 
 export function Chatbot() {
@@ -335,7 +350,7 @@ export function Chatbot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-96 h-[500px] shadow-xl z-50 flex flex-col">
+        <Card className="fixed bottom-6 right-6 w-80 h-[450px] shadow-xl z-50 flex flex-col">
           <CardHeader className="flex-shrink-0 pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
