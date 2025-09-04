@@ -96,7 +96,8 @@ export function NotificationBadge({
             hasIncognitoMessages && "!bg-yellow-400 !text-black !border-yellow-400 hover:!bg-yellow-500 [&>*]:!text-black",
             isVisible && "animate-bounce",
             size === "sm" && "h-4 w-4 text-[10px]",
-            size === "lg" && "h-6 w-6 text-sm"
+            size === "lg" && "h-6 w-6 text-sm",
+            className
           )}
           data-testid={`notification-count-${type}`}
         >

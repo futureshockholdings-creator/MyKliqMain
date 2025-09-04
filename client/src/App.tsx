@@ -117,8 +117,8 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 data-testid={`nav-${item.tab}`}
               >
                 {item.badgeType && (
-                  <div className="absolute -top-2 -right-2">
-                    <NotificationBadge type={item.badgeType} showIcon={false} size="sm" />
+                  <div className="absolute -top-1 -right-1">
+                    <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className="h-5 w-5" />
                   </div>
                 )}
                 <item.icon className="w-6 h-6" />
@@ -171,8 +171,8 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 data-testid={`nav-mobile-${item.tab}`}
               >
                 {item.badgeType && (
-                  <div className="absolute -top-2 -right-2">
-                    <NotificationBadge type={item.badgeType} showIcon={false} size="sm" />
+                  <div className="absolute -top-1 -right-1">
+                    <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className="h-5 w-5" />
                   </div>
                 )}
                 <item.icon className="w-5 h-5" />
