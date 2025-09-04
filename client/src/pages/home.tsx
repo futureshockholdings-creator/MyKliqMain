@@ -1289,8 +1289,8 @@ export default function Home() {
               </Button>
             </div>
             
-            {/* Daily Content Buttons - Moved under emojis, moviecons, and mood icons */}
-            <div className="flex flex-wrap gap-2 items-start mt-3">
+            {/* Daily Content Buttons - Positioned under the main action icons */}
+            <div className="flex flex-wrap gap-2 items-start mt-3 justify-start">
               <Button
                 onClick={() => horoscopeMutation.mutate()}
                 disabled={horoscopeMutation.isPending}
@@ -1301,30 +1301,26 @@ export default function Home() {
               >
                 {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
               </Button>
-              <div className="flex flex-col gap-1 flex-shrink-0">
-                <Button
-                  onClick={() => bibleVerseMutation.mutate()}
-                  disabled={bibleVerseMutation.isPending}
-                  variant="outline"
-                  size="sm"
-                  className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px]"
-                  data-testid="button-daily-bible-verse"
-                >
-                  {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
-                </Button>
-                <Button
-                  onClick={handleReflect}
-                  disabled={reflectMutation.isPending}
-                  variant="outline"
-                  size="sm"
-                  className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px]"
-                  data-testid="button-lets-reflect"
-                >
-                  {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
-                </Button>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2 items-start">
+              <Button
+                onClick={() => bibleVerseMutation.mutate()}
+                disabled={bibleVerseMutation.isPending}
+                variant="outline"
+                size="sm"
+                className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
+                data-testid="button-daily-bible-verse"
+              >
+                {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
+              </Button>
+              <Button
+                onClick={handleReflect}
+                disabled={reflectMutation.isPending}
+                variant="outline"
+                size="sm"
+                className="px-1.5 py-0.5 text-[10px] h-6 min-h-[24px] flex-shrink-0"
+                data-testid="button-lets-reflect"
+              >
+                {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
+              </Button>
             </div>
             <div className="flex justify-end">
               <Button
