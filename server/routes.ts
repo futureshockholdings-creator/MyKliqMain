@@ -1132,6 +1132,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Test endpoint to send mock incognito message notifications
+  app.post('/api/test/incognito-message', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Create dual notifications for testing incognito message system
+      const result = await notificationService.notifyIncognitoMessage(
+        userId,
+        'test-sender-id',
+        'Test User',
+        'This is a test incognito message to verify the notification system is working correctly!'
+      );
+
+      res.json({
+        success: true,
+        message: "Mock incognito message notifications created",
+        notifications: {
+          alertNotification: result.alertNotification.id,
+          messageNotification: result.messageNotification.id
+        }
+      });
+
+    } catch (error) {
+      console.error("Error creating test incognito message:", error);
+      res.status(500).json({ 
+        message: "Failed to create test notifications"
+      });
+    }
+  });
+
   // Alternative login endpoint to avoid Replit auth conflicts
   app.post('/api/user/login', async (req, res) => {
     console.log('=== LOGIN ATTEMPT ===', new Date().toISOString());
