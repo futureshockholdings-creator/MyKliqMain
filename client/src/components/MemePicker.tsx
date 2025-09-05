@@ -58,16 +58,7 @@ function MemeImage({ meme, className }: { meme: Meme; className?: string }) {
           </div>
         )}
       </div>
-      <div className="flex-1 bg-gray-900 p-2 flex flex-col justify-center">
-        <div className="text-xs text-white text-center font-medium leading-tight">
-          {meme.title}
-        </div>
-        {meme.description && (
-          <div className="text-xs text-gray-300 text-center mt-1 leading-tight">
-            {meme.description}
-          </div>
-        )}
-      </div>
+      <div className="flex-1 bg-gray-900"></div>
       <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
         <ImageIcon className="w-6 h-6 text-white drop-shadow-lg" />
       </div>
