@@ -44,21 +44,18 @@ function MemeImage({ meme, className }: { meme: Meme; className?: string }) {
     : meme.imageUrl;
 
   return (
-    <div className={`${className} relative h-40 overflow-hidden meme-container cursor-pointer border-2 border-primary rounded-lg bg-black flex flex-col`}>
-      <div className="h-24 w-full flex-shrink-0 overflow-hidden">
-        <img
-          src={imageUrl}
-          alt={meme.title}
-          className="w-full h-full object-cover"
-          onError={() => setImageError(true)}
-        />
-        {meme.isAnimated && (
-          <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
-            GIF
-          </div>
-        )}
-      </div>
-      <div className="flex-1 bg-gray-900"></div>
+    <div className={`${className} relative h-32 overflow-hidden meme-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
+      <img
+        src={imageUrl}
+        alt={meme.title}
+        className="w-full h-full object-cover"
+        onError={() => setImageError(true)}
+      />
+      {meme.isAnimated && (
+        <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
+          GIF
+        </div>
+      )}
       <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
         <ImageIcon className="w-6 h-6 text-white drop-shadow-lg" />
       </div>
