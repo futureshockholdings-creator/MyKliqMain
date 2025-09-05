@@ -44,18 +44,30 @@ function MemeImage({ meme, className }: { meme: Meme; className?: string }) {
     : meme.imageUrl;
 
   return (
-    <div className={`${className} relative h-40 overflow-hidden meme-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
-      <img
-        src={imageUrl}
-        alt={meme.title}
-        className="w-full h-full object-cover"
-        onError={() => setImageError(true)}
-      />
-      {meme.isAnimated && (
-        <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
-          GIF
+    <div className={`${className} relative h-40 overflow-hidden meme-container cursor-pointer border-2 border-primary rounded-lg bg-black flex flex-col`}>
+      <div className="h-24 w-full flex-shrink-0 overflow-hidden">
+        <img
+          src={imageUrl}
+          alt={meme.title}
+          className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
+        />
+        {meme.isAnimated && (
+          <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
+            GIF
+          </div>
+        )}
+      </div>
+      <div className="flex-1 bg-gray-900 p-2 flex flex-col justify-center">
+        <div className="text-xs text-white text-center font-medium leading-tight">
+          {meme.title}
         </div>
-      )}
+        {meme.description && (
+          <div className="text-xs text-gray-300 text-center mt-1 leading-tight">
+            {meme.description}
+          </div>
+        )}
+      </div>
       <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
         <ImageIcon className="w-6 h-6 text-white drop-shadow-lg" />
       </div>
@@ -171,14 +183,6 @@ export function MemePicker({
                       meme={meme} 
                       className="rounded-lg hover:scale-105 transition-transform duration-200 shadow-sm hover:shadow-md"
                     />
-                    <div className="text-xs text-center mt-2 text-muted-foreground group-hover:text-foreground transition-colors truncate px-1">
-                      {meme.title}
-                    </div>
-                    {meme.description && (
-                      <div className="text-xs text-center text-muted-foreground/70 truncate px-1">
-                        {meme.description}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
