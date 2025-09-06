@@ -575,7 +575,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile user profile endpoint
   app.get('/api/mobile/user/profile', verifyMobileToken, async (req, res) => {
     try {
-      const user = await storage.getUser(req.user?.id);
+      const user = await storage.getUser(req.user?.userId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
@@ -633,7 +633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile-optimized intelligent feed endpoint with curation and battery efficiency
   app.get('/api/mobile/feed', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       const page = parseInt(req.query.page as string) || 1;
       const limit = Math.min(50, Math.max(5, parseInt(req.query.limit as string) || 20)); // Mobile-optimized limits
       const lastSeenId = req.query.lastSeenId as string; // For battery-efficient pagination
@@ -732,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile post creation endpoint
   app.post('/api/mobile/posts', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       const { content, mediaUrl, mediaType } = req.body;
       
       if (!content && !mediaUrl) {
@@ -773,7 +773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile like/unlike endpoint with automatic engagement tracking
   app.post('/api/mobile/posts/:postId/like', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       const postId = req.params.postId;
       
       // Get post info for engagement tracking
@@ -799,26 +799,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Track this engagement for future curation improvements
           await curationService.trackContentEngagement({
-            id: require('crypto').randomUUID(),
             userId,
-            contentId: postId,
+            contentOwnerId: post.userId,
             contentType: 'post',
-            authorId: post.userId,
+            contentId: postId,
+            viewDuration: 2, // Estimated 2 seconds for a like action
             interactionType: 'like',
-            timeSpent: 2, // Estimated 2 seconds for a like action
-            engagedAt: new Date(),
           });
 
           // Generate intelligent notification for post author
           const { NotificationIntelligence } = await import('./notificationIntelligence');
           const notificationService = new NotificationIntelligence();
           
+          // Get user data for notification
+          const likerUser = await storage.getUser(userId);
+          
           await notificationService.generateSmartNotifications({
             type: 'new_like',
             userId,
             targetUserId: post.userId,
             data: {
-              liker: `${req.user?.firstName || 'User'} ${req.user?.lastName || ''}`,
+              liker: `${likerUser?.firstName || 'User'} ${likerUser?.lastName || ''}`,
               postId: postId
             }
           });
@@ -839,7 +840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile friends list endpoint
   app.get('/api/mobile/friends', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       const friends = await storage.getFriends(userId);
       
       // Format for mobile display
@@ -863,7 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile intelligent insights endpoint - comprehensive intelligence dashboard
   app.get('/api/mobile/insights', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       
       // Get all intelligent insights in parallel for maximum efficiency
       const [connectionHealth, conversationSuggestions, notificationTiming, groupDynamics] = await Promise.all([
@@ -942,7 +943,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile stories endpoint
   app.get('/api/mobile/stories', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       const stories = await storage.getActiveStories(userId);
       
       // Group stories by user for mobile UI
@@ -978,7 +979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Push notification registration endpoint
   app.post('/api/mobile/notifications/register', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       const { pushToken, platform } = req.body;
       
       if (!pushToken || !platform) {
@@ -1026,7 +1027,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile content recommendations endpoint - personalized content discovery
   app.get('/api/mobile/recommendations', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       const category = req.query.category as string; // Optional filter: 'interests', 'hobbies', 'entertainment', 'lifestyle'
       
       const { contentRecommendationEngine } = await import('./contentRecommendationEngine.js');
@@ -1053,7 +1054,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         recommendations: mobileRecommendations,
         totalCount: mobileRecommendations.length,
-        categories: [...new Set(mobileRecommendations.map(r => r.category))],
+        categories: Array.from(new Set(mobileRecommendations.map(r => r.category))),
         userEngagementLevel: calculateUserEngagementLevel(recommendations)
       });
       
@@ -1066,7 +1067,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile recommendation stats for analytics
   app.get('/api/mobile/recommendations/stats', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.id;
+      const userId = req.user?.userId;
       
       const { contentRecommendationEngine } = await import('./contentRecommendationEngine.js');
       const stats = await contentRecommendationEngine.getRecommendationStats(userId);
@@ -1251,10 +1252,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (attempts.lockedUntil && attempts.lockedUntil > new Date()) {
       const remainingMs = attempts.lockedUntil.getTime() - new Date().getTime();
       const remainingHours = Math.ceil(remainingMs / (1000 * 60 * 60));
-      return { isLocked: true, remainingHours, attemptCount: attempts.attemptCount };
+      return { isLocked: true, remainingHours, attemptCount: attempts.attemptCount || 0 };
     }
 
-    return { isLocked: false, attemptCount: attempts.attemptCount };
+    return { isLocked: false, attemptCount: attempts.attemptCount || 0 };
   }
 
   // Step 1: Verify name
@@ -1654,8 +1655,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         bio: user.bio,
         kliqName: user.kliqName,
         birthdate: user.birthdate,
-        profileMusicUrl: user.profileMusicUrl,
-        profileMusicTitle: user.profileMusicTitle,
+        profileMusicUrls: user.profileMusicUrls,
+        profileMusicTitles: user.profileMusicTitles,
         createdAt: user.createdAt,
       };
       
@@ -2488,7 +2489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         adminNotes,
         actionTaken,
         reviewedBy: userId,
-        reviewedAt: new Date().toISOString()
+        reviewedAt: new Date()
       });
       
       res.json(updatedReport);
@@ -3366,11 +3367,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "No account found with this phone number" });
       }
       
-      if (!user.pinHash) {
+      if (!user.securityPin) {
         return res.status(400).json({ message: "PIN not set for this account" });
       }
       
-      const isValidPin = await bcrypt.compare(pin, user.pinHash);
+      const isValidPin = await bcrypt.compare(pin, user.securityPin);
       
       if (!isValidPin) {
         return res.status(400).json({ message: "Invalid PIN" });
@@ -5202,7 +5203,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Invalid suspension type" });
       }
 
-      await storage.suspendUser(userId, suspensionType, expiresAt);
+      await storage.suspendUser(userId, {
+        suspensionType,
+        suspendedAt: new Date().toISOString(),
+        suspensionExpiresAt: expiresAt ? expiresAt.toISOString() : null
+      });
       res.json({ success: true, message: "User suspended successfully", expiresAt });
     } catch (error) {
       console.error("Error suspending user:", error);
