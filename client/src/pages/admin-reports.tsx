@@ -64,7 +64,10 @@ export default function AdminReports() {
   // Fetch reports
   const { data: reports = [], isLoading } = useQuery<Report[]>({
     queryKey: ['/api/admin/reports', statusFilter],
-    queryFn: () => apiRequest("GET", `/api/admin/reports?status=${statusFilter}`),
+    queryFn: () => {
+      const statusParam = statusFilter === "all" ? "" : statusFilter;
+      return apiRequest("GET", `/api/admin/reports?status=${statusParam}`);
+    },
   });
 
   // Update report mutation
@@ -199,7 +202,7 @@ export default function AdminReports() {
             <SelectItem value="reviewed">Reviewed</SelectItem>
             <SelectItem value="resolved">Resolved</SelectItem>
             <SelectItem value="dismissed">Dismissed</SelectItem>
-            <SelectItem value="">All Reports</SelectItem>
+            <SelectItem value="all">All Reports</SelectItem>
           </SelectContent>
         </Select>
       </div>
