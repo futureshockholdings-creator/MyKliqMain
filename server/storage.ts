@@ -26,6 +26,7 @@ import {
   socialCredentials,
   externalPosts,
   passwordResetTokens,
+  passwordResetAttempts,
   rulesReports,
   type User,
   type UpsertUser,
@@ -67,6 +68,8 @@ import {
   type InsertExternalPost,
   type PasswordResetToken,
   type InsertPasswordResetToken,
+  type PasswordResetAttempt,
+  type InsertPasswordResetAttempt,
   type Report,
   type InsertReport,
   type MeetupCheckIn,
@@ -124,6 +127,10 @@ export interface IStorage {
   createPasswordResetToken(userId: string, token: string, expiresAt: Date): Promise<PasswordResetToken>;
   getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
   deletePasswordResetToken(token: string): Promise<void>;
+  getPasswordResetAttempts(userId: string): Promise<PasswordResetAttempt | undefined>;
+  recordPasswordResetAttempt(userId: string): Promise<void>;
+  lockPasswordReset(userId: string): Promise<void>;
+  clearPasswordResetAttempts(userId: string): Promise<void>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
   updateUser(userId: string, updates: Partial<User>): Promise<User>;
@@ -3007,6 +3014,72 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(passwordResetTokens)
       .where(eq(passwordResetTokens.token, token));
+  }
+
+  // Password reset attempt tracking methods
+  async getPasswordResetAttempts(userId: string): Promise<PasswordResetAttempt | undefined> {
+    const [attempts] = await db
+      .select()
+      .from(passwordResetAttempts)
+      .where(eq(passwordResetAttempts.userId, userId));
+    return attempts;
+  }
+
+  async recordPasswordResetAttempt(userId: string): Promise<void> {
+    const existing = await this.getPasswordResetAttempts(userId);
+    
+    if (existing) {
+      // Increment attempt count
+      await db
+        .update(passwordResetAttempts)
+        .set({ 
+          attemptCount: existing.attemptCount + 1,
+          lastAttemptAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(passwordResetAttempts.userId, userId));
+    } else {
+      // Create new attempt record
+      await db
+        .insert(passwordResetAttempts)
+        .values({
+          userId,
+          attemptCount: 1,
+          lastAttemptAt: new Date()
+        });
+    }
+  }
+
+  async lockPasswordReset(userId: string): Promise<void> {
+    const lockUntil = new Date();
+    lockUntil.setHours(lockUntil.getHours() + 24); // 24 hour lockout
+
+    const existing = await this.getPasswordResetAttempts(userId);
+    
+    if (existing) {
+      await db
+        .update(passwordResetAttempts)
+        .set({ 
+          lockedUntil: lockUntil,
+          updatedAt: new Date()
+        })
+        .where(eq(passwordResetAttempts.userId, userId));
+    } else {
+      await db
+        .insert(passwordResetAttempts)
+        .values({
+          userId,
+          attemptCount: 10, // Mark as locked with max attempts
+          lastAttemptAt: new Date(),
+          lockedUntil: lockUntil
+        });
+    }
+  }
+
+  async clearPasswordResetAttempts(userId: string): Promise<void> {
+    await db
+      .delete(passwordResetAttempts)
+      .where(eq(passwordResetAttempts.userId, userId));
   }
 
   // Admin operations for customer service
