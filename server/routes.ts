@@ -5234,6 +5234,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Comprehensive scaling dashboard for 5000+ user monitoring
+  app.get('/api/admin/scaling-dashboard', async (req, res) => {
+    try {
+      const { password } = req.query;
+      
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      // Gather comprehensive metrics for 5000+ user scaling
+      const [
+        performanceStats,
+        rateLimitStats,
+        dbHealth,
+        maintenanceStats
+      ] = await Promise.all([
+        performanceOptimizer.getPerformanceStats(),
+        rateLimitService.getStats(),
+        performanceOptimizer.checkDatabaseHealth(),
+        maintenanceService.getMetrics()
+      ]);
+
+      const analytics = await storage.getAnalytics();
+      
+      const scalingMetrics = {
+        // Current load metrics
+        currentLoad: {
+          activeUsers: analytics.totalUsers,
+          memoryUsageMB: Math.round(performanceStats.memoryUsage.heapUsed / 1024 / 1024),
+          databaseConnections: {
+            total: pool.totalCount,
+            idle: pool.idleCount,
+            waiting: pool.waitingCount,
+            utilization: ((pool.totalCount / 50) * 100).toFixed(1) + '%'
+          },
+          cachePerformance: {
+            redisConnected: performanceStats.cacheStats.redisConnected,
+            memoryCacheSize: performanceStats.cacheStats.memoryCacheSize,
+            rateLimitEntries: rateLimitStats.memoryEntries
+          }
+        },
+        
+        // Performance benchmarks
+        performance: {
+          averageResponseTimes: performanceStats.averageResponseTimes,
+          slowEndpoints: performanceStats.slowEndpoints,
+          databaseHealth: dbHealth,
+          optimizationSuggestions: performanceOptimizer.getOptimizationSuggestions()
+        },
+        
+        // Scaling capacity indicators
+        scalingCapacity: {
+          estimatedConcurrentUsers: Math.min(
+            Math.floor((1500 - performanceStats.memoryUsage.heapUsed / 1024 / 1024) / 0.3), // Memory based
+            Math.floor((50 - pool.totalCount) * 100), // DB connection based
+            5000 // Target capacity
+          ),
+          memoryCapacityUsed: ((performanceStats.memoryUsage.heapUsed / 1024 / 1024) / 1500 * 100).toFixed(1) + '%',
+          dbCapacityUsed: ((pool.totalCount / 50) * 100).toFixed(1) + '%',
+          scalingStatus: dbHealth.status === 'healthy' && performanceStats.memoryUsage.heapUsed < 800000000 ? 'optimal' : 'monitoring'
+        },
+        
+        // Rate limiting effectiveness
+        rateLimiting: {
+          limits: rateLimitStats.limits,
+          activeRateLimits: rateLimitStats.memoryEntries,
+          effectiveness: 'protecting against traffic spikes'
+        },
+        
+        // System maintenance
+        maintenance: maintenanceStats,
+        
+        // Recommendations for 5000+ users
+        recommendations: [
+          performanceStats.memoryUsage.heapUsed > 800000000 ? "Consider memory optimization or horizontal scaling" : "Memory usage optimal",
+          pool.totalCount / 50 > 0.8 ? "Database connection pool approaching limits" : "Database connections healthy",
+          !performanceStats.cacheStats.redisConnected ? "Enable Redis for better caching performance" : "Cache system operational",
+          performanceStats.slowEndpoints.length > 3 ? "Multiple slow endpoints detected - optimization needed" : "Endpoint performance good"
+        ]
+      };
+
+      res.json(scalingMetrics);
+    } catch (error) {
+      console.error("Error fetching scaling dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch scaling metrics" });
+    }
+  });
+
   // System health endpoint for admin
   app.get('/api/admin/system-health', async (req, res) => {
     try {
