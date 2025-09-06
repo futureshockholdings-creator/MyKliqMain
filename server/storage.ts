@@ -26,6 +26,7 @@ import {
   socialCredentials,
   externalPosts,
   passwordResetTokens,
+  reports,
   type User,
   type UpsertUser,
   type UserTheme,
@@ -66,6 +67,8 @@ import {
   type InsertExternalPost,
   type PasswordResetToken,
   type InsertPasswordResetToken,
+  type Report,
+  type InsertReport,
   type MeetupCheckIn,
   type InsertMeetupCheckIn,
   type BirthdayMessage,
@@ -308,7 +311,6 @@ export interface IStorage {
   // Admin operations for customer service
   getAllUsersForAdmin(): Promise<User[]>;
   getUserDetailsForAdmin(userId: string): Promise<User | undefined>;
-  suspendUser(userId: string, suspensionType: string, expiresAt: Date | null): Promise<void>;
   checkAndUnsuspendExpiredUsers(): Promise<number>;
 
   // Smart Friend Ranking Intelligence
@@ -318,6 +320,12 @@ export interface IStorage {
   updateFriendshipRank(userId: string, friendId: string, rank: number): Promise<void>;
   getActiveUsersForRankingAnalysis(): Promise<User[]>;
   getUserFriendships(userId: string): Promise<Friendship[]>;
+
+  // Report operations
+  createReport(report: InsertReport): Promise<Report>;
+  getReports(filters: { status?: string; page?: number; limit?: number }): Promise<Report[]>;
+  updateReport(reportId: string, updates: Partial<Report>): Promise<Report>;
+  suspendUser(userId: string, suspensionData: { suspensionType: string; suspendedAt: string; suspensionExpiresAt: string | null }): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3284,6 +3292,71 @@ export class DatabaseStorage implements IStorage {
       .from(friendships)
       .where(eq(friendships.userId, userId))
       .orderBy(asc(friendships.rank));
+  }
+
+  // Report operations
+  async createReport(report: InsertReport): Promise<Report> {
+    const [newReport] = await db
+      .insert(reports)
+      .values(report)
+      .returning();
+    return newReport;
+  }
+
+  async getReports(filters: { status?: string; page?: number; limit?: number }): Promise<Report[]> {
+    const { status, page = 1, limit = 20 } = filters;
+    let query = db
+      .select({
+        id: reports.id,
+        reportedBy: reports.reportedBy,
+        postId: reports.postId,
+        postAuthorId: reports.postAuthorId,
+        reason: reports.reason,
+        description: reports.description,
+        status: reports.status,
+        reviewedBy: reports.reviewedBy,
+        reviewedAt: reports.reviewedAt,
+        adminNotes: reports.adminNotes,
+        actionTaken: reports.actionTaken,
+        createdAt: reports.createdAt,
+        updatedAt: reports.updatedAt,
+        reporter: users,
+        post: posts,
+        postAuthor: sql<User>`NULL`.as('postAuthor')
+      })
+      .from(reports)
+      .leftJoin(users, eq(reports.reportedBy, users.id))
+      .leftJoin(posts, eq(reports.postId, posts.id))
+      .orderBy(desc(reports.createdAt));
+
+    if (status) {
+      query = query.where(eq(reports.status, status as any));
+    }
+
+    const offset = (page - 1) * limit;
+    return await query.limit(limit).offset(offset);
+  }
+
+  async updateReport(reportId: string, updates: Partial<Report>): Promise<Report> {
+    const [updatedReport] = await db
+      .update(reports)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(reports.id, reportId))
+      .returning();
+    return updatedReport;
+  }
+
+  async suspendUser(userId: string, suspensionData: { suspensionType: string; suspendedAt: string; suspensionExpiresAt: string | null }): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        isSuspended: true,
+        suspensionType: suspensionData.suspensionType,
+        suspendedAt: new Date(suspensionData.suspendedAt),
+        suspensionExpiresAt: suspensionData.suspensionExpiresAt ? new Date(suspensionData.suspensionExpiresAt) : null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
   }
 }
 

@@ -14,7 +14,7 @@ import { sendChatbotConversation } from "./emailService";
 import { pool } from "./db";
 import { friendRankingIntelligence } from "./friendRankingIntelligence";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
@@ -2296,6 +2296,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error adding reply:", error);
       res.status(500).json({ message: "Failed to add reply" });
+    }
+  });
+
+  // Report a post
+  app.post('/api/reports', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate report data
+      const reportData = insertReportSchema.parse({
+        ...req.body,
+        reportedBy: userId
+      });
+      
+      // Get the post to find the author
+      const post = await storage.getPostById(reportData.postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      // Add post author ID to the report
+      const completeReportData = {
+        ...reportData,
+        postAuthorId: post.userId
+      };
+      
+      const report = await storage.createReport(completeReportData);
+      
+      res.json({ success: true, reportId: report.id });
+    } catch (error) {
+      console.error("Error creating report:", error);
+      res.status(500).json({ message: "Failed to create report" });
+    }
+  });
+
+  // Get all reports (admin only)
+  app.get('/api/admin/reports', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Check if user is admin
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+      
+      const { status, page = 1, limit = 20 } = req.query;
+      const reports = await storage.getReports({ 
+        status: status || undefined, 
+        page: parseInt(page), 
+        limit: parseInt(limit) 
+      });
+      
+      res.json(reports);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      res.status(500).json({ message: "Failed to fetch reports" });
+    }
+  });
+
+  // Update report status (admin only)
+  app.patch('/api/admin/reports/:reportId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { reportId } = req.params;
+      
+      // Check if user is admin
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+      
+      const { status, adminNotes, actionTaken } = req.body;
+      
+      const updatedReport = await storage.updateReport(reportId, {
+        status,
+        adminNotes,
+        actionTaken,
+        reviewedBy: userId,
+        reviewedAt: new Date().toISOString()
+      });
+      
+      res.json(updatedReport);
+    } catch (error) {
+      console.error("Error updating report:", error);
+      res.status(500).json({ message: "Failed to update report" });
+    }
+  });
+
+  // Suspend/ban user (admin only)
+  app.patch('/api/admin/users/:userId/suspend', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminUserId = req.user.claims.sub;
+      const { userId } = req.params;
+      
+      // Check if user is admin
+      const adminUser = await storage.getUser(adminUserId);
+      if (!adminUser?.isAdmin) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+      
+      const { suspensionType, reason } = req.body;
+      
+      // Calculate suspension end date
+      let suspensionExpiresAt = null;
+      if (suspensionType !== "banned") {
+        const now = new Date();
+        switch (suspensionType) {
+          case "24hours":
+            suspensionExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            break;
+          case "7days":
+            suspensionExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            break;
+          case "30days":
+            suspensionExpiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            break;
+          case "90days":
+            suspensionExpiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+            break;
+          case "180days":
+            suspensionExpiresAt = new Date(now.getTime() + 180 * 24 * 60 * 60 * 1000);
+            break;
+        }
+      }
+      
+      await storage.suspendUser(userId, {
+        suspensionType,
+        suspendedAt: new Date().toISOString(),
+        suspensionExpiresAt: suspensionExpiresAt?.toISOString() || null
+      });
+      
+      res.json({ success: true, message: `User ${suspensionType === "banned" ? "banned" : "suspended"} successfully` });
+    } catch (error) {
+      console.error("Error suspending user:", error);
+      res.status(500).json({ message: "Failed to suspend user" });
+    }
+  });
+
+  // Remove post (admin only)
+  app.delete('/api/admin/posts/:postId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { postId } = req.params;
+      
+      // Check if user is admin
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+      
+      await storage.deletePost(postId);
+      
+      res.json({ success: true, message: "Post removed successfully" });
+    } catch (error) {
+      console.error("Error removing post:", error);
+      res.status(500).json({ message: "Failed to remove post" });
     }
   });
 
