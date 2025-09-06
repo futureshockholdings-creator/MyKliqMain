@@ -7,12 +7,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video } from "lucide-react";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle } from "lucide-react";
 import { SiX, SiFacebook, SiInstagram, SiTiktok, SiYoutube, SiTwitch, SiDiscord, SiReddit } from "react-icons/si";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -217,6 +218,10 @@ export default function Home() {
   const [horoscopeData, setHoroscopeData] = useState<any>(null);
   const [showBibleVerseDialog, setShowBibleVerseDialog] = useState(false);
   const [bibleVerseData, setBibleVerseData] = useState<any>(null);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [selectedPostToReport, setSelectedPostToReport] = useState<any>(null);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDescription, setReportDescription] = useState("");
 
   const { user } = useAuth();
   const userData = user as any;
@@ -777,6 +782,39 @@ export default function Home() {
     },
   });
 
+  // Report post mutation
+  const reportPostMutation = useMutation({
+    mutationFn: async ({ postId, reason, description }: { postId: string; reason: string; description: string }) => {
+      await apiRequest("POST", "/api/reports", { postId, reason, description });
+    },
+    onSuccess: () => {
+      setShowReportDialog(false);
+      setReportReason("");
+      setReportDescription("");
+      setSelectedPostToReport(null);
+      toast({
+        title: "Report submitted",
+        description: "Thank you for helping keep MyKliq safe. Our team will review this content.",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive"
+        });
+        window.location.href = "/";
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to submit report. Please try again.",
+          variant: "destructive"
+        });
+      }
+    }
+  });
+
   const getCurrentLocation = () => {
     setIsGettingLocation(true);
     
@@ -942,6 +980,28 @@ export default function Home() {
 
   const handleLikePost = (postId: string) => {
     likePostMutation.mutate(postId);
+  };
+
+  const handleReportPost = (post: any) => {
+    setSelectedPostToReport(post);
+    setShowReportDialog(true);
+  };
+
+  const handleSubmitReport = () => {
+    if (!selectedPostToReport || !reportReason) {
+      toast({
+        title: "Please select a reason",
+        description: "A reason for the report is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    reportPostMutation.mutate({
+      postId: selectedPostToReport.id,
+      reason: reportReason,
+      description: reportDescription
+    });
   };
 
   const handleToggleComments = (postId: string) => {
@@ -2063,6 +2123,23 @@ export default function Home() {
                     <Share className="w-4 h-4" />
                   </Button>
                 </div>
+                
+                {/* Report button on the right side */}
+                {item.author.id !== userData?.id && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleReportPost(item);
+                    }}
+                    className="text-muted-foreground hover:text-red-500 hover:bg-red-50 p-1 h-auto text-xs"
+                    data-testid={`button-report-${item.id}`}
+                  >
+                    REPORT
+                  </Button>
+                )}
               </div>
 
               {/* Comments Section */}
@@ -2433,6 +2510,73 @@ export default function Home() {
                 </Button>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Dialog */}
+      <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <span>Report Content</span>
+            </DialogTitle>
+            <DialogDescription>
+              Help us keep MyKliq safe by reporting inappropriate content
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="report-reason">Reason for report *</Label>
+              <Select value={reportReason} onValueChange={setReportReason}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hate_speech">Hate Speech</SelectItem>
+                  <SelectItem value="discrimination">Discrimination</SelectItem>
+                  <SelectItem value="offensive">Offensive Content</SelectItem>
+                  <SelectItem value="pornographic">Pornographic Content</SelectItem>
+                  <SelectItem value="spam">Spam</SelectItem>
+                  <SelectItem value="harassment">Harassment</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="report-description">Additional details (optional)</Label>
+              <Textarea
+                id="report-description"
+                placeholder="Please provide additional context about why you're reporting this content..."
+                value={reportDescription}
+                onChange={(e) => setReportDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowReportDialog(false);
+                  setReportReason("");
+                  setReportDescription("");
+                }}
+                disabled={reportPostMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmitReport}
+                disabled={reportPostMutation.isPending}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {reportPostMutation.isPending ? "Submitting..." : "Submit Report"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
