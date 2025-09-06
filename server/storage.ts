@@ -26,7 +26,7 @@ import {
   socialCredentials,
   externalPosts,
   passwordResetTokens,
-  reports,
+  rulesReports,
   type User,
   type UpsertUser,
   type UserTheme,
@@ -3129,23 +3129,6 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async suspendUser(userId: string, suspensionType: string, expiresAt: Date | null): Promise<void> {
-    try {
-      const now = new Date();
-      await db.update(users)
-        .set({
-          isSuspended: true,
-          suspensionType: suspensionType,
-          suspendedAt: now,
-          suspensionExpiresAt: expiresAt,
-          updatedAt: now
-        })
-        .where(eq(users.id, userId));
-    } catch (error) {
-      console.error("Error suspending user:", error);
-      throw error;
-    }
-  }
 
   async checkAndUnsuspendExpiredUsers(): Promise<number> {
     try {
@@ -3297,7 +3280,7 @@ export class DatabaseStorage implements IStorage {
   // Report operations
   async createReport(report: InsertReport): Promise<Report> {
     const [newReport] = await db
-      .insert(reports)
+      .insert(rulesReports)
       .values(report)
       .returning();
     return newReport;
@@ -3307,30 +3290,30 @@ export class DatabaseStorage implements IStorage {
     const { status, page = 1, limit = 20 } = filters;
     let query = db
       .select({
-        id: reports.id,
-        reportedBy: reports.reportedBy,
-        postId: reports.postId,
-        postAuthorId: reports.postAuthorId,
-        reason: reports.reason,
-        description: reports.description,
-        status: reports.status,
-        reviewedBy: reports.reviewedBy,
-        reviewedAt: reports.reviewedAt,
-        adminNotes: reports.adminNotes,
-        actionTaken: reports.actionTaken,
-        createdAt: reports.createdAt,
-        updatedAt: reports.updatedAt,
+        id: rulesReports.id,
+        reportedBy: rulesReports.reportedBy,
+        postId: rulesReports.postId,
+        postAuthorId: rulesReports.postAuthorId,
+        reason: rulesReports.reason,
+        description: rulesReports.description,
+        status: rulesReports.status,
+        reviewedBy: rulesReports.reviewedBy,
+        reviewedAt: rulesReports.reviewedAt,
+        adminNotes: rulesReports.adminNotes,
+        actionTaken: rulesReports.actionTaken,
+        createdAt: rulesReports.createdAt,
+        updatedAt: rulesReports.updatedAt,
         reporter: users,
         post: posts,
         postAuthor: sql<User>`NULL`.as('postAuthor')
       })
-      .from(reports)
-      .leftJoin(users, eq(reports.reportedBy, users.id))
-      .leftJoin(posts, eq(reports.postId, posts.id))
-      .orderBy(desc(reports.createdAt));
+      .from(rulesReports)
+      .leftJoin(users, eq(rulesReports.reportedBy, users.id))
+      .leftJoin(posts, eq(rulesReports.postId, posts.id))
+      .orderBy(desc(rulesReports.createdAt));
 
     if (status) {
-      query = query.where(eq(reports.status, status as any));
+      query = query.where(eq(rulesReports.status, status as any));
     }
 
     const offset = (page - 1) * limit;
@@ -3339,9 +3322,9 @@ export class DatabaseStorage implements IStorage {
 
   async updateReport(reportId: string, updates: Partial<Report>): Promise<Report> {
     const [updatedReport] = await db
-      .update(reports)
+      .update(rulesReports)
       .set({ ...updates, updatedAt: new Date() })
-      .where(eq(reports.id, reportId))
+      .where(eq(rulesReports.id, reportId))
       .returning();
     return updatedReport;
   }

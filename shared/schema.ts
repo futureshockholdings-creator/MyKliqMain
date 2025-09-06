@@ -1189,7 +1189,7 @@ export const externalPosts = pgTable("external_posts", {
 export const reportStatusEnum = pgEnum("report_status", ["pending", "reviewed", "resolved", "dismissed"]);
 
 // Reports table for content moderation
-export const reports = pgTable("reports", {
+export const rulesReports = pgTable("rules-reports", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   reportedBy: varchar("reported_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
   postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }).notNull(),
@@ -1234,10 +1234,10 @@ export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
 
 // Report types
-export const insertReportSchema = createInsertSchema(reports).omit({ 
+export const insertReportSchema = createInsertSchema(rulesReports).omit({ 
   id: true, 
   createdAt: true, 
   updatedAt: true 
 });
 export type InsertReport = z.infer<typeof insertReportSchema>;
-export type Report = typeof reports.$inferSelect;
+export type Report = typeof rulesReports.$inferSelect;
