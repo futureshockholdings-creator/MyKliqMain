@@ -1240,6 +1240,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Password reset endpoints
+  // Helper function to check if user is locked from password reset attempts
+  async function checkPasswordResetLockout(userId: string): Promise<{ isLocked: boolean; remainingHours?: number; attemptCount: number }> {
+    const attempts = await storage.getPasswordResetAttempts(userId);
+    if (!attempts) {
+      return { isLocked: false, attemptCount: 0 };
+    }
+
+    // Check if user is currently locked
+    if (attempts.lockedUntil && attempts.lockedUntil > new Date()) {
+      const remainingMs = attempts.lockedUntil.getTime() - new Date().getTime();
+      const remainingHours = Math.ceil(remainingMs / (1000 * 60 * 60));
+      return { isLocked: true, remainingHours, attemptCount: attempts.attemptCount };
+    }
+
+    return { isLocked: false, attemptCount: attempts.attemptCount };
+  }
+
   // Step 1: Verify name
   app.post('/api/auth/verify-name', async (req, res) => {
     try {
@@ -1252,7 +1269,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find user by name (case-insensitive)
       const user = await storage.getUserByName(firstName.trim(), lastName.trim());
       if (!user) {
+        // Record failed attempt for any user with this name if they exist
+        const users = await storage.getAllUsers();
+        const matchingUser = users.find(u => 
+          u.firstName?.toLowerCase() === firstName.trim().toLowerCase() ||
+          u.lastName?.toLowerCase() === lastName.trim().toLowerCase()
+        );
+        
+        if (matchingUser) {
+          await storage.recordPasswordResetAttempt(matchingUser.id);
+          const lockStatus = await checkPasswordResetLockout(matchingUser.id);
+          
+          if (lockStatus.attemptCount >= 10) {
+            await storage.lockPasswordReset(matchingUser.id);
+          }
+        }
+        
         return res.status(404).json({ message: "No account found with this name" });
+      }
+
+      // Check lockout status
+      const lockStatus = await checkPasswordResetLockout(user.id);
+      if (lockStatus.isLocked) {
+        return res.status(429).json({ 
+          message: `Account locked for ${lockStatus.remainingHours} hours due to too many failed password reset attempts` 
+        });
       }
 
       res.json({ 
@@ -1277,7 +1318,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find user by name and phone number for extra security
       const user = await storage.getUserByNameAndPhone(firstName.trim(), lastName.trim(), phoneNumber);
       if (!user) {
+        // Record failed attempt if user with name exists
+        const userByName = await storage.getUserByName(firstName.trim(), lastName.trim());
+        if (userByName) {
+          await storage.recordPasswordResetAttempt(userByName.id);
+          const lockStatus = await checkPasswordResetLockout(userByName.id);
+          
+          if (lockStatus.attemptCount >= 10) {
+            await storage.lockPasswordReset(userByName.id);
+          }
+        }
+        
         return res.status(404).json({ message: "Account information does not match our records" });
+      }
+
+      // Check lockout status
+      const lockStatus = await checkPasswordResetLockout(user.id);
+      if (lockStatus.isLocked) {
+        return res.status(429).json({ 
+          message: `Account locked for ${lockStatus.remainingHours} hours due to too many failed password reset attempts` 
+        });
       }
 
       // Check if user has security questions set up
@@ -1330,12 +1390,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Check lockout status
+      const lockStatus = await checkPasswordResetLockout(user.id);
+      if (lockStatus.isLocked) {
+        return res.status(429).json({ 
+          message: `Account locked for ${lockStatus.remainingHours} hours due to too many failed password reset attempts` 
+        });
+      }
+
       // Verify security answers (case-insensitive)
       const answer1Valid = await bcrypt.compare(securityAnswer1.toLowerCase().trim(), user.securityAnswer1!);
       const answer2Valid = await bcrypt.compare(securityAnswer2.toLowerCase().trim(), user.securityAnswer2!);
       const answer3Valid = await bcrypt.compare(securityAnswer3.toLowerCase().trim(), user.securityAnswer3!);
 
       if (!answer1Valid || !answer2Valid || !answer3Valid) {
+        // Record failed attempt
+        await storage.recordPasswordResetAttempt(user.id);
+        const updatedLockStatus = await checkPasswordResetLockout(user.id);
+        
+        if (updatedLockStatus.attemptCount >= 10) {
+          await storage.lockPasswordReset(user.id);
+          return res.status(429).json({ message: "Too many failed attempts. Account locked for 24 hours." });
+        } else if (updatedLockStatus.attemptCount === 8) {
+          return res.status(400).json({ message: `Security answers do not match. Warning: 2 more failed attempts will lock your account for 24 hours.` });
+        } else if (updatedLockStatus.attemptCount === 9) {
+          return res.status(400).json({ message: `Security answers do not match. Warning: 1 more failed attempt will lock your account for 24 hours.` });
+        }
+        
         return res.status(400).json({ message: "Security answers do not match" });
       }
 
@@ -1435,6 +1516,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Check lockout status
+      const lockStatus = await checkPasswordResetLockout(user.id);
+      if (lockStatus.isLocked) {
+        return res.status(429).json({ 
+          message: `Account locked for ${lockStatus.remainingHours} hours due to too many failed password reset attempts` 
+        });
+      }
+
       // Check if user has a PIN set up
       if (!user.securityPin) {
         return res.status(400).json({ message: "Security PIN not set up for this account" });
@@ -1443,6 +1532,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify PIN
       const pinValid = await bcrypt.compare(pin, user.securityPin);
       if (!pinValid) {
+        // Record failed attempt
+        await storage.recordPasswordResetAttempt(user.id);
+        const updatedLockStatus = await checkPasswordResetLockout(user.id);
+        
+        if (updatedLockStatus.attemptCount >= 10) {
+          await storage.lockPasswordReset(user.id);
+          return res.status(429).json({ message: "Too many failed attempts. Account locked for 24 hours." });
+        } else if (updatedLockStatus.attemptCount === 8) {
+          return res.status(400).json({ message: `Invalid PIN. Warning: 2 more failed attempts will lock your account for 24 hours.` });
+        } else if (updatedLockStatus.attemptCount === 9) {
+          return res.status(400).json({ message: `Invalid PIN. Warning: 1 more failed attempt will lock your account for 24 hours.` });
+        }
+        
         return res.status(400).json({ message: "Invalid PIN" });
       }
 
@@ -1505,11 +1607,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid or expired reset token" });
       }
 
+      // Check lockout status
+      const lockStatus = await checkPasswordResetLockout(tokenData.userId);
+      if (lockStatus.isLocked) {
+        return res.status(429).json({ 
+          message: `Account locked for ${lockStatus.remainingHours} hours due to too many failed password reset attempts` 
+        });
+      }
+
       // Hash new password
       const hashedPassword = await bcrypt.hash(newPassword, 12);
 
       // Update user password
       await storage.updateUser(tokenData.userId, { password: hashedPassword });
+
+      // Clear password reset attempts on successful reset
+      await storage.clearPasswordResetAttempts(tokenData.userId);
 
       // Delete used reset token
       await storage.deletePasswordResetToken(resetToken);
