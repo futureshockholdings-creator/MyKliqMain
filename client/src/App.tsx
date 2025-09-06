@@ -34,6 +34,7 @@ import Signup from "@/pages/signup";
 import Login from "@/pages/login";
 import ForgotPassword from "@/pages/forgot-password";
 import AdminPage from "@/pages/admin";
+import AdminReports from "@/pages/admin-reports";
 import Marketing from "@/pages/marketing";
 
 // Navigation Component
@@ -194,6 +195,7 @@ function Router() {
       
       {/* Admin routes - accessible without authentication for emergency access */}
       <Route path="/support-admin" component={AdminPage} />
+      <Route path="/admin-reports" component={AdminReports} />
       <Route path="/ads-manager" component={AdsManager} />
       <Route path="/moviecon-manager" component={MovieconManagerPage} />
       <Route path="/meme-manager" component={MemeManagerPage} />
