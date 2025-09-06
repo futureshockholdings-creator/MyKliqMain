@@ -13,6 +13,9 @@ import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
 import { pool } from "./db";
 import { friendRankingIntelligence } from "./friendRankingIntelligence";
+import { cacheService } from "./cacheService";
+import { rateLimitService } from "./rateLimitService";
+import { performanceOptimizer } from "./performanceOptimizer";
 
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
@@ -2117,7 +2120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get aggregated kliq feed with posts, polls, events, and actions from all kliq members
-  app.get('/api/kliq-feed', isAuthenticated, async (req: any, res) => {
+  app.get('/api/kliq-feed', isAuthenticated, rateLimitService.createRateLimitMiddleware('feed'), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
@@ -2125,15 +2128,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const cacheKey = `kliq-feed:${userId}:${page}:${limit}`;
       
-      // Try to get from cache first (Redis)
-      const { getCachedOrFetch } = await import('./redis');
-      const feed = await getCachedOrFetch(
-        cacheKey,
+      // Try to get from cache first using our optimized cache service
+      const feed = await performanceOptimizer.optimizeQuery(
         async () => {
           const filters = await storage.getContentFilters(userId);
           const filterKeywords = filters.map(f => f.keyword);
           return await storage.getKliqFeed(userId, filterKeywords, page, limit);
         },
+        cacheKey,
         120 // Cache for 2 minutes (longer for paginated content)
       );
       
@@ -4295,7 +4297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notification API routes
-  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+  app.get('/api/notifications', isAuthenticated, rateLimitService.createRateLimitMiddleware('notifications'), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { type } = req.query;

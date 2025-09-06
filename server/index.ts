@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { startBirthdayService } from "./birthdayService";
 import { setupVite, serveStatic, log } from "./vite";
+import { performanceOptimizer } from "./performanceOptimizer";
+import { rateLimitService } from "./rateLimitService";
 
 const app = express();
 
@@ -37,6 +39,11 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// Performance optimizations for 5000+ concurrent users
+app.use(performanceOptimizer.responseTimeMiddleware());
+app.use(performanceOptimizer.memoryOptimizationMiddleware());
+app.use(performanceOptimizer.prioritizeRequest());
 
 // Optimize Express settings for production scaling
 app.use(express.json({ limit: '10mb' })); // Set reasonable payload limit
