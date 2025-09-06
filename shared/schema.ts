@@ -129,6 +129,17 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Password reset attempt tracking
+export const passwordResetAttempts = pgTable("password_reset_attempts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  attemptCount: integer("attempt_count").default(0),
+  lastAttemptAt: timestamp("last_attempt_at").defaultNow(),
+  lockedUntil: timestamp("locked_until"), // NULL if not locked, timestamp if locked
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // GIF database for posts and comments
 export const gifs = pgTable("gifs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1232,6 +1243,15 @@ export type InsertContentEngagement = z.infer<typeof insertContentEngagementSche
 // Password reset token types
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+
+// Password reset attempt types
+export const insertPasswordResetAttemptSchema = createInsertSchema(passwordResetAttempts).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertPasswordResetAttempt = z.infer<typeof insertPasswordResetAttemptSchema>;
+export type PasswordResetAttempt = typeof passwordResetAttempts.$inferSelect;
 
 // Report types
 export const insertReportSchema = createInsertSchema(rulesReports).omit({ 
