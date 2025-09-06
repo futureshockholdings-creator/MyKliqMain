@@ -195,7 +195,7 @@ function Router() {
       
       {/* Admin routes - accessible without authentication for emergency access */}
       <Route path="/support-admin" component={AdminPage} />
-      <Route path="/admin-reports" component={AdminReports} />
+      <Route path="/rules-reports" component={AdminReports} />
       <Route path="/ads-manager" component={AdsManager} />
       <Route path="/moviecon-manager" component={MovieconManagerPage} />
       <Route path="/meme-manager" component={MemeManagerPage} />
