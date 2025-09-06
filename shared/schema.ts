@@ -1185,6 +1185,26 @@ export const externalPosts = pgTable("external_posts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Report status enum
+export const reportStatusEnum = pgEnum("report_status", ["pending", "reviewed", "resolved", "dismissed"]);
+
+// Reports table for content moderation
+export const reports = pgTable("reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reportedBy: varchar("reported_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }).notNull(),
+  postAuthorId: varchar("post_author_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  reason: varchar("reason").notNull(), // "hate", "discrimination", "offensive", "pornographic", "spam", "other"
+  description: text("description"), // Optional additional details
+  status: reportStatusEnum("status").default("pending").notNull(),
+  reviewedBy: varchar("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at"),
+  adminNotes: text("admin_notes"), // Admin notes about the review
+  actionTaken: varchar("action_taken"), // "none", "warning", "post_removed", "user_suspended", "user_banned"
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Social media integration schemas
 export const insertSocialCredentialSchema = createInsertSchema(socialCredentials).omit({ 
   id: true, 
@@ -1212,3 +1232,12 @@ export type InsertContentEngagement = z.infer<typeof insertContentEngagementSche
 // Password reset token types
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+
+// Report types
+export const insertReportSchema = createInsertSchema(reports).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertReport = z.infer<typeof insertReportSchema>;
+export type Report = typeof reports.$inferSelect;
