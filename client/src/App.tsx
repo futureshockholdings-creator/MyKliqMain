@@ -30,6 +30,7 @@ import AdsManager from "@/pages/ads-manager";
 import Settings from "@/pages/settings";
 import PrivacyPolicy from "./pages/privacy-policy";
 import Disclaimer from "./pages/disclaimer";
+import CommunityGuidelines from "./pages/community-guidelines";
 import Signup from "@/pages/signup";
 import Login from "@/pages/login";
 import ForgotPassword from "@/pages/forgot-password";
@@ -187,6 +188,7 @@ function Router() {
       {/* Public routes - accessible without authentication */}
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/disclaimer" component={Disclaimer} />
+      <Route path="/community-guidelines" component={CommunityGuidelines} />
       <Route path="/landing" component={Landing} />
       <Route path="/marketing" component={Marketing} />
       <Route path="/signup" component={Signup} />

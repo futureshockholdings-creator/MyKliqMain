@@ -45,6 +45,9 @@ export default function Footer() {
               <Link href="/disclaimer" className="hover:opacity-75 transition-opacity">
                 Disclaimer
               </Link>
+              <Link href="/community-guidelines" className="hover:opacity-75 transition-opacity">
+                Community Guidelines
+              </Link>
             </div>
           </div>
           <div className="text-center md:text-right">
