@@ -87,13 +87,13 @@ export function LanguageSelector({
         <Button 
           variant="ghost" 
           size="sm" 
-          className={`gap-2 ${className}`}
+          className={`gap-1 text-xs ${className} flex-shrink-0`}
           data-testid="button-language-selector"
         >
-          <Globe className="w-4 h-4" />
-          {showFlag && <span>{currentLanguage.flag}</span>}
-          <span className="hidden sm:inline">{currentLanguage.name}</span>
-          <span className="sm:hidden">{currentLanguage.code.toUpperCase()}</span>
+          <Globe className="w-3 h-3 flex-shrink-0" />
+          {showFlag && <span className="flex-shrink-0">{currentLanguage.flag}</span>}
+          <span className="hidden lg:inline truncate">{currentLanguage.name}</span>
+          <span className="lg:hidden truncate">{currentLanguage.code.toUpperCase()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">

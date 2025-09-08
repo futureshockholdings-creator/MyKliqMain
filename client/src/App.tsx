@@ -156,8 +156,8 @@ function Navigation({ currentPath }: { currentPath: string }) {
           })}
           
           {/* Language Selector at bottom */}
-          <div className="mt-auto mb-4">
-            <LanguageSelector variant="dropdown" className="w-16" />
+          <div className="mt-auto mb-4 flex justify-center">
+            <LanguageSelector variant="dropdown" className="max-w-16 min-w-12" />
           </div>
         </div>
       </div>
