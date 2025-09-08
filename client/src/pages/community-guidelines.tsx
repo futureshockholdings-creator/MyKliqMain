@@ -32,9 +32,6 @@ export default function CommunityGuidelines() {
                 <li>Disability or mental health status</li>
                 <li>Age, appearance, or socioeconomic status</li>
               </ul>
-              <p className="mb-4 font-semibold text-red-600 dark:text-red-400">
-                Consequence: Immediate account suspension or permanent ban
-              </p>
 
               <h3 className="text-xl font-semibold mb-3">Adult Content and Sexual Material</h3>
               <p className="mb-4">
@@ -46,9 +43,6 @@ export default function CommunityGuidelines() {
                 <li>Sexual solicitation or explicit conversations</li>
                 <li>Links to adult websites or content</li>
               </ul>
-              <p className="mb-4 font-semibold text-red-600 dark:text-red-400">
-                Consequence: Immediate content removal and account suspension
-              </p>
 
               <h3 className="text-xl font-semibold mb-3">Harassment and Bullying</h3>
               <p className="mb-4">
@@ -61,9 +55,6 @@ export default function CommunityGuidelines() {
                 <li>Cyberbullying or coordinated harassment</li>
                 <li>Impersonation of other users</li>
               </ul>
-              <p className="mb-4 font-semibold text-orange-600 dark:text-orange-400">
-                Consequence: Account suspension (24 hours to 30 days) or permanent ban for severe cases
-              </p>
 
               <h3 className="text-xl font-semibold mb-3">Violence and Harmful Content</h3>
               <p className="mb-4">
@@ -75,9 +66,6 @@ export default function CommunityGuidelines() {
                 <li>Terrorist or extremist content</li>
                 <li>Instructions for dangerous activities</li>
               </ul>
-              <p className="mb-4 font-semibold text-red-600 dark:text-red-400">
-                Consequence: Immediate account suspension or permanent ban
-              </p>
             </section>
 
             <section>
@@ -90,9 +78,6 @@ export default function CommunityGuidelines() {
                 <li>Unauthorized commercial advertising</li>
                 <li>Misinformation or deliberately false content</li>
               </ul>
-              <p className="mb-4 font-semibold text-yellow-600 dark:text-yellow-400">
-                Consequence: Content removal and account warning, repeated violations result in suspension
-              </p>
 
               <h3 className="text-xl font-semibold mb-3">Illegal Activities</h3>
               <p className="mb-4">
@@ -104,9 +89,6 @@ export default function CommunityGuidelines() {
                 <li>Copyright or intellectual property violation</li>
                 <li>Any content violating local, state, or federal laws</li>
               </ul>
-              <p className="mb-4 font-semibold text-red-600 dark:text-red-400">
-                Consequence: Immediate account suspension and potential law enforcement reporting
-              </p>
             </section>
 
             <section>
