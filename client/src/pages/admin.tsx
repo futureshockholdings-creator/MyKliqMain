@@ -18,6 +18,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -489,6 +490,9 @@ export default function AdminPage() {
                           <DialogContent className="max-w-2xl bg-card border-border max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
                               <DialogTitle className="text-foreground">User Details</DialogTitle>
+                              <DialogDescription>
+                                View comprehensive user account information and activity details.
+                              </DialogDescription>
                             </DialogHeader>
                             {selectedUser && (
                               <div className="space-y-4">
@@ -589,6 +593,9 @@ export default function AdminPage() {
                             <DialogContent className="bg-card border-border">
                               <DialogHeader>
                                 <DialogTitle className="text-foreground">Suspend User Account</DialogTitle>
+                                <DialogDescription>
+                                  Temporarily restrict user access to the platform. This action can be reversed.
+                                </DialogDescription>
                               </DialogHeader>
                               <div className="space-y-4">
                                 <p className="text-muted-foreground">

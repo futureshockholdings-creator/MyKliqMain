@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Eye, Ban, Clock, CheckCircle, XCircle, UserX } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -404,6 +404,9 @@ export default function AdminReports() {
               <Ban className="h-5 w-5 text-red-500" />
               <span>Suspend User</span>
             </DialogTitle>
+            <DialogDescription>
+              Enter suspension details for the reported user. This action will temporarily restrict their access.
+            </DialogDescription>
           </DialogHeader>
           
           {selectedUser && (

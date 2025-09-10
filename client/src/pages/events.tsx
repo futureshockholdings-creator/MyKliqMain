@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Calendar, Clock, MapPin, Users, Plus, Check, X, HelpCircle, Image as ImageIcon, Edit } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -396,6 +396,9 @@ export default function Events() {
           <DialogContent className="bg-card border-border max-w-md">
             <DialogHeader>
               <DialogTitle className="text-foreground">Create New Event</DialogTitle>
+              <DialogDescription>
+                Create a new event for your kliq. Add details, set date and time, and invite members.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -490,6 +493,9 @@ export default function Events() {
           <DialogContent className="bg-card border-border max-w-md">
             <DialogHeader>
               <DialogTitle className="text-foreground">Edit Event</DialogTitle>
+              <DialogDescription>
+                Update event details, change date and time, or modify the description and location.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -593,6 +599,9 @@ export default function Events() {
           <DialogContent className="bg-card border-border max-w-sm">
             <DialogHeader>
               <DialogTitle className="text-foreground">Confirm Delete</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. The event will be permanently removed from your kliq.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <p className="text-muted-foreground">
