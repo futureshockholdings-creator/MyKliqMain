@@ -23,8 +23,7 @@ export async function initializeRedis() {
       },
       // High-performance Redis settings  
       commandsQueueMaxLength: 1000,
-      disableOfflineQueue: false,
-      lazyConnect: false
+      disableOfflineQueue: false
     });
 
     redis.on('error', (err) => {

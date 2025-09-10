@@ -9,11 +9,15 @@ class CacheService {
   // Enhanced memory cache cleanup for better performance
   private cleanupExpiredEntries(): void {
     const now = Date.now();
-    for (const [key, value] of this.memoryCache.entries()) {
+    const keysToDelete: string[] = [];
+    
+    this.memoryCache.forEach((value, key) => {
       if (value.expiry <= now) {
-        this.memoryCache.delete(key);
+        keysToDelete.push(key);
       }
-    }
+    });
+    
+    keysToDelete.forEach(key => this.memoryCache.delete(key));
   }
   
   constructor() {
