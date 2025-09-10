@@ -21,12 +21,10 @@ export async function initializeRedis() {
           return Math.min(retries * 50, 500); // Faster reconnect attempts
         }
       },
-      // High-performance Redis settings
+      // High-performance Redis settings  
       commandsQueueMaxLength: 1000,
-      enableOfflineQueue: true,
-      maxRetriesPerRequest: 3,
-      lazyConnect: false,
-      retryDelayOnFailover: 100
+      disableOfflineQueue: false,
+      lazyConnect: false
     });
 
     redis.on('error', (err) => {

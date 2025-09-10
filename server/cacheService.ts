@@ -6,6 +6,16 @@ class CacheService {
   private isRedisAvailable = false;
   private memoryCache = new Map<string, { data: any; expiry: number }>();
   
+  // Enhanced memory cache cleanup for better performance
+  private cleanupExpiredEntries(): void {
+    const now = Date.now();
+    for (const [key, value] of this.memoryCache.entries()) {
+      if (value.expiry <= now) {
+        this.memoryCache.delete(key);
+      }
+    }
+  }
+  
   constructor() {
     this.initializeRedis();
   }
@@ -68,11 +78,15 @@ class CacheService {
       if (this.isRedisAvailable && this.client) {
         await this.client.setEx(key, ttlSeconds, JSON.stringify(value));
       } else {
-        // Memory cache with size limit for memory efficiency
-        if (this.memoryCache.size > 1000) {
-          // Remove oldest entries when cache gets too large
-          const entries = Array.from(this.memoryCache.entries());
-          for (let i = 0; i < 100; i++) {
+        // Enhanced memory cache with TTL cleanup and better size management
+        this.cleanupExpiredEntries();
+        
+        if (this.memoryCache.size > 2000) { // Increased limit for better performance
+          // LRU eviction: remove 25% of entries when limit reached
+          const entries = Array.from(this.memoryCache.entries())
+            .sort((a, b) => a[1].expiry - b[1].expiry); // Sort by expiry (oldest first)
+          const toRemove = Math.floor(entries.length * 0.25);
+          for (let i = 0; i < toRemove; i++) {
             this.memoryCache.delete(entries[i][0]);
           }
         }
