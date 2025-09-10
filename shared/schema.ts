@@ -103,7 +103,12 @@ export const friendships = pgTable("friendships", {
   status: varchar("status").default("pending"), // pending, accepted, declined
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Performance indexes for friend lookups
+  index("idx_friendships_user").on(table.userId), // Find user's friends
+  index("idx_friendships_friend").on(table.friendId), // Find who friended someone
+  index("idx_friendships_status").on(table.status), // Filter by friendship status
+]);
 
 // Used invite codes - tracks which codes have been used once
 export const usedInviteCodes = pgTable("used_invite_codes", {
@@ -290,7 +295,12 @@ export const posts = pgTable("posts", {
   address: varchar("address"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Performance indexes for kliq-feed optimization
+  index("idx_posts_user_created").on(table.userId, table.createdAt), // Combined index for user posts by date
+  index("idx_posts_created").on(table.createdAt), // Timeline sorting index
+  index("idx_posts_user").on(table.userId), // User filtering index
+]);
 
 // Stories (disappear after 24 hours)
 export const stories = pgTable("stories", {
@@ -386,7 +396,12 @@ export const polls = pgTable("polls", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Performance indexes for kliq-feed optimization
+  index("idx_polls_user_created").on(table.userId, table.createdAt), // Combined index for user polls by date
+  index("idx_polls_created").on(table.createdAt), // Timeline sorting index
+  index("idx_polls_user").on(table.userId), // User filtering index
+]);
 
 // Poll votes table
 export const pollVotes = pgTable("poll_votes", {
@@ -414,7 +429,13 @@ export const events = pgTable("events", {
   attendeeCount: integer("attendee_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Performance indexes for kliq-feed optimization
+  index("idx_events_user_created").on(table.userId, table.createdAt), // Combined index for user events by date
+  index("idx_events_created").on(table.createdAt), // Timeline sorting index
+  index("idx_events_user").on(table.userId), // User filtering index
+  index("idx_events_event_date").on(table.eventDate), // Event date filtering index
+]);
 
 // Event reminders for auto-posting daily reminders
 export const eventReminders = pgTable("event_reminders", {
