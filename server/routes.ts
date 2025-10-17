@@ -2213,8 +2213,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Invalidate cache for feeds
       const { invalidateCache } = await import('./cache');
-      invalidateCache('kliq-feed');
-      invalidateCache('posts');
+      invalidateCache('kliq-feed'); // Old cache system
+      invalidateCache('posts'); // Old cache system
+      
+      // Also invalidate the new cache system used by performanceOptimizer
+      await cacheService.invalidatePattern('kliq-feed');
       
       res.json(updatedPost);
     } catch (error) {
@@ -2244,8 +2247,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Invalidate cache for feeds
       const { invalidateCache } = await import('./cache');
-      invalidateCache('kliq-feed');
-      invalidateCache('posts');
+      invalidateCache('kliq-feed'); // Old cache system
+      invalidateCache('posts'); // Old cache system
+      
+      // Also invalidate the new cache system used by performanceOptimizer
+      await cacheService.invalidatePattern('kliq-feed');
       
       res.json({ success: true, message: "Post deleted successfully" });
     } catch (error) {

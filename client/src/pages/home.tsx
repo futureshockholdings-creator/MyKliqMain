@@ -1989,7 +1989,7 @@ export default function Home() {
                       <EditPostForm 
                         post={item} 
                         onUpdate={() => {
-                          queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+                          queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
                         }}
                       />
                     </DialogContent>
