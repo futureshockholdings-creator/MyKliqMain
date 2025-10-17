@@ -69,7 +69,7 @@ export default function Profile() {
 
   const updateProfilePictureMutation = useMutation({
     mutationFn: async (profileImageURL: string) => {
-      await apiRequest("PUT", "/api/user/profile-picture", { profileImageUrl: profileImageURL });
+      await apiRequest("PUT", "/api/user/profile-picture", { profileImageURL: profileImageURL });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
