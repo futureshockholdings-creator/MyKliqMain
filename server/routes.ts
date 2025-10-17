@@ -578,7 +578,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile user profile endpoint
   app.get('/api/mobile/user/profile', verifyMobileToken, async (req, res) => {
     try {
-      const user = await storage.getUser(req.user?.userId);
+      const user = await storage.getUser((req.user as any)?.userId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
@@ -636,7 +636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile-optimized intelligent feed endpoint with curation and battery efficiency
   app.get('/api/mobile/feed', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = (req.user as any)?.userId;
       const page = parseInt(req.query.page as string) || 1;
       const limit = Math.min(50, Math.max(5, parseInt(req.query.limit as string) || 20)); // Mobile-optimized limits
       const lastSeenId = req.query.lastSeenId as string; // For battery-efficient pagination
@@ -735,7 +735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile post creation endpoint
   app.post('/api/mobile/posts', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = (req.user as any)?.userId;
       const { content, mediaUrl, mediaType } = req.body;
       
       if (!content && !mediaUrl) {
@@ -776,7 +776,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile like/unlike endpoint with automatic engagement tracking
   app.post('/api/mobile/posts/:postId/like', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = (req.user as any)?.userId;
       const postId = req.params.postId;
       
       // Get post info for engagement tracking
@@ -843,7 +843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile friends list endpoint
   app.get('/api/mobile/friends', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = (req.user as any)?.userId;
       const friends = await storage.getFriends(userId);
       
       // Format for mobile display
@@ -867,7 +867,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile intelligent insights endpoint - comprehensive intelligence dashboard
   app.get('/api/mobile/insights', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = (req.user as any)?.userId;
       
       // Get all intelligent insights in parallel for maximum efficiency
       const [connectionHealth, conversationSuggestions, notificationTiming, groupDynamics] = await Promise.all([
@@ -946,7 +946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile stories endpoint
   app.get('/api/mobile/stories', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = (req.user as any)?.userId;
       const stories = await storage.getActiveStories(userId);
       
       // Group stories by user for mobile UI
@@ -982,7 +982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Push notification registration endpoint
   app.post('/api/mobile/notifications/register', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = (req.user as any)?.userId;
       const { pushToken, platform } = req.body;
       
       if (!pushToken || !platform) {
@@ -1030,7 +1030,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile content recommendations endpoint - personalized content discovery
   app.get('/api/mobile/recommendations', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = (req.user as any)?.userId;
       const category = req.query.category as string; // Optional filter: 'interests', 'hobbies', 'entertainment', 'lifestyle'
       
       const { contentRecommendationEngine } = await import('./contentRecommendationEngine.js');
@@ -1070,7 +1070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mobile recommendation stats for analytics
   app.get('/api/mobile/recommendations/stats', verifyMobileToken, async (req, res) => {
     try {
-      const userId = req.user?.userId;
+      const userId = (req.user as any)?.userId;
       
       const { contentRecommendationEngine } = await import('./contentRecommendationEngine.js');
       const stats = await contentRecommendationEngine.getRecommendationStats(userId);
