@@ -46,6 +46,16 @@ Extensive theming allows deep personalization:
 ## Technical Implementations
 Production code is optimized with removal of demo modes, console logs, and mock implementations. N+1 query issues are eliminated, and advanced caching is implemented. The application supports comprehensive profile translation across 10 supported languages. Push notification infrastructure for Firebase Cloud Messaging and Apple Push Notifications is included.
 
+### Caching Architecture
+The application uses a dual-cache system for optimal performance:
+- **SimpleCache (cache.ts)**: Legacy caching for general-purpose operations
+- **CacheService (cacheService.ts)**: High-performance caching for feeds with Redis support and in-memory fallback
+  - Pattern-based invalidation for synchronized cache clearing
+  - LRU eviction strategy with automatic cleanup for expired entries
+  - Optimized for 5000+ concurrent users
+
+Post creation automatically invalidates both cache systems to ensure feed consistency.
+
 # External Dependencies
 
 ## Core Infrastructure
