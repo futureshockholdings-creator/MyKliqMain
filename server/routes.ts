@@ -2175,8 +2175,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Invalidate cache for feeds that need to show this new post
       const { invalidateCache } = await import('./cache');
-      invalidateCache('kliq-feed'); // Invalidate all kliq feed caches
-      invalidateCache('posts'); // Invalidate posts caches
+      invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
+      invalidateCache('posts'); // Invalidate posts caches (old cache system)
+      
+      // Also invalidate the new cache system used by performanceOptimizer
+      await cacheService.invalidatePattern('kliq-feed');
       
       // Create notifications for post likes (for future likes)
       // Note: Actual like notifications will be created when someone likes the post

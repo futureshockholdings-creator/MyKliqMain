@@ -163,6 +163,30 @@ class CacheService {
     ]);
   }
 
+  // Invalidate all cache keys matching a pattern
+  async invalidatePattern(pattern: string): Promise<void> {
+    try {
+      if (this.isRedisAvailable && this.client) {
+        // For Redis, use KEYS command to find matching patterns
+        const keys = await this.client.keys(`*${pattern}*`);
+        if (keys && keys.length > 0) {
+          await Promise.all(keys.map((key: string) => this.del(key)));
+        }
+      } else {
+        // For memory cache, iterate and delete matching keys
+        const keysToDelete: string[] = [];
+        this.memoryCache.forEach((_, key) => {
+          if (key.includes(pattern)) {
+            keysToDelete.push(key);
+          }
+        });
+        keysToDelete.forEach(key => this.memoryCache.delete(key));
+      }
+    } catch (error) {
+      console.error('Cache pattern invalidation error:', error);
+    }
+  }
+
   // Analytics caching for performance
   async cacheAnalytics(data: any, ttl: number = 1800): Promise<void> {
     await this.set('analytics:dashboard', data, ttl);
