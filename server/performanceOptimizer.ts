@@ -136,8 +136,8 @@ class PerformanceOptimizer {
     const averageResponseTimes: Record<string, number> = {};
     const slowEndpoints: string[] = [];
     
-    for (const [endpoint, times] of this.responseTimeTracking.entries()) {
-      const average = times.reduce((sum, time) => sum + time, 0) / times.length;
+    for (const [endpoint, times] of Array.from(this.responseTimeTracking.entries())) {
+      const average = times.reduce((sum: number, time: number) => sum + time, 0) / times.length;
       averageResponseTimes[endpoint] = Math.round(average);
       
       if (average > this.slowRequestThreshold) {
@@ -239,7 +239,7 @@ class PerformanceOptimizer {
 
   // Cleanup old performance data
   cleanup(): void {
-    for (const [endpoint, times] of this.responseTimeTracking.entries()) {
+    for (const [endpoint, times] of Array.from(this.responseTimeTracking.entries())) {
       if (times.length > 100) {
         this.responseTimeTracking.set(endpoint, times.slice(-50));
       }
