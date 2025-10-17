@@ -434,7 +434,7 @@ export default function Home() {
       await apiRequest("POST", "/api/posts", postData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       setNewPost("");
       setSelectedMeme(null);
       setSelectedMoviecon(null);
@@ -722,7 +722,7 @@ export default function Home() {
       return result;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       setShowLocationDialog(false);
       setLocationName('');
       setAddress('');
@@ -1680,7 +1680,7 @@ export default function Home() {
                       });
                       
                       setShowHoroscopeDialog(false);
-                      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+                      queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
                       
                       toast({
                         title: "Horoscope Posted",
@@ -1763,7 +1763,7 @@ export default function Home() {
                       });
                       
                       setShowBibleVerseDialog(false);
-                      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+                      queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
                       
                       toast({
                         title: "Bible Verse Posted",
