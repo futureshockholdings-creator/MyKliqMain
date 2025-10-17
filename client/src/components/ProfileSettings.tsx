@@ -229,7 +229,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
         passwordForm.setValue('confirmPassword', '');
       }
     }
-  }, [user, isOpen, passwordForm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, isOpen]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (profileData: any) => {
