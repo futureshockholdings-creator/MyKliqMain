@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyKliq - Your Exclusive Social Circle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'mykliq-pink': '#FF1493',
+                        'mykliq-blue': '#00BFFF',
+                        'mykliq-green': '#32CD32',
+                        'mykliq-orange': '#FF4500',
+                        'mykliq-purple': '#8A2BE2',
+                        'retro-yellow': '#FFD700',
+                        'neon-cyan': '#00FFFF'
+                    },
+                    fontFamily: {
+                        'comic': ['Comic Sans MS', 'cursive'],
+                        'retro': ['Courier New', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                        'bounce-gentle': 'bounce 2s ease-in-out infinite',
+                    }
+                }
+            }
+        };
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .gradient-banner {
+            background: linear-gradient(45deg, #FF1493, #00BFFF, #32CD32);
+            background-size: 400% 400%;
+            animation: gradientShift 4s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .retro-shadow {
+            box-shadow: 4px 4px 0px #FF4500, 8px 8px 0px #8A2BE2;
+        }
+        
+        .neon-glow {
+            box-shadow: 0 0 10px #00FFFF, 0 0 20px #00FFFF, 0 0 30px #00FFFF;
+        }
+        
+        .pyramid-level {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .friend-avatar {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .friend-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 20, 147, 0.6);
+        }
+        
+        .sparkle {
+            position: relative;
+        }
+        
+        .sparkle::before {
+            content: "✨";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 12px;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body class="bg-black min-h-screen font-comic text-white">
+    <!-- @COMPONENT: MobileApp [main app container] -->
+    <div class="max-w-sm mx-auto bg-gray-900 min-h-screen relative overflow-hidden">
+        
+        <!-- Animated Background Pattern -->
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-10 left-10 w-20 h-20 bg-mykliq-pink rounded-full animate-pulse-slow"></div>
+            <div class="absolute top-32 right-8 w-16 h-16 bg-mykliq-blue rounded-full animate-bounce-gentle"></div>
+            <div class="absolute bottom-20 left-6 w-12 h-12 bg-mykliq-green rounded-full animate-pulse-slow"></div>
+            <div class="absolute bottom-40 right-12 w-8 h-8 bg-retro-yellow rounded-full animate-bounce-gentle"></div>
+        </div>
+        
+        <!-- @COMPONENT: CustomBanner [user customizable banner] -->
+        <div class="gradient-banner h-24 relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+            <!-- @STATE: bannerColors:object = {primary: '#FF1493', secondary: '#00BFFF'} -->
+            <div class="absolute top-2 right-2 bg-black/50 rounded-full p-2">
+                <i class="fas fa-edit text-white text-sm"></i>
+            </div>
+            <div class="absolute bottom-2 left-4">
+                <h1 class="text-2xl font-bold text-white retro-shadow" data-bind="user.kliqName">✨ Sarah's Squad ✨</h1>
+            </div>
+        </div>
+        
+        <!-- @COMPONENT: NavigationTabs [bottom tab navigation] -->
+        <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-gray-800 border-t-2 border-mykliq-pink">
+            <div class="flex justify-around py-2">
+                <button class="flex flex-col items-center p-2 text-mykliq-pink" data-event="click:switchTab" data-tab="feed">
+                    <i class="fas fa-home text-xl"></i>
+                    <span class="text-xs mt-1">Feed</span>
+                </button>
+                <button class="flex flex-col items-center p-2 text-gray-400" data-event="click:switchTab" data-tab="kliq">
+                    <i class="fas fa-users text-xl"></i>
+                    <span class="text-xs mt-1">My Kliq</span>
+                </button>
+                <button class="flex flex-col items-center p-2 text-gray-400" data-event="click:switchTab" data-tab="profile">
+                    <i class="fas fa-user text-xl"></i>
+                    <span class="text-xs mt-1">Profile</span>
+                </button>
+                <button class="flex flex-col items-center p-2 text-gray-400" data-event="click:switchTab" data-tab="themes">
+                    <i class="fas fa-palette text-xl"></i>
+                    <span class="text-xs mt-1">Themes</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- @COMPONENT: FeedView [main social feed] -->
+        <div id="feedView" class="p-4 pb-20 space-y-4">
+            
+            <!-- Post Creation Area -->
+            <div class="bg-gradient-to-r from-mykliq-purple to-mykliq-blue rounded-xl p-4 retro-shadow">
+                <div class="flex items-center space-x-3 mb-3">
+                    <!-- Profile picture with customizable border -->
+                    <img src="https://pixabay.com/get/g3e2b1cd6d2e21e17edb95c97ff09260720bcdf5ab94722eab76fb6c3c9139fbaf8fb8fabbce5d150381834fbfaddec3f0f9505fe47e453626df6c69cac9c6402_1280.jpg" alt="User avatar" class="w-10 h-10 rounded-full border-2 border-retro-yellow" data-mock-image="true" />
+                    <input type="text" placeholder="What's happening in your kliq?" class="flex-1 bg-black/30 text-white placeholder-gray-300 rounded-full px-4 py-2 text-sm" data-bind="newPost.content" />
+                </div>
+                <div class="flex justify-between items-center">
+                    <div class="flex space-x-2">
+                        <button class="text-retro-yellow text-sm" data-event="click:addEmoji">😄</button>
+                        <button class="text-mykliq-green text-sm" data-event="click:addPhoto"><i class="fas fa-image"></i></button>
+                        <button class="text-mykliq-pink text-sm" data-event="click:addGif">GIF</button>
+                    </div>
+                    <button class="bg-mykliq-pink text-white px-4 py-1 rounded-full text-sm font-bold neon-glow" data-event="click:createPost">Post!</button>
+                </div>
+            </div>
+            
+            <!-- Content Filter Panel -->
+            <div class="bg-gray-800 rounded-xl p-4 border border-mykliq-blue">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-mykliq-blue font-bold">🚫 Filter Keywords</h3>
+                    <button class="text-xs bg-mykliq-orange px-2 py-1 rounded" data-event="click:manageFilters">Manage</button>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <!-- @MAP: filterKeywords.map(keyword => ( -->
+                    <span class="bg-red-600 text-white px-2 py-1 text-xs rounded-full" data-bind="keyword.text">drama</span>
+                    <span class="bg-red-600 text-white px-2 py-1 text-xs rounded-full" data-bind="keyword.text">politics</span>
+                    <span class="bg-red-600 text-white px-2 py-1 text-xs rounded-full" data-bind="keyword.text">negative</span>
+                    <!-- @END_MAP )) -->
+                    <button class="bg-gray-600 text-white px-2 py-1 text-xs rounded-full border border-dashed" data-event="click:addFilter">+ Add</button>
+                </div>
+            </div>
+            
+            <!-- @MAP: posts.map(post => ( -->
+            <!-- Sample Posts -->
+            <div class="bg-gradient-to-br from-gray-800 to-gray-700 rounded-xl p-4 border border-mykliq-green" data-mock="true">
+                <div class="flex items-center space-x-3 mb-3">
+                    <!-- Profile picture of a friend with colorful lighting setup -->
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face" alt="Friend avatar" class="w-10 h-10 rounded-full border-2 border-mykliq-green sparkle" data-mock-image="true" />
+                    <div>
+                        <p class="font-bold text-mykliq-green" data-bind="post.author.name">Alex Martinez</p>
+                        <p class="text-xs text-gray-400" data-bind="post.timestamp">2 mins ago</p>
+                    </div>
+                    <div class="ml-auto bg-mykliq-green text-black px-2 py-1 rounded text-xs font-bold">#1</div>
+                </div>
+                <p class="text-white mb-3" data-bind="post.content">Just dropped my new track! 🎵 Check it out and let me know what you think! #MusicLife #NewBeat</p>
+                <!-- A vibrant concert stage with neon lights and crowd -->
+                <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop" alt="Concert stage with neon lights" class="w-full h-32 object-cover rounded-lg mb-3" data-mock-image="true" />
+                <div class="flex justify-between items-center">
+                    <div class="flex space-x-4">
+                        <button class="text-mykliq-pink" data-event="click:likePost"><i class="fas fa-heart"></i> 12</button>
+                        <button class="text-mykliq-blue" data-event="click:commentPost"><i class="fas fa-comment"></i> 3</button>
+                        <button class="text-mykliq-green" data-event="click:sharePost"><i class="fas fa-share"></i></button>
+                    </div>
+                    <span class="text-xs text-gray-400">Kliq rank: #1</span>
+                </div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-gray-800 to-gray-700 rounded-xl p-4 border border-mykliq-orange" data-mock="true">
+                <div class="flex items-center space-x-3 mb-3">
+                    <!-- Profile picture of a friend in retro outfit -->
+                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=40&h=40&fit=crop&crop=face" alt="Friend avatar" class="w-10 h-10 rounded-full border-2 border-mykliq-orange" data-mock-image="true" />
+                    <div>
+                        <p class="font-bold text-mykliq-orange" data-bind="post.author.name">Jessica Chen</p>
+                        <p class="text-xs text-gray-400" data-bind="post.timestamp">5 mins ago</p>
+                    </div>
+                    <div class="ml-auto bg-mykliq-orange text-black px-2 py-1 rounded text-xs font-bold">#3</div>
+                </div>
+                <p class="text-white mb-3" data-bind="post.content">OMG you guys!! Just got tickets to see my fave band! Who wants to come with?? 🎸✨ #ConcertBuddy #BestDay</p>
+                <div class="flex justify-between items-center">
+                    <div class="flex space-x-4">
+                        <button class="text-mykliq-pink" data-event="click:likePost"><i class="fas fa-heart"></i> 8</button>
+                        <button class="text-mykliq-blue" data-event="click:commentPost"><i class="fas fa-comment"></i> 5</button>
+                        <button class="text-mykliq-green" data-event="click:sharePost"><i class="fas fa-share"></i></button>
+                    </div>
+                    <span class="text-xs text-gray-400">Kliq rank: #3</span>
+                </div>
+            </div>
+            <!-- @END_MAP )) -->
+        </div>
+        
+        <!-- @COMPONENT: KliqView [pyramid friend organization] -->
+        <div id="kliqView" class="p-4 pb-20 hidden">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-mykliq-pink mb-2">🏆 Sarah's Squad 🏆</h2>
+                <p class="text-gray-400 text-sm">Drag friends to reorder your kliq pyramid</p>
+                <div class="bg-mykliq-blue/20 rounded-lg p-2 mt-2">
+                    <span class="text-mykliq-blue text-sm">12/15 Friends</span>
+                </div>
+            </div>
+            
+            <!-- Kliq Name Editor -->
+            <div class="bg-gray-800 rounded-xl p-4 mb-6 border border-mykliq-purple">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-mykliq-purple font-bold">Kliq Name:</label>
+                    <button class="text-xs bg-mykliq-purple px-2 py-1 rounded" data-event="click:editKliqName">Edit</button>
+                </div>
+                <input type="text" value="Sarah's Squad" class="w-full bg-gray-700 text-white rounded px-3 py-2" data-bind="kliq.name" />
+            </div>
+            
+            <!-- Pyramid Organization Chart -->
+            <div class="bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl p-6 retro-shadow">
+                <!-- @FUNCTIONALITY: Drag-and-drop pyramid ranking system -->
+                
+                <!-- Level 1 - Best Friend -->
+                <div class="pyramid-level">
+                    <div class="friend-avatar bg-gradient-to-r from-mykliq-pink to-mykliq-purple p-1 rounded-full" data-rank="1" data-event="drag:reorderFriend">
+                        <!-- Profile picture of best friend with artistic lighting -->
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face" alt="Best friend" class="w-12 h-12 rounded-full border-2 border-white" data-mock-image="true" />
+                        <div class="text-center mt-1">
+                            <p class="text-xs font-bold text-mykliq-pink" data-bind="friend.name">Alex</p>
+                            <span class="text-xs bg-mykliq-pink text-white px-1 rounded">👑 BFF</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Level 2 - Close Friends -->
+                <div class="pyramid-level">
+                    <div class="friend-avatar bg-gradient-to-r from-mykliq-blue to-mykliq-green p-1 rounded-full" data-rank="2" data-event="drag:reorderFriend">
+                        <!-- Profile picture of close friend smiling -->
+                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=45&h=45&fit=crop&crop=face" alt="Close friend" class="w-10 h-10 rounded-full border-2 border-white" data-mock-image="true" />
+                        <div class="text-center mt-1">
+                            <p class="text-xs font-bold text-mykliq-blue" data-bind="friend.name">Jess</p>
+                            <span class="text-xs bg-mykliq-blue text-white px-1 rounded">#2</span>
+                        </div>
+                    </div>
+                    <div class="friend-avatar bg-gradient-to-r from-mykliq-green to-mykliq-orange p-1 rounded-full" data-rank="3" data-event="drag:reorderFriend">
+                        <!-- Profile picture of another close friend outdoors -->
+                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=45&h=45&fit=crop&crop=face" alt="Close friend" class="w-10 h-10 rounded-full border-2 border-white" data-mock-image="true" />
+                        <div class="text-center mt-1">
+                            <p class="text-xs font-bold text-mykliq-green" data-bind="friend.name">Mike</p>
+                            <span class="text-xs bg-mykliq-green text-black px-1 rounded">#3</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Level 3 - Good Friends -->
+                <div class="pyramid-level">
+                    <div class="friend-avatar bg-gradient-to-r from-mykliq-orange to-mykliq-purple p-1 rounded-full" data-rank="4" data-event="drag:reorderFriend">
+                        <!-- Profile picture of good friend in casual setting -->
+                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face" alt="Good friend" class="w-8 h-8 rounded-full border border-white" data-mock-image="true" />
+                        <div class="text-center mt-1">
+                            <p class="text-xs font-bold text-mykliq-orange" data-bind="friend.name">Ryan</p>
+                            <span class="text-xs bg-mykliq-orange text-black px-1 rounded">#4</span>
+                        </div>
+                    </div>
+                    <div class="friend-avatar bg-gradient-to-r from-mykliq-purple to-mykliq-pink p-1 rounded-full" data-rank="5" data-event="drag:reorderFriend">
+                        <!-- Profile picture of good friend with bright smile -->
+                        <img src="https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=40&h=40&fit=crop&crop=face" alt="Good friend" class="w-8 h-8 rounded-full border border-white" data-mock-image="true" />
+                        <div class="text-center mt-1">
+                            <p class="text-xs font-bold text-mykliq-purple" data-bind="friend.name">Emma</p>
+                            <span class="text-xs bg-mykliq-purple text-white px-1 rounded">#5</span>
+                        </div>
+                    </div>
+                    <div class="friend-avatar bg-gradient-to-r from-retro-yellow to-neon-cyan p-1 rounded-full" data-rank="6" data-event="drag:reorderFriend">
+                        <!-- Profile picture of good friend in urban setting -->
+                        <img src="https://pixabay.com/get/gf163ebba1f103bfcf02f357be8fb66643cc1158df2ee2d6be8e8ae225003d0ed454acf7e520747f1e30d7f261f366fa051fa943bd5c2e52e629d92bcc3cea6df_1280.jpg" alt="Good friend" class="w-8 h-8 rounded-full border border-white" data-mock-image="true" />
+                        <div class="text-center mt-1">
+                            <p class="text-xs font-bold text-retro-yellow" data-bind="friend.name">Josh</p>
+                            <span class="text-xs bg-retro-yellow text-black px-1 rounded">#6</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Add More Friends Button -->
+                <div class="text-center mt-6">
+                    <button class="bg-gradient-to-r from-mykliq-pink to-mykliq-blue text-white px-6 py-3 rounded-full font-bold neon-glow" data-event="click:inviteFriend">
+                        <i class="fas fa-plus mr-2"></i>Invite Friend (3 spots left)
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- @COMPONENT: ProfileView [user profile customization] -->
+        <div id="profileView" class="p-4 pb-20 hidden">
+            <div class="text-center mb-6">
+                <!-- Profile picture with customizable frame -->
+                <img src="https://pixabay.com/get/g24478dd725b4fce9d91feb313c89ea70503873675e7f2772d2b7584990b119bb67514aa00b0cce5f049f3941e688a6ae9cdf87b493248acd9c040eaae0cd5411_1280.jpg" alt="User profile" class="w-24 h-24 rounded-full mx-auto border-4 border-mykliq-pink sparkle" data-mock-image="true" />
+                <h2 class="text-xl font-bold text-mykliq-pink mt-2" data-bind="user.name">Sarah Thompson</h2>
+                <p class="text-gray-400" data-bind="user.bio">Living my best life! ✨ Music lover 🎵 Adventure seeker 🌟</p>
+            </div>
+            
+            <!-- Profile Stats -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="bg-gradient-to-r from-mykliq-pink to-mykliq-purple rounded-xl p-4 text-center">
+                    <p class="text-2xl font-bold" data-bind="user.stats.posts">127</p>
+                    <p class="text-sm">Posts</p>
+                </div>
+                <div class="bg-gradient-to-r from-mykliq-blue to-mykliq-green rounded-xl p-4 text-center">
+                    <p class="text-2xl font-bold" data-bind="user.stats.friends">12</p>
+                    <p class="text-sm">Kliq Size</p>
+                </div>
+                <div class="bg-gradient-to-r from-mykliq-orange to-retro-yellow rounded-xl p-4 text-center text-black">
+                    <p class="text-2xl font-bold" data-bind="user.stats.likes">1.2k</p>
+                    <p class="text-sm">Total Likes</p>
+                </div>
+            </div>
+            
+            <!-- Invitation Code Generator -->
+            <div class="bg-gray-800 rounded-xl p-4 mb-6 border border-mykliq-green">
+                <h3 class="text-mykliq-green font-bold mb-3">📱 Invite Friends to Your Kliq</h3>
+                <div class="bg-gray-700 rounded-lg p-3 mb-3">
+                    <p class="text-sm text-gray-400 mb-2">Your invitation code:</p>
+                    <div class="flex items-center justify-between">
+                        <code class="bg-black text-mykliq-green px-3 py-2 rounded font-mono" data-bind="user.inviteCode">KLIQ-7H9K-2M4P</code>
+                        <button class="text-mykliq-blue" data-event="click:copyInviteCode"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+                <button class="w-full bg-mykliq-green text-black py-2 rounded-lg font-bold" data-event="click:generateNewCode">
+                    Generate New Code
+                </button>
+                <!-- @FUNCTIONALITY: Send invitation via SMS to phone number -->
+                <div class="mt-3">
+                    <input type="tel" placeholder="Friend's phone number" class="w-full bg-gray-700 text-white rounded px-3 py-2 mb-2" data-bind="invite.phoneNumber" />
+                    <button class="w-full bg-mykliq-blue text-white py-2 rounded-lg font-bold" data-event="click:sendSMSInvite">
+                        Send SMS Invite
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Profile Customization Quick Access -->
+            <div class="bg-gray-800 rounded-xl p-4">
+                <h3 class="text-mykliq-purple font-bold mb-3">🎨 Quick Customization</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="bg-mykliq-pink text-white py-2 rounded-lg" data-event="click:openThemeEditor">Edit Theme</button>
+                    <button class="bg-mykliq-blue text-white py-2 rounded-lg" data-event="click:changeBanner">Change Banner</button>
+                    <button class="bg-mykliq-green text-black py-2 rounded-lg" data-event="click:editProfile">Edit Profile</button>
+                    <button class="bg-mykliq-orange text-white py-2 rounded-lg" data-event="click:manageFilters">Manage Filters</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- @COMPONENT: ThemeEditor [customization interface] -->
+        <div id="themeView" class="p-4 pb-20 hidden">
+            <h2 class="text-xl font-bold text-mykliq-purple mb-4">🎨 Theme Customization</h2>
+            
+            <!-- Banner Customization -->
+            <div class="bg-gray-800 rounded-xl p-4 mb-4">
+                <h3 class="text-mykliq-pink font-bold mb-3">Banner & Colors</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-sm text-gray-400">Primary Color</label>
+                        <div class="flex space-x-2 mt-1">
+                            <input type="color" value="#FF1493" class="w-12 h-8 rounded border-2 border-gray-600" data-bind="theme.primaryColor" />
+                            <input type="text" value="#FF1493" class="flex-1 bg-gray-700 text-white rounded px-2 text-sm" data-bind="theme.primaryColorHex" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-400">Secondary Color</label>
+                        <div class="flex space-x-2 mt-1">
+                            <input type="color" value="#00BFFF" class="w-12 h-8 rounded border-2 border-gray-600" data-bind="theme.secondaryColor" />
+                            <input type="text" value="#00BFFF" class="flex-1 bg-gray-700 text-white rounded px-2 text-sm" data-bind="theme.secondaryColorHex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Font Customization -->
+            <div class="bg-gray-800 rounded-xl p-4 mb-4">
+                <h3 class="text-mykliq-blue font-bold mb-3">Font Style</h3>
+                <select class="w-full bg-gray-700 text-white rounded px-3 py-2" data-bind="theme.fontFamily">
+                    <option value="comic">Comic Sans MS (Default)</option>
+                    <option value="retro">Courier New (Retro)</option>
+                    <option value="helvetica">Helvetica (Clean)</option>
+                    <option value="times">Times New Roman (Classic)</option>
+                    <option value="impact">Impact (Bold)</option>
+                </select>
+                <div class="mt-3">
+                    <label class="text-sm text-gray-400">Font Color</label>
+                    <div class="flex space-x-2 mt-1">
+                        <input type="color" value="#FFFFFF" class="w-12 h-8 rounded border-2 border-gray-600" data-bind="theme.fontColor" />
+                        <input type="text" value="#FFFFFF" class="flex-1 bg-gray-700 text-white rounded px-2 text-sm" data-bind="theme.fontColorHex" />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Taskbar Customization -->
+            <div class="bg-gray-800 rounded-xl p-4 mb-4">
+                <h3 class="text-mykliq-green font-bold mb-3">Navigation Bar</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-sm text-gray-400">Background Color</label>
+                        <div class="flex space-x-2 mt-1">
+                            <input type="color" value="#1F2937" class="w-12 h-8 rounded border-2 border-gray-600" data-bind="theme.navBgColor" />
+                            <input type="text" value="#1F2937" class="flex-1 bg-gray-700 text-white rounded px-2 text-sm" data-bind="theme.navBgColorHex" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-400">Active Tab Color</label>
+                        <div class="flex space-x-2 mt-1">
+                            <input type="color" value="#FF1493" class="w-12 h-8 rounded border-2 border-gray-600" data-bind="theme.navActiveColor" />
+                            <input type="text" value="#FF1493" class="flex-1 bg-gray-700 text-white rounded px-2 text-sm" data-bind="theme.navActiveColorHex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ribbon/Border Customization -->
+            <div class="bg-gray-800 rounded-xl p-4 mb-4">
+                <h3 class="text-mykliq-orange font-bold mb-3">Borders & Effects</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-sm text-gray-400">Border Style</label>
+                        <select class="w-full bg-gray-700 text-white rounded px-3 py-2 mt-1" data-bind="theme.borderStyle">
+                            <option value="retro">Retro Shadow (Default)</option>
+                            <option value="neon">Neon Glow</option>
+                            <option value="simple">Simple Border</option>
+                            <option value="gradient">Gradient Border</option>
+                            <option value="none">No Border</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="sparkles" checked class="text-mykliq-pink" data-bind="theme.enableSparkles" />
+                        <label for="sparkles" class="text-sm">Enable Sparkle Effects ✨</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Theme Preview -->
+            <div class="bg-gray-800 rounded-xl p-4 mb-4">
+                <h3 class="text-retro-yellow font-bold mb-3">Preview</h3>
+                <div class="bg-gradient-to-r from-mykliq-pink to-mykliq-blue rounded-lg p-4 retro-shadow">
+                    <p class="text-white font-bold">Your theme preview</p>
+                    <p class="text-white/80 text-sm">This is how your posts will look</p>
+                </div>
+            </div>
+            
+            <!-- Save/Reset Buttons -->
+            <div class="flex space-x-3">
+                <button class="flex-1 bg-mykliq-green text-black py-3 rounded-lg font-bold" data-event="click:saveTheme">
+                    Save Theme
+                </button>
+                <button class="flex-1 bg-gray-600 text-white py-3 rounded-lg font-bold" data-event="click:resetTheme">
+                    Reset
+                </button>
+            </div>
+        </div>
+        
+        <!-- @COMPONENT: InviteModal [phone verification] -->
+        <div id="inviteModal" class="fixed inset-0 bg-black/80 hidden z-50" data-modal="invite">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-gray-800 rounded-xl p-6 w-full max-w-sm border border-mykliq-pink">
+                    <h3 class="text-xl font-bold text-mykliq-pink mb-4">Join a Kliq!</h3>
+                    <p class="text-gray-400 text-sm mb-4">Enter your phone number to verify and join the kliq</p>
+                    
+                    <div class="space-y-4">
+                        <input type="tel" placeholder="Your phone number" class="w-full bg-gray-700 text-white rounded px-3 py-2" data-bind="signup.phoneNumber" />
+                        <input type="text" placeholder="Invitation code (optional)" class="w-full bg-gray-700 text-white rounded px-3 py-2" data-bind="signup.inviteCode" />
+                        
+                        <!-- @FUNCTIONALITY: Phone number verification via SMS -->
+                        <button class="w-full bg-mykliq-pink text-white py-2 rounded-lg font-bold" data-event="click:sendVerificationSMS">
+                            Send Verification Code
+                        </button>
+                        
+                        <div class="hidden" id="verificationStep">
+                            <input type="text" placeholder="Enter 6-digit code" class="w-full bg-gray-700 text-white rounded px-3 py-2 mb-3" data-bind="signup.verificationCode" />
+                            <button class="w-full bg-mykliq-green text-black py-2 rounded-lg font-bold" data-event="click:verifyAndJoin">
+                                Verify & Join MyKliq
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 text-center">
+                        <button class="text-gray-400 text-sm" data-event="click:closeModal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <!-- @END_COMPONENT: MobileApp -->
+    
+    <script>
+        // TODO: Implement business logic, API calls, and state management
+        (function() {
+            // Tab switching functionality
+            const tabs = document.querySelectorAll('[data-tab]');
+            const views = {
+                'feed': document.getElementById('feedView'),
+                'kliq': document.getElementById('kliqView'),
+                'profile': document.getElementById('profileView'),
+                'themes': document.getElementById('themeView')
+            };
+            
+            function switchTab(tabName) {
+                // Hide all views
+                Object.values(views).forEach(view => view.classList.add('hidden'));
+                
+                // Show selected view
+                if (views[tabName]) {
+                    views[tabName].classList.remove('hidden');
+                }
+                
+                // Update tab states
+                tabs.forEach(tab => {
+                    if (tab.dataset.tab === tabName) {
+                        tab.classList.remove('text-gray-400');
+                        tab.classList.add('text-mykliq-pink');
+                    } else {
+                        tab.classList.remove('text-mykliq-pink');
+                        tab.classList.add('text-gray-400');
+                    }
+                });
+            }
+            
+            // Add click event listeners to tabs
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    switchTab(tab.dataset.tab);
+                });
+            });
+            
+            // Theme color picker functionality
+            const colorInputs = document.querySelectorAll('input[type="color"]');
+            colorInputs.forEach(input => {
+                input.addEventListener('change', (e) => {
+                    // TODO: Apply theme changes in real-time
+                    console.log('Color changed:', e.target.value);
+                });
+            });
+            
+            // Mock drag and drop for pyramid
+            const friendAvatars = document.querySelectorAll('.friend-avatar');
+            friendAvatars.forEach(avatar => {
+                avatar.addEventListener('dragstart', (e) => {
+                    // TODO: Implement drag and drop reordering
+                    console.log('Dragging friend:', e.target.dataset.rank);
+                });
+            });
+            
+            // Show invite modal on page load (simulate new user)
+            // setTimeout(() => {
+            //     document.getElementById('inviteModal').classList.remove('hidden');
+            // }, 1000);
+            
+        })();
+    </script>
+</body>
+</html>

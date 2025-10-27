@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = 'http://localhost:5000/api'; // Change to your deployed URL
+const API_BASE_URL = 'https://c7dd138c-576d-4490-a426-c0be6e6124ca-00-1u3lut3kqrgq6.kirk.repl.co/api'; // Change to your deployed URL
 
 interface ApiResponse<T> {
   success?: boolean;

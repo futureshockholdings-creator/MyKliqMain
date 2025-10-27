@@ -26,6 +26,8 @@ const LoginScreen: React.FC = () => {
 
     setLoading(true);
     try {
+      console.log(phoneNumber, password , "------>");
+      
       const success = await login(phoneNumber, password);
       if (!success) {
         Alert.alert('Login Failed', 'Invalid phone number or password');
