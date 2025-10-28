@@ -1,0 +1,25 @@
+version: 1
+backend:
+  phases:
+    build:
+      commands:
+        - cd client
+        - npm ci
+        - npm run build
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  customHeaders:
+    - pattern: '**/*'
+      headers:
+        - key: "Cache-Control"
+          value: "max-age=0,no-cache,no-store,must-revalidate"
