@@ -1,15 +1,9 @@
 version: 1
-backend:
-  phases:
-    build:
-      commands:
-        - cd client
-        - npm install --force
-        - npm run build
 frontend:
   phases:
     preBuild:
       commands:
+        - cd client
         - npm install --force
     build:
       commands:
@@ -19,7 +13,36 @@ frontend:
     files:
       - '**/*'
   customHeaders:
+    - pattern: '**/*.js'
+      headers:
+        - key: 'Content-Type'
+          value: 'application/javascript'
+    - pattern: '**/*.mjs'
+      headers:
+        - key: 'Content-Type'
+          value: 'application/javascript'
+    - pattern: '**/*.css'
+      headers:
+        - key: 'Content-Type'
+          value: 'text/css'
+    - pattern: '**/*.html'
+      headers:
+        - key: 'Content-Type'
+          value: 'text/html; charset=utf-8'
     - pattern: '**/*'
       headers:
-        - key: "Cache-Control"
-          value: "max-age=0,no-cache,no-store,must-revalidate"
+        - key: 'Cache-Control'
+          value: 'max-age=0,no-cache,no-store,must-revalidate'
+  cache:
+    paths:
+      - client/node_modules/**/*
+backend:
+  phases:
+    build:
+      commands:
+        - cd client
+        - npm install --force
+        - npm run build
+        - cd ..
+        - npm install --force
+        - npm run build
