@@ -96,9 +96,9 @@ export class OAuthService {
         tokenExpiresAt: tokens.expiresIn 
           ? new Date(Date.now() + tokens.expiresIn * 1000) 
           : null,
-        tokenType: tokens.tokenType || 'Bearer',
         scopes: [], // Will be filled based on platform requirements
         isActive: true,
+        lastSyncAt: null,
       };
 
       await storage.createSocialCredential(credential);

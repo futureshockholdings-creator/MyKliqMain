@@ -23,6 +23,7 @@ import {
   Link2,
   LogOut,
   User,
+  AlertTriangle,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
@@ -41,37 +42,43 @@ const platformInfo = {
     name: "Instagram",
     icon: Instagram,
     color: "bg-gradient-to-r from-purple-500 to-pink-500",
-    description: "Share your photos and stories"
+    description: "Business & Creator accounts only",
+    requiresBusiness: true
   },
   tiktok: {
     name: "TikTok",
     icon: MessageCircle,
     color: "bg-black",
-    description: "Short-form video content"
+    description: "Short-form video content",
+    requiresBusiness: false
   },
   twitch: {
     name: "Twitch",
     icon: Twitch,
     color: "bg-purple-600",
-    description: "Live streaming and gaming"
+    description: "Live streaming and gaming",
+    requiresBusiness: false
   },
   discord: {
     name: "Discord",
     icon: MessageCircle,
     color: "bg-indigo-600",
-    description: "Gaming communities and chat"
+    description: "Gaming communities and chat",
+    requiresBusiness: false
   },
   youtube: {
     name: "YouTube",
     icon: Youtube,
     color: "bg-red-600",
-    description: "Video content and subscriptions"
+    description: "Video content and subscriptions",
+    requiresBusiness: false
   },
   reddit: {
     name: "Reddit",
     icon: MessageCircle,
     color: "bg-orange-600",
-    description: "Communities and discussions"
+    description: "Communities and discussions",
+    requiresBusiness: false
   }
 };
 
@@ -367,9 +374,15 @@ export default function Settings() {
                               <div className={`p-2 rounded-lg ${platform?.color || 'bg-gray-600'}`}>
                                 <Icon className="w-5 h-5 text-white" />
                               </div>
-                              <div>
+                              <div className="flex-1">
                                 <h4 className="text-white font-medium">{platform?.name || platformKey}</h4>
                                 <p className="text-purple-200 text-sm">{platform?.description}</p>
+                                {platform?.requiresBusiness && (
+                                  <p className="text-yellow-300 text-xs mt-1 flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    Requires Business or Creator account
+                                  </p>
+                                )}
                               </div>
                             </div>
                             <Button
