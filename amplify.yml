@@ -25,4 +25,5 @@ backend:
   phases:
     build:
       commands:
-        - node server.js
+      - npm install express --force
+      - node server.js
