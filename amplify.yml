@@ -4,7 +4,7 @@ backend:
     build:
       commands:
         - cd client
-        - npm ci
+        - npm ci --legacy-peer-deps
         - npm run build
 frontend:
   phases:
