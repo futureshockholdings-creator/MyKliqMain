@@ -171,20 +171,70 @@ const knowledgeBase: KnowledgeBase = {
     keywords: ['friend ranking', 'ranking system', 'friendship score', 'pyramid ranking', 'closest friends', 'rank friends'],
     response: "MyKliq's intelligent friend ranking system automatically calculates friendship closeness using advanced algorithms. Factors include: 1) Message exchanges (highest weight), 2) Video calls (8.0 weight - very important), 3) Post interactions (likes, comments), 4) Story views, 5) Live stream participation, 6) Meetup attendance together, 7) Response time patterns. The system learns from your interactions and suggests optimal friend positions in your 1-28 pyramid, but you can always drag to manually rerank.",
     relatedTopics: ['kliq', 'pyramid', 'algorithms', 'interactions', 'video-calls']
+  },
+  'content-filters': {
+    keywords: ['content filters', 'filter feed', 'customize feed', 'filter by rank', 'feed visibility', 'hide posts', 'filter content'],
+    response: "Content Filters let you customize your Headlines feed based on friend rankings. Features: 1) Set which friend ranks (1-28) you want to see content from, 2) Create custom filter groups (e.g., only ranks 1-10 for close friends), 3) Dynamically filter posts, polls, events, and activities, 4) Multiple filter presets you can switch between, 5) Helps manage feed when you have many friends. Perfect for focusing on your closest friends or viewing all content - you control what appears in your Headlines.",
+    relatedTopics: ['headlines', 'feed', 'kliq', 'ranking', 'customization']
+  },
+  'push-notifications': {
+    keywords: ['push notifications', 'mobile notifications', 'fcm', 'firebase', 'apns', 'apple notifications', 'notification setup', 'mobile alerts'],
+    response: "MyKliq supports comprehensive push notifications for mobile devices. Setup includes: 1) Firebase Cloud Messaging (FCM) for Android devices, 2) Apple Push Notifications (APNs) for iOS devices, 3) Configure notification preferences in Settings, 4) Receive alerts for posts, messages, events, live streams, and friend activities, 5) Notification management and customization options. Push notifications keep you connected even when not actively using the app.",
+    relatedTopics: ['mobile-app', 'alerts', 'settings', 'ios', 'android']
+  },
+  'language-support': {
+    keywords: ['language', 'languages', 'translation', 'translate', 'multilingual', 'international', 'español', 'français', 'deutsch', 'language selector'],
+    response: "MyKliq supports 10 languages for international users. Features: 1) Complete interface translation across all pages, 2) Profile information translation, 3) Language selector in Settings page, 4) Supported languages include English, Spanish, French, German, Italian, Portuguese, Russian, Chinese, Japanese, and Korean, 5) Real-time language switching without page reload, 6) Flag icons for visual language identification. Access language settings in the Settings page to choose your preferred language.",
+    relatedTopics: ['settings', 'profile', 'international', 'customization']
+  },
+  'performance': {
+    keywords: ['performance', 'speed', 'scalability', 'concurrent users', 'caching', 'redis', 'optimization', 'load time', 'fast'],
+    response: "MyKliq is engineered for enterprise-grade performance. Technical features: 1) Supports 5000+ concurrent users, 2) Dual-cache system with Redis and in-memory fallback, 3) Pattern-based cache invalidation for feed consistency, 4) LRU eviction strategy with automatic cleanup, 5) Mobile-optimized API endpoints with pagination, 6) Strategic database indexing, 7) Connection pooling for database efficiency, 8) Bandwidth-optimized responses. The platform delivers fast, responsive experiences even under heavy load.",
+    relatedTopics: ['scalability', 'caching', 'mobile-app', 'database']
+  },
+  'oauth-setup': {
+    keywords: ['oauth', 'social media setup', 'connect instagram', 'connect tiktok', 'connect youtube', 'api credentials', 'client id', 'client secret', 'platform connection'],
+    response: "Connecting social media platforms to MyKliq uses OAuth 2.0 secure authentication. Process: 1) Go to Settings → Social Media Integration, 2) Click 'Connect Account' for desired platform, 3) OAuth popup opens for platform login, 4) Grant MyKliq permission to access your content, 5) Tokens are AES-256 encrypted and securely stored, 6) Connected platforms appear in unified social feed. Important: Instagram requires Business or Creator accounts (not personal accounts). Platforms include Instagram, TikTok, YouTube, Twitch, Discord, and Reddit.",
+    relatedTopics: ['social-media', 'settings', 'integration', 'security', 'encryption']
+  },
+  'moviecon-manager': {
+    keywords: ['moviecon manager', 'upload moviecons', 'video library', 'manage moviecons', 'moviecon collection', 'custom video reactions'],
+    response: "Moviecon Manager is your personal video reaction library. Features: 1) Upload custom short video clips (your reactions, expressions, inside jokes), 2) Organize your moviecon collection, 3) Preview videos before using them, 4) Delete unwanted moviecons, 5) Search and browse your library, 6) Use moviecons in posts, comments, and messages like emojis, 7) Create unlimited personalized reactions. Access Moviecon Manager from navigation to build your unique reaction collection.",
+    relatedTopics: ['moviecons', 'videos', 'customization', 'posts', 'messages']
+  },
+  'password-recovery': {
+    keywords: ['password recovery', 'forgot password', 'reset password', 'recover account', 'locked out', 'password reset', 'account recovery'],
+    response: "MyKliq uses a secure 4-step password recovery process. Steps: 1) Enter your phone number for verification, 2) Answer your 3 security questions correctly, 3) Enter your security PIN, 4) Create new password. This multi-layer approach ensures only you can recover your account. Important: Set up your security questions and PIN in Profile → Security Settings BEFORE you need them. No SMS codes are used - recovery relies on your pre-configured security information.",
+    relatedTopics: ['security', 'profile', 'authentication', 'pin', 'security-questions']
+  },
+  'security-questions': {
+    keywords: ['security questions', 'security setup', 'account questions', 'recovery questions', 'security answers'],
+    response: "Security Questions protect your account recovery. Setup: 1) Go to Profile → Security Settings, 2) Choose and answer 3 security questions, 3) Store answers securely - you'll need all 3 for password recovery, 4) Questions are used as part of the 4-step recovery process, 5) Cannot reset password without correct answers. Choose questions with answers you'll remember but others can't guess. This is critical for account security and recovery.",
+    relatedTopics: ['password-recovery', 'security', 'profile', 'authentication']
+  },
+  'pin': {
+    keywords: ['pin', 'security pin', 'pin code', 'account pin', 'verification pin', 'pin setup'],
+    response: "Security PIN is a numeric code for account verification. Features: 1) Set up in Profile → Security Settings, 2) Required for password recovery (step 3 of 4), 3) 4-6 digit numeric code, 4) Additional security layer beyond password, 5) Used for sensitive account operations, 6) Keep confidential - never share your PIN. Set your PIN early to ensure you can recover your account if needed.",
+    relatedTopics: ['security', 'password-recovery', 'profile', 'authentication']
+  },
+  'encryption': {
+    keywords: ['encryption', 'security', 'aes-256', 'token encryption', 'secure storage', 'data protection', 'encrypted'],
+    response: "MyKliq employs robust encryption for data protection. Security measures: 1) AES-256 encryption for social media OAuth tokens, 2) Encrypted credential storage in database, 3) Secure session management, 4) JWT token-based authentication for mobile apps, 5) Cookie-based sessions with PostgreSQL backing, 6) Industry-standard security practices. Your sensitive data including social media tokens and credentials are protected with enterprise-grade encryption.",
+    relatedTopics: ['security', 'oauth-setup', 'social-media', 'authentication']
   }
 };
 
 const greetingMessages = [
-  "Hi! I'm your MyKliq expert assistant. I can help you with everything from basic navigation to advanced features like video calling, incognito messaging, live streaming, auto-posting, and social media integration. What would you like to know?",
-  "Hello! I know all about MyKliq's features - from the friend pyramid and video calling to daily horoscopes, polls, themes, GIFs, and mobile app development. Ask me anything!",
-  "Hey there! I'm here to help you master MyKliq. Whether you need help with video calls, messaging, events, live streaming, friend ranking algorithms, or any other feature, I've got detailed answers for you!"
+  "Hi! I'm your MyKliq expert assistant. I can help you with everything from basic navigation to advanced features like video calling, incognito messaging, live streaming, auto-posting, social media OAuth integration, content filters, push notifications, and multi-language support. What would you like to know?",
+  "Hello! I know all about MyKliq's features - from the friend pyramid and video calling to daily horoscopes, polls, themes, GIFs, password recovery, AES-256 encryption, performance optimization, and mobile app development. Ask me anything!",
+  "Hey there! I'm here to help you master MyKliq. Whether you need help with video calls, messaging, events, live streaming, friend ranking algorithms, content filters, security setup, language translation, or any other feature, I've got detailed answers for you!"
 ];
 
 const fallbackResponses = [
-  "I have comprehensive knowledge about MyKliq! Try asking about: Headlines feed, friend pyramid, video calling, incognito messaging, live streaming, auto-posting, daily horoscopes, polls, events, themes, security settings, social media integration, kliq closure, or mobile app features.",
-  "I can provide detailed help with all MyKliq features! Ask about: navigation, notification badges, kliq customization with emojis, video calls, password recovery, moviecons, stories, meetup location sharing, bible verses, GIFs, or any specific functionality you're curious about.",
-  "Need detailed guidance? I know about: video calling with WebRTC, posting and interactions, real-time features, privacy settings, auto-deletion, live streaming with chat, event management, theme customization, friend ranking algorithms, security PINs, social media connections, or the upcoming mobile apps for iOS and Android.",
-  "I'm your complete MyKliq guide! I can explain: video calling system, friend ranking algorithms, kliq closure settings, incognito conversations, daily content features, notification system, profile customization, live actions, poll creation, GIF integration, or any advanced functionality step-by-step."
+  "I have comprehensive knowledge about MyKliq! Try asking about: Headlines feed, friend pyramid, video calling, incognito messaging, live streaming, auto-posting, daily horoscopes, polls, events, themes, security settings, social media OAuth integration, content filters, push notifications, language support, performance, or mobile app features.",
+  "I can provide detailed help with all MyKliq features! Ask about: navigation, notification badges, kliq customization with emojis, video calls, password recovery, moviecon manager, stories, meetup location sharing, bible verses, GIFs, AES-256 encryption, multi-language support, or any specific functionality you're curious about.",
+  "Need detailed guidance? I know about: video calling with WebRTC, posting and interactions, real-time features, privacy settings, auto-deletion, live streaming with chat, event management, theme customization, friend ranking algorithms, security PINs, social media OAuth setup, content filtering, caching architecture, 5000+ concurrent user scalability, or the mobile apps for iOS and Android.",
+  "I'm your complete MyKliq guide! I can explain: video calling system, friend ranking algorithms, kliq closure settings, incognito conversations, daily content features, notification system, profile customization, live actions, poll creation, GIF integration, content filters, push notification setup, language translation, password recovery process, moviecon library management, OAuth token encryption, or any advanced functionality step-by-step."
 ];
 
 export function Chatbot() {
