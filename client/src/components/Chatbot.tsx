@@ -153,14 +153,14 @@ const knowledgeBase: KnowledgeBase = {
     relatedTopics: ['profile', 'recovery', 'authentication', 'privacy']
   },
   'mobile-app': {
-    keywords: ['mobile', 'app', 'ios', 'android', 'app store', 'google play', 'native', 'react native'],
-    response: "MyKliq is developing native mobile apps for iOS and Android. Features: 1) Full feature parity with web version, 2) JWT authentication for mobile, 3) Optimized mobile API endpoints, 4) Push notification support, 5) Native camera and photo integration, 6) Planned App Store and Google Play release. The mobile experience will provide all MyKliq features optimized for touch interfaces and mobile usage patterns.",
-    relatedTopics: ['ios', 'android', 'native', 'notifications']
+    keywords: ['mobile', 'app', 'ios', 'android', 'app store', 'google play', 'native'],
+    response: "MyKliq is developing native mobile apps for iOS and Android. Features: 1) All the same features as the web version, 2) Push notification support, 3) Native camera and photo integration, 4) Planned App Store and Google Play release. The mobile experience will provide all MyKliq features optimized for touch interfaces and mobile usage patterns.",
+    relatedTopics: ['ios', 'android', 'notifications']
   },
   'video-calls': {
-    keywords: ['video call', 'video calling', 'call', 'calling', 'video chat', 'webrtc', 'camera', 'microphone'],
-    response: "MyKliq features WebRTC-based video calling for face-to-face conversations with friends. How it works: 1) Click on friends in the pyramid chart to start a video call, 2) Uses browser camera and microphone (permission required), 3) Real-time video and audio streaming, 4) Call controls include mute, video toggle, and end call, 5) Supports multiple participants in group calls, 6) Video calls boost your friendship ranking scores significantly (8.0 weight). No phone system access needed - works entirely through your web browser.",
-    relatedTopics: ['kliq', 'friends', 'webrtc', 'real-time', 'ranking']
+    keywords: ['video call', 'video calling', 'call', 'calling', 'video chat', 'camera', 'microphone'],
+    response: "MyKliq features video calling for face-to-face conversations with friends. How it works: 1) Click on friends in the pyramid chart to start a video call, 2) Uses your camera and microphone (permission required), 3) Real-time video and audio, 4) Call controls include mute, video toggle, and end call, 5) Supports multiple participants in group calls, 6) Video calls boost your friendship ranking scores significantly. Works entirely through your web browser - no phone system needed.",
+    relatedTopics: ['kliq', 'friends', 'real-time', 'ranking']
   },
   'gifs': {
     keywords: ['gifs', 'animated images', 'gif library', 'reactions', 'giphy', 'animated'],
@@ -178,9 +178,9 @@ const knowledgeBase: KnowledgeBase = {
     relatedTopics: ['headlines', 'feed', 'kliq', 'ranking', 'customization']
   },
   'push-notifications': {
-    keywords: ['push notifications', 'mobile notifications', 'fcm', 'firebase', 'apns', 'apple notifications', 'notification setup', 'mobile alerts'],
-    response: "MyKliq supports comprehensive push notifications for mobile devices. Setup includes: 1) Firebase Cloud Messaging (FCM) for Android devices, 2) Apple Push Notifications (APNs) for iOS devices, 3) Configure notification preferences in Settings, 4) Receive alerts for posts, messages, events, live streams, and friend activities, 5) Notification management and customization options. Push notifications keep you connected even when not actively using the app.",
-    relatedTopics: ['mobile-app', 'alerts', 'settings', 'ios', 'android']
+    keywords: ['push notifications', 'mobile notifications', 'notification setup', 'mobile alerts'],
+    response: "MyKliq supports push notifications for mobile devices. Features: 1) Available for both Android and iOS devices, 2) Configure notification preferences in Settings, 3) Receive alerts for posts, messages, events, live streams, and friend activities, 4) Notification management and customization options. Push notifications keep you connected even when not actively using the app.",
+    relatedTopics: ['mobile-app', 'alerts', 'settings']
   },
   'language-support': {
     keywords: ['language', 'languages', 'translation', 'translate', 'multilingual', 'international', 'español', 'français', 'deutsch', 'language selector'],
@@ -188,14 +188,14 @@ const knowledgeBase: KnowledgeBase = {
     relatedTopics: ['settings', 'profile', 'international', 'customization']
   },
   'performance': {
-    keywords: ['performance', 'speed', 'scalability', 'concurrent users', 'caching', 'redis', 'optimization', 'load time', 'fast'],
-    response: "MyKliq is engineered for enterprise-grade performance. Technical features: 1) Supports 5000+ concurrent users, 2) Dual-cache system with Redis and in-memory fallback, 3) Pattern-based cache invalidation for feed consistency, 4) LRU eviction strategy with automatic cleanup, 5) Mobile-optimized API endpoints with pagination, 6) Strategic database indexing, 7) Connection pooling for database efficiency, 8) Bandwidth-optimized responses. The platform delivers fast, responsive experiences even under heavy load.",
-    relatedTopics: ['scalability', 'caching', 'mobile-app', 'database']
+    keywords: ['performance', 'speed', 'fast', 'load time'],
+    response: "MyKliq is designed for fast, smooth performance. Features: 1) Supports thousands of users at the same time, 2) Quick page loads and responsive interactions, 3) Optimized for both mobile and desktop devices, 4) Efficient data handling for seamless experience. The platform delivers a fast, responsive experience even when many people are using it.",
+    relatedTopics: ['mobile-app']
   },
   'oauth-setup': {
-    keywords: ['oauth', 'social media setup', 'connect instagram', 'connect tiktok', 'connect youtube', 'api credentials', 'client id', 'client secret', 'platform connection'],
-    response: "Connecting social media platforms to MyKliq uses secure authentication. Process: 1) Go to Settings → Social Media Integration, 2) Click 'Connect Account' for desired platform, 3) Popup opens for platform login, 4) Grant MyKliq permission to access your content, 5) Your credentials are securely stored, 6) Connected platforms appear in unified social feed. Important: Instagram requires Business or Creator accounts (not personal accounts). Platforms include Instagram, TikTok, YouTube, Twitch, Discord, and Reddit.",
-    relatedTopics: ['social-media', 'settings', 'integration', 'security']
+    keywords: ['social media setup', 'connect instagram', 'connect tiktok', 'connect youtube', 'platform connection'],
+    response: "Connecting social media platforms to MyKliq is easy and secure. Process: 1) Go to Settings → Social Media Integration, 2) Click 'Connect Account' for your desired platform, 3) Log in to your social media account, 4) Grant MyKliq permission to access your content, 5) Your account is now connected, 6) View all your connected content in one unified social feed. Important: Instagram requires Business or Creator accounts (not personal accounts). Platforms include Instagram, TikTok, YouTube, Twitch, Discord, and Reddit.",
+    relatedTopics: ['social-media', 'settings', 'integration']
   },
   'moviecon-manager': {
     keywords: ['moviecon manager', 'upload moviecons', 'video library', 'manage moviecons', 'moviecon collection', 'custom video reactions'],
@@ -221,15 +221,15 @@ const knowledgeBase: KnowledgeBase = {
 
 const greetingMessages = [
   "Hi! I'm your MyKliq expert assistant. I can help you with everything from basic navigation to advanced features like video calling, incognito messaging, live streaming, auto-posting, social media integration, content filters, push notifications, and multi-language support. What would you like to know?",
-  "Hello! I know all about MyKliq's features - from the friend pyramid and video calling to daily horoscopes, polls, themes, GIFs, password recovery, performance optimization, and mobile app development. Ask me anything!",
+  "Hello! I know all about MyKliq's features - from the friend pyramid and video calling to daily horoscopes, polls, themes, GIFs, password recovery, and mobile app features. Ask me anything!",
   "Hey there! I'm here to help you master MyKliq. Whether you need help with video calls, messaging, events, live streaming, friend ranking, content filters, security setup, language translation, or any other feature, I've got detailed answers for you!"
 ];
 
 const fallbackResponses = [
-  "I have comprehensive knowledge about MyKliq! Try asking about: Headlines feed, friend pyramid, video calling, incognito messaging, live streaming, auto-posting, daily horoscopes, polls, events, themes, security settings, social media integration, content filters, push notifications, language support, performance, or mobile app features.",
+  "I have comprehensive knowledge about MyKliq! Try asking about: Headlines feed, friend pyramid, video calling, incognito messaging, live streaming, auto-posting, daily horoscopes, polls, events, themes, security settings, social media integration, content filters, push notifications, language support, or mobile app features.",
   "I can provide detailed help with all MyKliq features! Ask about: navigation, notification badges, kliq customization with emojis, video calls, password recovery, moviecon manager, stories, meetup location sharing, bible verses, GIFs, multi-language support, or any specific functionality you're curious about.",
-  "Need detailed guidance? I know about: video calling, posting and interactions, real-time features, privacy settings, auto-deletion, live streaming with chat, event management, theme customization, friend ranking system, security PINs, social media setup, content filtering, performance features, or the mobile apps for iOS and Android.",
-  "I'm your complete MyKliq guide! I can explain: video calling system, friend ranking system, kliq closure settings, incognito conversations, daily content features, notification system, profile customization, live actions, poll creation, GIF integration, content filters, push notification setup, language translation, password recovery process, moviecon library management, or any advanced functionality step-by-step."
+  "Need detailed guidance? I know about: video calling, posting and interactions, real-time features, privacy settings, auto-deletion, live streaming with chat, event management, theme customization, friend ranking system, security PINs, social media setup, content filtering, or the mobile apps for iOS and Android.",
+  "I'm your complete MyKliq guide! I can explain: video calling, friend ranking system, kliq closure settings, incognito conversations, daily content features, notification system, profile customization, live actions, poll creation, GIF integration, content filters, push notification setup, language translation, password recovery process, moviecon library management, or any functionality step-by-step."
 ];
 
 export function Chatbot() {
