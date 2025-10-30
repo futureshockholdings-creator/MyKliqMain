@@ -24,7 +24,10 @@ import {
   LogOut,
   User,
   AlertTriangle,
+  TrendingUp,
+  Facebook as FacebookIcon,
 } from "lucide-react";
+import { SiPinterest } from "react-icons/si";
 import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
 
@@ -78,6 +81,27 @@ const platformInfo = {
     icon: MessageCircle,
     color: "bg-orange-600",
     description: "Communities and discussions",
+    requiresBusiness: false
+  },
+  pinterest: {
+    name: "Pinterest",
+    icon: SiPinterest,
+    color: "bg-red-700",
+    description: "Visual inspiration and ideas",
+    requiresBusiness: false
+  },
+  facebook: {
+    name: "Facebook",
+    icon: FacebookIcon,
+    color: "bg-blue-600",
+    description: "Social networking and communities",
+    requiresBusiness: false
+  },
+  espn: {
+    name: "ESPN Fantasy",
+    icon: TrendingUp,
+    color: "bg-yellow-600",
+    description: "Fantasy sports leagues and stats",
     requiresBusiness: false
   }
 };

@@ -1,6 +1,6 @@
 # Social Media Integration Setup Guide
 
-MyKliq supports connecting 6 social media platforms to aggregate your content into one unified feed. Here's how to set up each platform:
+MyKliq supports connecting 9 social media platforms to aggregate your content into one unified feed. Here's how to set up each platform:
 
 ## ✅ Already Set Up (Replit Connectors)
 
@@ -20,7 +20,7 @@ MyKliq supports connecting 6 social media platforms to aggregate your content in
 
 ## 🔧 Manual Setup Required (Custom OAuth)
 
-The following platforms require you to create developer applications and provide API credentials. Follow these step-by-step instructions:
+The following 9 platforms require you to create developer applications and provide API credentials. Follow these step-by-step instructions:
 
 ---
 
@@ -189,6 +189,141 @@ The following platforms require you to create developer applications and provide
 
 ---
 
+### 5. Pinterest
+
+**Requirements**: Pinterest account
+
+**Step-by-Step Setup**:
+
+1. **Create a Pinterest App**
+   - Go to [developers.pinterest.com](https://developers.pinterest.com)
+   - Log in with your Pinterest account
+   - Click **"Create app"** or **"My Apps"** → **"Create app"**
+
+2. **Fill in App Details**
+   - **App name**: MyKliq
+   - **App description**: Social media integration for MyKliq
+   - **Website**: `https://your-replit-url.replit.dev`
+   - Accept the terms and click **"Create"**
+
+3. **Configure OAuth**
+   - In your app dashboard, go to **"OAuth"** settings
+   - Add redirect URI: `https://your-replit-url.replit.dev/api/oauth/callback/pinterest`
+   - Request these scopes:
+     - `boards:read`
+     - `pins:read`
+     - `user_accounts:read`
+
+4. **Get Your Credentials**
+   - In **App Settings** → **Basic information**:
+   - **App ID** (this is your Client ID)
+   - **App secret** (click "Show" to reveal)
+
+5. **Add to Replit Secrets**
+   - `PINTEREST_CLIENT_ID` = your App ID
+   - `PINTEREST_CLIENT_SECRET` = your App secret
+
+6. **Test Your Connection**
+   - Go to Settings in MyKliq
+   - Click "Connect Pinterest"
+   - Authorize the app
+   - Your Pinterest pins will appear in your feed!
+
+---
+
+### 6. Facebook
+
+**Requirements**: Facebook account
+
+**Step-by-Step Setup**:
+
+1. **Go to Meta for Developers**
+   - Visit: [developers.facebook.com](https://developers.facebook.com)
+   - Log in with your Facebook account
+   - Click **"Get Started"** if first time
+
+2. **Create a New App**
+   - Click **"My Apps"** → **"Create App"**
+   - Choose **"Other"** → **"Next"**
+   - Select **"Business"** type → **"Next"**
+   - **App name**: MyKliq Social
+   - **Contact email**: Your email
+   - Click **"Create app"**
+
+3. **Configure Basic Settings**
+   - Go to **Settings** → **Basic**
+   - **App Domains**: `your-replit-url.replit.dev`
+   - **Privacy Policy URL**: `https://your-replit-url.replit.dev/privacy-policy`
+   - Click **"+ Add Platform"** → **"Website"**
+   - **Site URL**: `https://your-replit-url.replit.dev`
+
+4. **Set Up Facebook Login**
+   - Go to **Products** → **Add Product** → Find **"Facebook Login"**
+   - Click **"Set Up"**
+   - Under **Settings**, add:
+     - **Valid OAuth Redirect URIs**: `https://your-replit-url.replit.dev/api/oauth/callback/facebook`
+   - Save changes
+
+5. **Get Your Credentials**
+   - Go to **Settings** → **Basic**
+   - **App ID**: Copy this (your Client ID)
+   - **App Secret**: Click "Show", complete security check, copy
+
+6. **Add to Replit Secrets**
+   - `FACEBOOK_CLIENT_ID` = your App ID
+   - `FACEBOOK_CLIENT_SECRET` = your App Secret
+
+7. **Test Your Connection**
+   - Go to Settings in MyKliq
+   - Click "Connect Facebook"
+   - Authorize the app
+   - Your Facebook posts will appear in your feed!
+
+---
+
+### 7. ESPN Fantasy
+
+**Requirements**: ESPN account with fantasy leagues
+
+**Step-by-Step Setup**:
+
+1. **Register for ESPN API Access**
+   - Go to [espn.com/apis/devcenter](https://espn.com/apis/devcenter)
+   - Click **"Register"** or **"Get API Key"**
+   - Log in with your ESPN account
+
+2. **Create a New Application**
+   - Click **"Create New Application"**
+   - Fill in:
+     - **Application Name**: MyKliq Fantasy Integration
+     - **Description**: Social media integration for fantasy sports
+     - **Redirect URL**: `https://your-replit-url.replit.dev/api/oauth/callback/espn`
+
+3. **Request Permissions**
+   - Select these API scopes:
+     - `openid`
+     - `profile`
+     - `fantasy` (for fantasy league access)
+
+4. **Get Your Credentials**
+   - After creation, you'll see:
+   - **Client ID**: Copy this
+   - **Client Secret**: Copy this (or generate if needed)
+
+5. **Add to Replit Secrets**
+   - `ESPN_CLIENT_ID` = your Client ID
+   - `ESPN_CLIENT_SECRET` = your Client Secret
+
+6. **Test Your Connection**
+   - Go to Settings in MyKliq
+   - Click "Connect ESPN Fantasy"
+   - Authorize the app
+   - Your fantasy leagues will appear in your feed!
+
+**Note**: ESPN's API access may require approval for production use. Your app will work immediately with your own account.
+
+---
+
 ## 📝 Important Notes
 
 ### Redirect URLs
@@ -199,6 +334,9 @@ Make sure to use your actual Replit URL in all redirect URIs. Replace `your-repl
 - **TikTok**: Requires open_id scope for video access
 - **Reddit**: Rate limited to 60 requests per minute
 - **Twitch**: Clips and stream data only (no chat history)
+- **Pinterest**: Requires approved Pinterest Developer account for production
+- **Facebook**: Posts and photos only (no private messages)
+- **ESPN Fantasy**: Requires active fantasy league participation
 
 ### Security
 - Never share your Client IDs or Client Secrets publicly
@@ -252,5 +390,20 @@ Once you complete these steps for each platform, you'll have:
 - ✅ TikTok (via Manual OAuth)
 - ✅ Reddit (via Manual OAuth)
 - ✅ Twitch (via Manual OAuth)
+- ✅ Pinterest (via Manual OAuth)
+- ✅ Facebook (via Manual OAuth)
+- ✅ ESPN Fantasy (via Manual OAuth)
 
-All your social media content will flow into one unified feed in MyKliq! 🎉
+**Total: 9 platforms** integrated into one unified social feed in MyKliq! 🎉
+
+### Required Secrets (18 total)
+Make sure you add all of these to your Replit Secrets:
+- `YOUTUBE_CLIENT_ID` & `YOUTUBE_CLIENT_SECRET`
+- `DISCORD_CLIENT_ID` & `DISCORD_CLIENT_SECRET`
+- `INSTAGRAM_CLIENT_ID` & `INSTAGRAM_CLIENT_SECRET`
+- `TIKTOK_CLIENT_ID` & `TIKTOK_CLIENT_SECRET`
+- `REDDIT_CLIENT_ID` & `REDDIT_CLIENT_SECRET`
+- `TWITCH_CLIENT_ID` & `TWITCH_CLIENT_SECRET`
+- `PINTEREST_CLIENT_ID` & `PINTEREST_CLIENT_SECRET`
+- `FACEBOOK_CLIENT_ID` & `FACEBOOK_CLIENT_SECRET`
+- `ESPN_CLIENT_ID` & `ESPN_CLIENT_SECRET`

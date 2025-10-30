@@ -6,6 +6,9 @@ import { InstagramOAuth } from './platforms/instagram';
 import { TikTokOAuth } from './platforms/tiktok';
 import { YouTubeOAuth } from './platforms/youtube';
 import { RedditOAuth } from './platforms/reddit';
+import { PinterestOAuth } from './platforms/pinterest';
+import { FacebookOAuth } from './platforms/facebook';
+import { ESPNOAuth } from './platforms/espn';
 import type { SocialCredential } from '@shared/schema';
 
 export interface OAuthTokens {
@@ -45,6 +48,9 @@ export class OAuthService {
     this.platforms.set('tiktok', new TikTokOAuth());
     this.platforms.set('youtube', new YouTubeOAuth());
     this.platforms.set('reddit', new RedditOAuth());
+    this.platforms.set('pinterest', new PinterestOAuth());
+    this.platforms.set('facebook', new FacebookOAuth());
+    this.platforms.set('espn', new ESPNOAuth());
   }
 
   getSupportedPlatforms(): string[] {
