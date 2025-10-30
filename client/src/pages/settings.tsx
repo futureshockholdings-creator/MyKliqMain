@@ -25,8 +25,9 @@ import {
   User,
   AlertTriangle,
   Facebook as FacebookIcon,
+  Trophy,
 } from "lucide-react";
-import { SiPinterest, SiEspn } from "react-icons/si";
+import { SiPinterest } from "react-icons/si";
 import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
 
@@ -98,7 +99,7 @@ const platformInfo = {
   },
   espn: {
     name: "ESPN Fantasy",
-    icon: SiEspn,
+    icon: Trophy,
     color: "bg-red-700",
     description: "Fantasy sports leagues and stats",
     requiresBusiness: false
