@@ -5063,12 +5063,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get aggregated external posts
+  // Get aggregated external posts (includes both OAuth and Replit Connector sources)
   app.get('/api/social/posts', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const posts = await storage.getExternalPosts(userId);
-      res.json(posts);
+      
+      // Also fetch from Replit connectors if available
+      const connectorPosts = [];
+      
+      try {
+        const { fetchYouTubeVideos } = await import('./connectors/youtube');
+        const youtubeVideos = await fetchYouTubeVideos();
+        connectorPosts.push(...youtubeVideos);
+      } catch (error) {
+        // YouTube connector not connected, skip
+      }
+      
+      try {
+        const { fetchDiscordData } = await import('./connectors/discord');
+        const discordData = await fetchDiscordData();
+        connectorPosts.push(...discordData);
+      } catch (error) {
+        // Discord connector not connected, skip
+      }
+      
+      // Merge and sort by date
+      const allPosts = [...posts, ...connectorPosts].sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      
+      res.json(allPosts);
     } catch (error) {
       console.error("Error fetching external posts:", error);
       res.status(500).json({ message: "Failed to fetch external posts" });
