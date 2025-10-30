@@ -52,4 +52,4 @@ localPort = 44529
 externalPort = 3001
 
 [agent]
-integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.0"]
+integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.0", "youtube:1.0.0"]
