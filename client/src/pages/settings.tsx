@@ -387,12 +387,12 @@ export default function Settings() {
                             </div>
                             <Button
                               onClick={() => connectAccount.mutate(platformKey)}
-                              disabled={connectAccount.isPending}
-                              className="w-full bg-white/10 hover:bg-white/20 text-white border-white/20"
+                              disabled={true}
+                              className="w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed"
                               data-testid={`button-connect-${platformKey}`}
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
-                              Connect Account
+                              Coming Soon
                             </Button>
                           </div>
                         );
