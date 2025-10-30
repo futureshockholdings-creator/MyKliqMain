@@ -2,6 +2,10 @@ import { encryptForStorage, decryptFromStorage } from './cryptoService';
 import { storage } from './storage';
 import { TwitchOAuth } from './platforms/twitch';
 import { DiscordOAuth } from './platforms/discord';
+import { InstagramOAuth } from './platforms/instagram';
+import { TikTokOAuth } from './platforms/tiktok';
+import { YouTubeOAuth } from './platforms/youtube';
+import { RedditOAuth } from './platforms/reddit';
 import type { SocialCredential } from '@shared/schema';
 
 export interface OAuthTokens {
@@ -37,7 +41,10 @@ export class OAuthService {
   constructor() {
     this.platforms.set('twitch', new TwitchOAuth());
     this.platforms.set('discord', new DiscordOAuth());
-    // Add more platforms as they're implemented
+    this.platforms.set('instagram', new InstagramOAuth());
+    this.platforms.set('tiktok', new TikTokOAuth());
+    this.platforms.set('youtube', new YouTubeOAuth());
+    this.platforms.set('reddit', new RedditOAuth());
   }
 
   getSupportedPlatforms(): string[] {
