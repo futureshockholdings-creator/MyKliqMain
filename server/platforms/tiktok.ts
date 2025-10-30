@@ -95,11 +95,25 @@ export class TikTokOAuth implements OAuthPlatform {
     }
 
     const data = await response.json();
-    return data.data.user;
+    const user = data.data.user;
+    
+    // Add id field for compatibility with oauthService
+    return {
+      ...user,
+      id: user.open_id,
+      username: user.display_name,
+    };
   }
 
   async fetchUserPosts(accessToken: string, userId?: string): Promise<SocialPost[]> {
     try {
+      // Get user info if userId (open_id) not provided
+      let openId = userId;
+      if (!openId) {
+        const userInfo = await this.getUserInfo(accessToken);
+        openId = userInfo.open_id;
+      }
+
       // Fetch recent videos for the user
       const response = await fetch('https://open.tiktokapis.com/v2/video/list/?fields=id,title,cover_image_url,share_url,video_description,duration,create_time', {
         method: 'POST',
@@ -108,6 +122,7 @@ export class TikTokOAuth implements OAuthPlatform {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          open_id: openId,
           max_count: 10,
         }),
       });
