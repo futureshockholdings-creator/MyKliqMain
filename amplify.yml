@@ -1,16 +1,10 @@
 
 version: 1
-backend:
-  phases:
-    build:
-      commands:
-        - cd client
-        - npm install --force
-        - npm run build
 frontend:
   phases:
     preBuild:
       commands:
+        - cd client
         - npm install --force
     build:
       commands:
@@ -22,5 +16,14 @@ frontend:
   customHeaders:
     - pattern: '**/*'
       headers:
-        - key: "Cache-Control"
-          value: "max-age=0,no-cache,no-store,must-revalidate"
+        - key: 'Cache-Control'
+          value: 'max-age=0,no-cache,no-store,must-revalidate'
+  cache:
+    paths:
+      - client/node_modules/**/*
+backend:
+  phases:
+    build:
+      commands:
+      - npm install express --force
+      - node server.js
