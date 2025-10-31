@@ -2219,6 +2219,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const { deleteMoodBoostPostsForUser } = await import('./services/moodBoostService');
         await deleteMoodBoostPostsForUser(userId, true); // true = delete ALL mood boost posts
         
+        // Invalidate mood boost cache immediately so frontend sees the change
+        invalidateCache('mood-boost');
+        await cacheService.invalidatePattern('mood-boost');
+        
         // Then trigger new mood boost generation asynchronously (don't wait for it)
         const { triggerMoodBoostForUser } = await import('./services/moodBoostScheduler');
         triggerMoodBoostForUser(userId, post.mood).catch(err => {

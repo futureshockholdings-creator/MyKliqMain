@@ -88,6 +88,13 @@ export async function triggerMoodBoostForUser(userId: string, mood: string): Pro
   try {
     console.log(`✨ Generating mood boost posts for user ${userId} with mood: ${mood}`);
     await generateMoodBoostPostsForUser(userId, mood);
+    
+    // Invalidate cache so frontend immediately sees new mood boost posts
+    const { invalidateCache } = await import('../cache');
+    const { cacheService } = await import('../cacheService');
+    invalidateCache('mood-boost');
+    await cacheService.invalidatePattern('mood-boost');
+    console.log(`🔄 Invalidated mood boost cache for user ${userId}`);
   } catch (error) {
     console.error("Error triggering mood boost for user:", error);
   }
