@@ -301,6 +301,7 @@ export const posts = pgTable("posts", {
   gifId: varchar("gif_id").references(() => gifs.id),
   memeId: varchar("meme_id").references(() => memes.id),
   movieconId: varchar("moviecon_id").references(() => moviecons.id),
+  mood: varchar("mood"),
   likes: integer("likes").default(0),
   latitude: numeric("latitude", { precision: 10, scale: 7 }),
   longitude: numeric("longitude", { precision: 10, scale: 7 }),
