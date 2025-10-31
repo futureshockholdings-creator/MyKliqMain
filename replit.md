@@ -25,6 +25,7 @@ The application features a sophisticated content system including:
 - **Hierarchical Feed**: Posts filtered by friend rankings and user-defined content filters.
 - **Kliq-wide Content Aggregation**: Displays all kliq member content (posts, polls, events, actions) in the headlines feed.
 - **Daily Content Features**: Daily horoscopes and Bible verses with timezone-aware generation and one-click posting.
+- **Mood Boost System**: AI-powered uplifting posts generated every 30 minutes using Google Gemini API, appearing in user feeds labeled "✨ Just for you" with colorful gradient styling. Posts are personalized based on user mood, expire after 5 hours, and are interspersed every 5 regular posts in the feed. Includes retry logic with exponential backoff for API rate limits and fallback to curated messages when API is unavailable.
 - **Real-time Polling**: Customizable polls with live results.
 - **Media Support**: Photo, video, and YouTube URL embedding with object storage.
 - **Stories**: 24-hour disappearing content.
