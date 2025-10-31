@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { startBirthdayService } from "./birthdayService";
+import { startMoodBoostScheduler } from "./services/moodBoostScheduler";
 import { setupVite, serveStatic, log } from "./vite";
 import { performanceOptimizer } from "./performanceOptimizer";
 import { rateLimitService } from "./rateLimitService";
@@ -113,6 +114,9 @@ app.use((req, res, next) => {
     
     // Start the birthday service for automatic birthday messages
     startBirthdayService();
+    
+    // Start the mood boost scheduler for AI-powered uplifting posts
+    startMoodBoostScheduler();
     
     // Setup graceful shutdown for production
     const gracefulShutdown = (signal: string) => {

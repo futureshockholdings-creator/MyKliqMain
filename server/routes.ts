@@ -1124,16 +1124,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'GET /api/mobile/friends - Friends list',
         'GET /api/mobile/stories - Stories grouped by user',
         'POST /api/mobile/notifications/register - Push notification registration',
-        'POST /api/mobile/upload - File upload preparation'
+        'POST /api/mobile/upload - File upload preparation',
+        'GET /api/mood-boost/posts - Get mood boost posts for current user'
       ],
       features: [
         'JWT Authentication',
         'Push Notifications',
         'File Upload Support',
         'Paginated Responses',
-        'Optimized for Mobile'
+        'Optimized for Mobile',
+        'AI-Powered Mood Boosts'
       ]
     });
+  });
+
+  // Mood Boost Posts - Get posts for current user
+  app.get('/api/mood-boost/posts', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+
+      const posts = await storage.getMoodBoostPostsForUser(userId);
+      res.json(posts);
+    } catch (error) {
+      console.error('Error fetching mood boost posts:', error);
+      res.status(500).json({ message: 'Failed to fetch mood boost posts' });
+    }
+  });
+
+  // Cleanup expired mood boost posts (can be called manually or by cron)
+  app.post('/api/mood-boost/cleanup', async (req, res) => {
+    try {
+      const { cleanupExpiredMoodBoostPosts } = await import('./services/moodBoostService');
+      await cleanupExpiredMoodBoostPosts();
+      res.json({ message: 'Cleanup completed successfully' });
+    } catch (error) {
+      console.error('Error during mood boost cleanup:', error);
+      res.status(500).json({ message: 'Cleanup failed' });
+    }
   });
 
 

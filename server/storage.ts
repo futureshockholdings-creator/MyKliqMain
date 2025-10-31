@@ -28,6 +28,7 @@ import {
   passwordResetTokens,
   passwordResetAttempts,
   rulesReports,
+  moodBoostPosts,
   type User,
   type UpsertUser,
   type UserTheme,
@@ -80,6 +81,8 @@ import {
   type InsertVideoCall,
   type CallParticipant,
   type InsertCallParticipant,
+  type MoodBoostPost,
+  type InsertMoodBoostPost,
   gifs,
   type Gif,
   type InsertGif,
@@ -333,6 +336,9 @@ export interface IStorage {
   getReports(filters: { status?: string; page?: number; limit?: number }): Promise<Report[]>;
   updateReport(reportId: string, updates: Partial<Report>): Promise<Report>;
   suspendUser(userId: string, suspensionData: { suspensionType: string; suspendedAt: string; suspensionExpiresAt: string | null }): Promise<void>;
+
+  // Mood Boost Posts operations
+  getMoodBoostPostsForUser(userId: string): Promise<MoodBoostPost[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3413,6 +3419,22 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(users.id, userId));
+  }
+
+  // Mood Boost Posts operations
+  async getMoodBoostPostsForUser(userId: string): Promise<MoodBoostPost[]> {
+    const now = new Date();
+    const posts = await db
+      .select()
+      .from(moodBoostPosts)
+      .where(
+        and(
+          eq(moodBoostPosts.userId, userId),
+          gt(moodBoostPosts.expiresAt, now) // Only get non-expired posts
+        )
+      )
+      .orderBy(desc(moodBoostPosts.createdAt));
+    return posts;
   }
 }
 
