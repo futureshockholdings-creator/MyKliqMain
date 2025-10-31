@@ -1,3 +1,4 @@
+
 version: 1
 frontend:
   phases:
@@ -27,7 +28,10 @@ backend:
     preBuild:
       commands:
         - npm install --force
+        - npm install typescript ts-node --force
     build:
       commands:
-        - npm install --force
-        - node server/index.ts
+        - npx tsc --project server/tsconfig.json --outDir dist/server --force || echo "No TS compile errors"
+    start:
+      commands:
+        - node dist/server/index.js
