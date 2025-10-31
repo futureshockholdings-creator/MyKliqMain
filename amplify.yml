@@ -4,13 +4,12 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd client
         - npm install --force
     build:
       commands:
         - npm run build
   artifacts:
-    baseDirectory: dist
+    baseDirectory: dist/public
     files:
       - '**/*'
   customHeaders:
