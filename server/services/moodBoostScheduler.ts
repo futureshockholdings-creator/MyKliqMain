@@ -49,61 +49,46 @@ async function getUsersNeedingBoost(): Promise<string[]> {
 }
 
 /**
- * Main scheduler function that runs every 30 minutes
+ * Cleanup scheduler function that runs every 30 minutes
+ * Note: Mood boost posts are now generated on-demand when users post with mood
  */
-export async function runMoodBoostScheduler(): Promise<void> {
+export async function runMoodBoostCleanup(): Promise<void> {
   try {
-    console.log("🔄 Starting mood boost scheduler...");
-
-    // Step 1: Cleanup expired posts first
+    console.log("🧹 Running mood boost cleanup...");
     await cleanupExpiredMoodBoostPosts();
-
-    // Step 2: Get active users with mood posts
-    const moodUsers = await getActiveUsersWithMood();
-    
-    console.log(`Found ${moodUsers.length} users with recent mood posts`);
-
-    // Step 3: Generate mood-specific posts for users who posted with mood
-    for (const { userId, mood } of moodUsers) {
-      await generateMoodBoostPostsForUser(userId, mood);
-      // Small delay to avoid hitting API rate limits
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-
-    // Step 4: Get random users for general uplifting content
-    const randomUsers = await getUsersNeedingBoost();
-    const selectedRandomUsers = randomUsers
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 10); // Pick 10 random users for general boosts
-
-    console.log(`Generating general mood boosts for ${selectedRandomUsers.length} random users`);
-
-    // Step 5: Generate general uplifting posts for random users
-    for (const userId of selectedRandomUsers) {
-      await generateMoodBoostPostsForUser(userId);
-      // Small delay to avoid hitting API rate limits
-      await new Promise(resolve => setTimeout(resolve, 200));
-    }
-
-    console.log("✅ Mood boost scheduler completed successfully");
+    console.log("✅ Mood boost cleanup completed");
   } catch (error) {
-    console.error("❌ Error in mood boost scheduler:", error);
+    console.error("❌ Error in mood boost cleanup:", error);
   }
 }
 
 /**
- * Start the mood boost scheduler interval (runs every 30 minutes)
+ * Start the mood boost cleanup scheduler (runs every 30 minutes)
+ * Note: Mood boost generation is now triggered on-demand when users post with mood
  */
 export function startMoodBoostScheduler(): NodeJS.Timeout {
-  console.log("🚀 Starting mood boost scheduler service...");
+  console.log("🚀 Starting mood boost cleanup service...");
   
-  // Run immediately on startup
-  runMoodBoostScheduler();
+  // Run cleanup immediately on startup
+  runMoodBoostCleanup();
   
-  // Then run every 30 minutes
+  // Then run cleanup every 30 minutes
   const interval = setInterval(() => {
-    runMoodBoostScheduler();
+    runMoodBoostCleanup();
   }, 30 * 60 * 1000); // 30 minutes in milliseconds
 
   return interval;
+}
+
+/**
+ * Trigger mood boost generation for a user based on their mood post
+ * This is called when a user posts with a mood
+ */
+export async function triggerMoodBoostForUser(userId: string, mood: string): Promise<void> {
+  try {
+    console.log(`✨ Generating mood boost posts for user ${userId} with mood: ${mood}`);
+    await generateMoodBoostPostsForUser(userId, mood);
+  } catch (error) {
+    console.error("Error triggering mood boost for user:", error);
+  }
 }
