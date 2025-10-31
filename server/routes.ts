@@ -2211,19 +2211,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Also invalidate the new cache system used by performanceOptimizer
       await cacheService.invalidatePattern('kliq-feed');
       
-      // Detect if post contains a mood and trigger mood boost generation
-      if (post.content && post.content.includes('MOOD: Feeling')) {
-        const moodMatch = post.content.match(/MOOD: Feeling ([a-z ]+)/i);
-        if (moodMatch && moodMatch[1]) {
-          const mood = moodMatch[1].trim();
-          console.log(`🎭 Detected mood post from user ${userId}: ${mood}`);
-          
-          // Trigger mood boost generation asynchronously (don't wait for it)
-          const { triggerMoodBoostForUser } = await import('./services/moodBoostScheduler');
-          triggerMoodBoostForUser(userId, mood).catch(err => {
-            console.error('Failed to trigger mood boost:', err);
-          });
-        }
+      // Detect if post has a mood field and trigger mood boost generation
+      if (post.mood) {
+        console.log(`🎭 Detected mood post from user ${userId}: ${post.mood}`);
+        
+        // Trigger mood boost generation asynchronously (don't wait for it)
+        const { triggerMoodBoostForUser } = await import('./services/moodBoostScheduler');
+        triggerMoodBoostForUser(userId, post.mood).catch(err => {
+          console.error('Failed to trigger mood boost:', err);
+        });
       }
       
       // Create notifications for post likes (for future likes)
