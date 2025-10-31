@@ -177,17 +177,17 @@ export async function deleteMoodBoostPostsForUser(userId: string, allPosts: bool
     let result;
     
     if (allPosts) {
-      // Delete ALL mood boost posts for this user (used when posting new mood)
+      // Delete ALL mood boost posts for this user (used when posting new mood or deleting mood post)
       result = await db
         .delete(moodBoostPosts)
         .where(sql`${moodBoostPosts.userId} = ${userId}`)
         .returning({ id: moodBoostPosts.id });
       
       if (result.length > 0) {
-        console.log(`🗑️ Deleted ${result.length} mood boost posts for user ${userId} (new mood posted)`);
+        console.log(`🗑️ Deleted ALL ${result.length} mood boost posts for user ${userId} (includes staggered unreleased posts)`);
       }
     } else {
-      // Delete mood boost posts from last 3 hours (used when deleting mood post)
+      // Delete mood boost posts from last 3 hours (legacy - not recommended)
       const threeHoursAgo = new Date();
       threeHoursAgo.setHours(threeHoursAgo.getHours() - 3);
       
@@ -200,7 +200,7 @@ export async function deleteMoodBoostPostsForUser(userId: string, allPosts: bool
         .returning({ id: moodBoostPosts.id });
       
       if (result.length > 0) {
-        console.log(`🗑️ Deleted ${result.length} mood boost posts for user ${userId} (original mood post deleted)`);
+        console.log(`🗑️ Deleted ${result.length} mood boost posts from last 3 hours for user ${userId}`);
       }
     }
   } catch (error) {

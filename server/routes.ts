@@ -2294,7 +2294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If the post had a mood, delete all associated mood boost posts
       if (existingPost.mood) {
         const { deleteMoodBoostPostsForUser } = await import('./services/moodBoostService');
-        await deleteMoodBoostPostsForUser(userId);
+        await deleteMoodBoostPostsForUser(userId, true); // true = delete ALL mood boost posts (including staggered ones)
       }
       
       // Delete the post
@@ -2304,9 +2304,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { invalidateCache } = await import('./cache');
       invalidateCache('kliq-feed'); // Old cache system
       invalidateCache('posts'); // Old cache system
+      invalidateCache('mood-boost'); // Clear mood boost cache when mood posts are deleted
       
       // Also invalidate the new cache system used by performanceOptimizer
       await cacheService.invalidatePattern('kliq-feed');
+      await cacheService.invalidatePattern('mood-boost'); // Clear mood boost cache
       
       res.json({ success: true, message: "Post deleted successfully" });
     } catch (error) {
