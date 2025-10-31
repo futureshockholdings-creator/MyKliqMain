@@ -10,7 +10,7 @@ frontend:
       commands:
         - npm run build --force
   artifacts:
-    baseDirectory: client/dist
+    baseDirectory: dist
     files:
       - '**/*'
   customHeaders:
