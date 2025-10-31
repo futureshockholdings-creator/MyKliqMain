@@ -11,32 +11,19 @@ async function getActiveUsersWithMood(): Promise<Array<{ userId: string; mood: s
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-    // Find users who posted with a mood in the last 24 hours
-    const activeMoodUsers = await db
-      .select({
-        userId: posts.authorId,
-        mood: sql<string>`
-          CASE 
-            WHEN ${posts.content} LIKE '%MOOD: Feeling%' 
-            THEN REGEXP_REPLACE(${posts.content}, '.*MOOD: Feeling ([a-z ]+).*', '\\1', 'i')
-            ELSE NULL
-          END
-        `.as('mood')
-      })
-      .from(posts)
-      .where(
-        sql`${posts.createdAt} > ${oneDayAgo} AND ${posts.content} LIKE '%MOOD: Feeling%'`
-      )
-      .groupBy(posts.authorId, sql`
-          CASE 
-            WHEN ${posts.content} LIKE '%MOOD: Feeling%' 
-            THEN REGEXP_REPLACE(${posts.content}, '.*MOOD: Feeling ([a-z ]+).*', '\\1', 'i')
-            ELSE NULL
-          END
-        `)
-      .limit(100); // Limit to 100 users per run to avoid overload
+    // Find users who posted with a mood in the last 24 hours using raw SQL
+    const activeMoodUsers = await db.execute<{ userId: string; mood: string | null }>(sql`
+      SELECT DISTINCT
+        user_id as "userId",
+        REGEXP_REPLACE(content, '.*MOOD: Feeling ([a-z ]+).*', '\\1', 'i') as mood
+      FROM ${posts}
+      WHERE 
+        created_at > ${oneDayAgo}
+        AND content LIKE '%MOOD: Feeling%'
+      LIMIT 100
+    `);
 
-    return activeMoodUsers.filter(u => u.mood !== null) as Array<{ userId: string; mood: string }>;
+    return activeMoodUsers.rows.filter(u => u.mood !== null) as Array<{ userId: string; mood: string }>;
   } catch (error) {
     console.error("Error getting active users with mood:", error);
     return [];

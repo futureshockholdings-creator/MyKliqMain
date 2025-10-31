@@ -38,11 +38,10 @@ const MOOD_PROMPTS = {
  * @returns AI-generated uplifting content
  */
 export async function generateUpliftingMessage(mood?: string): Promise<string> {
-  try {
-    const moodKey = mood?.toLowerCase().replace(/\s+/g, '_') || 'default';
-    const basePrompt = MOOD_PROMPTS[moodKey as keyof typeof MOOD_PROMPTS] || MOOD_PROMPTS.default;
-    
-    const fullPrompt = `${basePrompt}
+  const moodKey = mood?.toLowerCase().replace(/\s+/g, '_') || 'default';
+  const basePrompt = MOOD_PROMPTS[moodKey as keyof typeof MOOD_PROMPTS] || MOOD_PROMPTS.default;
+  
+  const fullPrompt = `${basePrompt}
 
 Requirements:
 - 2-3 sentences maximum
@@ -55,27 +54,46 @@ Requirements:
 
 Generate one unique uplifting message now:`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: fullPrompt,
-    });
+  // Retry logic with exponential backoff for API rate limits
+  const maxRetries = 3;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: fullPrompt,
+      });
 
-    const content = response.text?.trim() || "You're doing better than you think. Every moment is a chance to start fresh.";
-    
-    // Remove quotes if Gemini wrapped the response
-    return content.replace(/^["']|["']$/g, '');
-  } catch (error) {
-    console.error("Error generating uplifting message:", error);
-    // Fallback messages if API fails
-    const fallbacks = [
-      "You're stronger than you realize. Take it one moment at a time.",
-      "Your journey is uniquely yours. Trust the process, even when it's hard.",
-      "Small steps forward are still progress. You're doing great.",
-      "Be gentle with yourself today. You deserve kindness, especially from you.",
-      "This moment doesn't define you. Tomorrow brings new possibilities."
-    ];
-    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+      const content = response.text?.trim() || "You're doing better than you think. Every moment is a chance to start fresh.";
+      
+      // Remove quotes if Gemini wrapped the response
+      return content.replace(/^["']|["']$/g, '');
+    } catch (error: any) {
+      // If it's a rate limit error (503) and we have retries left, wait and retry
+      if (error?.status === 503 && attempt < maxRetries - 1) {
+        const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff: 1s, 2s, 4s
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+      
+      // If we've exhausted retries or it's a different error, use fallback
+      if (attempt === 0) {
+        console.error("Error generating uplifting message:", error);
+      }
+      
+      // Fallback messages if API fails
+      const fallbacks = [
+        "You're stronger than you realize. Take it one moment at a time.",
+        "Your journey is uniquely yours. Trust the process, even when it's hard.",
+        "Small steps forward are still progress. You're doing great.",
+        "Be gentle with yourself today. You deserve kindness, especially from you.",
+        "This moment doesn't define you. Tomorrow brings new possibilities."
+      ];
+      return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+    }
   }
+  
+  // Should never reach here, but TypeScript wants a return
+  return "You're doing better than you think. Every moment is a chance to start fresh.";
 }
 
 /**
