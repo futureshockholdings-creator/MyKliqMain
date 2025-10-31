@@ -257,6 +257,19 @@ export const memes = pgTable("memes", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Mood Boost Posts - AI-generated uplifting content personalized for users
+export const moodBoostPosts = pgTable("mood_boost_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  content: text("content").notNull(), // The uplifting message
+  mood: varchar("mood"), // The user's mood that triggered this (optional, can be null for general boosts)
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(), // Auto-delete after 5 hours
+}, (table) => [
+  index("idx_mood_boost_user").on(table.userId),
+  index("idx_mood_boost_expires").on(table.expiresAt), // For cleanup queries
+]);
+
 // Moviecons - short movie clips with sound (3-5 seconds)
 export const moviecons = pgTable("moviecons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1282,3 +1295,11 @@ export const insertReportSchema = createInsertSchema(rulesReports).omit({
 });
 export type InsertReport = z.infer<typeof insertReportSchema>;
 export type Report = typeof rulesReports.$inferSelect;
+
+// Mood Boost Post types
+export const insertMoodBoostPostSchema = createInsertSchema(moodBoostPosts).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type InsertMoodBoostPost = z.infer<typeof insertMoodBoostPostSchema>;
+export type MoodBoostPost = typeof moodBoostPosts.$inferSelect;
