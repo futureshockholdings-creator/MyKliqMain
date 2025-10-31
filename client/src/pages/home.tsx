@@ -296,8 +296,9 @@ export default function Home() {
   // Fetch mood boost posts
   const { data: moodBoostPosts = [] } = useQuery({
     queryKey: ["/api/mood-boost/posts"],
-    staleTime: 60000,
-    refetchInterval: 300000, // Refetch every 5 minutes to catch new posts
+    staleTime: 0, // Always fetch fresh data - mood boosts change frequently
+    refetchInterval: 10000, // Refetch every 10 seconds to catch new mood posts
+    refetchOnWindowFocus: true, // Refetch when user returns to app
   });
 
   // Separate different types of feed items
