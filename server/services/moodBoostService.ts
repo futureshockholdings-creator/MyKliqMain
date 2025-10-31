@@ -97,14 +97,16 @@ Generate one unique uplifting message now:`;
 }
 
 /**
- * Generate 5 mood boost posts for a specific user
+ * Generate 5 mood boost posts for a specific user with staggered release times
+ * First post appears immediately, remaining 4 appear every 30 minutes
  * @param userId - User ID to generate posts for
  * @param mood - Optional mood context
  */
 export async function generateMoodBoostPostsForUser(userId: string, mood?: string): Promise<void> {
   try {
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 5); // Expire in 5 hours
+    const now = new Date();
+    const baseExpiresAt = new Date(now);
+    baseExpiresAt.setHours(baseExpiresAt.getHours() + 5); // Expire 5 hours from now
 
     // Generate 5 unique messages
     const messages = await Promise.all([
@@ -115,17 +117,32 @@ export async function generateMoodBoostPostsForUser(userId: string, mood?: strin
       generateUpliftingMessage(mood),
     ]);
 
-    // Insert all posts
-    const posts = messages.map(content => ({
-      userId,
-      content,
-      mood: mood || null,
-      expiresAt,
-    }));
+    // Create posts with staggered release times
+    // Post 1: shows immediately (createdAt = now)
+    // Posts 2-5: show at 30, 60, 90, 120 minutes from now
+    const posts = messages.map((content, index) => {
+      const createdAt = new Date(now);
+      const expiresAt = new Date(baseExpiresAt);
+      
+      if (index > 0) {
+        // Stagger posts: 30 mins, 60 mins, 90 mins, 120 mins
+        const delayMinutes = index * 30;
+        createdAt.setMinutes(createdAt.getMinutes() + delayMinutes);
+        expiresAt.setMinutes(expiresAt.getMinutes() + delayMinutes);
+      }
+      
+      return {
+        userId,
+        content,
+        mood: mood || null,
+        createdAt,
+        expiresAt,
+      };
+    });
 
     await db.insert(moodBoostPosts).values(posts);
     
-    console.log(`✨ Generated 5 mood boost posts for user ${userId}${mood ? ` (mood: ${mood})` : ''}`);
+    console.log(`✨ Generated 5 mood boost posts for user ${userId}${mood ? ` (mood: ${mood})` : ''} (staggered every 30 mins)`);
   } catch (error) {
     console.error(`Error generating mood boost posts for user ${userId}:`, error);
   }

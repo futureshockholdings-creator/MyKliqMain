@@ -3430,6 +3430,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(moodBoostPosts.userId, userId),
+          sql`${moodBoostPosts.createdAt} <= ${now}`, // Only show posts whose release time has arrived
           gt(moodBoostPosts.expiresAt, now) // Only get non-expired posts
         )
       )
