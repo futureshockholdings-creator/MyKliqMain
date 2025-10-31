@@ -2287,6 +2287,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "You can only delete your own posts" });
       }
       
+      // If the post had a mood, delete all associated mood boost posts
+      if (existingPost.mood) {
+        const { deleteMoodBoostPostsForUser } = await import('./services/moodBoostService');
+        await deleteMoodBoostPostsForUser(userId);
+      }
+      
       // Delete the post
       await storage.deletePost(postId);
       
@@ -2615,6 +2621,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       if (!user?.isAdmin) {
         return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+      
+      // Check if post has a mood before deleting
+      const existingPost = await storage.getPostById(postId);
+      if (existingPost?.mood) {
+        const { deleteMoodBoostPostsForUser } = await import('./services/moodBoostService');
+        await deleteMoodBoostPostsForUser(existingPost.userId);
       }
       
       await storage.deletePost(postId);

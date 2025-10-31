@@ -166,3 +166,29 @@ export async function cleanupExpiredMoodBoostPosts(): Promise<void> {
     console.error("Error cleaning up expired mood boost posts:", error);
   }
 }
+
+/**
+ * Delete all mood boost posts for a specific user from the last 3 hours
+ * This is called when a user deletes their mood post
+ * @param userId - User ID to delete posts for
+ */
+export async function deleteMoodBoostPostsForUser(userId: string): Promise<void> {
+  try {
+    const threeHoursAgo = new Date();
+    threeHoursAgo.setHours(threeHoursAgo.getHours() - 3);
+    
+    const result = await db
+      .delete(moodBoostPosts)
+      .where(
+        sql`${moodBoostPosts.userId} = ${userId} 
+            AND ${moodBoostPosts.createdAt} >= ${threeHoursAgo}`
+      )
+      .returning({ id: moodBoostPosts.id });
+    
+    if (result.length > 0) {
+      console.log(`🗑️ Deleted ${result.length} mood boost posts for user ${userId} (original mood post deleted)`);
+    }
+  } catch (error) {
+    console.error(`Error deleting mood boost posts for user ${userId}:`, error);
+  }
+}
