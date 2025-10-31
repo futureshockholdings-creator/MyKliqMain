@@ -2215,7 +2215,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (post.mood) {
         console.log(`🎭 Detected mood post from user ${userId}: ${post.mood}`);
         
-        // Trigger mood boost generation asynchronously (don't wait for it)
+        // First, delete ALL existing mood boost posts for this user (new mood replaces old mood)
+        const { deleteMoodBoostPostsForUser } = await import('./services/moodBoostService');
+        await deleteMoodBoostPostsForUser(userId, true); // true = delete ALL mood boost posts
+        
+        // Then trigger new mood boost generation asynchronously (don't wait for it)
         const { triggerMoodBoostForUser } = await import('./services/moodBoostScheduler');
         triggerMoodBoostForUser(userId, post.mood).catch(err => {
           console.error('Failed to trigger mood boost:', err);

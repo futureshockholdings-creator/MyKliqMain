@@ -168,25 +168,40 @@ export async function cleanupExpiredMoodBoostPosts(): Promise<void> {
 }
 
 /**
- * Delete all mood boost posts for a specific user from the last 3 hours
- * This is called when a user deletes their mood post
+ * Delete mood boost posts for a specific user
  * @param userId - User ID to delete posts for
+ * @param allPosts - If true, delete ALL mood boost posts; if false, only delete posts from last 3 hours
  */
-export async function deleteMoodBoostPostsForUser(userId: string): Promise<void> {
+export async function deleteMoodBoostPostsForUser(userId: string, allPosts: boolean = false): Promise<void> {
   try {
-    const threeHoursAgo = new Date();
-    threeHoursAgo.setHours(threeHoursAgo.getHours() - 3);
+    let result;
     
-    const result = await db
-      .delete(moodBoostPosts)
-      .where(
-        sql`${moodBoostPosts.userId} = ${userId} 
-            AND ${moodBoostPosts.createdAt} >= ${threeHoursAgo}`
-      )
-      .returning({ id: moodBoostPosts.id });
-    
-    if (result.length > 0) {
-      console.log(`🗑️ Deleted ${result.length} mood boost posts for user ${userId} (original mood post deleted)`);
+    if (allPosts) {
+      // Delete ALL mood boost posts for this user (used when posting new mood)
+      result = await db
+        .delete(moodBoostPosts)
+        .where(sql`${moodBoostPosts.userId} = ${userId}`)
+        .returning({ id: moodBoostPosts.id });
+      
+      if (result.length > 0) {
+        console.log(`🗑️ Deleted ${result.length} mood boost posts for user ${userId} (new mood posted)`);
+      }
+    } else {
+      // Delete mood boost posts from last 3 hours (used when deleting mood post)
+      const threeHoursAgo = new Date();
+      threeHoursAgo.setHours(threeHoursAgo.getHours() - 3);
+      
+      result = await db
+        .delete(moodBoostPosts)
+        .where(
+          sql`${moodBoostPosts.userId} = ${userId} 
+              AND ${moodBoostPosts.createdAt} >= ${threeHoursAgo}`
+        )
+        .returning({ id: moodBoostPosts.id });
+      
+      if (result.length > 0) {
+        console.log(`🗑️ Deleted ${result.length} mood boost posts for user ${userId} (original mood post deleted)`);
+      }
     }
   } catch (error) {
     console.error(`Error deleting mood boost posts for user ${userId}:`, error);
