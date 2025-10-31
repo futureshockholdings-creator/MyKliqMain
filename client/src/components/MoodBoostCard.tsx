@@ -58,8 +58,7 @@ export function MoodBoostCard({ post }: MoodBoostCardProps) {
           </div>
 
           {/* Bottom section with subtle timestamp */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/30">
-            <span className="opacity-70">Uplifting message</span>
+          <div className="flex items-center justify-end text-xs text-muted-foreground pt-2 border-t border-border/30">
             <span className="opacity-70" data-testid="text-expires-at">
               Expires in {getTimeRemaining(post.expiresAt)}
             </span>

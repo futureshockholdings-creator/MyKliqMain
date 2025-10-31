@@ -44,13 +44,14 @@ export async function generateUpliftingMessage(mood?: string): Promise<string> {
   const fullPrompt = `${basePrompt}
 
 Requirements:
-- 2-3 sentences maximum
+- 1-2 SHORT sentences maximum (keep it concise and punchy)
 - Use "you" to make it personal
 - Be genuine and avoid clichés
-- Include specific, actionable encouragement
+- Include specific, actionable encouragement when possible
 - Make each message unique with varied vocabulary
 - NO emojis in the text itself
 - Sound like a caring friend, not a motivational poster
+- IMPORTANT: Keep it brief and impactful
 
 Generate one unique uplifting message now:`;
 
