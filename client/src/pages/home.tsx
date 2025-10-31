@@ -31,6 +31,7 @@ import { PollCard } from "@/components/PollCard";
 import { SponsoredAd } from "@/components/SponsoredAd";
 import { GoogleSearch } from "@/components/GoogleSearch";
 import { EventCard } from "@/components/EventCard";
+import { MoodBoostCard } from "@/components/MoodBoostCard";
 import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import Footer from "@/components/Footer";
 import { usePostTranslation } from "@/lib/translationService";
@@ -290,6 +291,13 @@ export default function Home() {
   // Fetch targeted ads for the user
   const { data: targetedAds = [] } = useQuery({
     queryKey: ["/api/ads/targeted"],
+  });
+
+  // Fetch mood boost posts
+  const { data: moodBoostPosts = [] } = useQuery({
+    queryKey: ["/api/mood-boost/posts"],
+    staleTime: 60000,
+    refetchInterval: 300000, // Refetch every 5 minutes to catch new posts
   });
 
   // Separate different types of feed items
@@ -1916,12 +1924,23 @@ export default function Home() {
           
           {feedItems.filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
           
-          // Inject sponsored ads every 3 feed items
+          // Inject sponsored ads every 4 feed items
           const shouldShowAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0;
           const adIndex = Math.floor((index + 1) / 4 - 1) % (targetedAds as any[]).length;
 
+          // Inject mood boost posts every 5 feed items (offset from ads)
+          const shouldShowMoodBoost = index > 0 && (index + 1) % 5 === 0 && (moodBoostPosts as any[]).length > 0;
+          const moodBoostIndex = Math.floor((index + 1) / 5 - 1) % (moodBoostPosts as any[]).length;
+
           return (
             <div key={`feed-wrapper-${item.id}-${index}`}>
+              {/* Show mood boost post before this item if conditions are met */}
+              {shouldShowMoodBoost && (moodBoostPosts as any[])[moodBoostIndex] && (
+                <div className="mb-6" key={`mood-boost-${moodBoostIndex}-${index}`}>
+                  <MoodBoostCard post={(moodBoostPosts as any[])[moodBoostIndex]} />
+                </div>
+              )}
+              
               {/* Show sponsored ad before this item if conditions are met */}
               {shouldShowAd && (targetedAds as any[])[adIndex] && (
                 <div className="mb-4" key={`ad-${adIndex}-${index}`}>
