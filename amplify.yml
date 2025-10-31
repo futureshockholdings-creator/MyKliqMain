@@ -8,7 +8,7 @@ frontend:
         - npm install --force
     build:
       commands:
-        - npm run build --force
+        - npm run build
   artifacts:
     baseDirectory: dist
     files:
@@ -21,17 +21,3 @@ frontend:
   cache:
     paths:
       - client/node_modules/**/*
-      - node_modules/**/*
-
-backend:
-  phases:
-    preBuild:
-      commands:
-        - npm install --force
-        - npm install typescript ts-node --force
-    build:
-      commands:
-        - npx tsc --project server/tsconfig.json --outDir dist/server --force || echo "No TS compile errors"
-    start:
-      commands:
-        - node dist/server/index.js
