@@ -1,4 +1,3 @@
-
 version: 1
 frontend:
   phases:
@@ -8,9 +7,9 @@ frontend:
         - npm install --force
     build:
       commands:
-        - npm run build
+        - npm run build --force
   artifacts:
-    baseDirectory: dist/public
+    baseDirectory: client/dist
     files:
       - '**/*'
   customHeaders:
@@ -21,9 +20,14 @@ frontend:
   cache:
     paths:
       - client/node_modules/**/*
+      - node_modules/**/*
+
 backend:
   phases:
+    preBuild:
+      commands:
+        - npm install --force
     build:
       commands:
-      - npm install express --force
-      - node server.js
+        - npm install --force
+        - node server/index.ts
