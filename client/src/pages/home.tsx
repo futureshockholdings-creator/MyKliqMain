@@ -1928,9 +1928,9 @@ export default function Home() {
           const shouldShowAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0;
           const adIndex = Math.floor((index + 1) / 4 - 1) % (targetedAds as any[]).length;
 
-          // Inject mood boost posts every 5 feed items (offset from ads)
-          const shouldShowMoodBoost = index > 0 && (index + 1) % 5 === 0 && (moodBoostPosts as any[]).length > 0;
-          const moodBoostIndex = Math.floor((index + 1) / 5 - 1) % (moodBoostPosts as any[]).length;
+          // Inject mood boost posts every 2 feed items for better visibility
+          const shouldShowMoodBoost = index > 0 && (index + 1) % 2 === 0 && (moodBoostPosts as any[]).length > 0;
+          const moodBoostIndex = Math.floor((index + 1) / 2 - 1) % (moodBoostPosts as any[]).length;
 
           return (
             <div key={`feed-wrapper-${item.id}-${index}`}>
