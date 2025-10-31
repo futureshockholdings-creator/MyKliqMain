@@ -894,7 +894,8 @@ export default function Home() {
       createPostMutation.mutate({
         content: postContent,
         memeId: selectedMeme?.id,
-        movieconId: selectedMoviecon?.id
+        movieconId: selectedMoviecon?.id,
+        mood: selectedMood || undefined
       });
     }
   };
