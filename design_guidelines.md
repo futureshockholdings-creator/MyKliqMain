@@ -67,7 +67,7 @@
 
 4. **Action Bar** (p-4, bg with slight opacity):
    - Share button with icon (Heroicons "share" icon)
-   - Save button with icon (Heroicons "bookmark" icon)
+   - Add to scrapbook button with icon (Lucide "plus" icon)
    - Gap between actions: gap-4
 
 ### B. Regular Post Card (For Contrast)

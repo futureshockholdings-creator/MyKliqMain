@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle, Bookmark, BookmarkCheck } from "lucide-react";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle, PlusCircle } from "lucide-react";
 import { SiX, SiFacebook, SiInstagram, SiTiktok, SiYoutube, SiTwitch, SiDiscord, SiReddit } from "react-icons/si";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
@@ -1822,7 +1822,7 @@ export default function Home() {
               {/* Scrapbook Header */}
               <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground" data-testid="text-saves-count">
-                  {(scrapbookSaves as any[]).length}/1000 saves used
+                  {(scrapbookSaves as any[]).length}/1000 posts added
                 </div>
                 <Button
                   onClick={() => setShowCreateAlbumDialog(true)}
@@ -1852,7 +1852,7 @@ export default function Home() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center">
-                            <BookmarkCheck className="h-5 w-5 text-white" />
+                            <PlusCircle className="h-5 w-5 text-white" />
                           </div>
                           <div>
                             <h4 className="font-medium">All Saves</h4>
@@ -1888,7 +1888,7 @@ export default function Home() {
                                 className="w-10 h-10 rounded-lg flex items-center justify-center"
                                 style={{ backgroundColor: album.color }}
                               >
-                                <BookmarkCheck className="h-5 w-5 text-white" />
+                                <PlusCircle className="h-5 w-5 text-white" />
                               </div>
                               <div>
                                 <h4 className="font-medium">{album.name}</h4>
@@ -2016,8 +2016,8 @@ export default function Home() {
                                   }}
                                   data-testid={`button-unsave-${save.id}`}
                                 >
-                                  <BookmarkCheck className="h-4 w-4 mr-1 fill-primary text-primary" />
-                                  Saved
+                                  <PlusCircle className="h-4 w-4 mr-1 fill-primary text-primary" />
+                                  Added
                                 </Button>
                                 {!save.note && (
                                   <Button
@@ -2043,10 +2043,10 @@ export default function Home() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No saved posts in this album</p>
+                    <Plus className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No posts in this album</p>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Start saving posts by clicking the bookmark icon on any post
+                      Add posts by clicking the + icon on any post
                     </p>
                   </div>
                 )}
@@ -2422,7 +2422,7 @@ export default function Home() {
                   </p>
                 </div>
                 
-                {/* Bookmark button */}
+                {/* Add to scrapbook button */}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -2436,12 +2436,12 @@ export default function Home() {
                       setShowSavePostDialog(true);
                     }
                   }}
-                  data-testid={`button-bookmark-${item.id}`}
+                  data-testid={`button-add-scrapbook-${item.id}`}
                 >
                   {savedPostsMap[item.id] ? (
-                    <BookmarkCheck className="h-4 w-4 fill-primary text-primary" />
+                    <PlusCircle className="h-4 w-4 fill-primary text-primary" />
                   ) : (
-                    <Bookmark className="h-4 w-4" />
+                    <Plus className="h-4 w-4" />
                   )}
                 </Button>
 
@@ -3061,22 +3061,22 @@ export default function Home() {
       <Dialog open={showSavePostDialog} onOpenChange={setShowSavePostDialog}>
         <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Save to Scrapbook</DialogTitle>
+            <DialogTitle className="text-foreground">Add to Scrapbook</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Save this post and optionally add it to an album
+              Add this post to your scrapbook and optionally organize it in an album
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              {(scrapbookSaves as any[]).length}/1000 saved
+              {(scrapbookSaves as any[]).length}/1000 added
             </div>
             
             <div>
               <Label htmlFor="album-select">Album (optional)</Label>
               <Select value={saveAlbumId} onValueChange={setSaveAlbumId}>
                 <SelectTrigger data-testid="select-album">
-                  <SelectValue placeholder="No album (save to All)" />
+                  <SelectValue placeholder="No album (add to All)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">No album</SelectItem>
@@ -3133,7 +3133,7 @@ export default function Home() {
                   if ((scrapbookSaves as any[]).length >= 1000) {
                     toast({
                       title: "Limit Reached",
-                      description: "You've reached the maximum of 1000 saved posts.",
+                      description: "You've reached the maximum of 1000 posts in your scrapbook.",
                       variant: "destructive",
                     });
                     return;
@@ -3148,7 +3148,7 @@ export default function Home() {
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 data-testid="button-save-post"
               >
-                {savePostMutation.isPending ? "Saving..." : "Save"}
+                {savePostMutation.isPending ? "Adding..." : "Add"}
               </Button>
             </div>
           </div>
