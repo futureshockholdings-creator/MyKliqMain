@@ -1,51 +1,20 @@
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 
 export default function Footer() {
-  const [textColor, setTextColor] = useState("text-black");
-
-  // Fetch user theme to determine background color with aggressive caching
-  const { data: theme } = useQuery({
-    queryKey: ["/api/user/theme"],
-    enabled: false, // Temporarily disable this query to stop API spam
-    staleTime: Infinity, // Never consider data stale
-    gcTime: Infinity, // Never garbage collect
-    refetchOnWindowFocus: false, // Don't refetch when window gains focus
-    refetchOnMount: false, // Don't refetch on component mount if data exists
-    refetchInterval: false, // Disable automatic refetching
-    refetchOnReconnect: false, // Don't refetch on reconnect
-  });
-
-  useEffect(() => {
-    if (theme && typeof theme === 'object' && 'backgroundColor' in theme && theme.backgroundColor) {
-      // Check if background is black or very dark
-      const backgroundColor = theme.backgroundColor as string;
-      const isBlackBackground = backgroundColor === "#000000" || 
-                               backgroundColor === "black" ||
-                               (backgroundColor.startsWith('#') && 
-                                parseInt(backgroundColor.slice(1), 16) < 0x333333);
-      
-      setTextColor(isBlackBackground ? "text-white" : "text-black");
-    } else {
-      setTextColor("text-black");
-    }
-  }, [theme]);
-
   return (
-    <footer className="mt-12 pt-8 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 py-6">
-        <div className={`flex flex-col md:flex-row justify-between items-center gap-4 text-sm ${textColor}`}>
+    <footer className="mt-12 pt-8 border-t border-border">
+      <div className="container mx-auto px-4 py-6 bg-white/95 dark:bg-gray-900/95 backdrop-blur rounded-lg shadow-sm">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-900 dark:text-gray-100">
           <div className="flex flex-col md:flex-row items-center gap-4">
             <span className="font-medium">© 2025 MyKliq</span>
             <div className="flex items-center gap-4">
-              <Link href="/privacy-policy" className="hover:opacity-75 transition-opacity">
+              <Link href="/privacy-policy" className="font-medium hover:underline transition-all">
                 Privacy Policy
               </Link>
-              <Link href="/disclaimer" className="hover:opacity-75 transition-opacity">
+              <Link href="/disclaimer" className="font-medium hover:underline transition-all">
                 Disclaimer
               </Link>
-              <Link href="/community-guidelines" className="hover:opacity-75 transition-opacity">
+              <Link href="/community-guidelines" className="font-medium hover:underline transition-all">
                 Community Guidelines
               </Link>
             </div>
@@ -59,12 +28,12 @@ export default function Footer() {
         </div>
         
         {/* Futureshock Holdings Link */}
-        <div className={`text-center mt-4 pt-4 border-t border-border ${textColor}`}>
+        <div className="text-center mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100">
           <a 
             href="https://futureshockholdings.com" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-sm hover:opacity-75 transition-opacity"
+            className="text-sm font-medium hover:underline transition-all"
           >
             Owned and Operated by Futureshock Holdings, LLC
           </a>
