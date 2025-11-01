@@ -7,7 +7,6 @@ import { Users, Crown, Palette, Shield, Video, LogIn, Link as LinkIcon } from "l
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import Footer from "@/components/Footer";
 
 export default function Landing() {
   const [inviteCode, setInviteCode] = useState("");
@@ -279,8 +278,6 @@ export default function Landing() {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 }
