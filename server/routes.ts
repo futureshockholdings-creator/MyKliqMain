@@ -4462,6 +4462,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expiresAt,
       });
       
+      await cacheService.invalidatePattern('kliq-feed');
+      
       res.json(highlight);
     } catch (error) {
       console.error("Error highlighting post:", error);
@@ -4484,6 +4486,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.removePostHighlight(postId);
+      
+      await cacheService.invalidatePattern('kliq-feed');
+      
       res.json({ message: "Highlight removed" });
     } catch (error) {
       console.error("Error removing highlight:", error);
