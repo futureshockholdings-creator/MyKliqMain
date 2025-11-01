@@ -1,4 +1,3 @@
-
 version: 1
 frontend:
   phases:
@@ -7,9 +6,9 @@ frontend:
         - npm install --force
     build:
       commands:
-        - npm run build
+        - npm run build --force
   artifacts:
-    baseDirectory: dist/public
+    baseDirectory: dist
     files:
       - '**/*'
   customHeaders:
@@ -19,4 +18,16 @@ frontend:
           value: 'max-age=0,no-cache,no-store,must-revalidate'
   cache:
     paths:
-      - client/node_modules/**/*
+      - node_modules/**/*
+backend:
+  phases:
+    preBuild:
+      commands:
+        - npm install --force
+    build:
+      commands:
+        - npm run build --force
+    start:
+      commands:
+        - node dist/index.js
+
