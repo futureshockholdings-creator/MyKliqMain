@@ -382,6 +382,19 @@ export const scrapbookSaves = pgTable("scrapbook_saves", {
   index("idx_scrapbook_saves_album").on(table.albumId),
 ]);
 
+// Post Highlights - for highlighting posts with 6hr duration
+export const postHighlights = pgTable("post_highlights", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }).notNull().unique(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  highlightedAt: timestamp("highlighted_at").defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+}, (table) => [
+  index("idx_post_highlights_user").on(table.userId),
+  index("idx_post_highlights_post").on(table.postId),
+  index("idx_post_highlights_expires").on(table.expiresAt),
+]);
+
 // Content filters
 export const contentFilters = pgTable("content_filters", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1034,6 +1047,7 @@ export const insertCommentLikeSchema = createInsertSchema(commentLikes).omit({ i
 export const insertContentFilterSchema = createInsertSchema(contentFilters).omit({ id: true, createdAt: true });
 export const insertScrapbookAlbumSchema = createInsertSchema(scrapbookAlbums).omit({ id: true, createdAt: true });
 export const insertScrapbookSaveSchema = createInsertSchema(scrapbookSaves).omit({ id: true, savedAt: true });
+export const insertPostHighlightSchema = createInsertSchema(postHighlights).omit({ id: true, highlightedAt: true });
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, isRead: true, createdAt: true });
 export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true, lastMessageId: true, lastActivity: true, createdAt: true });
 export const insertEventSchema = createInsertSchema(events).omit({ id: true, attendeeCount: true, createdAt: true, updatedAt: true }).extend({
@@ -1165,6 +1179,8 @@ export type ScrapbookAlbum = typeof scrapbookAlbums.$inferSelect;
 export type InsertScrapbookAlbum = z.infer<typeof insertScrapbookAlbumSchema>;
 export type ScrapbookSave = typeof scrapbookSaves.$inferSelect;
 export type InsertScrapbookSave = z.infer<typeof insertScrapbookSaveSchema>;
+export type PostHighlight = typeof postHighlights.$inferSelect;
+export type InsertPostHighlight = z.infer<typeof insertPostHighlightSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Conversation = typeof conversations.$inferSelect;

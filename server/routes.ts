@@ -4424,6 +4424,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Post Highlight routes
+  app.post('/api/posts/:id/highlight', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const postId = req.params.id;
+      
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      if (post.userId !== userId) {
+        return res.status(403).json({ message: "You can only highlight your own posts" });
+      }
+      
+      const lastHighlight = await storage.getUserLastHighlight(userId);
+      if (lastHighlight) {
+        const now = new Date();
+        const lastHighlightTime = new Date(lastHighlight.highlightedAt);
+        const hoursSinceLastHighlight = (now.getTime() - lastHighlightTime.getTime()) / (1000 * 60 * 60);
+        
+        if (hoursSinceLastHighlight < 24) {
+          const hoursRemaining = Math.ceil(24 - hoursSinceLastHighlight);
+          return res.status(400).json({ 
+            message: `You can only highlight one post per day. Try again in ${hoursRemaining} hour${hoursRemaining !== 1 ? 's' : ''}.` 
+          });
+        }
+      }
+      
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 6);
+      
+      const highlight = await storage.addPostHighlight({
+        postId,
+        userId,
+        expiresAt,
+      });
+      
+      res.json(highlight);
+    } catch (error) {
+      console.error("Error highlighting post:", error);
+      res.status(500).json({ message: "Failed to highlight post" });
+    }
+  });
+
+  app.delete('/api/posts/:id/highlight', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const postId = req.params.id;
+      
+      const post = await storage.getPost(postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      if (post.userId !== userId) {
+        return res.status(403).json({ message: "You can only remove highlights from your own posts" });
+      }
+      
+      await storage.removePostHighlight(postId);
+      res.json({ message: "Highlight removed" });
+    } catch (error) {
+      console.error("Error removing highlight:", error);
+      res.status(500).json({ message: "Failed to remove highlight" });
+    }
+  });
+
   // Birthday routes
   app.get("/api/birthdays/today", isAuthenticated, async (req: any, res) => {
     try {

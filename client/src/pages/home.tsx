@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle, PlusCircle, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle, PlusCircle, Trash2, Star } from "lucide-react";
 import { SiX, SiFacebook, SiInstagram, SiTiktok, SiYoutube, SiTwitch, SiDiscord, SiReddit } from "react-icons/si";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
@@ -620,6 +620,51 @@ export default function Home() {
       toast({
         title: "Error",
         description: "Failed to update note. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Highlight post mutation
+  const highlightPostMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      return await apiRequest("POST", `/api/posts/${postId}/highlight`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+      toast({
+        title: "Post Highlighted! ⭐",
+        description: "Your post will stand out for the next 6 hours.",
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: (error: any) => {
+      const message = error.message || "Failed to highlight post. Please try again.";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Unhighlight post mutation
+  const unhighlightPostMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      return await apiRequest("DELETE", `/api/posts/${postId}/highlight`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+      toast({
+        title: "Highlight Removed",
+        description: "Your post is back to normal.",
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove highlight. Please try again.",
         variant: "destructive",
       });
     },
@@ -2403,8 +2448,12 @@ export default function Home() {
           <Card
             key={item.id}
             className={cn(
-              "bg-gradient-to-br from-card to-card/80 border",
-              item.author.id === userData?.id ? "border-primary/50" : "border-border"
+              "bg-gradient-to-br from-card to-card/80 border transition-all duration-500",
+              item.isHighlighted 
+                ? "border-2 border-transparent bg-gradient-to-r from-yellow-400/20 via-amber-300/20 to-yellow-400/20 shadow-lg shadow-yellow-400/30 ring-2 ring-yellow-400/40 ring-offset-2 ring-offset-background" 
+                : item.author.id === userData?.id 
+                  ? "border-primary/50" 
+                  : "border-border"
             )}
           >
             <CardContent className="p-4">
@@ -2472,6 +2521,31 @@ export default function Home() {
                       />
                     </DialogContent>
                   </Dialog>
+                )}
+
+                {/* Highlight button - only show for post author */}
+                {item.author.id === userData?.id && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-8 w-8 p-0 transition-colors",
+                      item.isHighlighted 
+                        ? "text-yellow-500 hover:text-yellow-600" 
+                        : "text-muted-foreground hover:text-yellow-500"
+                    )}
+                    onClick={() => {
+                      if (item.isHighlighted) {
+                        unhighlightPostMutation.mutate(item.id);
+                      } else {
+                        highlightPostMutation.mutate(item.id);
+                      }
+                    }}
+                    disabled={highlightPostMutation.isPending || unhighlightPostMutation.isPending}
+                    data-testid={`button-highlight-${item.id}`}
+                  >
+                    <Star className={cn("h-4 w-4", item.isHighlighted && "fill-current")} />
+                  </Button>
                 )}
 
               </div>

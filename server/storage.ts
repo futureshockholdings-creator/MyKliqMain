@@ -12,6 +12,7 @@ import {
   contentFilters,
   scrapbookAlbums,
   scrapbookSaves,
+  postHighlights,
   messages,
   conversations,
   events,
@@ -51,6 +52,8 @@ import {
   type InsertScrapbookAlbum,
   type ScrapbookSave,
   type InsertScrapbookSave,
+  type PostHighlight,
+  type InsertPostHighlight,
   type Message,
   type InsertMessage,
   type Conversation,
@@ -781,11 +784,17 @@ export class DatabaseStorage implements IStorage {
 
       console.log(`Feed: Got ${postsData.length} posts, latest:`, postsData[0]?.createdAt);
       
-      // Add posts to feed
+      // Get highlight status for all posts
+      const postIds = postsData.map(p => p.id);
+      const highlights = await this.getActiveHighlights(postIds);
+      const highlightedPostIds = new Set(highlights.map(h => h.postId));
+      
+      // Add posts to feed with highlight status
       feedItems.push(...postsData.map(post => ({
         ...post,
         type: 'post',
         activityDate: post.createdAt,
+        isHighlighted: highlightedPostIds.has(post.id),
       })));
 
       // Add polls to feed
@@ -2446,6 +2455,59 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(scrapbookSaves.userId, userId),
         eq(scrapbookSaves.postId, postId)
+      ))
+      .limit(1);
+    return result.length > 0;
+  }
+
+  // Post Highlight operations
+  async addPostHighlight(highlight: InsertPostHighlight): Promise<PostHighlight> {
+    await db
+      .delete(postHighlights)
+      .where(eq(postHighlights.postId, highlight.postId));
+    
+    const [newHighlight] = await db
+      .insert(postHighlights)
+      .values(highlight)
+      .returning();
+    return newHighlight;
+  }
+
+  async removePostHighlight(postId: string): Promise<void> {
+    await db
+      .delete(postHighlights)
+      .where(eq(postHighlights.postId, postId));
+  }
+
+  async getActiveHighlights(postIds: string[]): Promise<PostHighlight[]> {
+    if (postIds.length === 0) return [];
+    
+    return await db
+      .select()
+      .from(postHighlights)
+      .where(and(
+        inArray(postHighlights.postId, postIds),
+        sql`${postHighlights.expiresAt} > NOW()`
+      ));
+  }
+
+  async getUserLastHighlight(userId: string): Promise<PostHighlight | null> {
+    const result = await db
+      .select()
+      .from(postHighlights)
+      .where(eq(postHighlights.userId, userId))
+      .orderBy(desc(postHighlights.highlightedAt))
+      .limit(1);
+    return result[0] || null;
+  }
+
+  async isPostHighlighted(postId: string): Promise<boolean> {
+    const result = await db
+      .select({ id: postHighlights.id })
+      .from(postHighlights)
+      .where(and(
+        eq(postHighlights.postId, postId),
+        sql`${postHighlights.expiresAt} > NOW()`
       ))
       .limit(1);
     return result.length > 0;
