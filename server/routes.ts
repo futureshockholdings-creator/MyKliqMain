@@ -4440,7 +4440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const lastHighlight = await storage.getUserLastHighlight(userId);
-      if (lastHighlight) {
+      if (lastHighlight && lastHighlight.postId !== postId) {
         const now = new Date();
         const lastHighlightTime = new Date(lastHighlight.highlightedAt);
         const hoursSinceLastHighlight = (now.getTime() - lastHighlightTime.getTime()) / (1000 * 60 * 60);
