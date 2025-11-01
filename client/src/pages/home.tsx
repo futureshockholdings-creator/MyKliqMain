@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle, PlusCircle } from "lucide-react";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle, PlusCircle, Trash2 } from "lucide-react";
 import { SiX, SiFacebook, SiInstagram, SiTiktok, SiYoutube, SiTwitch, SiDiscord, SiReddit } from "react-icons/si";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
@@ -2422,28 +2422,48 @@ export default function Home() {
                   </p>
                 </div>
                 
-                {/* Add to scrapbook button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                  onClick={() => {
-                    if (savedPostsMap[item.id]) {
-                      setPostToUnsave(item);
-                      setShowUnsaveDialog(true);
-                    } else {
+                {/* Scrapbook actions */}
+                {savedPostsMap[item.id] ? (
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-primary hover:text-primary/80"
+                      onClick={() => {
+                        setSelectedPostToSave(item);
+                        setShowSavePostDialog(true);
+                      }}
+                      data-testid={`button-view-saved-${item.id}`}
+                    >
+                      <PlusCircle className="h-4 w-4 fill-primary" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
+                      onClick={() => {
+                        setPostToUnsave(item);
+                        setShowUnsaveDialog(true);
+                      }}
+                      data-testid={`button-remove-scrapbook-${item.id}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
                       setSelectedPostToSave(item);
                       setShowSavePostDialog(true);
-                    }
-                  }}
-                  data-testid={`button-add-scrapbook-${item.id}`}
-                >
-                  {savedPostsMap[item.id] ? (
-                    <PlusCircle className="h-4 w-4 fill-primary text-primary" />
-                  ) : (
+                    }}
+                    data-testid={`button-add-scrapbook-${item.id}`}
+                  >
                     <Plus className="h-4 w-4" />
-                  )}
-                </Button>
+                  </Button>
+                )}
 
                 {/* Edit button - only show for post author */}
                 {item.author.id === userData?.id && (
