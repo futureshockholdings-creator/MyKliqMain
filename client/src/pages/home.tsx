@@ -2006,35 +2006,37 @@ export default function Home() {
 
                               {/* Actions */}
                               <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  {!save.note && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 text-xs"
+                                      onClick={() => {
+                                        setEditingSaveNote(save);
+                                        setEditNoteText("");
+                                        setShowEditNoteDialog(true);
+                                      }}
+                                      data-testid={`button-add-note-${save.id}`}
+                                    >
+                                      <Plus className="h-4 w-4 mr-1" />
+                                      Add Note
+                                    </Button>
+                                  )}
+                                </div>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 text-xs"
+                                  className="h-8 text-xs text-destructive hover:text-destructive/80"
                                   onClick={() => {
                                     setPostToUnsave(save.post);
                                     setShowUnsaveDialog(true);
                                   }}
-                                  data-testid={`button-unsave-${save.id}`}
+                                  data-testid={`button-remove-${save.id}`}
                                 >
-                                  <PlusCircle className="h-4 w-4 mr-1 fill-primary text-primary" />
-                                  Added
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Remove
                                 </Button>
-                                {!save.note && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 text-xs"
-                                    onClick={() => {
-                                      setEditingSaveNote(save);
-                                      setEditNoteText("");
-                                      setShowEditNoteDialog(true);
-                                    }}
-                                    data-testid={`button-add-note-${save.id}`}
-                                  >
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    Add Note
-                                  </Button>
-                                )}
                               </div>
                             </div>
                           </CardContent>
@@ -2422,48 +2424,28 @@ export default function Home() {
                   </p>
                 </div>
                 
-                {/* Scrapbook actions */}
-                {savedPostsMap[item.id] ? (
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-primary hover:text-primary/80"
-                      onClick={() => {
-                        setSelectedPostToSave(item);
-                        setShowSavePostDialog(true);
-                      }}
-                      data-testid={`button-view-saved-${item.id}`}
-                    >
-                      <PlusCircle className="h-4 w-4 fill-primary" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
-                      onClick={() => {
-                        setPostToUnsave(item);
-                        setShowUnsaveDialog(true);
-                      }}
-                      data-testid={`button-remove-scrapbook-${item.id}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                    onClick={() => {
+                {/* Add to scrapbook button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    if (savedPostsMap[item.id]) {
+                      setPostToUnsave(item);
+                      setShowUnsaveDialog(true);
+                    } else {
                       setSelectedPostToSave(item);
                       setShowSavePostDialog(true);
-                    }}
-                    data-testid={`button-add-scrapbook-${item.id}`}
-                  >
+                    }
+                  }}
+                  data-testid={`button-add-scrapbook-${item.id}`}
+                >
+                  {savedPostsMap[item.id] ? (
+                    <PlusCircle className="h-4 w-4 fill-primary text-primary" />
+                  ) : (
                     <Plus className="h-4 w-4" />
-                  </Button>
-                )}
+                  )}
+                </Button>
 
                 {/* Edit button - only show for post author */}
                 {item.author.id === userData?.id && (
