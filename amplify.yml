@@ -4,6 +4,9 @@ frontend:
     preBuild:
       commands:
         - npm install --force
+        # Rebuild esbuild safely to prevent ETXTBSY errors
+        - npm rebuild esbuild --force || echo "esbuild rebuild skipped"
+        - chmod +x ./node_modules/.bin/esbuild || true
     build:
       commands:
         - npm run build --force
@@ -19,15 +22,19 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
+
 backend:
   phases:
     preBuild:
       commands:
         - npm install --force
+        - npm rebuild esbuild --force || echo "esbuild rebuild skipped"
+        - chmod +x ./node_modules/.bin/esbuild || true
     build:
       commands:
         - npm run build --force
     start:
       commands:
         - node dist/index.js
+
 
