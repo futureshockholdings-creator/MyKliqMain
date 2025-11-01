@@ -4430,7 +4430,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const postId = req.params.id;
       
-      const post = await storage.getPost(postId);
+      const post = await storage.getPostById(postId);
       if (!post) {
         return res.status(404).json({ message: "Post not found" });
       }
@@ -4474,7 +4474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const postId = req.params.id;
       
-      const post = await storage.getPost(postId);
+      const post = await storage.getPostById(postId);
       if (!post) {
         return res.status(404).json({ message: "Post not found" });
       }
