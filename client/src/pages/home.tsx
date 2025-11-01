@@ -228,7 +228,7 @@ export default function Home() {
   // Scrapbook state
   const [showSavePostDialog, setShowSavePostDialog] = useState(false);
   const [selectedPostToSave, setSelectedPostToSave] = useState<any>(null);
-  const [saveAlbumId, setSaveAlbumId] = useState<string>("");
+  const [saveAlbumId, setSaveAlbumId] = useState<string>("none");
   const [saveNote, setSaveNote] = useState("");
   const [showCreateAlbumDialog, setShowCreateAlbumDialog] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState("");
@@ -492,10 +492,10 @@ export default function Home() {
       queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
       queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saved-map'] });
       setShowSavePostDialog(false);
-      setSaveAlbumId("");
+      setSaveAlbumId("none");
       setSaveNote("");
       toast({
-        title: "Post Saved!",
+        title: "Post Added!",
         description: "The post has been added to your scrapbook.",
         className: "bg-white text-black border-gray-300",
       });
@@ -3079,7 +3079,7 @@ export default function Home() {
                   <SelectValue placeholder="No album (add to All)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No album</SelectItem>
+                  <SelectItem value="none">No album</SelectItem>
                   {(scrapbookAlbums as any[]).map((album: any) => (
                     <SelectItem key={album.id} value={album.id}>
                       <div className="flex items-center gap-2">
@@ -3121,7 +3121,7 @@ export default function Home() {
                 variant="outline"
                 onClick={() => {
                   setShowSavePostDialog(false);
-                  setSaveAlbumId("");
+                  setSaveAlbumId("none");
                   setSaveNote("");
                 }}
                 className="border-border text-foreground"
@@ -3140,7 +3140,7 @@ export default function Home() {
                   }
                   savePostMutation.mutate({
                     postId: selectedPostToSave?.id,
-                    albumId: saveAlbumId || undefined,
+                    albumId: saveAlbumId === "none" ? undefined : saveAlbumId,
                     note: saveNote || undefined,
                   });
                 }}
