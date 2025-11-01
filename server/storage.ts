@@ -10,6 +10,8 @@ import {
   postLikes,
   commentLikes,
   contentFilters,
+  scrapbookAlbums,
+  scrapbookSaves,
   messages,
   conversations,
   events,
@@ -45,6 +47,10 @@ import {
   type PostLike,
   type ContentFilter,
   type InsertContentFilter,
+  type ScrapbookAlbum,
+  type InsertScrapbookAlbum,
+  type ScrapbookSave,
+  type InsertScrapbookSave,
   type Message,
   type InsertMessage,
   type Conversation,
@@ -285,6 +291,18 @@ export interface IStorage {
   updateParticipantStatus(callId: string, userId: string, status: string, joinedAt?: Date, leftAt?: Date): Promise<void>;
   getCallParticipants(callId: string): Promise<(CallParticipant & { user: User })[]>;
   getUserActiveCalls(userId: string): Promise<(VideoCall & { participants: (CallParticipant & { user: User })[] })[]>;
+
+  // Scrapbook operations
+  createScrapbookAlbum(album: InsertScrapbookAlbum): Promise<ScrapbookAlbum>;
+  getUserScrapbookAlbums(userId: string): Promise<(ScrapbookAlbum & { saveCount: number })[]>;
+  updateScrapbookAlbum(albumId: string, updates: Partial<InsertScrapbookAlbum>): Promise<ScrapbookAlbum>;
+  deleteScrapbookAlbum(albumId: string): Promise<void>;
+  savePostToScrapbook(save: InsertScrapbookSave): Promise<ScrapbookSave>;
+  unsavePostFromScrapbook(userId: string, postId: string): Promise<void>;
+  getUserScrapbookSaves(userId: string, albumId?: string): Promise<(ScrapbookSave & { post: Post & { author: User } })[]>;
+  updateScrapbookSaveNote(saveId: string, note: string): Promise<ScrapbookSave>;
+  getScrapbookSaveCount(userId: string): Promise<number>;
+  isPostSavedByUser(userId: string, postId: string): Promise<boolean>;
 
   // GIF operations
   getAllGifs(): Promise<Gif[]>;
@@ -2318,6 +2336,119 @@ export class DatabaseStorage implements IStorage {
     }));
 
     return callsWithParticipants;
+  }
+
+  // Scrapbook operations
+  async createScrapbookAlbum(album: InsertScrapbookAlbum): Promise<ScrapbookAlbum> {
+    const [newAlbum] = await db
+      .insert(scrapbookAlbums)
+      .values(album)
+      .returning();
+    return newAlbum;
+  }
+
+  async getUserScrapbookAlbums(userId: string): Promise<(ScrapbookAlbum & { saveCount: number })[]> {
+    const albums = await db
+      .select({
+        album: scrapbookAlbums,
+        saveCount: sql<number>`count(${scrapbookSaves.id})::int`.as('saveCount'),
+      })
+      .from(scrapbookAlbums)
+      .leftJoin(scrapbookSaves, eq(scrapbookAlbums.id, scrapbookSaves.albumId))
+      .where(eq(scrapbookAlbums.userId, userId))
+      .groupBy(scrapbookAlbums.id)
+      .orderBy(desc(scrapbookAlbums.createdAt));
+
+    return albums.map(({ album, saveCount }) => ({
+      ...album,
+      saveCount: saveCount || 0,
+    }));
+  }
+
+  async updateScrapbookAlbum(albumId: string, updates: Partial<InsertScrapbookAlbum>): Promise<ScrapbookAlbum> {
+    const [updatedAlbum] = await db
+      .update(scrapbookAlbums)
+      .set(updates)
+      .where(eq(scrapbookAlbums.id, albumId))
+      .returning();
+    return updatedAlbum;
+  }
+
+  async deleteScrapbookAlbum(albumId: string): Promise<void> {
+    await db.delete(scrapbookAlbums).where(eq(scrapbookAlbums.id, albumId));
+  }
+
+  async savePostToScrapbook(save: InsertScrapbookSave): Promise<ScrapbookSave> {
+    const [newSave] = await db
+      .insert(scrapbookSaves)
+      .values(save)
+      .returning();
+    return newSave;
+  }
+
+  async unsavePostFromScrapbook(userId: string, postId: string): Promise<void> {
+    await db
+      .delete(scrapbookSaves)
+      .where(and(
+        eq(scrapbookSaves.userId, userId),
+        eq(scrapbookSaves.postId, postId)
+      ));
+  }
+
+  async getUserScrapbookSaves(userId: string, albumId?: string): Promise<(ScrapbookSave & { post: Post & { author: User } })[]> {
+    const conditions = [eq(scrapbookSaves.userId, userId)];
+    if (albumId) {
+      conditions.push(eq(scrapbookSaves.albumId, albumId));
+    }
+
+    const saves = await db
+      .select({
+        save: scrapbookSaves,
+        post: posts,
+        author: users,
+      })
+      .from(scrapbookSaves)
+      .innerJoin(posts, eq(scrapbookSaves.postId, posts.id))
+      .innerJoin(users, eq(posts.userId, users.id))
+      .where(and(...conditions))
+      .orderBy(desc(scrapbookSaves.savedAt));
+
+    return saves.map(({ save, post, author }) => ({
+      ...save,
+      post: {
+        ...post,
+        author,
+      },
+    }));
+  }
+
+  async updateScrapbookSaveNote(saveId: string, note: string): Promise<ScrapbookSave> {
+    const [updatedSave] = await db
+      .update(scrapbookSaves)
+      .set({ note })
+      .where(eq(scrapbookSaves.id, saveId))
+      .returning();
+    return updatedSave;
+  }
+
+  async getScrapbookSaveCount(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(scrapbookSaves)
+      .where(eq(scrapbookSaves.userId, userId));
+    return result[0]?.count || 0;
+  }
+
+  async isPostSavedByUser(userId: string, postId: string): Promise<boolean> {
+    const result = await db
+      .select({ id: scrapbookSaves.id })
+      .from(scrapbookSaves)
+      .where(and(
+        eq(scrapbookSaves.userId, userId),
+        eq(scrapbookSaves.postId, postId)
+      ))
+      .limit(1);
+    return result.length > 0;
   }
 
   // GIF operations

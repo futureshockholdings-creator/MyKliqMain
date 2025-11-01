@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle } from "lucide-react";
+import { Heart, MessageCircle, Share, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle, Bookmark, BookmarkCheck } from "lucide-react";
 import { SiX, SiFacebook, SiInstagram, SiTiktok, SiYoutube, SiTwitch, SiDiscord, SiReddit } from "react-icons/si";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -223,6 +224,26 @@ export default function Home() {
   const [selectedPostToReport, setSelectedPostToReport] = useState<any>(null);
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
+  
+  // Scrapbook state
+  const [showSavePostDialog, setShowSavePostDialog] = useState(false);
+  const [selectedPostToSave, setSelectedPostToSave] = useState<any>(null);
+  const [saveAlbumId, setSaveAlbumId] = useState<string>("");
+  const [saveNote, setSaveNote] = useState("");
+  const [showCreateAlbumDialog, setShowCreateAlbumDialog] = useState(false);
+  const [newAlbumName, setNewAlbumName] = useState("");
+  const [newAlbumColor, setNewAlbumColor] = useState("#FF1493");
+  const [editingAlbum, setEditingAlbum] = useState<any>(null);
+  const [showEditAlbumDialog, setShowEditAlbumDialog] = useState(false);
+  const [editAlbumName, setEditAlbumName] = useState("");
+  const [editAlbumColor, setEditAlbumColor] = useState("#FF1493");
+  const [selectedAlbumFilter, setSelectedAlbumFilter] = useState<string | null>(null);
+  const [editingSaveNote, setEditingSaveNote] = useState<any>(null);
+  const [showEditNoteDialog, setShowEditNoteDialog] = useState(false);
+  const [editNoteText, setEditNoteText] = useState("");
+  const [showUnsaveDialog, setShowUnsaveDialog] = useState(false);
+  const [postToUnsave, setPostToUnsave] = useState<any>(null);
+  const [reflectTab, setReflectTab] = useState("reflection");
 
   const { user } = useAuth();
   const userData = user as any;
@@ -432,6 +453,173 @@ export default function Home() {
       toast({
         title: "Error",
         description: "Failed to get your daily bible verse",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Scrapbook queries
+  const { data: scrapbookAlbums = [] } = useQuery({
+    queryKey: ['/api/scrapbook/albums'],
+    enabled: showReflectDialog && reflectTab === 'scrapbook',
+  });
+
+  const scrapbookSavesUrl = selectedAlbumFilter 
+    ? `/api/scrapbook/saves?albumId=${selectedAlbumFilter}` 
+    : '/api/scrapbook/saves';
+  
+  const { data: scrapbookSaves = [] } = useQuery({
+    queryKey: [scrapbookSavesUrl],
+    enabled: showReflectDialog && reflectTab === 'scrapbook',
+  });
+
+  const postIds = feedItems.filter((item: any) => item.type === 'post').map((item: any) => item.id);
+  const { data: savedPostsMap = {} } = useQuery({
+    queryKey: ['/api/scrapbook/saved-map', postIds],
+    queryFn: async () => {
+      if (postIds.length === 0) return {};
+      return await apiRequest("POST", "/api/scrapbook/check-saved", { postIds });
+    },
+    enabled: postIds.length > 0,
+  });
+
+  // Scrapbook mutations
+  const savePostMutation = useMutation({
+    mutationFn: async (data: { postId: string; albumId?: string; note?: string }) => {
+      return await apiRequest("POST", "/api/scrapbook/save", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saved-map'] });
+      setShowSavePostDialog(false);
+      setSaveAlbumId("");
+      setSaveNote("");
+      toast({
+        title: "Post Saved!",
+        description: "The post has been added to your scrapbook.",
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save post. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const unsavePostMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      return await apiRequest("DELETE", `/api/scrapbook/save/${postId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saved-map'] });
+      setShowUnsaveDialog(false);
+      setPostToUnsave(null);
+      toast({
+        title: "Post Removed",
+        description: "The post has been removed from your scrapbook.",
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove post. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createAlbumMutation = useMutation({
+    mutationFn: async (data: { name: string; color: string }) => {
+      return await apiRequest("POST", "/api/scrapbook/albums", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/albums'] });
+      setShowCreateAlbumDialog(false);
+      setNewAlbumName("");
+      setNewAlbumColor("#FF1493");
+      toast({
+        title: "Album Created!",
+        description: "Your new album has been created.",
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create album. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateAlbumMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { name: string; color: string } }) => {
+      return await apiRequest("PATCH", `/api/scrapbook/albums/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/albums'] });
+      setShowEditAlbumDialog(false);
+      setEditingAlbum(null);
+      toast({
+        title: "Album Updated!",
+        description: "Your album has been updated.",
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update album. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteAlbumMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("DELETE", `/api/scrapbook/albums/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/albums'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+      toast({
+        title: "Album Deleted",
+        description: "The album has been deleted.",
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete album. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateNoteMutation = useMutation({
+    mutationFn: async ({ saveId, note }: { saveId: string; note: string }) => {
+      return await apiRequest("PATCH", `/api/scrapbook/save/${saveId}/note`, { note });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+      setShowEditNoteDialog(false);
+      setEditingSaveNote(null);
+      toast({
+        title: "Note Updated!",
+        description: "Your note has been updated.",
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update note. Please try again.",
         variant: "destructive",
       });
     },
@@ -1531,96 +1719,340 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      {/* Reflection Dialog */}
+      {/* Reflection & Scrapbook Dialog */}
       <Dialog open={showReflectDialog} onOpenChange={setShowReflectDialog}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <span className="text-2xl">✨</span>
-              <span>Your Kliq Reflection</span>
+              <span>Your Kliq Dashboard</span>
             </DialogTitle>
             <DialogDescription>
-              Your most popular posts from the last 30 days
+              View your reflection and manage your scrapbook
             </DialogDescription>
           </DialogHeader>
-          
-          {reflectionData && (
-            <div className="space-y-6">
-              {/* Stats Section */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <div className="text-2xl font-bold text-primary">{reflectionData.stats.totalPosts}</div>
-                  <div className="text-xs text-muted-foreground">Posts</div>
-                </div>
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <div className="text-2xl font-bold text-red-500">{reflectionData.stats.totalLikes}</div>
-                  <div className="text-xs text-muted-foreground">Likes</div>
-                </div>
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <div className="text-2xl font-bold text-blue-500">{reflectionData.stats.totalComments}</div>
-                  <div className="text-xs text-muted-foreground">Comments</div>
-                </div>
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <div className="text-2xl font-bold text-green-500">{reflectionData.stats.avgEngagement}</div>
-                  <div className="text-xs text-muted-foreground">Avg Engagement</div>
-                </div>
-              </div>
 
-              {/* Message */}
-              <div className="text-center p-4 bg-accent rounded-lg">
-                <p className="text-sm text-accent-foreground">{reflectionData.message}</p>
-              </div>
+          <Tabs value={reflectTab} onValueChange={setReflectTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="reflection" data-testid="tab-reflection">Reflection</TabsTrigger>
+              <TabsTrigger value="scrapbook" data-testid="tab-scrapbook">Scrapbook</TabsTrigger>
+            </TabsList>
 
-              {/* Posts Collage */}
-              {reflectionData.posts.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Your Top Posts</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
-                    {reflectionData.posts.map((post: any, index: number) => (
-                      <Card key={post.id} className="relative">
-                        <CardContent className="p-4">
-                          <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                            {index + 1}
-                          </div>
-                          <div className="space-y-2">
-                            {post.mediaUrl && (
-                              <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                                {post.mediaType === 'video' ? (
-                                  <video className="w-full h-full object-cover">
-                                    <source src={post.mediaUrl} type="video/mp4" />
-                                  </video>
-                                ) : (
-                                  <img 
-                                    src={post.mediaUrl} 
-                                    alt="Post media" 
-                                    className="w-full h-full object-cover"
-                                  />
-                                )}
+            <TabsContent value="reflection" className="space-y-6 mt-4">
+              {reflectionData && (
+                <div className="space-y-6">
+                  {/* Stats Section */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-primary">{reflectionData.stats.totalPosts}</div>
+                      <div className="text-xs text-muted-foreground">Posts</div>
+                    </div>
+                    <div className="text-center p-4 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-red-500">{reflectionData.stats.totalLikes}</div>
+                      <div className="text-xs text-muted-foreground">Likes</div>
+                    </div>
+                    <div className="text-center p-4 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-blue-500">{reflectionData.stats.totalComments}</div>
+                      <div className="text-xs text-muted-foreground">Comments</div>
+                    </div>
+                    <div className="text-center p-4 bg-muted rounded-lg">
+                      <div className="text-2xl font-bold text-green-500">{reflectionData.stats.avgEngagement}</div>
+                      <div className="text-xs text-muted-foreground">Avg Engagement</div>
+                    </div>
+                  </div>
+
+                  {/* Message */}
+                  <div className="text-center p-4 bg-accent rounded-lg">
+                    <p className="text-sm text-accent-foreground">{reflectionData.message}</p>
+                  </div>
+
+                  {/* Posts Collage */}
+                  {reflectionData.posts.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Your Top Posts</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                        {reflectionData.posts.map((post: any, index: number) => (
+                          <Card key={post.id} className="relative">
+                            <CardContent className="p-4">
+                              <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                                {index + 1}
                               </div>
-                            )}
-                            <p className="text-sm text-foreground line-clamp-2">{post.content}</p>
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Heart className="w-3 h-3" />
-                                {post.likes}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <MessageCircle className="w-3 h-3" />
-                                {post.commentCount}
-                              </span>
-                              <span className="font-medium">
-                                Score: {post.engagementScore}
-                              </span>
+                              <div className="space-y-2">
+                                {post.mediaUrl && (
+                                  <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                    {post.mediaType === 'video' ? (
+                                      <video className="w-full h-full object-cover">
+                                        <source src={post.mediaUrl} type="video/mp4" />
+                                      </video>
+                                    ) : (
+                                      <img 
+                                        src={post.mediaUrl} 
+                                        alt="Post media" 
+                                        className="w-full h-full object-cover"
+                                      />
+                                    )}
+                                  </div>
+                                )}
+                                <p className="text-sm text-foreground line-clamp-2">{post.content}</p>
+                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <Heart className="w-3 h-3" />
+                                    {post.likes}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <MessageCircle className="w-3 h-3" />
+                                    {post.commentCount}
+                                  </span>
+                                  <span className="font-medium">
+                                    Score: {post.engagementScore}
+                                  </span>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="scrapbook" className="space-y-6 mt-4">
+              {/* Scrapbook Header */}
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground" data-testid="text-saves-count">
+                  {(scrapbookSaves as any[]).length}/1000 saves used
+                </div>
+                <Button
+                  onClick={() => setShowCreateAlbumDialog(true)}
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  data-testid="button-new-album"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Album
+                </Button>
+              </div>
+
+              {/* Album List */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Albums</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* All Saves */}
+                  <Card
+                    className={cn(
+                      "cursor-pointer transition-all hover:shadow-md",
+                      selectedAlbumFilter === null ? "ring-2 ring-primary" : ""
+                    )}
+                    onClick={() => setSelectedAlbumFilter(null)}
+                    data-testid="album-all"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center">
+                            <BookmarkCheck className="h-5 w-5 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">All Saves</h4>
+                            <p className="text-xs text-muted-foreground">
+                              {(scrapbookSaves as any[]).length} posts
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* User Albums */}
+                  {(scrapbookAlbums as any[]).map((album: any) => {
+                    const albumSaveCount = (scrapbookSaves as any[]).filter(
+                      (save: any) => save.albumId === album.id
+                    ).length;
+
+                    return (
+                      <Card
+                        key={album.id}
+                        className={cn(
+                          "cursor-pointer transition-all hover:shadow-md",
+                          selectedAlbumFilter === album.id ? "ring-2 ring-primary" : ""
+                        )}
+                        onClick={() => setSelectedAlbumFilter(album.id)}
+                        data-testid={`album-${album.id}`}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                style={{ backgroundColor: album.color }}
+                              >
+                                <BookmarkCheck className="h-5 w-5 text-white" />
+                              </div>
+                              <div>
+                                <h4 className="font-medium">{album.name}</h4>
+                                <p className="text-xs text-muted-foreground">
+                                  {albumSaveCount} posts
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingAlbum(album);
+                                  setEditAlbumName(album.name);
+                                  setEditAlbumColor(album.color);
+                                  setShowEditAlbumDialog(true);
+                                }}
+                                data-testid={`button-edit-album-${album.id}`}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Delete album "${album.name}"? All saves will be moved to All Saves.`)) {
+                                    deleteAlbumMutation.mutate(album.id);
+                                  }
+                                }}
+                                data-testid={`button-delete-album-${album.id}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+
+              {/* Saved Posts Grid */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">
+                  {selectedAlbumFilter 
+                    ? (scrapbookAlbums as any[]).find((a: any) => a.id === selectedAlbumFilter)?.name 
+                    : "All Saves"}
+                </h3>
+                {(scrapbookSaves as any[]).filter((save: any) => 
+                  selectedAlbumFilter ? save.albumId === selectedAlbumFilter : true
+                ).length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                    {(scrapbookSaves as any[])
+                      .filter((save: any) => 
+                        selectedAlbumFilter ? save.albumId === selectedAlbumFilter : true
+                      )
+                      .map((save: any) => (
+                        <Card key={save.id} className="relative" data-testid={`save-${save.id}`}>
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              {/* Post Content */}
+                              {save.post?.mediaUrl && (
+                                <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                  {save.post.mediaType === 'video' ? (
+                                    <video className="w-full h-full object-cover">
+                                      <source src={save.post.mediaUrl} type="video/mp4" />
+                                    </video>
+                                  ) : (
+                                    <img 
+                                      src={save.post.mediaUrl} 
+                                      alt="Post media" 
+                                      className="w-full h-full object-cover"
+                                    />
+                                  )}
+                                </div>
+                              )}
+                              <p className="text-sm text-foreground line-clamp-3">{save.post?.content}</p>
+                              
+                              {/* Author Info */}
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage src={save.post?.author?.profileImageUrl} />
+                                  <AvatarFallback>{save.post?.author?.firstName?.[0]}</AvatarFallback>
+                                </Avatar>
+                                <span>{save.post?.author?.firstName} {save.post?.author?.lastName}</span>
+                              </div>
+
+                              {/* Note */}
+                              {save.note && (
+                                <div className="p-2 bg-muted/50 rounded text-sm">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className="text-xs italic text-foreground">{save.note}</p>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0 flex-shrink-0"
+                                      onClick={() => {
+                                        setEditingSaveNote(save);
+                                        setEditNoteText(save.note || "");
+                                        setShowEditNoteDialog(true);
+                                      }}
+                                      data-testid={`button-edit-note-${save.id}`}
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Actions */}
+                              <div className="flex items-center justify-between">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 text-xs"
+                                  onClick={() => {
+                                    setPostToUnsave(save.post);
+                                    setShowUnsaveDialog(true);
+                                  }}
+                                  data-testid={`button-unsave-${save.id}`}
+                                >
+                                  <BookmarkCheck className="h-4 w-4 mr-1 fill-primary text-primary" />
+                                  Saved
+                                </Button>
+                                {!save.note && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 text-xs"
+                                    onClick={() => {
+                                      setEditingSaveNote(save);
+                                      setEditNoteText("");
+                                      setShowEditNoteDialog(true);
+                                    }}
+                                    data-testid={`button-add-note-${save.id}`}
+                                  >
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Add Note
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No saved posts in this album</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Start saving posts by clicking the bookmark icon on any post
+                    </p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
           
           <div className="flex justify-end">
             <Button
@@ -1990,6 +2422,29 @@ export default function Home() {
                   </p>
                 </div>
                 
+                {/* Bookmark button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    if (savedPostsMap[item.id]) {
+                      setPostToUnsave(item);
+                      setShowUnsaveDialog(true);
+                    } else {
+                      setSelectedPostToSave(item);
+                      setShowSavePostDialog(true);
+                    }
+                  }}
+                  data-testid={`button-bookmark-${item.id}`}
+                >
+                  {savedPostsMap[item.id] ? (
+                    <BookmarkCheck className="h-4 w-4 fill-primary text-primary" />
+                  ) : (
+                    <Bookmark className="h-4 w-4" />
+                  )}
+                </Button>
+
                 {/* Edit button - only show for post author */}
                 {item.author.id === userData?.id && (
                   <Dialog>
@@ -2598,6 +3053,338 @@ export default function Home() {
                 {reportPostMutation.isPending ? "Submitting..." : "Submit Report"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save Post Dialog */}
+      <Dialog open={showSavePostDialog} onOpenChange={setShowSavePostDialog}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Save to Scrapbook</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Save this post and optionally add it to an album
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              {(scrapbookSaves as any[]).length}/1000 saved
+            </div>
+            
+            <div>
+              <Label htmlFor="album-select">Album (optional)</Label>
+              <Select value={saveAlbumId} onValueChange={setSaveAlbumId}>
+                <SelectTrigger data-testid="select-album">
+                  <SelectValue placeholder="No album (save to All)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No album</SelectItem>
+                  {(scrapbookAlbums as any[]).map((album: any) => (
+                    <SelectItem key={album.id} value={album.id}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: album.color }}
+                        />
+                        {album.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => setShowCreateAlbumDialog(true)}
+                className="mt-1 h-auto p-0 text-primary"
+                data-testid="button-create-album"
+              >
+                + Create New Album
+              </Button>
+            </div>
+            
+            <div>
+              <Label htmlFor="save-note">Note (optional)</Label>
+              <Textarea
+                id="save-note"
+                placeholder="Add a personal note..."
+                value={saveNote}
+                onChange={(e) => setSaveNote(e.target.value)}
+                rows={3}
+                data-testid="textarea-save-note"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowSavePostDialog(false);
+                  setSaveAlbumId("");
+                  setSaveNote("");
+                }}
+                className="border-border text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if ((scrapbookSaves as any[]).length >= 1000) {
+                    toast({
+                      title: "Limit Reached",
+                      description: "You've reached the maximum of 1000 saved posts.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  savePostMutation.mutate({
+                    postId: selectedPostToSave?.id,
+                    albumId: saveAlbumId || undefined,
+                    note: saveNote || undefined,
+                  });
+                }}
+                disabled={savePostMutation.isPending}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                data-testid="button-save-post"
+              >
+                {savePostMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Album Dialog */}
+      <Dialog open={showCreateAlbumDialog} onOpenChange={setShowCreateAlbumDialog}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Create New Album</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="album-name">Album Name</Label>
+              <Input
+                id="album-name"
+                placeholder="Enter album name..."
+                value={newAlbumName}
+                onChange={(e) => setNewAlbumName(e.target.value)}
+                data-testid="input-album-name"
+              />
+            </div>
+            
+            <div>
+              <Label>Album Color</Label>
+              <div className="flex gap-2 mt-2">
+                {["#FF1493", "#00BFFF", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"].map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setNewAlbumColor(color)}
+                    className={cn(
+                      "w-8 h-8 rounded-full border-2 transition-transform hover:scale-110",
+                      newAlbumColor === color ? "border-foreground scale-110" : "border-transparent"
+                    )}
+                    style={{ backgroundColor: color }}
+                    data-testid={`button-color-${color}`}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCreateAlbumDialog(false);
+                  setNewAlbumName("");
+                  setNewAlbumColor("#FF1493");
+                }}
+                className="border-border text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!newAlbumName.trim()) {
+                    toast({
+                      title: "Error",
+                      description: "Please enter an album name.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  createAlbumMutation.mutate({
+                    name: newAlbumName,
+                    color: newAlbumColor,
+                  });
+                }}
+                disabled={createAlbumMutation.isPending}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                data-testid="button-create-album-submit"
+              >
+                {createAlbumMutation.isPending ? "Creating..." : "Create"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Album Dialog */}
+      <Dialog open={showEditAlbumDialog} onOpenChange={setShowEditAlbumDialog}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Edit Album</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-album-name">Album Name</Label>
+              <Input
+                id="edit-album-name"
+                placeholder="Enter album name..."
+                value={editAlbumName}
+                onChange={(e) => setEditAlbumName(e.target.value)}
+                data-testid="input-edit-album-name"
+              />
+            </div>
+            
+            <div>
+              <Label>Album Color</Label>
+              <div className="flex gap-2 mt-2">
+                {["#FF1493", "#00BFFF", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"].map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setEditAlbumColor(color)}
+                    className={cn(
+                      "w-8 h-8 rounded-full border-2 transition-transform hover:scale-110",
+                      editAlbumColor === color ? "border-foreground scale-110" : "border-transparent"
+                    )}
+                    style={{ backgroundColor: color }}
+                    data-testid={`button-edit-color-${color}`}
+                  />
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditAlbumDialog(false);
+                  setEditingAlbum(null);
+                }}
+                className="border-border text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!editAlbumName.trim()) {
+                    toast({
+                      title: "Error",
+                      description: "Please enter an album name.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  updateAlbumMutation.mutate({
+                    id: editingAlbum?.id,
+                    data: {
+                      name: editAlbumName,
+                      color: editAlbumColor,
+                    },
+                  });
+                }}
+                disabled={updateAlbumMutation.isPending}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                data-testid="button-update-album"
+              >
+                {updateAlbumMutation.isPending ? "Updating..." : "Update"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Note Dialog */}
+      <Dialog open={showEditNoteDialog} onOpenChange={setShowEditNoteDialog}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Edit Note</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Add a personal note..."
+              value={editNoteText}
+              onChange={(e) => setEditNoteText(e.target.value)}
+              rows={4}
+              data-testid="textarea-edit-note"
+            />
+            
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditNoteDialog(false);
+                  setEditingSaveNote(null);
+                }}
+                className="border-border text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  updateNoteMutation.mutate({
+                    saveId: editingSaveNote?.id,
+                    note: editNoteText,
+                  });
+                }}
+                disabled={updateNoteMutation.isPending}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                data-testid="button-update-note"
+              >
+                {updateNoteMutation.isPending ? "Updating..." : "Update"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unsave Confirmation Dialog */}
+      <Dialog open={showUnsaveDialog} onOpenChange={setShowUnsaveDialog}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Remove from Scrapbook?</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              This will remove the post from your scrapbook and delete any notes you've added.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowUnsaveDialog(false);
+                setPostToUnsave(null);
+              }}
+              className="border-border text-foreground"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                unsavePostMutation.mutate(postToUnsave?.id);
+              }}
+              disabled={unsavePostMutation.isPending}
+              variant="destructive"
+              data-testid="button-confirm-unsave"
+            >
+              {unsavePostMutation.isPending ? "Removing..." : "Remove"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

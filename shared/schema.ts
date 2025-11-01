@@ -357,6 +357,31 @@ export const commentLikes = pgTable("comment_likes", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Scrapbook Albums - for organizing saved posts
+export const scrapbookAlbums = pgTable("scrapbook_albums", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  name: varchar("name").notNull(),
+  color: varchar("color").default("#FF1493"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_scrapbook_albums_user").on(table.userId),
+]);
+
+// Scrapbook Saves - saved posts with optional notes
+export const scrapbookSaves = pgTable("scrapbook_saves", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }).notNull(),
+  albumId: varchar("album_id").references(() => scrapbookAlbums.id, { onDelete: "cascade" }),
+  note: text("note"),
+  savedAt: timestamp("saved_at").defaultNow(),
+}, (table) => [
+  index("idx_scrapbook_saves_user").on(table.userId),
+  index("idx_scrapbook_saves_post").on(table.postId),
+  index("idx_scrapbook_saves_album").on(table.albumId),
+]);
+
 // Content filters
 export const contentFilters = pgTable("content_filters", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1007,6 +1032,8 @@ export const insertStorySchema = createInsertSchema(stories).omit({ id: true, vi
 export const insertCommentSchema = createInsertSchema(comments).omit({ id: true, createdAt: true });
 export const insertCommentLikeSchema = createInsertSchema(commentLikes).omit({ id: true, createdAt: true });
 export const insertContentFilterSchema = createInsertSchema(contentFilters).omit({ id: true, createdAt: true });
+export const insertScrapbookAlbumSchema = createInsertSchema(scrapbookAlbums).omit({ id: true, createdAt: true });
+export const insertScrapbookSaveSchema = createInsertSchema(scrapbookSaves).omit({ id: true, savedAt: true });
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, isRead: true, createdAt: true });
 export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true, lastMessageId: true, lastActivity: true, createdAt: true });
 export const insertEventSchema = createInsertSchema(events).omit({ id: true, attendeeCount: true, createdAt: true, updatedAt: true }).extend({
@@ -1134,6 +1161,10 @@ export type InsertCommentLike = z.infer<typeof insertCommentLikeSchema>;
 export type PostLike = typeof postLikes.$inferSelect;
 export type ContentFilter = typeof contentFilters.$inferSelect;
 export type InsertContentFilter = z.infer<typeof insertContentFilterSchema>;
+export type ScrapbookAlbum = typeof scrapbookAlbums.$inferSelect;
+export type InsertScrapbookAlbum = z.infer<typeof insertScrapbookAlbumSchema>;
+export type ScrapbookSave = typeof scrapbookSaves.$inferSelect;
+export type InsertScrapbookSave = z.infer<typeof insertScrapbookSaveSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Conversation = typeof conversations.$inferSelect;

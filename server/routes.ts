@@ -4253,6 +4253,177 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Scrapbook routes
+  app.get('/api/scrapbook/albums', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const albums = await storage.getUserScrapbookAlbums(userId);
+      res.json(albums);
+    } catch (error) {
+      console.error("Error fetching scrapbook albums:", error);
+      res.status(500).json({ message: "Failed to fetch scrapbook albums" });
+    }
+  });
+
+  app.post('/api/scrapbook/albums', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { name, color } = req.body;
+      
+      if (!name || typeof name !== 'string') {
+        return res.status(400).json({ message: "Album name is required" });
+      }
+
+      const album = await storage.createScrapbookAlbum({
+        userId,
+        name: name.trim(),
+        color: color || '#FF1493',
+      });
+      
+      res.json(album);
+    } catch (error) {
+      console.error("Error creating scrapbook album:", error);
+      res.status(500).json({ message: "Failed to create scrapbook album" });
+    }
+  });
+
+  app.patch('/api/scrapbook/albums/:albumId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { albumId } = req.params;
+      const { name, color } = req.body;
+      
+      const updates: any = {};
+      if (name) updates.name = name.trim();
+      if (color) updates.color = color;
+
+      const album = await storage.updateScrapbookAlbum(albumId, updates);
+      res.json(album);
+    } catch (error) {
+      console.error("Error updating scrapbook album:", error);
+      res.status(500).json({ message: "Failed to update scrapbook album" });
+    }
+  });
+
+  app.delete('/api/scrapbook/albums/:albumId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { albumId } = req.params;
+      await storage.deleteScrapbookAlbum(albumId);
+      res.json({ message: "Album deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting scrapbook album:", error);
+      res.status(500).json({ message: "Failed to delete scrapbook album" });
+    }
+  });
+
+  app.get('/api/scrapbook/saves', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { albumId } = req.query;
+      
+      const saves = await storage.getUserScrapbookSaves(userId, albumId as string | undefined);
+      res.json(saves);
+    } catch (error) {
+      console.error("Error fetching scrapbook saves:", error);
+      res.status(500).json({ message: "Failed to fetch scrapbook saves" });
+    }
+  });
+
+  app.get('/api/scrapbook/count', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const count = await storage.getScrapbookSaveCount(userId);
+      res.json({ count, limit: 1000 });
+    } catch (error) {
+      console.error("Error fetching scrapbook count:", error);
+      res.status(500).json({ message: "Failed to fetch scrapbook count" });
+    }
+  });
+
+  app.post('/api/scrapbook/check-saved', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { postIds } = req.body;
+      
+      if (!Array.isArray(postIds)) {
+        return res.status(400).json({ message: "postIds must be an array" });
+      }
+
+      // Batch check all posts at once
+      const savedMap: Record<string, boolean> = {};
+      await Promise.all(
+        postIds.map(async (postId) => {
+          savedMap[postId] = await storage.isPostSavedByUser(userId, postId);
+        })
+      );
+      
+      res.json(savedMap);
+    } catch (error) {
+      console.error("Error checking saved posts:", error);
+      res.status(500).json({ message: "Failed to check saved posts" });
+    }
+  });
+
+  app.post('/api/scrapbook/save', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { postId, albumId, note } = req.body;
+      
+      if (!postId) {
+        return res.status(400).json({ message: "Post ID is required" });
+      }
+
+      // Check save limit
+      const currentCount = await storage.getScrapbookSaveCount(userId);
+      if (currentCount >= 1000) {
+        return res.status(400).json({ message: "Scrapbook save limit reached (1000 saves maximum)" });
+      }
+
+      // Check if already saved
+      const alreadySaved = await storage.isPostSavedByUser(userId, postId);
+      if (alreadySaved) {
+        return res.status(400).json({ message: "Post is already saved to scrapbook" });
+      }
+
+      const save = await storage.savePostToScrapbook({
+        userId,
+        postId,
+        albumId: albumId || null,
+        note: note || null,
+      });
+      
+      res.json(save);
+    } catch (error) {
+      console.error("Error saving post to scrapbook:", error);
+      res.status(500).json({ message: "Failed to save post to scrapbook" });
+    }
+  });
+
+  app.delete('/api/scrapbook/save/:postId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { postId } = req.params;
+      
+      await storage.unsavePostFromScrapbook(userId, postId);
+      res.json({ message: "Post removed from scrapbook" });
+    } catch (error) {
+      console.error("Error removing post from scrapbook:", error);
+      res.status(500).json({ message: "Failed to remove post from scrapbook" });
+    }
+  });
+
+  app.patch('/api/scrapbook/save/:saveId/note', isAuthenticated, async (req: any, res) => {
+    try {
+      const { saveId } = req.params;
+      const { note } = req.body;
+      
+      const save = await storage.updateScrapbookSaveNote(saveId, note || '');
+      res.json(save);
+    } catch (error) {
+      console.error("Error updating scrapbook save note:", error);
+      res.status(500).json({ message: "Failed to update scrapbook save note" });
+    }
+  });
+
   // Birthday routes
   app.get("/api/birthdays/today", isAuthenticated, async (req: any, res) => {
     try {
