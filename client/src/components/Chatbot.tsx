@@ -240,9 +240,9 @@ const knowledgeBase: KnowledgeBase = {
 };
 
 const greetingMessages = [
-  "Hi! I'm your MyKliq expert assistant. I can help you with everything from basic navigation to advanced features like video calling, incognito messaging, live streaming, auto-posting, social media integration, content filters, push notifications, and multi-language support. What would you like to know?",
-  "Hello! I know all about MyKliq's features - from the friend pyramid and video calling to daily horoscopes, polls, themes, GIFs, password recovery, and mobile app features. Ask me anything!",
-  "Hey there! I'm here to help you master MyKliq. Whether you need help with video calls, messaging, events, live streaming, friend ranking, content filters, security setup, language translation, or any other feature, I've got detailed answers for you!"
+  "Hi! I'm your MyKliq expert assistant. I can help you with everything from basic navigation to advanced features like video calling, Mood Boost encouragement, Scrapbook organization, post highlighting, Kliq Calendar, incognito messaging, live streaming, auto-posting, social media integration, content filters, push notifications, and multi-language support. What would you like to know?",
+  "Hello! I know all about MyKliq's features - from the friend pyramid and video calling to Mood Boost messages, saving posts to Scrapbook, highlighting important posts, shared Kliq Calendars, daily horoscopes, polls, themes, GIFs, password recovery, and mobile app features. Ask me anything!",
+  "Hey there! I'm here to help you master MyKliq. Whether you need help with video calls, Mood Boost support, organizing your Scrapbook, highlighting posts, managing Kliq Calendars, messaging, events, live streaming, friend ranking, content filters, security setup, language translation, or any other feature, I've got detailed answers for you!"
 ];
 
 const fallbackResponses = [
