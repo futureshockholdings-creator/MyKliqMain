@@ -15,6 +15,7 @@ import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import Kliq from "@/pages/kliq";
 import Events from "@/pages/events";
+import CalendarPage from "@/pages/calendar";
 import Actions from "@/pages/actions";
 import MeetupPage from "@/pages/meetup";
 import Profile from "@/pages/profile";
@@ -211,6 +212,7 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/kliq" component={Kliq} />
           <Route path="/events" component={Events} />
+          <Route path="/calendar" component={CalendarPage} />
           <Route path="/actions" component={Actions} />
 
           <Route path="/messages" component={Messages} />

@@ -161,6 +161,95 @@ export async function sendEventReminders(): Promise<void> {
   }
 }
 
+// Send calendar reminders for notes with remind_kliq enabled
+export async function sendCalendarReminders(): Promise<void> {
+  try {
+    console.log("Checking for calendar reminders...");
+    
+    // Get calendar notes for today that have reminders enabled
+    const todaysReminders = await storage.getTodaysCalendarReminders();
+    
+    if (todaysReminders.length === 0) {
+      console.log("No calendar reminders to send");
+      return;
+    }
+    
+    console.log(`Found ${todaysReminders.length} calendar reminder(s) to send`);
+    
+    // Send reminder posts for each calendar note
+    for (const note of todaysReminders) {
+      try {
+        // Create a supportive post for the calendar note
+        let supportiveMessage = `✨ ${note.title}`;
+        if (note.description) {
+          supportiveMessage += ` - ${note.description}`;
+        }
+        
+        // Add personalized encouragement based on keywords in the title
+        const title = note.title.toLowerCase();
+        if (title.includes('surgery') || title.includes('operation')) {
+          supportiveMessage = `💙 Sending positive vibes to ${note.author.firstName} for ${note.title} today! Wishing you a smooth recovery! ✨`;
+        } else if (title.includes('birthday')) {
+          supportiveMessage = `🎉 Happy birthday to ${note.author.firstName}! Hope you have an amazing day! 🎂`;
+        } else if (title.includes('job') || title.includes('interview') || title.includes('work')) {
+          supportiveMessage = `🌟 Good luck to ${note.author.firstName} on ${note.title} today! You've got this! 💪`;
+        } else if (title.includes('exam') || title.includes('test')) {
+          supportiveMessage = `📚 Wishing ${note.author.firstName} the best on ${note.title} today! You're going to do great! ✨`;
+        } else if (title.includes('graduation')) {
+          supportiveMessage = `🎓 Congratulations to ${note.author.firstName} on ${note.title}! So proud of you! 🎉`;
+        } else if (title.includes('wedding') || title.includes('anniversary')) {
+          supportiveMessage = `💍 Celebrating ${note.author.firstName}'s ${note.title} today! Wishing you all the happiness! 💕`;
+        } else {
+          supportiveMessage = `⭐ Remember: ${note.title} is today!${note.description ? ` ${note.description}` : ''}`;
+        }
+        
+        // Create the supportive post from the kliq owner
+        await storage.createPost({
+          userId: note.kliqId, // Post from the kliq owner
+          content: supportiveMessage,
+        });
+        
+        // Mark reminder as sent
+        await storage.markReminderSent(note.id);
+        
+        // Send notification to kliq members only
+        const { NotificationService } = await import("./notificationService");
+        const notificationService = new NotificationService();
+        
+        // Get kliq members (friends of the kliq owner)
+        const kliqMembers = await storage.getFriends(note.kliqId);
+        // Notify all friends in the kliq
+        for (const friendship of kliqMembers) {
+          await notificationService.createNotification({
+            userId: friendship.friendId,
+            type: 'general',
+            title: 'Calendar Reminder',
+            message: `${note.title} is today!`,
+            relatedId: note.id,
+            relatedType: 'calendar_note'
+          });
+        }
+        
+        // Also notify the kliq owner
+        await notificationService.createNotification({
+          userId: note.kliqId,
+          type: 'general',
+          title: 'Calendar Reminder',
+          message: `${note.title} is today!`,
+          relatedId: note.id,
+          relatedType: 'calendar_note'
+        });
+        
+        console.log(`Sent calendar reminder for "${note.title}"`);
+      } catch (error) {
+        console.error(`Failed to send calendar reminder for "${note.title}":`, error);
+      }
+    }
+  } catch (error) {
+    console.error("Error in calendar reminder service:", error);
+  }
+}
+
 // Combined cleanup service that handles all expired content
 async function runCleanupTasks(): Promise<void> {
   try {
@@ -170,6 +259,7 @@ async function runCleanupTasks(): Promise<void> {
     await Promise.all([
       sendAutomaticBirthdayMessages(),
       sendEventReminders(),
+      sendCalendarReminders(),
       storage.deleteExpiredStories(),
       storage.cleanUpExpiredPolls(),
       storage.cleanUpExpiredEvents(),

@@ -13,7 +13,7 @@ import { CreatePollDialog } from "@/components/CreatePollDialog";
 import { RankingSuggestions } from "@/components/ranking-suggestions";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import { Badge } from "@/components/ui/badge";
-import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut } from "lucide-react";
+import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut, Calendar } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { getInviteMessage, getAppStoreUrl, getDownloadText } from "@/lib/deviceDetection";
@@ -615,7 +615,7 @@ export default function Kliq() {
 
       {/* Tabs */}
       <Tabs defaultValue="friends" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-muted">
+        <TabsList className="grid w-full grid-cols-4 bg-muted">
           <TabsTrigger value="friends" className="flex items-center gap-2" data-testid="tab-friends">
             <Users className="w-4 h-4" />
             Friends ({friends.length}/28)
@@ -627,6 +627,10 @@ export default function Kliq() {
           <TabsTrigger value="polls" className="flex items-center gap-2" data-testid="tab-polls">
             <BarChart3 className="w-4 h-4" />
             Polls ({polls.length})
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center gap-2" data-testid="tab-calendar" onClick={() => navigate('/calendar')}>
+            <Calendar className="w-4 h-4" />
+            Calendar
           </TabsTrigger>
         </TabsList>
 

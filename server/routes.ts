@@ -3213,6 +3213,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calendar routes
+  app.get('/api/calendar/notes', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { startDate, endDate } = req.query;
+      
+      // Get user to determine their kliq
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Determine the kliq ID to fetch calendar for:
+      // If user is a kliq owner, use their own ID
+      // If user is a kliq member, find who they're friends with and use that owner's ID
+      let kliqOwnerId = userId; // Default: user is kliq owner
+      
+      // Check if user is a member of another kliq (has accepted friendship)
+      const friendships = await storage.getFriends(userId);
+      // In MyKliq, the user who sends invites is the kliq owner
+      // Friends join the inviter's kliq, so we need to find who invited this user
+      if (friendships.length > 0) {
+        // Get the first friend's ID - this assumes user is part of one kliq
+        // In a more complex system, you'd need to track which kliq is "active"
+        const firstFriendship = friendships[0];
+        // Since friendships are stored as userId -> friendId, we need to check who this user is friends WITH
+        // The kliq owner is the one who invited them
+        kliqOwnerId = userId; // For now, use own ID (kliq owner scenario)
+      }
+      
+      const notes = await storage.getCalendarNotes(kliqOwnerId, startDate, endDate);
+      res.json(notes);
+    } catch (error) {
+      console.error("Error fetching calendar notes:", error);
+      res.status(500).json({ message: "Failed to fetch calendar notes" });
+    }
+  });
+
+  app.post('/api/calendar/notes', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { insertCalendarNoteSchema } = await import("@shared/schema");
+      
+      // Always use the authenticated user's ID as the kliqId (user is the kliq owner)
+      const noteData = insertCalendarNoteSchema.parse({
+        ...req.body,
+        userId,
+        kliqId: userId, // Server-controlled: authenticated user is always the kliq owner
+      });
+      
+      const note = await storage.createCalendarNote(noteData);
+      res.json(note);
+    } catch (error) {
+      console.error("Error creating calendar note:", error);
+      res.status(500).json({ message: "Failed to create calendar note" });
+    }
+  });
+
+  app.put('/api/calendar/notes/:noteId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { noteId } = req.params;
+      
+      // Validate ownership
+      const existingNote = await storage.getCalendarNoteById(noteId);
+      if (!existingNote || existingNote.userId !== userId) {
+        return res.status(403).json({ message: "You can only edit your own notes" });
+      }
+      
+      const { insertCalendarNoteSchema } = await import("@shared/schema");
+      const updates = insertCalendarNoteSchema.partial().parse(req.body);
+      
+      // Server-controlled: Never allow clients to change kliqId or userId
+      delete updates.kliqId;
+      delete updates.userId;
+      
+      const updatedNote = await storage.updateCalendarNote(noteId, updates);
+      res.json(updatedNote);
+    } catch (error) {
+      console.error("Error updating calendar note:", error);
+      res.status(500).json({ message: "Failed to update calendar note" });
+    }
+  });
+
+  app.delete('/api/calendar/notes/:noteId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { noteId } = req.params;
+      
+      // Validate ownership
+      const existingNote = await storage.getCalendarNoteById(noteId);
+      if (!existingNote || existingNote.userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own notes" });
+      }
+      
+      await storage.deleteCalendarNote(noteId);
+      res.json({ message: "Calendar note deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting calendar note:", error);
+      res.status(500).json({ message: "Failed to delete calendar note" });
+    }
+  });
+
   // Action (Live Stream) routes
   
   // Get all live actions

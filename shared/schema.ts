@@ -500,6 +500,25 @@ export const eventReminders = pgTable("event_reminders", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Calendar notes - shared kliq calendar for special dates
+export const calendarNotes = pgTable("calendar_notes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  kliqId: varchar("kliq_id").references(() => users.id, { onDelete: "cascade" }).notNull(), // References kliq owner
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(), // Who created the note
+  noteDate: date("note_date").notNull(), // The date this note is for
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  remindKliq: boolean("remind_kliq").default(false), // Send notification on this day
+  reminderSent: boolean("reminder_sent").default(false), // Track if reminder was sent
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  // Performance indexes
+  index("idx_calendar_notes_kliq_date").on(table.kliqId, table.noteDate), // Combined index for fetching notes by kliq and date
+  index("idx_calendar_notes_date").on(table.noteDate), // Date filtering for reminders
+  index("idx_calendar_notes_user").on(table.userId), // User's notes
+]);
+
 // Action (Live Streams)
 export const actionStreamStatusEnum = pgEnum("action_stream_status", ["live", "ended"]);
 
@@ -936,6 +955,17 @@ export const eventAttendeesRelations = relations(eventAttendees, ({ one }) => ({
   }),
 }));
 
+export const calendarNotesRelations = relations(calendarNotes, ({ one }) => ({
+  kliq: one(users, {
+    fields: [calendarNotes.kliqId],
+    references: [users.id],
+  }),
+  author: one(users, {
+    fields: [calendarNotes.userId],
+    references: [users.id],
+  }),
+}));
+
 export const actionsRelations = relations(actions, ({ one, many }) => ({
   user: one(users, {
     fields: [actions.userId],
@@ -1055,6 +1085,9 @@ export const insertEventSchema = createInsertSchema(events).omit({ id: true, att
 });
 export const insertEventAttendeeSchema = createInsertSchema(eventAttendees).omit({ id: true, createdAt: true });
 export const insertEventReminderSchema = createInsertSchema(eventReminders).omit({ id: true, createdAt: true });
+export const insertCalendarNoteSchema = createInsertSchema(calendarNotes).omit({ id: true, reminderSent: true, createdAt: true, updatedAt: true }).extend({
+  noteDate: z.string().transform((val) => val) // Keep as string for date
+});
 export const insertActionSchema = createInsertSchema(actions).omit({ id: true, viewerCount: true, createdAt: true, endedAt: true }).extend({
   streamKey: z.string().optional()
 });
@@ -1191,6 +1224,8 @@ export type EventAttendee = typeof eventAttendees.$inferSelect;
 export type InsertEventAttendee = z.infer<typeof insertEventAttendeeSchema>;
 export type EventReminder = typeof eventReminders.$inferSelect;
 export type InsertEventReminder = z.infer<typeof insertEventReminderSchema>;
+export type CalendarNote = typeof calendarNotes.$inferSelect;
+export type InsertCalendarNote = z.infer<typeof insertCalendarNoteSchema>;
 export type Action = typeof actions.$inferSelect;
 export type InsertAction = z.infer<typeof insertActionSchema>;
 export type ActionViewer = typeof actionViewers.$inferSelect;

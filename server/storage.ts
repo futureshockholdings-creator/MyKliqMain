@@ -18,6 +18,7 @@ import {
   events,
   eventAttendees,
   eventReminders,
+  calendarNotes,
   actions,
   actionViewers,
   actionChatMessages,
@@ -64,6 +65,8 @@ import {
   type InsertEventAttendee,
   type EventReminder,
   type InsertEventReminder,
+  type CalendarNote,
+  type InsertCalendarNote,
   type Action,
   type InsertAction,
   type ActionViewer,
@@ -240,6 +243,15 @@ export interface IStorage {
   getUserEventAttendance(eventId: string, userId: string): Promise<{ status: string } | undefined>;
   updateEventAttendance(eventId: string, userId: string, status: string): Promise<void>;
   getEventAttendees(eventId: string): Promise<EventAttendee[]>;
+
+  // Calendar note operations
+  getCalendarNotes(kliqId: string, startDate?: string, endDate?: string): Promise<(CalendarNote & { author: User })[]>;
+  getCalendarNoteById(noteId: string): Promise<CalendarNote | undefined>;
+  createCalendarNote(note: InsertCalendarNote): Promise<CalendarNote>;
+  updateCalendarNote(noteId: string, updates: Partial<InsertCalendarNote>): Promise<CalendarNote>;
+  deleteCalendarNote(noteId: string): Promise<void>;
+  getTodaysCalendarReminders(): Promise<(CalendarNote & { author: User; kliqOwner: User })[]>;
+  markReminderSent(noteId: string): Promise<void>;
 
   // Action (Live Stream) operations
   getActions(): Promise<(Action & { author: User; viewers: ActionViewer[]; viewerCount: number })[]>;
@@ -1871,6 +1883,99 @@ export class DatabaseStorage implements IStorage {
       .update(eventReminders)
       .set({ isActive: false })
       .where(eq(eventReminders.id, reminderId));
+  }
+
+  // Calendar note operations
+  async getCalendarNotes(kliqId: string, startDate?: string, endDate?: string): Promise<(CalendarNote & { author: User })[]> {
+    let query = db
+      .select({
+        note: calendarNotes,
+        author: users,
+      })
+      .from(calendarNotes)
+      .innerJoin(users, eq(calendarNotes.userId, users.id))
+      .where(eq(calendarNotes.kliqId, kliqId))
+      .$dynamic();
+
+    if (startDate && endDate) {
+      query = query.where(
+        and(
+          eq(calendarNotes.kliqId, kliqId),
+          gte(calendarNotes.noteDate, startDate),
+          lte(calendarNotes.noteDate, endDate)
+        )
+      );
+    }
+
+    const results = await query.orderBy(asc(calendarNotes.noteDate));
+    
+    return results.map(r => ({
+      ...r.note,
+      author: r.author,
+    }));
+  }
+
+  async getCalendarNoteById(noteId: string): Promise<CalendarNote | undefined> {
+    const [note] = await db.select().from(calendarNotes).where(eq(calendarNotes.id, noteId));
+    return note;
+  }
+
+  async createCalendarNote(note: InsertCalendarNote): Promise<CalendarNote> {
+    const [newNote] = await db.insert(calendarNotes).values(note).returning();
+    return newNote;
+  }
+
+  async updateCalendarNote(noteId: string, updates: Partial<InsertCalendarNote>): Promise<CalendarNote> {
+    const [updatedNote] = await db
+      .update(calendarNotes)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(calendarNotes.id, noteId))
+      .returning();
+    return updatedNote;
+  }
+
+  async deleteCalendarNote(noteId: string): Promise<void> {
+    await db.delete(calendarNotes).where(eq(calendarNotes.id, noteId));
+  }
+
+  async getTodaysCalendarReminders(): Promise<(CalendarNote & { author: User; kliqOwner: User })[]> {
+    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    
+    const results = await db
+      .select({
+        note: calendarNotes,
+        author: users,
+        kliqOwner: {
+          id: sql<string>`kliq_owner.id`,
+          email: sql<string>`kliq_owner.email`,
+          firstName: sql<string>`kliq_owner.first_name`,
+          lastName: sql<string>`kliq_owner.last_name`,
+          profileImageUrl: sql<string>`kliq_owner.profile_image_url`,
+        },
+      })
+      .from(calendarNotes)
+      .innerJoin(users, eq(calendarNotes.userId, users.id))
+      .innerJoin(sql`users as kliq_owner`, sql`calendar_notes.kliq_id = kliq_owner.id`)
+      .where(
+        and(
+          eq(calendarNotes.noteDate, today),
+          eq(calendarNotes.remindKliq, true),
+          eq(calendarNotes.reminderSent, false)
+        )
+      );
+
+    return results.map(r => ({
+      ...r.note,
+      author: r.author,
+      kliqOwner: r.kliqOwner as User,
+    }));
+  }
+
+  async markReminderSent(noteId: string): Promise<void> {
+    await db
+      .update(calendarNotes)
+      .set({ reminderSent: true })
+      .where(eq(calendarNotes.id, noteId));
   }
 
   // Action (Live Stream) operations
