@@ -216,6 +216,26 @@ const knowledgeBase: KnowledgeBase = {
     keywords: ['pin', 'security pin', 'pin code', 'account pin', 'verification pin', 'pin setup'],
     response: "Security PIN is a numeric code for account verification. Features: 1) Set up in Profile → Security Settings, 2) Required for password recovery (step 3 of 4), 3) 4-6 digit numeric code, 4) Additional security layer beyond password, 5) Used for sensitive account operations, 6) Keep confidential - never share your PIN. Set your PIN early to ensure you can recover your account if needed.",
     relatedTopics: ['security', 'password-recovery', 'profile', 'authentication']
+  },
+  'mood-boost': {
+    keywords: ['mood boost', 'mood', 'uplifting', 'encouragement', 'feel better', 'ai messages', 'personalized messages', 'support', 'positive'],
+    response: "Mood Boost is MyKliq's intelligent encouragement feature. How it works: 1) When you post with a mood on the Headlines page, the system creates personalized uplifting messages just for you, 2) You'll receive 5 encouraging messages tailored to your mood over the next few hours, 3) These special posts appear in your feed with a '✨ Just for you' label and colorful styling, 4) Messages are designed to lift your spirits and provide support, 5) Only you see these personalized posts - they're private to you. It's like having a supportive friend when you need it most.",
+    relatedTopics: ['posts', 'headlines', 'mood', 'personalization', 'support']
+  },
+  'scrapbook': {
+    keywords: ['scrapbook', 'save posts', 'favorite posts', 'save', 'albums', 'collections', 'organize posts', 'saved posts', 'bookmarks', 'notes'],
+    response: "Scrapbook lets you save and organize your favorite posts from your kliq. Features: 1) Save any post by clicking the plus (+) icon, 2) Create custom color-coded albums to organize saved posts, 3) Add personal notes to saved posts to remember why they're special, 4) Search through your saved posts, 5) Store up to 1,000 posts total, 6) Quick access to all your favorite memories and important content. Perfect for keeping track of meaningful moments, funny posts, or important information shared in your kliq.",
+    relatedTopics: ['posts', 'organization', 'favorites', 'memories', 'collections']
+  },
+  'post-highlighting': {
+    keywords: ['highlight post', 'highlight', 'featured post', 'star post', 'standout post', 'glow', 'special post', 'important post', 'featured'],
+    response: "Post Highlighting lets you make your most important posts stand out. How it works: 1) Click the star icon on any of YOUR OWN posts to highlight it, 2) Highlighted posts get a special gradient border and glow effect that catches everyone's attention, 3) Highlight lasts for 6 hours, 4) You can highlight 1 post per day, 5) Use it to emphasize important announcements, special moments, or posts you want your kliq to definitely see. The glow makes your post impossible to miss in the feed!",
+    relatedTopics: ['posts', 'headlines', 'featured', 'attention', 'announcements']
+  },
+  'kliq-calendar': {
+    keywords: ['kliq calendar', 'shared calendar', 'calendar', 'calendar notes', 'kliq notes', 'reminders', 'kliq reminders', 'shared notes', 'group calendar', 'team calendar'],
+    response: "Kliq Calendar is a shared calendar for you and your kliq members. Features: 1) Each kliq has its own shared calendar that all members can access, 2) You can view calendars for all kliqs you're part of (your own + friends' kliqs), 3) Add notes to any date with title, description, and optional reminders, 4) When reminders are enabled, everyone in the kliq gets notified on that date, 5) All kliq members can add, edit, or delete notes - it's fully collaborative, 6) Perfect for tracking birthdays, events, important dates, or group milestones. Access it from the Events page calendar section.",
+    relatedTopics: ['events', 'kliq', 'collaboration', 'reminders', 'organization', 'notifications']
   }
 };
 
