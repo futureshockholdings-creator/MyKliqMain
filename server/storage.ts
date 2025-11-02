@@ -1903,7 +1903,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     // 2. Get all kliqs where user is an accepted friend
-    const friendships = await db
+    const friendshipResults = await db
       .select({
         friendship: friendships,
         kliqOwner: users,
@@ -1917,7 +1917,7 @@ export class DatabaseStorage implements IStorage {
         )
       );
     
-    for (const { friendship, kliqOwner } of friendships) {
+    for (const { friendship, kliqOwner } of friendshipResults) {
       kliqs.push({
         kliqId: friendship.userId, // The user who invited them is the kliq owner
         kliqName: kliqOwner.kliqName || 'My Kliq',
