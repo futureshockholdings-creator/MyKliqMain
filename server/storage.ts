@@ -245,6 +245,8 @@ export interface IStorage {
   getEventAttendees(eventId: string): Promise<EventAttendee[]>;
 
   // Calendar note operations
+  getKliqsForUser(userId: string): Promise<{ kliqId: string; kliqName: string; kliqOwner: User; isOwner: boolean }[]>;
+  isUserInKliq(userId: string, kliqId: string): Promise<boolean>;
   getCalendarNotes(kliqId: string, startDate?: string, endDate?: string): Promise<(CalendarNote & { author: User })[]>;
   getCalendarNoteById(noteId: string): Promise<CalendarNote | undefined>;
   createCalendarNote(note: InsertCalendarNote): Promise<CalendarNote>;
@@ -1886,6 +1888,69 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Calendar note operations
+  async getKliqsForUser(userId: string): Promise<{ kliqId: string; kliqName: string; kliqOwner: User; isOwner: boolean }[]> {
+    const kliqs: { kliqId: string; kliqName: string; kliqOwner: User; isOwner: boolean }[] = [];
+    
+    // 1. Get user's own kliq (they are the owner)
+    const user = await this.getUser(userId);
+    if (user) {
+      kliqs.push({
+        kliqId: user.id,
+        kliqName: user.kliqName || 'My Kliq',
+        kliqOwner: user,
+        isOwner: true,
+      });
+    }
+    
+    // 2. Get all kliqs where user is an accepted friend
+    const friendships = await db
+      .select({
+        friendship: friendships,
+        kliqOwner: users,
+      })
+      .from(friendships)
+      .innerJoin(users, eq(friendships.userId, users.id))
+      .where(
+        and(
+          eq(friendships.friendId, userId),
+          eq(friendships.status, 'accepted')
+        )
+      );
+    
+    for (const { friendship, kliqOwner } of friendships) {
+      kliqs.push({
+        kliqId: friendship.userId, // The user who invited them is the kliq owner
+        kliqName: kliqOwner.kliqName || 'My Kliq',
+        kliqOwner,
+        isOwner: false,
+      });
+    }
+    
+    return kliqs;
+  }
+
+  async isUserInKliq(userId: string, kliqId: string): Promise<boolean> {
+    // User is in kliq if they are the owner
+    if (userId === kliqId) {
+      return true;
+    }
+    
+    // Or if they are an accepted friend of the kliq owner
+    const [friendship] = await db
+      .select()
+      .from(friendships)
+      .where(
+        and(
+          eq(friendships.userId, kliqId),
+          eq(friendships.friendId, userId),
+          eq(friendships.status, 'accepted')
+        )
+      )
+      .limit(1);
+    
+    return !!friendship;
+  }
+
   async getCalendarNotes(kliqId: string, startDate?: string, endDate?: string): Promise<(CalendarNote & { author: User })[]> {
     let query = db
       .select({

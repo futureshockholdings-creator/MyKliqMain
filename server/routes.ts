@@ -3213,40 +3213,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calendar authorization helper
+  const assertUserInKliq = async (userId: string, kliqId: string) => {
+    const isMember = await storage.isUserInKliq(userId, kliqId);
+    if (!isMember) {
+      throw new Error('You do not have access to this kliq calendar');
+    }
+  };
+
   // Calendar routes
+  app.get('/api/calendar/accessible-kliqs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const kliqs = await storage.getKliqsForUser(userId);
+      res.json(kliqs);
+    } catch (error) {
+      console.error("Error fetching accessible kliqs:", error);
+      res.status(500).json({ message: "Failed to fetch accessible kliqs" });
+    }
+  });
+
   app.get('/api/calendar/notes', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { startDate, endDate } = req.query;
+      const { kliqId, startDate, endDate } = req.query;
       
-      // Get user to determine their kliq
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+      // Require kliqId parameter
+      if (!kliqId || typeof kliqId !== 'string') {
+        return res.status(400).json({ message: "kliqId parameter is required" });
       }
       
-      // Determine the kliq ID to fetch calendar for:
-      // If user is a kliq owner, use their own ID
-      // If user is a kliq member, find who they're friends with and use that owner's ID
-      let kliqOwnerId = userId; // Default: user is kliq owner
+      // Verify user has access to this kliq's calendar
+      await assertUserInKliq(userId, kliqId);
       
-      // Check if user is a member of another kliq (has accepted friendship)
-      const friendships = await storage.getFriends(userId);
-      // In MyKliq, the user who sends invites is the kliq owner
-      // Friends join the inviter's kliq, so we need to find who invited this user
-      if (friendships.length > 0) {
-        // Get the first friend's ID - this assumes user is part of one kliq
-        // In a more complex system, you'd need to track which kliq is "active"
-        const firstFriendship = friendships[0];
-        // Since friendships are stored as userId -> friendId, we need to check who this user is friends WITH
-        // The kliq owner is the one who invited them
-        kliqOwnerId = userId; // For now, use own ID (kliq owner scenario)
-      }
-      
-      const notes = await storage.getCalendarNotes(kliqOwnerId, startDate, endDate);
+      const notes = await storage.getCalendarNotes(kliqId, startDate, endDate);
       res.json(notes);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching calendar notes:", error);
+      if (error.message === 'You do not have access to this kliq calendar') {
+        return res.status(403).json({ message: error.message });
+      }
       res.status(500).json({ message: "Failed to fetch calendar notes" });
     }
   });
@@ -3256,17 +3262,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { insertCalendarNoteSchema } = await import("@shared/schema");
       
-      // Always use the authenticated user's ID as the kliqId (user is the kliq owner)
+      // Require kliqId in request body
+      if (!req.body.kliqId) {
+        return res.status(400).json({ message: "kliqId is required" });
+      }
+      
+      // Verify user is a member of this kliq
+      await assertUserInKliq(userId, req.body.kliqId);
+      
+      // Server-controlled: always set userId to authenticated user
       const noteData = insertCalendarNoteSchema.parse({
         ...req.body,
-        userId,
-        kliqId: userId, // Server-controlled: authenticated user is always the kliq owner
+        userId, // Server-controlled: who is creating the note
+        kliqId: req.body.kliqId, // Validated kliqId
       });
       
       const note = await storage.createCalendarNote(noteData);
       res.json(note);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating calendar note:", error);
+      if (error.message === 'You do not have access to this kliq calendar') {
+        return res.status(403).json({ message: error.message });
+      }
       res.status(500).json({ message: "Failed to create calendar note" });
     }
   });
@@ -3276,11 +3293,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { noteId } = req.params;
       
-      // Validate ownership
+      // Get existing note to check kliq membership
       const existingNote = await storage.getCalendarNoteById(noteId);
-      if (!existingNote || existingNote.userId !== userId) {
-        return res.status(403).json({ message: "You can only edit your own notes" });
+      if (!existingNote) {
+        return res.status(404).json({ message: "Calendar note not found" });
       }
+      
+      // Verify user is a member of the note's kliq (any member can edit)
+      await assertUserInKliq(userId, existingNote.kliqId);
       
       const { insertCalendarNoteSchema } = await import("@shared/schema");
       const updates = insertCalendarNoteSchema.partial().parse(req.body);
@@ -3291,8 +3311,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updatedNote = await storage.updateCalendarNote(noteId, updates);
       res.json(updatedNote);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating calendar note:", error);
+      if (error.message === 'You do not have access to this kliq calendar') {
+        return res.status(403).json({ message: error.message });
+      }
       res.status(500).json({ message: "Failed to update calendar note" });
     }
   });
@@ -3302,16 +3325,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { noteId } = req.params;
       
-      // Validate ownership
+      // Get existing note to check kliq membership
       const existingNote = await storage.getCalendarNoteById(noteId);
-      if (!existingNote || existingNote.userId !== userId) {
-        return res.status(403).json({ message: "You can only delete your own notes" });
+      if (!existingNote) {
+        return res.status(404).json({ message: "Calendar note not found" });
       }
+      
+      // Verify user is a member of the note's kliq (any member can delete)
+      await assertUserInKliq(userId, existingNote.kliqId);
       
       await storage.deleteCalendarNote(noteId);
       res.json({ message: "Calendar note deleted successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting calendar note:", error);
+      if (error.message === 'You do not have access to this kliq calendar') {
+        return res.status(403).json({ message: error.message });
+      }
       res.status(500).json({ message: "Failed to delete calendar note" });
     }
   });

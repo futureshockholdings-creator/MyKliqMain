@@ -8,12 +8,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Trash2, Edit, Bell, User, CalendarDays } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Trash2, Edit, Bell, User, CalendarDays, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isToday } from "date-fns";
+import { useLocation } from "wouter";
 
 type CalendarNote = {
   id: string;
@@ -48,6 +50,17 @@ type Event = {
   };
 };
 
+type AccessibleKliq = {
+  kliqId: string;
+  kliqName: string;
+  kliqOwner: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  isOwner: boolean;
+};
+
 const noteFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
   description: z.string().optional(),
@@ -59,12 +72,14 @@ type NoteFormData = z.infer<typeof noteFormSchema>;
 
 export default function Calendar() {
   const { toast } = useToast();
+  const [location, setLocation] = useLocation();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [editingNote, setEditingNote] = useState<CalendarNote | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [selectedKliqId, setSelectedKliqId] = useState<string | null>(null);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -75,16 +90,36 @@ export default function Calendar() {
     ? eachDayOfInterval({ start: startOfWeek(monthStart), end: endOfWeek(monthEnd) })
     : eachDayOfInterval({ start: weekStart, end: weekEnd });
 
+  // Fetch accessible kliqs
+  const { data: accessibleKliqs = [], isLoading: kliqsLoading } = useQuery<AccessibleKliq[]>({
+    queryKey: ['/api/calendar/accessible-kliqs'],
+  });
+
+  // Set default selected kliq when data loads
+  useEffect(() => {
+    if (accessibleKliqs.length > 0 && !selectedKliqId) {
+      // Parse kliqId from URL or use first kliq (user's own kliq - they're always the owner of their own)
+      const params = new URLSearchParams(window.location.search);
+      const urlKliqId = params.get('kliqId');
+      const defaultKliq = urlKliqId && accessibleKliqs.find(k => k.kliqId === urlKliqId)
+        ? urlKliqId
+        : accessibleKliqs.find(k => k.isOwner)?.kliqId || accessibleKliqs[0].kliqId;
+      setSelectedKliqId(defaultKliq);
+    }
+  }, [accessibleKliqs, selectedKliqId]);
+
   // Fetch calendar notes for the current view
   const { data: notes = [], isLoading: notesLoading } = useQuery<CalendarNote[]>({
-    queryKey: ['/api/calendar/notes', viewMode === "month" ? format(monthStart, 'yyyy-MM-dd') : format(weekStart, 'yyyy-MM-dd')],
+    queryKey: ['/api/calendar/notes', selectedKliqId, viewMode === "month" ? format(monthStart, 'yyyy-MM-dd') : format(weekStart, 'yyyy-MM-dd')],
     queryFn: async () => {
+      if (!selectedKliqId) return [];
       const startDate = viewMode === "month" ? format(monthStart, 'yyyy-MM-dd') : format(weekStart, 'yyyy-MM-dd');
       const endDate = viewMode === "month" ? format(monthEnd, 'yyyy-MM-dd') : format(weekEnd, 'yyyy-MM-dd');
-      const response = await fetch(`/api/calendar/notes?startDate=${startDate}&endDate=${endDate}`);
+      const response = await fetch(`/api/calendar/notes?kliqId=${selectedKliqId}&startDate=${startDate}&endDate=${endDate}`);
       if (!response.ok) throw new Error('Failed to fetch calendar notes');
       return response.json();
     },
+    enabled: !!selectedKliqId,
   });
 
   // Fetch events
@@ -126,10 +161,11 @@ export default function Calendar() {
 
   const createNoteMutation = useMutation({
     mutationFn: async (data: NoteFormData) => {
-      return await apiRequest("POST", "/api/calendar/notes", data);
+      if (!selectedKliqId) throw new Error("No kliq selected");
+      return await apiRequest("POST", "/api/calendar/notes", { ...data, kliqId: selectedKliqId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/notes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar/notes', selectedKliqId] });
       toast({ title: "Note created successfully!" });
       setIsAddDialogOpen(false);
       setIsSheetOpen(false);
@@ -149,7 +185,7 @@ export default function Calendar() {
       return await apiRequest("PUT", `/api/calendar/notes/${id}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/notes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar/notes', selectedKliqId] });
       toast({ title: "Note updated successfully!" });
       setEditingNote(null);
       setIsAddDialogOpen(false);
@@ -169,7 +205,7 @@ export default function Calendar() {
       return await apiRequest("DELETE", `/api/calendar/notes/${id}`, null);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/notes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/calendar/notes', selectedKliqId] });
       toast({ title: "Note deleted successfully!" });
     },
     onError: (error: any) => {
@@ -215,6 +251,14 @@ export default function Calendar() {
     setIsSheetOpen(true);
   };
 
+  const handleKliqChange = (kliqId: string) => {
+    setSelectedKliqId(kliqId);
+    // Update URL to persist selection
+    const params = new URLSearchParams(window.location.search);
+    params.set('kliqId', kliqId);
+    window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+  };
+
   const handleAddNote = () => {
     setEditingNote(null);
     form.reset({
@@ -226,16 +270,43 @@ export default function Calendar() {
     setIsAddDialogOpen(true);
   };
 
+  const selectedKliq = accessibleKliqs.find(k => k.kliqId === selectedKliqId);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-card border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <CalendarIcon className="h-6 w-6" />
-              Kliq Calendar
-            </h1>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <CalendarIcon className="h-6 w-6" />
+                Kliq Calendar
+              </h1>
+            </div>
+
+            {/* Kliq Selector */}
+            {accessibleKliqs.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <Select value={selectedKliqId || undefined} onValueChange={handleKliqChange}>
+                  <SelectTrigger className="w-64" data-testid="select-kliq">
+                    <SelectValue placeholder="Select a kliq" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accessibleKliqs.map((kliq) => (
+                      <SelectItem key={kliq.kliqId} value={kliq.kliqId}>
+                        {kliq.isOwner ? `${kliq.kliqName} (My Kliq)` : `${kliq.kliqName} (${kliq.kliqOwner.firstName}'s Kliq)`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between mt-4">
+            <div></div>
             <div className="flex gap-2">
               <Button
                 variant={viewMode === "month" ? "default" : "outline"}
