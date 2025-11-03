@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { PushNotificationSetup } from "@/components/PushNotificationSetup";
 import { LanguageSelector } from "@/components/LanguageSelector";
 
 import { 
@@ -435,12 +434,6 @@ export default function Settings() {
                 )}
               </CardContent>
             </Card>
-
-            {/* Push Notification Setup */}
-            <PushNotificationSetup 
-              darkStyle={true}
-              compact={false}
-            />
 
             {/* Language Settings */}
             <Card className="bg-white/10 backdrop-blur-sm border-white/20">
