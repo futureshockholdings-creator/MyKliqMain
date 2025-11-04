@@ -55,5 +55,9 @@ externalPort = 3000
 localPort = 45059
 externalPort = 3003
 
+[[ports]]
+localPort = 45263
+externalPort = 3002
+
 [agent]
 integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.0", "discord:1.0.0", "javascript_gemini:1.0.0"]
