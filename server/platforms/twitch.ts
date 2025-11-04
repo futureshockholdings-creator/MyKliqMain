@@ -28,22 +28,31 @@ export class TwitchOAuth implements OAuthPlatform {
   }
 
   async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens> {
+    const requestBody = {
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: this.redirectUri,
+    };
+    
+    console.log('Twitch token exchange request:', {
+      redirect_uri: this.redirectUri,
+      code: code.substring(0, 10) + '...',
+    });
+    
     const response = await fetch('https://id.twitch.tv/oauth2/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: this.redirectUri,
-      }),
+      body: new URLSearchParams(requestBody),
     });
 
     if (!response.ok) {
-      throw new Error(`Twitch OAuth error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Twitch OAuth error response:', errorText);
+      throw new Error(`Twitch OAuth error: ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
