@@ -16,6 +16,8 @@ export class TwitchOAuth implements OAuthPlatform {
   }
 
   getAuthUrl(state: string, codeChallenge?: string): string {
+    console.log('Twitch getAuthUrl - redirect_uri being sent:', this.redirectUri);
+    
     const params = new URLSearchParams({
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
