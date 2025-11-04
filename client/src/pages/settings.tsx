@@ -410,14 +410,14 @@ export default function Settings() {
                             </div>
                             <Button
                               onClick={() => connectAccount.mutate(platformKey)}
-                              disabled={platformKey !== 'tiktok' || connectAccount.isPending}
-                              className={platformKey === 'tiktok' 
+                              disabled={(platformKey !== 'tiktok' && platformKey !== 'twitch') || connectAccount.isPending}
+                              className={(platformKey === 'tiktok' || platformKey === 'twitch')
                                 ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
                                 : "w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed"}
                               data-testid={`button-connect-${platformKey}`}
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
-                              {platformKey === 'tiktok' ? 'Connect TikTok' : 'Coming Soon'}
+                              {platformKey === 'tiktok' ? 'Connect TikTok' : platformKey === 'twitch' ? 'Connect Twitch' : 'Coming Soon'}
                             </Button>
                           </div>
                         );
