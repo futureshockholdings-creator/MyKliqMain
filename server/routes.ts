@@ -5423,6 +5423,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         req.session.pkceCodeVerifier = codeVerifier;
       }
       
+      console.log('OAuth Authorize Debug:', {
+        platform,
+        state,
+        sessionId: req.sessionID,
+        storedState: req.session.oauthState,
+        hasSession: !!req.session
+      });
+      
       // Check if OAuth credentials are configured for this platform
       const credentialMap: Record<string, { clientId: string; clientSecret: string }> = {
         instagram: { 
@@ -5482,7 +5490,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Verify state parameter
       const sessionState = req.session?.oauthState;
+      console.log('OAuth Callback Debug:', {
+        platform,
+        receivedState: state,
+        sessionState,
+        sessionId: req.sessionID,
+        hasSession: !!req.session,
+        sessionKeys: req.session ? Object.keys(req.session) : []
+      });
+      
       if (!sessionState || sessionState !== state) {
+        console.error('State mismatch:', { sessionState, receivedState: state });
         return res.status(400).json({ message: "Invalid state parameter" });
       }
       
