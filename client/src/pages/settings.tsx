@@ -128,7 +128,8 @@ export default function Settings() {
   // Connect social account mutation
   const connectAccount = useMutation({
     mutationFn: async (platform: string) => {
-      const response = await apiRequest("GET", `/api/oauth/authorize/${platform}`);
+      // Add cache-busting timestamp to prevent cached OAuth states
+      const response = await apiRequest("GET", `/api/oauth/authorize/${platform}?t=${Date.now()}`);
       return response;
     },
     onSuccess: (data) => {
