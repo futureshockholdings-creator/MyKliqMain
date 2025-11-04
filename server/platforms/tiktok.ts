@@ -15,7 +15,7 @@ export class TikTokOAuth implements OAuthPlatform {
     return !!(this.clientKey && this.clientSecret);
   }
 
-  getAuthUrl(state: string): string {
+  getAuthUrl(state: string, codeChallenge?: string): string {
     const csrfState = Math.random().toString(36).substring(2);
     const params = new URLSearchParams({
       client_key: this.clientKey,
@@ -25,22 +25,35 @@ export class TikTokOAuth implements OAuthPlatform {
       state: state || csrfState,
     });
 
+    // Add PKCE parameters if provided
+    if (codeChallenge) {
+      params.append('code_challenge', codeChallenge);
+      params.append('code_challenge_method', 'S256');
+    }
+
     return `https://www.tiktok.com/v2/auth/authorize?${params.toString()}`;
   }
 
-  async exchangeCodeForTokens(code: string): Promise<OAuthTokens> {
+  async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens> {
+    const params = new URLSearchParams({
+      client_key: this.clientKey,
+      client_secret: this.clientSecret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: this.redirectUri,
+    });
+
+    // Add code_verifier for PKCE if provided
+    if (codeVerifier) {
+      params.append('code_verifier', codeVerifier);
+    }
+
     const response = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        client_key: this.clientKey,
-        client_secret: this.clientSecret,
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: this.redirectUri,
-      }),
+      body: params,
     });
 
     if (!response.ok) {
