@@ -15,7 +15,7 @@ export class ESPNOAuth implements OAuthPlatform {
     return !!(this.clientId && this.clientSecret);
   }
 
-  getAuthUrl(state: string): string {
+  getAuthUrl(state: string, codeChallenge?: string): string {
     const params = new URLSearchParams({
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
@@ -27,7 +27,7 @@ export class ESPNOAuth implements OAuthPlatform {
     return `https://api.espn.com/v1/oauth/authorize?${params.toString()}`;
   }
 
-  async exchangeCodeForTokens(code: string): Promise<OAuthTokens> {
+  async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens> {
     const response = await fetch('https://api.espn.com/v1/oauth/token', {
       method: 'POST',
       headers: {

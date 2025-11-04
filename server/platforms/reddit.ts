@@ -15,7 +15,7 @@ export class RedditOAuth implements OAuthPlatform {
     return !!(this.clientId && this.clientSecret);
   }
 
-  getAuthUrl(state: string): string {
+  getAuthUrl(state: string, codeChallenge?: string): string {
     const params = new URLSearchParams({
       client_id: this.clientId,
       response_type: 'code',
@@ -28,7 +28,7 @@ export class RedditOAuth implements OAuthPlatform {
     return `https://www.reddit.com/api/v1/authorize?${params.toString()}`;
   }
 
-  async exchangeCodeForTokens(code: string): Promise<OAuthTokens> {
+  async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens> {
     const auth = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
     
     const response = await fetch('https://www.reddit.com/api/v1/access_token', {

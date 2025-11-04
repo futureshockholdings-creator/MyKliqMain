@@ -15,7 +15,7 @@ export class YouTubeOAuth implements OAuthPlatform {
     return !!(this.clientId && this.clientSecret);
   }
 
-  getAuthUrl(state: string): string {
+  getAuthUrl(state: string, codeChallenge?: string): string {
     const params = new URLSearchParams({
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
@@ -29,7 +29,7 @@ export class YouTubeOAuth implements OAuthPlatform {
     return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   }
 
-  async exchangeCodeForTokens(code: string): Promise<OAuthTokens> {
+  async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens> {
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {

@@ -15,7 +15,7 @@ export class TwitchOAuth implements OAuthPlatform {
     return !!(this.clientId && this.clientSecret);
   }
 
-  getAuthUrl(state: string): string {
+  getAuthUrl(state: string, codeChallenge?: string): string {
     const params = new URLSearchParams({
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
@@ -27,7 +27,7 @@ export class TwitchOAuth implements OAuthPlatform {
     return `https://id.twitch.tv/oauth2/authorize?${params.toString()}`;
   }
 
-  async exchangeCodeForTokens(code: string): Promise<OAuthTokens> {
+  async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens> {
     const response = await fetch('https://id.twitch.tv/oauth2/token', {
       method: 'POST',
       headers: {

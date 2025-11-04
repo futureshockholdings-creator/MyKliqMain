@@ -15,7 +15,7 @@ export class FacebookOAuth implements OAuthPlatform {
     return !!(this.clientId && this.clientSecret);
   }
 
-  getAuthUrl(state: string): string {
+  getAuthUrl(state: string, codeChallenge?: string): string {
     const params = new URLSearchParams({
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
@@ -27,7 +27,7 @@ export class FacebookOAuth implements OAuthPlatform {
     return `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
   }
 
-  async exchangeCodeForTokens(code: string): Promise<OAuthTokens> {
+  async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens> {
     const params = new URLSearchParams({
       client_id: this.clientId,
       client_secret: this.clientSecret,

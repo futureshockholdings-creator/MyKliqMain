@@ -5481,11 +5481,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Extract user ID from state
       const [userId] = state.split(':');
       
+      // Retrieve code_verifier for PKCE (if stored for this platform)
+      const codeVerifier = req.session?.pkceCodeVerifier;
+      
       // Handle OAuth callback through service
-      const result = await oauthService.handleOAuthCallback(platform, code, state);
+      const result = await oauthService.handleOAuthCallback(platform, code, state, codeVerifier);
       
       // Clear session state
       delete req.session.oauthState;
+      delete req.session.pkceCodeVerifier;
       
       if (result.success) {
         res.redirect('/settings?social=connected');
