@@ -5491,7 +5491,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/oauth/callback/:platform', async (req: any, res) => {
     try {
       const { platform } = req.params;
-      const { code, state } = req.query;
+      const { code, state, error, error_description } = req.query;
+      
+      console.log('OAuth Callback - All query params:', req.query);
+      
+      // Check for OAuth errors from the provider
+      if (error) {
+        console.error('OAuth provider error:', { error, error_description });
+        return res.redirect(`/settings?social=error&message=${encodeURIComponent(error_description || error)}`);
+      }
+      
+      if (!code) {
+        console.error('OAuth callback missing code parameter');
+        return res.redirect('/settings?social=error&message=missing_authorization_code');
+      }
       
       // Verify state parameter
       const sessionState = req.session?.oauthState;

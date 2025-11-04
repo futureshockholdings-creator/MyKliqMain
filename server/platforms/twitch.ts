@@ -38,7 +38,7 @@ export class TwitchOAuth implements OAuthPlatform {
     
     console.log('Twitch token exchange request:', {
       redirect_uri: this.redirectUri,
-      code: code.substring(0, 10) + '...',
+      code: code ? code.substring(0, 10) + '...' : 'MISSING',
     });
     
     const response = await fetch('https://id.twitch.tv/oauth2/token', {
