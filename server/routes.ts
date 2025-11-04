@@ -34,6 +34,15 @@ const passwordSetupSchema = z.object({
 import { WebSocketServer, WebSocket } from "ws";
 import crypto from "crypto";
 
+// PKCE helper functions for OAuth 2.0
+function generateCodeVerifier(): string {
+  return crypto.randomBytes(32).toString('base64url');
+}
+
+function generateCodeChallenge(verifier: string): string {
+  return crypto.createHash('sha256').update(verifier).digest('base64url');
+}
+
 // Zodiac sign calculation helper
 function getZodiacSign(birthdate: string): string {
   const date = new Date(birthdate);
@@ -5405,6 +5414,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store state in session for verification
       req.session.oauthState = state;
       
+      // Generate PKCE parameters for TikTok (required by TikTok API)
+      let codeChallenge: string | undefined;
+      if (platform === 'tiktok') {
+        const codeVerifier = generateCodeVerifier();
+        codeChallenge = generateCodeChallenge(codeVerifier);
+        // Store code_verifier in session for later use during token exchange
+        req.session.pkceCodeVerifier = codeVerifier;
+      }
+      
       // Check if OAuth credentials are configured for this platform
       const credentialMap: Record<string, { clientId: string; clientSecret: string }> = {
         instagram: { 
@@ -5440,7 +5458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const authUrl = oauthService.generateAuthUrl(platform, userId);
+      const authUrl = oauthService.generateAuthUrl(platform, userId, codeChallenge);
       res.json({ authUrl });
     } catch (error) {
       console.error(`Error starting OAuth for ${req.params.platform}:`, error);
