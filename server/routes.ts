@@ -5458,6 +5458,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Explicitly save session before redirecting to external OAuth provider
+      await new Promise<void>((resolve, reject) => {
+        req.session.save((err: any) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      
       const authUrl = oauthService.generateAuthUrl(platform, userId, codeChallenge);
       res.json({ authUrl });
     } catch (error) {
