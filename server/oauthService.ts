@@ -61,14 +61,13 @@ export class OAuthService {
     return this.platforms.get(platform);
   }
 
-  generateAuthUrl(platform: string, userId: string, codeChallenge?: string): string | null {
+  generateAuthUrl(platform: string, state: string, codeChallenge?: string): string | null {
     const platformImpl = this.platforms.get(platform);
     if (!platformImpl) {
       return null;
     }
 
-    // Use userId as state to identify the user during callback
-    const state = Buffer.from(JSON.stringify({ userId, platform })).toString('base64');
+    // Use the provided state parameter (already contains userId and random value)
     return platformImpl.getAuthUrl(state, codeChallenge);
   }
 
@@ -84,9 +83,8 @@ export class OAuthService {
         return { success: false, error: 'Unsupported platform' };
       }
 
-      // Decode state to get user info
-      const stateData = JSON.parse(Buffer.from(state, 'base64').toString());
-      const { userId } = stateData;
+      // Extract userId from state (format: userId:platform:random)
+      const [userId] = state.split(':');
 
       // Exchange code for tokens
       const tokens = await platformImpl.exchangeCodeForTokens(code, codeVerifier);
