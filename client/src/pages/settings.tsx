@@ -410,12 +410,14 @@ export default function Settings() {
                             </div>
                             <Button
                               onClick={() => connectAccount.mutate(platformKey)}
-                              disabled={true}
-                              className="w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed"
+                              disabled={platformKey !== 'tiktok' || connectAccount.isPending}
+                              className={platformKey === 'tiktok' 
+                                ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
+                                : "w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed"}
                               data-testid={`button-connect-${platformKey}`}
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
-                              Coming Soon
+                              {platformKey === 'tiktok' ? 'Connect TikTok' : 'Coming Soon'}
                             </Button>
                           </div>
                         );

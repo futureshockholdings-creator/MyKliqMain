@@ -2951,6 +2951,92 @@ export default function Home() {
             );
           }
           
+          if (item.type === 'external_post') {
+            const platformIcons: Record<string, any> = {
+              tiktok: SiTiktok,
+              instagram: SiInstagram,
+              youtube: SiYoutube,
+              twitch: SiTwitch,
+              discord: SiDiscord,
+              reddit: SiReddit,
+            };
+            
+            const platformColors: Record<string, string> = {
+              tiktok: 'from-black via-pink-500 to-cyan-500',
+              instagram: 'from-purple-600 via-pink-500 to-orange-500',
+              youtube: 'from-red-600 to-red-500',
+              twitch: 'from-purple-600 to-purple-500',
+              discord: 'from-indigo-600 to-blue-500',
+              reddit: 'from-orange-600 to-orange-500',
+            };
+            
+            const PlatformIcon = platformIcons[item.platform] || ExternalLink;
+            const platformGradient = platformColors[item.platform] || 'from-gray-600 to-gray-500';
+            
+            return (
+              <Card
+                key={item.id}
+                className="bg-gradient-to-br from-card to-card/80 border-border overflow-hidden"
+              >
+                {/* Platform Header */}
+                <div className={`bg-gradient-to-r ${platformGradient} px-4 py-2`}>
+                  <div className="flex items-center gap-2">
+                    <PlatformIcon className="w-5 h-5 text-white" />
+                    <span className="text-white font-semibold capitalize">{item.platform}</span>
+                    <span className="text-white/80 text-sm">• @{item.platformUsername}</span>
+                  </div>
+                </div>
+                
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <Avatar className="w-10 h-10 border-2 border-primary">
+                      <AvatarImage src={item.author.profileImageUrl} />
+                      <AvatarFallback className="bg-muted text-foreground">
+                        {item.author.firstName?.[0] || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-bold text-primary">
+                        {item.author.firstName} {item.author.lastName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatTimeAgo(item.platformCreatedAt)}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Content */}
+                  {item.content && (
+                    <p className="text-foreground mb-3 whitespace-pre-wrap">{item.content}</p>
+                  )}
+                  
+                  {/* Media Thumbnail */}
+                  {item.mediaUrl && (
+                    <div className="mb-3 rounded-lg overflow-hidden">
+                      <img 
+                        src={item.mediaUrl} 
+                        alt={`${item.platform} post`}
+                        className="w-full object-cover max-h-96"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* View Original Button */}
+                  <a
+                    href={item.postUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground rounded-lg transition-all"
+                    data-testid={`link-external-post-${item.id}`}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    View on {item.platform.charAt(0).toUpperCase() + item.platform.slice(1)}
+                  </a>
+                </CardContent>
+              </Card>
+            );
+          }
+          
           return null; // For unknown types
         })()}
       </div>

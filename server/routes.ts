@@ -5553,10 +5553,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Decrypt access token
       const accessToken = decryptFromStorage(credential.encryptedAccessToken);
       
-      // TODO: Implement platform-specific content fetching
-      // This would involve calling each platform's API to fetch recent posts
+      // Get platform implementation
+      const platformImpl = oauthService.getPlatform(platform);
+      if (!platformImpl) {
+        return res.status(400).json({ message: "Platform not supported" });
+      }
       
-      res.json({ message: `Sync initiated for ${platform}`, success: true });
+      // Fetch posts from the platform
+      const posts = await platformImpl.fetchUserPosts(accessToken, credential.platformUserId);
+      
+      // Convert to external posts format
+      const externalPostsToInsert = posts.map(post => ({
+        socialCredentialId: credential.id,
+        platform: post.platform,
+        platformPostId: post.platformPostId,
+        platformUserId: credential.platformUserId,
+        platformUsername: credential.platformUsername,
+        content: post.content,
+        mediaUrls: post.mediaUrl ? [post.mediaUrl] : [],
+        thumbnailUrl: post.mediaUrl || null,
+        postUrl: post.originalUrl,
+        platformCreatedAt: post.createdAt,
+        engagementStats: post.metadata || {},
+      }));
+      
+      // Store posts in database
+      if (externalPostsToInsert.length > 0) {
+        await storage.createExternalPosts(externalPostsToInsert);
+      }
+      
+      // Update last sync timestamp
+      await storage.updateSocialCredential(credential.id, {
+        lastSyncAt: new Date(),
+      });
+      
+      res.json({ 
+        message: `Successfully synced ${posts.length} posts from ${platform}`, 
+        success: true,
+        postsCount: posts.length 
+      });
     } catch (error) {
       console.error(`Error syncing ${req.params.platform}:`, error);
       res.status(500).json({ message: "Failed to sync platform" });

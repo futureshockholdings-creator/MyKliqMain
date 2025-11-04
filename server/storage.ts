@@ -719,7 +719,7 @@ export class DatabaseStorage implements IStorage {
 
     try {
       // Execute all queries in parallel for better performance
-      const [postsData, pollsData, eventsData] = await Promise.all([
+      const [postsData, pollsData, eventsData, externalPostsData] = await Promise.all([
         // 1. Get regular posts
         this.getPosts(userId, filters),
         
@@ -770,6 +770,33 @@ export class DatabaseStorage implements IStorage {
           .innerJoin(users, eq(events.userId, users.id))
           .where(inArray(events.userId, friendIds))
           .orderBy(desc(events.createdAt))
+          .limit(limit * 2) : [], // Get more to account for filtering
+          
+        // 4. Get external posts from kliq members' social media (optimized query)
+        friendIds.length > 0 ? db
+          .select({
+            id: externalPosts.id,
+            platform: externalPosts.platform,
+            platformPostId: externalPosts.platformPostId,
+            platformUserId: externalPosts.platformUserId,
+            platformUsername: externalPosts.platformUsername,
+            content: externalPosts.content,
+            thumbnailUrl: externalPosts.thumbnailUrl,
+            postUrl: externalPosts.postUrl,
+            platformCreatedAt: externalPosts.platformCreatedAt,
+            createdAt: externalPosts.createdAt,
+            credentialUserId: socialCredentials.userId,
+            authorId: users.id,
+            authorFirstName: users.firstName,
+            authorLastName: users.lastName,
+            authorProfileImageUrl: users.profileImageUrl,
+            authorKliqName: users.kliqName,
+          })
+          .from(externalPosts)
+          .innerJoin(socialCredentials, eq(externalPosts.socialCredentialId, socialCredentials.id))
+          .innerJoin(users, eq(socialCredentials.userId, users.id))
+          .where(inArray(socialCredentials.userId, friendIds))
+          .orderBy(desc(externalPosts.platformCreatedAt))
           .limit(limit * 2) : [] // Get more to account for filtering
       ]);
 
@@ -878,6 +905,29 @@ export class DatabaseStorage implements IStorage {
         },
         type: 'action',
         content: `🔴 ${action.status === 'live' ? 'Started a live stream' : 'Ended a live stream'}: "${action.title}"`,
+      })));
+
+      // Add external posts from social media platforms to feed
+      feedItems.push(...externalPostsData.map(externalPost => ({
+        id: externalPost.id,
+        userId: externalPost.credentialUserId,
+        platform: externalPost.platform,
+        platformPostId: externalPost.platformPostId,
+        platformUsername: externalPost.platformUsername,
+        content: externalPost.content,
+        mediaUrl: externalPost.thumbnailUrl,
+        postUrl: externalPost.postUrl,
+        platformCreatedAt: externalPost.platformCreatedAt,
+        activityDate: externalPost.platformCreatedAt,
+        createdAt: externalPost.createdAt,
+        author: {
+          id: externalPost.authorId,
+          firstName: externalPost.authorFirstName,
+          lastName: externalPost.authorLastName,
+          profileImageUrl: externalPost.authorProfileImageUrl,
+          kliqName: externalPost.authorKliqName,
+        },
+        type: 'external_post',
       })));
     } catch (error) {
       console.error('Error fetching kliq feed items:', error);
