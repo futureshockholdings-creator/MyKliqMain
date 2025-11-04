@@ -5404,6 +5404,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Start OAuth flow for a platform
   app.get('/api/oauth/authorize/:platform', isAuthenticated, async (req: any, res) => {
+    // Prevent caching - OAuth state must be fresh every time
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     try {
       const { platform } = req.params;
       const userId = req.user.claims.sub;
