@@ -30,8 +30,8 @@ export interface SocialPost {
 }
 
 export interface OAuthPlatform {
-  getAuthUrl(state: string): string;
-  exchangeCodeForTokens(code: string): Promise<OAuthTokens>;
+  getAuthUrl(state: string, codeChallenge?: string): string;
+  exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens>;
   refreshTokens(refreshToken: string): Promise<OAuthTokens>;
   getUserInfo(accessToken: string): Promise<any>;
   fetchUserPosts(accessToken: string, userId?: string): Promise<SocialPost[]>;
@@ -61,7 +61,7 @@ export class OAuthService {
     return this.platforms.get(platform);
   }
 
-  generateAuthUrl(platform: string, userId: string): string | null {
+  generateAuthUrl(platform: string, userId: string, codeChallenge?: string): string | null {
     const platformImpl = this.platforms.get(platform);
     if (!platformImpl) {
       return null;
@@ -69,13 +69,14 @@ export class OAuthService {
 
     // Use userId as state to identify the user during callback
     const state = Buffer.from(JSON.stringify({ userId, platform })).toString('base64');
-    return platformImpl.getAuthUrl(state);
+    return platformImpl.getAuthUrl(state, codeChallenge);
   }
 
   async handleOAuthCallback(
     platform: string,
     code: string,
-    state: string
+    state: string,
+    codeVerifier?: string
   ): Promise<{ success: boolean; userId?: string; error?: string }> {
     try {
       const platformImpl = this.platforms.get(platform);
@@ -88,7 +89,7 @@ export class OAuthService {
       const { userId } = stateData;
 
       // Exchange code for tokens
-      const tokens = await platformImpl.exchangeCodeForTokens(code);
+      const tokens = await platformImpl.exchangeCodeForTokens(code, codeVerifier);
 
       // Get user info from the platform
       const userInfo = await platformImpl.getUserInfo(tokens.accessToken);
