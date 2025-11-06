@@ -101,8 +101,8 @@ export class OAuthService {
       const credential: Omit<SocialCredential, 'id' | 'createdAt' | 'updatedAt'> = {
         userId,
         platform,
-        platformUserId: userInfo.id || userInfo.login || userInfo.username,
-        platformUsername: userInfo.username || userInfo.login || userInfo.display_name,
+        platformUserId: userInfo.id || userInfo.login || userInfo.username || userInfo.name,
+        platformUsername: userInfo.username || userInfo.login || userInfo.display_name || userInfo.name || userInfo.global_name,
         encryptedAccessToken,
         encryptedRefreshToken,
         tokenExpiresAt: tokens.expiresIn 
