@@ -5461,6 +5461,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         reddit: { 
           clientId: process.env.REDDIT_CLIENT_ID || '', 
           clientSecret: process.env.REDDIT_CLIENT_SECRET || '' 
+        },
+        pinterest: { 
+          clientId: process.env.PINTEREST_CLIENT_ID || '', 
+          clientSecret: process.env.PINTEREST_CLIENT_SECRET || '' 
         }
       };
 
