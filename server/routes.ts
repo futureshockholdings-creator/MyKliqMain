@@ -5469,6 +5469,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const credentials = credentialMap[platform];
+      
+      // Debug: Log credential check for Pinterest
+      if (platform === 'pinterest') {
+        console.log('Pinterest credentials check:', {
+          hasCredentials: !!credentials,
+          hasClientId: !!credentials?.clientId,
+          hasClientSecret: !!credentials?.clientSecret,
+          clientIdLength: credentials?.clientId?.length,
+          clientSecretLength: credentials?.clientSecret?.length
+        });
+      }
+      
       if (!credentials || !credentials.clientId || !credentials.clientSecret) {
         return res.status(400).json({
           message: `${platform} OAuth credentials not configured. Please add ${platform.toUpperCase()}_CLIENT_ID and ${platform.toUpperCase()}_CLIENT_SECRET environment variables.`
