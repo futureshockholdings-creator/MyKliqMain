@@ -1,26 +1,16 @@
-
 version: 1
 frontend:
   phases:
     preBuild:
       commands:
         - npm install --force
-        # Optional: rebuild esbuild if needed
-        - npm rebuild esbuild --force || echo "esbuild rebuild skipped"
     build:
       commands:
-        - npm run build
+        - npm run build --force
   artifacts:
-    baseDirectory: dist/public
+    baseDirectory: dist
     files:
       - '**/*'
-  customHeaders:
-    - pattern: '**/*'
-      headers:
-        - key: 'Cache-Control'
-          value: 'max-age=0,no-cache,no-store,must-revalidate'
   cache:
     paths:
       - node_modules/**/*
-
-# No backend here since server has no package.json
