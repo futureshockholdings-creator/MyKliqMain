@@ -96,7 +96,18 @@ export class YouTubeOAuth implements OAuthPlatform {
     }
 
     const data = await response.json();
-    return data.items?.[0];
+    const channel = data.items?.[0];
+    
+    if (!channel) {
+      throw new Error('No YouTube channel found for this account');
+    }
+    
+    return {
+      id: channel.id,
+      username: channel.snippet.title,
+      name: channel.snippet.title,
+      customUrl: channel.snippet.customUrl,
+    };
   }
 
   async fetchUserPosts(accessToken: string, userId?: string): Promise<SocialPost[]> {
