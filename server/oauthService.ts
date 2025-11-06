@@ -91,6 +91,11 @@ export class OAuthService {
 
       // Get user info from the platform
       const userInfo = await platformImpl.getUserInfo(tokens.accessToken);
+      
+      // Debug: Log what Reddit returns
+      if (platform === 'reddit') {
+        console.log('Reddit userInfo:', JSON.stringify(userInfo, null, 2));
+      }
 
       // Encrypt and store credentials
       const encryptedAccessToken = encryptForStorage(tokens.accessToken);
