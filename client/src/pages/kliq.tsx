@@ -698,13 +698,34 @@ export default function Kliq() {
         </TabsList>
 
         <TabsContent value="friends" className="space-y-6">
-          {/* Group Chat Button - Always visible */}
-          <div className="flex justify-center mb-4">
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="bg-card border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-secondary" data-testid="text-friend-count">
+                  {friends.length}/28
+                </div>
+                <div className="text-sm text-muted-foreground">Friends</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-mykliq-purple" data-testid="text-open-spots">
+                  {28 - friends.length}
+                </div>
+                <div className="text-sm text-muted-foreground">Open Spots</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Pyramid Chart with Group Chat Button */}
+          <div className="relative">
+            {/* Group Chat Button - Top Left Corner */}
             <Dialog open={isGroupChatDialogOpen} onOpenChange={setIsGroupChatDialogOpen}>
               <DialogTrigger asChild>
                 <Button
                   size="lg"
-                  className="bg-mykliq-green hover:bg-mykliq-green/90 text-white shadow-lg h-16 w-16 rounded-full"
+                  className="absolute top-0 left-0 z-10 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg h-16 w-16 rounded-full"
                   data-testid="button-new-group-chat"
                 >
                   <MessagesSquare className="w-8 h-8" />
@@ -801,30 +822,9 @@ export default function Kliq() {
                 </div>
               </DialogContent>
             </Dialog>
-          </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-secondary" data-testid="text-friend-count">
-                  {friends.length}/28
-                </div>
-                <div className="text-sm text-muted-foreground">Friends</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-mykliq-purple" data-testid="text-open-spots">
-                  {28 - friends.length}
-                </div>
-                <div className="text-sm text-muted-foreground">Open Spots</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Pyramid Chart */}
-          {friendsLoading ? (
+            {/* Pyramid Chart */}
+            {friendsLoading ? (
             <Card className="bg-card border-border">
               <CardContent className="p-8 text-center">
                 <div className="animate-pulse space-y-4">
@@ -874,7 +874,8 @@ export default function Kliq() {
               onCloseKliq={handleCloseKliq}
               isClosingKliq={false}
             />
-          )}
+            )}
+          </div>
 
           {/* Leave Kliq Button - only show if user has friends */}
           {friends.length > 0 && (
