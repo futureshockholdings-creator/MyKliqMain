@@ -698,6 +698,111 @@ export default function Kliq() {
         </TabsList>
 
         <TabsContent value="friends" className="space-y-6">
+          {/* Group Chat Button - Always visible */}
+          <div className="flex justify-center mb-4">
+            <Dialog open={isGroupChatDialogOpen} onOpenChange={setIsGroupChatDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  size="lg"
+                  className="bg-mykliq-green hover:bg-mykliq-green/90 text-white shadow-lg h-16 w-16 rounded-full"
+                  data-testid="button-new-group-chat"
+                >
+                  <MessagesSquare className="w-8 h-8" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-mykliq-green">Create Group Chat</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  {/* Optional Group Name */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Group Name (Optional)</label>
+                    <Input
+                      placeholder="e.g., Weekend Squad"
+                      value={groupChatName}
+                      onChange={(e) => setGroupChatName(e.target.value)}
+                      className="bg-background border-border"
+                      data-testid="input-group-name"
+                    />
+                  </div>
+
+                  {/* Member Selection */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Select Members (min 2)
+                      <span className="ml-2 text-muted-foreground">
+                        {selectedParticipants.length} selected
+                      </span>
+                    </label>
+                    {friends.length === 0 ? (
+                      <div className="p-4 bg-muted rounded-lg text-center">
+                        <p className="text-sm text-muted-foreground">
+                          You need at least 2 friends to create a group chat.
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Add friends to your kliq first!
+                        </p>
+                      </div>
+                    ) : friends.length === 1 ? (
+                      <div className="p-4 bg-muted rounded-lg text-center">
+                        <p className="text-sm text-muted-foreground">
+                          You need at least one more friend to create a group chat.
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Currently have {friends.length} friend - need 2 minimum.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {friends.map((f) => (
+                          <div
+                            key={f.friend.id}
+                            className="flex items-center space-x-3 p-3 rounded-lg bg-muted hover:bg-muted/80 cursor-pointer"
+                            onClick={() => toggleParticipant(f.friend.id)}
+                            data-testid={`friend-${f.friend.id}`}
+                          >
+                            <Checkbox
+                              checked={selectedParticipants.includes(f.friend.id)}
+                              onCheckedChange={() => toggleParticipant(f.friend.id)}
+                              data-testid={`checkbox-${f.friend.id}`}
+                            />
+                            <div className="flex items-center gap-2 flex-1">
+                              {f.friend.profileImageUrl ? (
+                                <img
+                                  src={f.friend.profileImageUrl}
+                                  alt={`${f.friend.firstName} ${f.friend.lastName}`}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
+                                  {f.friend.firstName?.[0]}{f.friend.lastName?.[0]}
+                                </div>
+                              )}
+                              <span className="font-medium">
+                                {f.friend.firstName} {f.friend.lastName}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Create Button */}
+                  <Button
+                    onClick={handleCreateGroupChat}
+                    disabled={selectedParticipants.length < 2 || createGroupChatMutation.isPending || friends.length < 2}
+                    className="w-full bg-mykliq-green hover:bg-mykliq-green/90 text-white"
+                    data-testid="button-create-group"
+                  >
+                    {createGroupChatMutation.isPending ? "Creating..." : "Create Group Chat"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
           {/* Stats */}
           <div className="grid grid-cols-2 gap-4">
             <Card className="bg-card border-border">
@@ -749,91 +854,7 @@ export default function Kliq() {
               </CardContent>
             </Card>
           ) : (
-            <div className="relative">
-              {/* Large Green Group Chat Button */}
-              <Dialog open={isGroupChatDialogOpen} onOpenChange={setIsGroupChatDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button
-                    size="lg"
-                    className="absolute top-0 left-0 z-10 bg-mykliq-green hover:bg-mykliq-green/90 text-white shadow-lg h-16 w-16 rounded-full"
-                    data-testid="button-new-group-chat"
-                  >
-                    <MessagesSquare className="w-8 h-8" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="text-mykliq-green">Create Group Chat</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    {/* Optional Group Name */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Group Name (Optional)</label>
-                      <Input
-                        placeholder="e.g., Weekend Squad"
-                        value={groupChatName}
-                        onChange={(e) => setGroupChatName(e.target.value)}
-                        className="bg-background border-border"
-                        data-testid="input-group-name"
-                      />
-                    </div>
-
-                    {/* Member Selection */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        Select Members (min 2)
-                        <span className="ml-2 text-muted-foreground">
-                          {selectedParticipants.length} selected
-                        </span>
-                      </label>
-                      <div className="space-y-2 max-h-60 overflow-y-auto">
-                        {friends.map((f) => (
-                          <div
-                            key={f.friend.id}
-                            className="flex items-center space-x-3 p-3 rounded-lg bg-muted hover:bg-muted/80 cursor-pointer"
-                            onClick={() => toggleParticipant(f.friend.id)}
-                            data-testid={`friend-${f.friend.id}`}
-                          >
-                            <Checkbox
-                              checked={selectedParticipants.includes(f.friend.id)}
-                              onCheckedChange={() => toggleParticipant(f.friend.id)}
-                              data-testid={`checkbox-${f.friend.id}`}
-                            />
-                            <div className="flex items-center gap-2 flex-1">
-                              {f.friend.profileImageUrl ? (
-                                <img
-                                  src={f.friend.profileImageUrl}
-                                  alt={`${f.friend.firstName} ${f.friend.lastName}`}
-                                  className="w-10 h-10 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
-                                  {f.friend.firstName?.[0]}{f.friend.lastName?.[0]}
-                                </div>
-                              )}
-                              <span className="font-medium">
-                                {f.friend.firstName} {f.friend.lastName}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Create Button */}
-                    <Button
-                      onClick={handleCreateGroupChat}
-                      disabled={selectedParticipants.length < 2 || createGroupChatMutation.isPending}
-                      className="w-full bg-mykliq-green hover:bg-mykliq-green/90 text-white"
-                      data-testid="button-create-group"
-                    >
-                      {createGroupChatMutation.isPending ? "Creating..." : "Create Group Chat"}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <PyramidChart
+            <PyramidChart
               friends={friends.map(f => ({
                 id: f.friend.id,
                 firstName: f.friend.firstName,
@@ -853,7 +874,6 @@ export default function Kliq() {
               onCloseKliq={handleCloseKliq}
               isClosingKliq={false}
             />
-            </div>
           )}
 
           {/* Leave Kliq Button - only show if user has friends */}
