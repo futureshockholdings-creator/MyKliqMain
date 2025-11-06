@@ -725,10 +725,10 @@ export default function Kliq() {
               <DialogTrigger asChild>
                 <Button
                   size="lg"
-                  className="absolute top-0 left-0 z-10 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg h-12 w-12 rounded-full"
+                  className="absolute top-0 left-0 z-10 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg h-12 w-12 rounded-full p-0"
                   data-testid="button-new-group-chat"
                 >
-                  <MessagesSquare className="w-10 h-10" />
+                  <MessagesSquare className="!w-10 !h-10" strokeWidth={1.5} />
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto max-h-[80vh] overflow-y-auto">
