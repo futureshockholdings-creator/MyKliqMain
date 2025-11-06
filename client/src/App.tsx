@@ -24,6 +24,7 @@ import Themes from "@/pages/themes";
 import NotFound from "@/pages/not-found";
 import { Messages } from "@/pages/messages";
 import { Conversation } from "@/pages/conversation";
+import { GroupChat } from "@/pages/group-chat";
 import { MovieconManagerPage } from "@/pages/moviecon-manager";
 import { MemeManagerPage } from "@/pages/meme-manager";
 import MaintenanceDashboard from "@/pages/maintenance-dashboard";
@@ -217,6 +218,7 @@ function Router() {
 
           <Route path="/messages" component={Messages} />
           <Route path="/messages/:conversationId" component={Conversation} />
+          <Route path="/group-chat/:groupChatId" component={GroupChat} />
           <Route path="/profile" component={Profile} />
           <Route path="/user/:userId" component={UserProfile} />
           <Route path="/themes" component={Themes} />

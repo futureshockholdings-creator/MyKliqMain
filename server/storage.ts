@@ -15,6 +15,8 @@ import {
   postHighlights,
   messages,
   conversations,
+  groupConversations,
+  conversationParticipants,
   events,
   eventAttendees,
   eventReminders,
@@ -59,6 +61,10 @@ import {
   type InsertMessage,
   type Conversation,
   type InsertConversation,
+  type GroupConversation,
+  type InsertGroupConversation,
+  type ConversationParticipant,
+  type InsertConversationParticipant,
   type Event,
   type InsertEvent,
   type EventAttendee,
@@ -234,6 +240,15 @@ export interface IStorage {
   markConversationAsRead(conversationId: string, userId: string): Promise<void>;
   deleteExpiredMessages(): Promise<void>;
   deleteOldConversations(): Promise<void>;
+  
+  // Group chat operations
+  createGroupConversation(data: { name?: string; creatorId: string; participantIds: string[] }): Promise<GroupConversation>;
+  getGroupConversations(userId: string): Promise<(GroupConversation & { participants: User[]; lastMessage?: Message; unreadCount: number })[]>;
+  getGroupConversation(groupId: string, userId: string): Promise<(GroupConversation & { participants: User[]; messages: (Message & { sender: User })[] }) | undefined>;
+  addParticipantToGroup(groupId: string, userId: string): Promise<void>;
+  removeParticipantFromGroup(groupId: string, userId: string): Promise<void>;
+  sendGroupMessage(message: InsertMessage): Promise<Message>;
+  deleteGroupConversation(groupId: string): Promise<void>;
   
   // Event operations
   getEvents(userId: string): Promise<(Event & { author: User; attendees: (EventAttendee & { user: User })[] })[]>;
@@ -1648,6 +1663,190 @@ export class DatabaseStorage implements IStorage {
       .where(lt(conversations.lastActivity, sevenDaysAgo));
     
     console.log(`Cleaned up ${oldConversations.length} old conversations and ${messagesDeletedCount} messages at ${now.toISOString()}`);
+  }
+
+  // Group chat operations
+  async createGroupConversation(data: { name?: string; creatorId: string; participantIds: string[] }): Promise<GroupConversation> {
+    const { name, creatorId, participantIds } = data;
+    
+    const [groupConversation] = await db
+      .insert(groupConversations)
+      .values({
+        name: name || null,
+        creatorId,
+      })
+      .returning();
+    
+    for (const userId of participantIds) {
+      await db.insert(conversationParticipants).values({
+        groupConversationId: groupConversation.id,
+        userId,
+      });
+    }
+    
+    return groupConversation;
+  }
+
+  async getGroupConversations(userId: string): Promise<(GroupConversation & { participants: User[]; lastMessage?: Message; unreadCount: number })[]> {
+    const userGroups = await db
+      .select({
+        groupConversation: groupConversations,
+      })
+      .from(conversationParticipants)
+      .innerJoin(groupConversations, eq(conversationParticipants.groupConversationId, groupConversations.id))
+      .where(eq(conversationParticipants.userId, userId))
+      .orderBy(desc(groupConversations.lastActivity));
+    
+    const result = [];
+    for (const { groupConversation } of userGroups) {
+      const participantsData = await db
+        .select({ user: users })
+        .from(conversationParticipants)
+        .innerJoin(users, eq(conversationParticipants.userId, users.id))
+        .where(eq(conversationParticipants.groupConversationId, groupConversation.id));
+      
+      const participants = participantsData.map(p => p.user);
+      
+      let lastMessage: Message | undefined;
+      if (groupConversation.lastMessageId) {
+        const lastMessages = await db
+          .select()
+          .from(messages)
+          .where(eq(messages.id, groupConversation.lastMessageId))
+          .limit(1);
+        lastMessage = lastMessages[0];
+      }
+      
+      const unreadMessages = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(messages)
+        .where(
+          and(
+            eq(messages.groupConversationId, groupConversation.id),
+            eq(messages.isRead, false),
+            sql`${messages.senderId} != ${userId}`
+          )
+        );
+      
+      const unreadCount = Number(unreadMessages[0]?.count || 0);
+      
+      result.push({
+        ...groupConversation,
+        participants,
+        lastMessage,
+        unreadCount,
+      });
+    }
+    
+    return result;
+  }
+
+  async getGroupConversation(groupId: string, userId: string): Promise<(GroupConversation & { participants: User[]; messages: (Message & { sender: User })[] }) | undefined> {
+    const isParticipant = await db
+      .select()
+      .from(conversationParticipants)
+      .where(
+        and(
+          eq(conversationParticipants.groupConversationId, groupId),
+          eq(conversationParticipants.userId, userId)
+        )
+      )
+      .limit(1);
+    
+    if (isParticipant.length === 0) {
+      return undefined;
+    }
+    
+    const groupConversationData = await db
+      .select()
+      .from(groupConversations)
+      .where(eq(groupConversations.id, groupId))
+      .limit(1);
+    
+    if (groupConversationData.length === 0) {
+      return undefined;
+    }
+    
+    const groupConversation = groupConversationData[0];
+    
+    const participantsData = await db
+      .select({ user: users })
+      .from(conversationParticipants)
+      .innerJoin(users, eq(conversationParticipants.userId, users.id))
+      .where(eq(conversationParticipants.groupConversationId, groupId));
+    
+    const participants = participantsData.map(p => p.user);
+    
+    const messagesData = await db
+      .select({
+        message: messages,
+        sender: users,
+      })
+      .from(messages)
+      .innerJoin(users, eq(messages.senderId, users.id))
+      .where(eq(messages.groupConversationId, groupId))
+      .orderBy(messages.createdAt);
+    
+    const groupMessages = messagesData.map(({ message, sender }) => ({
+      ...message,
+      sender,
+    }));
+    
+    return {
+      ...groupConversation,
+      participants,
+      messages: groupMessages,
+    };
+  }
+
+  async addParticipantToGroup(groupId: string, userId: string): Promise<void> {
+    await db.insert(conversationParticipants).values({
+      groupConversationId: groupId,
+      userId,
+    });
+  }
+
+  async removeParticipantFromGroup(groupId: string, userId: string): Promise<void> {
+    await db
+      .delete(conversationParticipants)
+      .where(
+        and(
+          eq(conversationParticipants.groupConversationId, groupId),
+          eq(conversationParticipants.userId, userId)
+        )
+      );
+  }
+
+  async sendGroupMessage(message: InsertMessage): Promise<Message> {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    
+    const [newMessage] = await db
+      .insert(messages)
+      .values({
+        ...message,
+        expiresAt,
+      })
+      .returning();
+    
+    if (message.groupConversationId) {
+      await db
+        .update(groupConversations)
+        .set({
+          lastMessageId: newMessage.id,
+          lastActivity: new Date(),
+        })
+        .where(eq(groupConversations.id, message.groupConversationId));
+    }
+    
+    return newMessage;
+  }
+
+  async deleteGroupConversation(groupId: string): Promise<void> {
+    await db.delete(messages).where(eq(messages.groupConversationId, groupId));
+    
+    await db.delete(conversationParticipants).where(eq(conversationParticipants.groupConversationId, groupId));
+    
+    await db.delete(groupConversations).where(eq(groupConversations.id, groupId));
   }
 
   // Event operations

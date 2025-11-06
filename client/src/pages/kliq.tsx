@@ -13,7 +13,8 @@ import { CreatePollDialog } from "@/components/CreatePollDialog";
 import { RankingSuggestions } from "@/components/ranking-suggestions";
 import { useVideoCall } from "@/hooks/useVideoCall";
 import { Badge } from "@/components/ui/badge";
-import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut, Calendar } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut, Calendar, MessagesSquare } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { getInviteMessage, getAppStoreUrl, getDownloadText } from "@/lib/deviceDetection";
@@ -33,6 +34,9 @@ export default function Kliq() {
   const [friendToRemove, setFriendToRemove] = useState<string | null>(null);
   const [isLeaveKliqDialogOpen, setIsLeaveKliqDialogOpen] = useState(false);
   const [isCloseKliqDialogOpen, setIsCloseKliqDialogOpen] = useState(false);
+  const [isGroupChatDialogOpen, setIsGroupChatDialogOpen] = useState(false);
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+  const [groupChatName, setGroupChatName] = useState("");
   const { user } = useAuth();
   const userData = user as { 
     id?: string; 
@@ -520,6 +524,65 @@ export default function Kliq() {
     }
   };
 
+  // Create group chat mutation
+  const createGroupChatMutation = useMutation({
+    mutationFn: async (data: { name?: string; participantIds: string[] }) => {
+      return await apiRequest("POST", "/api/group-chats", data);
+    },
+    onSuccess: (groupChat) => {
+      setIsGroupChatDialogOpen(false);
+      setSelectedParticipants([]);
+      setGroupChatName("");
+      toast({
+        title: "Group chat created!",
+        description: "Your group chat has been created",
+      });
+      navigate(`/group-chat/${groupChat.id}`);
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to create group chat",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const toggleParticipant = (userId: string) => {
+    setSelectedParticipants(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleCreateGroupChat = () => {
+    if (selectedParticipants.length < 2) {
+      toast({
+        title: "Error",
+        description: "Please select at least 2 members",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createGroupChatMutation.mutate({
+      name: groupChatName.trim() || undefined,
+      participantIds: selectedParticipants,
+    });
+  };
+
   // Show video call interface if in a call
   if (isInCall && currentCall) {
     return (
@@ -686,7 +749,91 @@ export default function Kliq() {
               </CardContent>
             </Card>
           ) : (
-            <PyramidChart
+            <div className="relative">
+              {/* Large Green Group Chat Button */}
+              <Dialog open={isGroupChatDialogOpen} onOpenChange={setIsGroupChatDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    size="lg"
+                    className="absolute top-0 left-0 z-10 bg-mykliq-green hover:bg-mykliq-green/90 text-white shadow-lg h-16 w-16 rounded-full"
+                    data-testid="button-new-group-chat"
+                  >
+                    <MessagesSquare className="w-8 h-8" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-mykliq-green">Create Group Chat</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    {/* Optional Group Name */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Group Name (Optional)</label>
+                      <Input
+                        placeholder="e.g., Weekend Squad"
+                        value={groupChatName}
+                        onChange={(e) => setGroupChatName(e.target.value)}
+                        className="bg-background border-border"
+                        data-testid="input-group-name"
+                      />
+                    </div>
+
+                    {/* Member Selection */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Select Members (min 2)
+                        <span className="ml-2 text-muted-foreground">
+                          {selectedParticipants.length} selected
+                        </span>
+                      </label>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {friends.map((f) => (
+                          <div
+                            key={f.friend.id}
+                            className="flex items-center space-x-3 p-3 rounded-lg bg-muted hover:bg-muted/80 cursor-pointer"
+                            onClick={() => toggleParticipant(f.friend.id)}
+                            data-testid={`friend-${f.friend.id}`}
+                          >
+                            <Checkbox
+                              checked={selectedParticipants.includes(f.friend.id)}
+                              onCheckedChange={() => toggleParticipant(f.friend.id)}
+                              data-testid={`checkbox-${f.friend.id}`}
+                            />
+                            <div className="flex items-center gap-2 flex-1">
+                              {f.friend.profileImageUrl ? (
+                                <img
+                                  src={f.friend.profileImageUrl}
+                                  alt={`${f.friend.firstName} ${f.friend.lastName}`}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
+                                  {f.friend.firstName?.[0]}{f.friend.lastName?.[0]}
+                                </div>
+                              )}
+                              <span className="font-medium">
+                                {f.friend.firstName} {f.friend.lastName}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Create Button */}
+                    <Button
+                      onClick={handleCreateGroupChat}
+                      disabled={selectedParticipants.length < 2 || createGroupChatMutation.isPending}
+                      className="w-full bg-mykliq-green hover:bg-mykliq-green/90 text-white"
+                      data-testid="button-create-group"
+                    >
+                      {createGroupChatMutation.isPending ? "Creating..." : "Create Group Chat"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <PyramidChart
               friends={friends.map(f => ({
                 id: f.friend.id,
                 firstName: f.friend.firstName,
@@ -706,6 +853,7 @@ export default function Kliq() {
               onCloseKliq={handleCloseKliq}
               isClosingKliq={false}
             />
+            </div>
           )}
 
           {/* Leave Kliq Button - only show if user has friends */}

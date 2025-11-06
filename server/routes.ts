@@ -3050,6 +3050,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Group chat routes
+  app.post('/api/group-chats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { name, participantIds } = req.body;
+
+      if (!participantIds || !Array.isArray(participantIds) || participantIds.length < 2) {
+        return res.status(400).json({ message: "At least 2 participants are required" });
+      }
+
+      const allParticipantIds = [userId, ...participantIds.filter((id: string) => id !== userId)];
+
+      const groupConversation = await storage.createGroupConversation({
+        name,
+        creatorId: userId,
+        participantIds: allParticipantIds,
+      });
+
+      res.json(groupConversation);
+    } catch (error) {
+      console.error("Error creating group chat:", error);
+      res.status(500).json({ message: "Failed to create group chat" });
+    }
+  });
+
+  app.get('/api/group-chats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const groupConversations = await storage.getGroupConversations(userId);
+      res.json(groupConversations);
+    } catch (error) {
+      console.error("Error fetching group chats:", error);
+      res.status(500).json({ message: "Failed to fetch group chats" });
+    }
+  });
+
+  app.get('/api/group-chats/:groupId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { groupId } = req.params;
+      
+      const groupConversation = await storage.getGroupConversation(groupId, userId);
+      
+      if (!groupConversation) {
+        return res.status(404).json({ message: "Group chat not found or you're not a participant" });
+      }
+      
+      res.json(groupConversation);
+    } catch (error) {
+      console.error("Error fetching group chat:", error);
+      res.status(500).json({ message: "Failed to fetch group chat" });
+    }
+  });
+
+  app.post('/api/group-chats/:groupId/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { groupId } = req.params;
+      const { content, mediaUrl, mediaType, gifId, movieconId } = req.body;
+
+      if (!content?.trim() && !mediaUrl && !gifId && !movieconId) {
+        return res.status(400).json({ message: "At least one content type (text, media, gif, or moviecon) is required" });
+      }
+
+      const messageData = {
+        senderId: userId,
+        receiverId: null,
+        groupConversationId: groupId,
+        content: content?.trim() || null,
+        mediaUrl: mediaUrl || null,
+        mediaType: mediaType || null,
+        gifId: gifId || null,
+        movieconId: movieconId || null,
+      };
+
+      const message = await storage.sendGroupMessage(messageData);
+      res.json(message);
+    } catch (error) {
+      console.error("Error sending group message:", error);
+      res.status(500).json({ message: "Failed to send group message" });
+    }
+  });
+
+  app.post('/api/group-chats/:groupId/participants', isAuthenticated, async (req: any, res) => {
+    try {
+      const { groupId } = req.params;
+      const { userId: participantId } = req.body;
+
+      if (!participantId) {
+        return res.status(400).json({ message: "Participant user ID is required" });
+      }
+
+      await storage.addParticipantToGroup(groupId, participantId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error adding participant:", error);
+      res.status(500).json({ message: "Failed to add participant" });
+    }
+  });
+
+  app.delete('/api/group-chats/:groupId/participants/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { groupId, userId: participantId } = req.params;
+
+      await storage.removeParticipantFromGroup(groupId, participantId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing participant:", error);
+      res.status(500).json({ message: "Failed to remove participant" });
+    }
+  });
+
+  app.delete('/api/group-chats/:groupId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { groupId } = req.params;
+
+      await storage.deleteGroupConversation(groupId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting group chat:", error);
+      res.status(500).json({ message: "Failed to delete group chat" });
+    }
+  });
+
   // Event routes
   app.get('/api/events', isAuthenticated, async (req: any, res) => {
     try {

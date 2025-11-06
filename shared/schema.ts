@@ -415,7 +415,8 @@ export const storyViews = pgTable("story_views", {
 export const messages = pgTable("messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   senderId: varchar("sender_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  receiverId: varchar("receiver_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  receiverId: varchar("receiver_id").references(() => users.id, { onDelete: "cascade" }),
+  groupConversationId: varchar("group_conversation_id").references(() => groupConversations.id, { onDelete: "cascade" }),
   content: text("content"),
   mediaUrl: varchar("media_url"),
   mediaType: mediaTypeEnum("media_type"),
@@ -425,7 +426,9 @@ export const messages = pgTable("messages", {
   readAt: timestamp("read_at"),
   expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_messages_group").on(table.groupConversationId),
+]);
 
 // Message conversations for organizing messages between users
 export const conversations = pgTable("conversations", {
@@ -436,6 +439,30 @@ export const conversations = pgTable("conversations", {
   lastActivity: timestamp("last_activity").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Group conversations for multi-user chats
+export const groupConversations = pgTable("group_conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name"),
+  creatorId: varchar("creator_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  lastMessageId: varchar("last_message_id"),
+  lastActivity: timestamp("last_activity").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_group_conversations_creator").on(table.creatorId),
+  index("idx_group_conversations_activity").on(table.lastActivity),
+]);
+
+// Participants in group conversations
+export const conversationParticipants = pgTable("conversation_participants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  groupConversationId: varchar("group_conversation_id").references(() => groupConversations.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  joinedAt: timestamp("joined_at").defaultNow(),
+}, (table) => [
+  index("idx_conversation_participants_group").on(table.groupConversationId),
+  index("idx_conversation_participants_user").on(table.userId),
+]);
 
 // Polls table
 export const polls = pgTable("polls", {
@@ -727,6 +754,8 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   receivedMessages: many(messages, { relationName: "receiverMessages" }),
   conversations1: many(conversations, { relationName: "user1Conversations" }),
   conversations2: many(conversations, { relationName: "user2Conversations" }),
+  createdGroupConversations: many(groupConversations, { relationName: "createdGroupConversations" }),
+  groupConversationParticipants: many(conversationParticipants),
   events: many(events),
   eventAttendees: many(eventAttendees),
   actions: many(actions),
@@ -890,6 +919,10 @@ export const messagesRelations = relations(messages, ({ one }) => ({
     references: [users.id],
     relationName: "receiverMessages",
   }),
+  groupConversation: one(groupConversations, {
+    fields: [messages.groupConversationId],
+    references: [groupConversations.id],
+  }),
   gif: one(gifs, {
     fields: [messages.gifId],
     references: [gifs.id],
@@ -914,6 +947,27 @@ export const conversationsRelations = relations(conversations, ({ one }) => ({
   lastMessage: one(messages, {
     fields: [conversations.lastMessageId],
     references: [messages.id],
+  }),
+}));
+
+export const groupConversationsRelations = relations(groupConversations, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [groupConversations.creatorId],
+    references: [users.id],
+    relationName: "createdGroupConversations",
+  }),
+  participants: many(conversationParticipants),
+  messages: many(messages),
+}));
+
+export const conversationParticipantsRelations = relations(conversationParticipants, ({ one }) => ({
+  groupConversation: one(groupConversations, {
+    fields: [conversationParticipants.groupConversationId],
+    references: [groupConversations.id],
+  }),
+  user: one(users, {
+    fields: [conversationParticipants.userId],
+    references: [users.id],
   }),
 }));
 
@@ -1080,6 +1134,8 @@ export const insertScrapbookSaveSchema = createInsertSchema(scrapbookSaves).omit
 export const insertPostHighlightSchema = createInsertSchema(postHighlights).omit({ id: true, highlightedAt: true });
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, isRead: true, createdAt: true });
 export const insertConversationSchema = createInsertSchema(conversations).omit({ id: true, lastMessageId: true, lastActivity: true, createdAt: true });
+export const insertGroupConversationSchema = createInsertSchema(groupConversations).omit({ id: true, lastMessageId: true, lastActivity: true, createdAt: true });
+export const insertConversationParticipantSchema = createInsertSchema(conversationParticipants).omit({ id: true, joinedAt: true });
 export const insertEventSchema = createInsertSchema(events).omit({ id: true, attendeeCount: true, createdAt: true, updatedAt: true }).extend({
   eventDate: z.string().transform((val) => new Date(val))
 });
@@ -1218,6 +1274,10 @@ export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
+export type GroupConversation = typeof groupConversations.$inferSelect;
+export type InsertGroupConversation = z.infer<typeof insertGroupConversationSchema>;
+export type ConversationParticipant = typeof conversationParticipants.$inferSelect;
+export type InsertConversationParticipant = z.infer<typeof insertConversationParticipantSchema>;
 export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type EventAttendee = typeof eventAttendees.$inferSelect;
