@@ -1,15 +1,15 @@
+
 version: 1
 frontend:
   phases:
     preBuild:
       commands:
         - npm install --force
-        # Rebuild esbuild safely to prevent ETXTBSY errors
+        # Optional: rebuild esbuild if needed
         - npm rebuild esbuild --force || echo "esbuild rebuild skipped"
-        - chmod +x ./node_modules/.bin/esbuild || true
     build:
       commands:
-        - npm run build --force
+        - npm run build
   artifacts:
     baseDirectory: dist
     files:
@@ -23,18 +23,4 @@ frontend:
     paths:
       - node_modules/**/*
 
-backend:
-  phases:
-    preBuild:
-      commands:
-        - npm install --force
-        - npm rebuild esbuild --force || echo "esbuild rebuild skipped"
-        - chmod +x ./node_modules/.bin/esbuild || true
-    build:
-      commands:
-        - npm run build --force
-    start:
-      commands:
-        - node dist/index.js
-
-
+# No backend here since server has no package.json
