@@ -95,13 +95,6 @@ const platformInfo = {
     color: "bg-blue-600",
     description: "Social networking and communities",
     requiresBusiness: false
-  },
-  espn: {
-    name: "ESPN Fantasy",
-    icon: Trophy,
-    color: "bg-red-700",
-    description: "Fantasy sports leagues and stats",
-    requiresBusiness: false
   }
 };
 
