@@ -411,14 +411,14 @@ export default function Settings() {
                             </div>
                             <Button
                               onClick={() => connectAccount.mutate(platformKey)}
-                              disabled={(platformKey !== 'tiktok' && platformKey !== 'twitch' && platformKey !== 'discord' && platformKey !== 'reddit') || connectAccount.isPending}
-                              className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey === 'reddit')
+                              disabled={(platformKey !== 'tiktok' && platformKey !== 'twitch' && platformKey !== 'discord' && platformKey !== 'reddit' && platformKey !== 'pinterest') || connectAccount.isPending}
+                              className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey === 'reddit' || platformKey === 'pinterest')
                                 ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
                                 : "w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed"}
                               data-testid={`button-connect-${platformKey}`}
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
-                              {platformKey === 'tiktok' ? 'Connect TikTok' : platformKey === 'twitch' ? 'Connect Twitch' : platformKey === 'discord' ? 'Connect Discord' : platformKey === 'reddit' ? 'Connect Reddit' : 'Coming Soon'}
+                              {platformKey === 'tiktok' ? 'Connect TikTok' : platformKey === 'twitch' ? 'Connect Twitch' : platformKey === 'discord' ? 'Connect Discord' : platformKey === 'reddit' ? 'Connect Reddit' : platformKey === 'pinterest' ? 'Connect Pinterest' : 'Coming Soon'}
                             </Button>
                           </div>
                         );
