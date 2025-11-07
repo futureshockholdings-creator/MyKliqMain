@@ -20,7 +20,7 @@ export class FacebookOAuth implements OAuthPlatform {
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
       response_type: 'code',
-      scope: 'public_profile,email',
+      scope: 'public_profile',
       state,
     });
 
