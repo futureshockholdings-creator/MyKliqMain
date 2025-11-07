@@ -34,7 +34,7 @@ The application features a sophisticated content system including:
 - **Live Streaming ("Action")**: Real-time video streaming with chat and auto-posting.
 - **Meetups**: GPS-based check-in posting.
 - **Event Auto-posting**: Automatically creates posts for events.
-- **Social Media Aggregation**: OAuth 2.0 framework for connecting 9 platforms (Instagram, TikTok, YouTube, Twitch, Discord, Reddit, Pinterest, Facebook, ESPN Fantasy), displaying aggregated content in a unified feed.
+- **Social Media Aggregation**: OAuth 2.0 framework for connecting 7 platforms (TikTok, YouTube, Twitch, Discord, Reddit, Pinterest, Twitter), displaying aggregated content in a unified feed.
 - **Shared Kliq Calendar**: Each kliq has a shared calendar accessible from the MyKliq page. Kliq owners can add event notes with optional kliq-wide reminders. When reminders are enabled, all kliq members receive notifications on the event date, and a supportive auto-post appears in the Headlines feed (e.g., "Wish Sarah luck on her surgery today! 💙"). Calendar integrates with the existing Events system and features month/week views with swipe navigation.
 
 ## UI Customization System

@@ -11,7 +11,6 @@ import { toast } from "@/hooks/use-toast";
 import { LanguageSelector } from "@/components/LanguageSelector";
 
 import { 
-  Instagram, 
   Twitter, 
   Youtube, 
   Twitch,
@@ -23,7 +22,6 @@ import {
   LogOut,
   User,
   AlertTriangle,
-  Facebook as FacebookIcon,
   Trophy,
 } from "lucide-react";
 import { SiPinterest } from "react-icons/si";
@@ -40,13 +38,6 @@ interface SocialAccount {
 }
 
 const platformInfo = {
-  instagram: {
-    name: "Instagram",
-    icon: Instagram,
-    color: "bg-gradient-to-r from-purple-500 to-pink-500",
-    description: "Business & Creator accounts only",
-    requiresBusiness: true
-  },
   tiktok: {
     name: "TikTok",
     icon: MessageCircle,
@@ -89,11 +80,11 @@ const platformInfo = {
     description: "Visual inspiration and ideas",
     requiresBusiness: false
   },
-  facebook: {
-    name: "Facebook",
-    icon: FacebookIcon,
-    color: "bg-blue-600",
-    description: "Social networking and communities",
+  twitter: {
+    name: "Twitter",
+    icon: Twitter,
+    color: "bg-sky-500",
+    description: "Real-time news and discussions",
     requiresBusiness: false
   }
 };
@@ -404,14 +395,14 @@ export default function Settings() {
                             </div>
                             <Button
                               onClick={() => connectAccount.mutate(platformKey)}
-                              disabled={(platformKey !== 'tiktok' && platformKey !== 'twitch' && platformKey !== 'discord' && platformKey !== 'reddit' && platformKey !== 'pinterest' && platformKey !== 'youtube' && platformKey !== 'facebook' && platformKey !== 'instagram') || connectAccount.isPending}
-                              className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey === 'reddit' || platformKey === 'pinterest' || platformKey === 'youtube' || platformKey === 'facebook' || platformKey === 'instagram')
+                              disabled={(platformKey !== 'tiktok' && platformKey !== 'twitch' && platformKey !== 'discord' && platformKey !== 'reddit' && platformKey !== 'pinterest' && platformKey !== 'youtube') || connectAccount.isPending}
+                              className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey === 'reddit' || platformKey === 'pinterest' || platformKey === 'youtube')
                                 ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
                                 : "w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed"}
                               data-testid={`button-connect-${platformKey}`}
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
-                              {platformKey === 'tiktok' ? 'Connect TikTok' : platformKey === 'twitch' ? 'Connect Twitch' : platformKey === 'discord' ? 'Connect Discord' : platformKey === 'reddit' ? 'Connect Reddit' : platformKey === 'pinterest' ? 'Connect Pinterest' : platformKey === 'youtube' ? 'Connect YouTube' : platformKey === 'facebook' ? 'Connect Facebook' : platformKey === 'instagram' ? 'Connect Instagram' : 'Coming Soon'}
+                              {platformKey === 'tiktok' ? 'Connect TikTok' : platformKey === 'twitch' ? 'Connect Twitch' : platformKey === 'discord' ? 'Connect Discord' : platformKey === 'reddit' ? 'Connect Reddit' : platformKey === 'pinterest' ? 'Connect Pinterest' : platformKey === 'youtube' ? 'Connect YouTube' : platformKey === 'twitter' ? 'Connect Twitter' : 'Coming Soon'}
                             </Button>
                           </div>
                         );
