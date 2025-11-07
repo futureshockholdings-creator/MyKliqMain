@@ -122,7 +122,7 @@ function SportsPreferences() {
   const [allTeams, setAllTeams] = useState<Team[]>([]);
 
   // Define sport-only sports (no team selection needed)
-  const SPORT_ONLY = ['nascar', 'xfinity', 'truck', 'f1', 'indycar', 'nhra', 'pga', 'lpga', 'atp', 'wta', 'wwe', 'ufc', 'boxing'];
+  const SPORT_ONLY = ['nascar', 'xfinity', 'truck', 'f1', 'indycar', 'nhra', 'pga', 'lpga', 'atp', 'wta', 'ufc', 'boxing'];
 
   // Fetch available sports
   const { data: availableSports = [] } = useQuery<Sport[]>({
@@ -567,16 +567,16 @@ function SportsPreferences() {
               <AccordionTrigger className="text-white hover:no-underline py-3">
                 <span className="flex items-center gap-2">
                   🥊 Combat Sports
-                  {selectedSports.filter(s => ['wwe', 'ufc', 'boxing'].includes(s)).length > 0 && (
+                  {selectedSports.filter(s => ['ufc', 'boxing'].includes(s)).length > 0 && (
                     <Badge variant="secondary" className="ml-2">
-                      {selectedSports.filter(s => ['wwe', 'ufc', 'boxing'].includes(s)).length}
+                      {selectedSports.filter(s => ['ufc', 'boxing'].includes(s)).length}
                     </Badge>
                   )}
                 </span>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-2 gap-2 pb-3">
-                  {availableSports.filter(s => ['wwe', 'ufc', 'boxing'].includes(s.id)).map((sport) => (
+                  {availableSports.filter(s => ['ufc', 'boxing'].includes(s.id)).map((sport) => (
                     <Button
                       key={sport.id}
                       variant={selectedSports.includes(sport.id) ? "default" : "outline"}
