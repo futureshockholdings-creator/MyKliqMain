@@ -256,23 +256,208 @@ function SportsPreferences() {
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-white">Add Teams</h3>
         
-        {/* Sport Selection */}
-        <div className="grid gap-2">
+        {/* Sport Selection - Organized by Category */}
+        <div className="space-y-4">
           <Label className="text-white">Select Sport</Label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {availableSports.map((sport) => (
-              <Button
-                key={sport.id}
-                variant={selectedSport === sport.id ? "default" : "outline"}
-                onClick={() => setSelectedSport(sport.id)}
-                className={selectedSport === sport.id 
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                  : "border-white/20 text-white hover:bg-white/10"}
-                data-testid={`button-select-sport-${sport.id}`}
-              >
-                {sport.icon} {sport.name}
-              </Button>
-            ))}
+          
+          {/* Football */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-purple-200">🏈 Football</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {availableSports.filter(s => ['nfl', 'cfb'].includes(s.id)).map((sport) => (
+                <Button
+                  key={sport.id}
+                  variant={selectedSport === sport.id ? "default" : "outline"}
+                  onClick={() => setSelectedSport(sport.id)}
+                  className={selectedSport === sport.id 
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                    : "border-white/20 text-white hover:bg-white/10"}
+                  data-testid={`button-select-sport-${sport.id}`}
+                >
+                  {sport.icon} {sport.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Basketball */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-purple-200">🏀 Basketball</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {availableSports.filter(s => ['nba', 'cbb', 'wnba', 'wcbb'].includes(s.id)).map((sport) => (
+                <Button
+                  key={sport.id}
+                  variant={selectedSport === sport.id ? "default" : "outline"}
+                  onClick={() => setSelectedSport(sport.id)}
+                  className={selectedSport === sport.id 
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                    : "border-white/20 text-white hover:bg-white/10"}
+                  data-testid={`button-select-sport-${sport.id}`}
+                >
+                  {sport.icon} {sport.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Baseball */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-purple-200">⚾ Baseball</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {availableSports.filter(s => ['mlb', 'collegebb'].includes(s.id)).map((sport) => (
+                <Button
+                  key={sport.id}
+                  variant={selectedSport === sport.id ? "default" : "outline"}
+                  onClick={() => setSelectedSport(sport.id)}
+                  className={selectedSport === sport.id 
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                    : "border-white/20 text-white hover:bg-white/10"}
+                  data-testid={`button-select-sport-${sport.id}`}
+                >
+                  {sport.icon} {sport.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Hockey */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-purple-200">🏒 Hockey</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {availableSports.filter(s => ['nhl', 'mcollegehockey', 'wcollegehockey'].includes(s.id)).map((sport) => (
+                <Button
+                  key={sport.id}
+                  variant={selectedSport === sport.id ? "default" : "outline"}
+                  onClick={() => setSelectedSport(sport.id)}
+                  className={selectedSport === sport.id 
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                    : "border-white/20 text-white hover:bg-white/10"}
+                  data-testid={`button-select-sport-${sport.id}`}
+                >
+                  {sport.icon} {sport.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Soccer */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-purple-200">⚽ Soccer</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {availableSports.filter(s => ['soccer', 'premierleague', 'laliga', 'seriea', 'bundesliga', 'championsleague'].includes(s.id)).map((sport) => (
+                <Button
+                  key={sport.id}
+                  variant={selectedSport === sport.id ? "default" : "outline"}
+                  onClick={() => setSelectedSport(sport.id)}
+                  className={selectedSport === sport.id 
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                    : "border-white/20 text-white hover:bg-white/10"}
+                  data-testid={`button-select-sport-${sport.id}`}
+                >
+                  {sport.icon} {sport.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Racing */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-purple-200">🏎️ Racing</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {availableSports.filter(s => ['nascar', 'xfinity', 'truck', 'f1', 'indycar', 'nhra'].includes(s.id)).map((sport) => (
+                <Button
+                  key={sport.id}
+                  variant={selectedSport === sport.id ? "default" : "outline"}
+                  onClick={() => setSelectedSport(sport.id)}
+                  className={selectedSport === sport.id 
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                    : "border-white/20 text-white hover:bg-white/10"}
+                  data-testid={`button-select-sport-${sport.id}`}
+                >
+                  {sport.icon} {sport.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Golf */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-purple-200">⛳ Golf</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {availableSports.filter(s => ['pga', 'lpga'].includes(s.id)).map((sport) => (
+                <Button
+                  key={sport.id}
+                  variant={selectedSport === sport.id ? "default" : "outline"}
+                  onClick={() => setSelectedSport(sport.id)}
+                  className={selectedSport === sport.id 
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                    : "border-white/20 text-white hover:bg-white/10"}
+                  data-testid={`button-select-sport-${sport.id}`}
+                >
+                  {sport.icon} {sport.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tennis */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-purple-200">🎾 Tennis</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {availableSports.filter(s => ['atp', 'wta'].includes(s.id)).map((sport) => (
+                <Button
+                  key={sport.id}
+                  variant={selectedSport === sport.id ? "default" : "outline"}
+                  onClick={() => setSelectedSport(sport.id)}
+                  className={selectedSport === sport.id 
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                    : "border-white/20 text-white hover:bg-white/10"}
+                  data-testid={`button-select-sport-${sport.id}`}
+                >
+                  {sport.icon} {sport.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Combat Sports */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-purple-200">🥊 Combat Sports</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {availableSports.filter(s => ['wwe', 'ufc', 'boxing'].includes(s.id)).map((sport) => (
+                <Button
+                  key={sport.id}
+                  variant={selectedSport === sport.id ? "default" : "outline"}
+                  onClick={() => setSelectedSport(sport.id)}
+                  className={selectedSport === sport.id 
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                    : "border-white/20 text-white hover:bg-white/10"}
+                  data-testid={`button-select-sport-${sport.id}`}
+                >
+                  {sport.icon} {sport.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Other Sports */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-purple-200">🌍 Other Sports</h4>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {availableSports.filter(s => ['rugby', 'cricket'].includes(s.id)).map((sport) => (
+                <Button
+                  key={sport.id}
+                  variant={selectedSport === sport.id ? "default" : "outline"}
+                  onClick={() => setSelectedSport(sport.id)}
+                  className={selectedSport === sport.id 
+                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                    : "border-white/20 text-white hover:bg-white/10"}
+                  data-testid={`button-select-sport-${sport.id}`}
+                >
+                  {sport.icon} {sport.name}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
 
