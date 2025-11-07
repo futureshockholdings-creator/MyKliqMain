@@ -2415,14 +2415,9 @@ export default function Home() {
           {feedItems.filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
           
           // Check conditions for each special content type
-          const canShowAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0;
-          const canShowMoodBoost = index > 0 && (index + 1) % 2 === 0 && (moodBoostPosts as any[]).length > 0;
-          const canShowSports = index > 0 && (index + 1) % 3 === 0 && (sportsUpdates as any[]).length > 0;
-
-          // Priority system: mood boost > sports > ads (only show one special card per position)
-          const showMoodBoost = canShowMoodBoost;
-          const showSports = !showMoodBoost && canShowSports;
-          const showAd = !showMoodBoost && !showSports && canShowAd;
+          const showAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0;
+          const showMoodBoost = index > 0 && (index + 1) % 2 === 0 && (moodBoostPosts as any[]).length > 0;
+          const showSports = index > 0 && (index + 1) % 3 === 0 && (sportsUpdates as any[]).length > 0;
 
           // Calculate indices
           const adIndex = Math.floor((index + 1) / 4 - 1) % (targetedAds as any[]).length;

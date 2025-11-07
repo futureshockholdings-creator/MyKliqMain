@@ -121,20 +121,26 @@ function SportsPreferences() {
   const [selectedTeams, setSelectedTeams] = useState<Team[]>([]);
   const [allTeams, setAllTeams] = useState<Team[]>([]);
 
+  // Define sport-only sports (no team selection needed)
+  const SPORT_ONLY = ['nascar', 'xfinity', 'truck', 'f1', 'indycar', 'nhra', 'pga', 'lpga', 'atp', 'wta', 'wwe', 'ufc', 'boxing'];
+
   // Fetch available sports
   const { data: availableSports = [] } = useQuery<Sport[]>({
     queryKey: ["/api/sports/available"],
   });
 
-  // Fetch teams for all selected sports
+  // Fetch teams for team-based sports only
   useEffect(() => {
     const fetchAllTeams = async () => {
-      if (selectedSports.length === 0) {
+      // Filter to only team-based sports
+      const teamBasedSports = selectedSports.filter(s => !SPORT_ONLY.includes(s));
+      
+      if (teamBasedSports.length === 0) {
         setAllTeams([]);
         return;
       }
 
-      const teamPromises = selectedSports.map(async (sport) => {
+      const teamPromises = teamBasedSports.map(async (sport) => {
         const response = await fetch(`/api/sports/teams/${sport}`);
         if (!response.ok) return [];
         return response.json();
@@ -236,7 +242,18 @@ function SportsPreferences() {
       sport: pref.sport,
     }));
 
-    const allTeams = [...existingTeams, ...selectedTeams];
+    // For sport-only selections, create fake "team" entries with sport as the identifier
+    const sportOnlySelections = selectedSports
+      .filter(s => SPORT_ONLY.includes(s))
+      .map(sport => ({
+        id: sport, // Use sport ID as team ID for sport-only selections
+        name: sport.toUpperCase(),
+        abbreviation: sport.toUpperCase(),
+        logo: '',
+        sport: sport,
+      }));
+
+    const allTeams = [...existingTeams, ...selectedTeams, ...sportOnlySelections];
     savePreferences.mutate(allTeams);
   };
 
@@ -611,64 +628,94 @@ function SportsPreferences() {
           </Accordion>
         </div>
 
-        {/* Team Selection */}
+        {/* Team Selection and Sport-Only Message */}
         {selectedSports.length > 0 && (
           <div className="space-y-3">
-            <Label className="text-white">Select Teams ({selectedSports.length} sport{selectedSports.length !== 1 ? 's' : ''} selected)</Label>
-            {allTeams.length === 0 ? (
-              <div className="text-purple-200">Loading teams...</div>
-            ) : (
-              <>
-                <div className="grid gap-2 max-h-64 overflow-y-auto">
-                  {allTeams.map((team) => {
-                    const isSelected = selectedTeams.some(t => t.id === team.id);
-                    const isAlreadyFollowing = userPreferences.some(p => p.teamId === team.id);
-                    
-                    return (
-                      <button
-                        key={team.id}
-                        onClick={() => !isAlreadyFollowing && handleTeamToggle(team)}
-                        disabled={isAlreadyFollowing}
-                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
-                          isAlreadyFollowing 
-                            ? 'bg-white/5 border-white/10 opacity-50 cursor-not-allowed'
-                            : isSelected
-                            ? 'bg-purple-600/30 border-purple-400'
-                            : 'bg-white/5 border-white/10 hover:bg-white/10'
-                        }`}
-                        data-testid={`button-toggle-team-${team.id}`}
-                      >
-                        {team.logo && (
-                          <img
-                            src={team.logo}
-                            alt={team.name}
-                            className="w-8 h-8 object-contain"
-                          />
-                        )}
-                        <div className="flex-1">
-                          <div className="text-white font-medium">{team.name}</div>
-                          <div className="text-purple-200 text-sm">{team.abbreviation}</div>
-                        </div>
-                        {isAlreadyFollowing && (
-                          <Badge variant="secondary">Following</Badge>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+            {(() => {
+              const teamBasedSports = selectedSports.filter(s => !SPORT_ONLY.includes(s));
+              const sportOnlySports = selectedSports.filter(s => SPORT_ONLY.includes(s));
+              
+              return (
+                <>
+                  {/* Show message for sport-only selections */}
+                  {sportOnlySports.length > 0 && (
+                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                      <p className="text-emerald-400 text-sm">
+                        ✓ {sportOnlySports.length} sport{sportOnlySports.length !== 1 ? 's' : ''} selected ({sportOnlySports.map(s => s.toUpperCase()).join(', ')})
+                      </p>
+                      <p className="text-emerald-300/70 text-xs mt-1">
+                        These sports don't require team selection
+                      </p>
+                    </div>
+                  )}
 
-                {selectedTeams.length > 0 && (
-                  <Button
-                    onClick={handleSaveAll}
-                    disabled={savePreferences.isPending}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-                    data-testid="button-save-sports-preferences"
-                  >
-                    Save {selectedTeams.length} Team{selectedTeams.length !== 1 ? 's' : ''}
-                  </Button>
-                )}
-              </>
-            )}
+                  {/* Show team selection for team-based sports */}
+                  {teamBasedSports.length > 0 && (
+                    <>
+                      <Label className="text-white">Select Teams ({teamBasedSports.length} team-based sport{teamBasedSports.length !== 1 ? 's' : ''} selected)</Label>
+                      {allTeams.length === 0 ? (
+                        <div className="text-purple-200">Loading teams...</div>
+                      ) : (
+                        <div className="grid gap-2 max-h-64 overflow-y-auto">
+                          {allTeams.map((team) => {
+                            const isSelected = selectedTeams.some(t => t.id === team.id);
+                            const isAlreadyFollowing = userPreferences.some(p => p.teamId === team.id);
+                            
+                            return (
+                              <button
+                                key={team.id}
+                                onClick={() => !isAlreadyFollowing && handleTeamToggle(team)}
+                                disabled={isAlreadyFollowing}
+                                className={`flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                                  isAlreadyFollowing 
+                                    ? 'bg-white/5 border-white/10 opacity-50 cursor-not-allowed'
+                                    : isSelected
+                                    ? 'bg-purple-600/30 border-purple-400'
+                                    : 'bg-white/5 border-white/10 hover:bg-white/10'
+                                }`}
+                                data-testid={`button-toggle-team-${team.id}`}
+                              >
+                                {team.logo && (
+                                  <img
+                                    src={team.logo}
+                                    alt={team.name}
+                                    className="w-8 h-8 object-contain"
+                                  />
+                                )}
+                                <div className="flex-1">
+                                  <div className="text-white font-medium">{team.name}</div>
+                                  <div className="text-purple-200 text-sm">{team.abbreviation}</div>
+                                </div>
+                                {isAlreadyFollowing && (
+                                  <Badge variant="secondary">Following</Badge>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Save button - show if there are teams selected OR sport-only sports selected */}
+                  {(selectedTeams.length > 0 || sportOnlySports.length > 0) && (
+                    <Button
+                      onClick={handleSaveAll}
+                      disabled={savePreferences.isPending}
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                      data-testid="button-save-sports-preferences"
+                    >
+                      {selectedTeams.length > 0 && sportOnlySports.length > 0
+                        ? `Save ${selectedTeams.length} Team${selectedTeams.length !== 1 ? 's' : ''} & ${sportOnlySports.length} Sport${sportOnlySports.length !== 1 ? 's' : ''}`
+                        : selectedTeams.length > 0
+                        ? `Save ${selectedTeams.length} Team${selectedTeams.length !== 1 ? 's' : ''}`
+                        : `Save ${sportOnlySports.length} Sport${sportOnlySports.length !== 1 ? 's' : ''}`
+                      }
+                    </Button>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
       </div>
