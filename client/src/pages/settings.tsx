@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
@@ -284,208 +285,330 @@ function SportsPreferences() {
         <h3 className="text-lg font-semibold text-white">Add Teams</h3>
         
         {/* Sport Selection - Organized by Category */}
-        <div className="space-y-4">
-          <Label className="text-white">Select Sport</Label>
+        <div className="space-y-3">
+          <Label className="text-white">Select Sports</Label>
           
-          {/* Football */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-purple-200">🏈 Football</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {availableSports.filter(s => ['nfl', 'cfb'].includes(s.id)).map((sport) => (
-                <Button
-                  key={sport.id}
-                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
-                  onClick={() => handleSportToggle(sport.id)}
-                  className={selectedSports.includes(sport.id)
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                    : "border-white/20 text-white hover:bg-white/10"}
-                  data-testid={`button-select-sport-${sport.id}`}
-                >
-                  {sport.icon} {sport.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+          <Accordion type="multiple" className="w-full space-y-2">
+            {/* Football */}
+            <AccordionItem value="football" className="bg-white/5 border-white/10 rounded-lg px-3">
+              <AccordionTrigger className="text-white hover:no-underline py-3">
+                <span className="flex items-center gap-2">
+                  🏈 Football
+                  {selectedSports.filter(s => ['nfl', 'cfb'].includes(s)).length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {selectedSports.filter(s => ['nfl', 'cfb'].includes(s)).length}
+                    </Badge>
+                  )}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pb-3">
+                  {availableSports.filter(s => ['nfl', 'cfb'].includes(s.id)).map((sport) => (
+                    <Button
+                      key={sport.id}
+                      variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                      onClick={() => handleSportToggle(sport.id)}
+                      size="sm"
+                      className={selectedSports.includes(sport.id)
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                        : "border-white/20 text-white hover:bg-white/10"}
+                      data-testid={`button-select-sport-${sport.id}`}
+                    >
+                      {sport.icon} {sport.name}
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Basketball */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-purple-200">🏀 Basketball</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {availableSports.filter(s => ['nba', 'cbb', 'wnba', 'wcbb'].includes(s.id)).map((sport) => (
-                <Button
-                  key={sport.id}
-                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
-                  onClick={() => handleSportToggle(sport.id)}
-                  className={selectedSports.includes(sport.id) 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                    : "border-white/20 text-white hover:bg-white/10"}
-                  data-testid={`button-select-sport-${sport.id}`}
-                >
-                  {sport.icon} {sport.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+            {/* Basketball */}
+            <AccordionItem value="basketball" className="bg-white/5 border-white/10 rounded-lg px-3">
+              <AccordionTrigger className="text-white hover:no-underline py-3">
+                <span className="flex items-center gap-2">
+                  🏀 Basketball
+                  {selectedSports.filter(s => ['nba', 'cbb', 'wnba', 'wcbb'].includes(s)).length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {selectedSports.filter(s => ['nba', 'cbb', 'wnba', 'wcbb'].includes(s)).length}
+                    </Badge>
+                  )}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pb-3">
+                  {availableSports.filter(s => ['nba', 'cbb', 'wnba', 'wcbb'].includes(s.id)).map((sport) => (
+                    <Button
+                      key={sport.id}
+                      variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                      onClick={() => handleSportToggle(sport.id)}
+                      size="sm"
+                      className={selectedSports.includes(sport.id)
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                        : "border-white/20 text-white hover:bg-white/10"}
+                      data-testid={`button-select-sport-${sport.id}`}
+                    >
+                      {sport.icon} {sport.name}
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Baseball */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-purple-200">⚾ Baseball</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {availableSports.filter(s => ['mlb', 'collegebb'].includes(s.id)).map((sport) => (
-                <Button
-                  key={sport.id}
-                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
-                  onClick={() => handleSportToggle(sport.id)}
-                  className={selectedSports.includes(sport.id) 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                    : "border-white/20 text-white hover:bg-white/10"}
-                  data-testid={`button-select-sport-${sport.id}`}
-                >
-                  {sport.icon} {sport.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+            {/* Baseball */}
+            <AccordionItem value="baseball" className="bg-white/5 border-white/10 rounded-lg px-3">
+              <AccordionTrigger className="text-white hover:no-underline py-3">
+                <span className="flex items-center gap-2">
+                  ⚾ Baseball
+                  {selectedSports.filter(s => ['mlb', 'collegebb'].includes(s)).length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {selectedSports.filter(s => ['mlb', 'collegebb'].includes(s)).length}
+                    </Badge>
+                  )}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pb-3">
+                  {availableSports.filter(s => ['mlb', 'collegebb'].includes(s.id)).map((sport) => (
+                    <Button
+                      key={sport.id}
+                      variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                      onClick={() => handleSportToggle(sport.id)}
+                      size="sm"
+                      className={selectedSports.includes(sport.id)
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                        : "border-white/20 text-white hover:bg-white/10"}
+                      data-testid={`button-select-sport-${sport.id}`}
+                    >
+                      {sport.icon} {sport.name}
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Hockey */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-purple-200">🏒 Hockey</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {availableSports.filter(s => ['nhl', 'mcollegehockey', 'wcollegehockey'].includes(s.id)).map((sport) => (
-                <Button
-                  key={sport.id}
-                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
-                  onClick={() => handleSportToggle(sport.id)}
-                  className={selectedSports.includes(sport.id) 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                    : "border-white/20 text-white hover:bg-white/10"}
-                  data-testid={`button-select-sport-${sport.id}`}
-                >
-                  {sport.icon} {sport.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+            {/* Hockey */}
+            <AccordionItem value="hockey" className="bg-white/5 border-white/10 rounded-lg px-3">
+              <AccordionTrigger className="text-white hover:no-underline py-3">
+                <span className="flex items-center gap-2">
+                  🏒 Hockey
+                  {selectedSports.filter(s => ['nhl', 'mcollegehockey', 'wcollegehockey'].includes(s)).length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {selectedSports.filter(s => ['nhl', 'mcollegehockey', 'wcollegehockey'].includes(s)).length}
+                    </Badge>
+                  )}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pb-3">
+                  {availableSports.filter(s => ['nhl', 'mcollegehockey', 'wcollegehockey'].includes(s.id)).map((sport) => (
+                    <Button
+                      key={sport.id}
+                      variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                      onClick={() => handleSportToggle(sport.id)}
+                      size="sm"
+                      className={selectedSports.includes(sport.id)
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                        : "border-white/20 text-white hover:bg-white/10"}
+                      data-testid={`button-select-sport-${sport.id}`}
+                    >
+                      {sport.icon} {sport.name}
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Soccer */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-purple-200">⚽ Soccer</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {availableSports.filter(s => ['soccer', 'premierleague', 'laliga', 'seriea', 'bundesliga', 'championsleague'].includes(s.id)).map((sport) => (
-                <Button
-                  key={sport.id}
-                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
-                  onClick={() => handleSportToggle(sport.id)}
-                  className={selectedSports.includes(sport.id) 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                    : "border-white/20 text-white hover:bg-white/10"}
-                  data-testid={`button-select-sport-${sport.id}`}
-                >
-                  {sport.icon} {sport.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+            {/* Soccer */}
+            <AccordionItem value="soccer" className="bg-white/5 border-white/10 rounded-lg px-3">
+              <AccordionTrigger className="text-white hover:no-underline py-3">
+                <span className="flex items-center gap-2">
+                  ⚽ Soccer
+                  {selectedSports.filter(s => ['soccer', 'premierleague', 'laliga', 'seriea', 'bundesliga', 'championsleague'].includes(s)).length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {selectedSports.filter(s => ['soccer', 'premierleague', 'laliga', 'seriea', 'bundesliga', 'championsleague'].includes(s)).length}
+                    </Badge>
+                  )}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pb-3">
+                  {availableSports.filter(s => ['soccer', 'premierleague', 'laliga', 'seriea', 'bundesliga', 'championsleague'].includes(s.id)).map((sport) => (
+                    <Button
+                      key={sport.id}
+                      variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                      onClick={() => handleSportToggle(sport.id)}
+                      size="sm"
+                      className={selectedSports.includes(sport.id)
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                        : "border-white/20 text-white hover:bg-white/10"}
+                      data-testid={`button-select-sport-${sport.id}`}
+                    >
+                      {sport.icon} {sport.name}
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Racing */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-purple-200">🏎️ Racing</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {availableSports.filter(s => ['nascar', 'xfinity', 'truck', 'f1', 'indycar', 'nhra'].includes(s.id)).map((sport) => (
-                <Button
-                  key={sport.id}
-                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
-                  onClick={() => handleSportToggle(sport.id)}
-                  className={selectedSports.includes(sport.id) 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                    : "border-white/20 text-white hover:bg-white/10"}
-                  data-testid={`button-select-sport-${sport.id}`}
-                >
-                  {sport.icon} {sport.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+            {/* Racing */}
+            <AccordionItem value="racing" className="bg-white/5 border-white/10 rounded-lg px-3">
+              <AccordionTrigger className="text-white hover:no-underline py-3">
+                <span className="flex items-center gap-2">
+                  🏎️ Racing
+                  {selectedSports.filter(s => ['nascar', 'xfinity', 'truck', 'f1', 'indycar', 'nhra'].includes(s)).length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {selectedSports.filter(s => ['nascar', 'xfinity', 'truck', 'f1', 'indycar', 'nhra'].includes(s)).length}
+                    </Badge>
+                  )}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pb-3">
+                  {availableSports.filter(s => ['nascar', 'xfinity', 'truck', 'f1', 'indycar', 'nhra'].includes(s.id)).map((sport) => (
+                    <Button
+                      key={sport.id}
+                      variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                      onClick={() => handleSportToggle(sport.id)}
+                      size="sm"
+                      className={selectedSports.includes(sport.id)
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                        : "border-white/20 text-white hover:bg-white/10"}
+                      data-testid={`button-select-sport-${sport.id}`}
+                    >
+                      {sport.icon} {sport.name}
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Golf */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-purple-200">⛳ Golf</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {availableSports.filter(s => ['pga', 'lpga'].includes(s.id)).map((sport) => (
-                <Button
-                  key={sport.id}
-                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
-                  onClick={() => handleSportToggle(sport.id)}
-                  className={selectedSports.includes(sport.id) 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                    : "border-white/20 text-white hover:bg-white/10"}
-                  data-testid={`button-select-sport-${sport.id}`}
-                >
-                  {sport.icon} {sport.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+            {/* Golf */}
+            <AccordionItem value="golf" className="bg-white/5 border-white/10 rounded-lg px-3">
+              <AccordionTrigger className="text-white hover:no-underline py-3">
+                <span className="flex items-center gap-2">
+                  ⛳ Golf
+                  {selectedSports.filter(s => ['pga', 'lpga'].includes(s)).length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {selectedSports.filter(s => ['pga', 'lpga'].includes(s)).length}
+                    </Badge>
+                  )}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pb-3">
+                  {availableSports.filter(s => ['pga', 'lpga'].includes(s.id)).map((sport) => (
+                    <Button
+                      key={sport.id}
+                      variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                      onClick={() => handleSportToggle(sport.id)}
+                      size="sm"
+                      className={selectedSports.includes(sport.id)
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                        : "border-white/20 text-white hover:bg-white/10"}
+                      data-testid={`button-select-sport-${sport.id}`}
+                    >
+                      {sport.icon} {sport.name}
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Tennis */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-purple-200">🎾 Tennis</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {availableSports.filter(s => ['atp', 'wta'].includes(s.id)).map((sport) => (
-                <Button
-                  key={sport.id}
-                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
-                  onClick={() => handleSportToggle(sport.id)}
-                  className={selectedSports.includes(sport.id) 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                    : "border-white/20 text-white hover:bg-white/10"}
-                  data-testid={`button-select-sport-${sport.id}`}
-                >
-                  {sport.icon} {sport.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+            {/* Tennis */}
+            <AccordionItem value="tennis" className="bg-white/5 border-white/10 rounded-lg px-3">
+              <AccordionTrigger className="text-white hover:no-underline py-3">
+                <span className="flex items-center gap-2">
+                  🎾 Tennis
+                  {selectedSports.filter(s => ['atp', 'wta'].includes(s)).length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {selectedSports.filter(s => ['atp', 'wta'].includes(s)).length}
+                    </Badge>
+                  )}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pb-3">
+                  {availableSports.filter(s => ['atp', 'wta'].includes(s.id)).map((sport) => (
+                    <Button
+                      key={sport.id}
+                      variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                      onClick={() => handleSportToggle(sport.id)}
+                      size="sm"
+                      className={selectedSports.includes(sport.id)
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                        : "border-white/20 text-white hover:bg-white/10"}
+                      data-testid={`button-select-sport-${sport.id}`}
+                    >
+                      {sport.icon} {sport.name}
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Combat Sports */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-purple-200">🥊 Combat Sports</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {availableSports.filter(s => ['wwe', 'ufc', 'boxing'].includes(s.id)).map((sport) => (
-                <Button
-                  key={sport.id}
-                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
-                  onClick={() => handleSportToggle(sport.id)}
-                  className={selectedSports.includes(sport.id) 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                    : "border-white/20 text-white hover:bg-white/10"}
-                  data-testid={`button-select-sport-${sport.id}`}
-                >
-                  {sport.icon} {sport.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+            {/* Combat Sports */}
+            <AccordionItem value="combat" className="bg-white/5 border-white/10 rounded-lg px-3">
+              <AccordionTrigger className="text-white hover:no-underline py-3">
+                <span className="flex items-center gap-2">
+                  🥊 Combat Sports
+                  {selectedSports.filter(s => ['wwe', 'ufc', 'boxing'].includes(s)).length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {selectedSports.filter(s => ['wwe', 'ufc', 'boxing'].includes(s)).length}
+                    </Badge>
+                  )}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pb-3">
+                  {availableSports.filter(s => ['wwe', 'ufc', 'boxing'].includes(s.id)).map((sport) => (
+                    <Button
+                      key={sport.id}
+                      variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                      onClick={() => handleSportToggle(sport.id)}
+                      size="sm"
+                      className={selectedSports.includes(sport.id)
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                        : "border-white/20 text-white hover:bg-white/10"}
+                      data-testid={`button-select-sport-${sport.id}`}
+                    >
+                      {sport.icon} {sport.name}
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
-          {/* Other Sports */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-purple-200">🌍 Other Sports</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {availableSports.filter(s => ['rugby', 'cricket'].includes(s.id)).map((sport) => (
-                <Button
-                  key={sport.id}
-                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
-                  onClick={() => handleSportToggle(sport.id)}
-                  className={selectedSports.includes(sport.id) 
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
-                    : "border-white/20 text-white hover:bg-white/10"}
-                  data-testid={`button-select-sport-${sport.id}`}
-                >
-                  {sport.icon} {sport.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+            {/* Other Sports */}
+            <AccordionItem value="other" className="bg-white/5 border-white/10 rounded-lg px-3">
+              <AccordionTrigger className="text-white hover:no-underline py-3">
+                <span className="flex items-center gap-2">
+                  🌍 Other Sports
+                  {selectedSports.filter(s => ['rugby', 'cricket'].includes(s)).length > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {selectedSports.filter(s => ['rugby', 'cricket'].includes(s)).length}
+                    </Badge>
+                  )}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-2 gap-2 pb-3">
+                  {availableSports.filter(s => ['rugby', 'cricket'].includes(s.id)).map((sport) => (
+                    <Button
+                      key={sport.id}
+                      variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                      onClick={() => handleSportToggle(sport.id)}
+                      size="sm"
+                      className={selectedSports.includes(sport.id)
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                        : "border-white/20 text-white hover:bg-white/10"}
+                      data-testid={`button-select-sport-${sport.id}`}
+                    >
+                      {sport.icon} {sport.name}
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
 
         {/* Team Selection */}
