@@ -331,6 +331,36 @@ export default function Home() {
     refetchOnWindowFocus: true, // Refetch when user returns to app
   });
 
+  // Create combined feed by merging sports updates with feed items
+  // Insert sports updates at regular intervals (every 3 items)
+  const combinedFeed = [...feedItems];
+  const sportsUpdatesArray = Array.isArray(sportsUpdates) ? sportsUpdates : [];
+  
+  if (sportsUpdatesArray.length > 0) {
+    let sportsIndex = 0;
+    const insertInterval = 3; // Insert sports update every 3 items
+    
+    // Insert sports updates at positions 2, 5, 8, etc. (after items at indices 1, 4, 7...)
+    for (let i = insertInterval - 1; i < combinedFeed.length && sportsIndex < sportsUpdatesArray.length; i += insertInterval) {
+      combinedFeed.splice(i + sportsIndex, 0, {
+        ...sportsUpdatesArray[sportsIndex],
+        type: 'sports_update',
+        id: `sports-${sportsUpdatesArray[sportsIndex].eventId}`,
+      });
+      sportsIndex++;
+    }
+    
+    // If we have remaining sports updates and feed is short, append them
+    while (sportsIndex < sportsUpdatesArray.length) {
+      combinedFeed.push({
+        ...sportsUpdatesArray[sportsIndex],
+        type: 'sports_update',
+        id: `sports-${sportsUpdatesArray[sportsIndex].eventId}`,
+      });
+      sportsIndex++;
+    }
+  }
+
   // Separate different types of feed items
   const posts = feedItems.filter((item: any) => item.type === 'post');
   const polls = feedItems.filter((item: any) => item.type === 'poll');
@@ -2409,31 +2439,20 @@ export default function Home() {
         </Card>
       ) : (
         <>
-
-
+          {combinedFeed.filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
           
-          {/* Show sports updates at the top if we have them */}
-          {(sportsUpdates as any[]).length > 0 && (
-            <div className="mb-4">
-              {(sportsUpdates as any[]).map((update: any, idx: number) => (
-                <div key={`sports-update-top-${idx}`} className="mb-4">
-                  <SportsUpdateCard update={update} />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {feedItems.filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
+          // Skip sports updates for injection calculations (they're already in the feed)
+          const regularItemIndex = combinedFeed.slice(0, index).filter((i: any) => i.type !== 'sports_update').length;
           
-          // Check conditions for each special content type
-          const showMoodBoost = index > 0 && (index + 1) % 2 === 0 && (moodBoostPosts as any[]).length > 0;
+          // Check conditions for mood boosts and ads (based on regular item positions only)
+          const showMoodBoost = regularItemIndex > 0 && (regularItemIndex + 1) % 2 === 0 && (moodBoostPosts as any[]).length > 0;
           
           // Mood boosts take priority over ads - only show ad if no mood boost at this position
-          const showAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0 && !showMoodBoost;
+          const showAd = regularItemIndex > 0 && (regularItemIndex + 1) % 4 === 0 && (targetedAds as any[]).length > 0 && !showMoodBoost;
 
           // Calculate indices
-          const adIndex = Math.floor((index + 1) / 4 - 1) % (targetedAds as any[]).length;
-          const moodBoostIndex = Math.floor((index + 1) / 2 - 1) % (moodBoostPosts as any[]).length;
+          const adIndex = Math.floor((regularItemIndex + 1) / 4 - 1) % (targetedAds as any[]).length;
+          const moodBoostIndex = Math.floor((regularItemIndex + 1) / 2 - 1) % (moodBoostPosts as any[]).length;
 
           return (
             <div key={`feed-wrapper-${item.id}-${index}`}>
@@ -2450,7 +2469,16 @@ export default function Home() {
                   <SponsoredAd ad={(targetedAds as any[])[adIndex]} />
                 </div>
               )}
+              
               {(() => {
+          
+          if (item.type === 'sports_update') {
+            return (
+              <div key={item.id} className="mb-4">
+                <SportsUpdateCard update={item} />
+              </div>
+            );
+          }
           
           if (item.type === 'poll') {
             return (
