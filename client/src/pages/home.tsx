@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
-import { Heart, MessageCircle, CornerUpRight, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle, PlusCircle, Trash2, Star } from "lucide-react";
+import { Heart, MessageCircle, Send, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle, PlusCircle, Trash2, Star } from "lucide-react";
 import { SiX, SiFacebook, SiInstagram, SiTiktok, SiYoutube, SiTwitch, SiDiscord, SiReddit } from "react-icons/si";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
@@ -2684,7 +2684,7 @@ export default function Home() {
                     className="text-mykliq-orange hover:bg-mykliq-orange/10 p-0 h-auto"
                     data-testid={`button-share-${item.id}`}
                   >
-                    <CornerUpRight className="w-4 h-4" />
+                    <Send className="w-4 h-4" />
                   </Button>
                 </div>
                 
@@ -3115,7 +3115,7 @@ export default function Home() {
                 className="flex-1"
                 data-testid="button-confirm-share"
               >
-                <CornerUpRight className="w-4 h-4 mr-2" />
+                <Send className="w-4 h-4 mr-2" />
                 Share to Headlines
               </Button>
             </div>
