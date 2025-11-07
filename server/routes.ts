@@ -5589,6 +5589,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pinterest: { 
           clientId: process.env.PINTEREST_CLIENT_ID || '', 
           clientSecret: process.env.PINTEREST_CLIENT_SECRET || '' 
+        },
+        facebook: { 
+          clientId: process.env.FACEBOOK_CLIENT_ID || '', 
+          clientSecret: process.env.FACEBOOK_CLIENT_SECRET || '' 
         }
       };
 
