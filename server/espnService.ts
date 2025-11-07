@@ -62,9 +62,11 @@ export interface GameUpdate {
   homeTeamId: string;
   homeTeamName: string;
   homeTeamScore: number | null;
+  homeTeamLogo: string | null;
   awayTeamId: string;
   awayTeamName: string;
   awayTeamScore: number | null;
+  awayTeamLogo: string | null;
   status: 'scheduled' | 'in_progress' | 'final';
   statusDetail: string;
   eventDate: Date;
@@ -323,9 +325,11 @@ class ESPNService {
           homeTeamId: homeTeam?.team.id || '',
           homeTeamName: homeTeam?.team.displayName || '',
           homeTeamScore: homeTeam?.score ? parseInt(homeTeam.score) : null,
+          homeTeamLogo: homeTeam?.team.logo || null,
           awayTeamId: awayTeam?.team.id || '',
           awayTeamName: awayTeam?.team.displayName || '',
           awayTeamScore: awayTeam?.score ? parseInt(awayTeam.score) : null,
+          awayTeamLogo: awayTeam?.team.logo || null,
           status,
           statusDetail: competition.status.type.shortDetail || competition.status.type.detail,
           eventDate: new Date(competition.date),
