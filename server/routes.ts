@@ -2365,16 +2365,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       invalidateCache('posts');
       await cacheService.invalidatePattern('kliq-feed');
       
-      // Notify the original author that their post was shared
-      const sharingUser = await storage.getUser(userId);
-      if (sharingUser && originalPost.userId !== userId) {
-        await notificationService.notifyPostShare(
-          originalPost.userId,
-          sharingUser.firstName || "Someone",
-          postId
-        );
-      }
-      
       res.json({ success: true, sharedPost });
     } catch (error) {
       console.error("Error sharing post:", error);

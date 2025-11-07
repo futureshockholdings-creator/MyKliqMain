@@ -2480,13 +2480,7 @@ export default function Home() {
                   <p className="font-bold text-primary">
                     {item.author.firstName} {item.author.lastName}
                   </p>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    {item.sharedFromPostId && (
-                      <>
-                        <Share className="w-3 h-3" />
-                        <span>Shared · </span>
-                      </>
-                    )}
+                  <p className="text-xs text-muted-foreground">
                     {formatTimeAgo(item.createdAt)}
                   </p>
                 </div>
