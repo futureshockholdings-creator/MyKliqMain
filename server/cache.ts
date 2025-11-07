@@ -79,7 +79,6 @@ export const cache = new SimpleCache();
 // Clean up expired items every 2 minutes for better memory management
 setInterval(() => {
   cache.cleanup();
-  console.log(`Cache stats: ${JSON.stringify(getCacheStats())}`);
 }, 2 * 60 * 1000);
 
 // Cache helper functions for common patterns

@@ -44,36 +44,21 @@ app.use((req, res, next) => {
 // Performance optimizations for 5000+ concurrent users
 app.use(performanceOptimizer.responseTimeMiddleware());
 app.use(performanceOptimizer.memoryOptimizationMiddleware());
-app.use(performanceOptimizer.prioritizeRequest());
 
 // Optimize Express settings for production scaling
 app.use(express.json({ limit: '50mb' })); // Set payload limit for large metadata
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
+// Production-ready request logging (no PII exposure)
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
 
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
+      // Only log method, path, status, and timing - never response bodies
+      log(`${req.method} ${path} ${res.statusCode} in ${duration}ms`);
     }
   });
 

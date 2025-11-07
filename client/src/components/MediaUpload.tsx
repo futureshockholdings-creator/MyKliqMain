@@ -25,10 +25,15 @@ export interface UploadResult {
   }>;
 }
 
+interface UploadedMediaObject {
+  objectURL: string;
+  type: "image" | "video";
+}
+
 interface MediaUploadProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: (uploadedObject?: any) => void;
+  onSuccess: (uploadedObject?: UploadedMediaObject) => void;
   type: "post" | "story" | "event";
   userId: string;
 }
@@ -48,7 +53,6 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
   const handleGetUploadParameters = async () => {
     try {
       const response = await apiRequest("POST", "/api/media/upload");
-      console.log("Upload parameters response:", response);
       
       if (!response?.uploadURL) {
         console.error("Invalid response:", response);
@@ -71,8 +75,6 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
   };
 
   const handleUploadComplete = async (result: UploadResult) => {
-    console.log("Upload complete result:", result);
-    
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       const fileType = uploadedFile.type;
@@ -140,7 +142,13 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
 
     setIsUploading(true);
     try {
-      const payload: any = {
+      const payload: {
+        userId: string;
+        content: string | null;
+        mediaUrl: string | null;
+        mediaType: "image" | "video" | null;
+        expiresAt?: string;
+      } = {
         userId,
         content: content.trim() || null,
         mediaUrl: uploadedMedia?.url || null,

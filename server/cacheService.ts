@@ -85,7 +85,7 @@ class CacheService {
         // Enhanced memory cache with TTL cleanup and better size management
         this.cleanupExpiredEntries();
         
-        if (this.memoryCache.size > 2000) { // Increased limit for better performance
+        if (this.memoryCache.size > 5000) { // Optimized for 5000+ concurrent users
           // LRU eviction: remove 25% of entries when limit reached
           const entries = Array.from(this.memoryCache.entries())
             .sort((a, b) => a[1].expiry - b[1].expiry); // Sort by expiry (oldest first)

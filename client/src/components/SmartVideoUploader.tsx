@@ -39,8 +39,6 @@ export function SmartVideoUploader({
   const { toast } = useToast();
 
   const handleUploadComplete = async (result: UploadResult) => {
-    console.log("SmartVideoUploader: Upload complete result:", result);
-    
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       const fileType = uploadedFile.type || '';
