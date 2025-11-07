@@ -5808,6 +5808,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================================================
+  // SPORTS API ROUTES
+  // ============================================================================
+
+  // Get all available sports
+  app.get('/api/sports/available', isAuthenticated, async (req, res) => {
+    try {
+      const { espnService } = await import('./espnService');
+      const sports = espnService.getAvailableSports();
+      res.json(sports);
+    } catch (error) {
+      console.error('Error fetching available sports:', error);
+      res.status(500).json({ message: 'Failed to fetch sports' });
+    }
+  });
+
+  // Get teams for a specific sport
+  app.get('/api/sports/teams/:sport', isAuthenticated, async (req, res) => {
+    try {
+      const { sport } = req.params;
+      const { espnService } = await import('./espnService');
+      const teams = await espnService.getTeams(sport as any);
+      res.json(teams);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+      res.status(500).json({ message: 'Failed to fetch teams' });
+    }
+  });
+
+  // Get user's sports preferences
+  app.get('/api/sports/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const preferences = await storage.getUserSportsPreferences(userId);
+      res.json(preferences);
+    } catch (error) {
+      console.error('Error fetching sports preferences:', error);
+      res.status(500).json({ message: 'Failed to fetch preferences' });
+    }
+  });
+
+  // Save user's sports preferences (bulk)
+  app.post('/api/sports/preferences', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { teams } = req.body; // Array of {sport, teamId, teamName, teamLogo, teamAbbr}
+
+      // Validate input
+      if (!Array.isArray(teams)) {
+        return res.status(400).json({ message: 'Teams must be an array' });
+      }
+
+      // Delete existing preferences
+      await storage.deleteUserSportsPreferences(userId);
+
+      // Insert new preferences
+      for (const team of teams) {
+        await storage.createUserSportsPreference({
+          userId,
+          sport: team.sport,
+          teamId: team.teamId,
+          teamName: team.teamName,
+          teamLogo: team.teamLogo || null,
+          teamAbbr: team.teamAbbr || null,
+        });
+      }
+
+      res.json({ success: true, message: 'Sports preferences saved' });
+    } catch (error) {
+      console.error('Error saving sports preferences:', error);
+      res.status(500).json({ message: 'Failed to save preferences' });
+    }
+  });
+
+  // Delete a specific sports preference
+  app.delete('/api/sports/preferences/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { id } = req.params;
+
+      // Verify ownership
+      const preferences = await storage.getUserSportsPreferences(userId);
+      const preference = preferences.find(p => p.id === id);
+
+      if (!preference) {
+        return res.status(404).json({ message: 'Preference not found' });
+      }
+
+      await storage.deleteUserSportsPreference(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting sports preference:', error);
+      res.status(500).json({ message: 'Failed to delete preference' });
+    }
+  });
+
+  // Get latest sports updates for user's teams
+  app.get('/api/sports/updates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { espnService } = await import('./espnService');
+
+      // Get user's sports preferences
+      const preferences = await storage.getUserSportsPreferences(userId);
+
+      if (preferences.length === 0) {
+        return res.json([]);
+      }
+
+      // Group preferences by sport
+      const teamsBySport = preferences.reduce((acc, pref) => {
+        if (!acc[pref.sport]) {
+          acc[pref.sport] = [];
+        }
+        acc[pref.sport].push(pref.teamId);
+        return acc;
+      }, {} as Record<string, string[]>);
+
+      // Fetch games for each sport
+      const allGames = [];
+      for (const [sport, teamIds] of Object.entries(teamsBySport)) {
+        const games = await espnService.getTeamGames(sport as any, teamIds);
+        allGames.push(...games);
+      }
+
+      // Sort by date (most recent first)
+      allGames.sort((a, b) => b.eventDate.getTime() - a.eventDate.getTime());
+
+      res.json(allGames);
+    } catch (error) {
+      console.error('Error fetching sports updates:', error);
+      res.status(500).json({ message: 'Failed to fetch updates' });
+    }
+  });
+
+  // ============================================================================
+  // END SPORTS API ROUTES
+  // ============================================================================
+
   // Sync posts from a specific platform
   app.post('/api/social/sync/:platform', isAuthenticated, async (req: any, res) => {
     try {

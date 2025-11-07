@@ -1373,6 +1373,44 @@ export const externalPosts = pgTable("external_posts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Sports preferences - tracks which sports and teams users follow
+export const userSportsPreferences = pgTable("user_sports_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  sport: varchar("sport").notNull(), // 'nfl', 'nba', 'mlb', 'nhl', 'soccer'
+  teamId: varchar("team_id").notNull(), // ESPN team ID
+  teamName: varchar("team_name").notNull(),
+  teamLogo: varchar("team_logo"),
+  teamAbbr: varchar("team_abbr"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_user_sports_user").on(table.userId),
+  index("idx_user_sports_sport").on(table.sport),
+]);
+
+// Sports updates cache - stores latest scores and news
+export const sportsUpdates = pgTable("sports_updates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sport: varchar("sport").notNull(),
+  eventId: varchar("event_id").notNull(), // ESPN event/game ID
+  homeTeamId: varchar("home_team_id").notNull(),
+  homeTeamName: varchar("home_team_name").notNull(),
+  homeTeamScore: integer("home_team_score"),
+  awayTeamId: varchar("away_team_id").notNull(),
+  awayTeamName: varchar("away_team_name").notNull(),
+  awayTeamScore: integer("away_team_score"),
+  status: varchar("status").notNull(), // 'scheduled', 'in_progress', 'final'
+  statusDetail: varchar("status_detail"), // e.g. "End of 3rd Quarter", "Final"
+  eventDate: timestamp("event_date").notNull(),
+  venue: varchar("venue"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_sports_updates_sport").on(table.sport),
+  index("idx_sports_updates_event").on(table.eventId),
+  index("idx_sports_updates_teams").on(table.homeTeamId, table.awayTeamId),
+]);
+
 // Report status enum
 export const reportStatusEnum = pgEnum("report_status", ["pending", "reviewed", "resolved", "dismissed"]);
 
@@ -1408,6 +1446,22 @@ export const insertExternalPostSchema = createInsertSchema(externalPosts).omit({
 });
 export type InsertExternalPost = z.infer<typeof insertExternalPostSchema>;
 export type ExternalPost = typeof externalPosts.$inferSelect;
+
+// Sports preferences types
+export const insertUserSportsPreferenceSchema = createInsertSchema(userSportsPreferences).omit({ 
+  id: true, 
+  createdAt: true 
+});
+export type InsertUserSportsPreference = z.infer<typeof insertUserSportsPreferenceSchema>;
+export type UserSportsPreference = typeof userSportsPreferences.$inferSelect;
+
+export const insertSportsUpdateSchema = createInsertSchema(sportsUpdates).omit({ 
+  id: true, 
+  createdAt: true,
+  updatedAt: true
+});
+export type InsertSportsUpdate = z.infer<typeof insertSportsUpdateSchema>;
+export type SportsUpdate = typeof sportsUpdates.$inferSelect;
 
 // Smart Friend Ranking Types
 export type UserInteractionAnalytics = typeof userInteractionAnalytics.$inferSelect;

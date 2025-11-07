@@ -131,6 +131,9 @@ import {
   type InsertUserInteractionAnalytics,
   type FriendRankingSuggestion,
   type InsertFriendRankingSuggestion,
+  userSportsPreferences,
+  type UserSportsPreference,
+  type InsertUserSportsPreference,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, isNull, isNotNull } from "drizzle-orm";
@@ -302,6 +305,12 @@ export interface IStorage {
   createExternalPost(post: InsertExternalPost): Promise<ExternalPost>;
   createExternalPosts(posts: InsertExternalPost[]): Promise<ExternalPost[]>;
   deleteOldExternalPosts(platform: string, keepDays: number): Promise<void>;
+
+  // Sports preferences operations
+  getUserSportsPreferences(userId: string): Promise<UserSportsPreference[]>;
+  createUserSportsPreference(preference: InsertUserSportsPreference): Promise<UserSportsPreference>;
+  deleteUserSportsPreference(preferenceId: string): Promise<void>;
+  deleteUserSportsPreferences(userId: string): Promise<void>;
 
   // Utility operations
   generateInviteCode(): Promise<string>;
@@ -3605,6 +3614,36 @@ export class DatabaseStorage implements IStorage {
         eq(externalPosts.platform, platform),
         sql`${externalPosts.platformCreatedAt} < ${cutoffDate}`
       ));
+  }
+
+  // Sports preferences operations
+  async getUserSportsPreferences(userId: string): Promise<UserSportsPreference[]> {
+    const preferences = await db
+      .select()
+      .from(userSportsPreferences)
+      .where(eq(userSportsPreferences.userId, userId))
+      .orderBy(userSportsPreferences.createdAt);
+    return preferences;
+  }
+
+  async createUserSportsPreference(preference: InsertUserSportsPreference): Promise<UserSportsPreference> {
+    const [newPreference] = await db
+      .insert(userSportsPreferences)
+      .values(preference)
+      .returning();
+    return newPreference;
+  }
+
+  async deleteUserSportsPreference(preferenceId: string): Promise<void> {
+    await db
+      .delete(userSportsPreferences)
+      .where(eq(userSportsPreferences.id, preferenceId));
+  }
+
+  async deleteUserSportsPreferences(userId: string): Promise<void> {
+    await db
+      .delete(userSportsPreferences)
+      .where(eq(userSportsPreferences.userId, userId));
   }
 
   // Password reset token methods

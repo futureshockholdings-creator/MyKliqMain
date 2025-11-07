@@ -89,6 +89,269 @@ const platformInfo = {
   }
 };
 
+interface Sport {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+interface Team {
+  id: string;
+  name: string;
+  abbreviation: string;
+  logo: string;
+  sport: string;
+}
+
+interface SportsPreference {
+  id: string;
+  userId: string;
+  sport: string;
+  teamId: string;
+  teamName: string;
+  teamLogo: string | null;
+  teamAbbr: string | null;
+  createdAt: string;
+}
+
+function SportsPreferences() {
+  const queryClient = useQueryClient();
+  const [selectedSport, setSelectedSport] = useState<string | null>(null);
+  const [selectedTeams, setSelectedTeams] = useState<Team[]>([]);
+
+  // Fetch available sports
+  const { data: availableSports = [] } = useQuery<Sport[]>({
+    queryKey: ["/api/sports/available"],
+  });
+
+  // Fetch teams for selected sport
+  const { data: teams = [], isLoading: teamsLoading } = useQuery<Team[]>({
+    queryKey: ["/api/sports/teams", selectedSport],
+    enabled: !!selectedSport,
+  });
+
+  // Fetch user's current preferences
+  const { data: userPreferences = [], isLoading: prefsLoading } = useQuery<SportsPreference[]>({
+    queryKey: ["/api/sports/preferences"],
+  });
+
+  // Save preferences mutation
+  const savePreferences = useMutation({
+    mutationFn: async (teams: Team[]) => {
+      return await apiRequest("POST", "/api/sports/preferences", {
+        teams: teams.map(team => ({
+          sport: team.sport,
+          teamId: team.id,
+          teamName: team.name,
+          teamLogo: team.logo,
+          teamAbbr: team.abbreviation,
+        }))
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sports/preferences"] });
+      toast({
+        title: "Preferences Saved",
+        description: "Your sports preferences have been updated.",
+      });
+      setSelectedTeams([]);
+      setSelectedSport(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to save preferences. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Remove preference mutation
+  const removePreference = useMutation({
+    mutationFn: async (preferenceId: string) => {
+      return await apiRequest("DELETE", `/api/sports/preferences/${preferenceId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sports/preferences"] });
+      toast({
+        title: "Team Removed",
+        description: "Team has been removed from your preferences.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove team. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleTeamToggle = (team: Team) => {
+    setSelectedTeams(prev => {
+      const exists = prev.find(t => t.id === team.id);
+      if (exists) {
+        return prev.filter(t => t.id !== team.id);
+      } else {
+        return [...prev, team];
+      }
+    });
+  };
+
+  const handleSaveAll = () => {
+    // Combine existing preferences with newly selected teams
+    const existingTeams = userPreferences.map(pref => ({
+      id: pref.teamId,
+      name: pref.teamName,
+      abbreviation: pref.teamAbbr || '',
+      logo: pref.teamLogo || '',
+      sport: pref.sport,
+    }));
+
+    const allTeams = [...existingTeams, ...selectedTeams];
+    savePreferences.mutate(allTeams);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Followed Teams */}
+      {userPreferences.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-white">Following</h3>
+          <div className="grid gap-3">
+            {userPreferences.map((pref) => (
+              <div
+                key={pref.id}
+                className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"
+              >
+                <div className="flex items-center gap-3">
+                  {pref.teamLogo && (
+                    <img
+                      src={pref.teamLogo}
+                      alt={pref.teamName}
+                      className="w-10 h-10 object-contain"
+                    />
+                  )}
+                  <div>
+                    <h4 className="text-white font-medium">{pref.teamName}</h4>
+                    <p className="text-purple-200 text-sm">{pref.sport.toUpperCase()}</p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => removePreference.mutate(pref.id)}
+                  disabled={removePreference.isPending}
+                  data-testid={`button-remove-team-${pref.id}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Add New Teams */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-white">Add Teams</h3>
+        
+        {/* Sport Selection */}
+        <div className="grid gap-2">
+          <Label className="text-white">Select Sport</Label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {availableSports.map((sport) => (
+              <Button
+                key={sport.id}
+                variant={selectedSport === sport.id ? "default" : "outline"}
+                onClick={() => setSelectedSport(sport.id)}
+                className={selectedSport === sport.id 
+                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
+                  : "border-white/20 text-white hover:bg-white/10"}
+                data-testid={`button-select-sport-${sport.id}`}
+              >
+                {sport.icon} {sport.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Team Selection */}
+        {selectedSport && (
+          <div className="space-y-3">
+            <Label className="text-white">Select Teams</Label>
+            {teamsLoading ? (
+              <div className="text-purple-200">Loading teams...</div>
+            ) : teams.length > 0 ? (
+              <>
+                <div className="grid gap-2 max-h-64 overflow-y-auto">
+                  {teams.map((team) => {
+                    const isSelected = selectedTeams.some(t => t.id === team.id);
+                    const isAlreadyFollowing = userPreferences.some(p => p.teamId === team.id);
+                    
+                    return (
+                      <button
+                        key={team.id}
+                        onClick={() => !isAlreadyFollowing && handleTeamToggle(team)}
+                        disabled={isAlreadyFollowing}
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors text-left ${
+                          isAlreadyFollowing 
+                            ? 'bg-white/5 border-white/10 opacity-50 cursor-not-allowed'
+                            : isSelected
+                            ? 'bg-purple-600/30 border-purple-400'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10'
+                        }`}
+                        data-testid={`button-toggle-team-${team.id}`}
+                      >
+                        {team.logo && (
+                          <img
+                            src={team.logo}
+                            alt={team.name}
+                            className="w-8 h-8 object-contain"
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div className="text-white font-medium">{team.name}</div>
+                          <div className="text-purple-200 text-sm">{team.abbreviation}</div>
+                        </div>
+                        {isAlreadyFollowing && (
+                          <Badge variant="secondary">Following</Badge>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {selectedTeams.length > 0 && (
+                  <Button
+                    onClick={handleSaveAll}
+                    disabled={savePreferences.isPending}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                    data-testid="button-save-sports-preferences"
+                  >
+                    Save {selectedTeams.length} Team{selectedTeams.length !== 1 ? 's' : ''}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <div className="text-purple-200">No teams available for this sport.</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {userPreferences.length === 0 && !prefsLoading && (
+        <div className="text-center py-8">
+          <p className="text-purple-200 mb-4">No teams followed yet</p>
+          <p className="text-purple-300 text-sm">
+            Select a sport and add teams to see their scores in your Headlines feed
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Settings() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -419,6 +682,22 @@ export default function Settings() {
                     </p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Sports Preferences */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Trophy className="w-5 h-5" />
+                  Sports Preferences
+                </CardTitle>
+                <CardDescription className="text-purple-200">
+                  Follow your favorite sports teams and get score updates in your Headlines feed
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <SportsPreferences />
               </CardContent>
             </Card>
 
