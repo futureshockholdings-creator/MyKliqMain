@@ -20,49 +20,66 @@ export class InstagramOAuth implements OAuthPlatform {
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
       response_type: 'code',
-      scope: 'user_profile,user_media',
+      scope: 'instagram_basic,pages_show_list',
       state,
     });
 
-    return `https://api.instagram.com/oauth/authorize?${params.toString()}`;
+    return `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
   }
 
   async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens> {
-    const response = await fetch('https://api.instagram.com/oauth/access_token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: this.redirectUri,
-      }),
+    const params = new URLSearchParams({
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      code,
+      redirect_uri: this.redirectUri,
     });
 
+    const response = await fetch(`https://graph.facebook.com/v18.0/oauth/access_token?${params.toString()}`);
+
     if (!response.ok) {
-      throw new Error(`Instagram OAuth error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Instagram OAuth error:', errorText);
+      throw new Error(`Instagram OAuth error: ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
     
-    // Exchange short-lived token for long-lived token
-    const longLivedResponse = await fetch(`https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${this.clientSecret}&access_token=${data.access_token}`);
+    // Exchange short-lived token for long-lived token using Facebook's exchange method
+    const longLivedParams = new URLSearchParams({
+      grant_type: 'fb_exchange_token',
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      fb_exchange_token: data.access_token,
+    });
+
+    const longLivedResponse = await fetch(`https://graph.facebook.com/v18.0/oauth/access_token?${longLivedParams.toString()}`);
+    
+    if (!longLivedResponse.ok) {
+      const errorText = await longLivedResponse.text();
+      console.error('Instagram long-lived token error:', errorText);
+    }
+    
     const longLivedData = await longLivedResponse.json();
     
     return {
       accessToken: longLivedData.access_token,
-      refreshToken: '', // Instagram Graph API doesn't use refresh tokens
+      refreshToken: '',
       expiresIn: longLivedData.expires_in || 5184000, // 60 days
       tokenType: longLivedData.token_type || 'Bearer',
     };
   }
 
   async refreshTokens(refreshToken: string): Promise<OAuthTokens> {
-    // Instagram long-lived tokens can be refreshed before expiry
-    const response = await fetch(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${refreshToken}`);
+    // Use Facebook's token exchange to refresh
+    const params = new URLSearchParams({
+      grant_type: 'fb_exchange_token',
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      fb_exchange_token: refreshToken,
+    });
+
+    const response = await fetch(`https://graph.facebook.com/v18.0/oauth/access_token?${params.toString()}`);
 
     if (!response.ok) {
       throw new Error(`Instagram token refresh error: ${response.statusText}`);
