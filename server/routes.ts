@@ -5686,6 +5686,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Facebook Data Deletion Callback (required by Meta for Facebook Login)
+  app.post('/api/platforms/facebook/deletion', async (req, res) => {
+    try {
+      const signed_request = req.body.signed_request;
+      
+      if (!signed_request) {
+        return res.status(400).json({ 
+          error: 'Missing signed_request parameter' 
+        });
+      }
+
+      // Parse the signed request
+      const [encoded_sig, payload] = signed_request.split('.');
+      const data = JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
+      
+      // The data contains:
+      // - user_id: Facebook user ID
+      // - algorithm: Should be HMAC-SHA256
+      // - issued_at: Unix timestamp
+      
+      console.log('Facebook data deletion request:', {
+        facebookUserId: data.user_id,
+        timestamp: new Date(data.issued_at * 1000)
+      });
+      
+      // Find and delete user's Facebook credentials
+      try {
+        const credentials = await storage.getAllSocialCredentials();
+        const facebookCredential = credentials.find(
+          c => c.platform === 'facebook' && c.metadata?.userId === data.user_id
+        );
+        
+        if (facebookCredential) {
+          await storage.deleteSocialCredential(facebookCredential.id);
+          console.log(`Deleted Facebook credentials for user ${data.user_id}`);
+        }
+      } catch (error) {
+        console.error('Error deleting Facebook data:', error);
+      }
+      
+      // Return a confirmation URL (required by Facebook)
+      const confirmationCode = crypto.randomBytes(16).toString('hex');
+      const statusUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/deletion-status?code=${confirmationCode}`;
+      
+      res.json({
+        url: statusUrl,
+        confirmation_code: confirmationCode
+      });
+    } catch (error) {
+      console.error('Facebook data deletion error:', error);
+      res.status(500).json({ 
+        error: 'Failed to process deletion request' 
+      });
+    }
+  });
+
   // Remove a social media account
   app.delete('/api/social/accounts/:accountId', isAuthenticated, async (req: any, res) => {
     try {
