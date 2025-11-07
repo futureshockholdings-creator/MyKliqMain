@@ -2,12 +2,28 @@ import { useState } from "react";
 import { SmartVideoUploader } from "./SmartVideoUploader";
 import { ObjectUploader } from "./ObjectUploader";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Image as ImageIcon, Video, X, Upload } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
+export interface UploadResult {
+  successful?: Array<{
+    type: string;
+    uploadURL: string;
+    name: string;
+    size: number;
+    response?: {
+      uploadURL: string;
+    };
+  }>;
+  failed?: Array<{
+    name: string;
+    error: string;
+  }>;
+}
 
 interface MediaUploadProps {
   open: boolean;
@@ -54,7 +70,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
     }
   };
 
-  const handleUploadComplete = async (result: any) => {
+  const handleUploadComplete = async (result: UploadResult) => {
     console.log("Upload complete result:", result);
     
     if (result.successful && result.successful.length > 0) {
@@ -62,7 +78,6 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       const fileType = uploadedFile.type;
       const mediaType = fileType.startsWith('image/') ? 'image' : 'video';
       
-      // The URL should be the upload URL that was used
       const mediaUrl = uploadedFile.uploadURL || uploadedFile.response?.uploadURL;
       
       setUploadedMedia({
@@ -72,7 +87,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
         fileSize: uploadedFile.size
       });
 
-      const sizeWarning = uploadedFile.size > 200 * 1024 * 1024; // Warn if over 200MB (close to 250MB limit)
+      const sizeWarning = uploadedFile.size > 200 * 1024 * 1024;
       
       toast({
         title: "Media uploaded!",
@@ -84,7 +99,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       console.error("Upload failed:", result.failed);
       toast({
         title: "Upload failed",
-        description: "Failed to upload media. Please try again.",
+        description: result.failed[0]?.error || "Failed to upload media. Please try again.",
         variant: "destructive"
       });
     }
@@ -172,6 +187,11 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
           <DialogTitle className="text-foreground">
             {type === "event" ? "Add Media to Event" : `Create ${type === "post" ? "Post" : "Story"}`}
           </DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            {type === "event" 
+              ? "Upload photos or videos for your event (max 250MB)" 
+              : `Share photos or videos with your kliq (max 250MB)`}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">

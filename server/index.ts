@@ -47,8 +47,8 @@ app.use(performanceOptimizer.memoryOptimizationMiddleware());
 app.use(performanceOptimizer.prioritizeRequest());
 
 // Optimize Express settings for production scaling
-app.use(express.json({ limit: '10mb' })); // Set reasonable payload limit
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' })); // Set payload limit for large metadata
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();

@@ -12,10 +12,11 @@ import {
   convertVideoToMP4, 
   isVideoConversionSupported 
 } from "@/lib/videoConverter";
+import type { UploadResult } from "./MediaUpload";
 
 interface SmartVideoUploaderProps {
   onGetUploadParameters: () => Promise<{ method: "PUT"; url: string }>;
-  onUploadComplete: (result: any) => void;
+  onUploadComplete: (result: UploadResult) => void;
   maxFileSize?: number;
   className?: string;
   disabled?: boolean;
@@ -33,11 +34,11 @@ export function SmartVideoUploader({
   const [isConverting, setIsConverting] = useState(false);
   const [conversionProgress, setConversionProgress] = useState(0);
   const [showConversionDialog, setShowConversionDialog] = useState(false);
-  const [pendingResult, setPendingResult] = useState<any>(null);
+  const [pendingResult, setPendingResult] = useState<UploadResult | null>(null);
   const [convertedFile, setConvertedFile] = useState<File | null>(null);
   const { toast } = useToast();
 
-  const handleUploadComplete = async (result: any) => {
+  const handleUploadComplete = async (result: UploadResult) => {
     console.log("SmartVideoUploader: Upload complete result:", result);
     
     if (result.successful && result.successful.length > 0) {
