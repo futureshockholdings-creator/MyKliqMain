@@ -174,6 +174,66 @@ const SPORTS_CONFIG = {
     path: 'boxing/boxing',
     name: 'Boxing',
     icon: '🥊'
+  },
+  premierleague: {
+    path: 'soccer/eng.1',
+    name: 'Premier League',
+    icon: '⚽'
+  },
+  laliga: {
+    path: 'soccer/esp.1',
+    name: 'La Liga',
+    icon: '⚽'
+  },
+  seriea: {
+    path: 'soccer/ita.1',
+    name: 'Serie A',
+    icon: '⚽'
+  },
+  bundesliga: {
+    path: 'soccer/ger.1',
+    name: 'Bundesliga',
+    icon: '⚽'
+  },
+  championsleague: {
+    path: 'soccer/uefa.champions',
+    name: 'Champions League',
+    icon: '⚽'
+  },
+  collegebb: {
+    path: 'baseball/college-baseball',
+    name: 'College Baseball',
+    icon: '⚾'
+  },
+  mcollegehockey: {
+    path: 'hockey/mens-college-hockey',
+    name: "Men's College Hockey",
+    icon: '🏒'
+  },
+  wcollegehockey: {
+    path: 'hockey/womens-college-hockey',
+    name: "Women's College Hockey",
+    icon: '🏒'
+  },
+  pga: {
+    path: 'golf/pga',
+    name: 'PGA Tour',
+    icon: '⛳'
+  },
+  atp: {
+    path: 'tennis/atp',
+    name: 'ATP Tennis',
+    icon: '🎾'
+  },
+  rugby: {
+    path: 'rugby/rugby',
+    name: 'Rugby',
+    icon: '🏉'
+  },
+  cricket: {
+    path: 'cricket/cricket',
+    name: 'Cricket',
+    icon: '🏏'
   }
 } as const;
 
