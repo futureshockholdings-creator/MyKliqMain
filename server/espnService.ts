@@ -80,9 +80,19 @@ const SPORTS_CONFIG = {
     name: 'NFL',
     icon: '🏈'
   },
+  cfb: {
+    path: 'football/college-football',
+    name: 'College Football',
+    icon: '🏈'
+  },
   nba: {
     path: 'basketball/nba',
     name: 'NBA',
+    icon: '🏀'
+  },
+  cbb: {
+    path: 'basketball/mens-college-basketball',
+    name: 'College Basketball',
     icon: '🏀'
   },
   mlb: {
