@@ -25,7 +25,7 @@ interface SmartVideoUploaderProps {
 export function SmartVideoUploader({
   onGetUploadParameters,
   onUploadComplete,
-  maxFileSize = 50 * 1024 * 1024, // 50MB default
+  maxFileSize = 100 * 1024 * 1024, // 100MB default
   className = "",
   disabled = false,
   children
@@ -48,9 +48,8 @@ export function SmartVideoUploader({
       if (fileType.startsWith('video/') && isHEVCFile(uploadedFile)) {
         if (!isVideoConversionSupported()) {
           toast({
-            title: "HEVC Video Detected",
-            description: "Your HEVC video has been uploaded but may have compatibility issues on some devices.",
-            variant: "destructive"
+            title: "HEVC/H.265 Video Uploaded",
+            description: "Your video has been uploaded successfully. Note: HEVC videos may not play on all devices. For best compatibility, consider converting to MP4 before uploading.",
           });
           onUploadComplete(result); // Pass through original result
           return;
@@ -95,9 +94,8 @@ export function SmartVideoUploader({
       console.error('Conversion failed:', error);
       setIsConverting(false);
       toast({
-        title: "Conversion failed",
-        description: "Using original video file.",
-        variant: "destructive"
+        title: "Conversion not available",
+        description: "Don't worry! Your original video has been uploaded successfully. It may have limited compatibility on some devices.",
       });
       
       // Use original file if conversion fails

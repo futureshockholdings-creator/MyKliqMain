@@ -7,6 +7,7 @@ import "@uppy/dashboard/dist/style.min.css";
 import AwsS3 from "@uppy/aws-s3";
 import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
@@ -61,6 +62,14 @@ export function ObjectUploader({
   children,
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
+  const { toast } = useToast();
+  
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / 1048576).toFixed(1) + " MB";
+  };
+
   const [uppy] = useState(() =>
     new Uppy({
       restrictions: {
@@ -73,6 +82,45 @@ export function ObjectUploader({
       .use(AwsS3, {
         shouldUseMultipart: false,
         getUploadParameters: onGetUploadParameters,
+      })
+      .on("restriction-failed", (file, error) => {
+        console.error("Upload restriction failed:", error);
+        
+        let errorMessage = "Upload failed";
+        let description = error.message;
+        
+        if (file) {
+          const fileSize = formatFileSize(file.size || 0);
+          const maxSize = formatFileSize(maxFileSize);
+          
+          if (error.message.includes("exceeds maximum allowed size")) {
+            errorMessage = "File too large";
+            description = `"${file.name}" is ${fileSize}, but the maximum size is ${maxSize}. Please choose a smaller file.`;
+          } else if (error.message.includes("type is not allowed")) {
+            errorMessage = "Unsupported file type";
+            const fileExt = file.name?.split('.').pop()?.toUpperCase() || "this type";
+            description = `${fileExt} files are not supported. Please choose a different file format.`;
+          } else if (error.message.includes("maximum number of files")) {
+            errorMessage = "Too many files";
+            description = `You can only upload ${maxNumberOfFiles} file${maxNumberOfFiles > 1 ? 's' : ''} at a time.`;
+          }
+        }
+        
+        toast({
+          title: errorMessage,
+          description,
+          variant: "destructive",
+        });
+      })
+      .on("upload-error", (file, error) => {
+        console.error("Upload error:", error);
+        toast({
+          title: "Upload failed",
+          description: file?.name 
+            ? `Failed to upload "${file.name}". Please try again.` 
+            : "Upload failed. Please try again.",
+          variant: "destructive",
+        });
       })
       .on("complete", (result) => {
         onComplete?.(result);

@@ -19,9 +19,15 @@ interface MediaUploadProps {
 
 export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: MediaUploadProps) {
   const [content, setContent] = useState("");
-  const [uploadedMedia, setUploadedMedia] = useState<{ url: string; type: "image" | "video" } | null>(null);
+  const [uploadedMedia, setUploadedMedia] = useState<{ url: string; type: "image" | "video"; fileName?: string; fileSize?: number } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / 1048576).toFixed(1) + " MB";
+  };
 
   const handleGetUploadParameters = async () => {
     try {
@@ -61,12 +67,18 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       
       setUploadedMedia({
         url: mediaUrl,
-        type: mediaType
+        type: mediaType,
+        fileName: uploadedFile.name,
+        fileSize: uploadedFile.size
       });
 
+      const sizeWarning = uploadedFile.size > 80 * 1024 * 1024; // Warn if over 80MB (close to 100MB limit)
+      
       toast({
         title: "Media uploaded!",
-        description: "Your media file has been uploaded successfully."
+        description: sizeWarning 
+          ? `File uploaded successfully (${formatFileSize(uploadedFile.size)}). Note: This is a large file.`
+          : "Your media file has been uploaded successfully."
       });
     } else if (result.failed && result.failed.length > 0) {
       console.error("Upload failed:", result.failed);
@@ -174,40 +186,62 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
           )}
 
           {uploadedMedia && (
-            <Card className="relative bg-muted border-border">
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    {uploadedMedia.type === "image" ? (
-                      <ImageIcon className="w-8 h-8 text-green-400" />
-                    ) : (
-                      <Video className="w-8 h-8 text-blue-400" />
-                    )}
-                    <div>
-                      <p className="text-sm text-foreground font-medium">
-                        {uploadedMedia.type === "image" ? "Image" : "Video"} uploaded
-                      </p>
-                      <p className="text-xs text-muted-foreground">Ready to share</p>
+            <>
+              <Card className="relative bg-muted border-border">
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      {uploadedMedia.type === "image" ? (
+                        <ImageIcon className="w-8 h-8 text-green-400" />
+                      ) : (
+                        <Video className="w-8 h-8 text-blue-400" />
+                      )}
+                      <div>
+                        <p className="text-sm text-foreground font-medium">
+                          {uploadedMedia.type === "image" ? "Image" : "Video"} uploaded
+                        </p>
+                        {uploadedMedia.fileName && (
+                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                            {uploadedMedia.fileName}
+                          </p>
+                        )}
+                        {uploadedMedia.fileSize && (
+                          <p className="text-xs text-muted-foreground">
+                            {formatFileSize(uploadedMedia.fileSize)}
+                            {uploadedMedia.fileSize > 80 * 1024 * 1024 && " ⚠️ Large file"}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={removeMedia}
+                      className="text-destructive hover:bg-destructive/10"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={removeMedia}
-                    className="text-destructive hover:bg-destructive/10"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+              
+              {uploadedMedia.fileSize && uploadedMedia.fileSize > 80 * 1024 * 1024 && uploadedMedia.type === "video" && (
+                <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+                  <CardContent className="p-3">
+                    <p className="text-xs text-amber-800 dark:text-amber-200">
+                      💡 <strong>Tip:</strong> Large videos may take longer to upload and view. Consider compressing your video before uploading for faster sharing and better compatibility.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
 
           <div className="flex justify-between items-center">
             <div className="space-y-2">
               <ObjectUploader
                 maxNumberOfFiles={1}
-                maxFileSize={50485760} // 50MB
+                maxFileSize={104857600} // 100MB
                 allowedFileTypes={[
                   // Image formats
                   'image/*',
@@ -226,7 +260,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                 📸📹 Add Photos & Videos
               </ObjectUploader>
               <p className="text-xs text-muted-foreground text-center">
-                Supports: JPEG, PNG, GIF, WebP, HEIC, MP4, MOV, HEVC, 3GP, WebM + more
+                Supports: JPEG, PNG, GIF, WebP, HEIC, MP4, MOV, HEVC, 3GP, WebM + more (max 100MB)
               </p>
             </div>
 

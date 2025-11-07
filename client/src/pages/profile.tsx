@@ -183,7 +183,7 @@ export default function Profile() {
                   <div className="absolute -bottom-1 -right-1">
                     <ObjectUploader
                       maxNumberOfFiles={1}
-                      maxFileSize={5242880} // 5MB limit for profile pictures
+                      maxFileSize={15728640} // 15MB limit for profile pictures
                       onGetUploadParameters={handleGetUploadParameters}
                       onComplete={handleProfilePictureComplete}
                       buttonClassName="!p-2 !rounded-full !bg-primary !text-white hover:!bg-primary/90 !border-2 !border-white !shadow-lg"
@@ -241,7 +241,7 @@ export default function Profile() {
             
             <div className="p-4">
               <p className="text-sm text-muted-foreground text-right">
-                Click the camera icons to upload your profile picture (5MB max) or background wallpaper (15MB max)
+                Click the camera icons to upload your profile picture (15MB max) or background wallpaper (15MB max)
               </p>
               <p className="text-xs text-muted-foreground text-right mt-1">
                 Supported formats: JPEG, PNG, GIF, WebP, BMP, TIFF, SVG, AVIF, HEIC/HEIF
