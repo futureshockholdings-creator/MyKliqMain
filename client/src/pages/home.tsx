@@ -2477,19 +2477,16 @@ export default function Home() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  {item.sharedFromPostId && (
-                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                      <Share className="w-3 h-3" />
-                      {item.author.firstName} {item.author.lastName} shared
-                    </p>
-                  )}
                   <p className="font-bold text-primary">
-                    {item.sharedFromPostId ? 
-                      `${item.author.firstName} ${item.author.lastName}` : 
-                      `${item.author.firstName} ${item.author.lastName}`
-                    }
+                    {item.author.firstName} {item.author.lastName}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    {item.sharedFromPostId && (
+                      <>
+                        <Share className="w-3 h-3" />
+                        <span>Shared · </span>
+                      </>
+                    )}
                     {formatTimeAgo(item.createdAt)}
                   </p>
                 </div>
