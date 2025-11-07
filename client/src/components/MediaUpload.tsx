@@ -167,7 +167,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      <DialogContent className="sm:max-w-xl bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-foreground">
             {type === "event" ? "Add Media to Event" : `Create ${type === "post" ? "Post" : "Story"}`}
