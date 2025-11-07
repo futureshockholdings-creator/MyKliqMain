@@ -36,6 +36,7 @@ The application features a sophisticated content system including:
 - **Event Auto-posting**: Automatically creates posts for events.
 - **Social Media Aggregation**: OAuth 2.0 framework for connecting 7 platforms (TikTok, YouTube, Twitch, Discord, Reddit, Pinterest, LinkedIn), displaying aggregated content in a unified feed.
 - **Shared Kliq Calendar**: Each kliq has a shared calendar accessible from the MyKliq page. Kliq owners can add event notes with optional kliq-wide reminders. When reminders are enabled, all kliq members receive notifications on the event date, and a supportive auto-post appears in the Headlines feed (e.g., "Wish Sarah luck on her surgery today! 💙"). Calendar integrates with the existing Events system and features month/week views with swipe navigation.
+- **Sports Updates**: Personalized sports score updates using ESPN's free API. Users can follow favorite teams across NFL, NBA, MLB, NHL, and MLS. Score updates appear in Headlines feed in real-time format (e.g., "⚡ Lakers 108 - Warriors 105 (Final)"). Managed through Settings page with easy team selection interface.
 
 ## UI Customization System
 Extensive theming allows deep personalization:
