@@ -25,7 +25,7 @@ interface SmartVideoUploaderProps {
 export function SmartVideoUploader({
   onGetUploadParameters,
   onUploadComplete,
-  maxFileSize = 100 * 1024 * 1024, // 100MB default
+  maxFileSize = 250 * 1024 * 1024, // 250MB default
   className = "",
   disabled = false,
   children

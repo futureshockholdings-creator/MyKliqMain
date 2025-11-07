@@ -72,7 +72,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
         fileSize: uploadedFile.size
       });
 
-      const sizeWarning = uploadedFile.size > 80 * 1024 * 1024; // Warn if over 80MB (close to 100MB limit)
+      const sizeWarning = uploadedFile.size > 200 * 1024 * 1024; // Warn if over 200MB (close to 250MB limit)
       
       toast({
         title: "Media uploaded!",
@@ -208,7 +208,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                         {uploadedMedia.fileSize && (
                           <p className="text-xs text-muted-foreground">
                             {formatFileSize(uploadedMedia.fileSize)}
-                            {uploadedMedia.fileSize > 80 * 1024 * 1024 && " ⚠️ Large file"}
+                            {uploadedMedia.fileSize > 200 * 1024 * 1024 && " ⚠️ Large file"}
                           </p>
                         )}
                       </div>
@@ -225,7 +225,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                 </CardContent>
               </Card>
               
-              {uploadedMedia.fileSize && uploadedMedia.fileSize > 80 * 1024 * 1024 && uploadedMedia.type === "video" && (
+              {uploadedMedia.fileSize && uploadedMedia.fileSize > 200 * 1024 * 1024 && uploadedMedia.type === "video" && (
                 <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
                   <CardContent className="p-3">
                     <p className="text-xs text-amber-800 dark:text-amber-200">
@@ -241,7 +241,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
             <div className="space-y-2">
               <ObjectUploader
                 maxNumberOfFiles={1}
-                maxFileSize={104857600} // 100MB
+                maxFileSize={262144000} // 250MB
                 allowedFileTypes={[
                   // Image formats
                   'image/*',
@@ -260,7 +260,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                 📸📹 Add Photos & Videos
               </ObjectUploader>
               <p className="text-xs text-muted-foreground text-center">
-                Supports: JPEG, PNG, GIF, WebP, HEIC, MP4, MOV, HEVC, 3GP, WebM + more (max 100MB)
+                Supports: JPEG, PNG, GIF, WebP, HEIC, MP4, MOV, HEVC, 3GP, WebM + more (max 250MB)
               </p>
             </div>
 
