@@ -109,6 +109,36 @@ const SPORTS_CONFIG = {
     path: 'soccer/usa.1', // MLS
     name: 'MLS',
     icon: '⚽'
+  },
+  nascar: {
+    path: 'racing/nascar-premier',
+    name: 'NASCAR Cup Series',
+    icon: '🏎️'
+  },
+  xfinity: {
+    path: 'racing/nascar-secondary',
+    name: 'NASCAR Xfinity',
+    icon: '🏎️'
+  },
+  truck: {
+    path: 'racing/nascar-truck',
+    name: 'NASCAR Truck Series',
+    icon: '🏁'
+  },
+  f1: {
+    path: 'racing/f1',
+    name: 'Formula 1',
+    icon: '🏎️'
+  },
+  indycar: {
+    path: 'racing/irl',
+    name: 'IndyCar',
+    icon: '🏎️'
+  },
+  nhra: {
+    path: 'racing/nhra',
+    name: 'NHRA Drag Racing',
+    icon: '🏁'
   }
 } as const;
 
