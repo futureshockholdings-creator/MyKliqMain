@@ -252,12 +252,6 @@ export default function Home() {
   const queryClient = useQueryClient();
   const { translatePost, translateMoodText } = usePostTranslation();
 
-  // Query to fetch user's connected social accounts
-  const { data: connectedAccounts = [] } = useQuery<any[]>({
-    queryKey: ['/api/social/accounts'],
-    enabled: showShareDialog, // Only fetch when share dialog is open
-  });
-
   // Add click outside to close comments
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1380,70 +1374,38 @@ export default function Home() {
     setShowShareDialog(true);
   };
 
-  const shareToSocialPlatform = async (platform: string) => {
+  const sharePostToHeadlines = async () => {
     if (!selectedPostToShare) return;
     
-    const shareText = `${selectedPostToShare.author.firstName} ${selectedPostToShare.author.lastName} on MyKliq: ${selectedPostToShare.content || "Check out this post!"}`;
-    const shareUrl = window.location.href;
-    
     try {
-      // Note: In a real implementation, you would use platform-specific APIs
-      // For now, we'll create platform-specific share URLs that open in new windows
-      let shareLink = '';
+      await apiRequest("POST", `/api/posts/${selectedPostToShare.id}/share`, {});
       
-      switch (platform.toLowerCase()) {
-        case 'twitter':
-          shareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
-          break;
-        case 'facebook':
-          shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
-          break;
-        case 'instagram':
-          // Instagram doesn't support direct sharing via URL, so we'll copy the text
-          await navigator.clipboard.writeText(shareText + '\n' + shareUrl);
-          toast({
-            title: "Content copied!",
-            description: "Post content copied to clipboard. You can now paste it in Instagram.",
-            duration: 3000,
-          });
-          setShowShareDialog(false);
-          return;
-        case 'tiktok':
-          // TikTok doesn't support direct sharing via URL, so we'll copy the text
-          await navigator.clipboard.writeText(shareText + '\n' + shareUrl);
-          toast({
-            title: "Content copied!",
-            description: "Post content copied to clipboard. You can now paste it in TikTok.",
-            duration: 3000,
-          });
-          setShowShareDialog(false);
-          return;
-        default:
-          // For other platforms, copy to clipboard
-          await navigator.clipboard.writeText(shareText + '\n' + shareUrl);
-          toast({
-            title: "Content copied!",
-            description: "Post content copied to clipboard.",
-            duration: 2000,
-          });
-          setShowShareDialog(false);
-          return;
-      }
-      
-      if (shareLink) {
-        window.open(shareLink, '_blank', 'width=600,height=400');
-        toast({
-          title: "Opening share window",
-          description: `Sharing to ${platform}`,
-          duration: 2000,
-        });
-      }
+      toast({
+        title: "Post shared!",
+        description: "This post has been shared to your Headlines feed",
+        duration: 3000,
+      });
       
       setShowShareDialog(false);
-    } catch (error) {
+      
+      // Refresh the feed to show the shared post
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    } catch (error: any) {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
       toast({
         title: "Share failed",
-        description: "Unable to share post",
+        description: error?.message || "Unable to share post",
         variant: "destructive",
       });
     }
@@ -3116,88 +3078,47 @@ export default function Home() {
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Share Post</DialogTitle>
+            <DialogTitle>Share to Headlines</DialogTitle>
             <DialogDescription>
-              {connectedAccounts.length > 0 
-                ? "Choose a platform to share this post to your connected social accounts" 
-                : "You haven't connected any social media accounts yet. Visit Settings to connect your accounts for sharing."}
+              Share this post to your Headlines feed so your kliq can see it
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {connectedAccounts.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3">
-                {connectedAccounts.map((account: any) => {
-                  let PlatformIcon;
-                  let platformColor = 'text-gray-600';
-                  
-                  switch (account.platform.toLowerCase()) {
-                    case 'twitter':
-                    case 'x':
-                      PlatformIcon = SiX;
-                      platformColor = 'text-black dark:text-white';
-                      break;
-                    case 'facebook':
-                      PlatformIcon = SiFacebook;
-                      platformColor = 'text-blue-600';
-                      break;
-                    case 'instagram':
-                      PlatformIcon = SiInstagram;
-                      platformColor = 'text-pink-600';
-                      break;
-                    case 'tiktok':
-                      PlatformIcon = SiTiktok;
-                      platformColor = 'text-black dark:text-white';
-                      break;
-                    case 'youtube':
-                      PlatformIcon = SiYoutube;
-                      platformColor = 'text-red-600';
-                      break;
-                    case 'twitch':
-                      PlatformIcon = SiTwitch;
-                      platformColor = 'text-purple-600';
-                      break;
-                    case 'discord':
-                      PlatformIcon = SiDiscord;
-                      platformColor = 'text-indigo-600';
-                      break;
-                    case 'reddit':
-                      PlatformIcon = SiReddit;
-                      platformColor = 'text-orange-600';
-                      break;
-                    default:
-                      PlatformIcon = ExternalLink;
-                      platformColor = 'text-gray-600';
-                  }
-                  
-                  return (
-                    <Button
-                      key={account.id}
-                      variant="outline"
-                      className="h-20 flex flex-col gap-2 hover:bg-accent"
-                      onClick={() => shareToSocialPlatform(account.platform)}
-                      data-testid={`button-share-${account.platform}`}
-                    >
-                      <PlatformIcon className={`w-6 h-6 ${platformColor}`} />
-                      <div className="text-center">
-                        <div className="font-medium capitalize">{account.platform}</div>
-                        <div className="text-xs text-muted-foreground">@{account.username}</div>
-                      </div>
-                    </Button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Share className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">No connected accounts found</p>
-                <Button variant="outline" onClick={() => {
-                  setShowShareDialog(false);
-                  window.location.href = '/settings';
-                }}>
-                  Go to Settings
-                </Button>
+            {selectedPostToShare && (
+              <div className="p-4 rounded-lg border bg-muted/50">
+                <div className="flex items-center gap-3 mb-2">
+                  <img 
+                    src={selectedPostToShare.author?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedPostToShare.author?.firstName || 'User')}&background=random`} 
+                    alt={selectedPostToShare.author?.firstName || 'User'} 
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <div className="text-sm font-medium">
+                    {selectedPostToShare.author?.firstName} {selectedPostToShare.author?.lastName}
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground line-clamp-3">
+                  {selectedPostToShare.content || "Post with media"}
+                </p>
               </div>
             )}
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowShareDialog(false)}
+                className="flex-1"
+                data-testid="button-cancel-share"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={sharePostToHeadlines}
+                className="flex-1"
+                data-testid="button-confirm-share"
+              >
+                <Share className="w-4 h-4 mr-2" />
+                Share to Headlines
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
