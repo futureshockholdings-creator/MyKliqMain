@@ -2412,11 +2412,21 @@ export default function Home() {
 
 
           
+          {/* Show sports updates at the top if we have them */}
+          {(sportsUpdates as any[]).length > 0 && (
+            <div className="mb-4">
+              {(sportsUpdates as any[]).map((update: any, idx: number) => (
+                <div key={`sports-update-top-${idx}`} className="mb-4">
+                  <SportsUpdateCard update={update} />
+                </div>
+              ))}
+            </div>
+          )}
+
           {feedItems.filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
           
           // Check conditions for each special content type
           const showMoodBoost = index > 0 && (index + 1) % 2 === 0 && (moodBoostPosts as any[]).length > 0;
-          const showSports = index > 0 && (index + 1) % 3 === 0 && (sportsUpdates as any[]).length > 0;
           
           // Mood boosts take priority over ads - only show ad if no mood boost at this position
           const showAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0 && !showMoodBoost;
@@ -2424,7 +2434,6 @@ export default function Home() {
           // Calculate indices
           const adIndex = Math.floor((index + 1) / 4 - 1) % (targetedAds as any[]).length;
           const moodBoostIndex = Math.floor((index + 1) / 2 - 1) % (moodBoostPosts as any[]).length;
-          const sportsIndex = Math.floor((index + 1) / 3 - 1) % (sportsUpdates as any[]).length;
 
           return (
             <div key={`feed-wrapper-${item.id}-${index}`}>
@@ -2432,13 +2441,6 @@ export default function Home() {
               {showMoodBoost && (moodBoostPosts as any[])[moodBoostIndex] && (
                 <div className="mb-6" key={`mood-boost-${moodBoostIndex}-${index}`}>
                   <MoodBoostCard post={(moodBoostPosts as any[])[moodBoostIndex]} />
-                </div>
-              )}
-
-              {/* Show sports update before this item if conditions are met (independent of mood/ad priority) */}
-              {showSports && (sportsUpdates as any[])[sportsIndex] && (
-                <div className="mb-4" key={`sports-update-${sportsIndex}-${index}`}>
-                  <SportsUpdateCard update={(sportsUpdates as any[])[sportsIndex]} />
                 </div>
               )}
               
