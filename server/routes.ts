@@ -5713,14 +5713,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Find and delete user's Facebook credentials
       try {
-        const credentials = await storage.getAllSocialCredentials();
-        const facebookCredential = credentials.find(
-          c => c.platform === 'facebook' && c.metadata?.userId === data.user_id
+        // Query database directly to find Facebook credentials by Facebook user ID
+        const result = await pool.query(
+          `SELECT id FROM social_credentials 
+           WHERE platform = 'facebook' 
+           AND metadata->>'userId' = $1`,
+          [data.user_id]
         );
         
-        if (facebookCredential) {
-          await storage.deleteSocialCredential(facebookCredential.id);
-          console.log(`Deleted Facebook credentials for user ${data.user_id}`);
+        if (result.rows.length > 0) {
+          await storage.deleteSocialCredential(result.rows[0].id);
+          console.log(`Deleted Facebook credentials for Facebook user ${data.user_id}`);
         }
       } catch (error) {
         console.error('Error deleting Facebook data:', error);
