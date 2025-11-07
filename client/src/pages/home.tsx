@@ -2415,9 +2415,11 @@ export default function Home() {
           {feedItems.filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
           
           // Check conditions for each special content type
-          const showAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0;
           const showMoodBoost = index > 0 && (index + 1) % 2 === 0 && (moodBoostPosts as any[]).length > 0;
           const showSports = index > 0 && (index + 1) % 3 === 0 && (sportsUpdates as any[]).length > 0;
+          
+          // Mood boosts take priority over ads - only show ad if no mood boost at this position
+          const showAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0 && !showMoodBoost;
 
           // Calculate indices
           const adIndex = Math.floor((index + 1) / 4 - 1) % (targetedAds as any[]).length;
@@ -2433,14 +2435,14 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Show sports update before this item if conditions are met */}
+              {/* Show sports update before this item if conditions are met (independent of mood/ad priority) */}
               {showSports && (sportsUpdates as any[])[sportsIndex] && (
                 <div className="mb-4" key={`sports-update-${sportsIndex}-${index}`}>
                   <SportsUpdateCard update={(sportsUpdates as any[])[sportsIndex]} />
                 </div>
               )}
               
-              {/* Show sponsored ad before this item if conditions are met */}
+              {/* Show sponsored ad before this item if conditions are met (blocked by mood boosts) */}
               {showAd && (targetedAds as any[])[adIndex] && (
                 <div className="mb-4" key={`ad-${adIndex}-${index}`}>
                   <SponsoredAd ad={(targetedAds as any[])[adIndex]} />
