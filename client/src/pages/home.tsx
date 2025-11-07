@@ -33,6 +33,7 @@ import { SponsoredAd } from "@/components/SponsoredAd";
 import { GoogleSearch } from "@/components/GoogleSearch";
 import { EventCard } from "@/components/EventCard";
 import { MoodBoostCard } from "@/components/MoodBoostCard";
+import { SportsUpdateCard } from "@/components/SportsUpdateCard";
 import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import Footer from "@/components/Footer";
 import { usePostTranslation } from "@/lib/translationService";
@@ -319,6 +320,14 @@ export default function Home() {
     queryKey: ["/api/mood-boost/posts"],
     staleTime: 0, // Always fetch fresh data - mood boosts change frequently
     refetchInterval: 10000, // Refetch every 10 seconds to catch new mood posts
+    refetchOnWindowFocus: true, // Refetch when user returns to app
+  });
+
+  // Fetch sports updates
+  const { data: sportsUpdates = [] } = useQuery({
+    queryKey: ["/api/sports/updates"],
+    staleTime: 300000, // Consider data fresh for 5 minutes
+    refetchInterval: 900000, // Refetch every 15 minutes
     refetchOnWindowFocus: true, // Refetch when user returns to app
   });
 
@@ -2405,25 +2414,39 @@ export default function Home() {
           
           {feedItems.filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
           
-          // Inject sponsored ads every 4 feed items
-          const shouldShowAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0;
-          const adIndex = Math.floor((index + 1) / 4 - 1) % (targetedAds as any[]).length;
+          // Check conditions for each special content type
+          const canShowAd = index > 0 && (index + 1) % 4 === 0 && (targetedAds as any[]).length > 0;
+          const canShowMoodBoost = index > 0 && (index + 1) % 2 === 0 && (moodBoostPosts as any[]).length > 0;
+          const canShowSports = index > 0 && (index + 1) % 3 === 0 && (sportsUpdates as any[]).length > 0;
 
-          // Inject mood boost posts every 2 feed items for better visibility
-          const shouldShowMoodBoost = index > 0 && (index + 1) % 2 === 0 && (moodBoostPosts as any[]).length > 0;
+          // Priority system: mood boost > sports > ads (only show one special card per position)
+          const showMoodBoost = canShowMoodBoost;
+          const showSports = !showMoodBoost && canShowSports;
+          const showAd = !showMoodBoost && !showSports && canShowAd;
+
+          // Calculate indices
+          const adIndex = Math.floor((index + 1) / 4 - 1) % (targetedAds as any[]).length;
           const moodBoostIndex = Math.floor((index + 1) / 2 - 1) % (moodBoostPosts as any[]).length;
+          const sportsIndex = Math.floor((index + 1) / 3 - 1) % (sportsUpdates as any[]).length;
 
           return (
             <div key={`feed-wrapper-${item.id}-${index}`}>
               {/* Show mood boost post before this item if conditions are met */}
-              {shouldShowMoodBoost && (moodBoostPosts as any[])[moodBoostIndex] && (
+              {showMoodBoost && (moodBoostPosts as any[])[moodBoostIndex] && (
                 <div className="mb-6" key={`mood-boost-${moodBoostIndex}-${index}`}>
                   <MoodBoostCard post={(moodBoostPosts as any[])[moodBoostIndex]} />
                 </div>
               )}
+
+              {/* Show sports update before this item if conditions are met */}
+              {showSports && (sportsUpdates as any[])[sportsIndex] && (
+                <div className="mb-4" key={`sports-update-${sportsIndex}-${index}`}>
+                  <SportsUpdateCard update={(sportsUpdates as any[])[sportsIndex]} />
+                </div>
+              )}
               
               {/* Show sponsored ad before this item if conditions are met */}
-              {shouldShowAd && (targetedAds as any[])[adIndex] && (
+              {showAd && (targetedAds as any[])[adIndex] && (
                 <div className="mb-4" key={`ad-${adIndex}-${index}`}>
                   <SponsoredAd ad={(targetedAds as any[])[adIndex]} />
                 </div>
