@@ -11,7 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { LanguageSelector } from "@/components/LanguageSelector";
 
 import { 
-  Twitter, 
+  Linkedin, 
   Youtube, 
   Twitch,
   MessageCircle,
@@ -80,11 +80,11 @@ const platformInfo = {
     description: "Visual inspiration and ideas",
     requiresBusiness: false
   },
-  twitter: {
-    name: "Twitter",
-    icon: Twitter,
-    color: "bg-sky-500",
-    description: "Real-time news and discussions",
+  linkedin: {
+    name: "LinkedIn",
+    icon: Linkedin,
+    color: "bg-blue-700",
+    description: "Professional networking and career content",
     requiresBusiness: false
   }
 };
@@ -402,7 +402,7 @@ export default function Settings() {
                               data-testid={`button-connect-${platformKey}`}
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
-                              {platformKey === 'tiktok' ? 'Connect TikTok' : platformKey === 'twitch' ? 'Connect Twitch' : platformKey === 'discord' ? 'Connect Discord' : platformKey === 'reddit' ? 'Connect Reddit' : platformKey === 'pinterest' ? 'Connect Pinterest' : platformKey === 'youtube' ? 'Connect YouTube' : platformKey === 'twitter' ? 'Connect Twitter' : 'Coming Soon'}
+                              {platformKey === 'tiktok' ? 'Connect TikTok' : platformKey === 'twitch' ? 'Connect Twitch' : platformKey === 'discord' ? 'Connect Discord' : platformKey === 'reddit' ? 'Connect Reddit' : platformKey === 'pinterest' ? 'Connect Pinterest' : platformKey === 'youtube' ? 'Connect YouTube' : platformKey === 'linkedin' ? 'Connect LinkedIn' : 'Coming Soon'}
                             </Button>
                           </div>
                         );
