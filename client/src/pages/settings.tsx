@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -116,19 +116,36 @@ interface SportsPreference {
 
 function SportsPreferences() {
   const queryClient = useQueryClient();
-  const [selectedSport, setSelectedSport] = useState<string | null>(null);
+  const [selectedSports, setSelectedSports] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<Team[]>([]);
+  const [allTeams, setAllTeams] = useState<Team[]>([]);
 
   // Fetch available sports
   const { data: availableSports = [] } = useQuery<Sport[]>({
     queryKey: ["/api/sports/available"],
   });
 
-  // Fetch teams for selected sport
-  const { data: teams = [], isLoading: teamsLoading } = useQuery<Team[]>({
-    queryKey: ["/api/sports/teams", selectedSport],
-    enabled: !!selectedSport,
-  });
+  // Fetch teams for all selected sports
+  useEffect(() => {
+    const fetchAllTeams = async () => {
+      if (selectedSports.length === 0) {
+        setAllTeams([]);
+        return;
+      }
+
+      const teamPromises = selectedSports.map(async (sport) => {
+        const response = await fetch(`/api/sports/teams/${sport}`);
+        if (!response.ok) return [];
+        return response.json();
+      });
+
+      const teamsArrays = await Promise.all(teamPromises);
+      const combined = teamsArrays.flat();
+      setAllTeams(combined);
+    };
+
+    fetchAllTeams();
+  }, [selectedSports]);
 
   // Fetch user's current preferences
   const { data: userPreferences = [], isLoading: prefsLoading } = useQuery<SportsPreference[]>({
@@ -155,7 +172,7 @@ function SportsPreferences() {
         description: "Your sports preferences have been updated.",
       });
       setSelectedTeams([]);
-      setSelectedSport(null);
+      setSelectedSports([]);
     },
     onError: () => {
       toast({
@@ -186,6 +203,16 @@ function SportsPreferences() {
       });
     },
   });
+
+  const handleSportToggle = (sportId: string) => {
+    setSelectedSports(prev => {
+      if (prev.includes(sportId)) {
+        return prev.filter(s => s !== sportId);
+      } else {
+        return [...prev, sportId];
+      }
+    });
+  };
 
   const handleTeamToggle = (team: Team) => {
     setSelectedTeams(prev => {
@@ -267,9 +294,9 @@ function SportsPreferences() {
               {availableSports.filter(s => ['nfl', 'cfb'].includes(s.id)).map((sport) => (
                 <Button
                   key={sport.id}
-                  variant={selectedSport === sport.id ? "default" : "outline"}
-                  onClick={() => setSelectedSport(sport.id)}
-                  className={selectedSport === sport.id 
+                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                  onClick={() => handleSportToggle(sport.id)}
+                  className={selectedSports.includes(sport.id)
                     ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
                     : "border-white/20 text-white hover:bg-white/10"}
                   data-testid={`button-select-sport-${sport.id}`}
@@ -287,9 +314,9 @@ function SportsPreferences() {
               {availableSports.filter(s => ['nba', 'cbb', 'wnba', 'wcbb'].includes(s.id)).map((sport) => (
                 <Button
                   key={sport.id}
-                  variant={selectedSport === sport.id ? "default" : "outline"}
-                  onClick={() => setSelectedSport(sport.id)}
-                  className={selectedSport === sport.id 
+                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                  onClick={() => handleSportToggle(sport.id)}
+                  className={selectedSports.includes(sport.id) 
                     ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
                     : "border-white/20 text-white hover:bg-white/10"}
                   data-testid={`button-select-sport-${sport.id}`}
@@ -307,9 +334,9 @@ function SportsPreferences() {
               {availableSports.filter(s => ['mlb', 'collegebb'].includes(s.id)).map((sport) => (
                 <Button
                   key={sport.id}
-                  variant={selectedSport === sport.id ? "default" : "outline"}
-                  onClick={() => setSelectedSport(sport.id)}
-                  className={selectedSport === sport.id 
+                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                  onClick={() => handleSportToggle(sport.id)}
+                  className={selectedSports.includes(sport.id) 
                     ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
                     : "border-white/20 text-white hover:bg-white/10"}
                   data-testid={`button-select-sport-${sport.id}`}
@@ -327,9 +354,9 @@ function SportsPreferences() {
               {availableSports.filter(s => ['nhl', 'mcollegehockey', 'wcollegehockey'].includes(s.id)).map((sport) => (
                 <Button
                   key={sport.id}
-                  variant={selectedSport === sport.id ? "default" : "outline"}
-                  onClick={() => setSelectedSport(sport.id)}
-                  className={selectedSport === sport.id 
+                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                  onClick={() => handleSportToggle(sport.id)}
+                  className={selectedSports.includes(sport.id) 
                     ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
                     : "border-white/20 text-white hover:bg-white/10"}
                   data-testid={`button-select-sport-${sport.id}`}
@@ -347,9 +374,9 @@ function SportsPreferences() {
               {availableSports.filter(s => ['soccer', 'premierleague', 'laliga', 'seriea', 'bundesliga', 'championsleague'].includes(s.id)).map((sport) => (
                 <Button
                   key={sport.id}
-                  variant={selectedSport === sport.id ? "default" : "outline"}
-                  onClick={() => setSelectedSport(sport.id)}
-                  className={selectedSport === sport.id 
+                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                  onClick={() => handleSportToggle(sport.id)}
+                  className={selectedSports.includes(sport.id) 
                     ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
                     : "border-white/20 text-white hover:bg-white/10"}
                   data-testid={`button-select-sport-${sport.id}`}
@@ -367,9 +394,9 @@ function SportsPreferences() {
               {availableSports.filter(s => ['nascar', 'xfinity', 'truck', 'f1', 'indycar', 'nhra'].includes(s.id)).map((sport) => (
                 <Button
                   key={sport.id}
-                  variant={selectedSport === sport.id ? "default" : "outline"}
-                  onClick={() => setSelectedSport(sport.id)}
-                  className={selectedSport === sport.id 
+                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                  onClick={() => handleSportToggle(sport.id)}
+                  className={selectedSports.includes(sport.id) 
                     ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
                     : "border-white/20 text-white hover:bg-white/10"}
                   data-testid={`button-select-sport-${sport.id}`}
@@ -387,9 +414,9 @@ function SportsPreferences() {
               {availableSports.filter(s => ['pga', 'lpga'].includes(s.id)).map((sport) => (
                 <Button
                   key={sport.id}
-                  variant={selectedSport === sport.id ? "default" : "outline"}
-                  onClick={() => setSelectedSport(sport.id)}
-                  className={selectedSport === sport.id 
+                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                  onClick={() => handleSportToggle(sport.id)}
+                  className={selectedSports.includes(sport.id) 
                     ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
                     : "border-white/20 text-white hover:bg-white/10"}
                   data-testid={`button-select-sport-${sport.id}`}
@@ -407,9 +434,9 @@ function SportsPreferences() {
               {availableSports.filter(s => ['atp', 'wta'].includes(s.id)).map((sport) => (
                 <Button
                   key={sport.id}
-                  variant={selectedSport === sport.id ? "default" : "outline"}
-                  onClick={() => setSelectedSport(sport.id)}
-                  className={selectedSport === sport.id 
+                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                  onClick={() => handleSportToggle(sport.id)}
+                  className={selectedSports.includes(sport.id) 
                     ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
                     : "border-white/20 text-white hover:bg-white/10"}
                   data-testid={`button-select-sport-${sport.id}`}
@@ -427,9 +454,9 @@ function SportsPreferences() {
               {availableSports.filter(s => ['wwe', 'ufc', 'boxing'].includes(s.id)).map((sport) => (
                 <Button
                   key={sport.id}
-                  variant={selectedSport === sport.id ? "default" : "outline"}
-                  onClick={() => setSelectedSport(sport.id)}
-                  className={selectedSport === sport.id 
+                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                  onClick={() => handleSportToggle(sport.id)}
+                  className={selectedSports.includes(sport.id) 
                     ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
                     : "border-white/20 text-white hover:bg-white/10"}
                   data-testid={`button-select-sport-${sport.id}`}
@@ -447,9 +474,9 @@ function SportsPreferences() {
               {availableSports.filter(s => ['rugby', 'cricket'].includes(s.id)).map((sport) => (
                 <Button
                   key={sport.id}
-                  variant={selectedSport === sport.id ? "default" : "outline"}
-                  onClick={() => setSelectedSport(sport.id)}
-                  className={selectedSport === sport.id 
+                  variant={selectedSports.includes(sport.id) ? "default" : "outline"}
+                  onClick={() => handleSportToggle(sport.id)}
+                  className={selectedSports.includes(sport.id) 
                     ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white" 
                     : "border-white/20 text-white hover:bg-white/10"}
                   data-testid={`button-select-sport-${sport.id}`}
@@ -462,15 +489,15 @@ function SportsPreferences() {
         </div>
 
         {/* Team Selection */}
-        {selectedSport && (
+        {selectedSports.length > 0 && (
           <div className="space-y-3">
-            <Label className="text-white">Select Teams</Label>
-            {teamsLoading ? (
+            <Label className="text-white">Select Teams ({selectedSports.length} sport{selectedSports.length !== 1 ? 's' : ''} selected)</Label>
+            {allTeams.length === 0 ? (
               <div className="text-purple-200">Loading teams...</div>
-            ) : teams.length > 0 ? (
+            ) : (
               <>
                 <div className="grid gap-2 max-h-64 overflow-y-auto">
-                  {teams.map((team) => {
+                  {allTeams.map((team) => {
                     const isSelected = selectedTeams.some(t => t.id === team.id);
                     const isAlreadyFollowing = userPreferences.some(p => p.teamId === team.id);
                     
@@ -518,8 +545,6 @@ function SportsPreferences() {
                   </Button>
                 )}
               </>
-            ) : (
-              <div className="text-purple-200">No teams available for this sport.</div>
             )}
           </div>
         )}
