@@ -341,13 +341,13 @@ class ESPNService {
   }
 
   /**
-   * Get games for specific teams (checks past 3 days and next 3 days)
+   * Get games for specific teams (checks yesterday, today, and tomorrow)
    */
   async getTeamGames(sport: Sport, teamIds: string[]): Promise<GameUpdate[]> {
     try {
-      // Check past 3 days, today, and next 3 days to ensure we always show recent/upcoming games
+      // Check yesterday, today, and tomorrow to avoid overwhelming the feed
       const dates = [];
-      for (let i = -3; i <= 3; i++) {
+      for (let i = -1; i <= 1; i++) {
         const date = new Date();
         date.setDate(date.getDate() + i);
         dates.push(date);
