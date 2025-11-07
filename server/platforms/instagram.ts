@@ -6,8 +6,8 @@ export class InstagramOAuth implements OAuthPlatform {
   private redirectUri: string;
 
   constructor() {
-    this.clientId = process.env.INSTAGRAM_CLIENT_ID || '';
-    this.clientSecret = process.env.INSTAGRAM_CLIENT_SECRET || '';
+    this.clientId = process.env.FACEBOOK_CLIENT_ID || '';
+    this.clientSecret = process.env.FACEBOOK_CLIENT_SECRET || '';
     this.redirectUri = `${process.env.BASE_URL || 'http://localhost:5000'}/api/oauth/callback/instagram`;
   }
   
