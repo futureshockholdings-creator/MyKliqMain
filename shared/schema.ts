@@ -307,6 +307,9 @@ export const posts = pgTable("posts", {
   longitude: numeric("longitude", { precision: 10, scale: 7 }),
   locationName: varchar("location_name"),
   address: varchar("address"),
+  sharedFromPostId: varchar("shared_from_post_id").references(() => posts.id, { onDelete: "cascade" }),
+  originalAuthorId: varchar("original_author_id").references(() => users.id, { onDelete: "cascade" }),
+  postType: varchar("post_type").default("regular"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -314,6 +317,7 @@ export const posts = pgTable("posts", {
   index("idx_posts_user_created").on(table.userId, table.createdAt), // Combined index for user posts by date
   index("idx_posts_created").on(table.createdAt), // Timeline sorting index
   index("idx_posts_user").on(table.userId), // User filtering index
+  index("idx_posts_shared_from").on(table.sharedFromPostId), // Shared post tracking
 ]);
 
 // Stories (disappear after 24 hours)

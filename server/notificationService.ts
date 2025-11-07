@@ -220,6 +220,19 @@ export class NotificationService {
     });
   }
 
+  async notifyPostShare(userId: string, sharerName: string, postId: string) {
+    return this.createNotification({
+      userId,
+      type: "post_share",
+      title: "Post shared",
+      message: `${sharerName} shared your post to their Headlines`,
+      actionUrl: `/bulletin`,
+      relatedId: postId,
+      relatedType: "post",
+      priority: "medium",
+    });
+  }
+
   async notifyComment(userId: string, commenterName: string, postId: string, commentPreview: string) {
     return this.createNotification({
       userId,

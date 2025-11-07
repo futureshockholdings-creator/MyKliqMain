@@ -2326,6 +2326,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Share post to user's own Headlines
+  app.post('/api/posts/:postId/share', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { postId } = req.params;
+      
+      // Get the original post
+      const originalPost = await storage.getPostById(postId);
+      if (!originalPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      // Don't allow sharing your own posts
+      if (originalPost.userId === userId) {
+        return res.status(400).json({ message: "You cannot share your own posts" });
+      }
+      
+      // Create a shared post
+      const sharedPostData = {
+        userId, // The person sharing
+        content: originalPost.content,
+        mediaUrl: originalPost.mediaUrl,
+        mediaType: originalPost.mediaType,
+        gifId: originalPost.gifId,
+        memeId: originalPost.memeId,
+        movieconId: originalPost.movieconId,
+        sharedFromPostId: postId,
+        originalAuthorId: originalPost.userId,
+        postType: originalPost.postType || 'regular',
+      };
+      
+      const sharedPost = await storage.createPost(sharedPostData);
+      
+      // Invalidate cache
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed');
+      invalidateCache('posts');
+      await cacheService.invalidatePattern('kliq-feed');
+      
+      // Notify the original author that their post was shared
+      const sharingUser = await storage.getUser(userId);
+      if (sharingUser && originalPost.userId !== userId) {
+        await notificationService.notifyPostShare(
+          originalPost.userId,
+          sharingUser.firstName || "Someone",
+          postId
+        );
+      }
+      
+      res.json({ success: true, sharedPost });
+    } catch (error) {
+      console.error("Error sharing post:", error);
+      res.status(500).json({ message: "Failed to share post" });
+    }
+  });
+
   app.post('/api/posts/:postId/like', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
