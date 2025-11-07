@@ -160,11 +160,6 @@ const SPORTS_CONFIG = {
     name: 'WTA Tennis',
     icon: '🎾'
   },
-  wwe: {
-    path: 'wrestling/wwe',
-    name: 'WWE',
-    icon: '🤼'
-  },
   ufc: {
     path: 'mma/ufc',
     name: 'UFC/MMA',
