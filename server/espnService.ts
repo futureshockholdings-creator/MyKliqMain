@@ -346,19 +346,34 @@ class ESPNService {
   }
 
   /**
-   * Get games for specific teams
+   * Get games for specific teams (checks past 3 days and next 3 days)
    */
   async getTeamGames(sport: Sport, teamIds: string[]): Promise<GameUpdate[]> {
     try {
-      // Get today's scoreboard
-      const allGames = await this.getScoreboard(sport);
+      // Check past 3 days, today, and next 3 days to ensure we always show recent/upcoming games
+      const dates = [];
+      for (let i = -3; i <= 3; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() + i);
+        dates.push(date);
+      }
+
+      // Fetch games for all dates
+      const allGamesPromises = dates.map(date => this.getScoreboard(sport, date));
+      const allGamesArrays = await Promise.all(allGamesPromises);
+      const allGames = allGamesArrays.flat();
       
       // Filter games involving any of the specified teams
       const teamGames = allGames.filter(game => 
         teamIds.includes(game.homeTeamId) || teamIds.includes(game.awayTeamId)
       );
 
-      return teamGames;
+      // Remove duplicates (same eventId)
+      const uniqueGames = Array.from(
+        new Map(teamGames.map(game => [game.eventId, game])).values()
+      );
+
+      return uniqueGames;
     } catch (error) {
       console.error(`Error fetching team games:`, error);
       return [];

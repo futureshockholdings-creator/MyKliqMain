@@ -5926,11 +5926,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return acc;
       }, {} as Record<string, string[]>);
 
-      // Fetch games for each sport
+      // Fetch games for each sport independently (one failure won't break others)
       const allGames = [];
       for (const [sport, teamIds] of Object.entries(teamsBySport)) {
-        const games = await espnService.getTeamGames(sport as any, teamIds);
-        allGames.push(...games);
+        try {
+          const games = await espnService.getTeamGames(sport as any, teamIds);
+          allGames.push(...games);
+        } catch (sportError) {
+          console.error(`Failed to fetch ${sport} updates:`, sportError);
+          // Continue with other sports even if one fails
+        }
       }
 
       // Sort by date (most recent first)
