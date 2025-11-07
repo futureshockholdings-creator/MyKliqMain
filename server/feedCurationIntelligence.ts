@@ -282,8 +282,8 @@ export class FeedCurationIntelligence {
    * Apply intelligent curation algorithm with diversity balancing
    */
   private applyCurationAlgorithm(items: CuratedFeedItem[], maxItems: number): CuratedFeedItem[] {
-    // Sort by final score (descending)
-    const sortedItems = [...items].sort((a, b) => b.finalScore - a.finalScore);
+    // Sort by creation date (newest first) for chronological feed
+    const sortedItems = [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // Apply diversity constraints to prevent feed monotony
     const curatedItems: CuratedFeedItem[] = [];
@@ -353,8 +353,8 @@ export class FeedCurationIntelligence {
       balancedItems.push(...remainingItems.slice(0, remainingSlots));
     }
 
-    // Final sort by score to maintain quality
-    return balancedItems.sort((a, b) => b.finalScore - a.finalScore);
+    // Final sort by creation date (newest first) for chronological feed
+    return balancedItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   /**
