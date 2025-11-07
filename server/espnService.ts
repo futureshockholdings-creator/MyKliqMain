@@ -139,6 +139,26 @@ const SPORTS_CONFIG = {
     path: 'racing/nhra',
     name: 'NHRA Drag Racing',
     icon: '🏁'
+  },
+  wnba: {
+    path: 'basketball/wnba',
+    name: 'WNBA',
+    icon: '🏀'
+  },
+  wcbb: {
+    path: 'basketball/womens-college-basketball',
+    name: "Women's College Basketball",
+    icon: '🏀'
+  },
+  lpga: {
+    path: 'golf/lpga',
+    name: 'LPGA',
+    icon: '⛳'
+  },
+  wta: {
+    path: 'tennis/wta',
+    name: 'WTA Tennis',
+    icon: '🎾'
   }
 } as const;
 
