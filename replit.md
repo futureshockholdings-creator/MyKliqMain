@@ -27,7 +27,7 @@ The application features a sophisticated content system including:
 - **Daily Content Features**: Daily horoscopes and Bible verses with timezone-aware generation and one-click posting.
 - **Mood Boost System**: AI-powered uplifting posts generated on-demand when users post with a mood using the mood button on the headlines page. Uses Google Gemini API to create 5 personalized, concise (1-2 sentences) uplifting messages based on the detected mood. Posts appear in user feeds labeled "✨ Just for you" with colorful gradient styling, expire after 5 hours, and are interspersed every 2 regular posts in the feed for better visibility. Includes retry logic with exponential backoff for API rate limits and fallback to curated messages when API is unavailable. Cleanup runs every 30 minutes to remove expired posts. **Staggered Release**: 1st post appears immediately, remaining 4 posts released every 30 minutes thereafter to avoid overwhelming users. All 5 posts are pre-generated to prevent future API failures. **Mood Priority System**: Only ONE mood is active at a time - when a user posts a new mood, ALL existing mood boost posts are deleted and replaced with new ones tailored to the current mood. When a user deletes their mood post, all associated mood boost posts are also automatically deleted.
 - **Real-time Polling**: Customizable polls with live results.
-- **Media Support**: Photo, video, and YouTube URL embedding with object storage.
+- **Media Support**: Photo, video, and YouTube URL embedding with object storage. **Enhanced Upload System** (Nov 2025): Increased file size limits to 100MB for posts/stories and 15MB for profile pictures. Features comprehensive error handling with detailed feedback (file name, size, rejection reason), file size preview with warnings for large files (>80MB), helpful compression suggestions for oversized videos, and improved HEVC/H.265 video handling with better user messaging. Supports wide range of formats including JPEG, PNG, GIF, WebP, HEIC/HEIF, MP4, MOV, HEVC, AVI, MKV, 3GP, and WebM.
 - **Stories**: 24-hour disappearing content.
 - **Incognito Messaging (IM)**: Private direct messaging with message auto-deletion after 7 days.
 - **Moviecons**: Custom video uploads for reactions.
@@ -57,7 +57,15 @@ The application uses a dual-cache system for optimal performance:
   - LRU eviction strategy with automatic cleanup for expired entries
   - Optimized for 5000+ concurrent users
 
-Post creation automatically invalidates both cache systems to ensure feed consistency.
+Post creation and internal post sharing automatically invalidates both cache systems to ensure feed consistency.
+
+### Internal Post Sharing
+Users can share posts within their kliq community instead of to external social media platforms. The share feature (accessed via paper airplane icon on posts):
+- Creates a copy of the post (including all media, GIFs, memes, moviecons) in the sharer's feed
+- Prevents self-sharing with validation
+- Shared posts appear identical to regular posts without "Shared" indicators
+- No notifications sent to original author
+- Maintains chronological feed ordering (newest first)
 
 # External Dependencies
 
