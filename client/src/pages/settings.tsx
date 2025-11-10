@@ -10,6 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { StreakDashboardCard } from "@/components/KliqKoin/StreakDashboardCard";
+import { KoinWalletCard } from "@/components/KliqKoin/KoinWalletCard";
+import { BorderMarketplaceCard } from "@/components/KliqKoin/BorderMarketplaceCard";
+import { MyBordersCard } from "@/components/KliqKoin/MyBordersCard";
 
 import { 
   Linkedin, 
@@ -24,6 +28,12 @@ import {
   User,
   AlertTriangle,
   Trophy,
+  Coins,
+  Flame,
+  ShoppingCart,
+  Crown,
+  Lock,
+  Check,
 } from "lucide-react";
 import { SiPinterest } from "react-icons/si";
 import { apiRequest } from "@/lib/queryClient";
@@ -843,6 +853,88 @@ export default function Settings() {
     return Object.keys(platformInfo).filter(platform => !connected.includes(platform));
   };
 
+  // Kliq Koin queries
+  const { data: walletData, isLoading: walletLoading } = useQuery({
+    queryKey: ["/api/kliq-koins/wallet"],
+  });
+
+  const { data: streakData, isLoading: streakLoading } = useQuery({
+    queryKey: ["/api/kliq-koins/streak"],
+  });
+
+  const { data: bordersData = [], isLoading: bordersLoading } = useQuery({
+    queryKey: ["/api/kliq-koins/borders"],
+  });
+
+  const { data: myBordersData = [], isLoading: myBordersLoading } = useQuery({
+    queryKey: ["/api/kliq-koins/my-borders"],
+  });
+
+  // Kliq Koin mutations
+  const purchaseBorder = useMutation({
+    mutationFn: async (borderId: string) => {
+      return await apiRequest("POST", "/api/kliq-koins/purchase-border", { borderId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
+      toast({
+        title: "Border Purchased! 🎉",
+        description: "Your new border has been added to your collection.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Purchase Failed",
+        description: error.message || "Failed to purchase border. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const equipBorder = useMutation({
+    mutationFn: async (borderId: string) => {
+      return await apiRequest("POST", "/api/kliq-koins/equip-border", { borderId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
+      toast({
+        title: "Border Equipped! ✨",
+        description: "Your profile border has been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Equip",
+        description: error.message || "Failed to equip border. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const buyStreakFreeze = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/kliq-koins/streak-freeze", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/streak"] });
+      toast({
+        title: "Streak Freeze Purchased! ❄️",
+        description: "You can now protect your streak for one day.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Purchase Failed",
+        description: error.message || "Failed to purchase streak freeze.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // PIN verification for delete account
   const verifyPin = useMutation({
     mutationFn: async (pinCode: string) => {
@@ -1080,6 +1172,34 @@ export default function Settings() {
                 <SportsPreferences />
               </CardContent>
             </Card>
+
+            {/* Kliq Koin System */}
+            <StreakDashboardCard 
+              streakData={streakData}
+              isLoading={streakLoading}
+              onBuyFreeze={() => buyStreakFreeze.mutate()}
+              isBuyingFreeze={buyStreakFreeze.isPending}
+            />
+
+            <KoinWalletCard 
+              walletData={walletData}
+              isLoading={walletLoading}
+            />
+
+            <BorderMarketplaceCard 
+              bordersData={bordersData}
+              walletData={walletData}
+              isLoading={bordersLoading}
+              isPurchasing={purchaseBorder.isPending}
+              onPurchase={(borderId) => purchaseBorder.mutate(borderId)}
+            />
+
+            <MyBordersCard 
+              myBordersData={myBordersData}
+              isLoading={myBordersLoading}
+              isEquipping={equipBorder.isPending}
+              onEquip={(borderId) => equipBorder.mutate(borderId)}
+            />
 
             {/* Language Settings */}
             <Card className="bg-white/10 backdrop-blur-sm border-white/20">
