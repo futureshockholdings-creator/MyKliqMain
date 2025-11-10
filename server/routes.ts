@@ -6472,6 +6472,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Kliq Koin Routes
+  
+  // Process daily login - award Koins and update streak
+  app.post('/api/kliq-koins/login', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const result = await storage.processLogin(userId);
+      
+      res.json({
+        success: true,
+        koinsAwarded: result.koinsAwarded,
+        streak: result.streak,
+        tierUnlocked: result.tierUnlocked,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to process login" });
+    }
+  });
+
+  // Get user's Koin wallet info
+  app.get('/api/kliq-koins/wallet', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      let koins = await storage.getUserKoins(userId);
+      
+      if (!koins) {
+        koins = await storage.initializeUserKoins(userId);
+      }
+      
+      const transactions = await storage.getKoinTransactions(userId, 50);
+      
+      res.json({ koins, transactions });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch wallet info" });
+    }
+  });
+
+  // Get user's streak info
+  app.get('/api/kliq-koins/streak', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      let streak = await storage.getUserStreak(userId);
+      
+      if (!streak) {
+        streak = await storage.initializeUserStreak(userId);
+      }
+      
+      res.json(streak);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch streak info" });
+    }
+  });
+
+  // Buy a streak freeze (costs 10 Koins)
+  app.post('/api/kliq-koins/streak-freeze', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const updatedStreak = await storage.buyStreakFreeze(userId);
+      
+      res.json({ 
+        success: true, 
+        streak: updatedStreak,
+        message: "Streak freeze purchased successfully!" 
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Failed to buy streak freeze" });
+    }
+  });
+
+  // Get all available borders
+  app.get('/api/kliq-koins/borders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const allBorders = await storage.getAllBorders();
+      const userBorders = await storage.getUserBorders(userId);
+      const userBorderIds = new Set(userBorders.map(ub => ub.borderId));
+      
+      const bordersWithOwnership = allBorders.map(border => ({
+        ...border,
+        owned: userBorderIds.has(border.id),
+        isEquipped: userBorders.find(ub => ub.borderId === border.id)?.isEquipped || false,
+      }));
+      
+      res.json(bordersWithOwnership);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch borders" });
+    }
+  });
+
+  // Get user's owned borders
+  app.get('/api/kliq-koins/my-borders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userBorders = await storage.getUserBorders(userId);
+      
+      res.json(userBorders);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user borders" });
+    }
+  });
+
+  // Purchase a border
+  app.post('/api/kliq-koins/purchase-border', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { borderId } = req.body;
+      
+      if (!borderId) {
+        return res.status(400).json({ message: "Border ID required" });
+      }
+      
+      const newUserBorder = await storage.purchaseBorder(userId, borderId);
+      
+      res.json({ 
+        success: true, 
+        border: newUserBorder,
+        message: "Border purchased successfully!" 
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Failed to purchase border" });
+    }
+  });
+
+  // Equip a border
+  app.post('/api/kliq-koins/equip-border', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { borderId } = req.body;
+      
+      if (!borderId) {
+        return res.status(400).json({ message: "Border ID required" });
+      }
+      
+      await storage.equipBorder(userId, borderId);
+      
+      res.json({ 
+        success: true,
+        message: "Border equipped successfully!" 
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Failed to equip border" });
+    }
+  });
+
   return httpServer;
 }
 
