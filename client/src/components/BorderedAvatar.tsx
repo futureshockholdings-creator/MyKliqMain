@@ -46,6 +46,10 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
     emoji: "👑",
     bg: "bg-gradient-to-br from-yellow-200 to-orange-300"
   },
+  "Rainbow Sparkle": {
+    emoji: "🌈",
+    bg: "bg-gradient-to-br from-purple-300 to-pink-400"
+  },
   "Dragon Scale": {
     emoji: "🐉",
     bg: "bg-gradient-to-br from-red-500 to-orange-600"
