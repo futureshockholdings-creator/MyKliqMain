@@ -20,7 +20,7 @@ const sizeClasses = {
 
 const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
   "Rainbow Sparkle": {
-    wrapper: "bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500 p-1 rounded-full animate-pulse",
+    wrapper: "bg-[conic-gradient(from_0deg,#ff0000,#ff7700,#ffdd00,#00ff00,#0099ff,#4400ff,#ff00ff,#ff0000)] p-1 rounded-full animate-pulse",
     avatar: ""
   },
   "Neon Glow": {
