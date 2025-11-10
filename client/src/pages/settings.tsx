@@ -897,11 +897,11 @@ export default function Settings() {
     mutationFn: async (borderId: string) => {
       return await apiRequest("POST", "/api/kliq-koins/equip-border", { borderId });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Border Equipped! ✨",
         description: "Your profile border has been updated.",
@@ -920,11 +920,11 @@ export default function Settings() {
     mutationFn: async () => {
       return await apiRequest("POST", "/api/kliq-koins/unequip-border", {});
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Border Removed",
         description: "Your profile border has been removed.",
