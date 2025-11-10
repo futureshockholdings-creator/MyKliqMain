@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { Medal, Gem, Crown } from "lucide-react";
 
 interface BorderedAvatarProps {
   src: string | undefined;
@@ -16,6 +17,41 @@ const sizeClasses = {
   md: "w-10 h-10",
   lg: "w-16 h-16",
   xl: "w-24 h-24",
+};
+
+const iconSizeClasses = {
+  sm: "w-3 h-3",
+  md: "w-4 h-4",
+  lg: "w-5 h-5",
+  xl: "w-6 h-6",
+};
+
+const streakBorderIcons: Record<string, { Icon: any; color: string; bg: string }> = {
+  "Bronze Medal": {
+    Icon: Medal,
+    color: "#cd7f32",
+    bg: "bg-gradient-to-br from-amber-700 to-amber-900"
+  },
+  "Silver Medal": {
+    Icon: Medal,
+    color: "#c0c0c0",
+    bg: "bg-gradient-to-br from-gray-300 to-gray-500"
+  },
+  "Gold Medal": {
+    Icon: Medal,
+    color: "#ffd700",
+    bg: "bg-gradient-to-br from-yellow-400 to-yellow-600"
+  },
+  "Diamond": {
+    Icon: Gem,
+    color: "#b9f2ff",
+    bg: "bg-gradient-to-br from-cyan-200 to-blue-400"
+  },
+  "Legend Crown": {
+    Icon: Crown,
+    color: "#ffd700",
+    bg: "bg-gradient-to-br from-yellow-400 to-orange-500"
+  },
 };
 
 const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
@@ -83,18 +119,37 @@ export function BorderedAvatar({
   size = "md",
 }: BorderedAvatarProps) {
   const sizeClass = sizeClasses[size];
+  const iconSize = iconSizeClasses[size];
   const borderStyle = borderName && borderStyles[borderName] ? borderStyles[borderName] : null;
+  const streakIcon = borderName && streakBorderIcons[borderName] ? streakBorderIcons[borderName] : null;
+
+  // Render streak icon badge if applicable
+  const renderStreakBadge = () => {
+    if (!streakIcon) return null;
+    const { Icon, bg } = streakIcon;
+    return (
+      <div className={cn(
+        "absolute -top-1 -left-1 rounded-full p-1 shadow-lg z-10",
+        bg
+      )}>
+        <Icon className={cn(iconSize, "text-white drop-shadow-md")} />
+      </div>
+    );
+  };
 
   // CSS-based border with wrapper
   if (borderStyle?.wrapper) {
     return (
-      <div className={borderStyle.wrapper}>
-        <Avatar className={cn(sizeClass, className)}>
-          <AvatarImage src={src} alt={alt} className="object-cover" />
-          <AvatarFallback className="bg-muted text-foreground">
-            {fallback}
-          </AvatarFallback>
-        </Avatar>
+      <div className="relative inline-block">
+        <div className={borderStyle.wrapper}>
+          <Avatar className={cn(sizeClass, className)}>
+            <AvatarImage src={src} alt={alt} className="object-cover" />
+            <AvatarFallback className="bg-muted text-foreground">
+              {fallback}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+        {renderStreakBadge()}
       </div>
     );
   }
@@ -114,6 +169,7 @@ export function BorderedAvatar({
           alt={borderName || "border"}
           className={cn("absolute inset-0 pointer-events-none", sizeClass)}
         />
+        {renderStreakBadge()}
       </div>
     );
   }
@@ -131,6 +187,7 @@ export function BorderedAvatar({
           {fallback}
         </AvatarFallback>
       </Avatar>
+      {renderStreakBadge()}
     </div>
   );
 }
