@@ -134,6 +134,21 @@ import {
   userSportsPreferences,
   type UserSportsPreference,
   type InsertUserSportsPreference,
+  profileBorders,
+  kliqKoins,
+  kliqKoinTransactions,
+  loginStreaks,
+  userBorders,
+  type ProfileBorder,
+  type InsertProfileBorder,
+  type KliqKoin,
+  type InsertKliqKoin,
+  type KliqKoinTransaction,
+  type InsertKliqKoinTransaction,
+  type LoginStreak,
+  type InsertLoginStreak,
+  type UserBorder,
+  type InsertUserBorder,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, isNull, isNotNull } from "drizzle-orm";
@@ -398,6 +413,30 @@ export interface IStorage {
 
   // Mood Boost Posts operations
   getMoodBoostPostsForUser(userId: string): Promise<MoodBoostPost[]>;
+
+  // Kliq Koin operations
+  getUserKoins(userId: string): Promise<KliqKoin | undefined>;
+  initializeUserKoins(userId: string): Promise<KliqKoin>;
+  awardKoins(userId: string, amount: number, source: string, referenceId?: string): Promise<KliqKoin>;
+  spendKoins(userId: string, amount: number, source: string, referenceId?: string): Promise<KliqKoin>;
+  getKoinTransactions(userId: string, limit?: number): Promise<KliqKoinTransaction[]>;
+  
+  // Login Streak operations
+  getUserStreak(userId: string): Promise<LoginStreak | undefined>;
+  initializeUserStreak(userId: string): Promise<LoginStreak>;
+  processLogin(userId: string): Promise<{ streak: LoginStreak; koinsAwarded: number; tierUnlocked?: ProfileBorder }>;
+  buyStreakFreeze(userId: string): Promise<LoginStreak>;
+  
+  // Profile Border operations
+  getAllBorders(): Promise<ProfileBorder[]>;
+  getStreakRewardBorders(): Promise<ProfileBorder[]>;
+  getPurchasableBorders(): Promise<ProfileBorder[]>;
+  getBorderById(borderId: string): Promise<ProfileBorder | undefined>;
+  getUserBorders(userId: string): Promise<(UserBorder & { border: ProfileBorder })[]>;
+  getEquippedBorder(userId: string): Promise<(UserBorder & { border: ProfileBorder }) | undefined>;
+  purchaseBorder(userId: string, borderId: string): Promise<UserBorder>;
+  equipBorder(userId: string, borderId: string): Promise<void>;
+  unlockStreakBorder(userId: string, tier: number): Promise<UserBorder | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4093,6 +4132,356 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(moodBoostPosts.createdAt));
     return posts;
+  }
+
+  // Kliq Koin operations
+  async getUserKoins(userId: string): Promise<KliqKoin | undefined> {
+    const [koins] = await db
+      .select()
+      .from(kliqKoins)
+      .where(eq(kliqKoins.userId, userId));
+    return koins;
+  }
+
+  async initializeUserKoins(userId: string): Promise<KliqKoin> {
+    const [newKoins] = await db
+      .insert(kliqKoins)
+      .values({ userId, balance: 0, totalEarned: 0 })
+      .returning();
+    return newKoins;
+  }
+
+  async awardKoins(userId: string, amount: number, source: string, referenceId?: string): Promise<KliqKoin> {
+    return await db.transaction(async (tx) => {
+      let userKoins = await this.getUserKoins(userId);
+      if (!userKoins) {
+        userKoins = await this.initializeUserKoins(userId);
+      }
+
+      const newBalance = userKoins.balance + amount;
+      const newTotalEarned = userKoins.totalEarned + amount;
+
+      const [updated] = await tx
+        .update(kliqKoins)
+        .set({ 
+          balance: newBalance, 
+          totalEarned: newTotalEarned,
+          updatedAt: new Date() 
+        })
+        .where(eq(kliqKoins.userId, userId))
+        .returning();
+
+      await tx.insert(kliqKoinTransactions).values({
+        userId,
+        amount,
+        type: 'earned',
+        source,
+        referenceId,
+        balanceAfter: newBalance,
+      });
+
+      return updated;
+    });
+  }
+
+  async spendKoins(userId: string, amount: number, source: string, referenceId?: string): Promise<KliqKoin> {
+    return await db.transaction(async (tx) => {
+      const userKoins = await this.getUserKoins(userId);
+      if (!userKoins || userKoins.balance < amount) {
+        throw new Error('Insufficient Kliq Koins');
+      }
+
+      const newBalance = userKoins.balance - amount;
+
+      const [updated] = await tx
+        .update(kliqKoins)
+        .set({ balance: newBalance, updatedAt: new Date() })
+        .where(eq(kliqKoins.userId, userId))
+        .returning();
+
+      await tx.insert(kliqKoinTransactions).values({
+        userId,
+        amount: -amount,
+        type: 'spent',
+        source,
+        referenceId,
+        balanceAfter: newBalance,
+      });
+
+      return updated;
+    });
+  }
+
+  async getKoinTransactions(userId: string, limit: number = 50): Promise<KliqKoinTransaction[]> {
+    return await db
+      .select()
+      .from(kliqKoinTransactions)
+      .where(eq(kliqKoinTransactions.userId, userId))
+      .orderBy(desc(kliqKoinTransactions.createdAt))
+      .limit(limit);
+  }
+
+  // Login Streak operations
+  async getUserStreak(userId: string): Promise<LoginStreak | undefined> {
+    const [streak] = await db
+      .select()
+      .from(loginStreaks)
+      .where(eq(loginStreaks.userId, userId));
+    return streak;
+  }
+
+  async initializeUserStreak(userId: string): Promise<LoginStreak> {
+    const [newStreak] = await db
+      .insert(loginStreaks)
+      .values({ 
+        userId, 
+        currentStreak: 0, 
+        longestStreak: 0,
+        streakFreezes: 0 
+      })
+      .returning();
+    return newStreak;
+  }
+
+  async processLogin(userId: string): Promise<{ streak: LoginStreak; koinsAwarded: number; tierUnlocked?: ProfileBorder }> {
+    return await db.transaction(async (tx) => {
+      let userStreak = await this.getUserStreak(userId);
+      if (!userStreak) {
+        userStreak = await this.initializeUserStreak(userId);
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      const lastLogin = userStreak.lastLoginDate?.toString();
+
+      if (lastLogin === today) {
+        return { streak: userStreak, koinsAwarded: 0 };
+      }
+
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      let newStreak = userStreak.currentStreak;
+      let tierUnlocked: ProfileBorder | undefined;
+
+      if (lastLogin === yesterdayStr) {
+        newStreak += 1;
+      } else {
+        newStreak = 1;
+      }
+
+      const newLongestStreak = Math.max(newStreak, userStreak.longestStreak);
+
+      const [updatedStreak] = await tx
+        .update(loginStreaks)
+        .set({
+          currentStreak: newStreak,
+          longestStreak: newLongestStreak,
+          lastLoginDate: today as any,
+          updatedAt: new Date(),
+        })
+        .where(eq(loginStreaks.userId, userId))
+        .returning();
+
+      const koinsAwarded = await this.awardKoins(userId, 1, 'daily_login');
+
+      const tiers = [3, 7, 14, 30, 100];
+      for (const tier of tiers) {
+        if (newStreak === tier) {
+          const unlockedBorder = await this.unlockStreakBorder(userId, tier);
+          if (unlockedBorder) {
+            tierUnlocked = unlockedBorder.border;
+          }
+        }
+      }
+
+      return { 
+        streak: updatedStreak, 
+        koinsAwarded: 1,
+        tierUnlocked 
+      };
+    });
+  }
+
+  async buyStreakFreeze(userId: string): Promise<LoginStreak> {
+    return await db.transaction(async (tx) => {
+      await this.spendKoins(userId, 10, 'streak_freeze');
+
+      const [updatedStreak] = await tx
+        .update(loginStreaks)
+        .set({ 
+          streakFreezes: sql`${loginStreaks.streakFreezes} + 1`,
+          updatedAt: new Date() 
+        })
+        .where(eq(loginStreaks.userId, userId))
+        .returning();
+
+      return updatedStreak;
+    });
+  }
+
+  // Profile Border operations
+  async getAllBorders(): Promise<ProfileBorder[]> {
+    return await db
+      .select()
+      .from(profileBorders)
+      .where(eq(profileBorders.isActive, true))
+      .orderBy(asc(profileBorders.cost));
+  }
+
+  async getStreakRewardBorders(): Promise<ProfileBorder[]> {
+    return await db
+      .select()
+      .from(profileBorders)
+      .where(
+        and(
+          eq(profileBorders.type, 'streak_reward'),
+          eq(profileBorders.isActive, true)
+        )
+      )
+      .orderBy(asc(profileBorders.tier));
+  }
+
+  async getPurchasableBorders(): Promise<ProfileBorder[]> {
+    return await db
+      .select()
+      .from(profileBorders)
+      .where(
+        and(
+          eq(profileBorders.type, 'purchasable'),
+          eq(profileBorders.isActive, true)
+        )
+      )
+      .orderBy(asc(profileBorders.cost));
+  }
+
+  async getBorderById(borderId: string): Promise<ProfileBorder | undefined> {
+    const [border] = await db
+      .select()
+      .from(profileBorders)
+      .where(eq(profileBorders.id, borderId));
+    return border;
+  }
+
+  async getUserBorders(userId: string): Promise<(UserBorder & { border: ProfileBorder })[]> {
+    const borders = await db
+      .select({
+        id: userBorders.id,
+        userId: userBorders.userId,
+        borderId: userBorders.borderId,
+        isEquipped: userBorders.isEquipped,
+        purchasedAt: userBorders.purchasedAt,
+        createdAt: userBorders.createdAt,
+        border: profileBorders,
+      })
+      .from(userBorders)
+      .innerJoin(profileBorders, eq(userBorders.borderId, profileBorders.id))
+      .where(eq(userBorders.userId, userId))
+      .orderBy(desc(userBorders.purchasedAt));
+
+    return borders;
+  }
+
+  async getEquippedBorder(userId: string): Promise<(UserBorder & { border: ProfileBorder }) | undefined> {
+    const [equipped] = await db
+      .select({
+        id: userBorders.id,
+        userId: userBorders.userId,
+        borderId: userBorders.borderId,
+        isEquipped: userBorders.isEquipped,
+        purchasedAt: userBorders.purchasedAt,
+        createdAt: userBorders.createdAt,
+        border: profileBorders,
+      })
+      .from(userBorders)
+      .innerJoin(profileBorders, eq(userBorders.borderId, profileBorders.id))
+      .where(
+        and(
+          eq(userBorders.userId, userId),
+          eq(userBorders.isEquipped, true)
+        )
+      );
+
+    return equipped;
+  }
+
+  async purchaseBorder(userId: string, borderId: string): Promise<UserBorder> {
+    return await db.transaction(async (tx) => {
+      const border = await this.getBorderById(borderId);
+      if (!border) {
+        throw new Error('Border not found');
+      }
+
+      if (border.type === 'streak_reward') {
+        throw new Error('Streak reward borders cannot be purchased');
+      }
+
+      const existingBorders = await this.getUserBorders(userId);
+      if (existingBorders.some(ub => ub.borderId === borderId)) {
+        throw new Error('Border already owned');
+      }
+
+      await this.spendKoins(userId, border.cost, 'purchase_border', borderId);
+
+      const [newUserBorder] = await tx
+        .insert(userBorders)
+        .values({ userId, borderId, isEquipped: false })
+        .returning();
+
+      return newUserBorder;
+    });
+  }
+
+  async equipBorder(userId: string, borderId: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      const userBorderList = await this.getUserBorders(userId);
+      if (!userBorderList.some(ub => ub.borderId === borderId)) {
+        throw new Error('Border not owned');
+      }
+
+      await tx
+        .update(userBorders)
+        .set({ isEquipped: false })
+        .where(eq(userBorders.userId, userId));
+
+      await tx
+        .update(userBorders)
+        .set({ isEquipped: true })
+        .where(
+          and(
+            eq(userBorders.userId, userId),
+            eq(userBorders.borderId, borderId)
+          )
+        );
+    });
+  }
+
+  async unlockStreakBorder(userId: string, tier: number): Promise<(UserBorder & { border: ProfileBorder }) | undefined> {
+    const [border] = await db
+      .select()
+      .from(profileBorders)
+      .where(
+        and(
+          eq(profileBorders.type, 'streak_reward'),
+          eq(profileBorders.tier, tier)
+        )
+      );
+
+    if (!border) {
+      return undefined;
+    }
+
+    const existingBorders = await this.getUserBorders(userId);
+    if (existingBorders.some(ub => ub.borderId === border.id)) {
+      return undefined;
+    }
+
+    const [newUserBorder] = await db
+      .insert(userBorders)
+      .values({ userId, borderId: border.id, isEquipped: false })
+      .returning();
+
+    return { ...newUserBorder, border };
   }
 }
 
