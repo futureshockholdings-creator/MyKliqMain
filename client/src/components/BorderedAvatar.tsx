@@ -196,19 +196,19 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
     avatar: ""
   },
   "Phoenix Fire": {
-    wrapper: "bg-[conic-gradient(from_45deg,#ff6600,#ff9900,#ffcc00,#ff6600)] p-1 rounded-full animate-[spin_5s_linear_infinite] shadow-[0_0_25px_rgba(255,102,0,0.8),0_0_45px_rgba(255,153,0,0.6)]",
+    wrapper: "bg-[conic-gradient(from_45deg,#ff6600,#ff9900,#ffcc00,#ff6600)] p-[3px] rounded-full animate-[spin_5s_linear_infinite] shadow-[0_0_25px_rgba(255,102,0,0.8),0_0_45px_rgba(255,153,0,0.6)]",
     avatar: ""
   },
   "Starlight": {
-    wrapper: "bg-[conic-gradient(from_0deg,#ffffff,#ffffcc,#ffff99,#ffffcc,#ffffff)] p-1 rounded-full animate-[pulse_3s_ease-in-out_infinite] shadow-[0_0_30px_rgba(255,255,255,0.9),0_0_50px_rgba(255,255,204,0.7)]",
+    wrapper: "bg-[conic-gradient(from_0deg,#ffffff,#ffffcc,#ffff99,#ffffcc,#ffffff)] p-[3px] rounded-full animate-[pulse_3s_ease-in-out_infinite] shadow-[0_0_30px_rgba(255,255,255,0.9),0_0_50px_rgba(255,255,204,0.7)]",
     avatar: ""
   },
   "Moonbeam": {
-    wrapper: "bg-[radial-gradient(circle,#e6e6fa,#b19cd9,#9370db)] p-1 rounded-full shadow-[0_0_25px_rgba(147,112,219,0.7),inset_0_0_15px_rgba(230,230,250,0.5)]",
+    wrapper: "bg-[radial-gradient(circle,#e6e6fa,#b19cd9,#9370db)] p-[3px] rounded-full animate-[pulse_4s_ease-in-out_infinite] shadow-[0_0_25px_rgba(147,112,219,0.7),inset_0_0_15px_rgba(230,230,250,0.5)]",
     avatar: ""
   },
   "Tropical Paradise": {
-    wrapper: "bg-[conic-gradient(from_0deg,#ff1493,#00ff7f,#ffd700,#ff6347,#ff1493)] p-1 rounded-full animate-[spin_7s_linear_infinite] shadow-[0_0_22px_rgba(255,20,147,0.7)]",
+    wrapper: "bg-[conic-gradient(from_0deg,#ff1493,#00ff7f,#ffd700,#ff6347,#ff1493)] p-[3px] rounded-full animate-[spin_7s_linear_infinite] shadow-[0_0_22px_rgba(255,20,147,0.7)]",
     avatar: ""
   },
   // 250 Koin Tier
@@ -217,7 +217,7 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
     avatar: ""
   },
   "Electric Storm": {
-    wrapper: "bg-[conic-gradient(from_0deg,#00ffff,#ffffff,#0099ff,#ffffff,#00ffff)] p-1 rounded-full animate-[pulse_0.6s_ease-in-out_infinite] shadow-[0_0_40px_rgba(0,255,255,1),0_0_80px_rgba(0,153,255,0.8)]",
+    wrapper: "bg-[conic-gradient(from_0deg,#00ffff,#ffffff,#0099ff,#ffffff,#00ffff)] p-[3px] rounded-full animate-[pulse_0.6s_ease-in-out_infinite] shadow-[0_0_40px_rgba(0,255,255,1),0_0_80px_rgba(0,153,255,0.8)]",
     avatar: ""
   },
   "Crystal Aurora": {
@@ -229,7 +229,7 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
     avatar: ""
   },
   "Cosmic Nebula": {
-    wrapper: "bg-[radial-gradient(circle_at_40%_40%,#ff1493,#9370db,#4169e1,#8a2be2)] p-1 rounded-full animate-[spin_12s_linear_infinite] shadow-[0_0_40px_rgba(255,20,147,0.8),0_0_80px_rgba(147,112,219,0.6)]",
+    wrapper: "bg-[radial-gradient(circle_at_40%_40%,#ff1493,#9370db,#4169e1,#8a2be2)] p-[3px] rounded-full animate-[spin_12s_linear_infinite] shadow-[0_0_40px_rgba(255,20,147,0.8),0_0_80px_rgba(147,112,219,0.6)]",
     avatar: ""
   },
   // 500 Koin Tier
@@ -246,7 +246,7 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
     avatar: ""
   },
   "Celestial Throne": {
-    wrapper: "bg-[conic-gradient(from_0deg,#ffffff,#add8e6,#87ceeb,#add8e6,#ffffff)] p-[3px] rounded-full shadow-[0_0_50px_rgba(255,255,255,0.9),0_0_100px_rgba(173,216,230,0.7),inset_0_0_30px_rgba(135,206,235,0.6)]",
+    wrapper: "bg-[conic-gradient(from_0deg,#ffffff,#add8e6,#87ceeb,#add8e6,#ffffff)] p-[3px] rounded-full animate-[pulse_3s_ease-in-out_infinite] shadow-[0_0_50px_rgba(255,255,255,0.9),0_0_100px_rgba(173,216,230,0.7),inset_0_0_30px_rgba(135,206,235,0.6)]",
     avatar: ""
   },
   "Blood Moon": {
