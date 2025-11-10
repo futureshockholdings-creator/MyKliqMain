@@ -33,7 +33,7 @@ export function KoinWalletCard({ walletData, isLoading }: KoinWalletCardProps) {
     <Card className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 backdrop-blur-sm border-white/20">
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
-          <img src={kliqKoinIcon} alt="Kliq Koin" className="w-6 h-6" />
+          <img src={kliqKoinIcon} alt="Kliq Koin" className="w-10 h-10" />
           Kliq Koin Wallet
         </CardTitle>
         <CardDescription className="text-purple-200">
@@ -44,7 +44,7 @@ export function KoinWalletCard({ walletData, isLoading }: KoinWalletCardProps) {
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center p-4 bg-white/10 rounded-lg">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <img src={kliqKoinIcon} alt="Koin" className="w-8 h-8" />
+              <img src={kliqKoinIcon} alt="Koin" className="w-12 h-12" />
               <div className="text-4xl font-bold text-yellow-400">{balance}</div>
             </div>
             <div className="text-purple-200 text-sm">Current Balance</div>
