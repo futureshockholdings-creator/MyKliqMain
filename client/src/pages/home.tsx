@@ -2475,6 +2475,7 @@ export default function Home() {
                   src={item.author.profileImageUrl}
                   fallback={item.author.firstName?.[0] || "U"}
                   borderImageUrl={item.authorBorder?.imageUrl}
+                  borderName={item.authorBorder?.name}
                   size="md"
                 />
                 <div className="flex-1">
@@ -2722,6 +2723,7 @@ export default function Home() {
                             src={comment.author?.profileImageUrl}
                             fallback={comment.author?.firstName?.[0] || "U"}
                             borderImageUrl={comment.authorBorder?.imageUrl}
+                            borderName={comment.authorBorder?.name}
                             size="sm"
                           />
                           <div className="flex-1">

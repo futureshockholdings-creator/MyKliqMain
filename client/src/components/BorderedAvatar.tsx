@@ -7,6 +7,7 @@ interface BorderedAvatarProps {
   fallback: string;
   className?: string;
   borderImageUrl?: string | null;
+  borderName?: string | null;
   size?: "sm" | "md" | "lg" | "xl";
 }
 
@@ -17,39 +18,46 @@ const sizeClasses = {
   xl: "w-24 h-24",
 };
 
+const borderStyles: Record<string, string> = {
+  "Rainbow Sparkle": "ring-4 ring-offset-2 ring-offset-transparent ring-gradient-to-r from-red-500 via-yellow-500 via-green-500 via-blue-500 to-purple-500 animate-pulse",
+  "Neon Glow": "ring-4 ring-cyan-400 ring-offset-2 ring-offset-transparent shadow-lg shadow-cyan-400/50 animate-pulse",
+  "Fire Frame": "ring-4 ring-orange-500 ring-offset-2 ring-offset-transparent shadow-lg shadow-orange-500/50",
+  "Ice Crystal": "ring-4 ring-blue-300 ring-offset-2 ring-offset-transparent shadow-lg shadow-blue-300/50",
+  "Galaxy Swirl": "ring-4 ring-purple-500 ring-offset-2 ring-offset-transparent shadow-lg shadow-purple-500/50",
+  "Cherry Blossom": "ring-4 ring-pink-400 ring-offset-2 ring-offset-transparent shadow-lg shadow-pink-400/50",
+  "Lightning Strike": "ring-4 ring-yellow-300 ring-offset-2 ring-offset-transparent shadow-lg shadow-yellow-300/50 animate-pulse",
+  "Royal Purple": "ring-4 ring-purple-700 ring-offset-2 ring-offset-transparent shadow-lg shadow-purple-700/50",
+  "Bronze Medal": "ring-4 ring-amber-700 ring-offset-2 ring-offset-transparent shadow-lg shadow-amber-700/50",
+  "Silver Medal": "ring-4 ring-gray-400 ring-offset-2 ring-offset-transparent shadow-lg shadow-gray-400/50",
+  "Gold Medal": "ring-4 ring-yellow-500 ring-offset-2 ring-offset-transparent shadow-lg shadow-yellow-500/50",
+  "Diamond": "ring-4 ring-blue-200 ring-offset-2 ring-offset-transparent shadow-lg shadow-blue-200/50 animate-pulse",
+  "Legend Crown": "ring-4 ring-yellow-400 ring-offset-2 ring-offset-transparent shadow-lg shadow-yellow-400/50 animate-pulse",
+};
+
 export function BorderedAvatar({
   src,
   alt,
   fallback,
   className,
   borderImageUrl,
+  borderName,
   size = "md",
 }: BorderedAvatarProps) {
   const sizeClass = sizeClasses[size];
+  const borderClass = borderName && borderStyles[borderName] ? borderStyles[borderName] : "";
 
   return (
     <div className="relative inline-block">
-      <Avatar className={cn(sizeClass, "border-2 border-primary", className)}>
+      <Avatar className={cn(
+        sizeClass, 
+        borderName ? borderClass : "border-2 border-primary",
+        className
+      )}>
         <AvatarImage src={src} alt={alt} className="object-cover" />
         <AvatarFallback className="bg-muted text-foreground">
           {fallback}
         </AvatarFallback>
       </Avatar>
-      
-      {borderImageUrl && (
-        <img
-          src={borderImageUrl}
-          alt="Profile border"
-          className={cn(
-            "absolute inset-0 pointer-events-none",
-            sizeClass
-          )}
-          style={{
-            objectFit: "contain",
-          }}
-          aria-hidden="true"
-        />
-      )}
     </div>
   );
 }
