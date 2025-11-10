@@ -37,15 +37,15 @@ export function BorderedAvatar({
       </Avatar>
       
       {borderImageUrl && (
-        <div
+        <img
+          src={borderImageUrl}
+          alt="Profile border"
           className={cn(
-            "absolute inset-0 pointer-events-none rounded-full",
+            "absolute inset-0 pointer-events-none",
             sizeClass
           )}
           style={{
-            backgroundImage: `url(${borderImageUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            objectFit: "contain",
           }}
           aria-hidden="true"
         />
