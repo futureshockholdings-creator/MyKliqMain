@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Medal, Gem, Crown } from "lucide-react";
 
 interface BorderedAvatarProps {
   src: string | undefined;
@@ -20,36 +19,31 @@ const sizeClasses = {
 };
 
 const iconSizeClasses = {
-  sm: "w-3 h-3",
-  md: "w-4 h-4",
-  lg: "w-5 h-5",
-  xl: "w-6 h-6",
+  sm: "text-xs",
+  md: "text-sm",
+  lg: "text-base",
+  xl: "text-lg",
 };
 
-const streakBorderIcons: Record<string, { Icon: any; color: string; bg: string }> = {
+const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
   "Bronze Medal": {
-    Icon: Medal,
-    color: "#cd7f32",
+    emoji: "🥉",
     bg: "bg-gradient-to-br from-amber-700 to-amber-900"
   },
   "Silver Medal": {
-    Icon: Medal,
-    color: "#c0c0c0",
+    emoji: "🥈",
     bg: "bg-gradient-to-br from-gray-300 to-gray-500"
   },
   "Gold Medal": {
-    Icon: Medal,
-    color: "#ffd700",
+    emoji: "🥇",
     bg: "bg-gradient-to-br from-yellow-400 to-yellow-600"
   },
   "Diamond": {
-    Icon: Gem,
-    color: "#b9f2ff",
+    emoji: "💎",
     bg: "bg-gradient-to-br from-cyan-200 to-blue-400"
   },
   "Legend Crown": {
-    Icon: Crown,
-    color: "#ffd700",
+    emoji: "👑",
     bg: "bg-gradient-to-br from-yellow-400 to-orange-500"
   },
 };
@@ -126,13 +120,13 @@ export function BorderedAvatar({
   // Render streak icon badge if applicable
   const renderStreakBadge = () => {
     if (!streakIcon) return null;
-    const { Icon, bg } = streakIcon;
+    const { emoji, bg } = streakIcon;
     return (
       <div className={cn(
-        "absolute -top-1 -left-1 rounded-full p-1 shadow-lg z-10",
+        "absolute -top-1 -left-1 rounded-full p-1 shadow-lg z-10 flex items-center justify-center",
         bg
       )}>
-        <Icon className={cn(iconSize, "text-white drop-shadow-md")} />
+        <span className={cn(iconSize, "leading-none")}>{emoji}</span>
       </div>
     );
   };
