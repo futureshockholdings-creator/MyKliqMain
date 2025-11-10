@@ -93,9 +93,9 @@ export function StreakDashboardCard({ streakData, isLoading, onBuyFreeze, isBuyi
               onClick={onBuyFreeze}
               disabled={isBuyingFreeze}
               className="bg-blue-600 hover:bg-blue-700 text-white"
-              data-testid="button-buy-freeze"
+              data-testid="button-use-freeze"
             >
-              {isBuyingFreeze ? "Buying..." : "Buy (10 Koins)"}
+              {isBuyingFreeze ? "Using..." : "Use (10 Koins)"}
             </Button>
           </div>
         </div>
