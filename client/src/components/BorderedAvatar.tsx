@@ -36,7 +36,7 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
   },
   "Gold Medal": {
     emoji: "🥇",
-    bg: "bg-gradient-to-br from-yellow-300 to-yellow-500"
+    bg: "bg-gradient-to-br from-yellow-200 to-yellow-400"
   },
   "Diamond": {
     emoji: "💎",
@@ -44,7 +44,7 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
   },
   "Legend Crown": {
     emoji: "👑",
-    bg: "bg-gradient-to-br from-yellow-300 to-orange-400"
+    bg: "bg-gradient-to-br from-yellow-200 to-orange-300"
   },
 };
 
