@@ -1186,20 +1186,42 @@ export default function Settings() {
               isLoading={walletLoading}
             />
 
-            <BorderMarketplaceCard 
-              bordersData={bordersData}
-              walletData={walletData}
-              isLoading={bordersLoading}
-              isPurchasing={purchaseBorder.isPending}
-              onPurchase={(borderId) => purchaseBorder.mutate(borderId)}
-            />
+            <Accordion type="multiple" className="space-y-4">
+              <AccordionItem value="marketplace" className="border-0">
+                <AccordionTrigger className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-6 py-4 hover:bg-white/20 transition-colors data-[state=open]:rounded-b-none">
+                  <div className="flex items-center gap-2 text-white">
+                    <ShoppingCart className="w-5 h-5" />
+                    <span className="text-lg font-semibold">Border Marketplace</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="bg-white/5 backdrop-blur-sm border border-t-0 border-white/20 rounded-b-lg p-0">
+                  <BorderMarketplaceCard 
+                    bordersData={bordersData}
+                    walletData={walletData}
+                    isLoading={bordersLoading}
+                    isPurchasing={purchaseBorder.isPending}
+                    onPurchase={(borderId) => purchaseBorder.mutate(borderId)}
+                  />
+                </AccordionContent>
+              </AccordionItem>
 
-            <MyBordersCard 
-              myBordersData={myBordersData}
-              isLoading={myBordersLoading}
-              isEquipping={equipBorder.isPending}
-              onEquip={(borderId) => equipBorder.mutate(borderId)}
-            />
+              <AccordionItem value="collection" className="border-0">
+                <AccordionTrigger className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-6 py-4 hover:bg-white/20 transition-colors data-[state=open]:rounded-b-none">
+                  <div className="flex items-center gap-2 text-white">
+                    <Crown className="w-5 h-5" />
+                    <span className="text-lg font-semibold">My Borders Collection</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="bg-white/5 backdrop-blur-sm border border-t-0 border-white/20 rounded-b-lg p-0">
+                  <MyBordersCard 
+                    myBordersData={myBordersData}
+                    isLoading={myBordersLoading}
+                    isEquipping={equipBorder.isPending}
+                    onEquip={(borderId) => equipBorder.mutate(borderId)}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
 
             {/* Language Settings */}
             <Card className="bg-white/10 backdrop-blur-sm border-white/20">
