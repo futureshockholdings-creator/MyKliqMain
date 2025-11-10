@@ -46,6 +46,74 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
     emoji: "👑",
     bg: "bg-gradient-to-br from-yellow-200 to-orange-300"
   },
+  "Dragon Scale": {
+    emoji: "🐉",
+    bg: "bg-gradient-to-br from-red-500 to-orange-600"
+  },
+  "Phoenix Fire": {
+    emoji: "🔥",
+    bg: "bg-gradient-to-br from-orange-400 to-red-500"
+  },
+  "Starlight": {
+    emoji: "⭐",
+    bg: "bg-gradient-to-br from-yellow-200 to-amber-400"
+  },
+  "Moonbeam": {
+    emoji: "🌙",
+    bg: "bg-gradient-to-br from-purple-300 to-blue-400"
+  },
+  "Tropical Paradise": {
+    emoji: "🌺",
+    bg: "bg-gradient-to-br from-pink-400 to-purple-500"
+  },
+  "Inferno Blaze": {
+    emoji: "🔥",
+    bg: "bg-gradient-to-br from-orange-400 to-red-600"
+  },
+  "Electric Storm": {
+    emoji: "⚡",
+    bg: "bg-gradient-to-br from-blue-300 to-purple-500"
+  },
+  "Molten Lava": {
+    emoji: "🌋",
+    bg: "bg-gradient-to-br from-orange-500 to-red-700"
+  },
+  "Cosmic Nebula": {
+    emoji: "🌌",
+    bg: "bg-gradient-to-br from-purple-400 to-pink-600"
+  },
+  "Divine Radiance": {
+    emoji: "✨",
+    bg: "bg-gradient-to-br from-yellow-200 to-amber-400"
+  },
+  "Shadow Realm": {
+    emoji: "💀",
+    bg: "bg-gradient-to-br from-purple-600 to-gray-900"
+  },
+  "Enchanted Forest": {
+    emoji: "🍃",
+    bg: "bg-gradient-to-br from-green-400 to-emerald-600"
+  },
+  "Celestial Throne": {
+    emoji: "👼",
+    bg: "bg-gradient-to-br from-blue-200 to-purple-400"
+  },
+  "Infinity Spiral": {
+    emoji: "♾️",
+    bg: "bg-gradient-to-br from-purple-400 to-blue-600"
+  },
+  "Supernova Burst": {
+    emoji: "💥",
+    bg: "bg-gradient-to-br from-yellow-300 to-orange-500"
+  },
+  "Eternal Flame": {
+    emoji: "🕯️",
+    bg: "bg-gradient-to-br from-yellow-300 to-orange-400"
+  },
+  "Universe Core": {
+    emoji: "🌟",
+    bg: "bg-gradient-to-br from-blue-300 to-purple-500"
+  },
 };
 
 const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
@@ -99,6 +167,111 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
   },
   "Legend Crown": {
     wrapper: "bg-[conic-gradient(from_0deg,#ffd700_0%,#ff6b00_8%,#ffed4e_16%,#ff8800_24%,#ffd700_32%,#ff6b00_40%,#ffaa00_48%,#ff8800_56%,#ffd700_64%,#ff6b00_72%,#ffed4e_80%,#ff8800_88%,#ffd700_100%)] p-1 rounded-full animate-[spin_6s_linear_infinite] shadow-[0_0_30px_rgba(255,215,0,0.8),0_0_60px_rgba(255,107,0,0.6),inset_0_0_20px_rgba(255,237,78,0.5)]",
+    avatar: ""
+  },
+  // 50 Koin Tier
+  "Ocean Wave": {
+    wrapper: "bg-[conic-gradient(from_0deg,#00d4ff,#0099cc,#00b8d4,#00acc1,#00d4ff)] p-1 rounded-full shadow-[0_0_18px_rgba(0,212,255,0.6),inset_0_0_12px_rgba(0,184,212,0.3)]",
+    avatar: ""
+  },
+  "Sunset Glow": {
+    wrapper: "bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 p-1 rounded-full shadow-[0_0_20px_rgba(255,105,180,0.7)]",
+    avatar: ""
+  },
+  "Emerald Ring": {
+    wrapper: "bg-[conic-gradient(from_0deg,#00ff88,#00cc66,#00ffaa,#00dd77,#00ff88)] p-1 rounded-full shadow-[0_0_18px_rgba(0,255,136,0.6)]",
+    avatar: ""
+  },
+  "Rose Gold": {
+    wrapper: "bg-gradient-to-r from-pink-300 via-rose-400 to-amber-300 p-1 rounded-full shadow-[0_0_15px_rgba(255,192,203,0.6)]",
+    avatar: ""
+  },
+  "Arctic Frost": {
+    wrapper: "bg-gradient-to-br from-blue-100 via-cyan-200 to-white p-1 rounded-full shadow-[0_0_18px_rgba(0,255,255,0.5)]",
+    avatar: ""
+  },
+  // 100 Koin Tier
+  "Dragon Scale": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ff0000,#8b0000,#ff4500,#b22222,#ff0000)] p-[3px] rounded-full animate-[pulse_2.5s_ease-in-out_infinite] shadow-[0_0_25px_rgba(255,0,0,0.8),0_0_50px_rgba(139,0,0,0.5),inset_0_0_15px_rgba(255,69,0,0.4)]",
+    avatar: ""
+  },
+  "Phoenix Fire": {
+    wrapper: "bg-[conic-gradient(from_45deg,#ff6600,#ff9900,#ffcc00,#ff6600)] p-1 rounded-full animate-[spin_5s_linear_infinite] shadow-[0_0_25px_rgba(255,102,0,0.8),0_0_45px_rgba(255,153,0,0.6)]",
+    avatar: ""
+  },
+  "Starlight": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ffffff,#ffffcc,#ffff99,#ffffcc,#ffffff)] p-1 rounded-full animate-[pulse_3s_ease-in-out_infinite] shadow-[0_0_30px_rgba(255,255,255,0.9),0_0_50px_rgba(255,255,204,0.7)]",
+    avatar: ""
+  },
+  "Moonbeam": {
+    wrapper: "bg-[radial-gradient(circle,#e6e6fa,#b19cd9,#9370db)] p-1 rounded-full shadow-[0_0_25px_rgba(147,112,219,0.7),inset_0_0_15px_rgba(230,230,250,0.5)]",
+    avatar: ""
+  },
+  "Tropical Paradise": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ff1493,#00ff7f,#ffd700,#ff6347,#ff1493)] p-1 rounded-full animate-[spin_7s_linear_infinite] shadow-[0_0_22px_rgba(255,20,147,0.7)]",
+    avatar: ""
+  },
+  // 250 Koin Tier
+  "Inferno Blaze": {
+    wrapper: "bg-[conic-gradient(from_90deg,#ff0000,#ff4500,#ff8c00,#ffa500,#ff0000)] p-[3px] rounded-full animate-[pulse_1s_ease-in-out_infinite] shadow-[0_0_35px_rgba(255,69,0,0.9),0_0_70px_rgba(255,140,0,0.7),inset_0_0_25px_rgba(255,165,0,0.5)]",
+    avatar: ""
+  },
+  "Electric Storm": {
+    wrapper: "bg-[conic-gradient(from_0deg,#00ffff,#ffffff,#0099ff,#ffffff,#00ffff)] p-1 rounded-full animate-[pulse_0.6s_ease-in-out_infinite] shadow-[0_0_40px_rgba(0,255,255,1),0_0_80px_rgba(0,153,255,0.8)]",
+    avatar: ""
+  },
+  "Crystal Aurora": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ff00ff,#00ffff,#00ff00,#ffff00,#ff00ff)] p-[3px] rounded-full animate-[spin_10s_linear_infinite] shadow-[0_0_35px_rgba(255,0,255,0.8),0_0_70px_rgba(0,255,255,0.6)]",
+    avatar: ""
+  },
+  "Molten Lava": {
+    wrapper: "bg-[radial-gradient(circle,#ff4500,#dc143c,#8b0000)] p-[3px] rounded-full animate-[pulse_1.8s_ease-in-out_infinite] shadow-[0_0_40px_rgba(255,69,0,0.9),0_0_80px_rgba(220,20,60,0.7),inset_0_0_20px_rgba(139,0,0,0.6)]",
+    avatar: ""
+  },
+  "Cosmic Nebula": {
+    wrapper: "bg-[radial-gradient(circle_at_40%_40%,#ff1493,#9370db,#4169e1,#8a2be2)] p-1 rounded-full animate-[spin_12s_linear_infinite] shadow-[0_0_40px_rgba(255,20,147,0.8),0_0_80px_rgba(147,112,219,0.6)]",
+    avatar: ""
+  },
+  // 500 Koin Tier
+  "Divine Radiance": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ffffff,#ffd700,#fffacd,#ffd700,#ffffff)] p-[4px] rounded-full animate-[pulse_2.5s_ease-in-out_infinite] shadow-[0_0_50px_rgba(255,255,255,1),0_0_100px_rgba(255,215,0,0.9),inset_0_0_30px_rgba(255,250,205,0.7)]",
+    avatar: ""
+  },
+  "Shadow Realm": {
+    wrapper: "bg-[radial-gradient(circle,#4b0082,#2f004f,#000000)] p-[3px] rounded-full animate-[pulse_3.5s_ease-in-out_infinite] shadow-[0_0_45px_rgba(75,0,130,0.9),0_0_90px_rgba(47,0,79,0.7)]",
+    avatar: ""
+  },
+  "Enchanted Forest": {
+    wrapper: "bg-[conic-gradient(from_0deg,#00ff00,#32cd32,#9acd32,#ffd700,#00ff00)] p-[3px] rounded-full animate-[spin_8s_linear_infinite] shadow-[0_0_45px_rgba(0,255,0,0.8),0_0_90px_rgba(50,205,50,0.6),inset_0_0_25px_rgba(154,205,50,0.5)]",
+    avatar: ""
+  },
+  "Celestial Throne": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ffffff,#add8e6,#87ceeb,#add8e6,#ffffff)] p-[3px] rounded-full shadow-[0_0_50px_rgba(255,255,255,0.9),0_0_100px_rgba(173,216,230,0.7),inset_0_0_30px_rgba(135,206,235,0.6)]",
+    avatar: ""
+  },
+  "Blood Moon": {
+    wrapper: "bg-[radial-gradient(circle,#dc143c,#8b0000,#4b0000)] p-[3px] rounded-full animate-[pulse_2s_ease-in-out_infinite] shadow-[0_0_50px_rgba(220,20,60,0.9),0_0_100px_rgba(139,0,0,0.8)]",
+    avatar: ""
+  },
+  // 1000 Koin Tier
+  "Infinity Spiral": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ff00ff,#00ffff,#ffff00,#00ff00,#ff00ff)] p-[4px] rounded-full animate-[spin_3s_linear_infinite] shadow-[0_0_60px_rgba(255,0,255,1),0_0_120px_rgba(0,255,255,0.9),inset_0_0_35px_rgba(255,255,0,0.7)]",
+    avatar: ""
+  },
+  "Supernova Burst": {
+    wrapper: "bg-[radial-gradient(circle,#ffffff,#ffd700,#ff8c00,#ff4500)] p-[5px] rounded-full animate-[pulse_0.8s_ease-in-out_infinite] shadow-[0_0_70px_rgba(255,255,255,1),0_0_140px_rgba(255,215,0,1),0_0_200px_rgba(255,140,0,0.8)]",
+    avatar: ""
+  },
+  "Time Warp": {
+    wrapper: "bg-[conic-gradient(from_0deg,#9370db,#4169e1,#00ced1,#32cd32,#9370db)] p-[4px] rounded-full animate-[spin_2s_linear_infinite] shadow-[0_0_65px_rgba(147,112,219,0.9),0_0_130px_rgba(65,105,225,0.8),inset_0_0_40px_rgba(0,206,209,0.6)]",
+    avatar: ""
+  },
+  "Eternal Flame": {
+    wrapper: "bg-[conic-gradient(from_45deg,#ffd700,#ffffff,#ff8c00,#ffffff,#ffd700)] p-[4px] rounded-full animate-[pulse_1.5s_ease-in-out_infinite] shadow-[0_0_60px_rgba(255,215,0,1),0_0_120px_rgba(255,255,255,0.9),inset_0_0_35px_rgba(255,140,0,0.7)]",
+    avatar: ""
+  },
+  "Universe Core": {
+    wrapper: "bg-[radial-gradient(circle,#ffffff,#00ffff,#ff00ff,#ffd700,#4169e1)] p-[5px] rounded-full animate-[spin_4s_linear_infinite] shadow-[0_0_70px_rgba(255,255,255,1),0_0_140px_rgba(0,255,255,0.9),0_0_200px_rgba(255,0,255,0.8),inset_0_0_40px_rgba(255,215,0,0.7)]",
     avatar: ""
   },
 };
