@@ -442,8 +442,28 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    const results = await db
+      .select({
+        user: users,
+        equippedBorder: profileBorders,
+      })
+      .from(users)
+      .leftJoin(
+        userBorders,
+        and(
+          eq(userBorders.userId, users.id),
+          eq(userBorders.isEquipped, true)
+        )
+      )
+      .leftJoin(profileBorders, eq(userBorders.borderId, profileBorders.id))
+      .where(eq(users.id, id));
+
+    if (!results[0]) return undefined;
+
+    return {
+      ...results[0].user,
+      equippedBorder: results[0].equippedBorder || undefined,
+    } as any;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
