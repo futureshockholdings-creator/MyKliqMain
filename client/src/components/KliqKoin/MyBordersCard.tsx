@@ -64,25 +64,25 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip }
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {myBordersData.map((userBorder: any) => {
                 const isEquipped = userBorder.isEquipped;
                 return (
                   <div
                     key={userBorder.id}
-                    className={`p-4 rounded-lg border-2 ${
+                    className={`p-3 rounded-lg border-2 ${
                       isEquipped 
                         ? "bg-purple-500/20 border-purple-400" 
                         : "bg-white/5 border-white/10"
                     }`}
                     data-testid={`my-border-${userBorder.id}`}
                   >
-                    <div className="flex flex-col items-center text-center mb-3">
-                      <div className="w-20 h-20 rounded-full mb-2 bg-gradient-to-br from-purple-500 to-pink-500" />
-                      <h3 className="text-white font-medium">{userBorder.border.name}</h3>
+                    <div className="flex flex-col items-center text-center mb-2">
+                      <div className="w-12 h-12 rounded-full mb-2 bg-gradient-to-br from-purple-500 to-pink-500" />
+                      <h3 className="text-white font-medium text-sm">{userBorder.border.name}</h3>
                       <p className="text-purple-300 text-xs">{userBorder.border.description}</p>
                       {userBorder.border.type === 'streak_reward' && (
-                        <Badge variant="secondary" className="mt-1">
+                        <Badge variant="secondary" className="mt-1 text-xs">
                           {userBorder.border.tier}-day streak
                         </Badge>
                       )}
