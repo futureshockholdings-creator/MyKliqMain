@@ -28,23 +28,23 @@ const iconSizeClasses = {
 const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
   "Bronze Medal": {
     emoji: "🥉",
-    bg: "bg-gradient-to-br from-amber-700 to-amber-900"
+    bg: "bg-gradient-to-br from-amber-400 to-amber-600"
   },
   "Silver Medal": {
     emoji: "🥈",
-    bg: "bg-gradient-to-br from-gray-300 to-gray-500"
+    bg: "bg-gradient-to-br from-gray-200 to-gray-400"
   },
   "Gold Medal": {
     emoji: "🥇",
-    bg: "bg-gradient-to-br from-yellow-400 to-yellow-600"
+    bg: "bg-gradient-to-br from-yellow-300 to-yellow-500"
   },
   "Diamond": {
     emoji: "💎",
-    bg: "bg-gradient-to-br from-cyan-200 to-blue-400"
+    bg: "bg-gradient-to-br from-cyan-100 to-blue-300"
   },
   "Legend Crown": {
     emoji: "👑",
-    bg: "bg-gradient-to-br from-yellow-400 to-orange-500"
+    bg: "bg-gradient-to-br from-yellow-300 to-orange-400"
   },
 };
 
