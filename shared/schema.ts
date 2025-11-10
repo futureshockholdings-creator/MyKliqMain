@@ -94,6 +94,83 @@ export const userThemes = pgTable("user_themes", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Border type enum for profile borders
+export const borderTypeEnum = pgEnum("border_type", ["streak_reward", "purchasable"]);
+
+// Transaction type enum for Kliq Koin transactions
+export const koinTransactionTypeEnum = pgEnum("koin_transaction_type", ["earned", "spent", "refund"]);
+
+// Profile borders catalog (all available borders)
+export const profileBorders = pgTable("profile_borders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(), // "Bronze Medal", "Golden Crown"
+  type: borderTypeEnum("type").notNull(), // "streak_reward" or "purchasable"
+  cost: integer("cost").notNull().default(0), // Koin cost, 0 for streak rewards
+  tier: integer("tier"), // For streak rewards: 3, 7, 14, 30, 100 days
+  imageUrl: varchar("image_url").notNull(), // Path to border graphic
+  description: text("description"), // Optional description
+  isActive: boolean("is_active").notNull().default(true), // For hiding/showing borders
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_borders_type_tier").on(table.type, table.tier), // Fast marketplace queries
+  index("idx_borders_active").on(table.isActive), // Filter active borders
+]);
+
+// Kliq Koins - User balances
+export const kliqKoins = pgTable("kliq_koins", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
+  balance: integer("balance").notNull().default(0), // Current Koin balance
+  totalEarned: integer("total_earned").notNull().default(0), // Lifetime earnings
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_koins_user").on(table.userId), // Fast user lookup
+]);
+
+// Kliq Koin transactions - Audit trail for all Koin activity
+export const kliqKoinTransactions = pgTable("kliq_koin_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  amount: integer("amount").notNull(), // Positive for earn, negative for spend
+  type: koinTransactionTypeEnum("type").notNull(), // "earned", "spent", "refund"
+  source: varchar("source").notNull(), // "daily_login", "purchase_border", "streak_recovery"
+  referenceId: varchar("reference_id"), // Related entity ID (borderId, etc)
+  balanceAfter: integer("balance_after").notNull(), // Balance snapshot after transaction
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_transactions_user").on(table.userId), // User's transaction history
+  index("idx_transactions_user_date").on(table.userId, table.createdAt), // Sorted history
+]);
+
+// Login streaks - Daily login tracking
+export const loginStreaks = pgTable("login_streaks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
+  currentStreak: integer("current_streak").notNull().default(0), // Current consecutive days
+  longestStreak: integer("longest_streak").notNull().default(0), // Best streak ever
+  lastLoginDate: date("last_login_date"), // Last login date (not timestamp)
+  streakFreezes: integer("streak_freezes").notNull().default(0), // Available freeze count
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_streaks_user").on(table.userId), // Fast user lookup
+  index("idx_streaks_last_login").on(table.lastLoginDate), // Detect stale streaks
+]);
+
+// User borders - Which borders each user owns
+export const userBorders = pgTable("user_borders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  borderId: varchar("border_id").references(() => profileBorders.id, { onDelete: "cascade" }).notNull(),
+  isEquipped: boolean("is_equipped").notNull().default(false), // Only one can be true per user
+  purchasedAt: timestamp("purchased_at").defaultNow(), // When acquired
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_user_borders_user").on(table.userId), // User's collection
+  index("idx_user_borders_equipped").on(table.userId, table.isEquipped), // Find equipped border
+]);
+
 // Friendships with pyramid ranking
 export const friendships = pgTable("friendships", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1184,7 +1261,25 @@ export const insertContentEngagementSchema = createInsertSchema(contentEngagemen
   endedAt: z.string().optional().transform((val) => val ? new Date(val) : undefined)
 });
 
+// Kliq Koin system schemas
+export const insertProfileBorderSchema = createInsertSchema(profileBorders).omit({ id: true, createdAt: true });
+export const insertKliqKoinSchema = createInsertSchema(kliqKoins).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertKliqKoinTransactionSchema = createInsertSchema(kliqKoinTransactions).omit({ id: true, createdAt: true });
+export const insertLoginStreakSchema = createInsertSchema(loginStreaks).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertUserBorderSchema = createInsertSchema(userBorders).omit({ id: true, createdAt: true });
+
 // Types
+export type ProfileBorder = typeof profileBorders.$inferSelect;
+export type InsertProfileBorder = z.infer<typeof insertProfileBorderSchema>;
+export type KliqKoin = typeof kliqKoins.$inferSelect;
+export type InsertKliqKoin = z.infer<typeof insertKliqKoinSchema>;
+export type KliqKoinTransaction = typeof kliqKoinTransactions.$inferSelect;
+export type InsertKliqKoinTransaction = z.infer<typeof insertKliqKoinTransactionSchema>;
+export type LoginStreak = typeof loginStreaks.$inferSelect;
+export type InsertLoginStreak = z.infer<typeof insertLoginStreakSchema>;
+export type UserBorder = typeof userBorders.$inferSelect;
+export type InsertUserBorder = z.infer<typeof insertUserBorderSchema>;
+
 // Birthday messages to track sent birthday wishes
 export const birthdayMessages = pgTable("birthday_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
