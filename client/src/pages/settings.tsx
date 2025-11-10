@@ -900,6 +900,8 @@ export default function Settings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Border Equipped! ✨",
         description: "Your profile border has been updated.",
@@ -921,6 +923,8 @@ export default function Settings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Border Removed",
         description: "Your profile border has been removed.",
