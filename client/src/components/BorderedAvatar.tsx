@@ -24,40 +24,52 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
     avatar: ""
   },
   "Neon Glow": {
-    avatar: "ring-4 ring-cyan-400 ring-offset-2 ring-offset-transparent shadow-lg shadow-cyan-400/50 animate-pulse"
+    wrapper: "bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 p-1 rounded-full animate-pulse shadow-lg shadow-cyan-400/50",
+    avatar: ""
   },
   "Fire Frame": {
-    avatar: "ring-4 ring-orange-500 ring-offset-2 ring-offset-transparent shadow-lg shadow-orange-500/50"
+    wrapper: "bg-[conic-gradient(from_0deg,#ff0000,#ff4400,#ff8800,#ffaa00,#ff6600,#ff2200,#ff0000)] p-1 rounded-full shadow-lg shadow-orange-500/60",
+    avatar: ""
   },
   "Ice Crystal": {
-    avatar: "ring-4 ring-blue-300 ring-offset-2 ring-offset-transparent shadow-lg shadow-blue-300/50"
+    wrapper: "bg-[conic-gradient(from_0deg,#00d4ff,#00ffff,#80e5ff,#b3f0ff,#66d9ff,#00bbff,#00d4ff)] p-1 rounded-full shadow-lg shadow-cyan-400/60",
+    avatar: ""
   },
   "Galaxy Swirl": {
-    avatar: "ring-4 ring-purple-500 ring-offset-2 ring-offset-transparent shadow-lg shadow-purple-500/50"
+    wrapper: "bg-[conic-gradient(from_0deg,#4400ff,#8800ff,#bb00ff,#ff00ff,#cc00ff,#6600ff,#4400ff)] p-1 rounded-full shadow-lg shadow-purple-500/60",
+    avatar: ""
   },
   "Cherry Blossom": {
-    avatar: "ring-4 ring-pink-400 ring-offset-2 ring-offset-transparent shadow-lg shadow-pink-400/50"
+    wrapper: "bg-[conic-gradient(from_0deg,#ff69b4,#ff85c1,#ffa0ce,#ffb6db,#ff9bcc,#ff7abe,#ff69b4)] p-1 rounded-full shadow-lg shadow-pink-400/60",
+    avatar: ""
   },
   "Lightning Strike": {
-    avatar: "ring-4 ring-yellow-300 ring-offset-2 ring-offset-transparent shadow-lg shadow-yellow-300/50 animate-pulse"
+    wrapper: "bg-[conic-gradient(from_0deg,#ffff00,#ffffff,#ffff66,#ffffaa,#ffff88,#ffffcc,#ffff00)] p-1 rounded-full animate-pulse shadow-lg shadow-yellow-300/70",
+    avatar: ""
   },
   "Royal Purple": {
-    avatar: "ring-4 ring-purple-700 ring-offset-2 ring-offset-transparent shadow-lg shadow-purple-700/50"
+    wrapper: "bg-[conic-gradient(from_0deg,#6600cc,#8800ee,#aa00ff,#ffcc00,#dd00ff,#7700dd,#6600cc)] p-1 rounded-full shadow-lg shadow-purple-600/60",
+    avatar: ""
   },
   "Bronze Medal": {
-    avatar: "ring-4 ring-amber-700 ring-offset-2 ring-offset-transparent shadow-lg shadow-amber-700/50"
+    wrapper: "bg-[conic-gradient(from_0deg,#cd7f32,#b87333,#a0522d,#d4a574,#c9985f,#be8c4a,#cd7f32)] p-1 rounded-full shadow-lg shadow-amber-700/60",
+    avatar: ""
   },
   "Silver Medal": {
-    avatar: "ring-4 ring-gray-400 ring-offset-2 ring-offset-transparent shadow-lg shadow-gray-400/50"
+    wrapper: "bg-[conic-gradient(from_0deg,#c0c0c0,#d3d3d3,#e8e8e8,#f5f5f5,#dddddd,#cccccc,#c0c0c0)] p-1 rounded-full shadow-lg shadow-gray-400/60",
+    avatar: ""
   },
   "Gold Medal": {
-    avatar: "ring-4 ring-yellow-500 ring-offset-2 ring-offset-transparent shadow-lg shadow-yellow-500/50"
+    wrapper: "bg-[conic-gradient(from_0deg,#ffd700,#ffed4e,#fff68f,#ffffcc,#ffeb3b,#ffc107,#ffd700)] p-1 rounded-full shadow-lg shadow-yellow-500/60",
+    avatar: ""
   },
   "Diamond": {
-    avatar: "ring-4 ring-blue-200 ring-offset-2 ring-offset-transparent shadow-lg shadow-blue-200/50 animate-pulse"
+    wrapper: "bg-[conic-gradient(from_0deg,#b9f2ff,#e0f7ff,#ffffff,#f0faff,#d4f1ff,#c4ecff,#b9f2ff)] p-1 rounded-full animate-pulse shadow-lg shadow-blue-200/70",
+    avatar: ""
   },
   "Legend Crown": {
-    avatar: "ring-4 ring-yellow-400 ring-offset-2 ring-offset-transparent shadow-lg shadow-yellow-400/50 animate-pulse"
+    wrapper: "bg-[conic-gradient(from_0deg,#ffd700,#ffed4e,#ff6b00,#ffd700,#ffaa00,#ff8800,#ffd700)] p-1 rounded-full animate-pulse shadow-lg shadow-yellow-400/70",
+    avatar: ""
   },
 };
 
