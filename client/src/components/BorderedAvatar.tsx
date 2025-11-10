@@ -85,6 +85,7 @@ export function BorderedAvatar({
   const sizeClass = sizeClasses[size];
   const borderStyle = borderName && borderStyles[borderName] ? borderStyles[borderName] : null;
 
+  // CSS-based border with wrapper
   if (borderStyle?.wrapper) {
     return (
       <div className={borderStyle.wrapper}>
@@ -98,6 +99,26 @@ export function BorderedAvatar({
     );
   }
 
+  // Image-based border fallback (for future borders with actual images)
+  if (borderImageUrl && !borderStyle) {
+    return (
+      <div className="relative inline-block">
+        <Avatar className={cn(sizeClass, className)}>
+          <AvatarImage src={src} alt={alt} className="object-cover" />
+          <AvatarFallback className="bg-muted text-foreground">
+            {fallback}
+          </AvatarFallback>
+        </Avatar>
+        <img 
+          src={borderImageUrl} 
+          alt={borderName || "border"}
+          className={cn("absolute inset-0 pointer-events-none", sizeClass)}
+        />
+      </div>
+    );
+  }
+
+  // Default border (no special border)
   return (
     <div className="relative inline-block">
       <Avatar className={cn(

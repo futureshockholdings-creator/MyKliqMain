@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Lock, Check, Coins } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BorderedAvatar } from "@/components/BorderedAvatar";
 
 interface BorderMarketplaceCardProps {
   bordersData: any[];
@@ -70,15 +71,14 @@ export function BorderMarketplaceCard({
                   data-testid={`border-${border.id}`}
                 >
                   <div className="flex flex-col items-center text-center mb-2">
-                    <div className="relative w-12 h-12 mb-2">
-                      <div className="w-12 h-12 rounded-full bg-gray-700" />
-                      {border.imageUrl && (
-                        <img 
-                          src={border.imageUrl} 
-                          alt={border.name}
-                          className="absolute inset-0 w-12 h-12 object-contain"
-                        />
-                      )}
+                    <div className="mb-2">
+                      <BorderedAvatar
+                        src=""
+                        fallback="★"
+                        borderImageUrl={border.imageUrl}
+                        borderName={border.name}
+                        size="lg"
+                      />
                     </div>
                     <h3 className="text-white font-medium text-sm">{border.name}</h3>
                     <p className="text-purple-300 text-xs">{border.description}</p>
@@ -118,15 +118,14 @@ export function BorderMarketplaceCard({
                   data-testid={`streak-border-${border.id}`}
                 >
                   <div className="flex flex-col items-center text-center mb-2">
-                    <div className="relative w-12 h-12 mb-2">
-                      <div className="w-12 h-12 rounded-full bg-gray-700" />
-                      {border.imageUrl && (
-                        <img 
-                          src={border.imageUrl} 
-                          alt={border.name}
-                          className="absolute inset-0 w-12 h-12 object-contain"
-                        />
-                      )}
+                    <div className="mb-2">
+                      <BorderedAvatar
+                        src=""
+                        fallback="★"
+                        borderImageUrl={border.imageUrl}
+                        borderName={border.name}
+                        size="lg"
+                      />
                     </div>
                     <h3 className="text-white font-medium text-sm">{border.name}</h3>
                     <p className="text-purple-300 text-xs">{border.description}</p>

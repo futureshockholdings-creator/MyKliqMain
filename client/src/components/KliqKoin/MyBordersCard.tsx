@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Crown, Check, X } from "lucide-react";
+import { BorderedAvatar } from "@/components/BorderedAvatar";
 
 interface MyBordersCardProps {
   myBordersData: any[];
@@ -55,16 +56,13 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, 
             {equippedBorder && (
               <div className="p-4 bg-gradient-to-r from-purple-600/30 to-pink-600/30 rounded-lg border-2 border-purple-400">
                 <div className="flex items-center gap-4">
-                  <div className="relative w-20 h-20">
-                    <div className="w-20 h-20 rounded-full bg-gray-700" />
-                    {equippedBorder.border.imageUrl && (
-                      <img 
-                        src={equippedBorder.border.imageUrl} 
-                        alt={equippedBorder.border.name}
-                        className="absolute inset-0 w-20 h-20 object-contain"
-                      />
-                    )}
-                  </div>
+                  <BorderedAvatar
+                    src=""
+                    fallback="★"
+                    borderImageUrl={equippedBorder.border.imageUrl}
+                    borderName={equippedBorder.border.name}
+                    size="xl"
+                  />
                   <div className="flex-1">
                     <Badge className="mb-2 bg-purple-600">Currently Equipped</Badge>
                     <h3 className="text-white font-bold text-lg">{equippedBorder.border.name}</h3>
@@ -99,15 +97,14 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, 
                     data-testid={`my-border-${userBorder.id}`}
                   >
                     <div className="flex flex-col items-center text-center mb-2">
-                      <div className="relative w-12 h-12 mb-2">
-                        <div className="w-12 h-12 rounded-full bg-gray-700" />
-                        {userBorder.border.imageUrl && (
-                          <img 
-                            src={userBorder.border.imageUrl} 
-                            alt={userBorder.border.name}
-                            className="absolute inset-0 w-12 h-12 object-contain"
-                          />
-                        )}
+                      <div className="mb-2">
+                        <BorderedAvatar
+                          src=""
+                          fallback="★"
+                          borderImageUrl={userBorder.border.imageUrl}
+                          borderName={userBorder.border.name}
+                          size="lg"
+                        />
                       </div>
                       <h3 className="text-white font-medium text-sm">{userBorder.border.name}</h3>
                       <p className="text-purple-300 text-xs">{userBorder.border.description}</p>
