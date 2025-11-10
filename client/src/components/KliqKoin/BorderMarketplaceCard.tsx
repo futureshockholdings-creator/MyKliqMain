@@ -70,7 +70,16 @@ export function BorderMarketplaceCard({
                   data-testid={`border-${border.id}`}
                 >
                   <div className="flex flex-col items-center text-center mb-2">
-                    <div className="w-12 h-12 rounded-full mb-2 bg-gradient-to-br from-purple-500 to-pink-500" />
+                    <div className="relative w-12 h-12 mb-2">
+                      <div className="w-12 h-12 rounded-full bg-gray-700" />
+                      {border.imageUrl && (
+                        <img 
+                          src={border.imageUrl} 
+                          alt={border.name}
+                          className="absolute inset-0 w-12 h-12 object-contain"
+                        />
+                      )}
+                    </div>
                     <h3 className="text-white font-medium text-sm">{border.name}</h3>
                     <p className="text-purple-300 text-xs">{border.description}</p>
                   </div>
@@ -109,7 +118,16 @@ export function BorderMarketplaceCard({
                   data-testid={`streak-border-${border.id}`}
                 >
                   <div className="flex flex-col items-center text-center mb-2">
-                    <div className="w-12 h-12 rounded-full mb-2 bg-gradient-to-br from-orange-500 to-red-500" />
+                    <div className="relative w-12 h-12 mb-2">
+                      <div className="w-12 h-12 rounded-full bg-gray-700" />
+                      {border.imageUrl && (
+                        <img 
+                          src={border.imageUrl} 
+                          alt={border.name}
+                          className="absolute inset-0 w-12 h-12 object-contain"
+                        />
+                      )}
+                    </div>
                     <h3 className="text-white font-medium text-sm">{border.name}</h3>
                     <p className="text-purple-300 text-xs">{border.description}</p>
                   </div>

@@ -54,7 +54,16 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip }
             {equippedBorder && (
               <div className="p-4 bg-gradient-to-r from-purple-600/30 to-pink-600/30 rounded-lg border-2 border-purple-400">
                 <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
+                  <div className="relative w-20 h-20">
+                    <div className="w-20 h-20 rounded-full bg-gray-700" />
+                    {equippedBorder.border.imageUrl && (
+                      <img 
+                        src={equippedBorder.border.imageUrl} 
+                        alt={equippedBorder.border.name}
+                        className="absolute inset-0 w-20 h-20 object-contain"
+                      />
+                    )}
+                  </div>
                   <div className="flex-1">
                     <Badge className="mb-2 bg-purple-600">Currently Equipped</Badge>
                     <h3 className="text-white font-bold text-lg">{equippedBorder.border.name}</h3>
@@ -78,7 +87,16 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip }
                     data-testid={`my-border-${userBorder.id}`}
                   >
                     <div className="flex flex-col items-center text-center mb-2">
-                      <div className="w-12 h-12 rounded-full mb-2 bg-gradient-to-br from-purple-500 to-pink-500" />
+                      <div className="relative w-12 h-12 mb-2">
+                        <div className="w-12 h-12 rounded-full bg-gray-700" />
+                        {userBorder.border.imageUrl && (
+                          <img 
+                            src={userBorder.border.imageUrl} 
+                            alt={userBorder.border.name}
+                            className="absolute inset-0 w-12 h-12 object-contain"
+                          />
+                        )}
+                      </div>
                       <h3 className="text-white font-medium text-sm">{userBorder.border.name}</h3>
                       <p className="text-purple-300 text-xs">{userBorder.border.description}</p>
                       {userBorder.border.type === 'streak_reward' && (
