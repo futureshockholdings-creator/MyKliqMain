@@ -901,15 +901,8 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
       
-      // Aggressively clear feed cache
-      queryClient.removeQueries({ queryKey: ["/api/kliq-feed"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
-      
-      toast({
-        title: "Border Equipped! ✨",
-        description: "Your profile border has been updated.",
-      });
+      // Force hard refresh by reloading the page
+      window.location.reload();
     },
     onError: (error: any) => {
       toast({
@@ -928,15 +921,8 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
       
-      // Aggressively clear feed cache
-      queryClient.removeQueries({ queryKey: ["/api/kliq-feed"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
-      
-      toast({
-        title: "Border Removed",
-        description: "Your profile border has been removed.",
-      });
+      // Force hard refresh by reloading the page
+      window.location.reload();
     },
     onError: (error: any) => {
       toast({
