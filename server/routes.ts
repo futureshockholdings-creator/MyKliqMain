@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
@@ -1913,6 +1914,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to get public meme upload URL" });
     }
   });
+
+  // Serve static files from attached_assets (border images, etc.)
+  app.use("/attached_assets", express.static("attached_assets"));
 
   // Serve uploaded objects (profile pictures, etc.)
   app.get("/objects/:objectPath(*)", async (req, res) => {
