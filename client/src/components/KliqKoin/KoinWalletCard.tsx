@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Coins, TrendingUp, ArrowDownRight, ArrowUpRight } from "lucide-react";
-import kliqKoinIcon from "@assets/generated_images/Kliq_Koin_currency_icon_27dea416.png";
+import kliqKoinIcon from "@assets/kliq-koin.png";
 
 interface KoinWalletCardProps {
   walletData: any;

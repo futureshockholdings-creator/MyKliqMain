@@ -65,6 +65,36 @@ export default function Login() {
           console.log("Login response:", data);
         }
 
+        // Track daily login and award Kliq Koin
+        try {
+          const loginResponse = await fetch("/api/kliq-koins/login", {
+            method: "POST",
+            credentials: "include",
+          });
+          
+          if (loginResponse.ok) {
+            const loginData = await loginResponse.json();
+            
+            // Show notification if Koin was awarded
+            if (loginData.koinAwarded) {
+              toast({
+                title: "Daily Login Bonus! 🪙",
+                description: `+1 Kliq Koin earned! Current streak: ${loginData.currentStreak} days`,
+              });
+            }
+            
+            // Show streak milestone notification
+            if (loginData.borderUnlocked) {
+              toast({
+                title: `🎉 ${loginData.borderUnlocked.border.name} Unlocked!`,
+                description: `You've reached a ${loginData.currentStreak}-day streak! Check your borders in Settings.`,
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Failed to track daily login:", err);
+        }
+
         toast({
           title: "Login Successful", 
           description: "Welcome back to MyKliq!",
