@@ -70,7 +70,7 @@ export function BorderMarketplaceCard({
                   data-testid={`border-${border.id}`}
                 >
                   <div className="flex flex-col items-center text-center mb-3">
-                    <div className="w-24 h-24 rounded-full mb-2 bg-gradient-to-br from-purple-500 to-pink-500" />
+                    <div className="w-6 h-6 rounded-full mb-2 bg-gradient-to-br from-purple-500 to-pink-500" />
                     <h3 className="text-white font-medium">{border.name}</h3>
                     <p className="text-purple-300 text-sm">{border.description}</p>
                   </div>
@@ -109,7 +109,7 @@ export function BorderMarketplaceCard({
                   data-testid={`streak-border-${border.id}`}
                 >
                   <div className="flex flex-col items-center text-center mb-3">
-                    <div className="w-24 h-24 rounded-full mb-2 bg-gradient-to-br from-orange-500 to-red-500" />
+                    <div className="w-6 h-6 rounded-full mb-2 bg-gradient-to-br from-orange-500 to-red-500" />
                     <h3 className="text-white font-medium">{border.name}</h3>
                     <p className="text-purple-300 text-sm">{border.description}</p>
                   </div>
