@@ -58,21 +58,21 @@ export function BorderMarketplaceCard({
           </TabsList>
 
           <TabsContent value="purchasable" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {purchasableBorders.map((border: any) => (
                 <div
                   key={border.id}
-                  className={`p-4 rounded-lg border-2 ${
+                  className={`p-3 rounded-lg border-2 ${
                     border.owned 
                       ? "bg-green-500/10 border-green-400" 
                       : "bg-white/5 border-white/10"
                   }`}
                   data-testid={`border-${border.id}`}
                 >
-                  <div className="flex flex-col items-center text-center mb-3">
-                    <div className="w-6 h-6 rounded-full mb-2 bg-gradient-to-br from-purple-500 to-pink-500" />
-                    <h3 className="text-white font-medium">{border.name}</h3>
-                    <p className="text-purple-300 text-sm">{border.description}</p>
+                  <div className="flex flex-col items-center text-center mb-2">
+                    <div className="w-12 h-12 rounded-full mb-2 bg-gradient-to-br from-purple-500 to-pink-500" />
+                    <h3 className="text-white font-medium text-sm">{border.name}</h3>
+                    <p className="text-purple-300 text-xs">{border.description}</p>
                   </div>
 
                   {border.owned ? (
@@ -97,21 +97,21 @@ export function BorderMarketplaceCard({
           </TabsContent>
 
           <TabsContent value="streak" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {streakBorders.map((border: any) => (
                 <div
                   key={border.id}
-                  className={`p-4 rounded-lg border-2 ${
+                  className={`p-3 rounded-lg border-2 ${
                     border.owned 
                       ? "bg-green-500/10 border-green-400" 
                       : "bg-white/5 border-white/10"
                   }`}
                   data-testid={`streak-border-${border.id}`}
                 >
-                  <div className="flex flex-col items-center text-center mb-3">
-                    <div className="w-6 h-6 rounded-full mb-2 bg-gradient-to-br from-orange-500 to-red-500" />
-                    <h3 className="text-white font-medium">{border.name}</h3>
-                    <p className="text-purple-300 text-sm">{border.description}</p>
+                  <div className="flex flex-col items-center text-center mb-2">
+                    <div className="w-12 h-12 rounded-full mb-2 bg-gradient-to-br from-orange-500 to-red-500" />
+                    <h3 className="text-white font-medium text-sm">{border.name}</h3>
+                    <p className="text-purple-300 text-xs">{border.description}</p>
                   </div>
 
                   {border.owned ? (
