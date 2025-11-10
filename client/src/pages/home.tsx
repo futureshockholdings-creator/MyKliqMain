@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BorderedAvatar } from "@/components/BorderedAvatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
 import { Heart, MessageCircle, Send, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle, PlusCircle, Trash2, Star } from "lucide-react";
@@ -2470,12 +2471,12 @@ export default function Home() {
           >
             <CardContent className="p-4">
               <div className="flex items-center space-x-3 mb-3">
-                <Avatar className="w-10 h-10 border-2 border-primary">
-                  <AvatarImage src={item.author.profileImageUrl} />
-                  <AvatarFallback className="bg-muted text-foreground">
-                    {item.author.firstName?.[0] || "U"}
-                  </AvatarFallback>
-                </Avatar>
+                <BorderedAvatar
+                  src={item.author.profileImageUrl}
+                  fallback={item.author.firstName?.[0] || "U"}
+                  borderImageUrl={item.authorBorder?.imageUrl}
+                  size="md"
+                />
                 <div className="flex-1">
                   <p className="font-bold text-primary">
                     {item.author.firstName} {item.author.lastName}
@@ -2717,12 +2718,12 @@ export default function Home() {
                     <div className="space-y-3 mb-4">
                       {item.comments.map((comment: any) => (
                         <div key={comment.id} className="flex space-x-3">
-                          <Avatar className="w-8 h-8 border border-border">
-                            <AvatarImage src={comment.author?.profileImageUrl} />
-                            <AvatarFallback className="bg-muted text-foreground text-xs">
-                              {comment.author?.firstName?.[0] || "U"}
-                            </AvatarFallback>
-                          </Avatar>
+                          <BorderedAvatar
+                            src={comment.author?.profileImageUrl}
+                            fallback={comment.author?.firstName?.[0] || "U"}
+                            borderImageUrl={comment.authorBorder?.imageUrl}
+                            size="sm"
+                          />
                           <div className="flex-1">
                             <div className="bg-muted rounded-lg px-3 py-2">
                               <p className="text-sm font-semibold text-primary">

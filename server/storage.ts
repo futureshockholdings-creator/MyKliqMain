@@ -683,12 +683,14 @@ export class DatabaseStorage implements IStorage {
         originalAuthorId: posts.originalAuthorId,
         postType: posts.postType,
         author: users,
+        authorBorder: profileBorders,
         gif: gifs,
         meme: memes,
         moviecon: moviecons,
       })
       .from(posts)
       .innerJoin(users, eq(posts.userId, users.id))
+      .leftJoin(profileBorders, eq(users.equippedBorderId, profileBorders.id))
       .leftJoin(gifs, eq(posts.gifId, gifs.id))
       .leftJoin(memes, eq(posts.memeId, memes.id))
       .leftJoin(moviecons, eq(posts.movieconId, moviecons.id))
@@ -718,6 +720,7 @@ export class DatabaseStorage implements IStorage {
           movieconId: comments.movieconId,
           createdAt: comments.createdAt,
           author: users,
+          authorBorder: profileBorders,
           gif: gifs,
           meme: memes,
           moviecon: moviecons,
@@ -725,12 +728,13 @@ export class DatabaseStorage implements IStorage {
         })
         .from(comments)
         .innerJoin(users, eq(comments.userId, users.id))
+        .leftJoin(profileBorders, eq(users.equippedBorderId, profileBorders.id))
         .leftJoin(gifs, eq(comments.gifId, gifs.id))
         .leftJoin(memes, eq(comments.memeId, memes.id))
         .leftJoin(moviecons, eq(comments.movieconId, moviecons.id))
         .leftJoin(commentLikes, eq(comments.id, commentLikes.commentId))
         .where(inArray(comments.postId, postIds))
-        .groupBy(comments.id, users.id, gifs.id, memes.id, moviecons.id)
+        .groupBy(comments.id, users.id, profileBorders.id, gifs.id, memes.id, moviecons.id)
         .orderBy(comments.createdAt) : [] as any[]
     ]);
 
@@ -771,6 +775,7 @@ export class DatabaseStorage implements IStorage {
       originalAuthorId: post.originalAuthorId,
       postType: post.postType,
       author: post.author,
+      authorBorder: post.authorBorder,
       comments: commentsByPost[post.id] || [],
     }));
 
@@ -4453,6 +4458,11 @@ export class DatabaseStorage implements IStorage {
             eq(userBorders.borderId, borderId)
           )
         );
+
+      await tx
+        .update(users)
+        .set({ equippedBorderId: borderId })
+        .where(eq(users.id, userId));
     });
   }
 

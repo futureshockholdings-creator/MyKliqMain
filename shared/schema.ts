@@ -69,6 +69,8 @@ export const users = pgTable("users", {
   suspensionExpiresAt: timestamp("suspension_expires_at"),
   // Admin role field
   isAdmin: boolean("is_admin").default(false),
+  // Kliq Koin - Equipped profile border
+  equippedBorderId: varchar("equipped_border_id").references(() => profileBorders.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
