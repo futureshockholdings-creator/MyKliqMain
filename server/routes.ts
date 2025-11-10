@@ -6620,6 +6620,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Unequip border
+  app.post('/api/kliq-koins/unequip-border', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      await storage.unequipBorder(userId);
+      
+      res.json({ 
+        success: true,
+        message: "Border removed successfully!" 
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Failed to remove border" });
+    }
+  });
+
   return httpServer;
 }
 

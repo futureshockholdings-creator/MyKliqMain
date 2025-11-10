@@ -914,6 +914,27 @@ export default function Settings() {
     },
   });
 
+  const unequipBorder = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/kliq-koins/unequip-border", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
+      toast({
+        title: "Border Removed",
+        description: "Your profile border has been removed.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to Remove",
+        description: error.message || "Failed to remove border. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const buyStreakFreeze = useMutation({
     mutationFn: async () => {
       return await apiRequest("POST", "/api/kliq-koins/streak-freeze", {});
@@ -1216,8 +1237,9 @@ export default function Settings() {
                   <MyBordersCard 
                     myBordersData={myBordersData}
                     isLoading={myBordersLoading}
-                    isEquipping={equipBorder.isPending}
+                    isEquipping={equipBorder.isPending || unequipBorder.isPending}
                     onEquip={(borderId) => equipBorder.mutate(borderId)}
+                    onUnequip={() => unequipBorder.mutate()}
                   />
                 </AccordionContent>
               </AccordionItem>

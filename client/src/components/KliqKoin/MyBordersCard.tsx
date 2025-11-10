@@ -1,16 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Crown, Check } from "lucide-react";
+import { Crown, Check, X } from "lucide-react";
 
 interface MyBordersCardProps {
   myBordersData: any[];
   isLoading: boolean;
   isEquipping: boolean;
   onEquip: (borderId: string) => void;
+  onUnequip: () => void;
 }
 
-export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip }: MyBordersCardProps) {
+export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, onUnequip }: MyBordersCardProps) {
   if (isLoading) {
     return (
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
@@ -69,6 +70,17 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip }
                     <h3 className="text-white font-bold text-lg">{equippedBorder.border.name}</h3>
                     <p className="text-purple-200 text-sm">{equippedBorder.border.description}</p>
                   </div>
+                  <Button
+                    onClick={onUnequip}
+                    disabled={isEquipping}
+                    variant="destructive"
+                    size="sm"
+                    className="bg-red-600 hover:bg-red-700"
+                    data-testid="button-unequip-border"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Unequip
+                  </Button>
                 </div>
               </div>
             )}

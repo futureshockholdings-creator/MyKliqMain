@@ -4466,6 +4466,20 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  async unequipBorder(userId: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(userBorders)
+        .set({ isEquipped: false })
+        .where(eq(userBorders.userId, userId));
+
+      await tx
+        .update(users)
+        .set({ equippedBorderId: null })
+        .where(eq(users.id, userId));
+    });
+  }
+
   async unlockStreakBorder(userId: string, tier: number): Promise<(UserBorder & { border: ProfileBorder }) | undefined> {
     const [border] = await db
       .select()
