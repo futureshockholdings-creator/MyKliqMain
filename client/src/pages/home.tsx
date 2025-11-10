@@ -2474,8 +2474,8 @@ export default function Home() {
                 <BorderedAvatar
                   src={item.author.profileImageUrl}
                   fallback={item.author.firstName?.[0] || "U"}
-                  borderImageUrl={item.authorBorder?.imageUrl}
-                  borderName={item.authorBorder?.name}
+                  borderImageUrl={item.author.id === userData?.id ? (userData as any)?.equippedBorder?.imageUrl : item.authorBorder?.imageUrl}
+                  borderName={item.author.id === userData?.id ? (userData as any)?.equippedBorder?.name : item.authorBorder?.name}
                   size="md"
                 />
                 <div className="flex-1">
@@ -2722,8 +2722,8 @@ export default function Home() {
                           <BorderedAvatar
                             src={comment.author?.profileImageUrl}
                             fallback={comment.author?.firstName?.[0] || "U"}
-                            borderImageUrl={comment.authorBorder?.imageUrl}
-                            borderName={comment.authorBorder?.name}
+                            borderImageUrl={comment.author?.id === userData?.id ? (userData as any)?.equippedBorder?.imageUrl : comment.authorBorder?.imageUrl}
+                            borderName={comment.author?.id === userData?.id ? (userData as any)?.equippedBorder?.name : comment.authorBorder?.name}
                             size="sm"
                           />
                           <div className="flex-1">
