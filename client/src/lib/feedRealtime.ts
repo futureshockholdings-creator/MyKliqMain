@@ -11,6 +11,7 @@ class FeedRealtimeService {
   private isSubscribed = false;
   private userId: string | null = null;
   private isFallbackMode = false;
+  private isPaused = false; // Flag to prevent reconnection while paused
 
   connect(userId: string) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
@@ -76,6 +77,12 @@ class FeedRealtimeService {
   }
 
   private attemptReconnect() {
+    // Don't reconnect if paused (mobile battery optimization)
+    if (this.isPaused) {
+      console.log('⏸️ Skipping reconnect - service is paused');
+      return;
+    }
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.log('⚠️ Max reconnect attempts reached. Falling back to polling.');
       this.startPolling();
@@ -102,6 +109,12 @@ class FeedRealtimeService {
   }
 
   private startPolling() {
+    // Don't start polling if paused (mobile battery optimization)
+    if (this.isPaused) {
+      console.log('⏸️ Skipping polling - service is paused');
+      return;
+    }
+
     if (this.pollingInterval) {
       return; // Already polling
     }
@@ -142,12 +155,15 @@ class FeedRealtimeService {
 
   pause() {
     // Pause connection when app goes to background (mobile battery optimization)
+    this.isPaused = true;
     this.disconnect();
     console.log('⏸️ Feed WebSocket paused');
   }
 
   resume(userId: string) {
     // Resume connection when app comes to foreground
+    this.isPaused = false;
+    this.reconnectAttempts = 0; // Reset reconnect attempts on resume
     this.connect(userId);
     console.log('▶️ Feed WebSocket resumed');
   }

@@ -82,6 +82,11 @@ export async function sendAutomaticBirthdayMessages(): Promise<void> {
 
 // Send event reminders for upcoming events
 export async function sendEventReminders(): Promise<void> {
+  // Event reminder auto-posts disabled per user request
+  console.log("Event reminder auto-posts are disabled");
+  return;
+  
+  /* DISABLED CODE:
   try {
     console.log("Checking for event reminders...");
     
@@ -159,6 +164,7 @@ export async function sendEventReminders(): Promise<void> {
   } catch (error) {
     console.error("Error in event reminder service:", error);
   }
+  */
 }
 
 // Send calendar reminders for notes with remind_kliq enabled

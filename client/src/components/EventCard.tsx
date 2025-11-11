@@ -102,50 +102,6 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
     updateAttendanceMutation.mutate(status);
   };
 
-  // Simple test component to debug
-  if (currentUserId) {
-    return (
-      <div className="w-full bg-white border-2 border-red-500 p-6 mb-4">
-        <h3 className="text-xl font-bold mb-4 text-red-600">TEST EVENT CARD: {event.title}</h3>
-        <div className="bg-yellow-100 p-4 mb-4">
-          <p>Debug Info:</p>
-          <p>Event ID: {event.id}</p>
-          <p>Current User ID: {currentUserId}</p>
-          <p>Current Status: {currentStatus}</p>
-        </div>
-        <div className="flex space-x-4">
-          <button 
-            onClick={() => handleAttendanceClick('going')}
-            className="px-6 py-3 bg-green-500 text-white text-lg font-bold rounded hover:bg-green-600"
-            style={{ backgroundColor: '#10b981', color: 'white' }}
-          >
-            GOING ✅
-          </button>
-          <button 
-            onClick={() => handleAttendanceClick('maybe')}
-            className="px-6 py-3 bg-yellow-500 text-white text-lg font-bold rounded hover:bg-yellow-600"
-            style={{ backgroundColor: '#f59e0b', color: 'white' }}
-          >
-            MAYBE ❓
-          </button>
-          <button 
-            onClick={() => handleAttendanceClick('not_going')}
-            className="px-6 py-3 bg-red-500 text-white text-lg font-bold rounded hover:bg-red-600"
-            style={{ backgroundColor: '#ef4444', color: 'white' }}
-          >
-            NOT GOING ❌
-          </button>
-        </div>
-        {currentStatus && (
-          <div className="mt-4 p-3 bg-blue-100 text-blue-800 font-semibold">
-            Your current status: {currentStatus.toUpperCase()}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Original component code (temporarily disabled)
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'going':
@@ -187,15 +143,6 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
 
   const displayStatus = selectedAttendance || currentStatus;
   const isUpdating = updateAttendanceMutation.isPending;
-
-  console.log('EventCard rendering:', {
-    eventId: event.id,
-    eventTitle: event.title,
-    currentUserId,
-    currentStatus,
-    hasCurrentUserId: !!currentUserId,
-    userIdType: typeof currentUserId
-  });
 
   return (
     <Card className="bg-gradient-to-br from-card to-card/80 border border-primary/30">

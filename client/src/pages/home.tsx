@@ -2492,6 +2492,7 @@ export default function Home() {
               <EventCard
                 key={item.id}
                 event={item}
+                currentUserId={user?.id}
                 onUpdate={() => queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] })}
               />
             );
