@@ -38,6 +38,7 @@ import { SportsUpdateCard } from "@/components/SportsUpdateCard";
 import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import Footer from "@/components/Footer";
 import { usePostTranslation } from "@/lib/translationService";
+import { feedRealtimeService } from "@/lib/feedRealtime";
 
 import type { Meme, Moviecon } from "@shared/schema";
 
@@ -267,6 +268,30 @@ export default function Home() {
       document.removeEventListener('click', handleClickOutside);
     };
   }, []);
+
+  // Real-time feed updates via WebSocket
+  useEffect(() => {
+    // Only connect if user is authenticated
+    if (userData?.id) {
+      feedRealtimeService.connect(userData.id);
+
+      // Handle page visibility for mobile battery optimization
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          feedRealtimeService.pause();
+        } else {
+          feedRealtimeService.resume(userData.id);
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        feedRealtimeService.disconnect();
+      };
+    }
+  }, [userData?.id]);
 
   // Predefined mood options
   const moodOptions = [

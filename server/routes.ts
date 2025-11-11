@@ -236,6 +236,7 @@ interface ExtendedWebSocket extends WebSocket {
   action_id?: string;
   user_id?: string;
   call_id?: string;
+  feed_subscriber?: boolean;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -764,6 +765,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.awardKoins(userId, 0.50, 'post_create', newPost.id);
       } catch (koinError) {
         console.error("Error awarding Koins for post creation:", koinError);
+      }
+      
+      // Broadcast feed update to all connected clients
+      try {
+        (req.app as any).broadcastFeedUpdate('post');
+      } catch (broadcastError) {
+        console.error("Error broadcasting feed update:", broadcastError);
       }
       
       // Return the created post with author info for immediate UI update
@@ -2239,6 +2247,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error awarding Koins for post creation:", koinError);
       }
       
+      // Broadcast feed update to all connected clients
+      try {
+        (req.app as any).broadcastFeedUpdate('post');
+      } catch (broadcastError) {
+        console.error("Error broadcasting feed update:", broadcastError);
+      }
+      
       // Invalidate cache for feeds that need to show this new post
       const { invalidateCache } = await import('./cache');
       invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
@@ -3304,6 +3319,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error awarding Koins for event creation:", koinError);
       }
       
+      // Broadcast feed update to all connected clients
+      try {
+        (req.app as any).broadcastFeedUpdate('event');
+      } catch (broadcastError) {
+        console.error("Error broadcasting feed update:", broadcastError);
+      }
+      
       res.json(event);
     } catch (error) {
       console.error("Error creating event:", error);
@@ -3638,6 +3660,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error awarding Koins for livestream creation:", koinError);
       }
       
+      // Broadcast feed update to all connected clients
+      try {
+        (req.app as any).broadcastFeedUpdate('livestream');
+      } catch (broadcastError) {
+        console.error("Error broadcasting feed update:", broadcastError);
+      }
+      
       // Auto-post to headlines when live stream starts
       const postContent = `🔴 LIVE: Streaming "${action.title}" right now! ${action.description ? action.description : ''}`;
       
@@ -3909,6 +3938,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.awardKoins(userId, 0.50, 'meetup_create', meetup.id);
       } catch (koinError) {
         console.error("Error awarding Koins for meetup creation:", koinError);
+      }
+      
+      // Broadcast feed update to all connected clients
+      try {
+        (req.app as any).broadcastFeedUpdate('meetup');
+      } catch (broadcastError) {
+        console.error("Error broadcasting feed update:", broadcastError);
       }
       
       res.json(meetup);
@@ -5567,6 +5603,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             });
             break;
+            
+          case 'subscribe_feed':
+            // Subscribe to real-time feed updates
+            ws.feed_subscriber = true;
+            ws.user_id = data.userId;
+            break;
+            
+          case 'unsubscribe_feed':
+            // Unsubscribe from feed updates
+            ws.feed_subscriber = false;
+            break;
         }
       } catch (error) {
         console.error('WebSocket message error:', error);
@@ -5590,6 +5637,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
   });
+
+  // Global function to broadcast feed updates to all subscribers
+  const broadcastFeedUpdate = (contentType: string, data?: any) => {
+    const message = JSON.stringify({
+      type: 'feed:new-content',
+      contentType, // 'post', 'event', 'meetup', 'livestream'
+      timestamp: new Date().toISOString(),
+      data
+    });
+
+    let subscriberCount = 0;
+    wss.clients.forEach((client: ExtendedWebSocket) => {
+      if (client.readyState === WebSocket.OPEN && client.feed_subscriber) {
+        client.send(message);
+        subscriberCount++;
+      }
+    });
+
+    if (subscriberCount > 0) {
+      console.log(`📡 Broadcasted ${contentType} update to ${subscriberCount} subscribers`);
+    }
+  };
+
+  // Store broadcast function reference for use in routes
+  (app as any).broadcastFeedUpdate = broadcastFeedUpdate;
 
   // Maintenance dashboard routes
   app.get('/api/maintenance/metrics', async (req: any, res) => {
