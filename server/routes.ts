@@ -3326,6 +3326,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error broadcasting feed update:", broadcastError);
       }
       
+      // Invalidate cache for feeds that need to show this new event
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
+      
+      // Invalidate CacheService for feeds (new optimized cache)
+      const { cacheService } = await import('./cacheService');
+      await cacheService.invalidatePattern('kliq-feed:*'); // Invalidate all kliq feed cache entries
+      
       res.json(event);
     } catch (error) {
       console.error("Error creating event:", error);
@@ -3667,6 +3675,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error broadcasting feed update:", broadcastError);
       }
       
+      // Invalidate cache for feeds that need to show this new livestream
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
+      
+      // Invalidate CacheService for feeds (new optimized cache)
+      const { cacheService } = await import('./cacheService');
+      await cacheService.invalidatePattern('kliq-feed:*'); // Invalidate all kliq feed cache entries
+      
       // Auto-post to headlines when live stream starts
       const postContent = `🔴 LIVE: Streaming "${action.title}" right now! ${action.description ? action.description : ''}`;
       
@@ -3946,6 +3962,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (broadcastError) {
         console.error("Error broadcasting feed update:", broadcastError);
       }
+      
+      // Invalidate cache for feeds that need to show this new meetup
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
+      
+      // Invalidate CacheService for feeds (new optimized cache)
+      const { cacheService } = await import('./cacheService');
+      await cacheService.invalidatePattern('kliq-feed:*'); // Invalidate all kliq feed cache entries
       
       res.json(meetup);
     } catch (error) {

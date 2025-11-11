@@ -59,6 +59,16 @@ The application uses a dual-cache system for optimal performance:
 
 Post creation and internal post sharing automatically invalidates both cache systems to ensure feed consistency.
 
+### Real-time Feed Updates
+The application implements WebSocket-based real-time feed updates to eliminate manual refresh requirements:
+- **WebSocket Server**: Extended `/ws` endpoint handles feed subscriptions with `subscribe_feed`/`unsubscribe_feed` message types
+- **Broadcast System**: `broadcastFeedUpdate()` function notifies all subscribers when new content is created (posts, events, meetups, livestreams)
+- **Frontend Integration**: `feedRealtimeService` manages WebSocket connections with automatic reconnection (exponential backoff, max 5 attempts)
+- **Polling Fallback**: After max reconnect attempts, system falls back to 30-second polling to ensure feed freshness
+- **Mobile Optimization**: Page visibility handling pauses/resumes connections to conserve battery life
+- **Cache Synchronization**: Both frontend (TanStack Query) and backend (dual-cache system) caches are invalidated on content creation
+- All content creation endpoints broadcast updates and invalidate caches to ensure immediate feed consistency across all connected clients
+
 ### Internal Post Sharing
 Users can share posts within their kliq community instead of to external social media platforms. The share feature (accessed via paper airplane icon on posts):
 - Creates a copy of the post (including all media, GIFs, memes, moviecons) in the sharer's feed

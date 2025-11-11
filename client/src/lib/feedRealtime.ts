@@ -3,11 +3,14 @@ import { queryClient } from './queryClient';
 class FeedRealtimeService {
   private ws: WebSocket | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
+  private pollingInterval: NodeJS.Timeout | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private baseReconnectDelay = 1000; // Start with 1 second
+  private pollingDelay = 30000; // 30 seconds
   private isSubscribed = false;
   private userId: string | null = null;
+  private isFallbackMode = false;
 
   connect(userId: string) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
@@ -27,6 +30,7 @@ class FeedRealtimeService {
       this.ws.onopen = () => {
         console.log('✅ Feed WebSocket connected');
         this.reconnectAttempts = 0;
+        this.stopPolling(); // Stop polling if WebSocket reconnects
         this.subscribe();
       };
 
@@ -74,6 +78,7 @@ class FeedRealtimeService {
   private attemptReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.log('⚠️ Max reconnect attempts reached. Falling back to polling.');
+      this.startPolling();
       return;
     }
 
@@ -96,11 +101,36 @@ class FeedRealtimeService {
     }, delay);
   }
 
+  private startPolling() {
+    if (this.pollingInterval) {
+      return; // Already polling
+    }
+
+    this.isFallbackMode = true;
+    console.log(`🔄 Starting 30-second polling fallback...`);
+
+    this.pollingInterval = setInterval(() => {
+      console.log('🔄 Polling for feed updates...');
+      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+    }, this.pollingDelay);
+  }
+
+  private stopPolling() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+      this.isFallbackMode = false;
+      console.log('⏹️ Stopped polling fallback');
+    }
+  }
+
   disconnect() {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
+
+    this.stopPolling();
 
     if (this.ws) {
       this.isSubscribed = false;
