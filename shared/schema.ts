@@ -122,8 +122,8 @@ export const profileBorders = pgTable("profile_borders", {
 export const kliqKoins = pgTable("kliq_koins", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
-  balance: integer("balance").notNull().default(0), // Current Koin balance
-  totalEarned: integer("total_earned").notNull().default(0), // Lifetime earnings
+  balance: numeric("balance", { precision: 12, scale: 2 }).notNull().default("0"), // Current Koin balance (supports decimals)
+  totalEarned: numeric("total_earned", { precision: 12, scale: 2 }).notNull().default("0"), // Lifetime earnings (supports decimals)
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -134,11 +134,11 @@ export const kliqKoins = pgTable("kliq_koins", {
 export const kliqKoinTransactions = pgTable("kliq_koin_transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  amount: integer("amount").notNull(), // Positive for earn, negative for spend
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(), // Positive for earn, negative for spend (supports decimals)
   type: koinTransactionTypeEnum("type").notNull(), // "earned", "spent", "refund"
   source: varchar("source").notNull(), // "daily_login", "purchase_border", "streak_recovery"
   referenceId: varchar("reference_id"), // Related entity ID (borderId, etc)
-  balanceAfter: integer("balance_after").notNull(), // Balance snapshot after transaction
+  balanceAfter: numeric("balance_after", { precision: 12, scale: 2 }).notNull(), // Balance snapshot after transaction (supports decimals)
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_transactions_user").on(table.userId), // User's transaction history

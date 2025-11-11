@@ -25,8 +25,8 @@ export function KoinWalletCard({ walletData, isLoading }: KoinWalletCardProps) {
     );
   }
 
-  const balance = walletData?.koins?.balance || 0;
-  const totalEarned = walletData?.koins?.totalEarned || 0;
+  const balance = parseFloat(walletData?.koins?.balance || 0);
+  const totalEarned = parseFloat(walletData?.koins?.totalEarned || 0);
   const transactions = walletData?.transactions || [];
 
   return (
@@ -37,7 +37,7 @@ export function KoinWalletCard({ walletData, isLoading }: KoinWalletCardProps) {
           Kliq Koin Wallet
         </CardTitle>
         <CardDescription className="text-purple-200">
-          Earn Koins through daily logins and use them to unlock borders
+          Earn Koins to use in Border Marketplace
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -45,14 +45,14 @@ export function KoinWalletCard({ walletData, isLoading }: KoinWalletCardProps) {
           <div className="text-center p-4 bg-white/10 rounded-lg">
             <div className="flex items-center justify-center gap-3 mb-2">
               <img src={kliqKoinIcon} alt="Koin" className="w-20 h-20" />
-              <div className="text-4xl font-bold text-yellow-400">{balance}</div>
+              <div className="text-4xl font-bold text-yellow-400">{balance.toFixed(2)}</div>
             </div>
             <div className="text-purple-200 text-sm">Current Balance</div>
           </div>
           <div className="text-center p-4 bg-white/10 rounded-lg">
             <div className="flex items-center justify-center gap-1 mb-2">
               <TrendingUp className="w-5 h-5 text-green-400" />
-              <div className="text-4xl font-bold text-green-400">{totalEarned}</div>
+              <div className="text-4xl font-bold text-green-400">{totalEarned.toFixed(2)}</div>
             </div>
             <div className="text-purple-200 text-sm">Total Earned</div>
           </div>
@@ -89,10 +89,10 @@ export function KoinWalletCard({ walletData, isLoading }: KoinWalletCardProps) {
                   </div>
                   <div className="text-right">
                     <div className={`font-bold ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {tx.amount > 0 ? '+' : ''}{tx.amount}
+                      {tx.amount > 0 ? '+' : ''}{parseFloat(tx.amount).toFixed(2)}
                     </div>
                     <div className="text-purple-400 text-xs">
-                      Balance: {tx.balanceAfter}
+                      Balance: {parseFloat(tx.balanceAfter).toFixed(2)}
                     </div>
                   </div>
                 </div>
