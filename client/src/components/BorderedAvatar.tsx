@@ -118,6 +118,10 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
     emoji: "🌟",
     bg: "bg-gradient-to-br from-blue-300 to-purple-500"
   },
+  "Million Kliq-r Club": {
+    emoji: "💎",
+    bg: "bg-gradient-to-br from-yellow-200 via-purple-500 to-pink-500"
+  },
 };
 
 const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
@@ -276,6 +280,11 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
   },
   "Universe Core": {
     wrapper: "bg-[radial-gradient(circle,#ffffff,#00ffff,#ff00ff,#ffd700,#4169e1)] p-[5px] rounded-full animate-[spin_4s_linear_infinite] shadow-[0_0_70px_rgba(255,255,255,1),0_0_140px_rgba(0,255,255,0.9),0_0_200px_rgba(255,0,255,0.8),inset_0_0_40px_rgba(255,215,0,0.7)]",
+    avatar: ""
+  },
+  // 1,000,000 Koin Tier - THE ULTIMATE GRAND PRIZE
+  "Million Kliq-r Club": {
+    wrapper: "relative bg-[conic-gradient(from_0deg,#ffd700_0%,#ff00ff_7%,#00ffff_14%,#00ff00_21%,#ffd700_28%,#ff0000_35%,#ffffff_42%,#ff00ff_49%,#00ffff_56%,#ffd700_63%,#00ff00_70%,#ffffff_77%,#ff00ff_84%,#00ffff_91%,#ffd700_100%)] p-[6px] rounded-full before:content-[''] before:absolute before:inset-0 before:rounded-full before:bg-[conic-gradient(from_180deg,#ff00ff_0%,#00ffff_20%,#ffd700_40%,#ff0000_60%,#00ff00_80%,#ff00ff_100%)] before:opacity-70 before:blur-sm before:animate-[spin_2s_linear_infinite_reverse] animate-[spin_3s_linear_infinite] shadow-[0_0_100px_rgba(255,215,0,1),0_0_150px_rgba(255,0,255,1),0_0_200px_rgba(0,255,255,1),0_0_250px_rgba(255,255,255,0.9),inset_0_0_60px_rgba(255,215,0,0.8),inset_0_0_80px_rgba(255,0,255,0.6)] after:content-[''] after:absolute after:inset-[-8px] after:rounded-full after:bg-[conic-gradient(from_90deg,transparent_0%,#ffd700_10%,transparent_20%,#ff00ff_30%,transparent_40%,#00ffff_50%,transparent_60%,#ffffff_70%,transparent_80%,#ffd700_90%,transparent_100%)] after:opacity-60 after:animate-[spin_4s_linear_infinite] after:pointer-events-none",
     avatar: ""
   },
 };
