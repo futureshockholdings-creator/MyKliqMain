@@ -343,8 +343,8 @@ export default function Home() {
     refetchInterval: 120000,
   });
   
-  // Extract and flatten feed items from all pages
-  const feedItems = feedData?.pages.flatMap(page => page.items) || [];
+  // Extract and flatten feed items from all pages (with null safety)
+  const feedItems = feedData?.pages.flatMap(page => page?.items ?? []) || [];
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -354,11 +354,15 @@ export default function Home() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
+        // Guard against duplicate fetches while already loading
+        if (entries[0].isIntersecting && !isFetchingNextPage) {
           fetchNextPage();
         }
       },
-      { threshold: 0.1 }
+      { 
+        threshold: 0.1,
+        rootMargin: '200px' // Prefetch 200px before reaching the sentinel
+      }
     );
 
     observer.observe(loadMoreRef.current);
