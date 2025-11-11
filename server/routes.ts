@@ -3319,20 +3319,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error awarding Koins for event creation:", koinError);
       }
       
-      // Broadcast feed update to all connected clients
-      try {
-        (req.app as any).broadcastFeedUpdate('event');
-      } catch (broadcastError) {
-        console.error("Error broadcasting feed update:", broadcastError);
-      }
-      
-      // Invalidate cache for feeds that need to show this new event
+      // Invalidate cache BEFORE broadcasting (prevents race condition)
       const { invalidateCache } = await import('./cache');
       invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
       
       // Invalidate CacheService for feeds (new optimized cache)
       const { cacheService } = await import('./cacheService');
       await cacheService.invalidatePattern('kliq-feed:*'); // Invalidate all kliq feed cache entries
+      
+      // NOW broadcast feed update to all connected clients (after cache is cleared)
+      try {
+        (req.app as any).broadcastFeedUpdate('event');
+      } catch (broadcastError) {
+        console.error("Error broadcasting feed update:", broadcastError);
+      }
       
       res.json(event);
     } catch (error) {
