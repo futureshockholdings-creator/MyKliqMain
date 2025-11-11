@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -318,17 +318,53 @@ export default function Home() {
     { emoji: "😶", label: "Numb", color: "text-stone-500" }
   ];
 
-  // Fetch paginated kliq feed (posts, polls, events, actions from all kliq members)
-  const { data: feedData = { items: [], hasMore: false, totalPages: 1 }, isLoading: feedLoading, refetch: refetchFeed } = useQuery<{items: any[], hasMore: boolean, totalPages: number}>({
+  // Fetch paginated kliq feed with infinite scroll
+  const {
+    data: feedData,
+    isLoading: feedLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch: refetchFeed
+  } = useInfiniteQuery({
     queryKey: ["/api/kliq-feed"],
-    staleTime: 60000, // Consider data fresh for 1 minute
-    gcTime: 300000, // Keep cache for 5 minutes
-    refetchOnWindowFocus: false, // Reduce unnecessary refetches
-    refetchInterval: 120000, // Refetch every 2 minutes (reduced from 30s)
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await fetch(`/api/kliq-feed?page=${pageParam}&limit=20`);
+      if (!response.ok) throw new Error('Failed to fetch feed');
+      return response.json();
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.hasMore ? allPages.length + 1 : undefined;
+    },
+    initialPageParam: 1,
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchInterval: 120000,
   });
   
-  // Extract feed items from paginated response
-  const feedItems = feedData?.items || [];
+  // Extract and flatten feed items from all pages
+  const feedItems = feedData?.pages.flatMap(page => page.items) || [];
+
+  // Intersection observer for infinite scroll
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Fetch targeted ads for the user
   const { data: targetedAds = [] } = useQuery({
@@ -3099,6 +3135,33 @@ export default function Home() {
       </div>
     );
   })}
+          
+          {/* Infinite scroll trigger and loading indicator */}
+          {hasNextPage && (
+            <div 
+              ref={loadMoreRef} 
+              className="flex justify-center items-center py-8"
+              data-testid="load-more-trigger"
+            >
+              {isFetchingNextPage ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Loading more...</span>
+                </div>
+              ) : (
+                <div className="text-muted-foreground text-sm">
+                  Scroll down to load more
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* End of feed indicator */}
+          {!hasNextPage && feedItems.length > 0 && (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              You've reached the end of your feed
+            </div>
+          )}
         </>
       )}
 
