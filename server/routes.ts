@@ -3380,6 +3380,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.deleteEvent(eventId);
+      
+      // Invalidate cache for feeds (both old and new cache systems)
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed');
+      invalidateCache('events');
+      await cacheService.invalidatePattern('kliq-feed:*');
+      await cacheService.invalidatePattern('events:*');
+      
+      // Broadcast WebSocket update to all clients so deleted events disappear from headlines feed
+      broadcastFeedUpdate('event', eventId);
+      
       res.json({ message: "Event deleted successfully" });
     } catch (error) {
       console.error("Error deleting event:", error);
