@@ -3319,22 +3319,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error awarding Koins for event creation:", koinError);
       }
       
-      // Invalidate cache BEFORE broadcasting (prevents race condition)
-      const { invalidateCache } = await import('./cache');
-      invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
-      
-      // Invalidate CacheService for feeds (new optimized cache)
-      const { cacheService } = await import('./cacheService');
-      await cacheService.invalidatePattern('kliq-feed:*'); // Invalidate all kliq feed cache entries
-      
-      // NOW broadcast feed update to all connected clients (after cache is cleared)
-      try {
-        (req.app as any).broadcastFeedUpdate('event');
-      } catch (broadcastError) {
-        console.error("Error broadcasting feed update:", broadcastError);
-      }
-      
+      // Send response first to ensure event is fully committed
       res.json(event);
+      
+      // AFTER response: Invalidate cache and broadcast (prevents race condition)
+      setImmediate(async () => {
+        try {
+          const { invalidateCache } = await import('./cache');
+          invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
+          
+          // Invalidate CacheService for feeds (new optimized cache)
+          // Use 'kliq-feed:' not 'kliq-feed:*' because invalidatePattern uses includes(), not wildcard matching
+          const { cacheService } = await import('./cacheService');
+          await cacheService.invalidatePattern('kliq-feed:'); // Invalidate all kliq feed cache entries
+          
+          // NOW broadcast feed update to all connected clients (after cache is cleared)
+          (req.app as any).broadcastFeedUpdate('event');
+        } catch (error) {
+          console.error("Error in post-response cache invalidation:", error);
+        }
+      });
     } catch (error) {
       console.error("Error creating event:", error);
       res.status(500).json({ message: "Failed to create event" });
@@ -3381,17 +3385,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.deleteEvent(eventId);
       
-      // Invalidate cache for feeds (both old and new cache systems)
-      const { invalidateCache } = await import('./cache');
-      invalidateCache('kliq-feed');
-      invalidateCache('events');
-      await cacheService.invalidatePattern('kliq-feed:*');
-      await cacheService.invalidatePattern('events:*');
-      
-      // Broadcast WebSocket update to all clients so deleted events disappear from headlines feed
-      broadcastFeedUpdate('event', eventId);
-      
+      // Send response first
       res.json({ message: "Event deleted successfully" });
+      
+      // AFTER response: Invalidate cache and broadcast
+      setImmediate(async () => {
+        try {
+          const { invalidateCache } = await import('./cache');
+          invalidateCache('kliq-feed');
+          invalidateCache('events');
+          // Use 'kliq-feed:' not 'kliq-feed:*' - invalidatePattern uses includes(), not wildcard matching
+          await cacheService.invalidatePattern('kliq-feed:');
+          await cacheService.invalidatePattern('events:');
+          
+          // Broadcast WebSocket update to all clients so deleted events disappear from headlines feed
+          broadcastFeedUpdate('event', eventId);
+        } catch (error) {
+          console.error("Error in post-response cache invalidation:", error);
+        }
+      });
     } catch (error) {
       console.error("Error deleting event:", error);
       res.status(500).json({ message: "Failed to delete event" });
