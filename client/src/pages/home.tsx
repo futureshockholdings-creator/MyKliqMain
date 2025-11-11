@@ -2484,7 +2484,17 @@ export default function Home() {
                 }}
               />
             );
-          } 
+          }
+          
+          if (item.type === 'event') {
+            return (
+              <EventCard
+                key={item.id}
+                event={item}
+                onUpdate={() => queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] })}
+              />
+            );
+          }
           
           if (item.type === 'post') {
             return (
