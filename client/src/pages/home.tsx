@@ -382,6 +382,7 @@ export default function Home() {
   }
 
   // Separate different types of feed items
+  console.log('📊 Feed items received:', feedItems.length, feedItems.map((i: any) => i.type));
   const posts = feedItems.filter((item: any) => item.type === 'post');
   const polls = feedItems.filter((item: any) => item.type === 'poll');
   const activityItems = feedItems.filter((item: any) => item.type !== 'post' && item.type !== 'poll');
