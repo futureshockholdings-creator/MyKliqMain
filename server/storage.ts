@@ -917,7 +917,7 @@ export class DatabaseStorage implements IStorage {
         .orderBy(desc(actions.createdAt))
         .limit(50) : [];
 
-      console.log(`Feed: Got ${postsData.length} posts, latest:`, postsData[0]?.createdAt);
+      console.log(`Feed: Got ${postsData.length} posts, ${eventsData.length} events, ${pollsData.length} polls, ${actionsData.length} actions`);
       
       // Get highlight status for all posts
       const postIds = postsData.map(p => p.id);
