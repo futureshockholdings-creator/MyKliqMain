@@ -711,6 +711,7 @@ export default function Home() {
     },
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       setNewPost("");
       setSelectedMeme(null);
       setSelectedMoviecon(null);
@@ -791,6 +792,7 @@ export default function Home() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       // Removed like toast for immediate feedback
     },
     onSettled: () => {
@@ -836,6 +838,7 @@ export default function Home() {
       // Immediately refresh to get real comment with proper ID
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       
       toast({
         title: "Comment posted!",
@@ -851,6 +854,7 @@ export default function Home() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -881,6 +885,7 @@ export default function Home() {
       setReplyInputs(prev => ({ ...prev, [commentId]: "" }));
       setReplyingToComment(null);
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       toast({
         title: "Reply posted!",
         description: "Your reply has been added to the conversation",

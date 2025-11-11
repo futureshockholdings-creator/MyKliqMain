@@ -114,6 +114,7 @@ export default function Events() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       setShowCreateEvent(false);
       setNewEvent({
         title: "",

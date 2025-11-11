@@ -107,6 +107,7 @@ export default function Actions() {
     onSuccess: (newAction) => {
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] }); // Refresh posts to show the auto-post
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       setShowCreateAction(false);
       setSelectedAction(newAction);
       setNewAction({ title: "", description: "", chatEnabled: true });
