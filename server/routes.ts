@@ -759,6 +759,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mediaType: mediaType || null
       });
       
+      // Award 0.50 Kliq Koins for creating a post
+      try {
+        await storage.awardKoins(userId, 0.50, 'post_create', newPost.id);
+      } catch (koinError) {
+        console.error("Error awarding Koins for post creation:", koinError);
+      }
+      
       // Return the created post with author info for immediate UI update
       const user = await storage.getUser(userId);
       res.json({
@@ -804,6 +811,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If unlike fails, the like doesn't exist, so create it
         await storage.likePost(postId, userId);
         liked = true;
+        
+        // Award 0.25 Kliq Koins for liking a post (not own post)
+        if (post.userId !== userId) {
+          try {
+            await storage.awardKoins(userId, 0.25, 'post_like', postId);
+          } catch (koinError) {
+            console.error("Error awarding Koins for post like:", koinError);
+          }
+        }
         
         // Automatically track engagement for intelligent feed curation (background)
         try {
@@ -2216,6 +2232,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const post = await storage.createPost(postData);
       
+      // Award 0.50 Kliq Koins for creating a post
+      try {
+        await storage.awardKoins(userId, 0.50, 'post_create', post.id);
+      } catch (koinError) {
+        console.error("Error awarding Koins for post creation:", koinError);
+      }
+      
       // Invalidate cache for feeds that need to show this new post
       const { invalidateCache } = await import('./cache');
       invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
@@ -2397,6 +2420,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             postId
           );
         }
+        
+        // Award 0.25 Kliq Koins for liking a post (not own post)
+        if (post.userId !== userId) {
+          try {
+            await storage.awardKoins(userId, 0.25, 'post_like', postId);
+          } catch (koinError) {
+            console.error("Error awarding Koins for post like:", koinError);
+          }
+        }
       }
       
       res.json({ success: true });
@@ -2438,6 +2470,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             postId,
             commentPreview
           );
+        }
+        
+        // Award 0.25 Kliq Koins for commenting on another user's post (not own post)
+        if (post.userId !== userId) {
+          try {
+            await storage.awardKoins(userId, 0.25, 'comment_create', comment.id);
+          } catch (koinError) {
+            console.error("Error awarding Koins for comment creation:", koinError);
+          }
         }
       }
       
@@ -2530,6 +2571,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             parentComment.postId,
             replyPreview
           );
+        }
+        
+        // Award 0.25 Kliq Koins for replying to another user's comment (not own comment)
+        try {
+          await storage.awardKoins(userId, 0.25, 'comment_reply', reply.id);
+        } catch (koinError) {
+          console.error("Error awarding Koins for comment reply:", koinError);
         }
       }
       
@@ -3248,6 +3296,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const event = await storage.createEvent(eventData);
+      
+      // Award 0.50 Kliq Koins for creating an event
+      try {
+        await storage.awardKoins(userId, 0.50, 'event_create', event.id);
+      } catch (koinError) {
+        console.error("Error awarding Koins for event creation:", koinError);
+      }
+      
       res.json(event);
     } catch (error) {
       console.error("Error creating event:", error);
@@ -3575,6 +3631,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const action = await storage.createAction(actionData);
       
+      // Award 0.50 Kliq Koins for creating a livestream
+      try {
+        await storage.awardKoins(userId, 0.50, 'livestream_create', action.id);
+      } catch (koinError) {
+        console.error("Error awarding Koins for livestream creation:", koinError);
+      }
+      
       // Auto-post to headlines when live stream starts
       const postContent = `🔴 LIVE: Streaming "${action.title}" right now! ${action.description ? action.description : ''}`;
       
@@ -3840,6 +3903,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const meetup = await storage.createMeetup(meetupData);
+      
+      // Award 0.50 Kliq Koins for creating a meetup
+      try {
+        await storage.awardKoins(userId, 0.50, 'meetup_create', meetup.id);
+      } catch (koinError) {
+        console.error("Error awarding Koins for meetup creation:", koinError);
+      }
+      
       res.json(meetup);
     } catch (error) {
       console.error("Error creating meetup:", error);
