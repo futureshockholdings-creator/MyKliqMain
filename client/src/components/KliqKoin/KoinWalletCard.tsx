@@ -1,6 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Coins, TrendingUp, ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { Coins, TrendingUp } from "lucide-react";
 import kliqKoinIcon from "@assets/kliq-koin.png";
 
 interface KoinWalletCardProps {
@@ -27,7 +26,6 @@ export function KoinWalletCard({ walletData, isLoading }: KoinWalletCardProps) {
 
   const balance = parseFloat(walletData?.koins?.balance || 0);
   const totalEarned = parseFloat(walletData?.koins?.totalEarned || 0);
-  const transactions = walletData?.transactions || [];
 
   return (
     <Card className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 backdrop-blur-sm border-white/20">
@@ -55,49 +53,6 @@ export function KoinWalletCard({ walletData, isLoading }: KoinWalletCardProps) {
               <div className="text-4xl font-bold text-green-400">{totalEarned.toFixed(2)}</div>
             </div>
             <div className="text-purple-200 text-sm">Total Earned</div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-white font-medium mb-2">Recent Transactions</h3>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {transactions.length === 0 ? (
-              <div className="text-center py-8 text-purple-300">
-                No transactions yet. Login daily to earn Koins!
-              </div>
-            ) : (
-              transactions.slice(0, 10).map((tx: any) => (
-                <div
-                  key={tx.id}
-                  className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
-                  data-testid={`transaction-${tx.id}`}
-                >
-                  <div className="flex items-center gap-3">
-                    {tx.type === 'earned' ? (
-                      <ArrowDownRight className="w-5 h-5 text-green-400" />
-                    ) : (
-                      <ArrowUpRight className="w-5 h-5 text-red-400" />
-                    )}
-                    <div>
-                      <div className="text-white font-medium">
-                        {tx.source.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                      </div>
-                      <div className="text-purple-300 text-xs">
-                        {new Date(tx.createdAt).toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`font-bold ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {tx.amount > 0 ? '+' : ''}{parseFloat(tx.amount).toFixed(2)}
-                    </div>
-                    <div className="text-purple-400 text-xs">
-                      Balance: {parseFloat(tx.balanceAfter).toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
           </div>
         </div>
       </CardContent>
