@@ -4183,8 +4183,8 @@ export class DatabaseStorage implements IStorage {
         userKoins = await this.initializeUserKoins(userId);
       }
 
-      const newBalance = userKoins.balance + amount;
-      const newTotalEarned = userKoins.totalEarned + amount;
+      const newBalance = parseFloat(userKoins.balance as any) + amount;
+      const newTotalEarned = parseFloat(userKoins.totalEarned as any) + amount;
 
       const [updated] = await tx
         .update(kliqKoins)
@@ -4212,11 +4212,11 @@ export class DatabaseStorage implements IStorage {
   async spendKoins(userId: string, amount: number, source: string, referenceId?: string): Promise<KliqKoin> {
     return await db.transaction(async (tx) => {
       const userKoins = await this.getUserKoins(userId);
-      if (!userKoins || userKoins.balance < amount) {
+      if (!userKoins || parseFloat(userKoins.balance as any) < amount) {
         throw new Error('Insufficient Kliq Koins');
       }
 
-      const newBalance = userKoins.balance - amount;
+      const newBalance = parseFloat(userKoins.balance as any) - amount;
 
       const [updated] = await tx
         .update(kliqKoins)
