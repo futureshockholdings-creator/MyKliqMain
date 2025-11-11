@@ -2433,7 +2433,7 @@ export default function Home() {
         </Card>
       ) : (
         <>
-          {combinedFeed.filter((item: any) => item.type !== 'event').map((item: any, index: number) => {
+          {combinedFeed.map((item: any, index: number) => {
           
           // Skip sports updates for injection calculations (they're already in the feed)
           const regularItemIndex = combinedFeed.slice(0, index).filter((i: any) => i.type !== 'sports_update').length;
