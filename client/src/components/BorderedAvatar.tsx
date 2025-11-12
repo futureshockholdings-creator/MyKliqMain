@@ -293,7 +293,7 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
   },
   // Month-Specific Free Borders
   "Black History Month": {
-    wrapper: "relative bg-black p-[4px] rounded-full before:content-['BLACK_HISTORY_MONTH'] before:absolute before:inset-[-10px] before:rounded-full before:text-white before:text-[8px] before:font-bold before:tracking-[0.3em] before:flex before:items-center before:justify-center before:animate-[spin_8s_linear_infinite] before:pointer-events-none shadow-[0_0_30px_rgba(255,255,255,0.4),inset_0_0_20px_rgba(255,255,255,0.2)]",
+    wrapper: "relative bg-gradient-to-br from-gray-900 via-black to-gray-800 p-[4px] rounded-full before:content-[''] before:absolute before:inset-[-2px] before:rounded-full before:bg-[conic-gradient(from_0deg,transparent_0%,white_2%,transparent_4%,transparent_21%,white_23%,transparent_25%,transparent_42%,white_44%,transparent_46%,transparent_63%,white_65%,transparent_67%,transparent_84%,white_86%,transparent_88%,transparent_100%)] before:animate-[spin_12s_linear_infinite] before:opacity-80 before:pointer-events-none shadow-[0_0_20px_rgba(255,255,255,0.3),inset_0_0_15px_rgba(255,255,255,0.15)] after:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-gradient-to-br after:from-transparent after:via-white/10 after:to-transparent after:pointer-events-none",
     avatar: ""
   },
 };
