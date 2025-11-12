@@ -99,6 +99,9 @@ export const userThemes = pgTable("user_themes", {
 // Border type enum for profile borders
 export const borderTypeEnum = pgEnum("border_type", ["streak_reward", "purchasable", "reward"]);
 
+// Engagement type enum for reward borders
+export const engagementTypeEnum = pgEnum("engagement_type", ["posts_created", "posts_liked"]);
+
 // Transaction type enum for Kliq Koin transactions
 export const koinTransactionTypeEnum = pgEnum("koin_transaction_type", ["earned", "spent", "refund"]);
 
@@ -109,7 +112,9 @@ export const profileBorders = pgTable("profile_borders", {
   type: borderTypeEnum("type").notNull(), // "streak_reward", "purchasable", or "reward"
   cost: integer("cost").notNull().default(0), // Koin cost, 0 for streak rewards
   tier: integer("tier"), // For streak rewards: 3, 7, 14, 30, 100 days
-  postsRequired: integer("posts_required"), // For engagement rewards: 100, 250, 500 posts
+  postsRequired: integer("posts_required"), // DEPRECATED: Use engagementThreshold instead (will be removed after migration)
+  engagementType: engagementTypeEnum("engagement_type"), // Type of engagement: 'posts_created', 'posts_liked', null for non-reward borders
+  engagementThreshold: integer("engagement_threshold"), // Number required to unlock: 100, 250, 500
   imageUrl: varchar("image_url").notNull(), // Path to border graphic
   description: text("description"), // Optional description
   isActive: boolean("is_active").notNull().default(true), // For hiding/showing borders
