@@ -38,7 +38,9 @@ export function BorderMarketplaceCard({
   }
 
   const balance = walletData?.koins?.balance || 0;
-  const streakBorders = bordersData.filter((b: any) => b.type === 'streak_reward');
+  const streakBorders = bordersData
+    .filter((b: any) => b.type === 'streak_reward')
+    .sort((a: any, b: any) => (a.tier || 0) - (b.tier || 0)); // Sort by tier (days) ascending
   const rewardBorders = bordersData.filter((b: any) => b.type === 'reward');
   const purchasableBorders = bordersData.filter((b: any) => b.type === 'purchasable');
 
