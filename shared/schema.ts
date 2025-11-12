@@ -100,7 +100,7 @@ export const userThemes = pgTable("user_themes", {
 export const borderTypeEnum = pgEnum("border_type", ["streak_reward", "purchasable", "reward"]);
 
 // Engagement type enum for reward borders
-export const engagementTypeEnum = pgEnum("engagement_type", ["posts_created", "posts_liked", "mood_updates"]);
+export const engagementTypeEnum = pgEnum("engagement_type", ["posts_created", "posts_liked", "mood_updates", "horoscope_posts"]);
 
 // Transaction type enum for Kliq Koin transactions
 export const koinTransactionTypeEnum = pgEnum("koin_transaction_type", ["earned", "spent", "refund"]);
