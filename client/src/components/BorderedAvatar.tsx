@@ -394,6 +394,19 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
     wrapper: "bg-[conic-gradient(from_0deg,#8b008b,#ff00ff,#ff1493,#ff69b4,#8b008b)] p-[4px] rounded-full animate-[spin_4s_linear_infinite] shadow-[0_0_30px_rgba(139,0,139,0.9),0_0_60px_rgba(255,0,255,0.7),0_0_90px_rgba(255,20,147,0.5),inset_0_0_25px_rgba(255,105,180,0.5)]",
     avatar: ""
   },
+  // Mood-Based Engagement Reward Borders
+  "Emotionally Aware": {
+    wrapper: "bg-[radial-gradient(circle,#40e0d0,#48d1cc,#20b2aa)] p-[3px] rounded-full animate-[pulse_2.5s_ease-in-out_infinite] shadow-[0_0_20px_rgba(64,224,208,0.6),0_0_40px_rgba(72,209,204,0.4),inset_0_0_15px_rgba(32,178,170,0.3)]",
+    avatar: ""
+  },
+  "Mood Warrior": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ff6b6b,#ffa500,#ffd700,#90ee90,#4169e1,#9370db,#ff6b6b)] p-[3px] rounded-full animate-[spin_5s_linear_infinite] shadow-[0_0_25px_rgba(255,107,107,0.7),0_0_50px_rgba(65,105,225,0.5),inset_0_0_20px_rgba(147,112,219,0.4)]",
+    avatar: ""
+  },
+  "Zen Master": {
+    wrapper: "bg-[conic-gradient(from_0deg,#e6e6fa,#dda0dd,#ba55d3,#9370db,#e6e6fa)] p-[4px] rounded-full animate-[spin_6s_linear_infinite] shadow-[0_0_30px_rgba(230,230,250,0.9),0_0_60px_rgba(186,85,211,0.7),0_0_90px_rgba(147,112,219,0.5),inset_0_0_25px_rgba(221,160,221,0.5)]",
+    avatar: ""
+  },
 };
 
 export function BorderedAvatar({
