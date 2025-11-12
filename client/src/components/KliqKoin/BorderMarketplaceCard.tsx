@@ -60,48 +60,71 @@ export function BorderMarketplaceCard({
 
           <TabsContent value="purchasable" className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {purchasableBorders.map((border: any) => (
-                <div
-                  key={border.id}
-                  className={`p-3 rounded-lg border-2 ${
-                    border.owned 
-                      ? "bg-green-500/10 border-green-400" 
-                      : "bg-white/5 border-white/10"
-                  }`}
-                  data-testid={`border-${border.id}`}
-                >
-                  <div className="flex flex-col items-center text-center mb-2">
-                    <div className="mb-2">
-                      <BorderedAvatar
-                        src=""
-                        fallback="★"
-                        borderImageUrl={border.imageUrl}
-                        borderName={border.name}
-                        size="lg"
-                      />
+              {purchasableBorders.map((border: any) => {
+                const isMonthlyFree = border.cost === 0 && border.availableMonth;
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const monthName = border.availableMonth ? monthNames[border.availableMonth - 1] : null;
+                
+                return (
+                  <div
+                    key={border.id}
+                    className={`p-3 rounded-lg border-2 ${
+                      border.owned 
+                        ? "bg-green-500/10 border-green-400" 
+                        : isMonthlyFree
+                        ? "bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-400 shadow-lg shadow-purple-500/20"
+                        : "bg-white/5 border-white/10"
+                    }`}
+                    data-testid={`border-${border.id}`}
+                  >
+                    {isMonthlyFree && !border.owned && (
+                      <Badge className="w-full mb-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold">
+                        FREE - {monthName} Only
+                      </Badge>
+                    )}
+                    
+                    <div className="flex flex-col items-center text-center mb-2">
+                      <div className="mb-2">
+                        <BorderedAvatar
+                          src=""
+                          fallback="★"
+                          borderImageUrl={border.imageUrl}
+                          borderName={border.name}
+                          size="lg"
+                        />
+                      </div>
+                      <h3 className="text-white font-medium text-sm">{border.name}</h3>
+                      <p className="text-purple-300 text-xs">{border.description}</p>
                     </div>
-                    <h3 className="text-white font-medium text-sm">{border.name}</h3>
-                    <p className="text-purple-300 text-xs">{border.description}</p>
-                  </div>
 
-                  {border.owned ? (
-                    <Badge className="w-full bg-green-600">
-                      <Check className="w-4 h-4 mr-1" />
-                      Owned
-                    </Badge>
-                  ) : (
-                    <Button
-                      onClick={() => onPurchase(border.id)}
-                      disabled={isPurchasing || balance < border.cost}
-                      className="w-full bg-purple-600 hover:bg-purple-700"
-                      data-testid={`button-purchase-${border.id}`}
-                    >
-                      <Coins className="w-4 h-4 mr-2" />
-                      {isPurchasing ? "Purchasing..." : `Buy (${border.cost} Koins)`}
-                    </Button>
-                  )}
-                </div>
-              ))}
+                    {border.owned ? (
+                      <Badge className="w-full bg-green-600">
+                        <Check className="w-4 h-4 mr-1" />
+                        Owned
+                      </Badge>
+                    ) : isMonthlyFree ? (
+                      <Button
+                        onClick={() => onPurchase(border.id)}
+                        disabled={isPurchasing}
+                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 font-bold"
+                        data-testid={`button-purchase-${border.id}`}
+                      >
+                        {isPurchasing ? "Claiming..." : "Claim FREE"}
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => onPurchase(border.id)}
+                        disabled={isPurchasing || balance < border.cost}
+                        className="w-full bg-purple-600 hover:bg-purple-700"
+                        data-testid={`button-purchase-${border.id}`}
+                      >
+                        <Coins className="w-4 h-4 mr-2" />
+                        {isPurchasing ? "Purchasing..." : `Buy (${border.cost} Koins)`}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </TabsContent>
 
