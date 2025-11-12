@@ -4347,11 +4347,32 @@ export class DatabaseStorage implements IStorage {
 
   // Profile Border operations
   async getAllBorders(): Promise<ProfileBorder[]> {
-    return await db
+    const currentMonth = new Date().getMonth() + 1; // 1-12
+    
+    const allBorders = await db
       .select()
       .from(profileBorders)
-      .where(eq(profileBorders.isActive, true))
-      .orderBy(asc(profileBorders.cost));
+      .where(
+        and(
+          eq(profileBorders.isActive, true),
+          or(
+            isNull(profileBorders.availableMonth),
+            eq(profileBorders.availableMonth, currentMonth)
+          )
+        )
+      );
+    
+    // Sort: Free monthly borders first (cost=0 AND availableMonth not null),
+    // then regular borders sorted by cost
+    return allBorders.sort((a, b) => {
+      const aIsMonthlyFree = a.cost === 0 && a.availableMonth !== null;
+      const bIsMonthlyFree = b.cost === 0 && b.availableMonth !== null;
+      
+      if (aIsMonthlyFree && !bIsMonthlyFree) return -1;
+      if (!aIsMonthlyFree && bIsMonthlyFree) return 1;
+      
+      return a.cost - b.cost;
+    });
   }
 
   async getStreakRewardBorders(): Promise<ProfileBorder[]> {
