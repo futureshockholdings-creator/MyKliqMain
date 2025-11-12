@@ -112,6 +112,7 @@ export const profileBorders = pgTable("profile_borders", {
   imageUrl: varchar("image_url").notNull(), // Path to border graphic
   description: text("description"), // Optional description
   isActive: boolean("is_active").notNull().default(true), // For hiding/showing borders
+  availableMonth: integer("available_month"), // Month-specific availability (1-12 for Jan-Dec, null for always available)
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_borders_type_tier").on(table.type, table.tier), // Fast marketplace queries
