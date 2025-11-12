@@ -151,7 +151,7 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
     bg: "bg-white"
   },
   "Breast Cancer Awareness": {
-    emoji: "🎀",
+    emoji: "🎗️",
     bg: "bg-white"
   },
 };
