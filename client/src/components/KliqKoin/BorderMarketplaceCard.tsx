@@ -138,7 +138,9 @@ export function BorderMarketplaceCard({
                 const progress = border.progress || 0;
                 const required = border.engagementThreshold || border.postsRequired || 100;
                 const progressPercentage = Math.min((progress / required) * 100, 100);
-                const metric = border.engagementType === 'posts_liked' ? 'likes' : 'posts';
+                const metric = border.engagementType === 'posts_liked' ? 'likes' 
+                  : border.engagementType === 'mood_updates' ? 'moods' 
+                  : 'posts';
                 
                 return (
                   <div
