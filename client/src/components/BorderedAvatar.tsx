@@ -42,6 +42,18 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
     emoji: "💎",
     bg: "bg-gradient-to-br from-cyan-100 to-blue-300"
   },
+  "Platinum": {
+    emoji: "💿",
+    bg: "bg-gradient-to-br from-gray-100 to-gray-300"
+  },
+  "Titanium": {
+    emoji: "⚙️",
+    bg: "bg-gradient-to-br from-gray-400 to-slate-600"
+  },
+  "Emerald": {
+    emoji: "💚",
+    bg: "bg-gradient-to-br from-green-400 to-emerald-600"
+  },
   "Legend Crown": {
     emoji: "👑",
     bg: "bg-gradient-to-br from-yellow-200 to-orange-300"
@@ -238,6 +250,18 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
   },
   "Diamond": {
     wrapper: "bg-[conic-gradient(from_0deg,#b9f2ff_0%,#ffffff_10%,#e0f7ff_20%,#ffffff_30%,#f0faff_40%,#ffffff_50%,#d4f1ff_60%,#ffffff_70%,#c4ecff_80%,#ffffff_90%,#b9f2ff_100%)] p-[3px] rounded-full animate-[pulse_2s_ease-in-out_infinite] shadow-[0_0_25px_rgba(185,242,255,0.8),0_0_50px_rgba(255,255,255,0.6),inset_0_0_20px_rgba(255,255,255,0.7)]",
+    avatar: ""
+  },
+  "Platinum": {
+    wrapper: "bg-[conic-gradient(from_0deg,#e5e4e2_0%,#ffffff_12%,#f0f0f0_25%,#ffffff_37%,#dcdcdc_50%,#ffffff_62%,#e8e8e8_75%,#ffffff_87%,#e5e4e2_100%)] p-[3px] rounded-full animate-[spin_8s_linear_infinite] shadow-[0_0_30px_rgba(229,228,226,0.8),0_0_60px_rgba(255,255,255,0.7),inset_0_0_25px_rgba(240,240,240,0.6)]",
+    avatar: ""
+  },
+  "Titanium": {
+    wrapper: "bg-[conic-gradient(from_0deg,#878681_0%,#a9a9a9_10%,#c0c0c0_20%,#696969_30%,#808080_40%,#d3d3d3_50%,#778899_60%,#a9a9a9_70%,#708090_80%,#c0c0c0_90%,#878681_100%)] p-[3px] rounded-full animate-[pulse_3s_ease-in-out_infinite] shadow-[0_0_35px_rgba(135,134,129,0.9),0_0_70px_rgba(169,169,169,0.7),inset_0_0_30px_rgba(192,192,192,0.5)]",
+    avatar: ""
+  },
+  "Emerald": {
+    wrapper: "bg-[conic-gradient(from_0deg,#50C878_0%,#00ff88_12%,#3cb371_25%,#00dd77_37%,#2e8b57_50%,#00cc66_62%,#00ff7f_75%,#00ff88_87%,#50C878_100%)] p-[4px] rounded-full animate-[spin_6s_linear_infinite] shadow-[0_0_40px_rgba(80,200,120,0.9),0_0_80px_rgba(0,255,136,0.7),inset_0_0_35px_rgba(60,179,113,0.6)]",
     avatar: ""
   },
   "Legend Crown": {
