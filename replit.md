@@ -77,6 +77,14 @@ Users can share posts within their kliq community instead of to external social 
 - No notifications sent to original author
 - Maintains chronological feed ordering (newest first)
 
+### Accessibility Compliance
+The application meets WCAG accessibility requirements for dialog components (November 2025):
+- **Dialog Components**: All Radix UI DialogContent components include DialogDescription elements for screen reader accessibility
+- **Production Verification**: Zero accessibility warnings in browser console during runtime verification
+- **Components Updated**: VideoConversionUpload (HEVC conversion dialog), SmartVideoUploader (video compatibility dialog), ProfileSettings (main settings and PIN verification dialogs), MemePicker, MessageMediaPicker, MovieconPicker, PinVerificationModal
+- **Shared Components**: CommandDialog wrapper updated with optional description prop for future accessibility compliance
+- **Screen Reader Support**: Screen-reader-only descriptions implemented where visual descriptions are redundant
+
 # External Dependencies
 
 ## Core Infrastructure
