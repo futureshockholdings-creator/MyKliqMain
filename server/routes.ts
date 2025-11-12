@@ -6747,12 +6747,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const engagementCounters: Record<string, () => Promise<number>> = {
         posts_created: () => storage.getUserPostCount(userId),
         posts_liked: () => storage.getUserUniqueLikeCount(userId),
+        mood_updates: () => storage.getUserMoodUpdateCount(userId),
       };
       
       // Fetch all engagement metrics once
       const engagementCounts: Record<string, number> = {
         posts_created: await storage.getUserPostCount(userId),
         posts_liked: await storage.getUserUniqueLikeCount(userId),
+        mood_updates: await storage.getUserMoodUpdateCount(userId),
       };
       
       const bordersWithOwnership = allBorders.map(border => {
