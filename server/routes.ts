@@ -6743,11 +6743,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userBorders = await storage.getUserBorders(userId);
       const userBorderIds = new Set(userBorders.map(ub => ub.borderId));
       
-      const bordersWithOwnership = allBorders.map(border => ({
-        ...border,
-        owned: userBorderIds.has(border.id),
-        isEquipped: userBorders.find(ub => ub.borderId === border.id)?.isEquipped || false,
-      }));
+      // Get user's post count once for all reward borders
+      const userPostCount = await storage.getUserPostCount(userId);
+      
+      const bordersWithOwnership = allBorders.map(border => {
+        const baseInfo = {
+          ...border,
+          owned: userBorderIds.has(border.id),
+          isEquipped: userBorders.find(ub => ub.borderId === border.id)?.isEquipped || false,
+        };
+        
+        // For reward borders, add unlock status and progress
+        if (border.type === 'reward' && border.postsRequired !== null) {
+          return {
+            ...baseInfo,
+            unlocked: userPostCount >= border.postsRequired,
+            progress: userPostCount,
+            postsRequired: border.postsRequired,
+          };
+        }
+        
+        return baseInfo;
+      });
       
       res.json(bordersWithOwnership);
     } catch (error) {

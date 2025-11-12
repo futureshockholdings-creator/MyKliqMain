@@ -195,6 +195,7 @@ export interface IStorage {
   likePost(postId: string, userId: string): Promise<void>;
   unlikePost(postId: string, userId: string): Promise<void>;
   getUserReflection(userId: string): Promise<{ posts: any[]; stats: any; message: string }>;
+  getUserPostCount(userId: string): Promise<number>;
   
   // Feed operations
   getKliqFeed(userId: string, filters: string[], page?: number, limit?: number): Promise<{ items: any[], hasMore: boolean, totalPages: number } | any[]>;
@@ -1183,6 +1184,15 @@ export class DatabaseStorage implements IStorage {
       console.error('Error generating user reflection:', error);
       throw new Error('Failed to generate reflection');
     }
+  }
+
+  async getUserPostCount(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: count() })
+      .from(posts)
+      .where(eq(posts.userId, userId));
+    
+    return result[0]?.count || 0;
   }
 
   // Comment operations
@@ -4460,6 +4470,18 @@ export class DatabaseStorage implements IStorage {
 
       if (border.type === 'streak_reward') {
         throw new Error('Streak reward borders cannot be purchased');
+      }
+
+      // Validate unlock requirements for engagement reward borders
+      if (border.type === 'reward') {
+        if (!border.postsRequired || border.postsRequired <= 0) {
+          throw new Error('Invalid reward border configuration');
+        }
+        
+        const userPostCount = await this.getUserPostCount(userId);
+        if (userPostCount < border.postsRequired) {
+          throw new Error(`You need ${border.postsRequired - userPostCount} more posts to unlock this border`);
+        }
       }
 
       const existingBorders = await this.getUserBorders(userId);

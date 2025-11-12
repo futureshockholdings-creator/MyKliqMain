@@ -158,6 +158,18 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
     emoji: "💜",
     bg: "bg-white"
   },
+  "Interaction": {
+    emoji: "🎯",
+    bg: "bg-gradient-to-br from-blue-300 to-cyan-400"
+  },
+  "Social Butterfly": {
+    emoji: "🦋",
+    bg: "bg-gradient-to-br from-pink-300 to-purple-400"
+  },
+  "Kliq MVP": {
+    emoji: "🏆",
+    bg: "bg-gradient-to-br from-yellow-300 to-amber-500"
+  },
 };
 
 const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
@@ -354,6 +366,19 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
   },
   "Alzheimers Awareness": {
     wrapper: "relative bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 p-[4px] rounded-full before:content-[''] before:absolute before:inset-[-2px] before:rounded-full before:bg-[conic-gradient(from_0deg,transparent_0%,white_2%,transparent_4%,transparent_21%,white_23%,transparent_25%,transparent_42%,white_44%,transparent_46%,transparent_63%,white_65%,transparent_67%,transparent_84%,white_86%,transparent_88%,transparent_100%)] before:animate-[spin_12s_linear_infinite] before:opacity-80 before:pointer-events-none shadow-[0_0_20px_rgba(255,255,255,0.3),inset_0_0_15px_rgba(255,255,255,0.15)] after:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-gradient-to-br after:from-transparent after:via-white/10 after:to-transparent after:pointer-events-none",
+    avatar: ""
+  },
+  // Engagement-Based Reward Borders
+  "Interaction": {
+    wrapper: "bg-gradient-to-br from-blue-400 via-cyan-500 to-blue-600 p-[3px] rounded-full animate-[pulse_3s_ease-in-out_infinite] shadow-[0_0_20px_rgba(0,191,255,0.6),0_0_40px_rgba(0,128,255,0.4),inset_0_0_15px_rgba(135,206,250,0.3)]",
+    avatar: ""
+  },
+  "Social Butterfly": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ff69b4,#ba55d3,#ff1493,#da70d6,#ff69b4)] p-[3px] rounded-full animate-[spin_6s_linear_infinite] shadow-[0_0_25px_rgba(255,105,180,0.7),0_0_50px_rgba(218,112,214,0.5),inset_0_0_20px_rgba(255,182,193,0.4)]",
+    avatar: ""
+  },
+  "Kliq MVP": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ffd700,#ffaa00,#ff8800,#ffc107,#ffd700)] p-[4px] rounded-full animate-[spin_4s_linear_infinite] shadow-[0_0_30px_rgba(255,215,0,0.9),0_0_60px_rgba(255,170,0,0.7),0_0_90px_rgba(255,193,7,0.5),inset_0_0_25px_rgba(255,235,59,0.5)]",
     avatar: ""
   },
 };

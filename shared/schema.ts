@@ -97,7 +97,7 @@ export const userThemes = pgTable("user_themes", {
 });
 
 // Border type enum for profile borders
-export const borderTypeEnum = pgEnum("border_type", ["streak_reward", "purchasable"]);
+export const borderTypeEnum = pgEnum("border_type", ["streak_reward", "purchasable", "reward"]);
 
 // Transaction type enum for Kliq Koin transactions
 export const koinTransactionTypeEnum = pgEnum("koin_transaction_type", ["earned", "spent", "refund"]);
@@ -106,9 +106,10 @@ export const koinTransactionTypeEnum = pgEnum("koin_transaction_type", ["earned"
 export const profileBorders = pgTable("profile_borders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(), // "Bronze Medal", "Golden Crown"
-  type: borderTypeEnum("type").notNull(), // "streak_reward" or "purchasable"
+  type: borderTypeEnum("type").notNull(), // "streak_reward", "purchasable", or "reward"
   cost: integer("cost").notNull().default(0), // Koin cost, 0 for streak rewards
   tier: integer("tier"), // For streak rewards: 3, 7, 14, 30, 100 days
+  postsRequired: integer("posts_required"), // For engagement rewards: 100, 250, 500 posts
   imageUrl: varchar("image_url").notNull(), // Path to border graphic
   description: text("description"), // Optional description
   isActive: boolean("is_active").notNull().default(true), // For hiding/showing borders
