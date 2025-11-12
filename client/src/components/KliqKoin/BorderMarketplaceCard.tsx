@@ -141,6 +141,7 @@ export function BorderMarketplaceCard({
                 const metric = border.engagementType === 'posts_liked' ? 'likes' 
                   : border.engagementType === 'mood_updates' ? 'moods' 
                   : border.engagementType === 'horoscope_posts' ? 'horoscopes'
+                  : border.engagementType === 'bible_verse_posts' ? 'bible verses'
                   : 'posts';
                 
                 return (
