@@ -136,8 +136,9 @@ export function BorderMarketplaceCard({
               {rewardBorders.map((border: any) => {
                 const isUnlocked = border.unlocked || border.owned;
                 const progress = border.progress || 0;
-                const required = border.postsRequired || 100;
+                const required = border.engagementThreshold || border.postsRequired || 100;
                 const progressPercentage = Math.min((progress / required) * 100, 100);
+                const metric = border.engagementType === 'posts_liked' ? 'likes' : 'posts';
                 
                 return (
                   <div
@@ -170,8 +171,8 @@ export function BorderMarketplaceCard({
                       {!isUnlocked && (
                         <div className="w-full space-y-1">
                           <div className="flex justify-between text-xs text-purple-200">
-                            <span>{progress} posts</span>
-                            <span>{required} posts</span>
+                            <span>{progress} {metric}</span>
+                            <span>{required} {metric}</span>
                           </div>
                           <Progress value={progressPercentage} className="h-2" />
                         </div>
@@ -197,7 +198,7 @@ export function BorderMarketplaceCard({
                     ) : (
                       <Badge className="w-full bg-gray-600">
                         <Lock className="w-4 h-4 mr-1" />
-                        {required - progress} more posts
+                        {required - progress} more {metric}
                       </Badge>
                     )}
                   </div>
