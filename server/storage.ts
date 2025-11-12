@@ -4489,7 +4489,11 @@ export class DatabaseStorage implements IStorage {
 
       // Validate unlock requirements for engagement reward borders
       if (border.type === 'reward') {
-        if (!border.engagementType || !border.engagementThreshold || border.engagementThreshold <= 0) {
+        // Use new engagement system if available, fall back to legacy postsRequired
+        const threshold = border.engagementThreshold || border.postsRequired;
+        const engagementType = border.engagementType || 'posts_created';
+        
+        if (!threshold || threshold <= 0) {
           throw new Error('Invalid reward border configuration');
         }
         
@@ -4499,15 +4503,15 @@ export class DatabaseStorage implements IStorage {
           posts_liked: () => this.getUserUniqueLikeCount(userId),
         };
         
-        const getCount = engagementCounters[border.engagementType];
+        const getCount = engagementCounters[engagementType];
         if (!getCount) {
-          throw new Error(`Unknown engagement type: ${border.engagementType}`);
+          throw new Error(`Unknown engagement type: ${engagementType}`);
         }
         
         const userCount = await getCount();
-        if (userCount < border.engagementThreshold) {
-          const remaining = border.engagementThreshold - userCount;
-          const metric = border.engagementType === 'posts_created' ? 'posts' : 'likes';
+        if (userCount < threshold) {
+          const remaining = threshold - userCount;
+          const metric = engagementType === 'posts_created' ? 'posts' : 'likes';
           throw new Error(`You need ${remaining} more ${metric} to unlock this border`);
         }
       }
