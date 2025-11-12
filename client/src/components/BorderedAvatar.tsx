@@ -135,7 +135,7 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
     bg: "bg-white"
   },
   "4th of July": {
-    emoji: "🇺🇸",
+    emoji: "🗽",
     bg: "bg-white"
   },
 };
