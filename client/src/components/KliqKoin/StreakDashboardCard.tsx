@@ -14,9 +14,12 @@ interface StreakDashboardCardProps {
 const STREAK_TIERS = [
   { tier: 3, name: "Bronze", icon: "🥉", color: "text-orange-600" },
   { tier: 7, name: "Silver", icon: "🥈", color: "text-gray-400" },
-  { tier: 14, name: "Gold", icon: "🥇", color: "text-yellow-500" },
-  { tier: 30, name: "Diamond", icon: "💎", color: "text-blue-400" },
-  { tier: 100, name: "Legend", icon: "👑", color: "text-purple-500" },
+  { tier: 30, name: "Gold", icon: "🥇", color: "text-yellow-500" },
+  { tier: 90, name: "Diamond", icon: "💎", color: "text-blue-400" },
+  { tier: 180, name: "Platinum", icon: "💿", color: "text-cyan-400" },
+  { tier: 365, name: "Titanium", icon: "⚙️", color: "text-zinc-400" },
+  { tier: 730, name: "Emerald", icon: "💚", color: "text-emerald-500" },
+  { tier: 1000, name: "Legend", icon: "👑", color: "text-purple-500" },
 ];
 
 export function StreakDashboardCard({ streakData, isLoading, onBuyFreeze, isBuyingFreeze }: StreakDashboardCardProps) {
@@ -100,7 +103,7 @@ export function StreakDashboardCard({ streakData, isLoading, onBuyFreeze, isBuyi
           </div>
         </div>
 
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2">
           {STREAK_TIERS.map((tier) => (
             <div
               key={tier.tier}

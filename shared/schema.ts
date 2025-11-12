@@ -111,7 +111,7 @@ export const profileBorders = pgTable("profile_borders", {
   name: varchar("name").notNull(), // "Bronze Medal", "Golden Crown"
   type: borderTypeEnum("type").notNull(), // "streak_reward", "purchasable", or "reward"
   cost: integer("cost").notNull().default(0), // Koin cost, 0 for streak rewards
-  tier: integer("tier"), // For streak rewards: 3, 7, 14, 30, 100 days
+  tier: integer("tier"), // For streak rewards: 3, 7, 30, 90, 180, 365, 730, 1000 days
   postsRequired: integer("posts_required"), // DEPRECATED: Use engagementThreshold instead (will be removed after migration)
   engagementType: engagementTypeEnum("engagement_type"), // Type of engagement: 'posts_created', 'posts_liked', null for non-reward borders
   engagementThreshold: integer("engagement_threshold"), // Number required to unlock: 100, 250, 500

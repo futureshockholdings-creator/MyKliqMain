@@ -4384,7 +4384,8 @@ export class DatabaseStorage implements IStorage {
 
       const koinsAwarded = await this.awardKoins(userId, 1, 'daily_login');
 
-      const tiers = [3, 7, 14, 30, 100];
+      // Streak reward tiers matching profile_borders tier values
+      const tiers = [3, 7, 30, 90, 180, 365, 730, 1000];
       for (const tier of tiers) {
         if (newStreak === tier) {
           const unlockedBorder = await this.unlockStreakBorder(userId, tier);
