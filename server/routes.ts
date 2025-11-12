@@ -6743,8 +6743,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userBorders = await storage.getUserBorders(userId);
       const userBorderIds = new Set(userBorders.map(ub => ub.borderId));
       
-      // Get user's post count once for all reward borders
-      const userPostCount = await storage.getUserPostCount(userId);
+      // Engagement counter lookup for different reward types
+      const engagementCounters: Record<string, () => Promise<number>> = {
+        posts_created: () => storage.getUserPostCount(userId),
+        posts_liked: () => storage.getUserUniqueLikeCount(userId),
+      };
+      
+      // Fetch all engagement metrics once
+      const engagementCounts: Record<string, number> = {
+        posts_created: await storage.getUserPostCount(userId),
+        posts_liked: await storage.getUserUniqueLikeCount(userId),
+      };
       
       const bordersWithOwnership = allBorders.map(border => {
         const baseInfo = {
@@ -6753,13 +6762,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isEquipped: userBorders.find(ub => ub.borderId === border.id)?.isEquipped || false,
         };
         
-        // For reward borders, add unlock status and progress
-        if (border.type === 'reward' && border.postsRequired !== null) {
+        // For reward borders, add unlock status and progress based on engagement type
+        if (border.type === 'reward' && border.engagementType && border.engagementThreshold) {
+          const userCount = engagementCounts[border.engagementType] || 0;
           return {
             ...baseInfo,
-            unlocked: userPostCount >= border.postsRequired,
-            progress: userPostCount,
-            postsRequired: border.postsRequired,
+            unlocked: userCount >= border.engagementThreshold,
+            progress: userCount,
+            engagementType: border.engagementType,
+            engagementThreshold: border.engagementThreshold,
           };
         }
         

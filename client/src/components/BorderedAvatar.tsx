@@ -381,6 +381,19 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
     wrapper: "bg-[conic-gradient(from_0deg,#ffd700,#ffaa00,#ff8800,#ffc107,#ffd700)] p-[4px] rounded-full animate-[spin_4s_linear_infinite] shadow-[0_0_30px_rgba(255,215,0,0.9),0_0_60px_rgba(255,170,0,0.7),0_0_90px_rgba(255,193,7,0.5),inset_0_0_25px_rgba(255,235,59,0.5)]",
     avatar: ""
   },
+  // Like-Based Engagement Reward Borders
+  "Likeable": {
+    wrapper: "bg-[radial-gradient(circle,#ff1493,#ff69b4,#ffc0cb)] p-[3px] rounded-full animate-[pulse_2.5s_ease-in-out_infinite] shadow-[0_0_20px_rgba(255,20,147,0.6),0_0_40px_rgba(255,105,180,0.4),inset_0_0_15px_rgba(255,192,203,0.3)]",
+    avatar: ""
+  },
+  "Likefull": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ff1493,#ff69b4,#ff0080,#ff1493)] p-[3px] rounded-full animate-[spin_5s_linear_infinite] shadow-[0_0_25px_rgba(255,20,147,0.7),0_0_50px_rgba(255,0,128,0.5),inset_0_0_20px_rgba(255,105,180,0.4)]",
+    avatar: ""
+  },
+  "Likey Likey": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ff0080,#ff1493,#ff69b4,#ff0080)] p-[4px] rounded-full animate-[pulse_1.5s_ease-in-out_infinite] shadow-[0_0_30px_rgba(255,0,128,0.9),0_0_60px_rgba(255,20,147,0.7),0_0_90px_rgba(255,105,180,0.5),inset_0_0_25px_rgba(255,192,203,0.5)]",
+    avatar: ""
+  },
 };
 
 export function BorderedAvatar({

@@ -151,7 +151,7 @@ import {
   type InsertUserBorder,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, countDistinct, not, isNull, isNotNull } from "drizzle-orm";
 import { FeedCurationIntelligence } from './feedCurationIntelligence';
 import { randomUUID } from "crypto";
 
@@ -1191,6 +1191,21 @@ export class DatabaseStorage implements IStorage {
       .select({ count: count() })
       .from(posts)
       .where(eq(posts.userId, userId));
+    
+    return result[0]?.count || 0;
+  }
+
+  async getUserUniqueLikeCount(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: countDistinct(postLikes.postId) })
+      .from(postLikes)
+      .innerJoin(posts, eq(postLikes.postId, posts.id))
+      .where(
+        and(
+          eq(postLikes.userId, userId),
+          not(eq(posts.userId, userId))
+        )
+      );
     
     return result[0]?.count || 0;
   }
@@ -4474,13 +4489,26 @@ export class DatabaseStorage implements IStorage {
 
       // Validate unlock requirements for engagement reward borders
       if (border.type === 'reward') {
-        if (!border.postsRequired || border.postsRequired <= 0) {
+        if (!border.engagementType || !border.engagementThreshold || border.engagementThreshold <= 0) {
           throw new Error('Invalid reward border configuration');
         }
         
-        const userPostCount = await this.getUserPostCount(userId);
-        if (userPostCount < border.postsRequired) {
-          throw new Error(`You need ${border.postsRequired - userPostCount} more posts to unlock this border`);
+        // Engagement counter lookup
+        const engagementCounters: Record<string, () => Promise<number>> = {
+          posts_created: () => this.getUserPostCount(userId),
+          posts_liked: () => this.getUserUniqueLikeCount(userId),
+        };
+        
+        const getCount = engagementCounters[border.engagementType];
+        if (!getCount) {
+          throw new Error(`Unknown engagement type: ${border.engagementType}`);
+        }
+        
+        const userCount = await getCount();
+        if (userCount < border.engagementThreshold) {
+          const remaining = border.engagementThreshold - userCount;
+          const metric = border.engagementType === 'posts_created' ? 'posts' : 'likes';
+          throw new Error(`You need ${remaining} more ${metric} to unlock this border`);
         }
       }
 
