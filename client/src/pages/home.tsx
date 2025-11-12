@@ -2322,7 +2322,8 @@ export default function Home() {
                         mediaUrl: null,
                         mediaType: null,
                         youtubeUrl: null,
-                        type: 'post'
+                        type: 'post',
+                        postType: 'bible_verse'
                       });
                       
                       setShowBibleVerseDialog(false);

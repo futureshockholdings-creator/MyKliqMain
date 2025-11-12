@@ -6749,6 +6749,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         posts_liked: () => storage.getUserUniqueLikeCount(userId),
         mood_updates: () => storage.getUserMoodUpdateCount(userId),
         horoscope_posts: () => storage.getUserHoroscopePostCount(userId),
+        bible_verse_posts: () => storage.getUserBibleVersePostCount(userId),
       };
       
       // Fetch all engagement metrics once
@@ -6757,6 +6758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         posts_liked: await storage.getUserUniqueLikeCount(userId),
         mood_updates: await storage.getUserMoodUpdateCount(userId),
         horoscope_posts: await storage.getUserHoroscopePostCount(userId),
+        bible_verse_posts: await storage.getUserBibleVersePostCount(userId),
       };
       
       const bordersWithOwnership = allBorders.map(border => {
