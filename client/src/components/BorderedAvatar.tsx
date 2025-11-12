@@ -420,6 +420,19 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
     wrapper: "bg-[conic-gradient(from_0deg,#000080,#191970,#4169e1,#1e90ff,#000080)] p-[4px] rounded-full animate-[spin_4s_linear_infinite] shadow-[0_0_30px_rgba(0,0,128,0.9),0_0_60px_rgba(25,25,112,0.7),0_0_90px_rgba(65,105,225,0.5),inset_0_0_25px_rgba(30,144,255,0.5)]",
     avatar: ""
   },
+  // Bible Verse-Based Engagement Reward Borders 🙏✝️
+  "Saved": {
+    wrapper: "bg-[radial-gradient(circle,#f5deb3,#ffe4b5,#faebd7)] p-[3px] rounded-full animate-[pulse_2.5s_ease-in-out_infinite] shadow-[0_0_20px_rgba(245,222,179,0.6),0_0_40px_rgba(255,228,181,0.4),inset_0_0_15px_rgba(250,235,215,0.3)]",
+    avatar: ""
+  },
+  "Faithful": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ffffff,#f0f8ff,#e6f3ff,#ffffff)] p-[3px] rounded-full animate-[spin_5s_linear_infinite] shadow-[0_0_25px_rgba(255,255,255,0.8),0_0_50px_rgba(240,248,255,0.6),0_0_75px_rgba(230,243,255,0.4),inset_0_0_20px_rgba(255,255,255,0.5)]",
+    avatar: ""
+  },
+  "Blessed": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ffd700,#ffffff,#fffacd,#ffd700)] p-[4px] rounded-full animate-[spin_4s_linear_infinite] shadow-[0_0_35px_rgba(255,215,0,1),0_0_70px_rgba(255,255,255,0.8),0_0_105px_rgba(255,250,205,0.6),inset_0_0_30px_rgba(255,255,255,0.7)]",
+    avatar: ""
+  },
 };
 
 export function BorderedAvatar({
