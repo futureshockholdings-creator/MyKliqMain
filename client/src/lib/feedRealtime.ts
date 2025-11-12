@@ -15,23 +15,19 @@ class FeedRealtimeService {
 
   connect(userId: string) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      console.log('📡 WebSocket already connected');
       return;
     }
 
     this.userId = userId;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-    console.log('📡 Connecting to WebSocket for feed updates...');
     
     try {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log('✅ Feed WebSocket connected');
         this.reconnectAttempts = 0;
-        this.stopPolling(); // Stop polling if WebSocket reconnects
+        this.stopPolling();
         this.subscribe();
       };
 
@@ -40,9 +36,6 @@ class FeedRealtimeService {
           const message = JSON.parse(event.data);
           
           if (message.type === 'feed:new-content') {
-            console.log(`🔔 New ${message.contentType} posted! Refreshing feed...`);
-            
-            // Invalidate feed query to trigger refresh
             queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
           }
         } catch (error) {
@@ -55,7 +48,6 @@ class FeedRealtimeService {
       };
 
       this.ws.onclose = () => {
-        console.log('🔌 Feed WebSocket disconnected');
         this.isSubscribed = false;
         this.attemptReconnect();
       };
@@ -72,29 +64,23 @@ class FeedRealtimeService {
         userId: this.userId
       }));
       this.isSubscribed = true;
-      console.log('📡 Subscribed to feed updates');
     }
   }
 
   private attemptReconnect() {
-    // Don't reconnect if paused (mobile battery optimization)
     if (this.isPaused) {
-      console.log('⏸️ Skipping reconnect - service is paused');
       return;
     }
 
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('⚠️ Max reconnect attempts reached. Falling back to polling.');
       this.startPolling();
       return;
     }
 
     const delay = Math.min(
       this.baseReconnectDelay * Math.pow(2, this.reconnectAttempts),
-      30000 // Max 30 seconds
+      30000
     );
-
-    console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})...`);
 
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
@@ -109,21 +95,17 @@ class FeedRealtimeService {
   }
 
   private startPolling() {
-    // Don't start polling if paused (mobile battery optimization)
     if (this.isPaused) {
-      console.log('⏸️ Skipping polling - service is paused');
       return;
     }
 
     if (this.pollingInterval) {
-      return; // Already polling
+      return;
     }
 
     this.isFallbackMode = true;
-    console.log(`🔄 Starting 30-second polling fallback...`);
 
     this.pollingInterval = setInterval(() => {
-      console.log('🔄 Polling for feed updates...');
       queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
     }, this.pollingDelay);
   }
@@ -133,7 +115,6 @@ class FeedRealtimeService {
       clearInterval(this.pollingInterval);
       this.pollingInterval = null;
       this.isFallbackMode = false;
-      console.log('⏹️ Stopped polling fallback');
     }
   }
 
@@ -149,23 +130,18 @@ class FeedRealtimeService {
       this.isSubscribed = false;
       this.ws.close();
       this.ws = null;
-      console.log('🔌 Disconnected from feed WebSocket');
     }
   }
 
   pause() {
-    // Pause connection when app goes to background (mobile battery optimization)
     this.isPaused = true;
     this.disconnect();
-    console.log('⏸️ Feed WebSocket paused');
   }
 
   resume(userId: string) {
-    // Resume connection when app comes to foreground
     this.isPaused = false;
-    this.reconnectAttempts = 0; // Reset reconnect attempts on resume
+    this.reconnectAttempts = 0;
     this.connect(userId);
-    console.log('▶️ Feed WebSocket resumed');
   }
 }
 
