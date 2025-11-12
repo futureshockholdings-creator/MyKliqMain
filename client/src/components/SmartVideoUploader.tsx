@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ObjectUploader } from "./ObjectUploader";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
@@ -179,6 +179,9 @@ export function SmartVideoUploader({
               <FileVideo className="w-5 h-5" />
               Convert Video for Better Compatibility?
             </DialogTitle>
+            <DialogDescription>
+              Convert HEVC/H.265 video to MP4/H.264 format for seamless playback on all devices and browsers
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
