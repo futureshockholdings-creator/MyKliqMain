@@ -407,6 +407,19 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
     wrapper: "bg-[conic-gradient(from_0deg,#e6e6fa,#dda0dd,#ba55d3,#9370db,#e6e6fa)] p-[4px] rounded-full animate-[spin_6s_linear_infinite] shadow-[0_0_30px_rgba(230,230,250,0.9),0_0_60px_rgba(186,85,211,0.7),0_0_90px_rgba(147,112,219,0.5),inset_0_0_25px_rgba(221,160,221,0.5)]",
     avatar: ""
   },
+  // Horoscope-Based Engagement Reward Borders
+  "Head in the Clouds": {
+    wrapper: "bg-[radial-gradient(circle,#87ceeb,#b0e0e6,#add8e6)] p-[3px] rounded-full animate-[pulse_2.5s_ease-in-out_infinite] shadow-[0_0_20px_rgba(135,206,235,0.6),0_0_40px_rgba(176,224,230,0.4),inset_0_0_15px_rgba(173,216,230,0.3)]",
+    avatar: ""
+  },
+  "Clarity": {
+    wrapper: "bg-[conic-gradient(from_0deg,#ffd700,#fff8dc,#fffacd,#ffd700)] p-[3px] rounded-full animate-[spin_5s_linear_infinite] shadow-[0_0_25px_rgba(255,215,0,0.7),0_0_50px_rgba(255,248,220,0.5),inset_0_0_20px_rgba(255,250,205,0.4)]",
+    avatar: ""
+  },
+  "Stargazer": {
+    wrapper: "bg-[conic-gradient(from_0deg,#000080,#191970,#4169e1,#1e90ff,#000080)] p-[4px] rounded-full animate-[spin_4s_linear_infinite] shadow-[0_0_30px_rgba(0,0,128,0.9),0_0_60px_rgba(25,25,112,0.7),0_0_90px_rgba(65,105,225,0.5),inset_0_0_25px_rgba(30,144,255,0.5)]",
+    avatar: ""
+  },
 };
 
 export function BorderedAvatar({
