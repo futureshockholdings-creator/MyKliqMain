@@ -135,6 +135,9 @@ export function MovieconPicker({
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="text-primary">Choose a Moviecon</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Search and select a movie clip reaction to add to your message
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -91,6 +91,9 @@ export function PinVerificationModal({
             <Shield className="w-5 h-5 text-blue-600" />
             {title}
           </DialogTitle>
+          <DialogDescription className="text-gray-600 dark:text-gray-400">
+            {description}
+          </DialogDescription>
           <Button
             variant="ghost"
             size="sm"
@@ -103,10 +106,6 @@ export function PinVerificationModal({
         </DialogHeader>
         
         <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {description}
-          </p>
-          
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="pin" className="text-sm font-medium text-gray-900 dark:text-white">

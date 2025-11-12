@@ -132,6 +132,9 @@ export function MemePicker({
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="text-primary">Choose a Meme</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Search and select a meme to add to your message
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">

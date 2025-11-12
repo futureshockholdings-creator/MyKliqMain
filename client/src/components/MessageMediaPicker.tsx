@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Camera, Image, Film, MessageSquare, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MemePicker } from '@/components/MemePicker';
 import { MovieconPicker } from '@/components/MovieconPicker';
@@ -59,6 +59,9 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                 <X className="w-4 h-4" />
               </Button>
             </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Choose a meme, moviecon, or upload a photo or video to attach to your message
+            </DialogDescription>
           </DialogHeader>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
