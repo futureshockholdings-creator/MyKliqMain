@@ -1210,6 +1210,21 @@ export class DatabaseStorage implements IStorage {
     return result[0]?.count || 0;
   }
 
+  async getUserMoodUpdateCount(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: count() })
+      .from(posts)
+      .where(
+        and(
+          eq(posts.userId, userId),
+          isNotNull(posts.mood),
+          not(eq(posts.mood, ''))
+        )
+      );
+    
+    return result[0]?.count || 0;
+  }
+
   // Comment operations
   async addComment(comment: InsertComment): Promise<Comment> {
     const result = await db.insert(comments).values(comment).returning() as Comment[];
