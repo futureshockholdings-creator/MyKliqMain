@@ -316,12 +316,16 @@ export function BorderedAvatar({
   const renderStreakBadge = () => {
     if (!streakIcon) return null;
     const { emoji, bg } = streakIcon;
+    // Make Black History Month fist emoji bigger and more prominent
+    const emojiSize = borderName === "Black History Month" ? "text-3xl" : iconSize;
+    const badgePadding = borderName === "Black History Month" ? "p-2" : "p-1";
     return (
       <div className={cn(
-        "absolute -top-1 -left-1 rounded-full p-1 shadow-lg z-10 flex items-center justify-center",
+        "absolute -top-1 -left-1 rounded-full shadow-lg z-10 flex items-center justify-center",
+        badgePadding,
         bg
       )}>
-        <span className={cn(iconSize, "leading-none")}>{emoji}</span>
+        <span className={cn(emojiSize, "leading-none")}>{emoji}</span>
       </div>
     );
   };
