@@ -134,6 +134,10 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
     emoji: "🏳️‍🌈",
     bg: "bg-white"
   },
+  "4th of July": {
+    emoji: "🎆",
+    bg: "bg-white"
+  },
 };
 
 const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
@@ -306,6 +310,10 @@ const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
   },
   "Pride Month": {
     wrapper: "relative bg-[conic-gradient(from_0deg,#ff0000_0%,#ff7700_16%,#ffdd00_33%,#00ff00_50%,#0099ff_66%,#4400ff_83%,#ff0000_100%)] p-[4px] rounded-full before:content-[''] before:absolute before:inset-[-2px] before:rounded-full before:bg-[conic-gradient(from_0deg,transparent_0%,white_2%,transparent_4%,transparent_21%,white_23%,transparent_25%,transparent_42%,white_44%,transparent_46%,transparent_63%,white_65%,transparent_67%,transparent_84%,white_86%,transparent_88%,transparent_100%)] before:animate-[spin_12s_linear_infinite] before:opacity-80 before:pointer-events-none shadow-[0_0_20px_rgba(255,255,255,0.3),inset_0_0_15px_rgba(255,255,255,0.15)] after:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-gradient-to-br after:from-transparent after:via-white/10 after:to-transparent after:pointer-events-none",
+    avatar: ""
+  },
+  "4th of July": {
+    wrapper: "relative bg-[conic-gradient(from_0deg,#dc143c_0%,#ffffff_33%,#003478_66%,#dc143c_100%)] p-[4px] rounded-full before:content-[''] before:absolute before:inset-[-2px] before:rounded-full before:bg-[conic-gradient(from_0deg,transparent_0%,white_2%,transparent_4%,transparent_21%,white_23%,transparent_25%,transparent_42%,white_44%,transparent_46%,transparent_63%,white_65%,transparent_67%,transparent_84%,white_86%,transparent_88%,transparent_100%)] before:animate-[spin_12s_linear_infinite] before:opacity-80 before:pointer-events-none shadow-[0_0_20px_rgba(255,255,255,0.3),inset_0_0_15px_rgba(255,255,255,0.15)] after:content-[''] after:absolute after:inset-0 after:rounded-full after:bg-gradient-to-br after:from-transparent after:via-white/10 after:to-transparent after:pointer-events-none",
     avatar: ""
   },
 };
