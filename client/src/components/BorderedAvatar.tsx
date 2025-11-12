@@ -170,6 +170,45 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
     emoji: "🏆",
     bg: "bg-gradient-to-br from-yellow-300 to-amber-500"
   },
+  // Mood-Based Engagement Reward Borders
+  "Emotionally Aware": {
+    emoji: "💭",
+    bg: "bg-gradient-to-br from-turquoise-300 to-cyan-400"
+  },
+  "Mood Warrior": {
+    emoji: "🎭",
+    bg: "bg-gradient-to-br from-orange-300 to-purple-400"
+  },
+  "Zen Master": {
+    emoji: "🧘",
+    bg: "bg-gradient-to-br from-lavender-200 to-purple-300"
+  },
+  // Horoscope-Based Engagement Reward Borders
+  "Head in the Clouds": {
+    emoji: "☁️",
+    bg: "bg-gradient-to-br from-sky-200 to-blue-300"
+  },
+  "Clarity": {
+    emoji: "🔮",
+    bg: "bg-gradient-to-br from-yellow-200 to-amber-300"
+  },
+  "Stargazer": {
+    emoji: "⭐",
+    bg: "bg-gradient-to-br from-navy-400 to-blue-500"
+  },
+  // Bible Verse-Based Engagement Reward Borders
+  "Saved": {
+    emoji: "🙏",
+    bg: "bg-gradient-to-br from-wheat-200 to-amber-300"
+  },
+  "Faithful": {
+    emoji: "✝️",
+    bg: "bg-gradient-to-br from-white to-blue-100"
+  },
+  "Blessed": {
+    emoji: "🕊️",
+    bg: "bg-gradient-to-br from-yellow-200 to-white"
+  },
 };
 
 const borderStyles: Record<string, { wrapper?: string; avatar: string }> = {
