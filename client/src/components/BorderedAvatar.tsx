@@ -124,7 +124,7 @@ const streakBorderIcons: Record<string, { emoji: string; bg: string }> = {
   },
   "Black History Month": {
     emoji: "✊🏿",
-    bg: "bg-gradient-to-br from-gray-800 to-black"
+    bg: "bg-white"
   },
 };
 
