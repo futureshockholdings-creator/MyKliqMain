@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
+import { useDailyCheckIn } from "@/hooks/useDailyCheckIn";
 import { mobileAnalytics } from "./lib/mobileAnalytics";
 import { useTranslation } from "react-i18next";
 import "./i18n/config"; // Initialize i18n
@@ -237,6 +238,9 @@ function AppContent() {
   
   // Load and apply user theme globally
   useTheme();
+  
+  // Perform daily check-in for authenticated users
+  useDailyCheckIn();
   
   // Mobile analytics will handle screen tracking in React Native app
 
