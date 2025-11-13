@@ -64,8 +64,8 @@ export function useDailyCheckIn() {
               if (data.koinsAwarded > 0) {
                 // Show streak update toast
                 toast({
-                  title: `Day ${data.streak.currentStreak} Streak! 🔥`,
-                  description: `You earned ${data.koinsAwarded} Kliq Koin${data.koinsAwarded > 1 ? 's' : ''}!`,
+                  title: "Streaking 🔥",
+                  description: `You earned ${data.koinsAwarded} Kliq Koin${data.koinsAwarded > 1 ? 's' : ''} 🪙`,
                   duration: 5000,
                 });
 
