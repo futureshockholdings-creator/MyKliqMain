@@ -371,38 +371,73 @@ export interface VotePollResponse {
 // ============================================================================
 
 export interface EventData {
-  id: number;
+  id: string;
+  userId: string;
   title: string;
   description?: string;
-  startTime: string;
-  endTime?: string;
+  eventDate: string;
   location?: string;
-  createdBy: string;
-  attendees: string[];
+  mediaUrl?: string;
+  attendeeCount: number;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateEventRequest {
   title: string;
   description?: string;
-  startTime: string;
-  endTime?: string;
+  eventDate: string;
   location?: string;
+  mediaUrl?: string;
+}
+
+export interface UpdateEventRequest {
+  title?: string;
+  description?: string;
+  eventDate?: string;
+  location?: string;
+  mediaUrl?: string;
+}
+
+export interface EventsResponse {
+  events: EventData[];
 }
 
 export interface CreateEventResponse {
   success: boolean;
-  eventId: number;
+  eventId: string;
   message?: string;
 }
 
 export interface CalendarNoteData {
-  id: number;
+  id: string;
+  kliqId: string;
   userId: string;
-  kliqId?: string;
-  date: string;
-  note: string;
+  noteDate: string;
+  title: string;
+  description?: string;
+  remindKliq: boolean;
+  reminderSent: boolean;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCalendarNoteRequest {
+  kliqId: string;
+  noteDate: string;
+  title: string;
+  description?: string;
+  remindKliq: boolean;
+}
+
+export interface UpdateCalendarNoteRequest {
+  title?: string;
+  description?: string;
+  remindKliq?: boolean;
+}
+
+export interface CalendarNotesResponse {
+  notes: CalendarNoteData[];
 }
 
 // ============================================================================
@@ -493,91 +528,7 @@ export interface SendIncognitoMessageResponse {
   expiresAt: string;
 }
 
-// ============================================================================
-// NOTIFICATIONS
-// ============================================================================
-
-export interface NotificationData {
-  id: number;
-  userId: string;
-  type: 'like' | 'comment' | 'message' | 'friend_request' | 'event' | 'birthday' | 'system';
-  title: string;
-  message: string;
-  actionUrl?: string;
-  isRead: boolean;
-  createdAt: string;
-  metadata?: Record<string, any>;
-}
-
-export interface NotificationsResponse {
-  notifications: NotificationData[];
-  unreadCount: number;
-}
-
-// ============================================================================
-// CALENDAR & EVENTS
-// ============================================================================
-
-export interface EventData {
-  id: string;
-  userId: string;
-  title: string;
-  description?: string;
-  eventDate: string;
-  location?: string;
-  mediaUrl?: string;
-  attendeeCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateEventRequest {
-  title: string;
-  description?: string;
-  eventDate: string;
-  location?: string;
-  mediaUrl?: string;
-}
-
-export interface UpdateEventRequest {
-  title?: string;
-  description?: string;
-  eventDate?: string;
-  location?: string;
-  mediaUrl?: string;
-}
-
-export interface EventsResponse {
-  events: EventData[];
-}
-
-export interface CalendarNoteData {
-  id: string;
-  kliqId: string;
-  userId: string;
-  noteDate: string;
-  noteText: string;
-  reminderEnabled: boolean;
-  reminderSent: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateCalendarNoteRequest {
-  kliqId: string;
-  noteDate: string;
-  noteText: string;
-  reminderEnabled: boolean;
-}
-
-export interface UpdateCalendarNoteRequest {
-  noteText?: string;
-  reminderEnabled?: boolean;
-}
-
-export interface CalendarNotesResponse {
-  notes: CalendarNoteData[];
-}
+// Note: NotificationData is defined in REAL-TIME & NOTIFICATIONS section above
 
 // ============================================================================
 // GPS MEETUPS
