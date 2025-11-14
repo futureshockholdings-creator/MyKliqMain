@@ -1,18 +1,10 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { useAuth } from '../contexts/AuthContext';
+import { View, Text, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { useAuth } from '../providers/AuthProvider';
+import { Input } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
 
-const LoginScreen: React.FC = () => {
+export default function LoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,12 +18,9 @@ const LoginScreen: React.FC = () => {
 
     setLoading(true);
     try {
-      const success = await login(phoneNumber, password);
-      if (!success) {
-        Alert.alert('Login Failed', 'Invalid phone number or password');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Login failed. Please try again.');
+      await login(phoneNumber, password);
+    } catch (error: any) {
+      Alert.alert('Login Failed', error.message || 'Invalid phone number or password');
     } finally {
       setLoading(false);
     }
@@ -39,108 +28,52 @@ const LoginScreen: React.FC = () => {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container} 
+      className="flex-1 bg-background" 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome to MyKliq</Text>
-        <Text style={styles.subtitle}>Connect with your closest friends</Text>
-
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Phone Number"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            keyboardType="phone-pad"
-            autoCapitalize="none"
-            placeholderTextColor="#666"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholderTextColor="#666"
-          />
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Login</Text>
-            )}
-          </TouchableOpacity>
+      <View className="flex-1 justify-center px-8">
+        <View className="items-center mb-10">
+          <Text className="text-4xl font-bold text-primary mb-2">
+            Welcome to MyKliq
+          </Text>
+          <Text className="text-base text-muted-foreground text-center">
+            Connect with your closest friends
+          </Text>
         </View>
 
-        <Text style={styles.version}>MyKliq Mobile v1.0</Text>
+        <View className="mb-10">
+          <Input
+            label="Phone Number"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            placeholder="Enter your phone number"
+            keyboardType="phone-pad"
+            autoCapitalize="none"
+            className="mb-4"
+          />
+
+          <Input
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Enter your password"
+            secureTextEntry
+            className="mb-6"
+          />
+
+          <Button
+            title="Login"
+            onPress={handleLogin}
+            loading={loading}
+            disabled={loading}
+            size="lg"
+          />
+        </View>
+
+        <Text className="text-muted-foreground text-center text-xs">
+          MyKliq Mobile v1.0
+        </Text>
       </View>
     </KeyboardAvoidingView>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 30,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#00FF00',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#888',
-    textAlign: 'center',
-    marginBottom: 40,
-  },
-  form: {
-    marginBottom: 40,
-  },
-  input: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    fontSize: 16,
-    color: '#fff',
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  button: {
-    backgroundColor: '#00FF00',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  version: {
-    color: '#666',
-    textAlign: 'center',
-    fontSize: 12,
-  },
-});
-
-export default LoginScreen;
+}

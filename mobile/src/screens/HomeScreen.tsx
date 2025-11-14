@@ -1,199 +1,171 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  RefreshControl,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-} from 'react-native';
-import { Post } from '../types';
-import ApiService from '../services/api';
+import React, { useState } from 'react';
+import { View, Text, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '../lib/apiClient';
+import { useAuth } from '../providers/AuthProvider';
 import PostCard from '../components/PostCard';
-import { useAuth } from '../contexts/AuthContext';
 
-const HomeScreen: React.FC = () => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+interface FeedResponse {
+  posts: any[];
+  nextCursor?: string;
+  hasMore: boolean;
+}
+
+export default function HomeScreen() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadFeed();
-  }, []);
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['/api/mobile/feed'],
+    queryFn: async ({ pageParam }) => {
+      const response = await apiClient.getFeed(pageParam, 20);
+      return response as FeedResponse;
+    },
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    initialPageParam: undefined,
+  });
 
-  const loadFeed = async (pageNum = 1, refresh = false) => {
-    try {
-      if (refresh) {
-        setRefreshing(true);
-      } else if (pageNum === 1) {
-        setLoading(true);
-      }
-
-      const response = await ApiService.getFeed(pageNum);
+  const likeMutation = useMutation({
+    mutationFn: (postId: string) => apiClient.likePost(postId),
+    onMutate: async (postId) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ['/api/mobile/feed'] });
+      const previousData = queryClient.getQueryData(['/api/mobile/feed']);
       
-      if (refresh || pageNum === 1) {
-        setPosts(response.posts);
-      } else {
-        setPosts(prev => [...prev, ...response.posts]);
+      queryClient.setQueryData(['/api/mobile/feed'], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: FeedResponse) => ({
+            ...page,
+            posts: page.posts.map((post: any) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    isLiked: !post.isLiked,
+                    likeCount: post.isLiked ? post.likeCount - 1 : post.likeCount + 1,
+                  }
+                : post
+            ),
+          })),
+        };
+      });
+
+      return { previousData };
+    },
+    onError: (err, postId, context) => {
+      // Revert optimistic update on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['/api/mobile/feed'], context.previousData);
       }
-      
-      setHasMore(response.hasMore);
-      setPage(response.page);
-    } catch (error) {
-      console.error('Error loading feed:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+    },
+  });
+
+  const posts = data?.pages.flatMap((page) => page.posts) || [];
 
   const handleRefresh = () => {
-    loadFeed(1, true);
+    refetch();
   };
 
   const handleLoadMore = () => {
-    if (hasMore && !loading) {
-      loadFeed(page + 1);
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
   };
-
-  const handleLikePost = async (postId: string) => {
-    try {
-      // Optimistic update
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { 
-              ...post, 
-              isLiked: !post.isLiked,
-              likeCount: post.isLiked ? post.likeCount - 1 : post.likeCount + 1
-            }
-          : post
-      ));
-
-      await ApiService.likePost(postId);
-    } catch (error) {
-      console.error('Error liking post:', error);
-      // Revert optimistic update on error
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { 
-              ...post, 
-              isLiked: !post.isLiked,
-              likeCount: post.isLiked ? post.likeCount + 1 : post.likeCount - 1
-            }
-          : post
-      ));
-    }
-  };
-
-  const renderPost = ({ item }: { item: Post }) => (
-    <PostCard post={item} onLike={() => handleLikePost(item.id)} />
-  );
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <Text style={styles.greeting}>
+    <View className="p-5 pt-3">
+      <Text className="text-lg text-foreground mb-1">
         Welcome back, {user?.firstName}! 👋
       </Text>
-      <Text style={styles.kliqName}>
-        {user?.kliqName || 'Your Kliq'} Feed
+      <Text className="text-2xl font-bold text-primary">
+        Your Feed
       </Text>
     </View>
   );
 
   const renderFooter = () => {
-    if (!hasMore) return <Text style={styles.endText}>You're all caught up!</Text>;
-    if (loading && posts.length > 0) {
+    if (isFetchingNextPage) {
       return (
-        <View style={styles.loadingFooter}>
-          <ActivityIndicator color="#00FF00" />
+        <View className="p-5 items-center">
+          <ActivityIndicator size="small" color="#666" />
         </View>
+      );
+    }
+    if (!hasNextPage && posts.length > 0) {
+      return (
+        <Text className="text-muted-foreground text-center p-5 text-sm">
+          You're all caught up! 🎉
+        </Text>
       );
     }
     return null;
   };
 
-  if (loading && posts.length === 0) {
+  const renderEmptyState = () => (
+    <View className="flex-1 items-center justify-center p-8">
+      <Text className="text-6xl mb-4">📱</Text>
+      <Text className="text-xl font-semibold text-foreground mb-2">
+        No posts yet
+      </Text>
+      <Text className="text-muted-foreground text-center">
+        Be the first to share something with your kliq!
+      </Text>
+    </View>
+  );
+
+  if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00FF00" />
-        <Text style={styles.loadingText}>Loading your feed...</Text>
+      <View className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator size="large" color="#666" />
+        <Text className="text-muted-foreground mt-3 text-base">
+          Loading your feed...
+        </Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View className="flex-1 bg-background items-center justify-center p-8">
+        <Text className="text-4xl mb-4">😕</Text>
+        <Text className="text-xl font-semibold text-foreground mb-2">
+          Something went wrong
+        </Text>
+        <Text className="text-muted-foreground text-center">
+          Unable to load your feed. Pull down to try again.
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-background">
       <FlatList
         data={posts}
-        renderItem={renderPost}
+        renderItem={({ item }) => (
+          <PostCard post={item} onLike={() => likeMutation.mutate(item.id)} />
+        )}
         keyExtractor={(item) => item.id}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor="#00FF00"
-          />
+          <RefreshControl refreshing={false} onRefresh={handleRefresh} tintColor="#666" />
         }
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.1}
+        onEndReachedThreshold={0.5}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
+        ListEmptyComponent={renderEmptyState}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={posts.length === 0 ? { flex: 1 } : { paddingBottom: 20 }}
       />
     </View>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  listContent: {
-    paddingBottom: 20,
-  },
-  header: {
-    padding: 20,
-    paddingTop: 10,
-  },
-  greeting: {
-    fontSize: 18,
-    color: '#fff',
-    marginBottom: 4,
-  },
-  kliqName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#00FF00',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000',
-  },
-  loadingText: {
-    color: '#888',
-    marginTop: 12,
-    fontSize: 16,
-  },
-  loadingFooter: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  endText: {
-    color: '#666',
-    textAlign: 'center',
-    padding: 20,
-    fontSize: 14,
-  },
-});
-
-export default HomeScreen;
+}
