@@ -16,11 +16,12 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.yourcompany.mykliq",
+      "bundleIdentifier": "com.mykliq.app",
       "infoPlist": {
         "NSCameraUsageDescription": "MyKliq needs camera access to take photos and videos for posts and stories.",
         "NSPhotoLibraryUsageDescription": "MyKliq needs photo library access to select photos and videos for posts and stories.",
-        "NSMicrophoneUsageDescription": "MyKliq needs microphone access for video recording and voice messages."
+        "NSMicrophoneUsageDescription": "MyKliq needs microphone access for video recording and voice messages.",
+        "NSLocationWhenInUseUsageDescription": "MyKliq needs your location to show nearby meetups and check-in at locations."
       }
     },
     "android": {
@@ -28,12 +29,14 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.yourcompany.mykliq",
+      "package": "com.mykliq.app",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
       ]
     },
     "web": {
@@ -58,7 +61,16 @@
           "icon": "./assets/notification-icon.png",
           "color": "#00FF00"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow MyKliq to use your location for nearby meetups and check-ins."
+        }
       ]
-    ]
+    ],
+    "extra": {
+      "apiUrl": "https://c7dd138c-576d-4490-a426-c0be6e6124ca-00-1u3lut3kqrgq6.kirk.replit.dev"
+    }
   }
 }
