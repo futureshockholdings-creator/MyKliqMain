@@ -747,6 +747,97 @@ export interface MoodBoostResponse {
 }
 
 // ============================================================================
+// DAILY CONTENT (Phase 3)
+// ============================================================================
+
+export interface HoroscopeResponse {
+  sign: string;
+  date: string;
+  horoscope: string;
+  luckyNumber: number;
+  luckyColor: string;
+}
+
+export interface BibleVerseResponse {
+  date: string;
+  verse: string;
+  reference: string;
+  reflection: string;
+}
+
+// ============================================================================
+// LIVE STREAMING (Actions) - Phase 3
+// ============================================================================
+
+export interface ActionAuthor {
+  id: string;
+  firstName: string;
+  lastName: string;
+  profileImageUrl?: string;
+}
+
+export interface ActionData {
+  id: string;
+  userId: string;
+  title: string;
+  description?: string;
+  thumbnailUrl?: string;
+  status: 'live' | 'ended';
+  viewerCount: number;
+  streamKey?: string; // Only included for creator
+  createdAt: string;
+  endedAt?: string;
+  author?: ActionAuthor;
+}
+
+export interface CreateActionRequest {
+  title: string;
+  description?: string;
+  thumbnailUrl?: string;
+}
+
+export interface CreateActionResponse {
+  id: string;
+  streamKey: string;
+  title: string;
+  description?: string;
+  thumbnailUrl?: string;
+  status: 'live' | 'ended';
+  createdAt: string;
+}
+
+export interface ActionsListResponse {
+  actions: ActionData[];
+}
+
+export interface ActionChatMessage {
+  id: string;
+  actionId: string;
+  userId: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface ActionChatResponse {
+  messages: ActionChatMessage[];
+}
+
+export interface SendActionChatRequest {
+  message: string;
+}
+
+export interface SendActionChatResponse {
+  id: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface EndActionResponse {
+  success: boolean;
+  endedAt: string;
+}
+
+// ============================================================================
 // COMMON RESPONSE TYPES
 // ============================================================================
 
