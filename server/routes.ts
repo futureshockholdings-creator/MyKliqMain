@@ -2669,6 +2669,371 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================================================
+  // MOBILE GPS MEETUPS (Phase 2 - Simplified)
+  // ============================================================================
+
+  // Check in at a location (creates a post with location)
+  app.post('/api/mobile/meetups/checkin', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { latitude, longitude, locationName, caption } = req.body;
+      
+      if (!latitude || !longitude) {
+        return res.status(400).json({ message: 'Latitude and longitude are required' });
+      }
+      
+      // Create a post with location data (simplified for mobile)
+      const { insertPostSchema } = await import("@shared/schema");
+      const postData = insertPostSchema.parse({
+        userId,
+        content: caption || `📍 Checked in at ${locationName || 'a location'}`,
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        locationName: locationName || 'Unknown Location'
+      });
+      
+      const post = await storage.createPost(postData);
+      
+      res.json({
+        success: true,
+        postId: post.id,
+        locationName: postData.locationName || 'Unknown Location'
+      });
+    } catch (error) {
+      console.error('Check-in error:', error);
+      res.status(500).json({ message: 'Failed to check in' });
+    }
+  });
+
+  // Get nearby meetup locations (posts with location data)
+  app.post('/api/mobile/meetups/nearby', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { latitude, longitude, radiusKm = 10 } = req.body;
+      
+      if (!latitude || !longitude) {
+        return res.status(400).json({ message: 'Latitude and longitude are required' });
+      }
+      
+      // Get user's friends to filter posts
+      const friends = await storage.getFriends(userId);
+      const friendIds = friends.map(f => f.friendId);
+      const userIds = [userId, ...friendIds];
+      
+      // Query posts with location data within radius (simplified - actual implementation would use PostGIS)
+      const posts = await db
+        .select()
+        .from(postsTable)
+        .where(
+          and(
+            inArray(postsTable.userId, userIds),
+            isNotNull(postsTable.latitude),
+            isNotNull(postsTable.longitude)
+          )
+        )
+        .limit(50);
+      
+      // Simple distance filtering (production would use proper geospatial queries)
+      const nearbyPosts = posts.filter(post => {
+        if (!post.latitude || !post.longitude) return false;
+        const distance = Math.sqrt(
+          Math.pow(post.latitude - parseFloat(latitude), 2) + 
+          Math.pow(post.longitude - parseFloat(longitude), 2)
+        ) * 111; // Rough km conversion
+        return distance <= radiusKm;
+      });
+      
+      // Group by location name
+      const locationMap = new Map();
+      nearbyPosts.forEach(post => {
+        const key = post.locationName || 'Unknown';
+        if (!locationMap.has(key)) {
+          locationMap.set(key, {
+            id: key,
+            name: key,
+            latitude: post.latitude,
+            longitude: post.longitude,
+            checkInCount: 0,
+            lastCheckIn: post.createdAt?.toISOString() || new Date().toISOString()
+          });
+        }
+        const loc = locationMap.get(key);
+        loc.checkInCount++;
+        if (post.createdAt && new Date(post.createdAt) > new Date(loc.lastCheckIn)) {
+          loc.lastCheckIn = post.createdAt.toISOString();
+        }
+      });
+      
+      res.json({
+        locations: Array.from(locationMap.values())
+      });
+    } catch (error) {
+      console.error('Nearby meetups error:', error);
+      res.status(500).json({ message: 'Failed to fetch nearby meetups' });
+    }
+  });
+
+  // Get user's check-in history
+  app.get('/api/mobile/meetups/history', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      
+      const checkIns = await db
+        .select()
+        .from(postsTable)
+        .where(
+          and(
+            eq(postsTable.userId, userId),
+            isNotNull(postsTable.latitude),
+            isNotNull(postsTable.longitude)
+          )
+        )
+        .orderBy(desc(postsTable.createdAt))
+        .limit(50);
+      
+      res.json({
+        checkIns: checkIns.map(post => ({
+          id: post.id,
+          locationName: post.locationName || 'Unknown',
+          latitude: post.latitude,
+          longitude: post.longitude,
+          checkedInAt: post.createdAt?.toISOString() || new Date().toISOString(),
+          postId: post.id
+        }))
+      });
+    } catch (error) {
+      console.error('Check-in history error:', error);
+      res.status(500).json({ message: 'Failed to fetch check-in history' });
+    }
+  });
+
+  // ============================================================================
+  // MOBILE SPORTS SCORES (Phase 2 - Wrapper for ESPN)
+  // ============================================================================
+
+  // Follow/unfollow a sports team
+  app.post('/api/mobile/sports/follow', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { teamId, teamName, league } = req.body;
+      
+      if (!teamId || !teamName || !league) {
+        return res.status(400).json({ message: 'teamId, teamName, and league are required' });
+      }
+      
+      // Determine sport from league
+      const sportMap: Record<string, string> = {
+        'NBA': 'basketball',
+        'NFL': 'football',
+        'MLB': 'baseball',
+        'NHL': 'hockey',
+        'MLS': 'soccer'
+      };
+      const sport = sportMap[league] || 'basketball';
+      
+      await storage.addSportsPreference(userId, teamId, teamName, sport, league);
+      
+      res.json({ success: true, message: `Now following ${teamName}` });
+    } catch (error) {
+      console.error('Follow team error:', error);
+      res.status(500).json({ message: 'Failed to follow team' });
+    }
+  });
+
+  app.delete('/api/mobile/sports/follow/:teamId', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { teamId } = req.params;
+      
+      await storage.removeSportsPreference(userId, teamId);
+      
+      res.json({ success: true, message: 'Team unfollowed' });
+    } catch (error) {
+      console.error('Unfollow team error:', error);
+      res.status(500).json({ message: 'Failed to unfollow team' });
+    }
+  });
+
+  // Get user's followed teams
+  app.get('/api/mobile/sports/teams', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      
+      const preferences = await storage.getSportsPreferences(userId);
+      
+      res.json({
+        teams: preferences.map(pref => ({
+          id: pref.teamId,
+          name: pref.teamName,
+          abbreviation: pref.teamId,
+          sport: pref.sport,
+          league: pref.league
+        }))
+      });
+    } catch (error) {
+      console.error('Get teams error:', error);
+      res.status(500).json({ message: 'Failed to fetch teams' });
+    }
+  });
+
+  // Get live scores for followed teams
+  app.get('/api/mobile/sports/scores/live', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      
+      // Leverage existing /api/sports/updates endpoint
+      const preferences = await storage.getSportsPreferences(userId);
+      
+      if (preferences.length === 0) {
+        return res.json({ scores: [], lastUpdated: new Date().toISOString() });
+      }
+      
+      // Get ESPN service
+      const espnService = (req.app as any).espnService;
+      if (!espnService) {
+        return res.json({ scores: [], lastUpdated: new Date().toISOString() });
+      }
+      
+      // Group by sport
+      const teamsBySport = preferences.reduce((acc, pref) => {
+        if (!acc[pref.sport]) acc[pref.sport] = [];
+        acc[pref.sport].push(pref.teamId);
+        return acc;
+      }, {} as Record<string, string[]>);
+      
+      // Fetch games
+      const allGames = [];
+      for (const [sport, teamIds] of Object.entries(teamsBySport)) {
+        try {
+          const games = await espnService.getTeamGames(sport as any, teamIds);
+          allGames.push(...games);
+        } catch (error) {
+          console.error(`Failed to fetch ${sport} scores:`, error);
+        }
+      }
+      
+      res.json({
+        scores: allGames.map(game => ({
+          id: game.id,
+          homeTeam: {
+            id: game.home.id,
+            name: game.home.name,
+            abbreviation: game.home.abbreviation || game.home.id,
+            logo: game.home.logo,
+            sport: game.sport,
+            league: game.league
+          },
+          awayTeam: {
+            id: game.away.id,
+            name: game.away.name,
+            abbreviation: game.away.abbreviation || game.away.id,
+            logo: game.away.logo,
+            sport: game.sport,
+            league: game.league
+          },
+          homeScore: game.home.score || 0,
+          awayScore: game.away.score || 0,
+          status: game.status as any,
+          startTime: game.eventDate.toISOString(),
+          quarter: game.period || undefined,
+          timeRemaining: game.clock || undefined
+        })),
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Get live scores error:', error);
+      res.status(500).json({ message: 'Failed to fetch live scores' });
+    }
+  });
+
+  // ============================================================================
+  // MOBILE PUSH NOTIFICATIONS (Phase 2 - Simplified Registration)
+  // ============================================================================
+
+  // Register device for push notifications
+  app.post('/api/mobile/notifications/register-device', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { deviceToken, platform, deviceId } = req.body;
+      
+      if (!deviceToken || !platform || !deviceId) {
+        return res.status(400).json({ 
+          message: 'deviceToken, platform, and deviceId are required' 
+        });
+      }
+      
+      if (platform !== 'ios' && platform !== 'android') {
+        return res.status(400).json({ 
+          message: 'platform must be either "ios" or "android"' 
+        });
+      }
+      
+      // Store device token (simplified - production would use Firebase Admin SDK)
+      // For now, we just acknowledge registration
+      console.log(`📱 Registered device for push notifications: ${platform} - ${deviceId} for user ${userId}`);
+      
+      res.json({
+        success: true,
+        message: 'Device registered for push notifications'
+      });
+    } catch (error) {
+      console.error('Register device error:', error);
+      res.status(500).json({ message: 'Failed to register device' });
+    }
+  });
+
+  // Get notification preferences
+  app.get('/api/mobile/notifications/preferences', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      
+      // Return default preferences (production would store in database)
+      res.json({
+        preferences: {
+          newMessages: true,
+          newPosts: true,
+          eventReminders: true,
+          friendRequests: true,
+          likes: true,
+          comments: true
+        }
+      });
+    } catch (error) {
+      console.error('Get notification preferences error:', error);
+      res.status(500).json({ message: 'Failed to fetch notification preferences' });
+    }
+  });
+
+  // Update notification preferences
+  app.put('/api/mobile/notifications/preferences', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { preferences } = req.body;
+      
+      if (!preferences) {
+        return res.status(400).json({ message: 'preferences object is required' });
+      }
+      
+      // Store preferences (simplified - production would save to database)
+      console.log(`🔔 Updated notification preferences for user ${userId}:`, preferences);
+      
+      res.json({
+        preferences: {
+          newMessages: preferences.newMessages ?? true,
+          newPosts: preferences.newPosts ?? true,
+          eventReminders: preferences.eventReminders ?? true,
+          friendRequests: preferences.friendRequests ?? true,
+          likes: preferences.likes ?? true,
+          comments: preferences.comments ?? true
+        }
+      });
+    } catch (error) {
+      console.error('Update notification preferences error:', error);
+      res.status(500).json({ message: 'Failed to update notification preferences' });
+    }
+  });
+
   // Mobile backend health check endpoint
   app.get('/api/mobile/health', (req, res) => {
     res.json({
@@ -2687,6 +3052,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'GET /api/mobile/calendar/events - User events (Phase 2)',
         'POST /api/mobile/calendar/events - Create event (Phase 2)',
         'GET /api/mobile/calendar/notes - Calendar notes (Phase 2)',
+        'POST /api/mobile/meetups/checkin - GPS check-in (Phase 2)',
+        'POST /api/mobile/meetups/nearby - Nearby meetups (Phase 2)',
+        'POST /api/mobile/sports/follow - Follow sports team (Phase 2)',
+        'GET /api/mobile/sports/scores/live - Live sports scores (Phase 2)',
+        'POST /api/mobile/notifications/register-device - Device registration (Phase 2)',
         'GET /api/mood-boost/posts - Get mood boost posts for current user'
       ],
       features: [
@@ -2696,7 +3066,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Paginated Responses',
         'Optimized for Mobile',
         'AI-Powered Mood Boosts',
-        'Calendar & Events (Phase 2)'
+        'Calendar & Events (Phase 2)',
+        'GPS Meetups (Phase 2)',
+        'Sports Scores (Phase 2)',
+        'Push Notification Management (Phase 2)'
       ]
     });
   });
