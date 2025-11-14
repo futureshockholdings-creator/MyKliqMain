@@ -23,6 +23,62 @@ import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
 import { z } from "zod";
+import multer from "multer";
+
+// Configure multer for in-memory storage (MVP)
+// TODO: Post-MVP - Migrate to ObjectStorageService for persistent storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10 MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Whitelist allowed MIME types
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Invalid file type: ${file.mimetype}. Allowed types: ${allowedTypes.join(', ')}`));
+    }
+  }
+});
+
+// In-memory media registry for MVP (ephemeral storage)
+// TODO: Post-MVP - Replace with ObjectStorageService for permanent, scalable storage
+const mediaRegistry = new Map<string, { buffer: Buffer; mimetype: string; filename: string }>();
+
+// In-memory story store for MVP
+// TODO: Post-MVP - Migrate to database with proper story management
+interface Story {
+  id: string;
+  userId: string;
+  mediaUrl: string;
+  mediaType: string;
+  createdAt: string;
+  expiresAt: string;
+  caption?: string;
+}
+
+const storyStore = new Map<string, Story[]>();
+
+function ensureStoryGroup(userId: string): Story[] {
+  if (!storyStore.has(userId)) {
+    storyStore.set(userId, []);
+  }
+  return storyStore.get(userId)!;
+}
+
+function cleanupExpiredStories(): void {
+  const now = Date.now();
+  for (const [userId, stories] of storyStore.entries()) {
+    const validStories = stories.filter(story => new Date(story.expiresAt).getTime() > now);
+    if (validStories.length === 0) {
+      storyStore.delete(userId);
+    } else {
+      storyStore.set(userId, validStories);
+    }
+  }
+}
 
 // Password setup schema
 const passwordSetupSchema = z.object({
@@ -1122,6 +1178,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve uploaded media files from memory
+  app.get('/api/mobile/uploads/:mediaId', (req, res) => {
+    const { mediaId } = req.params;
+    const media = mediaRegistry.get(mediaId);
+    
+    if (!media) {
+      return res.status(404).json({ message: 'Media not found' });
+    }
+    
+    res.set('Content-Type', media.mimetype);
+    res.send(media.buffer);
+  });
+
   // Mobile file upload endpoint for camera/photo library
   app.post('/api/mobile/upload', verifyMobileToken, async (req, res) => {
     try {
@@ -1144,14 +1213,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create story (mobile)
-  app.post('/api/mobile/stories', verifyMobileToken, async (req, res) => {
+  // Get stories (mobile)
+  app.get('/api/mobile/stories', verifyMobileToken, async (req, res) => {
     try {
       const userId = (req as any).userId;
-      // TODO: Handle multipart/form-data upload
-      // For now, return success to prevent frontend crashes
+      
+      // Cleanup expired stories
+      cleanupExpiredStories();
+      
+      // Build story groups from store
+      const storyGroups = [];
+      for (const [storyUserId, stories] of storyStore.entries()) {
+        if (stories.length > 0) {
+          // TODO: Fetch real user data from database
+          // For MVP, use stub user data
+          const isOwnStory = storyUserId === userId;
+          storyGroups.push({
+            userId: storyUserId,
+            firstName: isOwnStory ? 'You' : 'Demo User',
+            lastName: '',
+            profileImageUrl: null,
+            stories: stories.map(story => ({
+              id: story.id,
+              mediaUrl: story.mediaUrl,
+              mediaType: story.mediaType,
+              createdAt: story.createdAt,
+              expiresAt: story.expiresAt,
+              caption: story.caption
+            }))
+          });
+        }
+      }
+      
+      // Put user's own stories first
+      storyGroups.sort((a, b) => {
+        if (a.userId === userId) return -1;
+        if (b.userId === userId) return 1;
+        return 0;
+      });
+      
+      res.json({ storyGroups });
+    } catch (error) {
+      console.error('Get stories error:', error);
+      res.status(500).json({ message: 'Failed to fetch stories' });
+    }
+  });
+
+  // Create story (mobile)
+  app.post('/api/mobile/stories', verifyMobileToken, upload.single('media'), async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: 'Media file is required for story' });
+      }
+
+      // Store media in registry
+      const mediaId = `story-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      mediaRegistry.set(mediaId, {
+        buffer: req.file.buffer,
+        mimetype: req.file.mimetype,
+        filename: req.file.originalname
+      });
+
+      const mediaUrl = `/api/mobile/uploads/${mediaId}`;
+      const mediaType = req.file.mimetype.startsWith('video') ? 'video' : 'image';
+      
+      // Create and persist story
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+      
+      const story: Story = {
+        id: `story-${Date.now()}`,
+        userId,
+        mediaUrl,
+        mediaType,
+        createdAt: now.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+        caption: req.body.caption
+      };
+      
+      const userStories = ensureStoryGroup(userId);
+      userStories.push(story);
+      
       res.json({
         success: true,
+        storyId: story.id,
+        mediaUrl,
+        expiresAt: story.expiresAt,
         message: 'Story created successfully'
       });
     } catch (error) {
@@ -1274,6 +1423,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Send message error:', error);
       res.status(500).json({ message: 'Failed to send message' });
+    }
+  });
+
+  // Send media message (mobile messaging)
+  app.post('/api/mobile/messages/:friendId/media', verifyMobileToken, upload.single('media'), async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { friendId } = req.params;
+      const { mediaType } = req.body;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: 'Media file is required' });
+      }
+
+      // Store media in registry
+      const mediaId = `msg-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      mediaRegistry.set(mediaId, {
+        buffer: req.file.buffer,
+        mimetype: req.file.mimetype,
+        filename: req.file.originalname
+      });
+
+      const mediaUrl = `/api/mobile/uploads/${mediaId}`;
+
+      // Add message to in-memory store
+      const messages = getOrCreateMessages(userId, friendId);
+      const newMessage = {
+        id: Date.now().toString(),
+        senderId: userId,
+        content: '',
+        mediaUrl,
+        mediaType: mediaType || 'image',
+        createdAt: new Date().toISOString(),
+        isRead: false
+      };
+      messages.push(newMessage);
+      
+      res.json({
+        success: true,
+        message: newMessage
+      });
+    } catch (error) {
+      console.error('Send media error:', error);
+      res.status(500).json({ message: 'Failed to send media' });
+    }
+  });
+
+  // Send GIF message (mobile messaging)
+  app.post('/api/mobile/messages/:friendId/gif', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { friendId } = req.params;
+      const { gifUrl } = req.body;
+      
+      if (!gifUrl || !gifUrl.trim()) {
+        return res.status(400).json({ message: 'GIF URL is required' });
+      }
+
+      // Add message to in-memory store
+      const messages = getOrCreateMessages(userId, friendId);
+      const newMessage = {
+        id: Date.now().toString(),
+        senderId: userId,
+        content: '',
+        mediaUrl: gifUrl.trim(),
+        mediaType: 'gif',
+        createdAt: new Date().toISOString(),
+        isRead: false
+      };
+      messages.push(newMessage);
+      
+      res.json({
+        success: true,
+        message: newMessage
+      });
+    } catch (error) {
+      console.error('Send GIF error:', error);
+      res.status(500).json({ message: 'Failed to send GIF' });
     }
   });
 

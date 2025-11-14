@@ -10,8 +10,10 @@ import {
   StyleSheet,
   Image,
   Alert,
+  Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Video } from 'expo-av';
 import { useAuth } from '../contexts/AuthContext';
 import ApiService from '../services/api';
 
@@ -21,6 +23,8 @@ interface Message {
   content: string;
   createdAt: string;
   isRead: boolean;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video' | 'gif';
 }
 
 interface ConversationScreenProps {
@@ -39,6 +43,8 @@ const ConversationScreen: React.FC<ConversationScreenProps> = ({ route, navigati
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
+  const [gifModalVisible, setGifModalVisible] = useState(false);
+  const [gifUrl, setGifUrl] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -75,17 +81,74 @@ const ConversationScreen: React.FC<ConversationScreenProps> = ({ route, navigati
       });
 
       if (!result.canceled && result.assets[0]) {
-        // TODO: Upload media and send as message
-        Alert.alert('Media Upload', 'Media attachment feature coming soon!');
+        const asset = result.assets[0];
+        await uploadAndSendMedia(asset.uri, asset.type || 'image');
       }
     } catch (error) {
       console.error('Error picking media:', error);
+      Alert.alert('Error', 'Failed to select media. Please try again.');
+    }
+  };
+
+  const uploadAndSendMedia = async (uri: string, type: string) => {
+    try {
+      setSending(true);
+      
+      // Create FormData for upload
+      const formData = new FormData();
+      const filename = uri.split('/').pop() || 'media';
+      const mediaType = type.includes('video') ? 'video' : 'image';
+      
+      formData.append('media', {
+        uri,
+        type: type.includes('video') ? 'video/mp4' : 'image/jpeg',
+        name: filename,
+      } as any);
+
+      // Upload media and send message
+      const response = await ApiService.sendMediaMessage(friendId, formData, mediaType);
+      
+      // Add to messages
+      if (response.message) {
+        setMessages(prev => [...prev, response.message]);
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      Alert.alert('Upload Failed', 'Could not send media. Please try again.');
+    } finally {
+      setSending(false);
     }
   };
 
   const handleGif = () => {
-    // TODO: Implement GIF picker
-    Alert.alert('GIF Picker', 'GIF picker feature coming soon!');
+    setGifModalVisible(true);
+    setGifUrl('');
+  };
+
+  const handleGifSubmit = async () => {
+    if (gifUrl.trim()) {
+      setGifModalVisible(false);
+      await sendGif(gifUrl.trim());
+    }
+  };
+
+  const sendGif = async (gifUrl: string) => {
+    try {
+      setSending(true);
+      
+      const response = await ApiService.sendGifMessage(friendId, gifUrl);
+      
+      if (response.message) {
+        setMessages(prev => [...prev, response.message]);
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }
+    } catch (error) {
+      console.error('Error sending GIF:', error);
+      Alert.alert('Send Failed', 'Could not send GIF. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleSend = async () => {
@@ -142,14 +205,33 @@ const ConversationScreen: React.FC<ConversationScreenProps> = ({ route, navigati
             isMyMessage ? styles.myMessage : styles.theirMessage,
           ]}
         >
-          <Text
-            style={[
-              styles.messageText,
-              isMyMessage ? styles.myMessageText : styles.theirMessageText,
-            ]}
-          >
-            {item.content}
-          </Text>
+          {item.mediaUrl && (
+            item.mediaType === 'video' ? (
+              <Video
+                source={{ uri: item.mediaUrl }}
+                style={styles.messageMedia}
+                useNativeControls
+                resizeMode="contain"
+                shouldPlay={false}
+              />
+            ) : (
+              <Image 
+                source={{ uri: item.mediaUrl }}
+                style={styles.messageMedia}
+                resizeMode={item.mediaType === 'gif' ? 'contain' : 'cover'}
+              />
+            )
+          )}
+          {item.content && (
+            <Text
+              style={[
+                styles.messageText,
+                isMyMessage ? styles.myMessageText : styles.theirMessageText,
+              ]}
+            >
+              {item.content}
+            </Text>
+          )}
         </View>
       </View>
     );
@@ -213,6 +295,46 @@ const ConversationScreen: React.FC<ConversationScreenProps> = ({ route, navigati
           <Text style={styles.sendIcon}>📤</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={gifModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setGifModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Send GIF</Text>
+            <Text style={styles.modalSubtitle}>Enter GIF URL from Giphy or Tenor:</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="https://media.giphy.com/media/..."
+              placeholderTextColor="#666"
+              value={gifUrl}
+              onChangeText={setGifUrl}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setGifModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSend]}
+                onPress={handleGifSubmit}
+                disabled={!gifUrl.trim()}
+              >
+                <Text style={[styles.modalButtonText, !gifUrl.trim() && styles.modalButtonTextDisabled]}>
+                  Send
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -272,6 +394,12 @@ const styles = StyleSheet.create({
   },
   theirMessageText: {
     color: '#fff',
+  },
+  messageMedia: {
+    width: 200,
+    height: 200,
+    borderRadius: 12,
+    marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -334,6 +462,65 @@ const styles = StyleSheet.create({
   },
   sendIcon: {
     fontSize: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    color: '#999',
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  modalInput: {
+    backgroundColor: '#000',
+    borderRadius: 8,
+    padding: 12,
+    color: '#fff',
+    fontSize: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#333',
+  },
+  modalButtonSend: {
+    backgroundColor: '#00FF00',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalButtonTextDisabled: {
+    opacity: 0.5,
   },
 });
 

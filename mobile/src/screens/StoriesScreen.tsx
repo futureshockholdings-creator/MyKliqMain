@@ -58,7 +58,7 @@ const StoriesScreen: React.FC<StoriesScreenProps> = ({ navigation }) => {
         setLoading(true);
         // Upload story directly
         const formData = new FormData();
-        formData.append('file', {
+        formData.append('media', {
           uri: result.assets[0].uri,
           type: 'image/jpeg',
           name: 'story.jpg',

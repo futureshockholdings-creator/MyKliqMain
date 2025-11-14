@@ -203,6 +203,33 @@ class ApiService {
     });
   }
 
+  async sendMediaMessage(friendId: string, formData: FormData, mediaType: string): Promise<any> {
+    const token = await this.getAuthToken();
+    formData.append('mediaType', mediaType);
+    
+    const response = await fetch(`${API_BASE_URL}/mobile/messages/${friendId}/media`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to send media');
+    }
+    
+    return response.json();
+  }
+
+  async sendGifMessage(friendId: string, gifUrl: string): Promise<any> {
+    return this.makeRequest(`/mobile/messages/${friendId}/gif`, {
+      method: 'POST',
+      body: JSON.stringify({ gifUrl }),
+    });
+  }
+
   // Kliq Koin & Streaks
   async getStreakData(): Promise<any> {
     return this.makeRequest('/mobile/streak');
