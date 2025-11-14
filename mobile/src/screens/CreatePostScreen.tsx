@@ -174,6 +174,9 @@ export default function CreatePostScreen({ navigation }: CreatePostScreenProps) 
               multiline
               textAlignVertical="top"
               data-testid="input-post-content"
+              accessible={true}
+              accessibilityLabel="Post content"
+              accessibilityHint="Write what you want to share with your kliq"
             />
 
             {mediaUri && (
@@ -186,6 +189,10 @@ export default function CreatePostScreen({ navigation }: CreatePostScreenProps) 
                 <TouchableOpacity
                   className="absolute top-2 right-2 bg-black/70 rounded-full p-2"
                   onPress={() => setMediaUri(null)}
+                  accessible={true}
+                  accessibilityLabel="Remove photo"
+                  accessibilityHint="Removes the attached photo from your post"
+                  accessibilityRole="button"
                 >
                   <Text className="text-white text-lg">✕</Text>
                 </TouchableOpacity>
@@ -202,7 +209,13 @@ export default function CreatePostScreen({ navigation }: CreatePostScreenProps) 
                     {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
                   </Text>
                 </View>
-                <TouchableOpacity onPress={() => setLocation(null)}>
+                <TouchableOpacity 
+                  onPress={() => setLocation(null)}
+                  accessible={true}
+                  accessibilityLabel="Remove location"
+                  accessibilityHint="Removes the location tag from your post"
+                  accessibilityRole="button"
+                >
                   <Text className="text-muted-foreground text-lg">✕</Text>
                 </TouchableOpacity>
               </View>
@@ -220,6 +233,11 @@ export default function CreatePostScreen({ navigation }: CreatePostScreenProps) 
                 onPress={handleTakePhoto}
                 disabled={createPostMutation.isPending}
                 data-testid="button-take-photo"
+                accessible={true}
+                accessibilityLabel="Take photo with camera"
+                accessibilityHint="Opens camera to take a photo for your post"
+                accessibilityRole="button"
+                accessibilityState={{ disabled: createPostMutation.isPending }}
               >
                 <Text className="text-3xl mb-2">📷</Text>
                 <Text className="text-foreground text-sm font-medium">Camera</Text>
@@ -230,6 +248,11 @@ export default function CreatePostScreen({ navigation }: CreatePostScreenProps) 
                 onPress={handlePickImage}
                 disabled={createPostMutation.isPending}
                 data-testid="button-pick-image"
+                accessible={true}
+                accessibilityLabel="Choose photo from gallery"
+                accessibilityHint="Opens photo library to select an image"
+                accessibilityRole="button"
+                accessibilityState={{ disabled: createPostMutation.isPending }}
               >
                 <Text className="text-3xl mb-2">🖼️</Text>
                 <Text className="text-foreground text-sm font-medium">Gallery</Text>
@@ -240,6 +263,11 @@ export default function CreatePostScreen({ navigation }: CreatePostScreenProps) 
                 onPress={handleAddLocation}
                 disabled={createPostMutation.isPending}
                 data-testid="button-add-location"
+                accessible={true}
+                accessibilityLabel="Add location"
+                accessibilityHint="Tags your current location to the post"
+                accessibilityRole="button"
+                accessibilityState={{ disabled: createPostMutation.isPending }}
               >
                 <Text className="text-3xl mb-2">📍</Text>
                 <Text className="text-foreground text-sm font-medium">Location</Text>
@@ -248,6 +276,11 @@ export default function CreatePostScreen({ navigation }: CreatePostScreenProps) 
               <TouchableOpacity
                 className="bg-card border border-border rounded-lg p-4 flex-1 min-w-[45%] items-center opacity-50"
                 disabled
+                accessible={true}
+                accessibilityLabel="Poll (coming soon)"
+                accessibilityHint="Poll feature is not yet available"
+                accessibilityRole="button"
+                accessibilityState={{ disabled: true }}
               >
                 <Text className="text-3xl mb-2">📊</Text>
                 <Text className="text-foreground text-sm font-medium">Poll</Text>
@@ -262,6 +295,12 @@ export default function CreatePostScreen({ navigation }: CreatePostScreenProps) 
             disabled={createPostMutation.isPending || (!content.trim() && !mediaUri)}
             size="lg"
             data-testid="button-submit-post"
+            accessibilityLabel="Publish post"
+            accessibilityHint={(!content.trim() && !mediaUri) ? "Add content or photo first" : "Shares your post with your kliq"}
+            accessibilityState={{ 
+              disabled: createPostMutation.isPending || (!content.trim() && !mediaUri),
+              busy: createPostMutation.isPending
+            }}
           />
           
           {createPostMutation.isPending && (

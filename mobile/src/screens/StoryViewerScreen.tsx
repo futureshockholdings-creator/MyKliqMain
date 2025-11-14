@@ -244,7 +244,12 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
       <StatusBar hidden />
 
       {/* Progress bars */}
-      <View className="absolute top-0 left-0 right-0 flex-row px-2 pt-12 z-10 gap-1">
+      <View 
+        className="absolute top-0 left-0 right-0 flex-row px-2 pt-12 z-10 gap-1"
+        accessible={true}
+        accessibilityLabel={`Story ${currentStoryIndex + 1} of ${totalStories}`}
+        accessibilityRole="progressbar"
+      >
         {currentGroup.stories.map((story, index) => {
           const progressAnim = getProgressAnim(currentGroupIndex, index, currentGroup.stories);
           return (
@@ -270,9 +275,15 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
             <Image
               source={{ uri: currentGroup.profileImageUrl }}
               className="w-10 h-10 rounded-full mr-3"
+              accessible={true}
+              accessibilityLabel={`${currentGroup.firstName}'s profile picture`}
             />
           ) : (
-            <View className="w-10 h-10 rounded-full bg-primary items-center justify-center mr-3">
+            <View 
+              className="w-10 h-10 rounded-full bg-primary items-center justify-center mr-3"
+              accessible={true}
+              accessibilityLabel={`${currentGroup.firstName}'s profile avatar`}
+            >
               <Text className="text-primary-foreground font-bold">
                 {currentGroup.firstName[0]}{currentGroup.lastName[0]}
               </Text>
@@ -295,6 +306,10 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
           onPress={() => navigation.goBack()}
           className="p-2"
           data-testid="button-close-story"
+          accessible={true}
+          accessibilityLabel="Close story viewer"
+          accessibilityHint="Returns to the home feed"
+          accessibilityRole="button"
         >
           <Text className="text-white text-2xl">✕</Text>
         </TouchableOpacity>
@@ -304,6 +319,9 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
       <TouchableWithoutFeedback
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
+        accessible={true}
+        accessibilityLabel={`Story by ${currentGroup.firstName} ${currentGroup.lastName}`}
+        accessibilityHint="Tap left side to go back, tap right side to go forward, long press to pause"
       >
         <View className="flex-1" data-testid="story-content-area">
         {currentStory.mediaType === 'video' ? (

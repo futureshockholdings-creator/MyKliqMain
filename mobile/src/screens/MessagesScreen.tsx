@@ -52,10 +52,20 @@ export default function MessagesScreen({ navigation }: MessagesScreenProps) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const renderConversation = ({ item }: { item: Conversation }) => (
+  const renderConversation = ({ item }: { item: Conversation }) => {
+    const unreadText = item.unreadCount > 0 
+      ? `, ${item.unreadCount} unread ${item.unreadCount === 1 ? 'message' : 'messages'}` 
+      : '';
+    const lastMessagePreview = item.lastMessage.substring(0, 50);
+    
+    return (
     <TouchableOpacity
       onPress={() => handleOpenConversation(item)}
       data-testid={`conversation-${item.friendId}`}
+      accessible={true}
+      accessibilityLabel={`Conversation with ${item.friendName}`}
+      accessibilityHint={`Last message: ${lastMessagePreview}, ${formatTime(item.lastMessageTime)}${unreadText}`}
+      accessibilityRole="button"
     >
       <Card className="flex-row items-center p-4 mb-2">
         <View className="relative mr-3">
@@ -63,9 +73,15 @@ export default function MessagesScreen({ navigation }: MessagesScreenProps) {
             <Image 
               source={{ uri: item.friendAvatar }} 
               className="w-14 h-14 rounded-full"
+              accessible={true}
+              accessibilityLabel={`${item.friendName}'s profile picture`}
             />
           ) : (
-            <View className="w-14 h-14 rounded-full bg-primary items-center justify-center">
+            <View 
+              className="w-14 h-14 rounded-full bg-primary items-center justify-center"
+              accessible={true}
+              accessibilityLabel={`${item.friendName}'s profile avatar`}
+            >
               <Text className="text-primary-foreground text-lg font-bold">
                 {item.friendName.split(' ').map(n => n[0]).join('')}
               </Text>
@@ -99,6 +115,7 @@ export default function MessagesScreen({ navigation }: MessagesScreenProps) {
       </Card>
     </TouchableOpacity>
   );
+  };
 
   if (isLoading) {
     return (
@@ -141,6 +158,8 @@ export default function MessagesScreen({ navigation }: MessagesScreenProps) {
           title="Go to Friends"
           onPress={() => navigation.navigate('Friends')}
           data-testid="button-go-to-friends"
+          accessibilityLabel="Go to Friends list"
+          accessibilityHint="Navigate to your friends list to start a conversation"
         />
       </View>
     );

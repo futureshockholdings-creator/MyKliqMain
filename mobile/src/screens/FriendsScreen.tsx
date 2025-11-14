@@ -69,11 +69,19 @@ export default function FriendsScreen() {
     }
   };
 
-  const renderFriend = ({ item }: { item: FriendData }) => (
+  const renderFriend = ({ item }: { item: FriendData }) => {
+    const friendName = `${item.firstName || 'Unknown'} ${item.lastName || ''}`.trim();
+    const tierText = item.tier ? `, ${getTierLabel(item.tier)} tier` : '';
+    
+    return (
     <TouchableOpacity
       className="mx-4 mb-3 bg-card rounded-xl p-4 border border-border flex-row items-center"
       onPress={() => navigation.navigate('ConversationScreen', { friendId: item.id, friendName: `${item.firstName} ${item.lastName}` })}
       data-testid={`friend-card-${item.id}`}
+      accessible={true}
+      accessibilityLabel={`${friendName}, ranked number ${item.ranking}${tierText}`}
+      accessibilityHint="Double tap to open conversation"
+      accessibilityRole="button"
     >
       {/* Ranking */}
       <View className="items-center mr-4 min-w-[40px]">
@@ -85,11 +93,19 @@ export default function FriendsScreen() {
 
       {/* Avatar */}
       {item.profileImageUrl ? (
-        <View className="w-12 h-12 rounded-full bg-muted items-center justify-center mr-4">
+        <View 
+          className="w-12 h-12 rounded-full bg-muted items-center justify-center mr-4"
+          accessible={true}
+          accessibilityLabel={`${friendName}'s profile picture`}
+        >
           <Text className="text-foreground text-xs">📷</Text>
         </View>
       ) : (
-        <View className="w-12 h-12 rounded-full bg-primary items-center justify-center mr-4">
+        <View 
+          className="w-12 h-12 rounded-full bg-primary items-center justify-center mr-4"
+          accessible={true}
+          accessibilityLabel={`${friendName}'s profile avatar`}
+        >
           <Text className="text-primary-foreground font-bold text-sm">
             {item.firstName?.[0] || 'U'}{item.lastName?.[0] || ''}
           </Text>
@@ -118,11 +134,16 @@ export default function FriendsScreen() {
         className="w-10 h-10 rounded-full bg-muted items-center justify-center"
         onPress={() => navigation.navigate('ConversationScreen', { friendId: item.id, friendName: `${item.firstName} ${item.lastName}` })}
         data-testid={`button-message-${item.id}`}
+        accessible={true}
+        accessibilityLabel={`Message ${friendName}`}
+        accessibilityHint="Opens conversation"
+        accessibilityRole="button"
       >
         <Text className="text-lg">💬</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
+  };
 
   const renderHeader = () => (
     <View className="px-4 pt-4 pb-2">
@@ -142,6 +163,9 @@ export default function FriendsScreen() {
         value={searchQuery}
         onChangeText={setSearchQuery}
         data-testid="input-search-friends"
+        accessible={true}
+        accessibilityLabel="Search friends"
+        accessibilityHint="Type to filter your friends list by name"
       />
 
       {/* Tier Filters */}
@@ -156,6 +180,10 @@ export default function FriendsScreen() {
             }`}
             onPress={() => setSelectedTier(tier)}
             data-testid={`button-tier-${tier}`}
+            accessible={true}
+            accessibilityLabel={`Filter by ${tier === 'all' ? 'all friends' : getTierLabel(tier)}`}
+            accessibilityRole="button"
+            accessibilityState={{ selected: selectedTier === tier }}
           >
             <Text
               className={`text-center text-sm font-semibold ${

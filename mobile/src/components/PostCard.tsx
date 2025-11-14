@@ -21,6 +21,9 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
+  const authorName = `${post.author?.firstName || 'Unknown'} ${post.author?.lastName || ''}`.trim();
+  const timeAgo = formatTimeAgo(post.createdAt);
+
   return (
     <Card className="mx-4 mb-4">
       {/* Header */}
@@ -29,9 +32,15 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
           <Image 
             source={{ uri: post.author.profileImageUrl }} 
             className="w-10 h-10 rounded-full mr-3"
+            accessible={true}
+            accessibilityLabel={`${authorName}'s profile picture`}
           />
         ) : (
-          <View className="w-10 h-10 rounded-full bg-primary items-center justify-center mr-3">
+          <View 
+            className="w-10 h-10 rounded-full bg-primary items-center justify-center mr-3"
+            accessible={true}
+            accessibilityLabel={`${authorName}'s profile avatar`}
+          >
             <Text className="text-primary-foreground font-bold text-sm">
               {post.author?.firstName?.[0] || 'U'}
               {post.author?.lastName?.[0] || ''}
@@ -40,10 +49,10 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
         )}
         <View className="flex-1">
           <Text className="text-foreground font-semibold text-base">
-            {post.author?.firstName || 'Unknown'} {post.author?.lastName || ''}
+            {authorName}
           </Text>
           <Text className="text-muted-foreground text-xs">
-            {formatTimeAgo(post.createdAt)}
+            {timeAgo}
           </Text>
         </View>
       </View>
@@ -61,6 +70,8 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
           source={{ uri: post.mediaUrl }} 
           className="w-full h-52 rounded-lg mb-3"
           resizeMode="cover"
+          accessible={true}
+          accessibilityLabel={`Photo posted by ${authorName}`}
         />
       )}
 
@@ -96,6 +107,11 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
           className="flex-row items-center p-2"
           onPress={onLike}
           data-testid={`button-like-${post.id}`}
+          accessible={true}
+          accessibilityLabel={post.isLiked ? 'Unlike this post' : 'Like this post'}
+          accessibilityHint={`Currently has ${post.likeCount || 0} ${post.likeCount === 1 ? 'like' : 'likes'}`}
+          accessibilityRole="button"
+          accessibilityState={{ selected: post.isLiked }}
         >
           <Text className="text-lg mr-2">
             {post.isLiked ? '❤️' : '🤍'}
@@ -109,6 +125,10 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
           className="flex-row items-center p-2"
           onPress={onComment}
           data-testid={`button-comment-${post.id}`}
+          accessible={true}
+          accessibilityLabel="View comments"
+          accessibilityHint={`${post.commentCount || 0} ${post.commentCount === 1 ? 'comment' : 'comments'} on this post`}
+          accessibilityRole="button"
         >
           <Text className="text-lg mr-2">💬</Text>
           <Text className="text-muted-foreground">
@@ -120,6 +140,10 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
           className="flex-row items-center p-2"
           onPress={onShare}
           data-testid={`button-share-${post.id}`}
+          accessible={true}
+          accessibilityLabel="Share post"
+          accessibilityHint="Share this post within your kliq"
+          accessibilityRole="button"
         >
           <Text className="text-lg mr-2">📤</Text>
           <Text className="text-muted-foreground">Share</Text>

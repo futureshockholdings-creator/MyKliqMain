@@ -144,6 +144,10 @@ export default function ConversationScreen({ route, navigation }: ConversationSc
     const prevMessage = index > 0 ? messages[index - 1] : null;
     const showTimestamp = !prevMessage || 
       new Date(item.createdAt).getTime() - new Date(prevMessage.createdAt).getTime() > 300000;
+    
+    const senderLabel = isMyMessage ? 'You' : friendName;
+    const contentText = item.content || (item.mediaUrl ? 'image' : '');
+    const accessibilityLabel = `Message from ${senderLabel}: ${contentText}`;
 
     return (
       <View>
@@ -158,12 +162,17 @@ export default function ConversationScreen({ route, navigation }: ConversationSc
               ? 'self-end bg-primary rounded-br' 
               : 'self-start bg-card rounded-bl'
           }`}
+          accessible={true}
+          accessibilityLabel={accessibilityLabel}
+          accessibilityHint={`Sent at ${formatTime(item.createdAt)}`}
         >
           {item.mediaUrl && (
             <Image 
               source={{ uri: item.mediaUrl }}
               className="w-48 h-48 rounded-lg mb-2"
               resizeMode={item.mediaType === 'gif' ? 'contain' : 'cover'}
+              accessible={true}
+              accessibilityLabel={`${item.mediaType === 'gif' ? 'GIF' : 'Photo'} from ${senderLabel}`}
             />
           )}
           {item.content && (
@@ -233,6 +242,11 @@ export default function ConversationScreen({ route, navigation }: ConversationSc
           onPress={handleAttachment}
           disabled={sendTextMutation.isPending}
           data-testid="button-attach-media"
+          accessible={true}
+          accessibilityLabel="Attach photo"
+          accessibilityHint="Opens photo library to select an image"
+          accessibilityRole="button"
+          accessibilityState={{ disabled: sendTextMutation.isPending }}
         >
           <Text className="text-2xl">📎</Text>
         </TouchableOpacity>
@@ -242,6 +256,11 @@ export default function ConversationScreen({ route, navigation }: ConversationSc
           onPress={handleGif}
           disabled={sendTextMutation.isPending}
           data-testid="button-gif"
+          accessible={true}
+          accessibilityLabel="Send GIF"
+          accessibilityHint="Opens GIF URL input"
+          accessibilityRole="button"
+          accessibilityState={{ disabled: sendTextMutation.isPending }}
         >
           <Text className="text-primary text-xs font-bold">GIF</Text>
         </TouchableOpacity>
@@ -255,6 +274,9 @@ export default function ConversationScreen({ route, navigation }: ConversationSc
           multiline
           maxLength={1000}
           data-testid="input-message"
+          accessible={true}
+          accessibilityLabel="Message input"
+          accessibilityHint="Type your message here"
         />
         
         <TouchableOpacity
@@ -262,6 +284,11 @@ export default function ConversationScreen({ route, navigation }: ConversationSc
           onPress={handleSend}
           disabled={!inputText.trim() || sendTextMutation.isPending}
           data-testid="button-send-message"
+          accessible={true}
+          accessibilityLabel="Send message"
+          accessibilityHint={inputText.trim() ? "Sends your message" : "Type a message first"}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !inputText.trim() || sendTextMutation.isPending }}
         >
           <Text className="text-2xl">📤</Text>
         </TouchableOpacity>
@@ -287,11 +314,18 @@ export default function ConversationScreen({ route, navigation }: ConversationSc
               onChangeText={setGifUrl}
               autoCapitalize="none"
               autoCorrect={false}
+              accessible={true}
+              accessibilityLabel="GIF URL input"
+              accessibilityHint="Paste GIF URL from Giphy or Tenor"
             />
             <View className="flex-row gap-3">
               <TouchableOpacity
                 className="flex-1 bg-muted py-3 rounded-lg"
                 onPress={() => setGifModalVisible(false)}
+                accessible={true}
+                accessibilityLabel="Cancel"
+                accessibilityHint="Closes GIF modal"
+                accessibilityRole="button"
               >
                 <Text className="text-foreground text-center font-semibold">Cancel</Text>
               </TouchableOpacity>
@@ -299,6 +333,11 @@ export default function ConversationScreen({ route, navigation }: ConversationSc
                 className={`flex-1 bg-primary py-3 rounded-lg ${!gifUrl.trim() ? 'opacity-50' : ''}`}
                 onPress={handleGifSubmit}
                 disabled={!gifUrl.trim()}
+                accessible={true}
+                accessibilityLabel="Send GIF"
+                accessibilityHint={gifUrl.trim() ? "Sends the GIF" : "Enter a GIF URL first"}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !gifUrl.trim() }}
               >
                 <Text className="text-primary-foreground text-center font-semibold">Send</Text>
               </TouchableOpacity>

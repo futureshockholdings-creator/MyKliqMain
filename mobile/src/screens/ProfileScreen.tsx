@@ -128,9 +128,15 @@ export default function ProfileScreen() {
               source={{ uri: profile.profileImageUrl }} 
               className="w-24 h-24 rounded-full"
               data-testid="profile-avatar"
+              accessible={true}
+              accessibilityLabel="Your profile picture"
             />
           ) : (
-            <View className="w-24 h-24 rounded-full bg-primary items-center justify-center">
+            <View 
+              className="w-24 h-24 rounded-full bg-primary items-center justify-center"
+              accessible={true}
+              accessibilityLabel={`Your profile avatar showing initials ${profile?.firstName?.[0]}${profile?.lastName?.[0]}`}
+            >
               <Text className="text-4xl text-primary-foreground font-bold">
                 {profile?.firstName?.[0]}{profile?.lastName?.[0]}
               </Text>
@@ -170,7 +176,11 @@ export default function ProfileScreen() {
             <Text className="text-destructive text-sm">Failed to load stats</Text>
           </View>
         ) : (
-          <View className="bg-card rounded-xl p-4 border border-border">
+          <View 
+            className="bg-card rounded-xl p-4 border border-border"
+            accessible={true}
+            accessibilityLabel={`Your stats: ${postsCount} posts, ${friendsCount} friends, ${koinData?.balance?.toFixed(2) || '0.00'} kliq koins`}
+          >
             <View className="flex-row justify-around mb-4">
               <View className="items-center" data-testid="stat-posts">
                 <Text className="text-2xl font-bold text-foreground">
@@ -311,6 +321,11 @@ export default function ProfileScreen() {
                   }
                 }}
                 className="items-center mr-3 mb-3"
+                accessible={true}
+                accessibilityLabel={`${preset.name} theme`}
+                accessibilityHint={`Select ${preset.name} color theme for the app`}
+                accessibilityRole="button"
+                accessibilityState={{ selected: theme.primaryColor === preset.primary }}
               >
                 <View 
                   className="w-16 h-16 rounded-xl mb-1.5 border-2"
@@ -367,6 +382,10 @@ export default function ProfileScreen() {
             );
           }}
           data-testid="button-edit-profile"
+          accessible={true}
+          accessibilityLabel="Edit Profile"
+          accessibilityHint="Update your bio, interests, and hobbies"
+          accessibilityRole="button"
         >
           <View className="flex-row items-center">
             <Edit3 color="#666" size={20} />
@@ -401,6 +420,10 @@ export default function ProfileScreen() {
             );
           }}
           data-testid="button-settings"
+          accessible={true}
+          accessibilityLabel="Settings"
+          accessibilityHint="Manage privacy settings and account preferences"
+          accessibilityRole="button"
         >
           <View className="flex-row items-center">
             <Settings color="#666" size={20} />
@@ -419,6 +442,10 @@ export default function ProfileScreen() {
             );
           }}
           data-testid="button-help"
+          accessible={true}
+          accessibilityLabel="Help and Support"
+          accessibilityHint="Access help center and contact support"
+          accessibilityRole="button"
         >
           <View className="flex-row items-center">
             <HelpCircle color="#666" size={20} />

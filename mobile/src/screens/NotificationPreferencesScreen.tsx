@@ -77,6 +77,10 @@ export default function NotificationPreferencesScreen() {
           onPress={() => navigation.goBack()}
           className="p-2"
           data-testid="button-back"
+          accessible={true}
+          accessibilityLabel="Go back"
+          accessibilityHint="Returns to profile screen"
+          accessibilityRole="button"
         >
           <ChevronLeft size={24} color="#8B5CF6" />
         </TouchableOpacity>
@@ -106,6 +110,10 @@ export default function NotificationPreferencesScreen() {
                 trackColor={{ false: '#374151', true: '#8B5CF6' }}
                 thumbColor="#FFFFFF"
                 data-testid="toggle-push-enabled"
+                accessible={true}
+                accessibilityLabel="Push notifications"
+                accessibilityHint={`Currently ${preferences.pushEnabled ? 'enabled' : 'disabled'}. Toggle to ${preferences.pushEnabled ? 'disable' : 'enable'} all push notifications`}
+                accessibilityRole="switch"
               />
             </View>
           </View>
@@ -215,6 +223,14 @@ export default function NotificationPreferencesScreen() {
                 onPress={() => handleToggle('deliveryPreference', 'immediate' as any)}
                 disabled={!preferences.pushEnabled}
                 data-testid="delivery-immediate"
+                accessible={true}
+                accessibilityLabel="Immediate delivery"
+                accessibilityHint="Receive notifications as they happen"
+                accessibilityRole="button"
+                accessibilityState={{ 
+                  selected: preferences.deliveryPreference === 'immediate',
+                  disabled: !preferences.pushEnabled
+                }}
               >
                 <Text className={`font-medium ${preferences.deliveryPreference === 'immediate' ? 'text-primary' : 'text-foreground'}`}>
                   Immediate
@@ -229,6 +245,14 @@ export default function NotificationPreferencesScreen() {
                 onPress={() => handleToggle('deliveryPreference', 'hourly_digest' as any)}
                 disabled={!preferences.pushEnabled}
                 data-testid="delivery-hourly"
+                accessible={true}
+                accessibilityLabel="Hourly digest delivery"
+                accessibilityHint="Receive a summary every hour"
+                accessibilityRole="button"
+                accessibilityState={{ 
+                  selected: preferences.deliveryPreference === 'hourly_digest',
+                  disabled: !preferences.pushEnabled
+                }}
               >
                 <Text className={`font-medium ${preferences.deliveryPreference === 'hourly_digest' ? 'text-primary' : 'text-foreground'}`}>
                   Hourly Digest
@@ -243,6 +267,14 @@ export default function NotificationPreferencesScreen() {
                 onPress={() => handleToggle('deliveryPreference', 'daily_digest' as any)}
                 disabled={!preferences.pushEnabled}
                 data-testid="delivery-daily"
+                accessible={true}
+                accessibilityLabel="Daily digest delivery"
+                accessibilityHint="Receive a summary once per day"
+                accessibilityRole="button"
+                accessibilityState={{ 
+                  selected: preferences.deliveryPreference === 'daily_digest',
+                  disabled: !preferences.pushEnabled
+                }}
               >
                 <Text className={`font-medium ${preferences.deliveryPreference === 'daily_digest' ? 'text-primary' : 'text-foreground'}`}>
                   Daily Digest
@@ -295,6 +327,11 @@ function NotificationToggle({
         trackColor={{ false: '#374151', true: '#8B5CF6' }}
         thumbColor="#FFFFFF"
         data-testid={testID}
+        accessible={true}
+        accessibilityLabel={`${label} notifications`}
+        accessibilityHint={`${description}. Currently ${value ? 'enabled' : 'disabled'}`}
+        accessibilityRole="switch"
+        accessibilityState={{ disabled }}
       />
     </View>
   );
