@@ -46,9 +46,10 @@ export class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const token = await this.getAuthToken();
+    const isFormData = options.body instanceof FormData;
     
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      ...(!isFormData && { 'Content-Type': 'application/json' }),
       ...options.headers,
     };
 
@@ -158,23 +159,34 @@ export class ApiClient {
 
   // Messages
   async getConversations() {
-    return this.request('/api/mobile/conversations');
+    return this.request('/api/mobile/messages/conversations');
   }
 
-  async getMessages(conversationId: string, cursor?: string) {
+  async getMessages(friendId: string, cursor?: string) {
     const params = new URLSearchParams({ limit: '50' });
     if (cursor) params.append('cursor', cursor);
-    return this.request(`/api/mobile/messages/${conversationId}?${params}`);
+    return this.request(`/api/mobile/messages/${friendId}?${params}`);
   }
 
-  async sendMessage(recipientId: string, data: {
-    content?: string;
-    mediaUrl?: string;
-    gifUrl?: string;
-  }) {
-    return this.request('/api/mobile/messages', {
+  async sendMessage(friendId: string, content: string) {
+    return this.request(`/api/mobile/messages/${friendId}`, {
       method: 'POST',
-      body: JSON.stringify({ recipientId, ...data }),
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async sendMediaMessage(friendId: string, formData: FormData) {
+    return this.request(`/api/mobile/messages/${friendId}/media`, {
+      method: 'POST',
+      body: formData,
+      headers: {},
+    });
+  }
+
+  async sendGifMessage(friendId: string, gifUrl: string) {
+    return this.request(`/api/mobile/messages/${friendId}/gif`, {
+      method: 'POST',
+      body: JSON.stringify({ gifUrl }),
     });
   }
 
