@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = 'http://localhost:5000/api'; // Change to your deployed URL
+const SERVER_BASE_URL = 'http://localhost:5000'; // Server base for media URLs
 
 interface ApiResponse<T> {
   success?: boolean;
@@ -62,6 +63,26 @@ interface Friend {
 }
 
 class ApiService {
+  // Transform relative media URLs to absolute URLs
+  private transformMediaUrl(url: string | undefined): string | undefined {
+    if (!url) return url;
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url; // Already absolute
+    }
+    if (url.startsWith('/api/mobile/uploads/')) {
+      return `${SERVER_BASE_URL}${url}`;
+    }
+    return url; // External URLs (Giphy, Tenor)
+  }
+
+  // Transform message/story objects to use absolute media URLs
+  private transformMediaObject<T extends { mediaUrl?: string }>(obj: T): T {
+    return {
+      ...obj,
+      mediaUrl: this.transformMediaUrl(obj.mediaUrl),
+    };
+  }
+
   private async getAuthToken(): Promise<string | null> {
     try {
       return await AsyncStorage.getItem('auth_token');
@@ -166,7 +187,14 @@ class ApiService {
 
   // Stories
   async getStories(): Promise<any> {
-    return this.makeRequest('/mobile/stories');
+    const result = await this.makeRequest<any>('/mobile/stories');
+    if (result.storyGroups) {
+      result.storyGroups = result.storyGroups.map((group: any) => ({
+        ...group,
+        stories: group.stories?.map((story: any) => this.transformMediaObject(story)) || [],
+      }));
+    }
+    return result;
   }
 
   async createStory(formData: FormData): Promise<any> {
@@ -193,14 +221,19 @@ class ApiService {
   }
 
   async getMessages(friendId: string): Promise<any[]> {
-    return this.makeRequest(`/mobile/messages/${friendId}`);
+    const messages = await this.makeRequest<any[]>(`/mobile/messages/${friendId}`);
+    return messages.map(msg => this.transformMediaObject(msg));
   }
 
   async sendMessage(friendId: string, content: string): Promise<any> {
-    return this.makeRequest(`/mobile/messages/${friendId}`, {
+    const result = await this.makeRequest<any>(`/mobile/messages/${friendId}`, {
       method: 'POST',
       body: JSON.stringify({ content }),
     });
+    return {
+      ...result,
+      message: result.message ? this.transformMediaObject(result.message) : result.message,
+    };
   }
 
   async sendMediaMessage(friendId: string, formData: FormData, mediaType: string): Promise<any> {
@@ -220,14 +253,22 @@ class ApiService {
       throw new Error(errorData.message || 'Failed to send media');
     }
     
-    return response.json();
+    const result = await response.json();
+    return {
+      ...result,
+      message: result.message ? this.transformMediaObject(result.message) : result.message,
+    };
   }
 
   async sendGifMessage(friendId: string, gifUrl: string): Promise<any> {
-    return this.makeRequest(`/mobile/messages/${friendId}/gif`, {
+    const result = await this.makeRequest<any>(`/mobile/messages/${friendId}/gif`, {
       method: 'POST',
       body: JSON.stringify({ gifUrl }),
     });
+    return {
+      ...result,
+      message: result.message ? this.transformMediaObject(result.message) : result.message,
+    };
   }
 
   // Kliq Koin & Streaks
