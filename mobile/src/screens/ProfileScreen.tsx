@@ -5,7 +5,7 @@ import { useAuth } from '../providers/AuthProvider';
 import { useTheme } from '../providers/ThemeProvider';
 import { apiClient } from '../lib/apiClient';
 import { useNavigation } from '@react-navigation/native';
-import { Settings, Edit3, HelpCircle, LogOut, Award, Users, TrendingUp } from 'lucide-react-native';
+import { Settings, Edit3, HelpCircle, LogOut, Award, Users, TrendingUp, Bell } from 'lucide-react-native';
 
 interface ProfileData {
   id: string;
@@ -370,13 +370,25 @@ export default function ProfileScreen() {
           </View>
           <Text className="text-muted-foreground text-lg">✏️</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity 
+          className="flex-row justify-between items-center bg-card rounded-xl p-4 mb-3 border border-border"
+          onPress={() => navigation.navigate('NotificationPreferencesScreen')}
+          data-testid="button-notifications"
+        >
+          <View className="flex-row items-center">
+            <Bell color="#666" size={20} />
+            <Text className="text-foreground text-base ml-3">Notifications</Text>
+          </View>
+          <Text className="text-muted-foreground text-lg">🔔</Text>
+        </TouchableOpacity>
         
         <TouchableOpacity 
           className="flex-row justify-between items-center bg-card rounded-xl p-4 mb-3 border border-border"
           onPress={() => {
             Alert.alert(
               'Settings',
-              'Settings screen coming soon! This will include notification preferences, privacy settings, and more.',
+              'Settings screen coming soon! This will include privacy settings, account management, and more.',
               [{ text: 'OK' }]
             );
           }}

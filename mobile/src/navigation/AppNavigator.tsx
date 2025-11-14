@@ -16,6 +16,7 @@ import MessagesScreen from '../screens/MessagesScreen';
 import ConversationScreen from '../screens/ConversationScreen';
 import KliqKoinScreen from '../screens/KliqKoinScreen';
 import CommentsScreen from '../screens/CommentsScreen';
+import NotificationPreferencesScreen from '../screens/NotificationPreferencesScreen';
 
 // Providers
 import { useAuth } from '../providers/AuthProvider';
@@ -166,6 +167,13 @@ const RootStackNavigator = () => {
       <Stack.Screen
         name="CommentsScreen"
         component={CommentsScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="NotificationPreferencesScreen"
+        component={NotificationPreferencesScreen}
         options={{
           headerShown: false,
         }}
