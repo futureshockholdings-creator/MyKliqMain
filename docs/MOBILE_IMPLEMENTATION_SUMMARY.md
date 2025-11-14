@@ -152,6 +152,7 @@ GET    /api/mobile/sports/scores/live         - Get live scores for followed tea
 - Leverages existing web ESPN service
 - Multi-sport game fetching with error isolation (one sport failure won't break others)
 - Team logos and abbreviations included in responses
+
 #### ✅ Push Notifications (Complete - Simplified for MVP)
 **Mobile Endpoints Implemented:**
 ```
