@@ -101,6 +101,41 @@ export interface UpdateProfileRequest {
 }
 
 // ============================================================================
+// USER THEMES & CUSTOMIZATION
+// ============================================================================
+
+export interface UserThemeData {
+  id: string;
+  userId: string;
+  primaryColor: string;
+  secondaryColor: string;
+  fontFamily: string;
+  fontColor: string;
+  navBgColor: string;
+  navActiveColor: string;
+  borderStyle: string;
+  enableSparkles: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UpdateThemeRequest {
+  primaryColor?: string;
+  secondaryColor?: string;
+  fontFamily?: string;
+  fontColor?: string;
+  navBgColor?: string;
+  navActiveColor?: string;
+  borderStyle?: string;
+  enableSparkles?: boolean;
+}
+
+export interface ThemeResponse {
+  success: boolean;
+  theme: UserThemeData;
+}
+
+// ============================================================================
 // POSTS & FEED
 // ============================================================================
 

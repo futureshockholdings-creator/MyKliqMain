@@ -326,6 +326,27 @@ export class ApiClient {
   async checkUpdates(lastChecked: string) {
     return this.request(`/api/mobile/updates/check?lastChecked=${lastChecked}`);
   }
+
+  // User Theme
+  async getUserTheme() {
+    return this.request('/api/mobile/user/theme');
+  }
+
+  async updateUserTheme(theme: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    fontFamily?: string;
+    fontColor?: string;
+    navBgColor?: string;
+    navActiveColor?: string;
+    borderStyle?: string;
+    enableSparkles?: boolean;
+  }) {
+    return this.request('/api/mobile/user/theme', {
+      method: 'POST',
+      body: JSON.stringify(theme),
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

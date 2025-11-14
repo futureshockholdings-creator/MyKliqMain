@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../providers/AuthProvider';
+import { useTheme } from '../providers/ThemeProvider';
 import { apiClient } from '../lib/apiClient';
 import { useNavigation } from '@react-navigation/native';
 import { Settings, Edit3, HelpCircle, LogOut, Award, Users, TrendingUp } from 'lucide-react-native';
@@ -43,9 +44,9 @@ interface FriendData {
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
-  const [selectedTheme, setSelectedTheme] = React.useState('default');
 
   // Fetch profile data
   const { data: profileData, isLoading: profileLoading } = useQuery<ProfileData>({
@@ -287,30 +288,51 @@ export default function ProfileScreen() {
           <Text className="text-sm text-muted-foreground mb-3">Choose your theme</Text>
           
           <View className="flex-row flex-wrap">
-            {['Default', 'Dark', 'Light', 'Ocean', 'Forest', 'Sunset'].map((theme) => (
+            {[
+              { name: 'Purple', primary: '#8B5CF6', secondary: '#06B6D4' },
+              { name: 'Ocean', primary: '#0EA5E9', secondary: '#10B981' },
+              { name: 'Forest', primary: '#10B981', secondary: '#F59E0B' },
+              { name: 'Sunset', primary: '#F59E0B', secondary: '#EF4444' },
+              { name: 'Rose', primary: '#EC4899', secondary: '#8B5CF6' },
+              { name: 'Emerald', primary: '#059669', secondary: '#0EA5E9' },
+            ].map((preset) => (
               <TouchableOpacity
-                key={theme}
-                data-testid={`theme-${theme.toLowerCase()}`}
-                onPress={() => setSelectedTheme(theme.toLowerCase())}
-                className={`px-4 py-2 rounded-full mr-2 mb-2 ${
-                  selectedTheme === theme.toLowerCase() 
-                    ? 'bg-primary' 
-                    : 'bg-muted'
-                }`}
+                key={preset.name}
+                data-testid={`theme-${preset.name.toLowerCase()}`}
+                onPress={async () => {
+                  try {
+                    await setTheme({
+                      primaryColor: preset.primary,
+                      secondaryColor: preset.secondary,
+                    });
+                    Alert.alert('Theme Updated', `${preset.name} theme applied successfully!`);
+                  } catch (error) {
+                    Alert.alert('Error', 'Failed to update theme. Please try again.');
+                  }
+                }}
+                className="items-center mr-3 mb-3"
               >
-                <Text className={
-                  selectedTheme === theme.toLowerCase()
-                    ? 'text-primary-foreground text-sm font-medium'
-                    : 'text-foreground text-sm'
-                }>
-                  {theme}
+                <View 
+                  className="w-16 h-16 rounded-xl mb-1.5 border-2"
+                  style={{ 
+                    backgroundColor: preset.primary,
+                    borderColor: theme.primaryColor === preset.primary ? '#FFFFFF' : 'transparent'
+                  }}
+                >
+                  <View 
+                    className="absolute bottom-0 right-0 w-6 h-6 rounded-tl-xl rounded-br-lg"
+                    style={{ backgroundColor: preset.secondary }}
+                  />
+                </View>
+                <Text className={`text-xs ${theme.primaryColor === preset.primary ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                  {preset.name}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
           
-          <Text className="text-xs text-muted-foreground mt-3">
-            Note: Theme persistence coming in Phase 2
+          <Text className="text-xs text-muted-foreground mt-2">
+            ✨ Theme syncs across devices and persists offline
           </Text>
         </View>
       </View>

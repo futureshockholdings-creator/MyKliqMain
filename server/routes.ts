@@ -1413,6 +1413,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  /**
+   * GET /api/mobile/user/theme - Get user's theme preferences
+   */
+  app.get('/api/mobile/user/theme', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      let theme = await storage.getUserTheme(userId);
+      
+      // Return default theme if user has no saved theme
+      if (!theme) {
+        theme = {
+          id: '',
+          userId,
+          primaryColor: '#8B5CF6',
+          secondaryColor: '#06B6D4',
+          fontFamily: 'system',
+          fontColor: '#FFFFFF',
+          navBgColor: '#1F2937',
+          navActiveColor: '#8B5CF6',
+          borderStyle: 'rounded',
+          enableSparkles: true,
+        } as any;
+      }
+      
+      res.json(theme);
+    } catch (error) {
+      console.error('Mobile theme fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch theme' });
+    }
+  });
+
+  /**
+   * POST /api/mobile/user/theme - Update user's theme preferences
+   */
+  app.post('/api/mobile/user/theme', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      
+      // Parse and validate theme data
+      const themeData = insertUserThemeSchema.parse({ ...req.body, userId });
+      const theme = await storage.upsertUserTheme(themeData);
+      res.json({ success: true, theme });
+    } catch (error: any) {
+      console.error('Mobile theme update error:', error);
+      
+      // Handle Zod validation errors separately
+      if (error?.issues) {
+        return res.status(400).json({ 
+          message: 'Invalid theme data', 
+          errors: error.issues 
+        });
+      }
+      
+      res.status(500).json({ message: 'Failed to update theme' });
+    }
+  });
+
   // Mobile comment endpoints
   app.get('/api/mobile/posts/:postId/comments', verifyMobileToken, async (req, res) => {
     try {
