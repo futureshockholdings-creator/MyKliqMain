@@ -101,6 +101,14 @@ const ProfileScreen: React.FC = () => {
 
       {/* Actions */}
       <View style={styles.section}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.kliqKoinButton]}
+          onPress={() => navigation.navigate('KliqKoinScreen')}
+        >
+          <Text style={styles.actionText}>Kliq Koin & Streaks</Text>
+          <Text style={styles.actionIcon}>🪙</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.actionButton}>
           <Text style={styles.actionText}>Edit Profile</Text>
           <Text style={styles.actionIcon}>✏️</Text>
@@ -234,6 +242,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#333',
+  },
+  kliqKoinButton: {
+    borderColor: '#00FF00',
+    borderWidth: 2,
   },
   actionText: {
     color: '#fff',

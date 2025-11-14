@@ -10,6 +10,11 @@ import HomeScreen from '../screens/HomeScreen';
 import FriendsScreen from '../screens/FriendsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import CreatePostScreen from '../screens/CreatePostScreen';
+import StoriesScreen from '../screens/StoriesScreen';
+import StoryViewerScreen from '../screens/StoryViewerScreen';
+import MessagesScreen from '../screens/MessagesScreen';
+import ConversationScreen from '../screens/ConversationScreen';
+import KliqKoinScreen from '../screens/KliqKoinScreen';
 
 // Context
 import { useAuth } from '../contexts/AuthContext';
@@ -90,21 +95,11 @@ const MainTabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Stories"
-        component={() => (
-          <Text style={{ color: '#fff', textAlign: 'center', marginTop: 100 }}>
-            Stories feature coming soon! 📱
-          </Text>
-        )}
+        name="Messages"
+        component={MessagesScreen}
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="📖" />,
-          headerTitle: 'Stories',
-          headerStyle: {
-            backgroundColor: '#000',
-            borderBottomColor: '#333',
-            borderBottomWidth: 1,
-          },
-          headerTintColor: '#fff',
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="💬" />,
+          headerTitle: 'Messages',
         }}
       />
       <Tab.Screen
@@ -133,6 +128,38 @@ const RootStackNavigator = () => {
         options={{
           presentation: 'modal',
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="StoryViewerModal"
+        component={StoryViewerScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+          animationEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="ConversationScreen"
+        component={ConversationScreen}
+        options={{
+          headerStyle: {
+            backgroundColor: '#000',
+          },
+          headerTintColor: '#00FF00',
+          headerBackTitleVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="KliqKoinScreen"
+        component={KliqKoinScreen}
+        options={{
+          headerTitle: 'Kliq Koin & Streaks',
+          headerStyle: {
+            backgroundColor: '#000',
+          },
+          headerTintColor: '#00FF00',
+          headerBackTitleVisible: false,
         }}
       />
     </Stack.Navigator>

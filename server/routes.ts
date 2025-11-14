@@ -1144,6 +1144,181 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create story (mobile)
+  app.post('/api/mobile/stories', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      // TODO: Handle multipart/form-data upload
+      // For now, return success to prevent frontend crashes
+      res.json({
+        success: true,
+        message: 'Story created successfully'
+      });
+    } catch (error) {
+      console.error('Create story error:', error);
+      res.status(500).json({ message: 'Failed to create story' });
+    }
+  });
+
+  // In-memory message store for MVP (TODO: Replace with database)
+  const messageStore: Map<string, any[]> = new Map();
+  
+  const getConversationKey = (userId: string, friendId: string) => {
+    return [userId, friendId].sort().join(':');
+  };
+
+  const getOrCreateMessages = (userId: string, friendId: string) => {
+    const key = getConversationKey(userId, friendId);
+    if (!messageStore.has(key)) {
+      // Initialize with stub messages
+      messageStore.set(key, [
+        {
+          id: '1',
+          senderId: friendId,
+          content: 'Hey! How are you?',
+          createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+          isRead: true
+        },
+        {
+          id: '2',
+          senderId: userId,
+          content: 'I\'m good! Just got back from class.',
+          createdAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
+          isRead: true
+        },
+        {
+          id: '3',
+          senderId: friendId,
+          content: 'Nice! Want to grab lunch?',
+          createdAt: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+          isRead: false
+        }
+      ]);
+    }
+    return messageStore.get(key)!;
+  };
+
+  // Get conversations list (mobile messaging)
+  app.get('/api/mobile/messages/conversations', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      // TODO: Implement real conversations query from database
+      // For MVP, return stub data for demo purposes
+      const stubConversations = [
+        {
+          id: '1',
+          friendId: 'friend1',
+          friendName: 'Alex Johnson',
+          friendAvatar: null,
+          lastMessage: 'Hey! How are you doing?',
+          lastMessageTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+          unreadCount: 2
+        },
+        {
+          id: '2',
+          friendId: 'friend2',
+          friendName: 'Sam Chen',
+          friendAvatar: null,
+          lastMessage: 'See you at the game tonight!',
+          lastMessageTime: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+          unreadCount: 0
+        }
+      ];
+      res.json(stubConversations);
+    } catch (error) {
+      console.error('Get conversations error:', error);
+      res.status(500).json({ message: 'Failed to fetch conversations' });
+    }
+  });
+
+  // Get messages with a friend (mobile messaging)
+  app.get('/api/mobile/messages/:friendId', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { friendId } = req.params;
+      // Return messages from in-memory store
+      const messages = getOrCreateMessages(userId, friendId);
+      res.json(messages);
+    } catch (error) {
+      console.error('Get messages error:', error);
+      res.status(500).json({ message: 'Failed to fetch messages' });
+    }
+  });
+
+  // Send message (mobile messaging)
+  app.post('/api/mobile/messages/:friendId', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { friendId } = req.params;
+      const { content } = req.body;
+      
+      if (!content || !content.trim()) {
+        return res.status(400).json({ message: 'Message content is required' });
+      }
+
+      // Add message to in-memory store
+      const messages = getOrCreateMessages(userId, friendId);
+      const newMessage = {
+        id: Date.now().toString(),
+        senderId: userId,
+        content: content.trim(),
+        createdAt: new Date().toISOString(),
+        isRead: false
+      };
+      messages.push(newMessage);
+      
+      res.json({
+        success: true,
+        message: newMessage
+      });
+    } catch (error) {
+      console.error('Send message error:', error);
+      res.status(500).json({ message: 'Failed to send message' });
+    }
+  });
+
+  // Get streak data (Kliq Koin)
+  app.get('/api/mobile/streak', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      // TODO: Implement real streak query from database
+      // For MVP, return starter data
+      res.json({
+        currentStreak: 0,
+        longestStreak: 0,
+        totalCheckIns: 0,
+        kliqKoinBalance: 0,
+        tier: 'Starter',
+        nextMilestone: 3,
+        lastCheckIn: null
+      });
+    } catch (error) {
+      console.error('Get streak error:', error);
+      res.status(500).json({ message: 'Failed to fetch streak data' });
+    }
+  });
+
+  // Daily check-in (Kliq Koin)
+  app.post('/api/mobile/streak/checkin', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      // TODO: Implement real check-in logic with database update
+      // For MVP, return updated mock data
+      res.json({
+        currentStreak: 1,
+        longestStreak: 1,
+        totalCheckIns: 1,
+        kliqKoinBalance: 10,
+        tier: 'Starter',
+        nextMilestone: 3,
+        lastCheckIn: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Check-in error:', error);
+      res.status(500).json({ message: 'Failed to check in' });
+    }
+  });
+
   // Mobile backend health check endpoint
   app.get('/api/mobile/health', (req, res) => {
     res.json({

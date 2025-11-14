@@ -169,6 +169,51 @@ class ApiService {
     return this.makeRequest('/mobile/stories');
   }
 
+  async createStory(formData: FormData): Promise<any> {
+    const token = await this.getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/mobile/stories`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create story');
+    }
+    
+    return response.json();
+  }
+
+  // Messaging
+  async getConversations(): Promise<any[]> {
+    return this.makeRequest('/mobile/messages/conversations');
+  }
+
+  async getMessages(friendId: string): Promise<any[]> {
+    return this.makeRequest(`/mobile/messages/${friendId}`);
+  }
+
+  async sendMessage(friendId: string, content: string): Promise<any> {
+    return this.makeRequest(`/mobile/messages/${friendId}`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  // Kliq Koin & Streaks
+  async getStreakData(): Promise<any> {
+    return this.makeRequest('/mobile/streak');
+  }
+
+  async checkIn(): Promise<any> {
+    return this.makeRequest('/mobile/streak/checkin', {
+      method: 'POST',
+    });
+  }
+
   // Push Notifications
   async registerPushToken(pushToken: string, platform: string): Promise<any> {
     return this.makeRequest('/mobile/notifications/register', {
