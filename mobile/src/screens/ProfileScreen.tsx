@@ -1,17 +1,90 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Image,
-  Alert,
-} from 'react-native';
-import { useAuth } from '../contexts/AuthContext';
+import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../providers/AuthProvider';
+import { apiClient } from '../lib/apiClient';
+import { useNavigation } from '@react-navigation/native';
+import { Settings, Edit3, HelpCircle, LogOut, Award, Users, TrendingUp } from 'lucide-react-native';
 
-const ProfileScreen: React.FC = () => {
+interface ProfileData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  email?: string;
+  bio?: string;
+  profileImageUrl?: string;
+  isAdmin: boolean;
+  interests?: string[];
+  hobbies?: string[];
+  kliqName?: string;
+}
+
+interface KliqKoinData {
+  balance: number;
+  totalEarned: number;
+  transactions: any[];
+}
+
+interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  tier: number;
+  tierName: string;
+  nextTierAt: number;
+}
+
+interface FriendData {
+  id: string;
+  friendId: string;
+  rank: number;
+  status: string;
+}
+
+export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
+  const [selectedTheme, setSelectedTheme] = React.useState('default');
+
+  // Fetch profile data
+  const { data: profileData, isLoading: profileLoading } = useQuery<ProfileData>({
+    queryKey: ['/api/mobile/user/profile'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/mobile/user/profile');
+      return response;
+    },
+  });
+
+  // Fetch Kliq Koin data
+  const { data: koinData } = useQuery<KliqKoinData>({
+    queryKey: ['/api/kliq-koins/wallet'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/kliq-koins/wallet');
+      return response;
+    },
+  });
+
+  // Fetch streak data
+  const { data: streakData } = useQuery<StreakData>({
+    queryKey: ['/api/kliq-koins/streak'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/kliq-koins/streak');
+      return response;
+    },
+  });
+
+  // Fetch friends list to get count
+  const { data: friendsData } = useQuery<FriendData[]>({
+    queryKey: ['/api/friends'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/friends');
+      return response;
+    },
+  });
+
+  const friendsCount = friendsData?.length || 0;
+  const postsCount = 0; // TODO Phase 2: Add mobile endpoint for user's post count
 
   const handleLogout = () => {
     Alert.alert(
@@ -19,257 +92,307 @@ const ProfileScreen: React.FC = () => {
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: logout },
+        { 
+          text: 'Logout', 
+          style: 'destructive', 
+          onPress: () => {
+            logout();
+          }
+        },
       ]
     );
   };
 
-  const ProfileItem = ({ label, value }: { label: string; value?: string }) => (
-    <View style={styles.profileItem}>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{value || 'Not set'}</Text>
-    </View>
-  );
+  if (profileLoading) {
+    return (
+      <View className="flex-1 bg-background items-center justify-center">
+        <Text className="text-foreground">Loading...</Text>
+      </View>
+    );
+  }
+
+  const profile = profileData || user;
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      className="flex-1 bg-background" 
+      showsVerticalScrollIndicator={false}
+      data-testid="profile-screen"
+    >
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          {user?.profileImageUrl ? (
+      <View className="items-center p-8 pt-6">
+        <View className="mb-4">
+          {profile?.profileImageUrl ? (
             <Image 
-              source={{ uri: user.profileImageUrl }} 
-              style={styles.avatar}
+              source={{ uri: profile.profileImageUrl }} 
+              className="w-24 h-24 rounded-full"
+              data-testid="profile-avatar"
             />
           ) : (
-            <View style={[styles.avatar, styles.defaultAvatar]}>
-              <Text style={styles.avatarText}>
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+            <View className="w-24 h-24 rounded-full bg-primary items-center justify-center">
+              <Text className="text-4xl text-primary-foreground font-bold">
+                {profile?.firstName?.[0]}{profile?.lastName?.[0]}
               </Text>
             </View>
           )}
         </View>
         
-        <Text style={styles.name}>
-          {user?.firstName} {user?.lastName}
+        <Text className="text-2xl font-bold text-foreground mb-2" data-testid="profile-name">
+          {profile?.firstName} {profile?.lastName}
         </Text>
         
-        {user?.bio && (
-          <Text style={styles.bio}>{user.bio}</Text>
+        {profile?.bio && (
+          <Text className="text-base text-muted-foreground text-center mb-3" data-testid="profile-bio">
+            {profile.bio}
+          </Text>
         )}
         
-        {user?.kliqName && (
-          <View style={styles.kliqBadge}>
-            <Text style={styles.kliqText}>{user.kliqName}</Text>
+        {profile?.kliqName && (
+          <View className="bg-primary px-4 py-2 rounded-full">
+            <Text className="text-primary-foreground text-sm font-semibold" data-testid="profile-kliq-name">
+              {profile.kliqName}
+            </Text>
           </View>
         )}
+      </View>
+
+      {/* Stats Section */}
+      <View className="mx-5 mb-6">
+        <Text className="text-xl font-bold text-primary mb-4">Stats</Text>
+        
+        <View className="bg-card rounded-xl p-4 border border-border">
+          <View className="flex-row justify-around mb-4">
+            <View className="items-center" data-testid="stat-posts">
+              <Text className="text-2xl font-bold text-foreground">
+                {postsCount}
+              </Text>
+              <Text className="text-xs text-muted-foreground mt-1">Posts</Text>
+            </View>
+            
+            <View className="w-px bg-border" />
+            
+            <View className="items-center" data-testid="stat-friends">
+              <Text className="text-2xl font-bold text-foreground">
+                {friendsCount}
+              </Text>
+              <Text className="text-xs text-muted-foreground mt-1">Friends</Text>
+            </View>
+            
+            <View className="w-px bg-border" />
+            
+            <View className="items-center" data-testid="stat-koins">
+              <Text className="text-2xl font-bold text-foreground">
+                {koinData?.balance?.toFixed(2) || '0.00'}
+              </Text>
+              <Text className="text-xs text-muted-foreground mt-1">Koins</Text>
+            </View>
+          </View>
+          
+          <View className="h-px bg-border my-2" />
+          
+          <View className="flex-row justify-around">
+            <View className="items-center" data-testid="stat-streak">
+              <Text className="text-xl font-bold text-foreground">
+                {streakData?.currentStreak || 0} 🔥
+              </Text>
+              <Text className="text-xs text-muted-foreground mt-1">Day Streak</Text>
+            </View>
+            
+            <View className="w-px bg-border" />
+            
+            <View className="items-center" data-testid="stat-tier">
+              <Text className="text-xl font-bold text-foreground">
+                Tier {streakData?.tier || 1}
+              </Text>
+              <Text className="text-xs text-muted-foreground mt-1">{streakData?.tierName || 'Starter'}</Text>
+            </View>
+          </View>
+        </View>
       </View>
 
       {/* Profile Details */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Profile Details</Text>
-        
-        <ProfileItem label="Phone Number" value={user?.phoneNumber} />
-        <ProfileItem label="Email" value={user?.email} />
-        
-        {user?.interests && user.interests.length > 0 && (
-          <View style={styles.profileItem}>
-            <Text style={styles.label}>Interests</Text>
-            <View style={styles.tagsContainer}>
-              {user.interests.map((interest, index) => (
-                <View key={index} style={styles.tag}>
-                  <Text style={styles.tagText}>{interest}</Text>
-                </View>
-              ))}
+      {(profile?.email || profile?.phoneNumber || profile?.interests || profile?.hobbies) && (
+        <View className="mx-5 mb-6">
+          <Text className="text-xl font-bold text-primary mb-4">Profile Details</Text>
+          
+          {profile?.phoneNumber && (
+            <View className="mb-4">
+              <Text className="text-xs text-muted-foreground mb-1">Phone Number</Text>
+              <Text className="text-base text-foreground" data-testid="profile-phone">
+                {profile.phoneNumber}
+              </Text>
             </View>
-          </View>
-        )}
-        
-        {user?.hobbies && user.hobbies.length > 0 && (
-          <View style={styles.profileItem}>
-            <Text style={styles.label}>Hobbies</Text>
-            <View style={styles.tagsContainer}>
-              {user.hobbies.map((hobby, index) => (
-                <View key={index} style={styles.tag}>
-                  <Text style={styles.tagText}>{hobby}</Text>
-                </View>
-              ))}
+          )}
+          
+          {profile?.email && (
+            <View className="mb-4">
+              <Text className="text-xs text-muted-foreground mb-1">Email</Text>
+              <Text className="text-base text-foreground" data-testid="profile-email">
+                {profile.email}
+              </Text>
             </View>
+          )}
+          
+          {profile?.interests && profile.interests.length > 0 && (
+            <View className="mb-4">
+              <Text className="text-xs text-muted-foreground mb-2">Interests</Text>
+              <View className="flex-row flex-wrap">
+                {profile.interests.map((interest, index) => (
+                  <View 
+                    key={index} 
+                    className="bg-muted px-3 py-1.5 rounded-full mr-2 mb-2"
+                    data-testid={`interest-tag-${index}`}
+                  >
+                    <Text className="text-foreground text-xs">{interest}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+          
+          {profile?.hobbies && profile.hobbies.length > 0 && (
+            <View className="mb-4">
+              <Text className="text-xs text-muted-foreground mb-2">Hobbies</Text>
+              <View className="flex-row flex-wrap">
+                {profile.hobbies.map((hobby, index) => (
+                  <View 
+                    key={index} 
+                    className="bg-muted px-3 py-1.5 rounded-full mr-2 mb-2"
+                    data-testid={`hobby-tag-${index}`}
+                  >
+                    <Text className="text-foreground text-xs">{hobby}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Theme Customization */}
+      <View className="mx-5 mb-6">
+        <Text className="text-xl font-bold text-primary mb-4">Theme</Text>
+        
+        <View className="bg-card rounded-xl p-4 border border-border">
+          <Text className="text-sm text-muted-foreground mb-3">Choose your theme</Text>
+          
+          <View className="flex-row flex-wrap">
+            {['Default', 'Dark', 'Light', 'Ocean', 'Forest', 'Sunset'].map((theme) => (
+              <TouchableOpacity
+                key={theme}
+                data-testid={`theme-${theme.toLowerCase()}`}
+                onPress={() => setSelectedTheme(theme.toLowerCase())}
+                className={`px-4 py-2 rounded-full mr-2 mb-2 ${
+                  selectedTheme === theme.toLowerCase() 
+                    ? 'bg-primary' 
+                    : 'bg-muted'
+                }`}
+              >
+                <Text className={
+                  selectedTheme === theme.toLowerCase()
+                    ? 'text-primary-foreground text-sm font-medium'
+                    : 'text-foreground text-sm'
+                }>
+                  {theme}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        )}
+          
+          <Text className="text-xs text-muted-foreground mt-3">
+            Note: Theme persistence coming in Phase 2
+          </Text>
+        </View>
       </View>
 
       {/* Actions */}
-      <View style={styles.section}>
+      <View className="mx-5 mb-6">
         <TouchableOpacity 
-          style={[styles.actionButton, styles.kliqKoinButton]}
+          className="flex-row justify-between items-center bg-primary rounded-xl p-4 mb-3 border-2 border-primary"
           onPress={() => navigation.navigate('KliqKoinScreen')}
+          data-testid="button-kliq-koin"
         >
-          <Text style={styles.actionText}>Kliq Koin & Streaks</Text>
-          <Text style={styles.actionIcon}>🪙</Text>
+          <View className="flex-row items-center">
+            <Award color="#000" size={20} />
+            <Text className="text-primary-foreground text-base font-medium ml-3">
+              Kliq Koin & Streaks
+            </Text>
+          </View>
+          <Text className="text-primary-foreground text-lg">🪙</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionText}>Edit Profile</Text>
-          <Text style={styles.actionIcon}>✏️</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionText}>Settings</Text>
-          <Text style={styles.actionIcon}>⚙️</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionText}>Help & Support</Text>
-          <Text style={styles.actionIcon}>❓</Text>
+        <TouchableOpacity 
+          className="flex-row justify-between items-center bg-card rounded-xl p-4 mb-3 border border-border"
+          onPress={() => {
+            Alert.alert(
+              'Edit Profile',
+              'Edit profile functionality coming soon! This will allow you to update your bio, interests, hobbies, and more.',
+              [{ text: 'OK' }]
+            );
+          }}
+          data-testid="button-edit-profile"
+        >
+          <View className="flex-row items-center">
+            <Edit3 color="#666" size={20} />
+            <Text className="text-foreground text-base ml-3">Edit Profile</Text>
+          </View>
+          <Text className="text-muted-foreground text-lg">✏️</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={[styles.actionButton, styles.logoutButton]} 
-          onPress={handleLogout}
+          className="flex-row justify-between items-center bg-card rounded-xl p-4 mb-3 border border-border"
+          onPress={() => {
+            Alert.alert(
+              'Settings',
+              'Settings screen coming soon! This will include notification preferences, privacy settings, and more.',
+              [{ text: 'OK' }]
+            );
+          }}
+          data-testid="button-settings"
         >
-          <Text style={[styles.actionText, styles.logoutText]}>Logout</Text>
-          <Text style={styles.actionIcon}>🚪</Text>
+          <View className="flex-row items-center">
+            <Settings color="#666" size={20} />
+            <Text className="text-foreground text-base ml-3">Settings</Text>
+          </View>
+          <Text className="text-muted-foreground text-lg">⚙️</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          className="flex-row justify-between items-center bg-card rounded-xl p-4 mb-3 border border-border"
+          onPress={() => {
+            Alert.alert(
+              'Help & Support',
+              'Help center coming soon! For immediate assistance, please contact support@mykliq.com',
+              [{ text: 'OK' }]
+            );
+          }}
+          data-testid="button-help"
+        >
+          <View className="flex-row items-center">
+            <HelpCircle color="#666" size={20} />
+            <Text className="text-foreground text-base ml-3">Help & Support</Text>
+          </View>
+          <Text className="text-muted-foreground text-lg">❓</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          className="flex-row justify-between items-center bg-card rounded-xl p-4 mb-3 border border-destructive"
+          onPress={handleLogout}
+          data-testid="button-logout"
+        >
+          <View className="flex-row items-center">
+            <LogOut color="#ff4757" size={20} />
+            <Text className="text-destructive text-base ml-3">Logout</Text>
+          </View>
+          <Text className="text-destructive text-lg">🚪</Text>
         </TouchableOpacity>
       </View>
 
       {/* App Info */}
-      <View style={styles.footer}>
-        <Text style={styles.appInfo}>MyKliq Mobile v1.0</Text>
-        <Text style={styles.appInfo}>Your Private Social Circle</Text>
+      <View className="items-center p-5 pb-10">
+        <Text className="text-muted-foreground text-xs mb-1">MyKliq Mobile v1.0</Text>
+        <Text className="text-muted-foreground text-xs">Your Private Social Circle</Text>
       </View>
     </ScrollView>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  header: {
-    alignItems: 'center',
-    padding: 30,
-    paddingTop: 20,
-  },
-  avatarContainer: {
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  defaultAvatar: {
-    backgroundColor: '#00FF00',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    color: '#000',
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  bio: {
-    fontSize: 16,
-    color: '#888',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  kliqBadge: {
-    backgroundColor: '#00FF00',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  kliqText: {
-    color: '#000',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  section: {
-    marginHorizontal: 20,
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#00FF00',
-    marginBottom: 16,
-  },
-  profileItem: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    color: '#888',
-    marginBottom: 4,
-  },
-  value: {
-    fontSize: 16,
-    color: '#fff',
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 4,
-  },
-  tag: {
-    backgroundColor: '#333',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  tagText: {
-    color: '#fff',
-    fontSize: 12,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  kliqKoinButton: {
-    borderColor: '#00FF00',
-    borderWidth: 2,
-  },
-  actionText: {
-    color: '#fff',
-    fontSize: 16,
-  },
-  actionIcon: {
-    fontSize: 18,
-  },
-  logoutButton: {
-    borderColor: '#ff4757',
-  },
-  logoutText: {
-    color: '#ff4757',
-  },
-  footer: {
-    alignItems: 'center',
-    padding: 20,
-    paddingBottom: 40,
-  },
-  appInfo: {
-    color: '#666',
-    fontSize: 12,
-    marginBottom: 4,
-  },
-});
-
-export default ProfileScreen;
+}

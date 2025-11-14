@@ -1391,6 +1391,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mobile user stats endpoint
+  app.get('/api/mobile/user/stats', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      
+      // Get posts count
+      const postsCount = await storage.getUserPostCount(userId);
+      
+      // Get friends count
+      const friends = await storage.getFriends(userId);
+      const friendsCount = friends.length;
+      
+      res.json({
+        postsCount,
+        friendsCount
+      });
+    } catch (error) {
+      console.error('Mobile stats fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch stats' });
+    }
+  });
+
   // Emergency admin access endpoint (keep for web admin dashboard)
   app.get('/api/activate-admin', async (req, res) => {
     try {
