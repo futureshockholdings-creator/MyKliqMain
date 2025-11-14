@@ -67,6 +67,27 @@ Core features include a Headlines Feed (infinite scroll, pull-to-refresh, native
 - **Push Notifications**: Full push notification infrastructure with device token registration on app startup, automatic registration on login/signup, cleanup on logout. Database tables (device_tokens, notification_preferences) with 9 customizable notification types (new posts, comments, likes, messages, story replies, mentions, events, kliq koin, friends). NotificationPreferencesScreen UI accessible from ProfileScreen. Backend endpoints: POST/DELETE `/api/mobile/push/register-device`, GET/POST `/api/mobile/notifications/preferences`. Firebase Admin SDK integration (`server/firebase-notifications.ts`) with graceful degradation when FIREBASE_SERVICE_ACCOUNT not configured. Mobile service (`mobile/src/services/pushNotificationService.ts`) handles expo-notifications permissions, device tokens, and notification listeners. Integrated into AuthProvider for automatic lifecycle management.
 
 ### Phase 4 Features (App Store Launch Prep - In Progress)
+
+**Legal & Privacy Compliance ✅ COMPLETE:**
+- **Privacy Policy Updated**: Comprehensive mobile-specific privacy disclosures added to `client/src/pages/privacy-policy.tsx`
+  - Camera and photo library access
+  - Location data (GPS meetups, event tagging)
+  - Push notifications (9 types with customization)
+  - Device information and Firebase Analytics
+  - Local data storage (AsyncStorage, secure tokens)
+  - Third-party services (Firebase, Gemini, ESPN, social media)
+  - Mobile permissions summary with clear controls
+  - Children's privacy (13+ age requirement)
+  - App Store privacy labels (iOS & Android)
+- **Mobile Privacy Guide**: Created `mobile/PRIVACY_POLICY.md` with:
+  - Quick summary for users
+  - Permission usage strings for Info.plist/AndroidManifest
+  - App Store privacy label data
+  - COPPA/GDPR/CCPA compliance notes
+  - Developer reference for permission setup
+- **Version**: Privacy Policy v2.0 (Last updated: November 14, 2025)
+
+**Accessibility ✅ COMPLETE (Phase 4 Tasks 11-13):**
 - **App Store Assets** ✅: Created app icons (1024×1024, 512×512), splash screens, and store listing screenshots (AI mockups - real device captures required before submission). Comprehensive metadata including descriptions, keywords, promotional text, and submission guidelines for both iOS App Store and Google Play Store.
 - **Performance Optimization** ⚠️ PARTIAL: Created image optimization utilities (`mobile/src/utils/imageOptimization.ts`) with prefetching, progressive loading, and URL-based resizing. Comprehensive performance guide (`mobile/PERFORMANCE_OPTIMIZATION.md`) documenting image lazy loading, video compression, FlashList migration, memory management, network optimization, and battery best practices. **Production implementation deferred** - requires expo-image integration, FlashList migration, and backend validation of image resize parameters.
 - **Offline Support** ⚠️ PARTIAL: Implemented offline indicator banner (`mobile/src/components/OfflineIndicator.tsx`) with accessibility support (alert role, live region) and network status hooks (`mobile/src/hooks/useNetworkStatus.ts`). **Limitation**: Current implementation uses `navigator.onLine` (works on web/dev only); requires `@react-native-community/netinfo` for native iOS/Android support. Comprehensive offline support guide (`mobile/OFFLINE_SUPPORT.md`) documenting data caching, request queue, and optimistic UI requirements.
