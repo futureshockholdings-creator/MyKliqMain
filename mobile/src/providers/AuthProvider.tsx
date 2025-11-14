@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient } from '../lib/apiClient';
 import { queryClient } from '../lib/queryClient';
 import { pushNotificationService } from '../services/pushNotificationService';
+import { errorReporting } from '../utils/errorReporting';
 
 interface User {
   id: string;
@@ -50,6 +51,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const profile = await apiClient.getProfile();
         setUser(profile as User);
         
+        // Set user ID for error reporting
+        errorReporting.setUserId(profile.id);
+        
         // Register device token for push notifications
         await pushNotificationService.registerDeviceToken();
       }
@@ -65,13 +69,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response: any = await apiClient.login(phoneNumber, password);
       await apiClient.setAuthToken(response.token);
-      setUser({
+      const userData = {
         id: response.userId,
         firstName: response.firstName,
         lastName: response.lastName,
         phoneNumber,
         profileImageUrl: response.profileImageUrl,
-      });
+      };
+      setUser(userData);
+      
+      // Set user ID for error reporting
+      errorReporting.setUserId(userData.id);
       
       // Register device token for push notifications
       await pushNotificationService.registerDeviceToken();
@@ -107,6 +115,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       await apiClient.logout();
       setUser(null);
+      
+      // Clear user ID from error reporting
+      errorReporting.setUserId(undefined);
       
       // Clear all queries on logout
       queryClient.clear();

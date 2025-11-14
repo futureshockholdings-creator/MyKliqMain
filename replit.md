@@ -88,9 +88,29 @@ Core features include a Headlines Feed (infinite scroll, pull-to-refresh, native
 - **Version**: Privacy Policy v2.0 (Last updated: November 14, 2025)
 
 **Accessibility ✅ COMPLETE (Phase 4 Tasks 11-13):**
-- **App Store Assets** ✅: Created app icons (1024×1024, 512×512), splash screens, and store listing screenshots (AI mockups - real device captures required before submission). Comprehensive metadata including descriptions, keywords, promotional text, and submission guidelines for both iOS App Store and Google Play Store.
-- **Performance Optimization** ⚠️ PARTIAL: Created image optimization utilities (`mobile/src/utils/imageOptimization.ts`) with prefetching, progressive loading, and URL-based resizing. Comprehensive performance guide (`mobile/PERFORMANCE_OPTIMIZATION.md`) documenting image lazy loading, video compression, FlashList migration, memory management, network optimization, and battery best practices. **Production implementation deferred** - requires expo-image integration, FlashList migration, and backend validation of image resize parameters.
-- **Offline Support** ⚠️ PARTIAL: Implemented offline indicator banner (`mobile/src/components/OfflineIndicator.tsx`) with accessibility support (alert role, live region) and network status hooks (`mobile/src/hooks/useNetworkStatus.ts`). **Limitation**: Current implementation uses `navigator.onLine` (works on web/dev only); requires `@react-native-community/netinfo` for native iOS/Android support. Comprehensive offline support guide (`mobile/OFFLINE_SUPPORT.md`) documenting data caching, request queue, and optimistic UI requirements.
+- **Screen Reader Support**: All 9 screens include accessibilityRole, accessibilityLabel, and accessibilityHint attributes. Semantic structure with proper headings, buttons, and text inputs.
+- **Dynamic Font Scaling**: Implemented useResponsiveFontSize() hook with 5-tier system (xs/sm/base/lg/xl) that scales with user's device font settings. All screens updated to use responsive font sizes.
+- **High Contrast Mode**: Theme-level palette override with WCAG AA compliant colors. Provides useAccessibleColors() and useAccessibleTextStyles() hooks. Toggle switch in ProfileScreen with backend sync at `/api/mobile/user/high-contrast`. Complete documentation in `mobile/ACCESSIBILITY.md` and `mobile/COLOR_CONTRAST_AUDIT.md`.
+
+**App Store Assets ✅ COMPLETE (Phase 4 Tasks 1-2, 4):**
+- **App Icons**: 1024×1024 and 512×512 icon designs created
+- **Splash Screens**: Launch screen designs for iOS and Android
+- **Store Metadata**: Comprehensive app descriptions, keywords, promotional text, and submission guidelines for both iOS App Store and Google Play Store
+- **Screenshots**: AI mockups created (NOTE: Real device screenshots required before submission)
+
+**Error Handling & Crash Reporting ✅ COMPLETE (Phase 4 Task 16):**
+- **Global Error Boundary**: React ErrorBoundary component (`mobile/src/components/ErrorBoundary.tsx`) wraps entire app, catches all unhandled React errors, displays graceful ErrorFallback UI with retry functionality
+- **Error Reporting Service**: Centralized error logging (`mobile/src/utils/errorReporting.ts`) with structured reports including error message, stack trace, component stack, timestamp, platform (iOS/Android), app version, and user ID
+- **User Context Tracking**: AuthProvider automatically sets/clears user ID in error reports for all logged errors
+- **React Query Integration**: Automatic error logging for all mutation failures via queryClient.defaultOptions.mutations.onError
+- **Development vs Production**: Dev mode shows full stack traces in UI; production shows user-friendly messages while logging detailed error metadata
+- **Accessibility**: ErrorFallback includes accessibilityRole, accessibilityLabel, accessibilityHint for screen readers
+- **Documentation**: Complete error handling guide in `mobile/ERROR_HANDLING.md` with integration examples for Sentry and Firebase Crashlytics
+- **Future Integration Ready**: Service designed to integrate with Sentry, Firebase Crashlytics, or other crash reporting tools
+
+**Performance Optimization** ⚠️ PARTIAL: Created image optimization utilities (`mobile/src/utils/imageOptimization.ts`) with prefetching, progressive loading, and URL-based resizing. Comprehensive performance guide (`mobile/PERFORMANCE_OPTIMIZATION.md`) documenting image lazy loading, video compression, FlashList migration, memory management, network optimization, and battery best practices. **Production implementation deferred** - requires expo-image integration, FlashList migration, and backend validation of image resize parameters.
+
+**Offline Support** ⚠️ PARTIAL: Implemented offline indicator banner (`mobile/src/components/OfflineIndicator.tsx`) with accessibility support (alert role, live region) and network status hooks (`mobile/src/hooks/useNetworkStatus.ts`). **Limitation**: Current implementation uses `navigator.onLine` (works on web/dev only); requires `@react-native-community/netinfo` for native iOS/Android support. Comprehensive offline support guide (`mobile/OFFLINE_SUPPORT.md`) documenting data caching, request queue, and optimistic UI requirements.
 
 ## System Design Choices
 Mobile optimizations prioritize bandwidth (paginated responses), battery (polling vs. persistent connections, background sync), and memory (auto-cleanup, media eviction). Cross-platform compatibility is ensured with solutions like modal-based GIF pickers. Push notification infrastructure is set up for Firebase Cloud Messaging and Apple Push Notifications.

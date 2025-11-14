@@ -7,20 +7,23 @@ import { AuthProvider } from './src/providers/AuthProvider';
 import { ThemeProvider } from './src/providers/ThemeProvider';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { queryClient } from './src/lib/queryClient';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ThemeProvider>
-              <StatusBar style="auto" />
-              <AppNavigator />
-            </ThemeProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <ErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <ThemeProvider>
+                <StatusBar style="auto" />
+                <AppNavigator />
+              </ThemeProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }
