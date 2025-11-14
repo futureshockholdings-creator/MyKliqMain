@@ -1543,6 +1543,29 @@ export const deviceTokens = pgTable("device_tokens", {
   index("idx_device_tokens_active").on(table.isActive),
 ]);
 
+// Notification delivery preference enum
+export const notificationDeliveryPreferenceEnum = pgEnum("notification_delivery_pref", ["immediate", "hourly_digest", "daily_digest"]);
+
+// User notification preferences
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
+  pushEnabled: boolean("push_enabled").notNull().default(true),
+  newPosts: boolean("new_posts").notNull().default(true),
+  comments: boolean("comments").notNull().default(true),
+  likes: boolean("likes").notNull().default(true),
+  newFriends: boolean("new_friends").notNull().default(true),
+  messages: boolean("messages").notNull().default(true),
+  storyReplies: boolean("story_replies").notNull().default(true),
+  mentions: boolean("mentions").notNull().default(true),
+  events: boolean("events").notNull().default(true),
+  kliqKoin: boolean("kliq_koin").notNull().default(true),
+  deliveryPreference: notificationDeliveryPreferenceEnum("delivery_preference").notNull().default("immediate"),
+  snoozedUntil: timestamp("snoozed_until"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Report status enum
 export const reportStatusEnum = pgEnum("report_status", ["pending", "reviewed", "resolved", "dismissed"]);
 
@@ -1641,3 +1664,12 @@ export const insertMoodBoostPostSchema = createInsertSchema(moodBoostPosts).omit
 });
 export type InsertMoodBoostPost = z.infer<typeof insertMoodBoostPostSchema>;
 export type MoodBoostPost = typeof moodBoostPosts.$inferSelect;
+
+// Notification Preferences types
+export const insertNotificationPreferenceSchema = createInsertSchema(notificationPreferences).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertNotificationPreference = z.infer<typeof insertNotificationPreferenceSchema>;
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
