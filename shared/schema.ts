@@ -416,7 +416,10 @@ export const stories = pgTable("stories", {
   viewCount: integer("view_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   expiresAt: timestamp("expires_at").notNull(),
-});
+}, (table) => [
+  index("idx_stories_user_expires").on(table.userId, table.expiresAt),
+  index("idx_stories_expires").on(table.expiresAt),
+]);
 
 // Comments on posts
 export const comments = pgTable("comments", {
@@ -518,6 +521,8 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_messages_group").on(table.groupConversationId),
+  index("idx_messages_sender_receiver_created").on(table.senderId, table.receiverId, table.createdAt),
+  index("idx_messages_receiver_unread").on(table.receiverId, table.isRead),
 ]);
 
 // Message conversations for organizing messages between users
@@ -528,7 +533,11 @@ export const conversations = pgTable("conversations", {
   lastMessageId: varchar("last_message_id").references(() => messages.id),
   lastActivity: timestamp("last_activity").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_conversations_user1").on(table.user1Id),
+  index("idx_conversations_user2").on(table.user2Id),
+  index("idx_conversations_activity").on(table.lastActivity),
+]);
 
 // Group conversations for multi-user chats
 export const groupConversations = pgTable("group_conversations", {

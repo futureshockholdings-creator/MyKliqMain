@@ -12,13 +12,14 @@ import { queryOptimizer } from './queryOptimizer';
 import { notificationService } from "./notificationService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
-import { pool } from "./db";
+import { pool, db } from "./db";
 import { friendRankingIntelligence } from "./friendRankingIntelligence";
 import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
 import { performanceOptimizer } from "./performanceOptimizer";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, messages, conversations, stories, users } from "@shared/schema";
+import { eq, and, or, desc, sql as sqlOp } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
@@ -47,38 +48,7 @@ const upload = multer({
 // TODO: Post-MVP - Replace with ObjectStorageService for permanent, scalable storage
 const mediaRegistry = new Map<string, { buffer: Buffer; mimetype: string; filename: string }>();
 
-// In-memory story store for MVP
-// TODO: Post-MVP - Migrate to database with proper story management
-interface Story {
-  id: string;
-  userId: string;
-  mediaUrl: string;
-  mediaType: string;
-  createdAt: string;
-  expiresAt: string;
-  caption?: string;
-}
-
-const storyStore = new Map<string, Story[]>();
-
-function ensureStoryGroup(userId: string): Story[] {
-  if (!storyStore.has(userId)) {
-    storyStore.set(userId, []);
-  }
-  return storyStore.get(userId)!;
-}
-
-function cleanupExpiredStories(): void {
-  const now = Date.now();
-  for (const [userId, stories] of storyStore.entries()) {
-    const validStories = stories.filter(story => new Date(story.expiresAt).getTime() > now);
-    if (validStories.length === 0) {
-      storyStore.delete(userId);
-    } else {
-      storyStore.set(userId, validStories);
-    }
-  }
-}
+// Stories and messages are now database-backed - no in-memory store needed
 
 // Password setup schema
 const passwordSetupSchema = z.object({
@@ -1218,32 +1188,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req as any).userId;
       
-      // Cleanup expired stories
-      cleanupExpiredStories();
+      // Get all non-expired stories from database
+      const activeStories = await db.select().from(stories)
+        .where(sqlOp`expires_at > NOW()`)
+        .orderBy(desc(stories.createdAt));
       
-      // Build story groups from store
-      const storyGroups = [];
-      for (const [storyUserId, stories] of storyStore.entries()) {
-        if (stories.length > 0) {
-          // TODO: Fetch real user data from database
-          // For MVP, use stub user data
-          const isOwnStory = storyUserId === userId;
-          storyGroups.push({
+      // Group stories by user
+      const userStoryMap = new Map<string, typeof activeStories>();
+      for (const story of activeStories) {
+        if (!userStoryMap.has(story.userId)) {
+          userStoryMap.set(story.userId, []);
+        }
+        userStoryMap.get(story.userId)!.push(story);
+      }
+      
+      // Build story groups with user details
+      const storyGroups = await Promise.all(
+        Array.from(userStoryMap.entries()).map(async ([storyUserId, userStories]) => {
+          // Get user details
+          const [user] = await db.select({
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            profileImageUrl: users.profileImageUrl,
+          }).from(users).where(eq(users.id, storyUserId)).limit(1);
+          
+          return {
             userId: storyUserId,
-            firstName: isOwnStory ? 'You' : 'Demo User',
-            lastName: '',
-            profileImageUrl: null,
-            stories: stories.map(story => ({
+            firstName: user?.firstName || 'Unknown',
+            lastName: user?.lastName || '',
+            profileImageUrl: user?.profileImageUrl,
+            stories: userStories.map(story => ({
               id: story.id,
               mediaUrl: story.mediaUrl,
               mediaType: story.mediaType,
-              createdAt: story.createdAt,
-              expiresAt: story.expiresAt,
-              caption: story.caption
+              createdAt: story.createdAt?.toISOString(),
+              expiresAt: story.expiresAt?.toISOString(),
+              caption: story.content
             }))
-          });
-        }
-      }
+          };
+        })
+      );
       
       // Put user's own stories first
       storyGroups.sort((a, b) => {
@@ -1268,7 +1253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Media file is required for story' });
       }
 
-      // Store media in registry
+      // Store media in registry (keeping in-memory for MVP)
       const mediaId = `story-${Date.now()}-${Math.random().toString(36).substring(7)}`;
       mediaRegistry.set(mediaId, {
         buffer: req.file.buffer,
@@ -1279,28 +1264,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mediaUrl = `/api/mobile/uploads/${mediaId}`;
       const mediaType = req.file.mimetype.startsWith('video') ? 'video' : 'image';
       
-      // Create and persist story
+      // Create story in database
       const now = new Date();
       const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
       
-      const story: Story = {
-        id: `story-${Date.now()}`,
+      const [newStory] = await db.insert(stories).values({
         userId,
         mediaUrl,
-        mediaType,
-        createdAt: now.toISOString(),
-        expiresAt: expiresAt.toISOString(),
-        caption: req.body.caption
-      };
-      
-      const userStories = ensureStoryGroup(userId);
-      userStories.push(story);
+        mediaType: mediaType as 'image' | 'video',
+        content: req.body.caption || null,
+        expiresAt,
+        viewCount: 0
+      }).returning();
       
       res.json({
         success: true,
-        storyId: story.id,
-        mediaUrl,
-        expiresAt: story.expiresAt,
+        storyId: newStory.id,
+        mediaUrl: newStory.mediaUrl,
+        expiresAt: newStory.expiresAt?.toISOString(),
         message: 'Story created successfully'
       });
     } catch (error) {
@@ -1309,71 +1290,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // In-memory message store for MVP (TODO: Replace with database)
-  const messageStore: Map<string, any[]> = new Map();
-  
-  const getConversationKey = (userId: string, friendId: string) => {
-    return [userId, friendId].sort().join(':');
-  };
-
-  const getOrCreateMessages = (userId: string, friendId: string) => {
-    const key = getConversationKey(userId, friendId);
-    if (!messageStore.has(key)) {
-      // Initialize with stub messages
-      messageStore.set(key, [
-        {
-          id: '1',
-          senderId: friendId,
-          content: 'Hey! How are you?',
-          createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-          isRead: true
-        },
-        {
-          id: '2',
-          senderId: userId,
-          content: 'I\'m good! Just got back from class.',
-          createdAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-          isRead: true
-        },
-        {
-          id: '3',
-          senderId: friendId,
-          content: 'Nice! Want to grab lunch?',
-          createdAt: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-          isRead: false
-        }
-      ]);
+  // Helper function to get or create a conversation record between two users
+  const getOrCreateConversation = async (user1Id: string, user2Id: string) => {
+    // Ensure consistent ordering for lookup
+    const [userId1, userId2] = [user1Id, user2Id].sort();
+    
+    // Try to find existing conversation
+    const existing = await db.select().from(conversations)
+      .where(
+        and(
+          eq(conversations.user1Id, userId1),
+          eq(conversations.user2Id, userId2)
+        )
+      )
+      .limit(1);
+    
+    if (existing.length > 0) {
+      return existing[0];
     }
-    return messageStore.get(key)!;
+    
+    // Create new conversation
+    const [newConversation] = await db.insert(conversations).values({
+      user1Id: userId1,
+      user2Id: userId2,
+    }).returning();
+    
+    return newConversation;
   };
 
   // Get conversations list (mobile messaging)
   app.get('/api/mobile/messages/conversations', verifyMobileToken, async (req, res) => {
     try {
       const userId = (req as any).userId;
-      // TODO: Implement real conversations query from database
-      // For MVP, return stub data for demo purposes
-      const stubConversations = [
-        {
-          id: '1',
-          friendId: 'friend1',
-          friendName: 'Alex Johnson',
-          friendAvatar: null,
-          lastMessage: 'Hey! How are you doing?',
-          lastMessageTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          unreadCount: 2
-        },
-        {
-          id: '2',
-          friendId: 'friend2',
-          friendName: 'Sam Chen',
-          friendAvatar: null,
-          lastMessage: 'See you at the game tonight!',
-          lastMessageTime: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-          unreadCount: 0
-        }
-      ];
-      res.json(stubConversations);
+      
+      // Get all conversations where user is a participant
+      const userConvos = await db.select().from(conversations)
+        .where(
+          or(
+            eq(conversations.user1Id, userId),
+            eq(conversations.user2Id, userId)
+          )
+        )
+        .orderBy(desc(conversations.lastActivity));
+      
+      // Build conversation list with friend details and unread counts
+      const conversationList = await Promise.all(
+        userConvos.map(async (convo) => {
+          // Determine friend ID (the other user in the conversation)
+          const friendId = convo.user1Id === userId ? convo.user2Id : convo.user1Id;
+          
+          // Get friend details
+          const [friend] = await db.select({
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            profileImageUrl: users.profileImageUrl,
+          }).from(users).where(eq(users.id, friendId)).limit(1);
+          
+          // Get last message
+          const [lastMsg] = await db.select().from(messages)
+            .where(eq(messages.id, convo.lastMessageId!))
+            .limit(1);
+          
+          // Count unread messages for this user
+          const unreadCount = await db.select({ count: sqlOp<number>`count(*)::int` })
+            .from(messages)
+            .where(
+              and(
+                or(
+                  and(eq(messages.senderId, userId), eq(messages.receiverId, friendId)),
+                  and(eq(messages.senderId, friendId), eq(messages.receiverId, userId))
+                ),
+                eq(messages.receiverId, userId),
+                eq(messages.isRead, false)
+              )
+            );
+          
+          return {
+            id: convo.id,
+            friendId: friend.id,
+            friendName: `${friend.firstName || ''} ${friend.lastName || ''}`.trim() || 'Unknown',
+            friendAvatar: friend.profileImageUrl,
+            lastMessage: lastMsg?.content || '',
+            lastMessageTime: convo.lastActivity?.toISOString() || convo.createdAt?.toISOString(),
+            unreadCount: unreadCount[0]?.count || 0
+          };
+        })
+      );
+      
+      res.json(conversationList);
     } catch (error) {
       console.error('Get conversations error:', error);
       res.status(500).json({ message: 'Failed to fetch conversations' });
@@ -1385,9 +1390,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req as any).userId;
       const { friendId } = req.params;
-      // Return messages from in-memory store
-      const messages = getOrCreateMessages(userId, friendId);
-      res.json(messages);
+      
+      // Get all messages between the two users
+      const messagesData = await db.select().from(messages)
+        .where(
+          or(
+            and(eq(messages.senderId, userId), eq(messages.receiverId, friendId)),
+            and(eq(messages.senderId, friendId), eq(messages.receiverId, userId))
+          )
+        )
+        .orderBy(messages.createdAt);
+      
+      // Transform to match mobile app format
+      const formattedMessages = messagesData.map(msg => ({
+        id: msg.id,
+        senderId: msg.senderId,
+        content: msg.content || '',
+        mediaUrl: msg.mediaUrl,
+        mediaType: msg.mediaType,
+        createdAt: msg.createdAt?.toISOString(),
+        isRead: msg.isRead
+      }));
+      
+      res.json(formattedMessages);
     } catch (error) {
       console.error('Get messages error:', error);
       res.status(500).json({ message: 'Failed to fetch messages' });
@@ -1405,20 +1430,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Message content is required' });
       }
 
-      // Add message to in-memory store
-      const messages = getOrCreateMessages(userId, friendId);
-      const newMessage = {
-        id: Date.now().toString(),
+      // Insert message into database
+      const [newMessage] = await db.insert(messages).values({
         senderId: userId,
+        receiverId: friendId,
         content: content.trim(),
-        createdAt: new Date().toISOString(),
         isRead: false
-      };
-      messages.push(newMessage);
+      }).returning();
+      
+      // Update or create conversation
+      await getOrCreateConversation(userId, friendId);
+      await db.update(conversations)
+        .set({
+          lastMessageId: newMessage.id,
+          lastActivity: new Date()
+        })
+        .where(
+          or(
+            and(
+              eq(conversations.user1Id, userId < friendId ? userId : friendId),
+              eq(conversations.user2Id, userId < friendId ? friendId : userId)
+            )
+          )
+        );
       
       res.json({
         success: true,
-        message: newMessage
+        message: {
+          id: newMessage.id,
+          senderId: newMessage.senderId,
+          content: newMessage.content,
+          createdAt: newMessage.createdAt?.toISOString(),
+          isRead: newMessage.isRead
+        }
       });
     } catch (error) {
       console.error('Send message error:', error);
@@ -1437,7 +1481,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Media file is required' });
       }
 
-      // Store media in registry
+      // Store media in registry (keeping in-memory for MVP)
       const mediaId = `msg-${Date.now()}-${Math.random().toString(36).substring(7)}`;
       mediaRegistry.set(mediaId, {
         buffer: req.file.buffer,
@@ -1447,22 +1491,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const mediaUrl = `/api/mobile/uploads/${mediaId}`;
 
-      // Add message to in-memory store
-      const messages = getOrCreateMessages(userId, friendId);
-      const newMessage = {
-        id: Date.now().toString(),
+      // Insert message into database
+      const [newMessage] = await db.insert(messages).values({
         senderId: userId,
+        receiverId: friendId,
         content: '',
         mediaUrl,
-        mediaType: mediaType || 'image',
-        createdAt: new Date().toISOString(),
+        mediaType: (mediaType || 'image') as 'image' | 'video',
         isRead: false
-      };
-      messages.push(newMessage);
+      }).returning();
+      
+      // Update or create conversation
+      await getOrCreateConversation(userId, friendId);
+      await db.update(conversations)
+        .set({
+          lastMessageId: newMessage.id,
+          lastActivity: new Date()
+        })
+        .where(
+          or(
+            and(
+              eq(conversations.user1Id, userId < friendId ? userId : friendId),
+              eq(conversations.user2Id, userId < friendId ? friendId : userId)
+            )
+          )
+        );
       
       res.json({
         success: true,
-        message: newMessage
+        message: {
+          id: newMessage.id,
+          senderId: newMessage.senderId,
+          content: newMessage.content || '',
+          mediaUrl: newMessage.mediaUrl,
+          mediaType: newMessage.mediaType,
+          createdAt: newMessage.createdAt?.toISOString(),
+          isRead: newMessage.isRead
+        }
       });
     } catch (error) {
       console.error('Send media error:', error);
@@ -1481,22 +1546,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'GIF URL is required' });
       }
 
-      // Add message to in-memory store
-      const messages = getOrCreateMessages(userId, friendId);
-      const newMessage = {
-        id: Date.now().toString(),
+      // Insert GIF message into database
+      const [newMessage] = await db.insert(messages).values({
         senderId: userId,
+        receiverId: friendId,
         content: '',
         mediaUrl: gifUrl.trim(),
-        mediaType: 'gif',
-        createdAt: new Date().toISOString(),
         isRead: false
-      };
-      messages.push(newMessage);
+      }).returning();
+      
+      // Update or create conversation
+      await getOrCreateConversation(userId, friendId);
+      await db.update(conversations)
+        .set({
+          lastMessageId: newMessage.id,
+          lastActivity: new Date()
+        })
+        .where(
+          or(
+            and(
+              eq(conversations.user1Id, userId < friendId ? userId : friendId),
+              eq(conversations.user2Id, userId < friendId ? friendId : userId)
+            )
+          )
+        );
       
       res.json({
         success: true,
-        message: newMessage
+        message: {
+          id: newMessage.id,
+          senderId: newMessage.senderId,
+          content: newMessage.content || '',
+          mediaUrl: newMessage.mediaUrl,
+          mediaType: 'gif',
+          createdAt: newMessage.createdAt?.toISOString(),
+          isRead: newMessage.isRead
+        }
       });
     } catch (error) {
       console.error('Send GIF error:', error);
