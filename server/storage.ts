@@ -336,6 +336,12 @@ export interface IStorage {
   getDeviceTokensByUser(userId: string): Promise<DeviceToken[]>;
   deactivateDeviceToken(token: string): Promise<void>;
   deactivateAllUserDeviceTokens(userId: string): Promise<void>;
+  unregisterDeviceToken(userId: string, token: string): Promise<void>;
+
+  // Notification preferences operations
+  getNotificationPreferences(userId: string): Promise<NotificationPreference | undefined>;
+  createNotificationPreferences(preferences: InsertNotificationPreference): Promise<NotificationPreference>;
+  updateNotificationPreferences(userId: string, updates: Partial<InsertNotificationPreference>): Promise<NotificationPreference>;
 
   // Utility operations
   generateInviteCode(): Promise<string>;
@@ -3840,6 +3846,38 @@ export class DatabaseStorage implements IStorage {
       .update(deviceTokens)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(deviceTokens.userId, userId));
+  }
+
+  async unregisterDeviceToken(userId: string, token: string): Promise<void> {
+    await db
+      .delete(deviceTokens)
+      .where(and(eq(deviceTokens.userId, userId), eq(deviceTokens.token, token)));
+  }
+
+  // Notification preferences operations
+  async getNotificationPreferences(userId: string): Promise<NotificationPreference | undefined> {
+    const [preferences] = await db
+      .select()
+      .from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, userId));
+    return preferences;
+  }
+
+  async createNotificationPreferences(preferences: InsertNotificationPreference): Promise<NotificationPreference> {
+    const [newPreferences] = await db
+      .insert(notificationPreferences)
+      .values(preferences)
+      .returning();
+    return newPreferences;
+  }
+
+  async updateNotificationPreferences(userId: string, updates: Partial<InsertNotificationPreference>): Promise<NotificationPreference> {
+    const [updated] = await db
+      .update(notificationPreferences)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(notificationPreferences.userId, userId))
+      .returning();
+    return updated;
   }
 
   // Password reset token methods

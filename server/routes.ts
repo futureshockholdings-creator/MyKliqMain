@@ -1470,6 +1470,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  /**
+   * POST /api/mobile/push/register-device - Register device token for push notifications
+   */
+  app.post('/api/mobile/push/register-device', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { token, platform, deviceId } = req.body;
+
+      if (!token || !platform) {
+        return res.status(400).json({ message: 'Token and platform are required' });
+      }
+
+      if (!['ios', 'android'].includes(platform)) {
+        return res.status(400).json({ message: 'Platform must be ios or android' });
+      }
+
+      const deviceToken = await storage.registerDeviceToken({
+        userId,
+        token,
+        platform,
+        deviceId
+      });
+
+      res.json({ success: true, tokenId: deviceToken.id });
+    } catch (error) {
+      console.error('Device token registration error:', error);
+      res.status(500).json({ message: 'Failed to register device token' });
+    }
+  });
+
+  /**
+   * DELETE /api/mobile/push/unregister-device - Unregister device token
+   */
+  app.delete('/api/mobile/push/unregister-device', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({ message: 'Token is required' });
+      }
+
+      await storage.unregisterDeviceToken(userId, token);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Device token unregistration error:', error);
+      res.status(500).json({ message: 'Failed to unregister device token' });
+    }
+  });
+
+  /**
+   * GET /api/mobile/notifications/preferences - Get user's notification preferences
+   */
+  app.get('/api/mobile/notifications/preferences', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      
+      let preferences = await storage.getNotificationPreferences(userId);
+      
+      // Create default preferences if none exist
+      if (!preferences) {
+        preferences = await storage.createNotificationPreferences({
+          userId,
+          pushEnabled: true,
+          newPosts: true,
+          comments: true,
+          likes: true,
+          newFriends: true,
+          messages: true,
+          storyReplies: true,
+          mentions: true,
+          events: true,
+          kliqKoin: true,
+          deliveryPreference: 'immediate'
+        });
+      }
+
+      res.json({ preferences });
+    } catch (error) {
+      console.error('Notification preferences fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch notification preferences' });
+    }
+  });
+
+  /**
+   * POST /api/mobile/notifications/preferences - Update user's notification preferences
+   */
+  app.post('/api/mobile/notifications/preferences', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      
+      const preferences = await storage.updateNotificationPreferences(userId, req.body);
+      res.json({ success: true, preferences });
+    } catch (error) {
+      console.error('Notification preferences update error:', error);
+      res.status(500).json({ message: 'Failed to update notification preferences' });
+    }
+  });
+
   // Mobile comment endpoints
   app.get('/api/mobile/posts/:postId/comments', verifyMobileToken, async (req, res) => {
     try {
