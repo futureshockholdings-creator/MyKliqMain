@@ -20,6 +20,7 @@ import NotificationPreferencesScreen from '../screens/NotificationPreferencesScr
 
 // Components
 import { OfflineIndicator } from '../components/OfflineIndicator';
+import { SyncIndicator } from '../components/SyncIndicator';
 
 // Providers
 import { useAuth } from '../providers/AuthProvider';
@@ -209,6 +210,7 @@ export const AppNavigator = () => {
         </Stack.Navigator>
       )}
       <OfflineIndicator />
+      <SyncIndicator />
     </NavigationContainer>
   );
 };

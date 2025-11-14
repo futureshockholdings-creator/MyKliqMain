@@ -1,10 +1,16 @@
 /**
  * MyKliq Mobile API Client
  * Connects to 107+ mobile-optimized backend endpoints
+ * 
+ * Features:
+ * - Automatic JWT authentication
+ * - Offline request queueing
+ * - Error handling and retry logic
  */
 
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
+import { requestQueue } from '@/utils/requestQueue';
 
 // API Configuration
 const API_URL = Constants.expoConfig?.extra?.apiUrl || 'https://c7dd138c-576d-4490-a426-c0be6e6124ca-00-1u3lut3kqrgq6.kirk.replit.dev';
@@ -43,7 +49,8 @@ export class ApiClient {
 
   async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    enableOfflineQueue: boolean = true
   ): Promise<T> {
     const token = await this.getAuthToken();
     const isFormData = options.body instanceof FormData;
@@ -57,22 +64,58 @@ export class ApiClient {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...options,
+        headers,
+      });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        // Token expired, clear it
-        await this.clearAuthToken();
-        throw new Error('Session expired. Please log in again.');
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Token expired, clear it
+          await this.clearAuthToken();
+          throw new Error('Session expired. Please log in again.');
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}`);
       }
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP ${response.status}`);
-    }
 
-    return response.json();
+      return response.json();
+    } catch (error) {
+      // Queue mutating requests if offline
+      if (enableOfflineQueue && this.isMutatingRequest(options.method)) {
+        const isNetworkError = error instanceof TypeError && error.message.includes('network');
+        
+        if (isNetworkError) {
+          console.log(`[ApiClient] Network error, queueing request: ${endpoint}`);
+          
+          // Parse body for queueing
+          let body;
+          try {
+            body = options.body ? JSON.parse(options.body as string) : undefined;
+          } catch {
+            body = options.body;
+          }
+          
+          await requestQueue.add(
+            endpoint,
+            options.method as any,
+            body,
+            'normal',
+            `${options.method} ${endpoint}`
+          );
+          
+          // Throw a user-friendly error
+          throw new Error('No internet connection. Your action will be synced when you\'re back online.');
+        }
+      }
+      
+      throw error;
+    }
+  }
+
+  private isMutatingRequest(method?: string): boolean {
+    return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method?.toUpperCase() || '');
   }
 
   // Authentication
