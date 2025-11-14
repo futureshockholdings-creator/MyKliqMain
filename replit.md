@@ -90,7 +90,40 @@ Automatic URL transformation ensures cross-platform compatibility:
 PostgreSQL with Drizzle ORM provides type-safe operations. Key tables manage users, themes, friendships (with ranking), posts, comments, content filters, messages, stories, sessions, and invite codes. Database indexing and connection pooling are implemented for performance.
 
 ## Authentication & Authorization
-Authentication integrates with Replit's OAuth (OpenID Connect) using JWT tokens for mobile. Secure, cookie-based sessions are stored in PostgreSQL. The system supports automatic user creation, unique invite codes for connections, and a 4-step password recovery system based on phone, security questions, and PIN verification.
+
+### Dual Authentication System
+The platform implements separate authentication strategies optimized for each client type:
+
+**Web Application (Replit OAuth):**
+- OpenID Connect (OIDC) integration with Replit
+- Cookie-based sessions stored in PostgreSQL
+- Automatic token refresh using refresh tokens
+- Session TTL: 7 days
+- Middleware: `isAuthenticated` (checks session validity and auto-refreshes)
+
+**Mobile Application (JWT):**
+- Phone number + password authentication
+- JWT tokens with 30-day expiration
+- Stateless authentication (no server-side sessions)
+- Token storage: expo-secure-store (iOS Keychain / Android Keystore)
+- Middleware: `verifyMobileTokenMiddleware` (validates JWT signature and expiry)
+
+### Security Features
+- **Password Requirements**: Min 10 chars, must include letter, number, and special character
+- **PKCE Support**: Ready for OAuth 2.0 flows (Phase 2 social platform integrations)
+- **4-Step Password Recovery**: Phone → Security Questions → PIN → Reset
+- **Invite Codes**: Unique codes for controlled user onboarding
+- **JWT Configuration**: HS256 algorithm, includes issuer/audience validation
+- **Token Best Practices**: Never logged, stored securely, validated on every request
+
+### Authentication Utilities
+Centralized utilities in `server/mobile-auth.ts`:
+- `generateMobileToken(userId, phoneNumber)` - Create secure JWT tokens
+- `verifyMobileToken(token)` - Validate and decode JWT
+- `verifyMobileTokenMiddleware` - Express middleware for route protection
+- `generateCodeVerifier()` - PKCE code verifier (OAuth 2.0)
+- `generateCodeChallenge(verifier)` - PKCE code challenge (OAuth 2.0)
+- `generateOAuthState()` - CSRF protection for OAuth flows
 
 ## Content Management
 The application features a sophisticated content system including:
