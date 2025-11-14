@@ -3,45 +3,72 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
   ScrollView,
+  Image,
+  TouchableOpacity,
   Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera } from 'expo-camera';
-import ApiService from '../services/api';
+import * as Location from 'expo-location';
+import { apiClient } from '../lib/apiClient';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
 
 interface CreatePostScreenProps {
   navigation: any;
 }
 
-const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
+export default function CreatePostScreen({ navigation }: CreatePostScreenProps) {
   const [content, setContent] = useState('');
   const [mediaUri, setMediaUri] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationName, setLocationName] = useState('');
+  
+  const queryClient = useQueryClient();
+
+  const createPostMutation = useMutation({
+    mutationFn: (postData: any) => apiClient.createPost(postData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/mobile/feed'] });
+      Alert.alert('Success', 'Post created successfully!', [{ text: 'OK', onPress: () => navigation.goBack() }]);
+    },
+    onError: (error: any) => {
+      Alert.alert('Error', error.message || 'Failed to create post');
+    },
+  });
 
   const requestCameraPermission = async () => {
-    const { status } = await Camera.requestCameraPermissionsAsync();
-    return status === 'granted';
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Camera permission is required');
+      return false;
+    }
+    return true;
   };
 
   const requestMediaLibraryPermission = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    return status === 'granted';
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Media library permission is required');
+      return false;
+    }
+    return true;
+  };
+
+  const requestLocationPermission = async () => {
+    const { status} = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Location permission is required');
+      return false;
+    }
+    return true;
   };
 
   const handleTakePhoto = async () => {
     const hasPermission = await requestCameraPermission();
-    if (!hasPermission) {
-      Alert.alert('Permission Denied', 'Camera access is required to take photos');
-      return;
-    }
+    if (!hasPermission) return;
 
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -52,19 +79,15 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
 
     if (!result.canceled && result.assets[0]) {
       setMediaUri(result.assets[0].uri);
-      setMediaType('image');
     }
   };
 
   const handlePickImage = async () => {
     const hasPermission = await requestMediaLibraryPermission();
-    if (!hasPermission) {
-      Alert.alert('Permission Denied', 'Photo library access is required');
-      return;
-    }
+    if (!hasPermission) return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
@@ -72,313 +95,182 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
 
     if (!result.canceled && result.assets[0]) {
       setMediaUri(result.assets[0].uri);
-      setMediaType(result.assets[0].type === 'video' ? 'video' : 'image');
     }
   };
 
-  const handleRemoveMedia = () => {
-    setMediaUri(null);
-    setMediaType(null);
-  };
+  const handleAddLocation = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) {
+      Alert.alert(
+        'Location Permission Required',
+        'To tag your location, please enable location access in your device settings.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
 
-  const uploadMedia = async (uri: string, type: 'image' | 'video'): Promise<string> => {
-    // This is a simplified upload - in production you'd upload to your backend/S3
-    // For now, we'll simulate the upload and return the URI
-    // In real implementation, use ApiService.prepareFileUpload() then upload to presigned URL
-    
-    const formData = new FormData();
-    const filename = uri.split('/').pop() || 'media';
-    const match = /\.(\w+)$/.exec(filename);
-    const fileType = match ? `${type}/${match[1]}` : `${type}`;
+    try {
+      const currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
 
-    formData.append('file', {
-      uri,
-      name: filename,
-      type: fileType,
-    } as any);
+      setLocation({
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
+      });
 
-    // In production, upload to your backend here
-    // For now, return the local URI (backend should handle this)
-    return uri;
+      const reverseGeocode = await Location.reverseGeocodeAsync({
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
+      });
+
+      if (reverseGeocode[0]) {
+        const { city, region, country } = reverseGeocode[0];
+        setLocationName(`${city || ''}, ${region || ''}, ${country || ''}`.replace(/^,\s*/, '').replace(/,\s*,/g, ','));
+      }
+    } catch (error) {
+      Alert.alert(
+        'Location Error',
+        'Failed to get your current location. Please try again or post without a location.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const handlePost = async () => {
     if (!content.trim() && !mediaUri) {
-      Alert.alert('Empty Post', 'Please add some content or media to your post');
+      Alert.alert('Error', 'Please add some content or a photo');
       return;
     }
 
-    setUploading(true);
-    try {
-      let mediaUrl: string | undefined;
-      
-      if (mediaUri && mediaType) {
-        mediaUrl = await uploadMedia(mediaUri, mediaType);
-      }
+    const postData: any = {
+      content: content.trim(),
+    };
 
-      await ApiService.createPost({
-        content: content.trim() || undefined,
-        mediaUrl,
-        mediaType: mediaType || undefined,
-      });
-
-      Alert.alert('Success', 'Your post has been shared with your kliq!', [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ]);
-    } catch (error) {
-      console.error('Error creating post:', error);
-      Alert.alert('Error', 'Failed to create post. Please try again.');
-    } finally {
-      setUploading(false);
+    if (mediaUri) {
+      postData.mediaUrl = mediaUri;
     }
+
+    if (location) {
+      postData.latitude = location.latitude;
+      postData.longitude = location.longitude;
+      postData.locationName = locationName;
+    }
+
+    createPostMutation.mutate(postData);
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.content}>
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.cancelButton}>Cancel</Text>
-            </TouchableOpacity>
-            <Text style={styles.title}>Create Post</Text>
-            <TouchableOpacity
-              onPress={handlePost}
-              disabled={uploading || (!content.trim() && !mediaUri)}
-            >
-              <Text
-                style={[
-                  styles.postButton,
-                  (uploading || (!content.trim() && !mediaUri)) && styles.postButtonDisabled,
-                ]}
-              >
-                {uploading ? 'Posting...' : 'Post'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+    <View className="flex-1 bg-background">
+      <ScrollView className="flex-1">
+        <View className="p-4">
+          <Card className="mb-4">
+            <TextInput
+              className="text-foreground text-base p-4 min-h-[120px]"
+              placeholder="What's on your mind?"
+              placeholderTextColor="#666"
+              value={content}
+              onChangeText={setContent}
+              multiline
+              textAlignVertical="top"
+              data-testid="input-post-content"
+            />
 
-          {/* Text Input */}
-          <TextInput
-            style={styles.textInput}
-            placeholder="What's on your mind?"
-            placeholderTextColor="#666"
-            value={content}
-            onChangeText={setContent}
-            multiline
-            textAlignVertical="top"
-            maxLength={2000}
-          />
+            {mediaUri && (
+              <View className="relative">
+                <Image 
+                  source={{ uri: mediaUri }} 
+                  className="w-full h-64 rounded-lg"
+                  resizeMode="cover"
+                />
+                <TouchableOpacity
+                  className="absolute top-2 right-2 bg-black/70 rounded-full p-2"
+                  onPress={() => setMediaUri(null)}
+                >
+                  <Text className="text-white text-lg">✕</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
-          {/* Media Preview */}
-          {mediaUri && (
-            <View style={styles.mediaPreview}>
-              <Image source={{ uri: mediaUri }} style={styles.previewImage} />
-              <TouchableOpacity
-                style={styles.removeMediaButton}
-                onPress={handleRemoveMedia}
-              >
-                <Text style={styles.removeMediaText}>✕</Text>
-              </TouchableOpacity>
-              {mediaType === 'video' && (
-                <View style={styles.videoIndicator}>
-                  <Text style={styles.videoIndicatorText}>🎥 Video</Text>
+            {location && (
+              <View className="bg-muted rounded-lg p-3 mt-3 flex-row items-center justify-between">
+                <View className="flex-1">
+                  <Text className="text-foreground font-semibold text-sm">
+                    📍 {locationName || 'Current Location'}
+                  </Text>
+                  <Text className="text-muted-foreground text-xs mt-1">
+                    {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+                  </Text>
                 </View>
-              )}
+                <TouchableOpacity onPress={() => setLocation(null)}>
+                  <Text className="text-muted-foreground text-lg">✕</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </Card>
+
+          <View className="mb-4">
+            <Text className="text-muted-foreground text-sm mb-3 font-medium">
+              Add to your post
+            </Text>
+            
+            <View className="flex-row flex-wrap gap-3">
+              <TouchableOpacity
+                className={`bg-card border border-border rounded-lg p-4 flex-1 min-w-[45%] items-center ${createPostMutation.isPending ? 'opacity-50' : ''}`}
+                onPress={handleTakePhoto}
+                disabled={createPostMutation.isPending}
+                data-testid="button-take-photo"
+              >
+                <Text className="text-3xl mb-2">📷</Text>
+                <Text className="text-foreground text-sm font-medium">Camera</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className={`bg-card border border-border rounded-lg p-4 flex-1 min-w-[45%] items-center ${createPostMutation.isPending ? 'opacity-50' : ''}`}
+                onPress={handlePickImage}
+                disabled={createPostMutation.isPending}
+                data-testid="button-pick-image"
+              >
+                <Text className="text-3xl mb-2">🖼️</Text>
+                <Text className="text-foreground text-sm font-medium">Gallery</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className={`bg-card border border-border rounded-lg p-4 flex-1 min-w-[45%] items-center ${createPostMutation.isPending ? 'opacity-50' : ''}`}
+                onPress={handleAddLocation}
+                disabled={createPostMutation.isPending}
+                data-testid="button-add-location"
+              >
+                <Text className="text-3xl mb-2">📍</Text>
+                <Text className="text-foreground text-sm font-medium">Location</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="bg-card border border-border rounded-lg p-4 flex-1 min-w-[45%] items-center opacity-50"
+                disabled
+              >
+                <Text className="text-3xl mb-2">📊</Text>
+                <Text className="text-foreground text-sm font-medium">Poll</Text>
+              </TouchableOpacity>
             </View>
-          )}
-
-          {/* Media Options */}
-          <View style={styles.mediaOptions}>
-            <TouchableOpacity
-              style={styles.mediaButton}
-              onPress={handleTakePhoto}
-              disabled={uploading}
-            >
-              <Text style={styles.mediaIcon}>📷</Text>
-              <Text style={styles.mediaButtonText}>Camera</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.mediaButton}
-              onPress={handlePickImage}
-              disabled={uploading}
-            >
-              <Text style={styles.mediaIcon}>🖼️</Text>
-              <Text style={styles.mediaButtonText}>Gallery</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.mediaButton, styles.mediaButtonDisabled]}
-              disabled
-            >
-              <Text style={styles.mediaIcon}>🎬</Text>
-              <Text style={styles.mediaButtonText}>Video</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.mediaButton, styles.mediaButtonDisabled]}
-              disabled
-            >
-              <Text style={styles.mediaIcon}>😊</Text>
-              <Text style={styles.mediaButtonText}>GIF</Text>
-            </TouchableOpacity>
           </View>
 
-          {/* Character Count */}
-          <Text style={styles.charCount}>
-            {content.length}/2000 characters
-          </Text>
-
-          {/* Loading Indicator */}
-          {uploading && (
-            <View style={styles.uploadingContainer}>
-              <ActivityIndicator color="#00FF00" size="large" />
-              <Text style={styles.uploadingText}>Posting to your kliq...</Text>
-            </View>
+          <Button
+            title={createPostMutation.isPending ? "Posting..." : "Post"}
+            onPress={handlePost}
+            loading={createPostMutation.isPending}
+            disabled={createPostMutation.isPending || (!content.trim() && !mediaUri)}
+            size="lg"
+            data-testid="button-submit-post"
+          />
+          
+          {createPostMutation.isPending && (
+            <Text className="text-muted-foreground text-center mt-2 text-sm">
+              Sharing with your kliq...
+            </Text>
           )}
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingTop: 10,
-  },
-  cancelButton: {
-    color: '#888',
-    fontSize: 16,
-  },
-  title: {
-    color: '#00FF00',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  postButton: {
-    color: '#00FF00',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  postButtonDisabled: {
-    color: '#333',
-  },
-  textInput: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#fff',
-    minHeight: 150,
-    borderWidth: 1,
-    borderColor: '#333',
-    marginBottom: 20,
-  },
-  mediaPreview: {
-    position: 'relative',
-    marginBottom: 20,
-  },
-  previewImage: {
-    width: '100%',
-    height: 300,
-    borderRadius: 12,
-  },
-  removeMediaButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  removeMediaText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  videoIndicator: {
-    position: 'absolute',
-    bottom: 10,
-    left: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  videoIndicatorText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  mediaOptions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  mediaButton: {
-    alignItems: 'center',
-    padding: 8,
-  },
-  mediaButtonDisabled: {
-    opacity: 0.4,
-  },
-  mediaIcon: {
-    fontSize: 28,
-    marginBottom: 4,
-  },
-  mediaButtonText: {
-    color: '#fff',
-    fontSize: 12,
-  },
-  charCount: {
-    color: '#666',
-    fontSize: 12,
-    textAlign: 'right',
-    marginBottom: 10,
-  },
-  uploadingContainer: {
-    alignItems: 'center',
-    padding: 30,
-  },
-  uploadingText: {
-    color: '#888',
-    marginTop: 12,
-    fontSize: 16,
-  },
-});
-
-export default CreatePostScreen;
+}
