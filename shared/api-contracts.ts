@@ -11,6 +11,39 @@
  */
 
 // ============================================================================
+// REAL-TIME & NOTIFICATIONS
+// ============================================================================
+
+export interface NotificationData {
+  id: string;
+  userId: string;
+  type: 'like' | 'comment' | 'message' | 'friend_request' | 'event' | 'story_view';
+  actorId: string;
+  actorName: string;
+  actorImageUrl?: string;
+  targetId?: string; // post ID, message ID, etc.
+  content?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface RealtimeUpdateMessage {
+  type: 'new_post' | 'new_message' | 'new_story' | 'notification' | 'poll_update' | 'friend_online';
+  data: any;
+  timestamp: string;
+}
+
+export interface MobileUpdatesResponse {
+  hasNewPosts: boolean;
+  hasNewMessages: boolean;
+  hasNewStories: boolean;
+  unreadMessageCount: number;
+  newPostCount: number;
+  newStoryCount: number;
+  lastChecked: string;
+}
+
+// ============================================================================
 // AUTHENTICATION & USER MANAGEMENT
 // ============================================================================
 
@@ -238,7 +271,7 @@ export interface CreateStoryResponse {
 }
 
 // ============================================================================
-// FRIENDS
+// FRIENDS & HIERARCHY
 // ============================================================================
 
 export interface FriendData {
@@ -250,10 +283,37 @@ export interface FriendData {
   kliqName?: string;
   ranking?: number;
   lastInteraction?: string;
+  tier?: 'inner' | 'core' | 'outer'; // Hierarchy tier
 }
 
 export interface FriendsResponse {
   friends: FriendData[];
+}
+
+export interface UpdateFriendRankingRequest {
+  friendId: string;
+  ranking: number; // 1-10 scale
+  tier?: 'inner' | 'core' | 'outer';
+}
+
+export interface UpdateFriendRankingResponse {
+  success: boolean;
+  friend: FriendData;
+}
+
+// ============================================================================
+// POST SHARING
+// ============================================================================
+
+export interface SharePostRequest {
+  postId: number;
+  caption?: string;
+}
+
+export interface SharePostResponse {
+  success: boolean;
+  sharedPostId: number;
+  message?: string;
 }
 
 // ============================================================================
@@ -374,6 +434,63 @@ export interface BorderData {
   price: number;
   imageUrl: string;
   tier: string;
+}
+
+// ============================================================================
+// MOVIECONS (VIDEO REACTIONS)
+// ============================================================================
+
+export interface MovieconData {
+  id: string;
+  userId: string;
+  postId?: number;
+  videoUrl: string;
+  createdAt: string;
+  author: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    profileImageUrl?: string;
+  };
+}
+
+export interface CreateMovieconRequest {
+  postId?: number;
+  videoData: string; // Base64 or media ID
+}
+
+export interface CreateMovieconResponse {
+  success: boolean;
+  movieconId: string;
+  videoUrl: string;
+}
+
+// ============================================================================
+// INCOGNITO MESSAGING
+// ============================================================================
+
+export interface IncognitoMessageData {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video' | 'gif';
+  expiresAt: string; // 7 days from creation
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface SendIncognitoMessageRequest {
+  receiverId: string;
+  content?: string;
+  mediaId?: string;
+}
+
+export interface SendIncognitoMessageResponse {
+  success: boolean;
+  messageId: string;
+  expiresAt: string;
 }
 
 // ============================================================================

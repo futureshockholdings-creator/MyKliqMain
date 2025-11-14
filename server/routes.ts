@@ -529,7 +529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     handlePlatformOAuthCallback,
     disconnectPlatform
   } = await import('./oauth-mobile');
-  const { generateMobileToken, verifyMobileTokenMiddleware } = await import('./mobile-auth');
+  const { generateMobileToken, verifyMobileTokenMiddleware, verifyMobileToken: verifyMobileTokenFn } = await import('./mobile-auth');
 
   // ============================================================================
   // MOBILE AUTHENTICATION - PHONE/PASSWORD
@@ -627,6 +627,741 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Disconnect platform
   app.delete('/api/mobile/oauth/:platform/disconnect', verifyMobileToken, disconnectPlatform);
+
+  // ========================================================================
+  // MOBILE REAL-TIME & NOTIFICATIONS (Phase 0 Task 4)
+  // ========================================================================
+
+  /**
+   * Battery-efficient polling endpoint for checking updates
+   * Mobile apps can poll this every 5-10 seconds instead of maintaining WebSocket
+   * 
+   * GET /api/mobile/updates/check?lastChecked=<timestamp>
+   */
+  app.get('/api/mobile/updates/check', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const lastChecked = req.query.lastChecked 
+        ? new Date(req.query.lastChecked as string)
+        : new Date(Date.now() - 60000); // Default: last 60 seconds
+
+      // Check for new posts in user's feed
+      const newPosts = await db.query.posts.findMany({
+        where: and(
+          gt(posts.createdAt, lastChecked),
+          ne(posts.userId, userId)
+        ),
+        limit: 1,
+      });
+
+      // Check for new messages
+      const newMessages = await db.query.messages.findMany({
+        where: and(
+          eq(messages.receiverId, userId),
+          gt(messages.createdAt, lastChecked),
+          eq(messages.isRead, false)
+        ),
+        limit: 1,
+      });
+
+      // Check for new stories
+      const newStories = await db.query.stories.findMany({
+        where: and(
+          gt(stories.createdAt, lastChecked),
+          ne(stories.userId, userId)
+        ),
+        limit: 1,
+      });
+
+      // Count unread messages
+      const unreadMessages = await db.query.messages.findMany({
+        where: and(
+          eq(messages.receiverId, userId),
+          eq(messages.isRead, false)
+        ),
+      });
+
+      res.json({
+        hasNewPosts: newPosts.length > 0,
+        hasNewMessages: newMessages.length > 0,
+        hasNewStories: newStories.length > 0,
+        unreadMessageCount: unreadMessages.length,
+        newPostCount: newPosts.length,
+        newStoryCount: newStories.length,
+        lastChecked: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Mobile updates check error:', error);
+      res.status(500).json({ message: 'Failed to check updates' });
+    }
+  });
+
+  /**
+   * Get latest notifications for mobile
+   * 
+   * GET /api/mobile/notifications?limit=20&offset=0
+   */
+  app.get('/api/mobile/notifications', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      // TODO: Implement notifications table in schema
+      // For now, return empty array
+      res.json({
+        notifications: [],
+        hasMore: false,
+        total: 0,
+      });
+    } catch (error) {
+      console.error('Mobile notifications fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch notifications' });
+    }
+  });
+
+  /**
+   * Mark notification as read
+   * 
+   * POST /api/mobile/notifications/:id/read
+   */
+  app.post('/api/mobile/notifications/:id/read', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const notificationId = req.params.id;
+
+      // TODO: Implement notification read status update
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Mobile notification read error:', error);
+      res.status(500).json({ message: 'Failed to mark notification as read' });
+    }
+  });
+
+  // ========================================================================
+  // MOBILE POLLING SYSTEM (Phase 1 Task 1)
+  // ========================================================================
+
+  /**
+   * Get active polls for mobile feed
+   * GET /api/mobile/polls?limit=20&offset=0
+   */
+  app.get('/api/mobile/polls', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const { polls: pollsTable, pollVotes } = await import('@shared/schema');
+      const { sql } = await import('drizzle-orm');
+
+      // Get active polls
+      const pollsList = await storage.getPolls();
+      const activePolls = pollsList
+        .filter((p: any) => p.isActive && new Date(p.expiresAt) > new Date())
+        .slice(offset, offset + limit);
+
+      // Get vote counts and user votes for each poll
+      const pollsWithVotes = await Promise.all(activePolls.map(async (poll: any) => {
+        const votes = await db.query.pollVotes.findMany({
+          where: eq(pollVotes.pollId, poll.id),
+        });
+
+        const userVote = votes.find(v => v.userId === userId);
+        const totalVotes = votes.length;
+        
+        // Calculate vote counts per option
+        const optionCounts = poll.options.map((_: any, index: number) => {
+          const count = votes.filter(v => v.optionIndex === index).length;
+          return {
+            option: poll.options[index],
+            votes: count,
+            percentage: totalVotes > 0 ? (count / totalVotes) * 100 : 0,
+          };
+        });
+
+        // Get poll author
+        const author = await storage.getUser(poll.userId);
+
+        return {
+          id: poll.id,
+          userId: poll.userId,
+          title: poll.title,
+          description: poll.description,
+          options: optionCounts,
+          expiresAt: poll.expiresAt,
+          isActive: poll.isActive,
+          createdAt: poll.createdAt,
+          totalVotes,
+          hasVoted: !!userVote,
+          userVotedOption: userVote?.optionIndex,
+          author: {
+            id: author?.id || poll.userId,
+            firstName: author?.firstName || 'Unknown',
+            lastName: author?.lastName || '',
+            profileImageUrl: author?.profileImageUrl,
+          },
+        };
+      }));
+
+      res.json({
+        polls: pollsWithVotes,
+        hasMore: pollsList.length > offset + limit,
+      });
+    } catch (error) {
+      console.error('Mobile polls fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch polls' });
+    }
+  });
+
+  /**
+   * Create a new poll
+   * POST /api/mobile/polls
+   */
+  app.post('/api/mobile/polls', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { title, description, options, duration } = req.body;
+
+      if (!title || !options || options.length < 2) {
+        return res.status(400).json({ 
+          message: 'Title and at least 2 options are required' 
+        });
+      }
+
+      if (options.length > 6) {
+        return res.status(400).json({ 
+          message: 'Maximum 6 options allowed' 
+        });
+      }
+
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + (duration || 24));
+
+      const poll = await storage.createPoll({
+        userId,
+        title,
+        description,
+        options,
+        expiresAt,
+      });
+
+      // Broadcast to WebSocket subscribers
+      if ((app as any).broadcastFeedUpdate) {
+        (app as any).broadcastFeedUpdate('poll', { pollId: poll.id });
+      }
+
+      res.json({
+        success: true,
+        pollId: poll.id,
+        poll: {
+          ...poll,
+          totalVotes: 0,
+          hasVoted: false,
+          options: poll.options.map((opt: string) => ({
+            option: opt,
+            votes: 0,
+            percentage: 0,
+          })),
+        },
+      });
+    } catch (error) {
+      console.error('Mobile poll creation error:', error);
+      res.status(500).json({ message: 'Failed to create poll' });
+    }
+  });
+
+  /**
+   * Vote on a poll
+   * POST /api/mobile/polls/:pollId/vote
+   */
+  app.post('/api/mobile/polls/:pollId/vote', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { pollId } = req.params;
+      const { optionIndex } = req.body;
+
+      if (typeof optionIndex !== 'number') {
+        return res.status(400).json({ message: 'Option index is required' });
+      }
+
+      const poll = await storage.getPollById(pollId);
+      if (!poll) {
+        return res.status(404).json({ message: 'Poll not found' });
+      }
+
+      if (!poll.isActive || new Date(poll.expiresAt) < new Date()) {
+        return res.status(400).json({ message: 'Poll is no longer active' });
+      }
+
+      if (optionIndex < 0 || optionIndex >= poll.options.length) {
+        return res.status(400).json({ message: 'Invalid option index' });
+      }
+
+      // Check if user already voted
+      const { pollVotes } = await import('@shared/schema');
+      const existingVote = await db.query.pollVotes.findFirst({
+        where: and(
+          eq(pollVotes.pollId, pollId),
+          eq(pollVotes.userId, userId)
+        ),
+      });
+
+      if (existingVote) {
+        return res.status(400).json({ message: 'You have already voted on this poll' });
+      }
+
+      // Create vote
+      await db.insert(pollVotes).values({
+        pollId,
+        userId,
+        optionIndex,
+      });
+
+      // Get updated vote counts
+      const votes = await db.query.pollVotes.findMany({
+        where: eq(pollVotes.pollId, pollId),
+      });
+
+      const totalVotes = votes.length;
+      const optionCounts = poll.options.map((_: any, index: number) => {
+        const count = votes.filter(v => v.optionIndex === index).length;
+        return {
+          option: poll.options[index],
+          votes: count,
+          percentage: totalVotes > 0 ? (count / totalVotes) * 100 : 0,
+        };
+      });
+
+      // Get poll author
+      const author = await storage.getUser(poll.userId);
+
+      res.json({
+        success: true,
+        poll: {
+          id: poll.id,
+          userId: poll.userId,
+          title: poll.title,
+          description: poll.description,
+          options: optionCounts,
+          expiresAt: poll.expiresAt,
+          isActive: poll.isActive,
+          createdAt: poll.createdAt,
+          totalVotes,
+          hasVoted: true,
+          userVotedOption: optionIndex,
+          author: {
+            id: author?.id || poll.userId,
+            firstName: author?.firstName || 'Unknown',
+            lastName: author?.lastName || '',
+            profileImageUrl: author?.profileImageUrl,
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Mobile poll vote error:', error);
+      res.status(500).json({ message: 'Failed to vote on poll' });
+    }
+  });
+
+  /**
+   * Get poll results
+   * GET /api/mobile/polls/:pollId/results
+   */
+  app.get('/api/mobile/polls/:pollId/results', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { pollId } = req.params;
+
+      const poll = await storage.getPollById(pollId);
+      if (!poll) {
+        return res.status(404).json({ message: 'Poll not found' });
+      }
+
+      const { pollVotes } = await import('@shared/schema');
+      const votes = await db.query.pollVotes.findMany({
+        where: eq(pollVotes.pollId, pollId),
+      });
+
+      const userVote = votes.find(v => v.userId === userId);
+      const totalVotes = votes.length;
+      
+      const optionCounts = poll.options.map((_: any, index: number) => {
+        const count = votes.filter(v => v.optionIndex === index).length;
+        return {
+          option: poll.options[index],
+          votes: count,
+          percentage: totalVotes > 0 ? (count / totalVotes) * 100 : 0,
+        };
+      });
+
+      const author = await storage.getUser(poll.userId);
+
+      res.json({
+        poll: {
+          id: poll.id,
+          userId: poll.userId,
+          title: poll.title,
+          description: poll.description,
+          options: optionCounts,
+          expiresAt: poll.expiresAt,
+          isActive: poll.isActive,
+          createdAt: poll.createdAt,
+          totalVotes,
+          hasVoted: !!userVote,
+          userVotedOption: userVote?.optionIndex,
+          author: {
+            id: author?.id || poll.userId,
+            firstName: author?.firstName || 'Unknown',
+            lastName: author?.lastName || '',
+            profileImageUrl: author?.profileImageUrl,
+          },
+        },
+      });
+    } catch (error) {
+      console.error('Mobile poll results error:', error);
+      res.status(500).json({ message: 'Failed to fetch poll results' });
+    }
+  });
+
+  // ========================================================================
+  // MOBILE MOVIECONS (Phase 1 Task 2)
+  // ========================================================================
+
+  /**
+   * Get available moviecons library
+   * GET /api/mobile/moviecons?category=general
+   */
+  app.get('/api/mobile/moviecons', verifyMobileToken, async (req, res) => {
+    try {
+      const category = req.query.category || 'general';
+      
+      // Get moviecons from storage
+      const moviecons = await storage.getMoviecons();
+      const filtered = category === 'all' 
+        ? moviecons 
+        : moviecons.filter((m: any) => m.category === category);
+
+      res.json({
+        moviecons: filtered.map((m: any) => ({
+          id: m.id,
+          title: m.title,
+          videoUrl: m.videoUrl,
+          thumbnailUrl: m.thumbnailUrl,
+          duration: m.duration,
+          category: m.category,
+        })),
+      });
+    } catch (error) {
+      console.error('Mobile moviecons fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch moviecons' });
+    }
+  });
+
+  /**
+   * Upload custom moviecon
+   * POST /api/mobile/moviecons/upload
+   */
+  app.post('/api/mobile/moviecons/upload', verifyMobileToken, upload.single('video'), async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { title, category } = req.body;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ message: 'Video file is required' });
+      }
+
+      // Store in media registry (MVP)
+      const mediaId = `moviecon_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      mediaRegistry.set(mediaId, {
+        buffer: file.buffer,
+        mimetype: file.mimetype,
+        filename: file.originalname,
+      });
+
+      const videoUrl = `/api/mobile/uploads/${mediaId}`;
+
+      // Create moviecon record
+      const moviecon = await storage.createMoviecon({
+        uploadedBy: userId,
+        title: title || 'Custom Moviecon',
+        videoUrl,
+        duration: 5, // TODO: Extract actual duration
+        category: category || 'custom',
+      });
+
+      res.json({
+        success: true,
+        movieconId: moviecon.id,
+        videoUrl,
+      });
+    } catch (error) {
+      console.error('Mobile moviecon upload error:', error);
+      res.status(500).json({ message: 'Failed to upload moviecon' });
+    }
+  });
+
+  // ========================================================================
+  // MOBILE INCOGNITO MESSAGING (Phase 1 Task 3)
+  // ========================================================================
+
+  /**
+   * Send incognito message (7-day auto-deletion)
+   * POST /api/mobile/messages/incognito
+   */
+  app.post('/api/mobile/messages/incognito', verifyMobileToken, async (req, res) => {
+    try {
+      const senderId = (req as any).userId;
+      const { receiverId, content, mediaId } = req.body;
+
+      if (!receiverId || (!content && !mediaId)) {
+        return res.status(400).json({ 
+          message: 'Receiver ID and content or media are required' 
+        });
+      }
+
+      // Get or create conversation
+      const { conversations: conversationsTable } = await import('@shared/schema');
+      const existingConversation = await db.query.conversations.findFirst({
+        where: or(
+          and(
+            eq(conversationsTable.user1Id, senderId),
+            eq(conversationsTable.user2Id, receiverId)
+          ),
+          and(
+            eq(conversationsTable.user1Id, receiverId),
+            eq(conversationsTable.user2Id, senderId)
+          )
+        ),
+      });
+
+      let conversationId;
+      if (existingConversation) {
+        conversationId = existingConversation.id;
+      } else {
+        const [newConversation] = await db.insert(conversationsTable)
+          .values({
+            user1Id: senderId < receiverId ? senderId : receiverId,
+            user2Id: senderId < receiverId ? receiverId : senderId,
+          })
+          .returning();
+        conversationId = newConversation.id;
+      }
+
+      // Create incognito message with 7-day expiration
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+
+      const { messages: messagesTable } = await import('@shared/schema');
+      const [message] = await db.insert(messagesTable)
+        .values({
+          conversationId,
+          senderId,
+          receiverId,
+          content,
+          mediaId,
+          isIncognito: true,
+          expiresAt,
+        })
+        .returning();
+
+      // Update conversation
+      await db.update(conversationsTable)
+        .set({
+          lastMessageAt: new Date(),
+          lastMessage: content || '📹 Video',
+        })
+        .where(eq(conversationsTable.id, conversationId));
+
+      res.json({
+        success: true,
+        messageId: message.id,
+        expiresAt: message.expiresAt,
+      });
+    } catch (error) {
+      console.error('Mobile incognito message error:', error);
+      res.status(500).json({ message: 'Failed to send incognito message' });
+    }
+  });
+
+  /**
+   * Get incognito messages for a conversation
+   * GET /api/mobile/messages/incognito/:conversationId
+   */
+  app.get('/api/mobile/messages/incognito/:conversationId', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { conversationId } = req.params;
+
+      const { messages: messagesTable } = await import('@shared/schema');
+      const messages = await db.query.messages.findMany({
+        where: and(
+          eq(messagesTable.conversationId, conversationId),
+          eq(messagesTable.isIncognito, true),
+          or(
+            eq(messagesTable.senderId, userId),
+            eq(messagesTable.receiverId, userId)
+          )
+        ),
+        orderBy: desc(messagesTable.createdAt),
+      });
+
+      // Filter out expired messages
+      const now = new Date();
+      const activeMessages = messages.filter(m => !m.expiresAt || new Date(m.expiresAt) > now);
+
+      res.json({
+        messages: activeMessages.map(m => ({
+          id: m.id,
+          senderId: m.senderId,
+          receiverId: m.receiverId,
+          content: m.content,
+          mediaUrl: m.mediaId ? `/api/mobile/uploads/${m.mediaId}` : null,
+          expiresAt: m.expiresAt,
+          isRead: m.isRead,
+          createdAt: m.createdAt,
+        })),
+      });
+    } catch (error) {
+      console.error('Mobile incognito messages fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch incognito messages' });
+    }
+  });
+
+  // ========================================================================
+  // MOBILE FRIEND HIERARCHY (Phase 1 Task 4)
+  // ========================================================================
+
+  /**
+   * Get friends with hierarchy/ranking
+   * GET /api/mobile/friends?tier=all
+   */
+  app.get('/api/mobile/friends', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const tier = req.query.tier || 'all';
+
+      const friends = await storage.getFriends(userId);
+      
+      // Classify friends into tiers based on ranking
+      const friendsWithTier = friends.map((f: any) => {
+        let friendTier = 'outer';
+        if (f.rank && f.rank <= 10) friendTier = 'inner';
+        else if (f.rank && f.rank <= 20) friendTier = 'core';
+        
+        return {
+          id: f.id,
+          firstName: f.firstName,
+          lastName: f.lastName,
+          profileImageUrl: f.profileImageUrl,
+          bio: f.bio,
+          kliqName: f.kliqName,
+          ranking: f.rank,
+          tier: friendTier,
+        };
+      });
+
+      const filtered = tier === 'all' 
+        ? friendsWithTier 
+        : friendsWithTier.filter(f => f.tier === tier);
+
+      res.json({
+        friends: filtered,
+      });
+    } catch (error) {
+      console.error('Mobile friends fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch friends' });
+    }
+  });
+
+  /**
+   * Update friend ranking
+   * PUT /api/mobile/friends/:friendId/ranking
+   */
+  app.put('/api/mobile/friends/:friendId/ranking', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { friendId } = req.params;
+      const { ranking } = req.body;
+
+      if (typeof ranking !== 'number' || ranking < 1 || ranking > 28) {
+        return res.status(400).json({ message: 'Ranking must be between 1 and 28' });
+      }
+
+      await storage.updateFriendRanking(userId, friendId, ranking);
+
+      const friend = await storage.getUser(friendId);
+      let tier = 'outer';
+      if (ranking <= 10) tier = 'inner';
+      else if (ranking <= 20) tier = 'core';
+
+      res.json({
+        success: true,
+        friend: {
+          id: friend.id,
+          firstName: friend.firstName,
+          lastName: friend.lastName,
+          profileImageUrl: friend.profileImageUrl,
+          bio: friend.bio,
+          ranking,
+          tier,
+        },
+      });
+    } catch (error) {
+      console.error('Mobile friend ranking update error:', error);
+      res.status(500).json({ message: 'Failed to update friend ranking' });
+    }
+  });
+
+  // ========================================================================
+  // MOBILE POST SHARING (Phase 1 Task 5)
+  // ========================================================================
+
+  /**
+   * Share a post internally within kliq
+   * POST /api/mobile/posts/:postId/share
+   */
+  app.post('/api/mobile/posts/:postId/share', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { postId } = req.params;
+      const { caption } = req.body;
+
+      // Get original post
+      const originalPost = await storage.getPost(parseInt(postId));
+      if (!originalPost) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+
+      // Create shared post (copy of original)
+      const { posts: postsTable } = await import('@shared/schema');
+      const [sharedPost] = await db.insert(postsTable)
+        .values({
+          userId,
+          content: caption || originalPost.content,
+          mediaUrl: originalPost.mediaUrl,
+          mediaType: originalPost.mediaType,
+          youtubeUrl: originalPost.youtubeUrl,
+          originalPostId: originalPost.id, // Track original
+        })
+        .returning();
+
+      // Broadcast to feed subscribers
+      if ((app as any).broadcastFeedUpdate) {
+        (app as any).broadcastFeedUpdate('post', { postId: sharedPost.id });
+      }
+
+      res.json({
+        success: true,
+        sharedPostId: sharedPost.id,
+        message: 'Post shared successfully',
+      });
+    } catch (error) {
+      console.error('Mobile post share error:', error);
+      res.status(500).json({ message: 'Failed to share post' });
+    }
+  });
 
   // Mobile user profile endpoint
   app.get('/api/mobile/user/profile', verifyMobileToken, async (req, res) => {
@@ -6164,6 +6899,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
           case 'unsubscribe_feed':
             // Unsubscribe from feed updates
             ws.feed_subscriber = false;
+            break;
+            
+          case 'mobile_auth':
+            // Mobile WebSocket authentication with JWT
+            try {
+              const token = data.token;
+              const decoded = verifyMobileTokenFn(token);
+              if (decoded && decoded.userId) {
+                ws.user_id = decoded.userId;
+                ws.feed_subscriber = true; // Auto-subscribe mobile clients
+                ws.send(JSON.stringify({
+                  type: 'auth_success',
+                  userId: decoded.userId,
+                }));
+                console.log(`📱 Mobile WebSocket authenticated: ${decoded.userId}`);
+              } else {
+                ws.send(JSON.stringify({
+                  type: 'auth_error',
+                  message: 'Invalid token',
+                }));
+                ws.close();
+              }
+            } catch (error) {
+              ws.send(JSON.stringify({
+                type: 'auth_error',
+                message: 'Authentication failed',
+              }));
+              ws.close();
+            }
             break;
         }
       } catch (error) {

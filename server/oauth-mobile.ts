@@ -107,7 +107,7 @@ export async function initReplitOAuth(req: Request, res: Response): Promise<void
     // Use provided redirect URI or fall back to environment variable
     const oauthRedirectUri = redirectUri || process.env.MOBILE_OAUTH_REDIRECT_URI || 'myapp://oauth/callback';
 
-    // Get OIDC configuration
+    // Discover OIDC configuration
     const config = await client.discovery(new URL(issuerUrl), clientId);
 
     // Generate PKCE parameters
@@ -193,7 +193,7 @@ export async function handleReplitOAuthCallback(req: Request, res: Response): Pr
     // Use provided redirect URI or fall back to environment variable
     const oauthRedirectUri = redirectUri || process.env.MOBILE_OAUTH_REDIRECT_URI || 'myapp://oauth/callback';
 
-    // Get OIDC configuration
+    // Discover OIDC configuration
     const config = await client.discovery(new URL(issuerUrl), clientId);
 
     // Verify issuer matches Replit
