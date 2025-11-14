@@ -74,17 +74,17 @@ export default function ProfileScreen() {
     },
   });
 
-  // Fetch friends list to get count
-  const { data: friendsData } = useQuery<FriendData[]>({
-    queryKey: ['/api/friends'],
+  // Fetch user stats (posts and friends counts)
+  const { data: statsData, isLoading: statsLoading, isError: statsError } = useQuery<{ postsCount: number; friendsCount: number }>({
+    queryKey: ['/api/mobile/user/stats'],
     queryFn: async () => {
-      const response = await apiClient.get('/api/friends');
+      const response = await apiClient.get('/api/mobile/user/stats');
       return response;
     },
   });
 
-  const friendsCount = friendsData?.length || 0;
-  const postsCount = 0; // TODO Phase 2: Add mobile endpoint for user's post count
+  const friendsCount = statsData?.friendsCount ?? 0;
+  const postsCount = statsData?.postsCount ?? 0;
 
   const handleLogout = () => {
     Alert.alert(
@@ -160,54 +160,64 @@ export default function ProfileScreen() {
       <View className="mx-5 mb-6">
         <Text className="text-xl font-bold text-primary mb-4">Stats</Text>
         
-        <View className="bg-card rounded-xl p-4 border border-border">
-          <View className="flex-row justify-around mb-4">
-            <View className="items-center" data-testid="stat-posts">
-              <Text className="text-2xl font-bold text-foreground">
-                {postsCount}
-              </Text>
-              <Text className="text-xs text-muted-foreground mt-1">Posts</Text>
+        {statsLoading ? (
+          <View className="bg-card rounded-xl p-8 border border-border items-center">
+            <Text className="text-muted-foreground">Loading stats...</Text>
+          </View>
+        ) : statsError ? (
+          <View className="bg-card rounded-xl p-8 border border-destructive items-center">
+            <Text className="text-destructive text-sm">Failed to load stats</Text>
+          </View>
+        ) : (
+          <View className="bg-card rounded-xl p-4 border border-border">
+            <View className="flex-row justify-around mb-4">
+              <View className="items-center" data-testid="stat-posts">
+                <Text className="text-2xl font-bold text-foreground">
+                  {postsCount}
+                </Text>
+                <Text className="text-xs text-muted-foreground mt-1">Posts</Text>
+              </View>
+              
+              <View className="w-px bg-border" />
+              
+              <View className="items-center" data-testid="stat-friends">
+                <Text className="text-2xl font-bold text-foreground">
+                  {friendsCount}
+                </Text>
+                <Text className="text-xs text-muted-foreground mt-1">Friends</Text>
+              </View>
+              
+              <View className="w-px bg-border" />
+              
+              <View className="items-center" data-testid="stat-koins">
+                <Text className="text-2xl font-bold text-foreground">
+                  {koinData?.balance?.toFixed(2) || '0.00'}
+                </Text>
+                <Text className="text-xs text-muted-foreground mt-1">Koins</Text>
+              </View>
             </View>
             
-            <View className="w-px bg-border" />
+            <View className="h-px bg-border my-2" />
             
-            <View className="items-center" data-testid="stat-friends">
-              <Text className="text-2xl font-bold text-foreground">
-                {friendsCount}
-              </Text>
-              <Text className="text-xs text-muted-foreground mt-1">Friends</Text>
-            </View>
-            
-            <View className="w-px bg-border" />
-            
-            <View className="items-center" data-testid="stat-koins">
-              <Text className="text-2xl font-bold text-foreground">
-                {koinData?.balance?.toFixed(2) || '0.00'}
-              </Text>
-              <Text className="text-xs text-muted-foreground mt-1">Koins</Text>
+            <View className="flex-row justify-around">
+              <View className="items-center" data-testid="stat-streak">
+                <Text className="text-xl font-bold text-foreground">
+                  {streakData?.currentStreak || 0} 🔥
+                </Text>
+                <Text className="text-xs text-muted-foreground mt-1">Day Streak</Text>
+              </View>
+              
+              <View className="w-px bg-border" />
+              
+              <View className="items-center" data-testid="stat-tier">
+                <Text className="text-xl font-bold text-foreground">
+                  Tier {streakData?.tier || 1}
+                </Text>
+                <Text className="text-xs text-muted-foreground mt-1">{streakData?.tierName || 'Starter'}</Text>
+              </View>
             </View>
           </View>
-          
-          <View className="h-px bg-border my-2" />
-          
-          <View className="flex-row justify-around">
-            <View className="items-center" data-testid="stat-streak">
-              <Text className="text-xl font-bold text-foreground">
-                {streakData?.currentStreak || 0} 🔥
-              </Text>
-              <Text className="text-xs text-muted-foreground mt-1">Day Streak</Text>
-            </View>
-            
-            <View className="w-px bg-border" />
-            
-            <View className="items-center" data-testid="stat-tier">
-              <Text className="text-xl font-bold text-foreground">
-                Tier {streakData?.tier || 1}
-              </Text>
-              <Text className="text-xs text-muted-foreground mt-1">{streakData?.tierName || 'Starter'}</Text>
-            </View>
-          </View>
-        </View>
+        )}
       </View>
 
       {/* Profile Details */}
