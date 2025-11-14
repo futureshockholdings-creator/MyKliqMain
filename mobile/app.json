@@ -6,6 +6,8 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
+    "scheme": "mykliq",
+    "privacy": "public",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -17,11 +19,17 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.mykliq.app",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "MyKliq needs camera access to take photos and videos for posts and stories.",
         "NSPhotoLibraryUsageDescription": "MyKliq needs photo library access to select photos and videos for posts and stories.",
+        "NSPhotoLibraryAddUsageDescription": "MyKliq needs permission to save photos and videos to your library.",
         "NSMicrophoneUsageDescription": "MyKliq needs microphone access for video recording and voice messages.",
-        "NSLocationWhenInUseUsageDescription": "MyKliq needs your location to show nearby meetups and check-in at locations."
+        "NSLocationWhenInUseUsageDescription": "MyKliq needs your location to show nearby meetups and check-in at locations.",
+        "UIBackgroundModes": ["remote-notification"]
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
@@ -30,14 +38,17 @@
         "backgroundColor": "#000000"
       },
       "package": "com.mykliq.app",
+      "versionCode": 1,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.RECORD_AUDIO",
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION"
-      ]
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -70,7 +81,19 @@
       ]
     ],
     "extra": {
-      "apiUrl": "https://c7dd138c-576d-4490-a426-c0be6e6124ca-00-1u3lut3kqrgq6.kirk.replit.dev"
+      "apiUrl": "https://REPLACE-WITH-YOUR-PRODUCTION-API-URL.com",
+      "comment": "⚠️ CRITICAL: Replace with your actual production URL (e.g., https://api.mykliq.com or your published Replit URL)",
+      "eas": {
+        "projectId": "REPLACE_WITH_YOUR_EAS_PROJECT_ID"
+      }
+    },
+    "owner": "REPLACE_WITH_YOUR_EXPO_USERNAME",
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/REPLACE_WITH_YOUR_EAS_PROJECT_ID"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
     }
   }
 }
