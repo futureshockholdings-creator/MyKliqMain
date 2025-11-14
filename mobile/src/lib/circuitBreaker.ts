@@ -11,6 +11,7 @@ type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 interface CircuitStats {
   state: CircuitState;
   failures: number;
+  successes: number;
   lastFailureTime: number;
   nextRetryTime: number;
 }
@@ -83,16 +84,25 @@ class CircuitBreaker {
    */
   private handleSuccess(endpoint: string, circuit: CircuitStats): void {
     if (circuit.state === 'HALF_OPEN') {
-      // Count successes in half-open state
-      circuit.failures = Math.max(0, circuit.failures - 1);
+      // Increment success counter in half-open state
+      circuit.successes++;
 
-      if (circuit.failures === 0) {
-        console.log(`[CircuitBreaker] ${endpoint}: HALF_OPEN → CLOSED (recovered)`);
+      // Close circuit after SUCCESS_THRESHOLD consecutive successes
+      if (circuit.successes >= this.SUCCESS_THRESHOLD) {
+        console.log(`[CircuitBreaker] ${endpoint}: HALF_OPEN → CLOSED (${circuit.successes} successes)`);
         circuit.state = 'CLOSED';
+        circuit.failures = 0;
+        circuit.successes = 0;
+        // Reset retry timing so next failures use standard backoff
+        circuit.lastFailureTime = 0;
+        circuit.nextRetryTime = 0;
       }
     } else if (circuit.state === 'CLOSED') {
-      // Reset failures on success
+      // Reset all counters on success in closed state
       circuit.failures = 0;
+      circuit.successes = 0;
+      circuit.lastFailureTime = 0;
+      circuit.nextRetryTime = 0;
     }
   }
 
@@ -101,6 +111,7 @@ class CircuitBreaker {
    */
   private handleFailure(endpoint: string, circuit: CircuitStats): void {
     circuit.failures++;
+    circuit.successes = 0; // Reset success counter on failure
     circuit.lastFailureTime = Date.now();
 
     if (circuit.state === 'HALF_OPEN') {
@@ -128,6 +139,7 @@ class CircuitBreaker {
       circuit = {
         state: 'CLOSED',
         failures: 0,
+        successes: 0,
         lastFailureTime: 0,
         nextRetryTime: 0,
       };
@@ -146,6 +158,7 @@ class CircuitBreaker {
       console.log(`[CircuitBreaker] Manually resetting circuit for ${endpoint}`);
       circuit.state = 'CLOSED';
       circuit.failures = 0;
+      circuit.successes = 0;
       circuit.lastFailureTime = 0;
       circuit.nextRetryTime = 0;
     }

@@ -18,7 +18,8 @@ export function initializeEnterpriseServices(): void {
   memoryManager.startMonitoring();
   console.log('[Enterprise] ✅ Memory manager initialized');
 
-  // Background scheduler is initialized automatically via AppState listeners
+  // Initialize background scheduler explicitly
+  backgroundScheduler.initialize();
   console.log('[Enterprise] ✅ Background scheduler initialized');
 
   // Performance monitor is passive, initialized on first use

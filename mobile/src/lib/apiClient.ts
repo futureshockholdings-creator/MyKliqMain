@@ -19,6 +19,7 @@ import { requestScheduler } from './requestScheduler';
 import { performanceMonitor } from './performanceMonitor';
 import { circuitBreaker } from './circuitBreaker';
 import { enhancedCache } from './enhancedCache';
+import { buildCacheKey } from './cacheKeyBuilder';
 
 // API Configuration
 const API_URL = Constants.expoConfig?.extra?.apiUrl || 'https://c7dd138c-576d-4490-a426-c0be6e6124ca-00-1u3lut3kqrgq6.kirk.replit.dev';
@@ -65,22 +66,24 @@ export class ApiClient {
 
     // For GET requests, use request deduplication and circuit breaker
     if (isGetRequest) {
-      const requestKey = `${endpoint}:${JSON.stringify(options)}`;
+      // Build safe cache key (handles non-serializable objects)
+      const cacheKey = buildCacheKey(endpoint, options);
       
       return requestScheduler.deduplicatedRequest(
-        requestKey,
+        cacheKey,
         () =>
           circuitBreaker.execute(
             endpoint,
             () => performanceMonitor.trackApiCall(
               endpoint,
-              () => this.executeRequest<T>(endpoint, options)
+              () => this.executeRequest<T>(endpoint, options, false, cacheKey)
             ),
-            // Fallback: try cache if circuit is open
+            // Fallback: try cache if circuit is open (with full cache key)
             async () => {
               console.log(`[ApiClient] Circuit open, trying cache for ${endpoint}`);
-              const cached = await enhancedCache.get<T>(endpoint);
+              const cached = await enhancedCache.get<T>(cacheKey);
               if (cached) {
+                console.log(`[ApiClient] Cache hit (circuit open fallback)`);
                 return cached;
               }
               throw new Error('Service temporarily unavailable');
@@ -106,7 +109,8 @@ export class ApiClient {
   private async executeRequest<T>(
     endpoint: string,
     options: RequestInit = {},
-    enableOfflineQueue: boolean = true
+    enableOfflineQueue: boolean = true,
+    cacheKey?: string
   ): Promise<T> {
     const token = await this.getAuthToken();
     const isFormData = options.body instanceof FormData;
@@ -138,9 +142,10 @@ export class ApiClient {
 
       const data = await response.json();
 
-      // Cache GET responses
+      // Cache GET responses with safe cache key
       if (!options.method || options.method === 'GET') {
-        await enhancedCache.set(endpoint, data, {
+        const finalCacheKey = cacheKey || buildCacheKey(endpoint, options);
+        await enhancedCache.set(finalCacheKey, data, {
           memoryTTL: 5 * 60 * 1000, // 5 minutes in memory
           diskTTL: 60 * 60 * 1000, // 1 hour on disk
         });

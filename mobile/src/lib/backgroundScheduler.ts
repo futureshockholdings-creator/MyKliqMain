@@ -22,19 +22,30 @@ class BackgroundScheduler {
   private intervals = new Map<string, NodeJS.Timeout>();
   private isBackground = false;
   private appStateSubscription: any = null;
-
-  constructor() {
-    this.initAppStateListener();
-  }
+  private isInitialized = false;
 
   /**
-   * Initialize app state listener
+   * Initialize app state listener (call explicitly, not in constructor)
+   * Resumes any previously scheduled tasks
    */
-  private initAppStateListener(): void {
+  initialize(): void {
+    if (this.isInitialized) {
+      console.warn('[BackgroundScheduler] Already initialized, skipping');
+      return;
+    }
+
     this.appStateSubscription = AppState.addEventListener(
       'change',
       this.handleAppStateChange.bind(this)
     );
+    this.isInitialized = true;
+    console.log('[BackgroundScheduler] Initialized with AppState listener');
+
+    // Resume any tasks that were preserved
+    if (this.tasks.size > 0 && !this.isBackground) {
+      console.log(`[BackgroundScheduler] Resuming ${this.tasks.size} preserved tasks`);
+      this.tasks.forEach((task) => this.startTask(task.id));
+    }
   }
 
   /**
@@ -174,8 +185,10 @@ class BackgroundScheduler {
 
   /**
    * Pause all tasks (when app goes to background)
+   * Clear intervals to save battery and memory
    */
   private pauseAllTasks(): void {
+    console.log(`[BackgroundScheduler] Pausing ${this.intervals.size} tasks`);
     this.intervals.forEach((intervalId) => clearInterval(intervalId));
     this.intervals.clear();
   }
@@ -189,10 +202,12 @@ class BackgroundScheduler {
 
   /**
    * Cancel all tasks
+   * NOTE: This clears task definitions - use pauseAllTasks() to just stop intervals
    */
   cancelAll(): void {
     this.pauseAllTasks();
     this.tasks.clear();
+    console.log('[BackgroundScheduler] All tasks cancelled');
   }
 
   /**
@@ -216,13 +231,39 @@ class BackgroundScheduler {
   }
 
   /**
-   * Cleanup on app exit
+   * Cleanup listeners and intervals but preserve task definitions
+   * This allows tasks to resume after re-initialization
    */
   destroy(): void {
-    this.cancelAll();
+    console.log('[BackgroundScheduler] Pausing scheduler (preserving tasks for resume)');
+    
+    // Stop all intervals but keep task definitions
+    this.pauseAllTasks();
+    
+    // Remove AppState listener
     if (this.appStateSubscription) {
       this.appStateSubscription.remove();
+      this.appStateSubscription = null;
     }
+    
+    this.isInitialized = false;
+    console.log(`[BackgroundScheduler] Paused with ${this.tasks.size} tasks preserved`);
+  }
+
+  /**
+   * Complete cleanup - removes all tasks and listeners
+   * Use this for full teardown (logout, app exit)
+   */
+  destroyAll(): void {
+    console.log('[BackgroundScheduler] Full teardown - removing all tasks');
+    this.cancelAll();
+    
+    if (this.appStateSubscription) {
+      this.appStateSubscription.remove();
+      this.appStateSubscription = null;
+    }
+    
+    this.isInitialized = false;
   }
 }
 
