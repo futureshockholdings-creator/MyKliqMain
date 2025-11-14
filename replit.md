@@ -117,13 +117,24 @@ The platform implements separate authentication strategies optimized for each cl
 - **Token Best Practices**: Never logged, stored securely, validated on every request
 
 ### Authentication Utilities
-Centralized utilities in `server/mobile-auth.ts`:
+**Core Utilities (`server/mobile-auth.ts`):**
 - `generateMobileToken(userId, phoneNumber)` - Create secure JWT tokens
 - `verifyMobileToken(token)` - Validate and decode JWT
 - `verifyMobileTokenMiddleware` - Express middleware for route protection
 - `generateCodeVerifier()` - PKCE code verifier (OAuth 2.0)
 - `generateCodeChallenge(verifier)` - PKCE code challenge (OAuth 2.0)
 - `generateOAuthState()` - CSRF protection for OAuth flows
+
+**Mobile OAuth Handlers (`server/oauth-mobile.ts`):**
+- `initReplitOAuth()` - Initialize Replit OAuth with PKCE
+- `handleReplitOAuthCallback()` - Exchange code for JWT token
+- `initPlatformOAuth()` - Initialize social platform OAuth (TikTok, YouTube, etc.)
+- `handlePlatformOAuthCallback()` - Store encrypted platform tokens
+- `disconnectPlatform()` - Remove platform connection
+
+**OAuth Endpoints:**
+- Replit OAuth: `POST /api/mobile/oauth/replit/init`, `/api/mobile/oauth/replit/callback`
+- Platform OAuth: `POST /api/mobile/oauth/:platform/init`, `/api/mobile/oauth/:platform/callback`, `DELETE /api/mobile/oauth/:platform/disconnect`
 
 ## Content Management
 The application features a sophisticated content system including:

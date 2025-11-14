@@ -521,6 +521,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Import mobile OAuth handlers
+  const { 
+    initReplitOAuth, 
+    handleReplitOAuthCallback,
+    initPlatformOAuth,
+    handlePlatformOAuthCallback,
+    disconnectPlatform
+  } = await import('./oauth-mobile');
+  const { generateMobileToken, verifyMobileTokenMiddleware } = await import('./mobile-auth');
+
+  // ============================================================================
+  // MOBILE AUTHENTICATION - PHONE/PASSWORD
+  // ============================================================================
+
   // Mobile authentication endpoints with JWT tokens
   app.post('/api/mobile/auth/login', async (req, res) => {
     console.log('=== MOBILE LOGIN ATTEMPT ===', new Date().toISOString());
@@ -561,13 +575,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Generate JWT token for mobile app
-      const jwt = await import('jsonwebtoken');
-      const token = jwt.default.sign(
-        { userId: user.id, isAdmin: user.isAdmin },
-        process.env.JWT_SECRET || 'mykliq-mobile-secret-2025',
-        { expiresIn: '30d' }
-      );
+      // Generate JWT token using centralized utility
+      const token = generateMobileToken(user.id, user.phoneNumber || '');
 
       console.log('Mobile login successful for user:', user.id);
       
@@ -593,29 +602,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // JWT token verification middleware for mobile
-  const verifyMobileToken = async (req: any, res: any, next: any) => {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  // Use centralized JWT middleware
+  const verifyMobileToken = verifyMobileTokenMiddleware;
 
-    if (!token) {
-      return res.status(401).json({ message: 'Access token required' });
-    }
+  // ============================================================================
+  // MOBILE AUTHENTICATION - REPLIT OAUTH
+  // ============================================================================
 
-    try {
-      const jwt = await import('jsonwebtoken');
-      const decoded = jwt.default.verify(token, process.env.JWT_SECRET || 'mykliq-mobile-secret-2025') as any;
-      req.user = decoded;
-      next();
-    } catch (error) {
-      return res.status(403).json({ message: 'Invalid or expired token' });
-    }
-  };
+  // Initialize Replit OAuth flow
+  app.post('/api/mobile/oauth/replit/init', initReplitOAuth);
+
+  // Handle OAuth callback
+  app.post('/api/mobile/oauth/replit/callback', handleReplitOAuthCallback);
+
+  // ============================================================================
+  // MOBILE AUTHENTICATION - SOCIAL PLATFORM OAUTH (Phase 2)
+  // ============================================================================
+
+  // Initialize platform OAuth flow (protected - requires existing auth)
+  app.post('/api/mobile/oauth/:platform/init', verifyMobileToken, initPlatformOAuth);
+
+  // Handle platform OAuth callback
+  app.post('/api/mobile/oauth/:platform/callback', handlePlatformOAuthCallback);
+
+  // Disconnect platform
+  app.delete('/api/mobile/oauth/:platform/disconnect', verifyMobileToken, disconnectPlatform);
 
   // Mobile user profile endpoint
   app.get('/api/mobile/user/profile', verifyMobileToken, async (req, res) => {
     try {
-      const user = await storage.getUser((req.user as any)?.userId);
+      const userId = (req as any).userId; // Set by verifyMobileTokenMiddleware
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
