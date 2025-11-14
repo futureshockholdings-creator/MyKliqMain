@@ -14,6 +14,22 @@ The client is a React-based Single Page Application (SPA) using TypeScript and V
 ## Backend
 The server employs a RESTful API with Express.js and TypeScript. Drizzle ORM manages PostgreSQL database interactions, and PostgreSQL-backed sessions handle user sessions. Mobile-optimized API endpoints (`/api/mobile/*`) ensure efficient data transfer.
 
+### API Architecture
+**Shared Type System:** All API requests and responses use shared TypeScript contracts defined in `shared/api-contracts.ts`, ensuring type safety and consistency across web and mobile platforms. This centralized contract system includes 50+ type definitions covering authentication, posts, messaging, stories, polls, events, social integration, sports, and AI features.
+
+**Endpoint Patterns:**
+- Web endpoints: `/api/{feature}` (e.g., `/api/posts`, `/api/messages`)
+- Mobile endpoints: `/api/mobile/{feature}` (e.g., `/api/mobile/feed`, `/api/mobile/messages`)
+- Both use the same shared TypeScript contracts for consistency
+
+**Key API Contracts:**
+- Authentication: `LoginRequest/Response`, `SignupRequest/Response`, `UserProfile`
+- Content: `PostData`, `CommentData`, `FeedResponse`, `PollData`
+- Messaging: `MessageData`, `ConversationData`, `SendMessageRequest/Response`
+- Stories: `StoryData`, `StoryGroupData`, `CreateStoryResponse`
+- Social: `SocialPost`, `ConnectedAccount`, `OAuthTokens`
+- Real-time: `NotificationData`, `SportsUpdate`, `MoodBoostPost`
+
 ## Mobile Architecture
 The MyKliq mobile application is built with React Native using Expo SDK 50 targeting iOS and Android for App Store deployment, focusing on native performance and seamless backend integration.
 
@@ -43,14 +59,18 @@ Mobile endpoints (`/api/mobile/*`) optimized for bandwidth and battery:
 - **Kliq Koin**: 8-tier streak system (Starter → Legend), daily check-in, visual progression
 - **Profile**: Theme customization, settings, friend management
 
-### Storage (MVP - 2 Week Demo)
-In-memory backend storage for investor demo with documented migration path:
+### Storage Architecture
+**Database-Backed Storage (Phase 0 Complete):**
+- **Messages**: PostgreSQL `messages` table with lazy conversation creation
+- **Conversations**: PostgreSQL `conversations` table with unread count tracking
+- **Stories**: PostgreSQL `stories` table with 24h auto-expiration queries
+- **Performance**: Indexed on senderId, receiverId, createdAt, expiresAt for efficient queries
+
+**In-Memory Media Registry (Temporary):**
 - **mediaRegistry**: Map<mediaId, {buffer, mimetype, filename}> for photos/videos
-- **storyStore**: Map<userId, Story[]> with 24h auto-expiration
-- **messageStore**: Map<conversationKey, Message[]> for conversations
-- **Media Serving**: `/api/mobile/uploads/:mediaId` serves from memory
-- **Security**: Multer 10MB limit, MIME whitelist, memory storage
-- **Post-MVP**: Migration to PostgreSQL using existing Drizzle ORM tables (messages, stories, attachments)
+- **Media Serving**: `/api/mobile/uploads/:mediaId` serves from memory buffer
+- **Security**: Multer 10MB limit, MIME whitelist validation
+- **Future**: Planned migration to ObjectStorageService for persistent, scalable storage
 
 ### Media Handling
 Automatic URL transformation ensures cross-platform compatibility:
