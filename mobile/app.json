@@ -81,8 +81,7 @@
       ]
     ],
     "extra": {
-      "apiUrl": "https://REPLACE-WITH-YOUR-PRODUCTION-API-URL.com",
-      "comment": "⚠️ CRITICAL: Replace with your actual production URL (e.g., https://api.mykliq.com or your published Replit URL)",
+      "apiUrl": "https://api.mykliq.com",
       "eas": {
         "projectId": "REPLACE_WITH_YOUR_EAS_PROJECT_ID"
       }
