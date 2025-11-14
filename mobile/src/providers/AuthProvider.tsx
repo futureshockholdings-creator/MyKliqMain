@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiClient } from '../lib/apiClient';
 import { queryClient } from '../lib/queryClient';
+import { pushNotificationService } from '../services/pushNotificationService';
 
 interface User {
   id: string;
@@ -35,6 +36,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check if user is already logged in
     checkAuth();
+    
+    // Setup notification listeners
+    const cleanup = pushNotificationService.setupNotificationListeners();
+    return cleanup;
   }, []);
 
   const checkAuth = async () => {
@@ -44,6 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Fetch user profile
         const profile = await apiClient.getProfile();
         setUser(profile as User);
+        
+        // Register device token for push notifications
+        await pushNotificationService.registerDeviceToken();
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -64,6 +72,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         phoneNumber,
         profileImageUrl: response.profileImageUrl,
       });
+      
+      // Register device token for push notifications
+      await pushNotificationService.registerDeviceToken();
+      
       // Invalidate all queries on login
       queryClient.invalidateQueries();
     } catch (error) {
@@ -90,8 +102,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      // Unregister device token before logging out
+      await pushNotificationService.unregisterDeviceToken();
+      
       await apiClient.logout();
       setUser(null);
+      
       // Clear all queries on logout
       queryClient.clear();
     } catch (error) {
