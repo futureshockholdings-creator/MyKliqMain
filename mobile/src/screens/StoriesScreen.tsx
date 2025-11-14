@@ -99,7 +99,7 @@ const StoriesScreen: React.FC<StoriesScreenProps> = ({ navigation }) => {
             />
           ) : (
             <View style={[styles.storyAvatar, styles.defaultAvatar]}>
-              <Text style={styles.avatarText}>
+              <Text style={styles.avatarText} allowFontScaling={false}>
                 {item.firstName[0]}{item.lastName[0]}
               </Text>
             </View>
@@ -119,13 +119,13 @@ const StoriesScreen: React.FC<StoriesScreenProps> = ({ navigation }) => {
           <Image source={{ uri: user.profileImageUrl }} style={styles.storyAvatar} />
         ) : (
           <View style={[styles.storyAvatar, styles.defaultAvatar]}>
-            <Text style={styles.avatarText}>
+            <Text style={styles.avatarText} allowFontScaling={false}>
               {user?.firstName[0]}{user?.lastName[0]}
             </Text>
           </View>
         )}
         <View style={styles.addButton}>
-          <Text style={styles.addButtonText}>+</Text>
+          <Text style={styles.addButtonText} allowFontScaling={false}>+</Text>
         </View>
       </View>
       <Text style={styles.storyName}>Create Story</Text>
@@ -145,7 +145,7 @@ const StoriesScreen: React.FC<StoriesScreenProps> = ({ navigation }) => {
     <View style={styles.container}>
       {storyGroups.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📱</Text>
+          <Text style={styles.emptyIcon} allowFontScaling={false}>📱</Text>
           <Text style={styles.emptyTitle}>No Stories Yet</Text>
           <Text style={styles.emptyText}>
             Be the first to share a story with your kliq!

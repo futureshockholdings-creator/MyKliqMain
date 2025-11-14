@@ -29,11 +29,14 @@ const Stack = createStackNavigator();
 
 // Tab icons using emoji (replace with proper icons in production)
 const TabIcon = ({ focused, emoji }: { focused: boolean; emoji: string }) => (
-  <Text style={{ 
-    fontSize: 24, 
-    opacity: focused ? 1 : 0.6,
-    transform: [{ scale: focused ? 1.1 : 1 }]
-  }}>
+  <Text 
+    style={{ 
+      fontSize: 24, 
+      opacity: focused ? 1 : 0.6,
+      transform: [{ scale: focused ? 1.1 : 1 }]
+    }}
+    allowFontScaling={false}
+  >
     {emoji}
   </Text>
 );

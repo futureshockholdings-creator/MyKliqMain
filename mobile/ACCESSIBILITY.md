@@ -15,12 +15,26 @@ All interactive elements must have:
 - **accessibilityHint**: Describes what happens when you interact with it
 - **accessibilityRole**: Defines the element type (button, link, etc.)
 
-### 2. Dynamic Font Scaling (PENDING)
+### 2. Dynamic Font Scaling ✅
 
-Support system text size preferences:
-- Use `allowFontScaling={true}` on all Text components
-- Test with system text size set to large/extra large
-- Avoid hardcoded font sizes
+**Implementation Approach:**
+React Native Text components scale automatically with system font size when `allowFontScaling={true}` (the default). We rely on this native behavior instead of custom scaling hooks.
+
+**Font Scaling Controls:**
+- **Most text**: Uses default `allowFontScaling={true}` for full accessibility
+- **Decorative emojis/icons**: Uses `allowFontScaling={false}` to prevent layout issues
+- **Large numbers/scores**: Uses `maxFontSizeMultiplier={1.3}` for limited scaling
+
+**Files Updated:**
+- `AppNavigator.tsx`: Tab bar emoji icons - `allowFontScaling={false}`
+- `StoriesScreen.tsx`: Avatar initials, emoji icons, + symbol - `allowFontScaling={false}`
+- `KliqKoinScreen.tsx`: Emoji icons - `allowFontScaling={false}`, score numbers - `maxFontSizeMultiplier={1.3}`
+- `OfflineIndicator.tsx`: Offline message text scales naturally (no changes needed)
+
+**Testing:**
+- iOS: Settings → Accessibility → Display & Text Size → Larger Text
+- Android: Settings → Display → Font size → Largest
+- Verify text scales appropriately without breaking layouts
 
 ### 3. Color Contrast (PENDING)
 
@@ -481,18 +495,82 @@ For dynamic content updates:
 
 ---
 
+## Manual Testing Instructions
+
+### VoiceOver Testing (iOS)
+
+**Enable VoiceOver:**
+1. Settings → Accessibility → VoiceOver → On
+2. Or use triple-click Home/Side button shortcut
+
+**Basic Gestures:**
+- **Swipe Right/Left**: Navigate between elements
+- **Double Tap**: Activate selected element
+- **Two-finger Swipe**: Scroll content
+- **Three-finger Swipe**: Navigate pages/screens
+
+**Testing Checklist:**
+1. **HomeScreen**: Verify story rings announce view status ("has new stories" vs "all stories viewed")
+2. **PostCard**: Verify like button announces count and state ("Like, 12 likes" vs "Unlike, 12 likes")
+3. **MessagesScreen**: Verify unread counts are announced ("3 unread messages")
+4. **ConversationScreen**: Verify message sender context ("Message from Sarah: Hello!")
+5. **StoryViewerScreen**: Verify gesture hints ("Tap left side to go back, tap right side to go forward, long press to pause")
+6. **CreatePostScreen**: Verify disabled state feedback ("Poll (coming soon)" should announce disabled)
+7. **FriendsScreen**: Verify tier info in labels ("Sarah Johnson, Tier 2, Inner Circle")
+8. **ProfileScreen**: Verify theme selection state ("Purple theme, selected" vs "Ocean theme")
+9. **NotificationPreferencesScreen**: Verify switch states ("Push notifications, on" vs "off")
+
+### TalkBack Testing (Android)
+
+**Enable TalkBack:**
+1. Settings → Accessibility → TalkBack → On
+2. Or use volume keys shortcut
+
+**Basic Gestures:**
+- **Swipe Right/Left**: Navigate between elements
+- **Double Tap**: Activate selected element
+- **Swipe Down Then Up**: Scroll down
+- **Swipe Up Then Down**: Scroll up
+
+**Testing Checklist:**
+- Same 9-point checklist as VoiceOver above
+- Additionally verify: All custom gestures work with Explore by Touch
+
+### Large Text Testing
+
+1. iOS: Settings → Accessibility → Display & Text Size → Larger Text
+2. Android: Settings → Display → Font size → Largest
+3. Verify all text remains readable and doesn't overflow containers
+
+### Focus Order Testing
+
+1. Enable VoiceOver/TalkBack
+2. Navigate through each screen linearly
+3. Verify focus order is logical (top-to-bottom, left-to-right)
+4. Verify no elements are skipped or duplicated
+
+---
+
 ## Current Status
 
-**Implemented:**
-- ✅ Offline indicator with accessibility support (alert role, live region)
-- ✅ Test IDs on all interactive elements
+**✅ COMPLETED (Phase 4 Task 11):**
+- ✅ **PostCard Component**: Avatar variants, media, like/comment/share buttons with state
+- ✅ **HomeScreen**: Story items with view status, add story button, profile images
+- ✅ **ProfileScreen**: Avatar variants, stats, 6 action buttons, 6 theme presets with state
+- ✅ **MessagesScreen**: Conversation items with unread count, last message, timestamp
+- ✅ **FriendsScreen**: Friend cards with ranking/tier, message buttons, search, tier filters
+- ✅ **NotificationPreferencesScreen**: Master push switch, 9 notification switches, 3 delivery preferences
+- ✅ **ConversationScreen**: Message bubbles, media, attachment/GIF/send buttons, GIF modal
+- ✅ **CreatePostScreen**: Post input, media/location controls, camera/gallery/location/poll buttons
+- ✅ **StoryViewerScreen**: Progress bars, avatar, close button, story content with gesture hints
+- ✅ **OfflineIndicator**: Alert role, live region for network status
+- ✅ **ACCESSIBILITY.md**: Comprehensive WCAG 2.1 AA guide with examples and checklist
+- ✅ **Test IDs**: All interactive elements have unique data-testid attributes
 
-**In Progress:**
-- ⏳ Adding accessibility labels to all screens (10 screens identified)
-- ⏳ Screen reader testing
+**✅ COMPLETED (Phase 4 Task 12):**
+- ✅ **Dynamic Font Scaling**: Native React Native text scaling with targeted controls for emojis (`allowFontScaling={false}`) and large numbers (`maxFontSizeMultiplier={1.3}`)
 
-**Pending:**
-- ⏳ Dynamic font scaling implementation
-- ⏳ Color contrast audit
+**⏳ PENDING (Phase 4 Task 13):**
+- ⏳ Color contrast audit  
 - ⏳ High contrast mode support
-- ⏳ Comprehensive screen reader testing
+- ⏳ Manual VoiceOver/TalkBack testing (see instructions above)

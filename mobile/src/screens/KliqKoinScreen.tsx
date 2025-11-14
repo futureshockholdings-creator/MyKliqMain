@@ -136,15 +136,15 @@ const KliqKoinScreen: React.FC<KliqKoinScreenProps> = ({ navigation }) => {
       <View style={styles.header}>
         <Text style={styles.greeting}>Hey {user?.firstName}! 👋</Text>
         <View style={styles.koinBalance}>
-          <Text style={styles.koinIcon}>🪙</Text>
-          <Text style={styles.koinAmount}>{streakData.kliqKoinBalance}</Text>
+          <Text style={styles.koinIcon} allowFontScaling={false}>🪙</Text>
+          <Text style={styles.koinAmount} maxFontSizeMultiplier={1.3}>{streakData.kliqKoinBalance}</Text>
           <Text style={styles.koinLabel}>Kliq Koins</Text>
         </View>
       </View>
 
       {/* Current Streak */}
       <View style={styles.streakCard}>
-        <Text style={styles.streakEmoji}>{currentTier.emoji}</Text>
+        <Text style={styles.streakEmoji} allowFontScaling={false}>{currentTier.emoji}</Text>
         <Text style={styles.streakNumber}>{streakData.currentStreak}</Text>
         <Text style={styles.streakLabel}>Day Streak</Text>
         <Text style={styles.tierName}>{currentTier.name} Tier</Text>
@@ -174,7 +174,7 @@ const KliqKoinScreen: React.FC<KliqKoinScreenProps> = ({ navigation }) => {
           <Text style={styles.progressLabel}>
             {streakData.currentStreak}/{nextTier.days} days to {nextTier.name}
           </Text>
-          <Text style={styles.progressEmoji}>{nextTier.emoji}</Text>
+          <Text style={styles.progressEmoji} allowFontScaling={false}>{nextTier.emoji}</Text>
         </View>
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, { width: `${progressToNext * 100}%` }]} />
@@ -187,11 +187,11 @@ const KliqKoinScreen: React.FC<KliqKoinScreenProps> = ({ navigation }) => {
       {/* Stats */}
       <View style={styles.statsSection}>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{streakData.longestStreak}</Text>
+          <Text style={styles.statNumber} maxFontSizeMultiplier={1.3}>{streakData.longestStreak}</Text>
           <Text style={styles.statLabel}>Longest Streak</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{streakData.totalCheckIns}</Text>
+          <Text style={styles.statNumber} maxFontSizeMultiplier={1.3}>{streakData.totalCheckIns}</Text>
           <Text style={styles.statLabel}>Total Check-Ins</Text>
         </View>
       </View>
@@ -212,7 +212,7 @@ const KliqKoinScreen: React.FC<KliqKoinScreenProps> = ({ navigation }) => {
                 !isUnlocked && styles.tierItemLocked,
               ]}
             >
-              <Text style={styles.tierEmoji}>{tier.emoji}</Text>
+              <Text style={styles.tierEmoji} allowFontScaling={false}>{tier.emoji}</Text>
               <View style={styles.tierInfo}>
                 <Text style={[styles.tierItemName, !isUnlocked && styles.tierItemNameLocked]}>
                   {tier.name}
