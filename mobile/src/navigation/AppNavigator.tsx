@@ -18,6 +18,9 @@ import KliqKoinScreen from '../screens/KliqKoinScreen';
 import CommentsScreen from '../screens/CommentsScreen';
 import NotificationPreferencesScreen from '../screens/NotificationPreferencesScreen';
 
+// Components
+import { OfflineIndicator } from '../components/OfflineIndicator';
+
 // Providers
 import { useAuth } from '../providers/AuthProvider';
 
@@ -199,6 +202,7 @@ export const AppNavigator = () => {
           <Stack.Screen name="Login" component={LoginScreen} />
         </Stack.Navigator>
       )}
+      <OfflineIndicator />
     </NavigationContainer>
   );
 };
