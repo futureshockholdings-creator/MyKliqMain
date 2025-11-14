@@ -3,8 +3,9 @@
 MyKliq is a social media application designed for close-knit friend groups ("kliq"), emphasizing intimate social sharing and privacy. It offers extensive UI customization, hierarchical friend ranking, content filtering, and rich media sharing including photo/video, disappearing stories, real-time polling, and live streaming. The platform aims to redefine social networking by focusing on quality interactions within private circles, with a long-term vision to become an AI-powered intelligent social network.
 
 **Mobile Development Status**: 
-- Backend Phase 3 Complete (107+ mobile endpoints implemented)
-- React Native Phase 0 Complete (Foundation with Expo SDK 51, NativeWind, TanStack Query, API client, Auth provider)
+- Backend Phase 3 Complete (109+ mobile endpoints implemented)
+- React Native Phase 1 Complete (10/10 core screens with feature breadth)
+- React Native Phase 2 In Progress (UX polish & advanced features)
 
 # User Preferences
 
@@ -57,6 +58,10 @@ Core features include a Headlines Feed (infinite scroll, pull-to-refresh, native
 - **AI Mood Boost**: Google Gemini-powered uplifting content with 5-hour expiration and auto-cleanup
 - **Daily Content**: Timezone-aware horoscopes and Bible verses with personalized readings
 - **Live Streaming**: WebRTC-based live streaming with real-time chat, viewer tracking, and creator controls
+
+### Phase 2 Features (In Progress)
+- **Theme Persistence** ✅ COMPLETE: Full theme customization with 6 presets (Purple, Ocean, Forest, Sunset, Rose, Emerald), AsyncStorage caching for offline persistence, backend sync for cross-device consistency, stale-while-revalidate pattern, optimistic UI updates, auth guards. Endpoints: GET/POST `/api/mobile/user/theme`
+- **Story View Tracking** ✅ COMPLETE: Visual indicators for story view status with purple rings for unviewed stories and gray rings for viewed stories. Two-query backend approach: (1) fetches all non-expired stories, (2) fetches viewed story IDs for current user, merged via Set-based lookup. API contracts include `isViewedByCurrentUser` on StoryData and `hasUnviewedStories` on StoryGroupData. User's own stories auto-marked as viewed. HomeScreen dynamically renders ring colors based on group view status. Endpoint: GET `/api/mobile/stories`
 
 ## System Design Choices
 Mobile optimizations prioritize bandwidth (paginated responses), battery (polling vs. persistent connections, background sync), and memory (auto-cleanup, media eviction). Cross-platform compatibility is ensured with solutions like modal-based GIF pickers. Push notification infrastructure is set up for Firebase Cloud Messaging and Apple Push Notifications.

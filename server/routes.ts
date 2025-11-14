@@ -18,8 +18,8 @@ import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
 import { performanceOptimizer } from "./performanceOptimizer";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, messages, conversations, stories, users } from "@shared/schema";
-import { eq, and, or, desc, sql as sqlOp } from "drizzle-orm";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, messages, conversations, stories, users, storyViews } from "@shared/schema";
+import { eq, and, or, desc, sql as sqlOp, isNotNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
@@ -2162,13 +2162,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req as any).userId;
       
-      // Get all non-expired stories from database
-      const activeStories = await db.select().from(stories)
+      // Get all non-expired stories
+      const activeStories = await db
+        .select({
+          id: stories.id,
+          userId: stories.userId,
+          mediaUrl: stories.mediaUrl,
+          mediaType: stories.mediaType,
+          content: stories.content,
+          createdAt: stories.createdAt,
+          expiresAt: stories.expiresAt,
+          viewCount: stories.viewCount,
+        })
+        .from(stories)
         .where(sqlOp`expires_at > NOW()`)
         .orderBy(desc(stories.createdAt));
       
+      // Get all story IDs that the current user has viewed
+      const viewedStoryIds = new Set(
+        (await db
+          .select({ storyId: storyViews.storyId })
+          .from(storyViews)
+          .where(eq(storyViews.userId, userId)))
+          .map(row => row.storyId)
+      );
+      
       // Group stories by user
-      const userStoryMap = new Map<string, typeof activeStories>();
+      type Story = typeof activeStories[number];
+      const userStoryMap = new Map<string, Story[]>();
       for (const story of activeStories) {
         if (!userStoryMap.has(story.userId)) {
           userStoryMap.set(story.userId, []);
@@ -2176,7 +2197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userStoryMap.get(story.userId)!.push(story);
       }
       
-      // Build story groups with user details
+      // Build story groups with user details and view status
       const storyGroups = await Promise.all(
         Array.from(userStoryMap.entries()).map(async ([storyUserId, userStories]) => {
           // Get user details
@@ -2187,19 +2208,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
             profileImageUrl: users.profileImageUrl,
           }).from(users).where(eq(users.id, storyUserId)).limit(1);
           
+          // Map stories with view status using viewedStoryIds Set
+          const mappedStories = userStories.map(story => ({
+            id: story.id,
+            mediaUrl: story.mediaUrl,
+            mediaType: story.mediaType,
+            createdAt: story.createdAt?.toISOString(),
+            expiresAt: story.expiresAt?.toISOString(),
+            caption: story.content,
+            viewCount: story.viewCount || 0,
+            // User's own stories are viewed, others check viewedStoryIds Set
+            isViewedByCurrentUser: storyUserId === userId ? true : viewedStoryIds.has(story.id),
+          }));
+          
+          // Calculate if group has any unviewed stories
+          const hasUnviewedStories = mappedStories.some(s => !s.isViewedByCurrentUser);
+          
           return {
             userId: storyUserId,
             firstName: user?.firstName || 'Unknown',
             lastName: user?.lastName || '',
             profileImageUrl: user?.profileImageUrl,
-            stories: userStories.map(story => ({
-              id: story.id,
-              mediaUrl: story.mediaUrl,
-              mediaType: story.mediaType,
-              createdAt: story.createdAt?.toISOString(),
-              expiresAt: story.expiresAt?.toISOString(),
-              caption: story.content
-            }))
+            stories: mappedStories,
+            hasUnviewedStories,
           };
         })
       );

@@ -277,6 +277,7 @@ export interface StoryData {
   createdAt: string;
   expiresAt: string;
   viewCount: number;
+  isViewedByCurrentUser?: boolean; // True if current user has viewed this story
 }
 
 export interface StoryGroupData {
@@ -285,6 +286,7 @@ export interface StoryGroupData {
   lastName: string;
   profileImageUrl?: string;
   stories: StoryData[];
+  hasUnviewedStories: boolean; // True if any story in group is unviewed by current user
 }
 
 export interface StoriesResponse {

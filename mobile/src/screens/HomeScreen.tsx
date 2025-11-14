@@ -99,9 +99,10 @@ export default function HomeScreen() {
   });
 
   const renderStoryItem = ({ item, index }: { item: StoryGroupData; index: number }) => {
-    // Phase 1: Show purple ring for all stories (backend doesn't yet return isViewedByCurrentUser)
-    // TODO Phase 2: Update backend to return isViewedByCurrentUser flag for proper unviewed detection
-    const hasUnviewed = true;
+    // Phase 2: Use actual view status from backend
+    // Purple ring = hasUnviewedStories (any story not viewed)
+    // Gray ring = all stories viewed
+    const hasUnviewed = item.hasUnviewedStories;
     
     return (
       <TouchableOpacity
@@ -115,7 +116,7 @@ export default function HomeScreen() {
         }}
         className="items-center mr-4"
       >
-        <View className={`rounded-full p-0.5 ${hasUnviewed ? 'bg-purple-500' : 'bg-muted'}`}>
+        <View className={`rounded-full p-0.5 ${hasUnviewed ? 'bg-primary' : 'bg-gray-400'}`}>
           <View className="rounded-full p-0.5 bg-background">
             {item.profileImageUrl ? (
               <Image
