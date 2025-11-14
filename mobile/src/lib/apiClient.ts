@@ -1,16 +1,24 @@
 /**
- * MyKliq Mobile API Client
+ * MyKliq Mobile API Client - Enterprise Edition
  * Connects to 107+ mobile-optimized backend endpoints
  * 
  * Features:
  * - Automatic JWT authentication
  * - Offline request queueing
- * - Error handling and retry logic
+ * - Enterprise optimizations for 20k+ users:
+ *   * Request deduplication
+ *   * Performance monitoring
+ *   * Circuit breaker for resilience
+ *   * Enhanced caching with SWR
  */
 
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 import { requestQueue } from '@/utils/requestQueue';
+import { requestScheduler } from './requestScheduler';
+import { performanceMonitor } from './performanceMonitor';
+import { circuitBreaker } from './circuitBreaker';
+import { enhancedCache } from './enhancedCache';
 
 // API Configuration
 const API_URL = Constants.expoConfig?.extra?.apiUrl || 'https://c7dd138c-576d-4490-a426-c0be6e6124ca-00-1u3lut3kqrgq6.kirk.replit.dev';
@@ -52,6 +60,54 @@ export class ApiClient {
     options: RequestInit = {},
     enableOfflineQueue: boolean = true
   ): Promise<T> {
+    const method = options.method || 'GET';
+    const isGetRequest = method === 'GET';
+
+    // For GET requests, use request deduplication and circuit breaker
+    if (isGetRequest) {
+      const requestKey = `${endpoint}:${JSON.stringify(options)}`;
+      
+      return requestScheduler.deduplicatedRequest(
+        requestKey,
+        () =>
+          circuitBreaker.execute(
+            endpoint,
+            () => performanceMonitor.trackApiCall(
+              endpoint,
+              () => this.executeRequest<T>(endpoint, options)
+            ),
+            // Fallback: try cache if circuit is open
+            async () => {
+              console.log(`[ApiClient] Circuit open, trying cache for ${endpoint}`);
+              const cached = await enhancedCache.get<T>(endpoint);
+              if (cached) {
+                return cached;
+              }
+              throw new Error('Service temporarily unavailable');
+            }
+          ),
+        'normal'
+      );
+    }
+
+    // For mutating requests, use circuit breaker and performance tracking
+    return circuitBreaker.execute(
+      endpoint,
+      () => performanceMonitor.trackApiCall(
+        endpoint,
+        () => this.executeRequest<T>(endpoint, options, enableOfflineQueue)
+      )
+    );
+  }
+
+  /**
+   * Execute the actual HTTP request
+   */
+  private async executeRequest<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    enableOfflineQueue: boolean = true
+  ): Promise<T> {
     const token = await this.getAuthToken();
     const isFormData = options.body instanceof FormData;
     
@@ -80,7 +136,17 @@ export class ApiClient {
         throw new Error(errorData.message || `HTTP ${response.status}`);
       }
 
-      return response.json();
+      const data = await response.json();
+
+      // Cache GET responses
+      if (!options.method || options.method === 'GET') {
+        await enhancedCache.set(endpoint, data, {
+          memoryTTL: 5 * 60 * 1000, // 5 minutes in memory
+          diskTTL: 60 * 60 * 1000, // 1 hour on disk
+        });
+      }
+
+      return data;
     } catch (error) {
       // Queue mutating requests if offline
       if (enableOfflineQueue && this.isMutatingRequest(options.method)) {

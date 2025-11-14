@@ -10,6 +10,7 @@ import type { StoriesResponse, StoryGroupData } from '../../../shared/api-contra
 import { useNavigation } from '@react-navigation/native';
 import { cacheFeedPosts, getCachedFeedPosts, cacheStories, getCachedStories } from '../utils/offlineCache';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { useMemoryCleanup } from '../lib/memoryManager';
 
 interface FeedResponse {
   posts: any[];
@@ -23,6 +24,9 @@ export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const { isConnected } = useNetworkStatus();
   const [cachedPosts, setCachedPosts] = useState<any[]>([]);
+  
+  // Enterprise optimization: automatic cleanup on unmount
+  const cleanup = useMemoryCleanup();
 
   // Load cached feed posts on mount
   useEffect(() => {
