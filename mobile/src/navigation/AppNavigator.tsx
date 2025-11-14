@@ -23,6 +23,7 @@ import { OfflineIndicator } from '../components/OfflineIndicator';
 
 // Providers
 import { useAuth } from '../providers/AuthProvider';
+import { useAccessibleColors } from '../hooks/useAccessibleColors';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -42,26 +43,28 @@ const TabIcon = ({ focused, emoji }: { focused: boolean; emoji: string }) => (
 );
 
 const MainTabNavigator = () => {
+  const colors = useAccessibleColors();
+  
   return (
     <Tab.Navigator
       screenOptions={{
         tabBarStyle: {
           backgroundColor: '#1a1a1a',
-          borderTopColor: '#333',
+          borderTopColor: colors.border,
           borderTopWidth: 1,
           height: 90,
           paddingBottom: 30,
           paddingTop: 10,
         },
         tabBarActiveTintColor: '#00FF00',
-        tabBarInactiveTintColor: '#888',
+        tabBarInactiveTintColor: colors.mutedText,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
         },
         headerStyle: {
           backgroundColor: '#000',
-          borderBottomColor: '#333',
+          borderBottomColor: colors.border,
           borderBottomWidth: 1,
         },
         headerTintColor: '#fff',

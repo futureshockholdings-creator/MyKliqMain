@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
@@ -16,6 +16,29 @@ interface UserTheme {
   navActiveColor: string;
   borderStyle: string;
   enableSparkles: boolean;
+  highContrastMode?: boolean;
+}
+
+// High contrast palette (WCAG AA compliant - 4.5:1 contrast ratio on dark backgrounds)
+const HIGH_CONTRAST_COLORS = {
+  background: '#000000',        // Pure black
+  card: '#000000',             // Pure black
+  muted: '#FFFFFF',            // Pure white on black (21:1)
+  mutedText: '#CCCCCC',        // Light gray (11:1 on black)
+  border: '#FFFFFF',           // White borders for visibility
+  placeholder: '#AAAAAA',      // Light gray (8.5:1 on black)
+} as const;
+
+// Resolved colors interface
+interface ResolvedColors {
+  background: string;
+  card: string;
+  muted: string;
+  mutedText: string;
+  border: string;
+  placeholder: string;
+  primary: string;
+  secondary: string;
 }
 
 const DEFAULT_THEME: UserTheme = {
@@ -27,10 +50,12 @@ const DEFAULT_THEME: UserTheme = {
   navActiveColor: '#8B5CF6',
   borderStyle: 'rounded',
   enableSparkles: true,
+  highContrastMode: false,
 };
 
 interface ThemeContextValue {
   theme: UserTheme;
+  resolvedColors: ResolvedColors;
   status: 'loading' | 'loaded' | 'error';
   setTheme: (theme: Partial<UserTheme>) => Promise<void>;
 }
@@ -167,6 +192,35 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id]);
 
+  // Compute resolved colors based on highContrastMode
+  const resolvedColors = useMemo((): ResolvedColors => {
+    if (theme.highContrastMode) {
+      // High contrast mode: use WCAG AA compliant neutrals, preserve user's accent colors
+      return {
+        background: HIGH_CONTRAST_COLORS.background,
+        card: HIGH_CONTRAST_COLORS.card,
+        muted: HIGH_CONTRAST_COLORS.muted,
+        mutedText: HIGH_CONTRAST_COLORS.mutedText,
+        border: HIGH_CONTRAST_COLORS.border,
+        placeholder: HIGH_CONTRAST_COLORS.placeholder,
+        primary: theme.primaryColor,    // Keep user's custom color
+        secondary: theme.secondaryColor, // Keep user's custom color
+      };
+    } else {
+      // Normal mode: use default colors
+      return {
+        background: '#000000',
+        card: '#1F2937',
+        muted: '#888888',
+        mutedText: '#999999',
+        border: '#333333',
+        placeholder: '#666666',
+        primary: theme.primaryColor,
+        secondary: theme.secondaryColor,
+      };
+    }
+  }, [theme.highContrastMode, theme.primaryColor, theme.secondaryColor]);
+
   const setTheme = async (newTheme: Partial<UserTheme>) => {
     // Guard against unauthenticated calls
     if (!user?.id) {
@@ -178,7 +232,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, status, setTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedColors, status, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

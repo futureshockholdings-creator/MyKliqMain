@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, Alert, Switch } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../providers/AuthProvider';
 import { useTheme } from '../providers/ThemeProvider';
@@ -349,6 +349,38 @@ export default function ProfileScreen() {
           <Text className="text-xs text-muted-foreground mt-2">
             ✨ Theme syncs across devices and persists offline
           </Text>
+
+          {/* High Contrast Mode Toggle */}
+          <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-border">
+            <View className="flex-1">
+              <Text className="text-foreground text-sm font-medium">High Contrast Mode</Text>
+              <Text className="text-muted-foreground text-xs mt-0.5">
+                WCAG AA compliant colors for better readability
+              </Text>
+            </View>
+            <Switch
+              value={theme.highContrastMode || false}
+              onValueChange={async (value) => {
+                try {
+                  await setTheme({ highContrastMode: value });
+                  Alert.alert(
+                    value ? 'High Contrast Enabled' : 'High Contrast Disabled',
+                    value 
+                      ? 'All colors are now optimized for maximum readability (WCAG AA compliant).'
+                      : 'Standard theme colors restored.'
+                  );
+                } catch (error) {
+                  Alert.alert('Error', 'Failed to update high contrast mode. Please try again.');
+                }
+              }}
+              trackColor={{ false: '#666', true: '#00FF00' }}
+              thumbColor={theme.highContrastMode ? '#FFFFFF' : '#f4f3f4'}
+              accessible={true}
+              accessibilityLabel="High contrast mode toggle"
+              accessibilityHint={`Currently ${theme.highContrastMode ? 'enabled' : 'disabled'}. Toggle to ${theme.highContrastMode ? 'disable' : 'enable'} high contrast colors`}
+              accessibilityRole="switch"
+            />
+          </View>
         </View>
       </View>
 

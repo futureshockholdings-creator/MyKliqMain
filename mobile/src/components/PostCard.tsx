@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Card } from './ui/Card';
+import { useAccessibleTextStyles } from '../hooks/useAccessibleTextStyles';
 
 interface PostCardProps {
   post: any;
@@ -10,6 +11,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, onLike, onComment, onShare }: PostCardProps) {
+  const accessibleStyles = useAccessibleTextStyles();
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
     const postDate = new Date(dateString);
@@ -51,7 +53,7 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
           <Text className="text-foreground font-semibold text-base">
             {authorName}
           </Text>
-          <Text className="text-muted-foreground text-xs">
+          <Text className="text-muted-foreground text-xs" style={accessibleStyles.muted}>
             {timeAgo}
           </Text>
         </View>
@@ -81,7 +83,7 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
           <Text className="text-foreground font-semibold text-sm mb-1">
             🎥 YouTube Video
           </Text>
-          <Text className="text-muted-foreground text-xs" numberOfLines={1}>
+          <Text className="text-muted-foreground text-xs" numberOfLines={1} style={accessibleStyles.muted}>
             {post.youtubeUrl}
           </Text>
         </View>
@@ -102,7 +104,7 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
       )}
 
       {/* Actions */}
-      <View className="flex-row justify-around pt-2 border-t border-border">
+      <View className="flex-row justify-around pt-2 border-t border-border" style={accessibleStyles.borderTop}>
         <TouchableOpacity 
           className="flex-row items-center p-2"
           onPress={onLike}
@@ -116,7 +118,10 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
           <Text className="text-lg mr-2">
             {post.isLiked ? '❤️' : '🤍'}
           </Text>
-          <Text className={post.isLiked ? 'text-red-500 font-semibold' : 'text-muted-foreground'}>
+          <Text 
+            className={post.isLiked ? 'text-red-500 font-semibold' : 'text-muted-foreground'}
+            style={!post.isLiked ? accessibleStyles.muted : undefined}
+          >
             {post.likeCount || 0}
           </Text>
         </TouchableOpacity>
@@ -131,7 +136,7 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
           accessibilityRole="button"
         >
           <Text className="text-lg mr-2">💬</Text>
-          <Text className="text-muted-foreground">
+          <Text className="text-muted-foreground" style={accessibleStyles.muted}>
             {post.commentCount || 0}
           </Text>
         </TouchableOpacity>
@@ -146,7 +151,7 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
           accessibilityRole="button"
         >
           <Text className="text-lg mr-2">📤</Text>
-          <Text className="text-muted-foreground">Share</Text>
+          <Text className="text-muted-foreground" style={accessibleStyles.muted}>Share</Text>
         </TouchableOpacity>
       </View>
     </Card>

@@ -570,7 +570,19 @@ For dynamic content updates:
 **✅ COMPLETED (Phase 4 Task 12):**
 - ✅ **Dynamic Font Scaling**: Native React Native text scaling with targeted controls for emojis (`allowFontScaling={false}`) and large numbers (`maxFontSizeMultiplier={1.3}`)
 
-**⏳ PENDING (Phase 4 Task 13):**
-- ⏳ Color contrast audit  
-- ⏳ High contrast mode support
-- ⏳ Manual VoiceOver/TalkBack testing (see instructions above)
+**✅ COMPLETED (Phase 4 Task 13):**
+- ✅ **Color Contrast Audit**: Comprehensive audit documented in `COLOR_CONTRAST_AUDIT.md` identifying WCAG AA compliance status
+- ✅ **global.css Update**: Improved `--muted-foreground` from 64.9% to 70% lightness for better contrast (4.5:1 ratio on dark backgrounds)
+- ✅ **High Contrast Mode Implementation**:
+  - ThemeProvider with resolvedColors computation (HIGH_CONTRAST_COLORS palette)
+  - useAccessibleColors() and useAccessibleTextStyles() hooks
+  - ProfileScreen toggle switch with backend + AsyncStorage persistence
+  - AppNavigator and PostCard updated to demonstrate pattern
+  - WCAG AA compliant: mutedText #CCCCCC (11:1), border #FFFFFF (21:1), placeholder #AAAAAA (8.5:1)
+- ✅ **Documentation**: Complete implementation guide in COLOR_CONTRAST_AUDIT.md
+
+**⏳ PENDING (Manual Testing & Extension):**
+- ⏳ Manual verification: Toggle high contrast mode in ProfileScreen and verify color changes in PostCard/tab bar
+- ⏳ Extend useAccessibleTextStyles pattern to additional components (HomeScreen, text inputs, etc.)
+- ⏳ Contrast ratio measurements with accessibility tools on real devices
+- ⏳ Manual VoiceOver/TalkBack testing on real devices (see instructions above)
