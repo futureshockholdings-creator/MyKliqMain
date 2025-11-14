@@ -343,6 +343,10 @@ export default function ProfileScreen() {
           className="flex-row justify-between items-center bg-primary rounded-xl p-4 mb-3 border-2 border-primary"
           onPress={() => navigation.navigate('KliqKoinScreen')}
           data-testid="button-kliq-koin"
+          accessible={true}
+          accessibilityLabel="Kliq Koin and Streaks"
+          accessibilityHint="View your kliq koin balance and daily streaks"
+          accessibilityRole="button"
         >
           <View className="flex-row items-center">
             <Award color="#000" size={20} />
@@ -375,6 +379,10 @@ export default function ProfileScreen() {
           className="flex-row justify-between items-center bg-card rounded-xl p-4 mb-3 border border-border"
           onPress={() => navigation.navigate('NotificationPreferencesScreen')}
           data-testid="button-notifications"
+          accessible={true}
+          accessibilityLabel="Notification Preferences"
+          accessibilityHint="Manage your notification settings"
+          accessibilityRole="button"
         >
           <View className="flex-row items-center">
             <Bell color="#666" size={20} />
@@ -423,6 +431,10 @@ export default function ProfileScreen() {
           className="flex-row justify-between items-center bg-card rounded-xl p-4 mb-3 border border-destructive"
           onPress={handleLogout}
           data-testid="button-logout"
+          accessible={true}
+          accessibilityLabel="Logout"
+          accessibilityHint="Log out of your MyKliq account"
+          accessibilityRole="button"
         >
           <View className="flex-row items-center">
             <LogOut color="#ff4757" size={20} />

@@ -103,10 +103,15 @@ export default function HomeScreen() {
     // Purple ring = hasUnviewedStories (any story not viewed)
     // Gray ring = all stories viewed
     const hasUnviewed = item.hasUnviewedStories;
+    const viewStatus = hasUnviewed ? 'has new stories' : 'all stories viewed';
     
     return (
       <TouchableOpacity
         data-testid={`story-${item.userId}`}
+        accessible={true}
+        accessibilityLabel={`View story by ${item.firstName}`}
+        accessibilityHint={`${item.storyCount} ${item.storyCount === 1 ? 'story' : 'stories'}, ${viewStatus}`}
+        accessibilityRole="button"
         onPress={() => {
           const storyGroups = storiesData?.storyGroups || [];
           navigation.navigate('StoryViewerModal', {
@@ -123,6 +128,8 @@ export default function HomeScreen() {
                 source={{ uri: item.profileImageUrl }}
                 className="w-16 h-16 rounded-full"
                 data-testid={`story-avatar-${item.userId}`}
+                accessibilityLabel={`${item.firstName}'s profile picture`}
+                accessible={true}
               />
             ) : (
               <View className="w-16 h-16 rounded-full bg-muted items-center justify-center">
@@ -141,6 +148,10 @@ export default function HomeScreen() {
   const renderAddStory = () => (
     <TouchableOpacity
       data-testid="add-story-button"
+      accessible={true}
+      accessibilityLabel="Create a new story"
+      accessibilityHint="Opens camera to create a 24-hour disappearing story"
+      accessibilityRole="button"
       onPress={() => {
         navigation.navigate('CreatePostModal', { isStory: true });
       }}
