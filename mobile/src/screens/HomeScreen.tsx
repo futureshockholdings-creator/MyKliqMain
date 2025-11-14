@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, RefreshControl, ActivityIndicator, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
@@ -7,6 +7,8 @@ import PostCard from '../components/PostCard';
 import { Plus } from 'lucide-react-native';
 import type { StoriesResponse, StoryGroupData } from '../../../shared/api-contracts';
 import { useNavigation } from '@react-navigation/native';
+import { cacheFeedPosts, getCachedFeedPosts, cacheStories, getCachedStories } from '../utils/offlineCache';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
 interface FeedResponse {
   posts: any[];
@@ -18,6 +20,17 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigation = useNavigation<any>();
+  const { isConnected } = useNetworkStatus();
+  const [cachedPosts, setCachedPosts] = useState<any[]>([]);
+
+  // Load cached feed posts on mount
+  useEffect(() => {
+    getCachedFeedPosts().then(cached => {
+      if (cached) {
+        setCachedPosts(cached);
+      }
+    });
+  }, []);
 
   const {
     data,
@@ -35,7 +48,15 @@ export default function HomeScreen() {
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: undefined,
+    enabled: isConnected,
   });
+
+  // Cache feed posts when data loads
+  useEffect(() => {
+    if (data?.pages[0]?.posts) {
+      cacheFeedPosts(data.pages[0].posts);
+    }
+  }, [data]);
 
   const likeMutation = useMutation({
     mutationFn: (postId: string) => apiClient.likePost(postId),
@@ -73,7 +94,8 @@ export default function HomeScreen() {
     },
   });
 
-  const posts = data?.pages.flatMap((page) => page.posts) || [];
+  // Use cached posts if offline and no fresh data
+  const posts = data?.pages.flatMap((page) => page.posts) || (!isConnected && cachedPosts.length > 0 ? cachedPosts : []);
 
   const handleRefresh = () => {
     refetch();
@@ -86,6 +108,17 @@ export default function HomeScreen() {
     }
   };
 
+  // Load cached stories
+  const [cachedStoriesData, setCachedStoriesData] = useState<StoriesResponse | null>(null);
+  
+  useEffect(() => {
+    getCachedStories().then(cached => {
+      if (cached) {
+        setCachedStoriesData(cached as StoriesResponse);
+      }
+    });
+  }, []);
+
   // Fetch stories
   const {
     data: storiesData,
@@ -96,7 +129,18 @@ export default function HomeScreen() {
       const response = await apiClient.getStories();
       return response as StoriesResponse;
     },
+    enabled: isConnected,
   });
+
+  // Cache stories when data loads
+  useEffect(() => {
+    if (storiesData) {
+      cacheStories([storiesData]);
+    }
+  }, [storiesData]);
+
+  // Use cached stories if offline
+  const displayStoriesData = storiesData || (!isConnected ? cachedStoriesData : null);
 
   const renderStoryItem = ({ item, index }: { item: StoryGroupData; index: number }) => {
     // Phase 2: Use actual view status from backend
@@ -113,7 +157,7 @@ export default function HomeScreen() {
         accessibilityHint={`${item.storyCount} ${item.storyCount === 1 ? 'story' : 'stories'}, ${viewStatus}`}
         accessibilityRole="button"
         onPress={() => {
-          const storyGroups = storiesData?.storyGroups || [];
+          const storyGroups = displayStoriesData?.storyGroups || [];
           navigation.navigate('StoryViewerModal', {
             storyGroups,
             initialGroupIndex: index,

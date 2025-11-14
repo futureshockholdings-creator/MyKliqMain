@@ -33,6 +33,7 @@ export interface QueuedRequest {
   body?: any;
   timestamp: number;
   retryCount: number;
+  nextRetryAt: number; // Timestamp when next retry should be attempted
   priority: 'high' | 'normal' | 'low';
   description?: string; // User-friendly description for debugging
 }
@@ -56,7 +57,27 @@ class RequestQueue {
     try {
       const stored = await AsyncStorage.getItem(QUEUE_KEY);
       if (stored) {
-        this.queue = JSON.parse(stored);
+        const loadedQueue: QueuedRequest[] = JSON.parse(stored);
+        
+        // Backfill nextRetryAt for legacy queue entries
+        this.queue = loadedQueue.map(request => {
+          if (request.nextRetryAt === undefined || request.nextRetryAt === null) {
+            // Calculate next retry time based on current retry count
+            if (request.retryCount === 0) {
+              // First attempt can retry immediately
+              request.nextRetryAt = Date.now();
+            } else {
+              // Subsequent attempts: apply exponential backoff from now
+              const backoffDelay = BASE_RETRY_DELAY * Math.pow(2, request.retryCount);
+              request.nextRetryAt = Date.now() + backoffDelay;
+            }
+            console.log(`[RequestQueue] Backfilled nextRetryAt for legacy request: ${request.description || request.endpoint} (retry ${request.retryCount}/${MAX_RETRIES})`);
+          }
+          return request;
+        });
+        
+        // Save updated queue with backfilled timestamps
+        await this.saveQueue();
         this.notifyListeners();
       }
     } catch (error) {
@@ -100,6 +121,7 @@ class RequestQueue {
       body,
       timestamp: Date.now(),
       retryCount: 0,
+      nextRetryAt: Date.now(), // Can retry immediately on first attempt
       priority,
       description,
     };
@@ -184,9 +206,13 @@ class RequestQueue {
           continue;
         }
 
-        // Exponential backoff delay
-        const delay = BASE_RETRY_DELAY * Math.pow(2, request.retryCount);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        // Skip if not yet time to retry (respect exponential backoff)
+        const now = Date.now();
+        if (now < request.nextRetryAt) {
+          console.log(`[RequestQueue] Skipping ${request.description || request.endpoint} - retry scheduled for ${new Date(request.nextRetryAt).toISOString()}`);
+          results.skipped++;
+          continue;
+        }
 
         // Get auth token
         const token = await SecureStore.getItemAsync('jwt_token');
@@ -211,10 +237,16 @@ class RequestQueue {
       } catch (error) {
         console.error(`[RequestQueue] ❌ Failed to retry: ${request.description || request.endpoint}`, error);
         
-        // Increment retry count
+        // Calculate next retry time with exponential backoff
         const index = this.queue.findIndex(r => r.id === request.id);
         if (index !== -1) {
-          this.queue[index].retryCount++;
+          const newRetryCount = this.queue[index].retryCount + 1;
+          const backoffDelay = BASE_RETRY_DELAY * Math.pow(2, newRetryCount);
+          
+          this.queue[index].retryCount = newRetryCount;
+          this.queue[index].nextRetryAt = Date.now() + backoffDelay;
+          
+          console.log(`[RequestQueue] Will retry ${request.description || request.endpoint} in ${backoffDelay}ms (attempt ${newRetryCount}/${MAX_RETRIES})`);
           await this.saveQueue();
         }
         

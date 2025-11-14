@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Alert, Switch } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../providers/AuthProvider';
@@ -6,6 +6,8 @@ import { useTheme } from '../providers/ThemeProvider';
 import { apiClient } from '../lib/apiClient';
 import { useNavigation } from '@react-navigation/native';
 import { Settings, Edit3, HelpCircle, LogOut, Award, Users, TrendingUp, Bell } from 'lucide-react-native';
+import { cacheUserProfile, getCachedUserProfile, cacheStreak, getCachedStreak } from '../utils/offlineCache';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
 interface ProfileData {
   id: string;
@@ -47,6 +49,19 @@ export default function ProfileScreen() {
   const { theme, setTheme } = useTheme();
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
+  const { isConnected } = useNetworkStatus();
+  const [cachedProfile, setCachedProfile] = useState<ProfileData | null>(null);
+  const [cachedStreakData, setCachedStreakData] = useState<StreakData | null>(null);
+
+  // Load cached profile on mount
+  useEffect(() => {
+    getCachedUserProfile().then(cached => {
+      if (cached) setCachedProfile(cached);
+    });
+    getCachedStreak().then(cached => {
+      if (cached) setCachedStreakData(cached);
+    });
+  }, []);
 
   // Fetch profile data
   const { data: profileData, isLoading: profileLoading } = useQuery<ProfileData>({
@@ -55,7 +70,18 @@ export default function ProfileScreen() {
       const response = await apiClient.get('/api/mobile/user/profile');
       return response;
     },
+    enabled: isConnected,
   });
+
+  // Cache profile when loaded
+  useEffect(() => {
+    if (profileData) {
+      cacheUserProfile(profileData);
+    }
+  }, [profileData]);
+
+  // Use cached profile if offline
+  const displayProfile = profileData || (!isConnected ? cachedProfile : null);
 
   // Fetch Kliq Koin data
   const { data: koinData } = useQuery<KliqKoinData>({
@@ -73,7 +99,18 @@ export default function ProfileScreen() {
       const response = await apiClient.get('/api/kliq-koins/streak');
       return response;
     },
+    enabled: isConnected,
   });
+
+  // Cache streak when loaded
+  useEffect(() => {
+    if (streakData) {
+      cacheStreak(streakData);
+    }
+  }, [streakData]);
+
+  // Use cached streak if offline
+  const displayStreak = streakData || (!isConnected ? cachedStreakData : null);
 
   // Fetch user stats (posts and friends counts)
   const { data: statsData, isLoading: statsLoading, isError: statsError } = useQuery<{ postsCount: number; friendsCount: number }>({
@@ -112,7 +149,7 @@ export default function ProfileScreen() {
     );
   }
 
-  const profile = profileData || user;
+  const profile = displayProfile || user;
 
   return (
     <ScrollView 
@@ -213,7 +250,7 @@ export default function ProfileScreen() {
             <View className="flex-row justify-around">
               <View className="items-center" data-testid="stat-streak">
                 <Text className="text-xl font-bold text-foreground">
-                  {streakData?.currentStreak || 0} 🔥
+                  {displayStreak?.currentStreak || 0} 🔥
                 </Text>
                 <Text className="text-xs text-muted-foreground mt-1">Day Streak</Text>
               </View>
@@ -222,9 +259,9 @@ export default function ProfileScreen() {
               
               <View className="items-center" data-testid="stat-tier">
                 <Text className="text-xl font-bold text-foreground">
-                  Tier {streakData?.tier || 1}
+                  Tier {displayStreak?.tier || 1}
                 </Text>
-                <Text className="text-xs text-muted-foreground mt-1">{streakData?.tierName || 'Starter'}</Text>
+                <Text className="text-xs text-muted-foreground mt-1">{displayStreak?.tierName || 'Starter'}</Text>
               </View>
             </View>
           </View>

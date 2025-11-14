@@ -78,6 +78,18 @@ Mobile optimizations prioritize bandwidth (paginated responses), battery efficie
 
 # Recent Phase 4 Implementations (App Store Launch Prep)
 
+**Offline Support ✅ COMPLETE (Phase 4 Tasks 8-9):**
+- **Offline Cache Service** (`mobile/src/utils/offlineCache.ts`): AsyncStorage-based caching with TTL expiration for feed posts (10min, max 20), user profile (1hr), friends list (30min), messages (5min per conversation, max 50), stories (24hr, max 10), notifications (5min, max 20), theme (7d), streak (24hr)
+- **Request Queue Service** (`mobile/src/utils/requestQueue.ts`): Persistent queue for failed API calls with exponential backoff (1s → 2s → 4s), max 3 retries, priority support (high/normal/low), request deduplication, backward compatibility for legacy entries
+- **Screen Integration**: HomeScreen (feed posts + stories cached), ProfileScreen (user profile + streak cached) with offline fallbacks
+- **UI Indicators**: OfflineIndicator (red banner when offline) + SyncIndicator (blue banner showing queued actions count/progress)
+- **API Client Integration**: Automatic request queueing on network errors (all TypeErrors), user-friendly error messages, opt-in/opt-out queueing
+- **Hooks**: useOfflineSync (automatic queue processing), useOfflineQuery (React Query + offline caching)
+- **Production Requirement**: Install `@react-native-community/netinfo` before native builds (navigator.onLine is web/dev only)
+- **Documentation**: Complete offline support guide in `mobile/OFFLINE_SUPPORT.md`
+
+# Recent Phase 4 Implementations (App Store Launch Prep)
+
 **Error Handling & Crash Reporting ✅ COMPLETE (Phase 4 Task 16):**
 - **Global Error Boundary**: React ErrorBoundary component (`mobile/src/components/ErrorBoundary.tsx`) wraps entire app, catches all unhandled React errors, displays graceful ErrorFallback UI with retry functionality
 - **Error Reporting Service**: Centralized error logging (`mobile/src/utils/errorReporting.ts`) with structured reports including error message, stack trace, component stack, timestamp, platform (iOS/Android), app version, and user ID

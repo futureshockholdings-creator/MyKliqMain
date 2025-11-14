@@ -84,10 +84,12 @@ export class ApiClient {
     } catch (error) {
       // Queue mutating requests if offline
       if (enableOfflineQueue && this.isMutatingRequest(options.method)) {
-        const isNetworkError = error instanceof TypeError && error.message.includes('network');
+        // Treat all TypeErrors from fetch as network errors (covers all offline scenarios)
+        // This includes: "Network request failed", "Failed to fetch", localized variants, etc.
+        const isNetworkError = error instanceof TypeError;
         
         if (isNetworkError) {
-          console.log(`[ApiClient] Network error, queueing request: ${endpoint}`);
+          console.log(`[ApiClient] Network error (${error.message}), queueing request: ${endpoint}`);
           
           // Parse body for queueing
           let body;
