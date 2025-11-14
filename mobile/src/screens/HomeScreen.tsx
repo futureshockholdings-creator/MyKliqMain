@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, RefreshControl, ActivityIndicator, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, RefreshControl, ActivityIndicator, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
 import { useAuth } from '../providers/AuthProvider';
@@ -320,7 +321,7 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <FlatList
+      <FlashList
         data={posts}
         renderItem={({ item }) => (
           <PostCard 
@@ -330,6 +331,7 @@ export default function HomeScreen() {
           />
         )}
         keyExtractor={(item) => item.id}
+        estimatedItemSize={400}
         refreshControl={
           <RefreshControl refreshing={false} onRefresh={handleRefresh} tintColor="#666" />
         }
