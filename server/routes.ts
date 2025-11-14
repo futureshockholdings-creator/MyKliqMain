@@ -2383,6 +2383,292 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================================================
+  // MOBILE CALENDAR & EVENTS
+  // ============================================================================
+
+  // Get user's events
+  app.get('/api/mobile/calendar/events', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const events = await storage.getEvents(userId);
+      
+      res.json({
+        events: events.map(event => ({
+          id: event.id,
+          userId: event.userId,
+          title: event.title,
+          description: event.description,
+          eventDate: event.eventDate,
+          location: event.location,
+          mediaUrl: event.mediaUrl,
+          attendeeCount: event.attendeeCount,
+          createdAt: event.createdAt?.toISOString(),
+          updatedAt: event.updatedAt?.toISOString(),
+        }))
+      });
+    } catch (error) {
+      console.error('Get events error:', error);
+      res.status(500).json({ message: 'Failed to fetch events' });
+    }
+  });
+
+  // Create new event
+  app.post('/api/mobile/calendar/events', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { insertEventSchema } = await import("@shared/schema");
+      
+      const eventData = insertEventSchema.parse({ ...req.body, userId });
+      
+      // Normalize media URL if provided
+      if (eventData.mediaUrl) {
+        const objectStorage = new ObjectStorageService();
+        eventData.mediaUrl = objectStorage.normalizeObjectEntityPath(eventData.mediaUrl);
+      }
+      
+      const event = await storage.createEvent(eventData);
+      
+      // Award 0.50 Kliq Koins for creating an event
+      try {
+        await storage.awardKoins(userId, 0.50, 'event_create', event.id);
+      } catch (koinError) {
+        console.error("Error awarding Koins for event creation:", koinError);
+      }
+      
+      res.json({
+        id: event.id,
+        userId: event.userId,
+        title: event.title,
+        description: event.description,
+        eventDate: event.eventDate,
+        location: event.location,
+        mediaUrl: event.mediaUrl,
+        attendeeCount: event.attendeeCount,
+        createdAt: event.createdAt?.toISOString(),
+        updatedAt: event.updatedAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error('Create event error:', error);
+      res.status(500).json({ message: 'Failed to create event' });
+    }
+  });
+
+  // Update event
+  app.put('/api/mobile/calendar/events/:eventId', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { eventId } = req.params;
+      
+      // Validate ownership
+      const existingEvent = await storage.getEventById(eventId);
+      if (!existingEvent || existingEvent.userId !== userId) {
+        return res.status(403).json({ message: "You can only edit your own events" });
+      }
+      
+      const { insertEventSchema } = await import("@shared/schema");
+      const eventData = insertEventSchema.partial().parse(req.body);
+      
+      // Normalize media URL if provided
+      if (eventData.mediaUrl) {
+        const objectStorage = new ObjectStorageService();
+        eventData.mediaUrl = objectStorage.normalizeObjectEntityPath(eventData.mediaUrl);
+      }
+      
+      const updatedEvent = await storage.updateEvent(eventId, eventData);
+      
+      res.json({
+        id: updatedEvent.id,
+        userId: updatedEvent.userId,
+        title: updatedEvent.title,
+        description: updatedEvent.description,
+        eventDate: updatedEvent.eventDate,
+        location: updatedEvent.location,
+        mediaUrl: updatedEvent.mediaUrl,
+        attendeeCount: updatedEvent.attendeeCount,
+        createdAt: updatedEvent.createdAt?.toISOString(),
+        updatedAt: updatedEvent.updatedAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error('Update event error:', error);
+      res.status(500).json({ message: 'Failed to update event' });
+    }
+  });
+
+  // Delete event
+  app.delete('/api/mobile/calendar/events/:eventId', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { eventId } = req.params;
+      
+      // Validate ownership
+      const existingEvent = await storage.getEventById(eventId);
+      if (!existingEvent || existingEvent.userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own events" });
+      }
+      
+      await storage.deleteEvent(eventId);
+      res.json({ success: true, message: "Event deleted successfully" });
+    } catch (error) {
+      console.error('Delete event error:', error);
+      res.status(500).json({ message: 'Failed to delete event' });
+    }
+  });
+
+  // Get calendar notes for a kliq
+  app.get('/api/mobile/calendar/notes', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { kliqId, startDate, endDate } = req.query;
+      
+      // Require kliqId parameter
+      if (!kliqId || typeof kliqId !== 'string') {
+        return res.status(400).json({ message: "kliqId parameter is required" });
+      }
+      
+      // Verify user has access to this kliq's calendar
+      const isMember = await storage.isUserInKliq(userId, kliqId);
+      if (!isMember) {
+        return res.status(403).json({ message: 'You do not have access to this kliq calendar' });
+      }
+      
+      const notes = await storage.getCalendarNotes(
+        kliqId,
+        startDate as string | undefined,
+        endDate as string | undefined
+      );
+      
+      res.json({
+        notes: notes.map(note => ({
+          id: note.id,
+          kliqId: note.kliqId,
+          userId: note.userId,
+          noteDate: note.noteDate,
+          noteText: note.noteText,
+          reminderEnabled: note.reminderEnabled,
+          reminderSent: note.reminderSent,
+          createdAt: note.createdAt?.toISOString(),
+          updatedAt: note.updatedAt?.toISOString(),
+        }))
+      });
+    } catch (error) {
+      console.error('Get calendar notes error:', error);
+      res.status(500).json({ message: 'Failed to fetch calendar notes' });
+    }
+  });
+
+  // Create calendar note
+  app.post('/api/mobile/calendar/notes', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { insertCalendarNoteSchema } = await import("@shared/schema");
+      
+      // Require kliqId in request body
+      if (!req.body.kliqId) {
+        return res.status(400).json({ message: "kliqId is required" });
+      }
+      
+      // Verify user is a member of this kliq
+      const isMember = await storage.isUserInKliq(userId, req.body.kliqId);
+      if (!isMember) {
+        return res.status(403).json({ message: 'You do not have access to this kliq calendar' });
+      }
+      
+      const noteData = insertCalendarNoteSchema.parse({
+        ...req.body,
+        userId, // Server-controlled: who is creating the note
+        kliqId: req.body.kliqId, // Validated kliqId
+      });
+      
+      const note = await storage.createCalendarNote(noteData);
+      
+      res.json({
+        id: note.id,
+        kliqId: note.kliqId,
+        userId: note.userId,
+        noteDate: note.noteDate,
+        noteText: note.noteText,
+        reminderEnabled: note.reminderEnabled,
+        reminderSent: note.reminderSent,
+        createdAt: note.createdAt?.toISOString(),
+        updatedAt: note.updatedAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error('Create calendar note error:', error);
+      res.status(500).json({ message: 'Failed to create calendar note' });
+    }
+  });
+
+  // Update calendar note
+  app.put('/api/mobile/calendar/notes/:noteId', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { noteId } = req.params;
+      
+      // Get existing note to check kliq membership
+      const existingNote = await storage.getCalendarNoteById(noteId);
+      if (!existingNote) {
+        return res.status(404).json({ message: "Calendar note not found" });
+      }
+      
+      // Verify user is a member of the note's kliq (any member can edit)
+      const isMember = await storage.isUserInKliq(userId, existingNote.kliqId);
+      if (!isMember) {
+        return res.status(403).json({ message: 'You do not have access to this kliq calendar' });
+      }
+      
+      const { insertCalendarNoteSchema } = await import("@shared/schema");
+      const updates = insertCalendarNoteSchema.partial().parse(req.body);
+      
+      // Server-controlled: Never allow clients to change kliqId or userId
+      delete updates.kliqId;
+      delete updates.userId;
+      
+      const updatedNote = await storage.updateCalendarNote(noteId, updates);
+      
+      res.json({
+        id: updatedNote.id,
+        kliqId: updatedNote.kliqId,
+        userId: updatedNote.userId,
+        noteDate: updatedNote.noteDate,
+        noteText: updatedNote.noteText,
+        reminderEnabled: updatedNote.reminderEnabled,
+        reminderSent: updatedNote.reminderSent,
+        createdAt: updatedNote.createdAt?.toISOString(),
+        updatedAt: updatedNote.updatedAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error('Update calendar note error:', error);
+      res.status(500).json({ message: 'Failed to update calendar note' });
+    }
+  });
+
+  // Delete calendar note
+  app.delete('/api/mobile/calendar/notes/:noteId', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { noteId } = req.params;
+      
+      // Get existing note to check kliq membership
+      const existingNote = await storage.getCalendarNoteById(noteId);
+      if (!existingNote) {
+        return res.status(404).json({ message: "Calendar note not found" });
+      }
+      
+      // Verify user is a member of the note's kliq (any member can delete)
+      const isMember = await storage.isUserInKliq(userId, existingNote.kliqId);
+      if (!isMember) {
+        return res.status(403).json({ message: 'You do not have access to this kliq calendar' });
+      }
+      
+      await storage.deleteCalendarNote(noteId);
+      res.json({ success: true, message: "Calendar note deleted successfully" });
+    } catch (error) {
+      console.error('Delete calendar note error:', error);
+      res.status(500).json({ message: 'Failed to delete calendar note' });
+    }
+  });
+
   // Mobile backend health check endpoint
   app.get('/api/mobile/health', (req, res) => {
     res.json({
@@ -2398,6 +2684,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'GET /api/mobile/stories - Stories grouped by user',
         'POST /api/mobile/notifications/register - Push notification registration',
         'POST /api/mobile/upload - File upload preparation',
+        'GET /api/mobile/calendar/events - User events (Phase 2)',
+        'POST /api/mobile/calendar/events - Create event (Phase 2)',
+        'GET /api/mobile/calendar/notes - Calendar notes (Phase 2)',
         'GET /api/mood-boost/posts - Get mood boost posts for current user'
       ],
       features: [
@@ -2406,7 +2695,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'File Upload Support',
         'Paginated Responses',
         'Optimized for Mobile',
-        'AI-Powered Mood Boosts'
+        'AI-Powered Mood Boosts',
+        'Calendar & Events (Phase 2)'
       ]
     });
   });

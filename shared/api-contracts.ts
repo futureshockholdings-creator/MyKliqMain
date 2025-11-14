@@ -515,6 +515,200 @@ export interface NotificationsResponse {
 }
 
 // ============================================================================
+// CALENDAR & EVENTS
+// ============================================================================
+
+export interface EventData {
+  id: string;
+  userId: string;
+  title: string;
+  description?: string;
+  eventDate: string;
+  location?: string;
+  mediaUrl?: string;
+  attendeeCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateEventRequest {
+  title: string;
+  description?: string;
+  eventDate: string;
+  location?: string;
+  mediaUrl?: string;
+}
+
+export interface UpdateEventRequest {
+  title?: string;
+  description?: string;
+  eventDate?: string;
+  location?: string;
+  mediaUrl?: string;
+}
+
+export interface EventsResponse {
+  events: EventData[];
+}
+
+export interface CalendarNoteData {
+  id: string;
+  kliqId: string;
+  userId: string;
+  noteDate: string;
+  noteText: string;
+  reminderEnabled: boolean;
+  reminderSent: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCalendarNoteRequest {
+  kliqId: string;
+  noteDate: string;
+  noteText: string;
+  reminderEnabled: boolean;
+}
+
+export interface UpdateCalendarNoteRequest {
+  noteText?: string;
+  reminderEnabled?: boolean;
+}
+
+export interface CalendarNotesResponse {
+  notes: CalendarNoteData[];
+}
+
+// ============================================================================
+// GPS MEETUPS
+// ============================================================================
+
+export interface MeetupLocation {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  checkInCount: number;
+  lastCheckIn: string;
+}
+
+export interface CheckInRequest {
+  latitude: number;
+  longitude: number;
+  locationName?: string;
+  caption?: string;
+}
+
+export interface CheckInResponse {
+  success: boolean;
+  postId: string;
+  locationName: string;
+}
+
+export interface NearbyMeetupsRequest {
+  latitude: number;
+  longitude: number;
+  radiusKm?: number;
+}
+
+export interface NearbyMeetupsResponse {
+  locations: MeetupLocation[];
+}
+
+export interface MeetupHistoryResponse {
+  checkIns: Array<{
+    id: string;
+    locationName: string;
+    latitude: number;
+    longitude: number;
+    checkedInAt: string;
+    postId?: string;
+  }>;
+}
+
+// ============================================================================
+// SPORTS SCORES
+// ============================================================================
+
+export interface TeamData {
+  id: string;
+  name: string;
+  abbreviation: string;
+  logo?: string;
+  sport: string;
+  league: string;
+}
+
+export interface ScoreData {
+  id: string;
+  homeTeam: TeamData;
+  awayTeam: TeamData;
+  homeScore: number;
+  awayScore: number;
+  status: 'scheduled' | 'live' | 'final';
+  startTime: string;
+  quarter?: string;
+  timeRemaining?: string;
+}
+
+export interface FollowTeamRequest {
+  teamId: string;
+  teamName: string;
+  league: string;
+}
+
+export interface UserTeamsResponse {
+  teams: TeamData[];
+}
+
+export interface LiveScoresResponse {
+  scores: ScoreData[];
+  lastUpdated: string;
+}
+
+export interface TeamScoresRequest {
+  teamId: string;
+  limit?: number;
+}
+
+export interface TeamScoresResponse {
+  scores: ScoreData[];
+  team: TeamData;
+}
+
+// ============================================================================
+// PUSH NOTIFICATIONS
+// ============================================================================
+
+export interface RegisterDeviceRequest {
+  deviceToken: string;
+  platform: 'ios' | 'android';
+  deviceId: string;
+}
+
+export interface RegisterDeviceResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface NotificationPreferences {
+  newMessages: boolean;
+  newPosts: boolean;
+  eventReminders: boolean;
+  friendRequests: boolean;
+  likes: boolean;
+  comments: boolean;
+}
+
+export interface UpdateNotificationPreferencesRequest {
+  preferences: Partial<NotificationPreferences>;
+}
+
+export interface GetNotificationPreferencesResponse {
+  preferences: NotificationPreferences;
+}
+
+// ============================================================================
 // SOCIAL MEDIA INTEGRATION
 // ============================================================================
 
