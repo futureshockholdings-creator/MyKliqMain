@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   Image,
   Dimensions,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   StatusBar,
   Animated,
   ActivityIndicator,
@@ -16,6 +17,7 @@ import type { StoryGroupData, StoryData } from '../../shared/api-contracts';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const STORY_DURATION = 7000; // 7 seconds per story
+const LONG_PRESS_THRESHOLD = 275; // 275ms for optimal UX (architect recommendation)
 
 interface StoryViewerScreenProps {
   route: {
@@ -37,10 +39,42 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
   
   const progressAnims = useRef<Map<string, Animated.Value>>(new Map());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const elapsedTimeRef = useRef(0); // Track elapsed time for precise pause/resume
+  const startTimeRef = useRef(0); // Track when timer started
+  const pressStartTimeRef = useRef(0); // Track press start for long-press detection
+  const pressLocationRef = useRef({ x: 0, y: 0 }); // Track tap location
 
   const currentGroup = storyGroups[currentGroupIndex];
   const currentStory = currentGroup?.stories[currentStoryIndex];
   const totalStories = currentGroup?.stories.length || 0;
+
+  // Pure helper functions for deterministic navigation (architect recommendation)
+  const getNextIndices = useCallback((groupIdx: number, storyIdx: number): { groupIdx: number; storyIdx: number; shouldClose: boolean } => {
+    const currentGroupStories = storyGroups[groupIdx].stories;
+    
+    if (storyIdx < currentGroupStories.length - 1) {
+      // Next story in same group
+      return { groupIdx, storyIdx: storyIdx + 1, shouldClose: false };
+    } else if (groupIdx < storyGroups.length - 1) {
+      // First story of next group
+      return { groupIdx: groupIdx + 1, storyIdx: 0, shouldClose: false };
+    } else {
+      // End of all stories
+      return { groupIdx, storyIdx, shouldClose: true };
+    }
+  }, [storyGroups]);
+
+  const getPreviousIndices = useCallback((groupIdx: number, storyIdx: number): { groupIdx: number; storyIdx: number } => {
+    if (storyIdx > 0) {
+      // Previous story in same group
+      return { groupIdx, storyIdx: storyIdx - 1 };
+    } else if (groupIdx > 0) {
+      // Last story of previous group
+      return { groupIdx: groupIdx - 1, storyIdx: storyGroups[groupIdx - 1].stories.length - 1 };
+    }
+    // Already at first story
+    return { groupIdx, storyIdx };
+  }, [storyGroups]);
 
   // Get or create progress animation for a story
   const getProgressAnim = (groupIdx: number, storyIdx: number, stories: StoryData[]) => {
@@ -69,102 +103,99 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
     }
   }, [currentStory?.id]);
 
-  // Auto-advance timer for images
+  // Auto-advance timer for images with precise pause/resume (architect recommendation)
   useEffect(() => {
-    if (paused || !currentStory || currentStory.mediaType === 'video') return;
+    if (!currentStory || currentStory.mediaType === 'video') return;
 
     const progressAnim = getProgressAnim(currentGroupIndex, currentStoryIndex, currentGroup.stories);
     
+    if (paused) {
+      // On pause: stop animation and timer, track elapsed time
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      progressAnim.stopAnimation();
+      elapsedTimeRef.current += Date.now() - startTimeRef.current;
+      return;
+    }
+
+    // On start/resume: calculate remaining time and start timer
+    const remainingTime = Math.max(0, STORY_DURATION - elapsedTimeRef.current); // Clamp to min 0
+    startTimeRef.current = Date.now();
+    
     Animated.timing(progressAnim, {
       toValue: 1,
-      duration: STORY_DURATION,
+      duration: remainingTime,
       useNativeDriver: false,
     }).start();
 
     timerRef.current = setTimeout(() => {
       handleNext();
-    }, STORY_DURATION);
+    }, remainingTime);
 
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
       progressAnim.stopAnimation();
     };
   }, [currentStoryIndex, currentGroupIndex, paused]);
 
-  // Reset loading and progress when story changes
+  // Reset loading, progress, and elapsed time when story changes
   useEffect(() => {
     setIsLoading(true);
+    elapsedTimeRef.current = 0; // Reset elapsed time for new story
+    startTimeRef.current = Date.now();
     const progressAnim = getProgressAnim(currentGroupIndex, currentStoryIndex, currentGroup.stories);
     progressAnim.setValue(0);
   }, [currentStory?.id]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     // Clear timer before state change
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
 
-    // Compute next indices synchronously
-    setCurrentGroupIndex((prevGroupIdx) => {
-      setCurrentStoryIndex((prevStoryIdx) => {
-        const progressAnim = getProgressAnim(prevGroupIdx, prevStoryIdx, storyGroups[prevGroupIdx].stories);
-        progressAnim.setValue(1);
-        
-        const currentGroupStories = storyGroups[prevGroupIdx].stories;
-        
-        if (prevStoryIdx < currentGroupStories.length - 1) {
-          // Next story in same group
-          return prevStoryIdx + 1;
-        } else if (prevGroupIdx < storyGroups.length - 1) {
-          // First story of next group
-          return 0;
-        } else {
-          // End of all stories
-          navigation.goBack();
-          return prevStoryIdx;
-        }
-      });
-      
-      // Update group index synchronously
-      const currentGroupStories = storyGroups[prevGroupIdx].stories;
-      if (prevGroupIdx < storyGroups.length - 1 && currentStoryIndex >= currentGroupStories.length - 1) {
-        return prevGroupIdx + 1;
-      }
-      return prevGroupIdx;
-    });
-  };
+    // Use helper function for deterministic navigation (architect recommendation)
+    const result = getNextIndices(currentGroupIndex, currentStoryIndex);
+    
+    if (result.shouldClose) {
+      navigation.goBack();
+      return;
+    }
 
-  const handlePrevious = () => {
+    // Mark current story as completed
+    const progressAnim = getProgressAnim(currentGroupIndex, currentStoryIndex, currentGroup.stories);
+    progressAnim.setValue(1);
+
+    // Atomic state update for race-free navigation
+    setCurrentGroupIndex(result.groupIdx);
+    setCurrentStoryIndex(result.storyIdx);
+    elapsedTimeRef.current = 0; // Reset elapsed time for next story
+  }, [currentGroupIndex, currentStoryIndex, getNextIndices, currentGroup]);
+
+  const handlePrevious = useCallback(() => {
     // Clear timer before state change
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
 
-    // Compute previous indices synchronously
-    setCurrentGroupIndex((prevGroupIdx) => {
-      setCurrentStoryIndex((prevStoryIdx) => {
-        const progressAnim = getProgressAnim(prevGroupIdx, prevStoryIdx, storyGroups[prevGroupIdx].stories);
-        progressAnim.setValue(0);
-        
-        if (prevStoryIdx > 0) {
-          // Previous story in same group
-          return prevStoryIdx - 1;
-        } else if (prevGroupIdx > 0) {
-          // Last story of previous group
-          return storyGroups[prevGroupIdx - 1].stories.length - 1;
-        }
-        return prevStoryIdx;
-      });
-      
-      // Update group index synchronously
-      if (prevGroupIdx > 0 && currentStoryIndex === 0) {
-        return prevGroupIdx - 1;
-      }
-      return prevGroupIdx;
-    });
-  };
+    // Use helper function for deterministic navigation (architect recommendation)
+    const result = getPreviousIndices(currentGroupIndex, currentStoryIndex);
+
+    // Reset current story progress
+    const progressAnim = getProgressAnim(currentGroupIndex, currentStoryIndex, currentGroup.stories);
+    progressAnim.setValue(0);
+
+    // Atomic state update for race-free navigation
+    setCurrentGroupIndex(result.groupIdx);
+    setCurrentStoryIndex(result.storyIdx);
+    elapsedTimeRef.current = 0; // Reset elapsed time for previous story
+  }, [currentGroupIndex, currentStoryIndex, getPreviousIndices, currentGroup]);
 
   const handleVideoProgress = (status: AVPlaybackStatus) => {
     if ('positionMillis' in status && 'durationMillis' in status && status.durationMillis) {
@@ -178,13 +209,27 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
     }
   };
 
-  const handleTap = (x: number) => {
-    if (x < SCREEN_WIDTH / 2) {
-      handlePrevious();
-    } else {
-      handleNext();
+  // Gesture handlers with tap/long-press separation (architect recommendation)
+  const handlePressIn = useCallback((e: any) => {
+    pressStartTimeRef.current = Date.now();
+    pressLocationRef.current = { x: e.nativeEvent.locationX, y: 0 };
+    setPaused(true); // Pause immediately on press
+  }, []);
+
+  const handlePressOut = useCallback(() => {
+    const pressDuration = Date.now() - pressStartTimeRef.current;
+    
+    if (pressDuration < LONG_PRESS_THRESHOLD) {
+      // Quick tap = navigate (left/right)
+      if (pressLocationRef.current.x < SCREEN_WIDTH / 2) {
+        handlePrevious();
+      } else {
+        handleNext();
+      }
     }
-  };
+    // Long press = just unpause (no navigation)
+    setPaused(false);
+  }, [handleNext, handlePrevious]);
 
   if (!currentStory) {
     return (
@@ -256,14 +301,11 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
       </View>
 
       {/* Story content */}
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={(e) => handleTap(e.nativeEvent.locationX)}
-        onPressIn={() => setPaused(true)}
-        onPressOut={() => setPaused(false)}
-        className="flex-1"
-        data-testid="story-content-area"
+      <TouchableWithoutFeedback
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
       >
+        <View className="flex-1" data-testid="story-content-area">
         {currentStory.mediaType === 'video' ? (
           <Video
             source={{ uri: currentStory.mediaUrl }}
@@ -290,7 +332,8 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
             <ActivityIndicator size="large" color="#FFFFFF" />
           </View>
         )}
-      </TouchableOpacity>
+        </View>
+      </TouchableWithoutFeedback>
 
       {/* Caption */}
       {currentStory.content && (
