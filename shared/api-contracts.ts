@@ -875,6 +875,68 @@ export interface EndActionResponse {
 }
 
 // ============================================================================
+// PUSH NOTIFICATIONS
+// ============================================================================
+
+export interface RegisterDeviceTokenRequest {
+  token: string;
+  platform: 'ios' | 'android';
+  deviceId?: string;
+}
+
+export interface RegisterDeviceTokenResponse {
+  success: boolean;
+  tokenId: string;
+}
+
+export interface UnregisterDeviceTokenRequest {
+  token: string;
+}
+
+export interface UnregisterDeviceTokenResponse {
+  success: boolean;
+}
+
+export interface NotificationPreferencesData {
+  pushEnabled: boolean;
+  newPosts: boolean;
+  comments: boolean;
+  likes: boolean;
+  newFriends: boolean;
+  messages: boolean;
+  storyReplies: boolean;
+  mentions: boolean;
+  events: boolean;
+  kliqKoin: boolean;
+  deliveryPreference: 'immediate' | 'hourly_digest' | 'daily_digest';
+  snoozedUntil?: string;
+}
+
+export interface NotificationPreferencesResponse {
+  preferences: NotificationPreferencesData;
+}
+
+export interface UpdateNotificationPreferencesRequest {
+  pushEnabled?: boolean;
+  newPosts?: boolean;
+  comments?: boolean;
+  likes?: boolean;
+  newFriends?: boolean;
+  messages?: boolean;
+  storyReplies?: boolean;
+  mentions?: boolean;
+  events?: boolean;
+  kliqKoin?: boolean;
+  deliveryPreference?: 'immediate' | 'hourly_digest' | 'daily_digest';
+  snoozedUntil?: string;
+}
+
+export interface UpdateNotificationPreferencesResponse {
+  success: boolean;
+  preferences: NotificationPreferencesData;
+}
+
+// ============================================================================
 // COMMON RESPONSE TYPES
 // ============================================================================
 
