@@ -1,47 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
   FlatList,
-  StyleSheet,
-  RefreshControl,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
+  RefreshControl,
+  TextInput,
 } from 'react-native';
-import { Friend } from '../types';
-import ApiService from '../services/api';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { useNavigation } from '@react-navigation/native';
+import { apiClient } from '../lib/apiClient';
+import { queryClient } from '../lib/queryClient';
 
-const FriendsScreen: React.FC = () => {
-  const [friends, setFriends] = useState<Friend[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+interface FriendData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  profileImageUrl?: string;
+  ranking: number;
+  tier?: 'inner' | 'core' | 'outer';
+}
 
-  useEffect(() => {
-    loadFriends();
-  }, []);
+export default function FriendsScreen() {
+  const navigation = useNavigation<any>();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTier, setSelectedTier] = useState<'all' | 'inner' | 'core' | 'outer'>('all');
 
-  const loadFriends = async (refresh = false) => {
-    try {
-      if (refresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+  // Fetch friends
+  const { data: friends = [], isLoading, refetch } = useQuery<FriendData[]>({
+    queryKey: ['/api/mobile/friends', selectedTier],
+    queryFn: async () => {
+      const params = selectedTier !== 'all' ? `?tier=${selectedTier}` : '';
+      const response = await apiClient.request(`/api/mobile/friends${params}`);
+      return response.friends || [];
+    },
+  });
 
-      const response = await ApiService.getFriends();
-      setFriends(response.friends.sort((a, b) => a.ranking - b.ranking));
-    } catch (error) {
-      console.error('Error loading friends:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  const handleRefresh = () => {
-    loadFriends(true);
-  };
+  // Filter by search query
+  const filteredFriends = friends.filter(friend => {
+    const fullName = `${friend.firstName} ${friend.lastName}`.toLowerCase();
+    return fullName.includes(searchQuery.toLowerCase());
+  });
 
   const getRankingEmoji = (ranking: number) => {
     if (ranking <= 3) return '👑';
@@ -50,176 +51,164 @@ const FriendsScreen: React.FC = () => {
     return '✨';
   };
 
-  const renderFriend = ({ item }: { item: Friend }) => (
-    <TouchableOpacity style={styles.friendCard}>
-      <View style={styles.rankingContainer}>
-        <Text style={styles.rankingEmoji}>{getRankingEmoji(item.ranking)}</Text>
-        <Text style={styles.ranking}>#{item.ranking}</Text>
+  const getTierColor = (tier?: 'inner' | 'core' | 'outer') => {
+    switch (tier) {
+      case 'inner': return 'text-red-500';
+      case 'core': return 'text-yellow-500';
+      case 'outer': return 'text-blue-500';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  const getTierLabel = (tier?: 'inner' | 'core' | 'outer') => {
+    switch (tier) {
+      case 'inner': return 'Inner Circle';
+      case 'core': return 'Core';
+      case 'outer': return 'Outer';
+      default: return '';
+    }
+  };
+
+  const renderFriend = ({ item }: { item: FriendData }) => (
+    <TouchableOpacity
+      className="mx-4 mb-3 bg-card rounded-xl p-4 border border-border flex-row items-center"
+      onPress={() => navigation.navigate('ConversationScreen', { friendId: item.id, friendName: `${item.firstName} ${item.lastName}` })}
+      data-testid={`friend-card-${item.id}`}
+    >
+      {/* Ranking */}
+      <View className="items-center mr-4 min-w-[40px]">
+        <Text className="text-xl mb-0.5">{getRankingEmoji(item.ranking)}</Text>
+        <Text className="text-primary text-xs font-bold" data-testid={`friend-ranking-${item.id}`}>
+          #{item.ranking}
+        </Text>
       </View>
-      
+
+      {/* Avatar */}
       {item.profileImageUrl ? (
-        <Image 
-          source={{ uri: item.profileImageUrl }} 
-          style={styles.avatar}
-        />
+        <View className="w-12 h-12 rounded-full bg-muted items-center justify-center mr-4">
+          <Text className="text-foreground text-xs">📷</Text>
+        </View>
       ) : (
-        <View style={[styles.avatar, styles.defaultAvatar]}>
-          <Text style={styles.avatarText}>
-            {item.firstName[0]}{item.lastName[0]}
+        <View className="w-12 h-12 rounded-full bg-primary items-center justify-center mr-4">
+          <Text className="text-primary-foreground font-bold text-sm">
+            {item.firstName?.[0] || 'U'}{item.lastName?.[0] || ''}
           </Text>
         </View>
       )}
-      
-      <View style={styles.friendInfo}>
-        <Text style={styles.friendName}>
-          {item.firstName} {item.lastName}
+
+      {/* Friend Info */}
+      <View className="flex-1">
+        <Text className="text-foreground font-semibold text-base mb-1" data-testid={`friend-name-${item.id}`}>
+          {item.firstName || 'Unknown'} {item.lastName || ''}
         </Text>
-        <Text style={styles.friendPhone}>{item.phone}</Text>
+        {item.tier && (
+          <Text className={`text-xs font-semibold ${getTierColor(item.tier)}`} data-testid={`friend-tier-${item.id}`}>
+            {getTierLabel(item.tier)}
+          </Text>
+        )}
+        {item.phoneNumber && (
+          <Text className="text-muted-foreground text-xs mt-0.5">
+            {item.phoneNumber}
+          </Text>
+        )}
       </View>
-      
-      <TouchableOpacity style={styles.messageButton}>
-        <Text style={styles.messageIcon}>💬</Text>
+
+      {/* Message Button */}
+      <TouchableOpacity
+        className="w-10 h-10 rounded-full bg-muted items-center justify-center"
+        onPress={() => navigation.navigate('ConversationScreen', { friendId: item.id, friendName: `${item.firstName} ${item.lastName}` })}
+        data-testid={`button-message-${item.id}`}
+      >
+        <Text className="text-lg">💬</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <Text style={styles.title}>Your Kliq</Text>
-      <Text style={styles.subtitle}>
-        {friends.length} friend{friends.length !== 1 ? 's' : ''} ranked by closeness
+    <View className="px-4 pt-4 pb-2">
+      {/* Title */}
+      <View className="mb-4">
+        <Text className="text-3xl font-bold text-primary mb-1">Your Kliq</Text>
+        <Text className="text-muted-foreground">
+          {filteredFriends.length} friend{filteredFriends.length !== 1 ? 's' : ''} ranked by closeness
+        </Text>
+      </View>
+
+      {/* Search */}
+      <TextInput
+        className="bg-card border border-border rounded-lg px-4 py-3 text-foreground mb-4"
+        placeholder="Search friends..."
+        placeholderTextColor="#9CA3AF"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        data-testid="input-search-friends"
+      />
+
+      {/* Tier Filters */}
+      <View className="flex-row mb-4 gap-2">
+        {(['all', 'inner', 'core', 'outer'] as const).map((tier) => (
+          <TouchableOpacity
+            key={tier}
+            className={`flex-1 py-2 px-3 rounded-lg border ${
+              selectedTier === tier
+                ? 'bg-primary border-primary'
+                : 'bg-card border-border'
+            }`}
+            onPress={() => setSelectedTier(tier)}
+            data-testid={`button-tier-${tier}`}
+          >
+            <Text
+              className={`text-center text-sm font-semibold ${
+                selectedTier === tier ? 'text-primary-foreground' : 'text-foreground'
+              }`}
+            >
+              {tier === 'all' ? 'All' : getTierLabel(tier)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+
+  const renderEmpty = () => (
+    <View className="items-center justify-center py-12">
+      <Text className="text-4xl mb-4">👥</Text>
+      <Text className="text-xl font-semibold text-foreground mb-2">
+        No friends yet
+      </Text>
+      <Text className="text-muted-foreground text-center px-8">
+        {searchQuery
+          ? `No friends match "${searchQuery}"`
+          : selectedTier !== 'all'
+          ? `No friends in ${getTierLabel(selectedTier)}`
+          : 'Start building your kliq by adding friends!'}
       </Text>
     </View>
   );
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00FF00" />
-        <Text style={styles.loadingText}>Loading your friends...</Text>
+      <View className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator size="large" color="#8B5CF6" />
+        <Text className="text-muted-foreground mt-3">Loading your kliq...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-background">
       <FlatList
-        data={friends}
-        renderItem={renderFriend}
+        data={filteredFriends}
         keyExtractor={(item) => item.id}
+        renderItem={renderFriend}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor="#00FF00"
-          />
+          <RefreshControl refreshing={false} onRefresh={refetch} tintColor="#8B5CF6" />
         }
         ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={filteredFriends.length === 0 ? { flex: 1 } : { paddingBottom: 20 }}
       />
     </View>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  listContent: {
-    paddingBottom: 20,
-  },
-  header: {
-    padding: 20,
-    paddingTop: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#00FF00',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#888',
-  },
-  friendCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  rankingContainer: {
-    alignItems: 'center',
-    marginRight: 16,
-    minWidth: 40,
-  },
-  rankingEmoji: {
-    fontSize: 20,
-    marginBottom: 2,
-  },
-  ranking: {
-    color: '#00FF00',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 16,
-  },
-  defaultAvatar: {
-    backgroundColor: '#00FF00',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  friendInfo: {
-    flex: 1,
-  },
-  friendName: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  friendPhone: {
-    color: '#888',
-    fontSize: 14,
-  },
-  messageButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#333',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  messageIcon: {
-    fontSize: 18,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000',
-  },
-  loadingText: {
-    color: '#888',
-    marginTop: 12,
-    fontSize: 16,
-  },
-});
-
-export default FriendsScreen;
+}

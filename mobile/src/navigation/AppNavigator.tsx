@@ -15,6 +15,7 @@ import StoryViewerScreen from '../screens/StoryViewerScreen';
 import MessagesScreen from '../screens/MessagesScreen';
 import ConversationScreen from '../screens/ConversationScreen';
 import KliqKoinScreen from '../screens/KliqKoinScreen';
+import CommentsScreen from '../screens/CommentsScreen';
 
 // Providers
 import { useAuth } from '../providers/AuthProvider';
@@ -160,6 +161,13 @@ const RootStackNavigator = () => {
           },
           headerTintColor: '#00FF00',
           headerBackTitleVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="CommentsScreen"
+        component={CommentsScreen}
+        options={{
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

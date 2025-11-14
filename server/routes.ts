@@ -1413,6 +1413,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mobile comment endpoints
+  app.get('/api/mobile/posts/:postId/comments', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { postId } = req.params;
+      
+      const comments = await storage.getCommentsByPostId(postId, userId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching mobile comments:", error);
+      res.status(500).json({ message: "Failed to fetch comments" });
+    }
+  });
+
+  app.post('/api/mobile/posts/:postId/comments', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { postId } = req.params;
+      const commentData = insertCommentSchema.parse({ ...req.body, userId, postId });
+      const comment = await storage.addComment(commentData);
+      
+      // Get post details to notify the author
+      const post = await storage.getPostById(postId);
+      if (post) {
+        const user = await storage.getUser(userId);
+        if (user) {
+          const commentPreview = comment.content.slice(0, 50) + (comment.content.length > 50 ? "..." : "");
+          await notificationService.notifyComment(
+            post.userId,
+            user.firstName || "Someone",
+            postId,
+            commentPreview
+          );
+        }
+        
+        // Award 0.25 Kliq Koins for commenting on another user's post (not own post)
+        if (post.userId !== userId) {
+          try {
+            await storage.awardKoins(userId, 0.25, 'comment_create', comment.id);
+          } catch (koinError) {
+            console.error("Error awarding Koins for comment creation:", koinError);
+          }
+        }
+      }
+      
+      res.json(comment);
+    } catch (error) {
+      console.error("Error adding mobile comment:", error);
+      res.status(500).json({ message: "Failed to add comment" });
+    }
+  });
+
+  app.post('/api/mobile/comments/:commentId/like', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { commentId } = req.params;
+      
+      await storage.likeComment(commentId, userId);
+      
+      // Get comment details to notify the author
+      const comment = await storage.getCommentById(commentId);
+      
+      if (comment && comment.userId !== userId) {
+        const user = await storage.getUser(userId);
+        if (user) {
+          const commentPreview = comment.content.slice(0, 50) + (comment.content.length > 50 ? "..." : "");
+          await notificationService.notifyCommentLike(
+            comment.userId,
+            user.firstName || "Someone",
+            comment.id,
+            commentPreview
+          );
+        }
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error liking mobile comment:", error);
+      res.status(500).json({ message: "Failed to like comment" });
+    }
+  });
+
+  app.delete('/api/mobile/comments/:commentId/like', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { commentId } = req.params;
+      
+      await storage.unlikeComment(commentId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error unliking mobile comment:", error);
+      res.status(500).json({ message: "Failed to unlike comment" });
+    }
+  });
+
+  app.post('/api/mobile/comments/:commentId/reply', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { commentId } = req.params;
+      
+      // Get parent comment to get the postId
+      const parentComment = await storage.getCommentById(commentId);
+      if (!parentComment) {
+        return res.status(404).json({ message: "Parent comment not found" });
+      }
+      
+      const replyData = insertCommentSchema.parse({ 
+        ...req.body, 
+        userId, 
+        postId: parentComment.postId,
+        parentCommentId: commentId 
+      });
+      
+      const reply = await storage.addComment(replyData);
+      
+      // Notify the parent comment author
+      if (parentComment.userId !== userId) {
+        const user = await storage.getUser(userId);
+        if (user) {
+          const replyPreview = reply.content.slice(0, 50) + (reply.content.length > 50 ? "..." : "");
+          await notificationService.notifyComment(
+            parentComment.userId,
+            `${user.firstName || "Someone"} replied to your comment`,
+            parentComment.postId,
+            replyPreview
+          );
+        }
+        
+        // Award 0.25 Kliq Koins for replying to another user's comment (not own comment)
+        try {
+          await storage.awardKoins(userId, 0.25, 'comment_reply', reply.id);
+        } catch (koinError) {
+          console.error("Error awarding Koins for comment reply:", koinError);
+        }
+      }
+      
+      res.json(reply);
+    } catch (error) {
+      console.error("Error adding mobile reply:", error);
+      res.status(500).json({ message: "Failed to add reply" });
+    }
+  });
+
   // Emergency admin access endpoint (keep for web admin dashboard)
   app.get('/api/activate-admin', async (req, res) => {
     try {

@@ -135,6 +135,29 @@ export class ApiClient {
     });
   }
 
+  async getComments(postId: string) {
+    return this.request(`/api/mobile/posts/${postId}/comments`);
+  }
+
+  async likeComment(commentId: string) {
+    return this.request(`/api/mobile/comments/${commentId}/like`, {
+      method: 'POST',
+    });
+  }
+
+  async unlikeComment(commentId: string) {
+    return this.request(`/api/mobile/comments/${commentId}/like`, {
+      method: 'DELETE',
+    });
+  }
+
+  async replyToComment(commentId: string, content: string) {
+    return this.request(`/api/mobile/comments/${commentId}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  }
+
   // Stories
   async getStories() {
     return this.request('/api/mobile/stories');

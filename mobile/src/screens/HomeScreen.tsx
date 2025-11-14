@@ -267,7 +267,11 @@ export default function HomeScreen() {
       <FlatList
         data={posts}
         renderItem={({ item }) => (
-          <PostCard post={item} onLike={() => likeMutation.mutate(item.id)} />
+          <PostCard 
+            post={item} 
+            onLike={() => likeMutation.mutate(item.id)}
+            onComment={() => navigation.navigate('CommentsScreen', { postId: item.id })}
+          />
         )}
         keyExtractor={(item) => item.id}
         refreshControl={
