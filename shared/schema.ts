@@ -1528,6 +1528,21 @@ export const sportsUpdates = pgTable("sports_updates", {
   index("idx_sports_updates_teams").on(table.homeTeamId, table.awayTeamId),
 ]);
 
+// Device tokens for push notifications (FCM/APNS)
+export const deviceTokens = pgTable("device_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  token: text("token").notNull().unique(), // FCM/APNS device token
+  platform: varchar("platform").notNull(), // 'ios' or 'android'
+  deviceId: varchar("device_id"), // Optional device identifier
+  isActive: boolean("is_active").default(true), // Can be disabled without deleting
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_device_tokens_user").on(table.userId),
+  index("idx_device_tokens_active").on(table.isActive),
+]);
+
 // Report status enum
 export const reportStatusEnum = pgEnum("report_status", ["pending", "reviewed", "resolved", "dismissed"]);
 
@@ -1579,6 +1594,15 @@ export const insertSportsUpdateSchema = createInsertSchema(sportsUpdates).omit({
 });
 export type InsertSportsUpdate = z.infer<typeof insertSportsUpdateSchema>;
 export type SportsUpdate = typeof sportsUpdates.$inferSelect;
+
+// Device tokens types
+export const insertDeviceTokenSchema = createInsertSchema(deviceTokens).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertDeviceToken = z.infer<typeof insertDeviceTokenSchema>;
+export type DeviceToken = typeof deviceTokens.$inferSelect;
 
 // Smart Friend Ranking Types
 export type UserInteractionAnalytics = typeof userInteractionAnalytics.$inferSelect;
