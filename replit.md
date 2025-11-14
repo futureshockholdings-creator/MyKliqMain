@@ -1,6 +1,6 @@
 # Overview
 
-MyKliq is a social media application designed for close-knit friend groups ("kliq"), focusing on intimate social sharing and privacy. It offers a highly customizable environment with features like hierarchical friend ranking, content filtering, extensive UI customization, and rich media sharing including photo/video, disappearing stories, real-time polling, and live streaming. The platform aims to redefine social networking by prioritizing quality interactions within smaller, private circles, with a vision to be an AI-powered intelligent social network.
+MyKliq is a social media application designed for close-knit friend groups ("kliq"), prioritizing intimate social sharing and privacy. It offers extensive UI customization, hierarchical friend ranking, content filtering, and rich media sharing including photo/video, disappearing stories, real-time polling, and live streaming. The platform aims to redefine social networking by focusing on quality interactions within private circles, with a long-term vision to become an AI-powered intelligent social network.
 
 # User Preferences
 
@@ -8,93 +8,116 @@ Preferred communication style: Simple, everyday language.
 
 # System Architecture
 
-## Frontend Architecture
-The client is a React-based Single Page Application (SPA) using TypeScript, built with Vite. It uses Wouter for routing, TanStack Query for server state management, Radix UI primitives with shadcn/ui for UI components, Tailwind CSS for styling, and React Hook Form with Zod for form handling. The design emphasizes responsiveness, adapting seamlessly between mobile and desktop views.
+## Frontend
+The client is a React-based Single Page Application (SPA) using TypeScript and Vite, with Wouter for routing, TanStack Query for state management, Radix UI/shadcn/ui for components, Tailwind CSS for styling, and React Hook Form with Zod for forms. The mobile application is built with React Native CLI for iOS and Android, focusing on native performance and offline capabilities, utilizing React Navigation, React Context API, and Firebase for analytics and push notifications.
 
-## Backend Architecture
-The server follows a RESTful API design using Express.js with TypeScript. It uses Drizzle ORM with PostgreSQL for the database layer and PostgreSQL-backed sessions for session management. Mobile-optimized API endpoints (`/api/mobile/*`) are provided for various functionalities, ensuring paginated and bandwidth-optimized responses.
+## Backend
+The server employs a RESTful API with Express.js and TypeScript. Drizzle ORM manages PostgreSQL database interactions, and PostgreSQL-backed sessions handle user sessions. Mobile-optimized API endpoints (`/api/mobile/*`) ensure efficient data transfer.
+
+## Mobile Architecture
+The MyKliq mobile application is built with React Native using Expo SDK 50 targeting iOS and Android for App Store deployment, focusing on native performance and seamless backend integration.
+
+### Tech Stack
+- **Framework**: React Native with Expo SDK 50, TypeScript
+- **Navigation**: React Navigation v6 with 5-tab Bottom Tab Navigator (Home, Create Post, Friends, Messages, Profile) plus Stack Navigator for modals and detail screens
+- **State Management**: React Context API (authentication), TanStack Query (server state)
+- **Storage**: AsyncStorage for JWT token persistence
+- **Media**: expo-image-picker (camera/gallery access), expo-av (video playback with native controls)
+- **Analytics**: Planned (Firebase Analytics infrastructure ready)
+- **Push Notifications**: Planned (FCM/APNS infrastructure ready)
+
+### API Integration
+Mobile endpoints (`/api/mobile/*`) optimized for bandwidth and battery:
+- JWT authentication with AsyncStorage persistence
+- Media URL transformation: Relative paths `/api/mobile/uploads/{id}` → Absolute URLs for React Native compatibility
+- Real-time updates: Polling-based (5s conversations, 3s messages) vs WebSocket for battery efficiency
+- Optimistic UI updates with background synchronization
+
+### Core Features
+- **Headlines Feed**: Infinite scroll, pull-to-refresh, native camera post creation
+- **Stories**: 24h disappearing content with camera capture, auto-advancing viewer with progress bars
+- **1:1 Messaging**: Text, photo, video, GIF support
+  - Video: expo-av Video component with native controls
+  - GIFs: Cross-platform Modal input (iOS/Android compatible)
+  - Media pipeline: ImagePicker → FormData → Multer memory storage → mediaRegistry Map
+- **Kliq Koin**: 8-tier streak system (Starter → Legend), daily check-in, visual progression
+- **Profile**: Theme customization, settings, friend management
+
+### Storage (MVP - 2 Week Demo)
+In-memory backend storage for investor demo with documented migration path:
+- **mediaRegistry**: Map<mediaId, {buffer, mimetype, filename}> for photos/videos
+- **storyStore**: Map<userId, Story[]> with 24h auto-expiration
+- **messageStore**: Map<conversationKey, Message[]> for conversations
+- **Media Serving**: `/api/mobile/uploads/:mediaId` serves from memory
+- **Security**: Multer 10MB limit, MIME whitelist, memory storage
+- **Post-MVP**: Migration to PostgreSQL using existing Drizzle ORM tables (messages, stories, attachments)
+
+### Media Handling
+Automatic URL transformation ensures cross-platform compatibility:
+- Backend returns: `/api/mobile/uploads/{mediaId}` (relative)
+- Frontend transforms: `http://localhost:5000/api/mobile/uploads/{mediaId}` (absolute)
+- External URLs: Giphy/Tenor URLs preserved unchanged
+- Coverage: All messages, stories, media responses via `transformMediaObject()`
+
+### Mobile Optimizations
+- **Bandwidth**: Paginated responses, configurable page sizes
+- **Battery**: Polling vs persistent connections, background sync
+- **Memory**: Auto-cleanup of expired stories (24h), media eviction
+- **Cross-Platform**: Modal-based GIF picker (replaces iOS-only Alert.prompt)
+- **Video**: Native controls via expo-av for consistent playback
 
 ## Database Design
-PostgreSQL with Drizzle ORM provides type-safe database operations. Key tables manage users, user themes, friendships (with a 1-28 ranking hierarchy), posts, comments, content filters, messages, stories, sessions, and used invite codes. The system features comprehensive database indexing and connection pooling for performance.
+PostgreSQL with Drizzle ORM provides type-safe operations. Key tables manage users, themes, friendships (with ranking), posts, comments, content filters, messages, stories, sessions, and invite codes. Database indexing and connection pooling are implemented for performance.
 
 ## Authentication & Authorization
-Authentication is integrated with Replit's OAuth system using OpenID Connect, utilizing JWT token-based authentication for mobile apps. Secure cookie-based sessions are stored in PostgreSQL. The system supports automatic user creation and management and uses unique, one-time invite codes for friend connections. A secure 4-step password recovery system is implemented, requiring phone, security questions, PIN, and new password using PIN-based verification instead of SMS.
+Authentication integrates with Replit's OAuth (OpenID Connect) using JWT tokens for mobile. Secure, cookie-based sessions are stored in PostgreSQL. The system supports automatic user creation, unique invite codes for connections, and a 4-step password recovery system based on phone, security questions, and PIN verification.
 
 ## Content Management
 The application features a sophisticated content system including:
-- **Hierarchical Feed**: Posts filtered by friend rankings and user-defined content filters. Feed displays in strict reverse chronological order (newest first) for familiar social media behavior.
-- **Kliq-wide Content Aggregation**: Displays all kliq member content (posts, polls, events, actions) in the headlines feed.
-- **Daily Content Features**: Daily horoscopes and Bible verses with timezone-aware generation and one-click posting.
-- **Mood Boost System**: AI-powered uplifting posts generated on-demand when users post with a mood using the mood button on the headlines page. Uses Google Gemini API to create 5 personalized, concise (1-2 sentences) uplifting messages based on the detected mood. Posts appear in user feeds labeled "✨ Just for you" with colorful gradient styling, expire after 5 hours, and are interspersed every 2 regular posts in the feed for better visibility. Includes retry logic with exponential backoff for API rate limits and fallback to curated messages when API is unavailable. Cleanup runs every 30 minutes to remove expired posts. **Staggered Release**: 1st post appears immediately, remaining 4 posts released every 30 minutes thereafter to avoid overwhelming users. All 5 posts are pre-generated to prevent future API failures. **Mood Priority System**: Only ONE mood is active at a time - when a user posts a new mood, ALL existing mood boost posts are deleted and replaced with new ones tailored to the current mood. When a user deletes their mood post, all associated mood boost posts are also automatically deleted.
+- **Hierarchical Feed**: Posts filtered by friend rankings and user-defined filters, displayed in reverse chronological order.
+- **Kliq-wide Aggregation**: Displays all kliq member content in the headlines feed.
+- **Daily Features**: Timezone-aware daily horoscopes and Bible verses.
+- **Mood Boost System**: AI-powered (Google Gemini API) uplifting posts generated based on user mood, appearing in feeds with staggered release and priority over other content.
 - **Real-time Polling**: Customizable polls with live results.
-- **Media Support**: Photo, video, and YouTube URL embedding with object storage. **Enhanced Upload System** (Nov 2025): Increased file size limits to 250MB for posts/stories and 15MB for profile pictures. Features comprehensive error handling with detailed feedback (file name, size, rejection reason), file size preview with warnings for large files (>200MB), helpful compression suggestions for oversized videos, and improved HEVC/H.265 video handling with better user messaging. Supports wide range of formats including JPEG, PNG, GIF, WebP, HEIC/HEIF, MP4, MOV, HEVC, AVI, MKV, 3GP, and WebM.
+- **Media Support**: Photo, video, and YouTube URL embedding with enhanced upload system supporting diverse formats, increased file size limits (250MB for posts, 15MB for profile pictures), and improved error handling.
 - **Stories**: 24-hour disappearing content.
-- **Incognito Messaging (IM)**: Private direct messaging with message auto-deletion after 7 days.
-- **Moviecons**: Custom video uploads for reactions.
-- **Live Streaming ("Action")**: Real-time video streaming with chat and auto-posting.
+- **Incognito Messaging (IM)**: Private messaging with 7-day auto-deletion.
+- **Moviecons**: Custom video reactions.
+- **Live Streaming ("Action")**: Real-time video streaming with chat.
 - **Meetups**: GPS-based check-in posting.
-- **Event Auto-posting**: Automatically creates posts for events.
-- **Social Media Aggregation**: OAuth 2.0 framework for connecting 7 platforms (TikTok, YouTube, Twitch, Discord, Reddit, Pinterest, LinkedIn), displaying aggregated content in a unified feed.
-- **Shared Kliq Calendar**: Each kliq has a shared calendar accessible from the MyKliq page. Kliq owners can add event notes with optional kliq-wide reminders. When reminders are enabled, all kliq members receive notifications on the event date, and a supportive auto-post appears in the Headlines feed (e.g., "Wish Sarah luck on her surgery today! 💙"). Calendar integrates with the existing Events system and features month/week views with swipe navigation.
-- **Sports Updates**: Personalized sports score updates using ESPN's free hidden API (no authentication required). Users can follow favorite teams across 32 different sports organized into 10 categories: Football (NFL, CFB), Basketball (NBA, CBB, WNBA, WCBB), Baseball (MLB, CBB), Hockey (NHL, IIHF, WHL), Soccer (Premier League, La Liga, Bundesliga, Serie A, Ligue 1, MLS), Racing (NASCAR, F1, IndyCar, Rally, MotoGP, Supercross), Golf (PGA, LPGA), Tennis (ATP, WTA), Combat Sports (UFC, Boxing), and Other Sports (Rugby, Cricket). **Team-based sports** (Football, Basketball, Baseball, Hockey, Soccer, Other Sports) require team selection, while **sport-only sports** (Racing, Golf, Tennis, Combat Sports) are followed as entire sports without team selection. Score updates flow naturally in the Headlines feed with real-time format (e.g., "⚡ Lakers 108 - Warriors 105 (Final)"), team logos, live/final status badges, and winning team highlighting. Managed through Settings page with compact accordion layout and selection badges. Updates automatically fetch every 15 minutes via background sync using a 3-day window (yesterday + today + tomorrow) to avoid overwhelming the feed. Each sport's fetch is isolated with error handling to prevent cascading failures. Feed injection: mood boosts (every 2 items) take priority over ads (every 4 items), while sports updates (every 3 items) remain independent and can appear back-to-back when users follow multiple teams.
+- **Event Auto-posting**: Automatic post creation for events.
+- **Social Media Aggregation**: OAuth 2.0 integration for 7 external platforms (TikTok, YouTube, Twitch, Discord, Reddit, Pinterest, LinkedIn).
+- **Shared Kliq Calendar**: Kliq-specific calendars with event notes, reminders, and supportive auto-posts in the Headlines feed.
+- **Sports Updates**: Personalized real-time sports scores from ESPN's API, integrated into the Headlines feed with team logos and live/final status, supporting 32 sports across 10 categories.
 
 ## UI Customization System
-Extensive theming allows deep personalization:
-- **Global Theme System**: Applies changes across the entire app using CSS variables.
-- **Dynamic Themes**: Real-time theme switching.
-- **Customization Options**: Backgrounds (solid, gradients, patterns), fonts, primary/secondary color schemes, border styles.
-- **"Surprise Me" Randomizer**: Generates random, readable themes.
-- **Kliq Customization**: Custom emoji selection for kliq names.
+Extensive theming options include global themes, dynamic switching, custom backgrounds, fonts, color schemes, and border styles. A "Surprise Me" randomizer generates readable themes, and kliqs can customize their names with emojis.
 
 ## Technical Implementations
-Production code is optimized with removal of demo modes, console logs, and mock implementations. N+1 query issues are eliminated, and advanced caching is implemented. The application supports comprehensive profile translation across 10 supported languages. Push notification infrastructure for Firebase Cloud Messaging and Apple Push Notifications is included.
+Production code is optimized with N+1 query elimination and advanced caching. The application supports profile translation across 10 languages and includes push notification infrastructure for Firebase Cloud Messaging and Apple Push Notifications.
 
 ### Caching Architecture
-The application uses a dual-cache system for optimal performance:
-- **SimpleCache (cache.ts)**: Legacy caching for general-purpose operations
-- **CacheService (cacheService.ts)**: High-performance caching for feeds with Redis support and in-memory fallback
-  - Pattern-based invalidation for synchronized cache clearing
-  - LRU eviction strategy with automatic cleanup for expired entries
-  - Optimized for 5000+ concurrent users
-
-Post creation and internal post sharing automatically invalidates both cache systems to ensure feed consistency.
+A dual-cache system (SimpleCache and CacheService) optimizes performance, with CacheService supporting Redis, in-memory fallback, pattern-based invalidation, and LRU eviction, optimized for high concurrency.
 
 ### Real-time Feed Updates
-The application implements WebSocket-based real-time feed updates to eliminate manual refresh requirements:
-- **WebSocket Server**: Extended `/ws` endpoint handles feed subscriptions with `subscribe_feed`/`unsubscribe_feed` message types
-- **Broadcast System**: `broadcastFeedUpdate()` function notifies all subscribers when new content is created (posts, events, meetups, livestreams)
-- **Frontend Integration**: `feedRealtimeService` manages WebSocket connections with automatic reconnection (exponential backoff, max 5 attempts)
-- **Polling Fallback**: After max reconnect attempts, system falls back to 30-second polling to ensure feed freshness
-- **Mobile Optimization**: Page visibility handling pauses/resumes connections to conserve battery life
-- **Cache Synchronization**: Both frontend (TanStack Query) and backend (dual-cache system) caches are invalidated on content creation
-- All content creation endpoints broadcast updates and invalidate caches to ensure immediate feed consistency across all connected clients
+WebSocket-based real-time updates eliminate manual refreshes. A WebSocket server handles feed subscriptions, broadcasting new content, with frontend integration managing connections and a polling fallback. Cache invalidation ensures immediate consistency.
 
 ### Internal Post Sharing
-Users can share posts within their kliq community instead of to external social media platforms. The share feature (accessed via paper airplane icon on posts):
-- Creates a copy of the post (including all media, GIFs, memes, moviecons) in the sharer's feed
-- Prevents self-sharing with validation
-- Shared posts appear identical to regular posts without "Shared" indicators
-- No notifications sent to original author
-- Maintains chronological feed ordering (newest first)
+Users can share posts within their kliq, creating a copy in the sharer's feed without external sharing, notifications to the original author, or "Shared" indicators, maintaining chronological order.
 
 ### Accessibility Compliance
-The application meets WCAG accessibility requirements for dialog components (November 2025):
-- **Dialog Components**: All Radix UI DialogContent components include DialogDescription elements for screen reader accessibility
-- **Production Verification**: Zero accessibility warnings in browser console during runtime verification
-- **Components Updated**: VideoConversionUpload (HEVC conversion dialog), SmartVideoUploader (video compatibility dialog), ProfileSettings (main settings and PIN verification dialogs), MemePicker, MessageMediaPicker, MovieconPicker, PinVerificationModal
-- **Shared Components**: CommandDialog wrapper updated with optional description prop for future accessibility compliance
-- **Screen Reader Support**: Screen-reader-only descriptions implemented where visual descriptions are redundant
+The application meets WCAG accessibility requirements for dialog components, with all Radix UI DialogContent elements including DialogDescription for screen reader support, verified by runtime checks.
 
 # External Dependencies
 
 ## Core Infrastructure
 - **Database**: PostgreSQL with Neon serverless driver.
-- **Session Store**: PostgreSQL-backed session storage.
-- **Build Tools**: Vite (frontend), ESBuild (backend).
+- **Session Store**: PostgreSQL.
+- **Build Tools**: Vite, ESBuild.
 - **Type Safety**: TypeScript.
 
 ## Authentication Services
-- **Replit OAuth**: Integrated authentication via OpenID Connect.
+- **Replit OAuth**: OpenID Connect integration.
 
 ## UI & Styling Libraries
 - **Radix UI**: Unstyled, accessible UI primitives.
@@ -104,9 +127,11 @@ The application meets WCAG accessibility requirements for dialog components (Nov
 
 ## Development Tools
 - **PostCSS**: CSS processing.
-- **Drizzle Kit**: Database migrations and schema management.
+- **Drizzle Kit**: Database migrations.
 - **TanStack Query**: Server state management.
 
 ## Other Integrations
-- **Firebase Analytics**: Mobile analytics framework.
+- **Firebase Analytics**: Mobile analytics.
+- **Google Gemini API**: AI-powered content generation.
+- **ESPN API**: Sports score data.
 - **SendGrid**: Email delivery.
