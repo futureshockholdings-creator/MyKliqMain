@@ -9,6 +9,7 @@ import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
 import FriendsScreen from '../screens/FriendsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import CreatePostScreen from '../screens/CreatePostScreen';
 
 // Context
 import { useAuth } from '../contexts/AuthContext';
@@ -66,6 +67,21 @@ const MainTabNavigator = () => {
         }}
       />
       <Tab.Screen
+        name="CreatePost"
+        component={CreatePostScreen}
+        options={{
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} emoji="➕" />,
+          headerTitle: 'Create Post',
+          tabBarLabel: 'Post',
+        }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('CreatePostModal');
+          },
+        })}
+      />
+      <Tab.Screen
         name="Friends"
         component={FriendsScreen}
         options={{
@@ -103,6 +119,26 @@ const MainTabNavigator = () => {
   );
 };
 
+const RootStackNavigator = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="Main" 
+        component={MainTabNavigator} 
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CreatePostModal"
+        component={CreatePostScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
+
 const AppNavigator = () => {
   const { isAuthenticated, loading } = useAuth();
 
@@ -114,7 +150,7 @@ const AppNavigator = () => {
   return (
     <NavigationContainer>
       {isAuthenticated ? (
-        <MainTabNavigator />
+        <RootStackNavigator />
       ) : (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Login" component={LoginScreen} />
