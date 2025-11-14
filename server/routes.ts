@@ -2951,6 +2951,290 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================================================
+  // MOBILE AI & PERSONALIZATION (Phase 3 - Mood Boost, Daily Content, Live Streaming)
+  // ============================================================================
+
+  // Get mood boost posts for mobile
+  app.get('/api/mobile/mood-boost/posts', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const posts = await storage.getMoodBoostPostsForUser(userId);
+      
+      res.json({
+        posts: posts.map(post => ({
+          id: post.id,
+          content: post.content,
+          mood: post.mood,
+          createdAt: post.createdAt?.toISOString(),
+          expiresAt: post.expiresAt?.toISOString(),
+        }))
+      });
+    } catch (error) {
+      console.error('Get mood boost posts error:', error);
+      res.status(500).json({ message: 'Failed to fetch mood boost posts' });
+    }
+  });
+  
+  // Get daily horoscope for mobile
+  app.get('/api/mobile/daily/horoscope', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || !user.birthdate) {
+        return res.status(400).json({ message: 'Birthdate required for horoscope' });
+      }
+      
+      const timezone = req.query.timezone as string || 'UTC';
+      const zodiacSign = getZodiacSign(user.birthdate);
+      const horoscope = generateDailyHoroscope(zodiacSign);
+      
+      const userDate = new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        timeZone: timezone
+      });
+      
+      res.json({
+        sign: zodiacSign,
+        date: userDate,
+        horoscope: horoscope.reading,
+        luckyNumber: horoscope.luckyNumber,
+        luckyColor: horoscope.luckyColor
+      });
+    } catch (error) {
+      console.error('Get horoscope error:', error);
+      res.status(500).json({ message: 'Failed to generate horoscope' });
+    }
+  });
+  
+  // Get daily Bible verse for mobile
+  app.get('/api/mobile/daily/bible-verse', verifyMobileToken, async (req, res) => {
+    try {
+      const timezone = req.query.timezone as string || 'UTC';
+      const bibleVerse = generateDailyBibleVerse();
+      
+      const userDate = new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        timeZone: timezone
+      });
+      
+      res.json({
+        date: userDate,
+        verse: bibleVerse.verse,
+        reference: bibleVerse.reference,
+        reflection: bibleVerse.reflection
+      });
+    } catch (error) {
+      console.error('Get Bible verse error:', error);
+      res.status(500).json({ message: 'Failed to generate Bible verse' });
+    }
+  });
+  
+  // Get all live streams (Actions)
+  app.get('/api/mobile/actions', verifyMobileToken, async (req, res) => {
+    try {
+      const actions = await storage.getActions();
+      
+      res.json({
+        actions: actions.map(action => ({
+          id: action.id,
+          userId: action.userId,
+          title: action.title,
+          description: action.description,
+          thumbnailUrl: action.thumbnailUrl,
+          status: action.status,
+          viewerCount: action.viewerCount || 0,
+          streamKey: undefined, // Don't expose stream key
+          createdAt: action.createdAt?.toISOString(),
+          endedAt: action.endedAt?.toISOString(),
+          author: {
+            id: action.author.id,
+            firstName: action.author.firstName,
+            lastName: action.author.lastName,
+            profileImageUrl: action.author.profileImageUrl,
+          }
+        }))
+      });
+    } catch (error) {
+      console.error('Get actions error:', error);
+      res.status(500).json({ message: 'Failed to fetch live streams' });
+    }
+  });
+  
+  // Get specific live stream
+  app.get('/api/mobile/actions/:actionId', verifyMobileToken, async (req, res) => {
+    try {
+      const { actionId } = req.params;
+      const action = await storage.getActionById(actionId);
+      
+      if (!action) {
+        return res.status(404).json({ message: 'Live stream not found' });
+      }
+      
+      res.json({
+        id: action.id,
+        userId: action.userId,
+        title: action.title,
+        description: action.description,
+        thumbnailUrl: action.thumbnailUrl,
+        status: action.status,
+        viewerCount: action.viewerCount || 0,
+        streamKey: undefined, // Don't expose stream key to viewers
+        createdAt: action.createdAt?.toISOString(),
+        endedAt: action.endedAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error('Get action error:', error);
+      res.status(500).json({ message: 'Failed to fetch live stream' });
+    }
+  });
+  
+  // Create new live stream
+  app.post('/api/mobile/actions', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { title, description, thumbnailUrl } = req.body;
+      
+      if (!title) {
+        return res.status(400).json({ message: 'Title is required' });
+      }
+      
+      // Generate stream key
+      const streamKey = `stream_${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const action = await storage.createAction({
+        userId,
+        title,
+        description: description || null,
+        thumbnailUrl: thumbnailUrl || null,
+        streamKey,
+      });
+      
+      res.json({
+        id: action.id,
+        streamKey: action.streamKey, // Only expose to creator
+        title: action.title,
+        description: action.description,
+        thumbnailUrl: action.thumbnailUrl,
+        status: action.status,
+        createdAt: action.createdAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error('Create action error:', error);
+      res.status(500).json({ message: 'Failed to create live stream' });
+    }
+  });
+  
+  // Join live stream
+  app.post('/api/mobile/actions/:actionId/join', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { actionId } = req.params;
+      
+      await storage.joinAction(actionId, userId);
+      
+      res.json({ success: true, message: 'Joined live stream' });
+    } catch (error) {
+      console.error('Join action error:', error);
+      res.status(500).json({ message: 'Failed to join live stream' });
+    }
+  });
+  
+  // Leave live stream
+  app.post('/api/mobile/actions/:actionId/leave', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { actionId } = req.params;
+      
+      await storage.leaveAction(actionId, userId);
+      
+      res.json({ success: true, message: 'Left live stream' });
+    } catch (error) {
+      console.error('Leave action error:', error);
+      res.status(500).json({ message: 'Failed to leave live stream' });
+    }
+  });
+  
+  // End live stream (creator only)
+  app.post('/api/mobile/actions/:actionId/end', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { actionId } = req.params;
+      
+      // Verify user is the creator
+      const action = await storage.getActionById(actionId);
+      if (!action || action.userId !== userId) {
+        return res.status(403).json({ message: 'Only the creator can end this stream' });
+      }
+      
+      const endedAction = await storage.endAction(actionId);
+      
+      res.json({
+        success: true,
+        endedAt: endedAction.endedAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error('End action error:', error);
+      res.status(500).json({ message: 'Failed to end live stream' });
+    }
+  });
+  
+  // Get chat messages for live stream
+  app.get('/api/mobile/actions/:actionId/chat', verifyMobileToken, async (req, res) => {
+    try {
+      const { actionId } = req.params;
+      const messages = await storage.getActionChatMessages(actionId);
+      
+      res.json({
+        messages: messages.map(msg => ({
+          id: msg.id,
+          actionId: msg.actionId,
+          userId: msg.userId,
+          message: msg.message,
+          createdAt: msg.createdAt?.toISOString(),
+        }))
+      });
+    } catch (error) {
+      console.error('Get action chat error:', error);
+      res.status(500).json({ message: 'Failed to fetch chat messages' });
+    }
+  });
+  
+  // Send chat message in live stream
+  app.post('/api/mobile/actions/:actionId/chat', verifyMobileToken, async (req, res) => {
+    try {
+      const userId = (req as any).userId;
+      const { actionId } = req.params;
+      const { message } = req.body;
+      
+      if (!message || message.trim().length === 0) {
+        return res.status(400).json({ message: 'Message cannot be empty' });
+      }
+      
+      const chatMessage = await storage.addActionChatMessage({
+        actionId,
+        userId,
+        message: message.trim(),
+      });
+      
+      res.json({
+        id: chatMessage.id,
+        message: chatMessage.message,
+        createdAt: chatMessage.createdAt?.toISOString(),
+      });
+    } catch (error) {
+      console.error('Send action chat error:', error);
+      res.status(500).json({ message: 'Failed to send chat message' });
+    }
+  });
+
+  // ============================================================================
   // MOBILE PUSH NOTIFICATIONS (Phase 2 - Simplified Registration)
   // ============================================================================
 
