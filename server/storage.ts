@@ -134,6 +134,9 @@ import {
   userSportsPreferences,
   type UserSportsPreference,
   type InsertUserSportsPreference,
+  deviceTokens,
+  type DeviceToken,
+  type InsertDeviceToken,
   profileBorders,
   kliqKoins,
   kliqKoinTransactions,
@@ -327,6 +330,12 @@ export interface IStorage {
   createUserSportsPreference(preference: InsertUserSportsPreference): Promise<UserSportsPreference>;
   deleteUserSportsPreference(preferenceId: string): Promise<void>;
   deleteUserSportsPreferences(userId: string): Promise<void>;
+
+  // Device token operations for push notifications
+  registerDeviceToken(tokenData: InsertDeviceToken): Promise<DeviceToken>;
+  getDeviceTokensByUser(userId: string): Promise<DeviceToken[]>;
+  deactivateDeviceToken(token: string): Promise<void>;
+  deactivateAllUserDeviceTokens(userId: string): Promise<void>;
 
   // Utility operations
   generateInviteCode(): Promise<string>;
@@ -3788,6 +3797,49 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(userSportsPreferences)
       .where(eq(userSportsPreferences.userId, userId));
+  }
+
+  // Device token operations
+  async registerDeviceToken(tokenData: InsertDeviceToken): Promise<DeviceToken> {
+    // Upsert: deactivate existing token if it exists, then insert new one
+    const existingToken = await db
+      .select()
+      .from(deviceTokens)
+      .where(eq(deviceTokens.token, tokenData.token))
+      .limit(1);
+    
+    if (existingToken.length > 0) {
+      const [updated] = await db
+        .update(deviceTokens)
+        .set({ ...tokenData, updatedAt: new Date(), isActive: true })
+        .where(eq(deviceTokens.token, tokenData.token))
+        .returning();
+      return updated;
+    }
+    
+    const [newToken] = await db.insert(deviceTokens).values(tokenData).returning();
+    return newToken;
+  }
+
+  async getDeviceTokensByUser(userId: string): Promise<DeviceToken[]> {
+    return await db
+      .select()
+      .from(deviceTokens)
+      .where(and(eq(deviceTokens.userId, userId), eq(deviceTokens.isActive, true)));
+  }
+
+  async deactivateDeviceToken(token: string): Promise<void> {
+    await db
+      .update(deviceTokens)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(deviceTokens.token, token));
+  }
+
+  async deactivateAllUserDeviceTokens(userId: string): Promise<void> {
+    await db
+      .update(deviceTokens)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(deviceTokens.userId, userId));
   }
 
   // Password reset token methods
