@@ -16,8 +16,8 @@ import MessagesScreen from '../screens/MessagesScreen';
 import ConversationScreen from '../screens/ConversationScreen';
 import KliqKoinScreen from '../screens/KliqKoinScreen';
 
-// Context
-import { useAuth } from '../contexts/AuthContext';
+// Providers
+import { useAuth } from '../providers/AuthProvider';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -166,10 +166,10 @@ const RootStackNavigator = () => {
   );
 };
 
-const AppNavigator = () => {
-  const { isAuthenticated, loading } = useAuth();
+export const AppNavigator = () => {
+  const { isAuthenticated, isLoading } = useAuth();
 
-  if (loading) {
+  if (isLoading) {
     // You can replace this with a proper loading screen
     return null;
   }
@@ -186,5 +186,3 @@ const AppNavigator = () => {
     </NavigationContainer>
   );
 };
-
-export default AppNavigator;
