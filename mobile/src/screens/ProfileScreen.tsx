@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Settings, Edit3, HelpCircle, LogOut, Award, Users, TrendingUp, Bell } from 'lucide-react-native';
 import { cacheUserProfile, getCachedUserProfile, cacheStreak, getCachedStreak } from '../utils/offlineCache';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { getImageForPreset, prefetchImage } from '../utils/imageOptimization';
 
 interface ProfileData {
   id: string;
@@ -82,6 +83,13 @@ export default function ProfileScreen() {
 
   // Use cached profile if offline
   const displayProfile = profileData || (!isConnected ? cachedProfile : null);
+  
+  // Prefetch profile image
+  useEffect(() => {
+    if (displayProfile?.profileImageUrl) {
+      prefetchImage(getImageForPreset(displayProfile.profileImageUrl, 'profilePicture'));
+    }
+  }, [displayProfile?.profileImageUrl]);
 
   // Fetch Kliq Koin data
   const { data: koinData } = useQuery<KliqKoinData>({
@@ -162,7 +170,7 @@ export default function ProfileScreen() {
         <View className="mb-4">
           {profile?.profileImageUrl ? (
             <Image 
-              source={{ uri: profile.profileImageUrl }} 
+              source={{ uri: getImageForPreset(profile.profileImageUrl, 'profilePicture') }} 
               className="w-24 h-24 rounded-full"
               data-testid="profile-avatar"
               accessible={true}

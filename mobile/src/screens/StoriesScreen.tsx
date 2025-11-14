@@ -13,6 +13,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { StoryGroup } from '../types';
 import ApiService from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { getImageForPreset } from '../utils/imageOptimization';
 
 interface StoriesScreenProps {
   navigation: any;
@@ -116,7 +117,7 @@ const StoriesScreen: React.FC<StoriesScreenProps> = ({ navigation }) => {
     <TouchableOpacity style={styles.storyItem} onPress={handleCreateStory}>
       <View style={styles.createStoryRing}>
         {user?.profileImageUrl ? (
-          <Image source={{ uri: user.profileImageUrl }} style={styles.storyAvatar} />
+          <Image source={{ uri: getImageForPreset(user.profileImageUrl, 'profilePicture') }} style={styles.storyAvatar} />
         ) : (
           <View style={[styles.storyAvatar, styles.defaultAvatar]}>
             <Text style={styles.avatarText} allowFontScaling={false}>

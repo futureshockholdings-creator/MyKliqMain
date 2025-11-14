@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Card } from './ui/Card';
 import { useAccessibleTextStyles } from '../hooks/useAccessibleTextStyles';
+import { getImageForPreset, prefetchImage } from '../utils/imageOptimization';
 
 interface PostCardProps {
   post: any;
@@ -12,6 +13,17 @@ interface PostCardProps {
 
 export default function PostCard({ post, onLike, onComment, onShare }: PostCardProps) {
   const accessibleStyles = useAccessibleTextStyles();
+  
+  // Prefetch images for better performance
+  useEffect(() => {
+    if (post.author?.profileImageUrl) {
+      prefetchImage(getImageForPreset(post.author.profileImageUrl, 'profilePicture'));
+    }
+    if (post.mediaUrl && post.mediaType === 'image') {
+      prefetchImage(getImageForPreset(post.mediaUrl, 'feedImage'));
+    }
+  }, [post.author?.profileImageUrl, post.mediaUrl, post.mediaType]);
+  
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
     const postDate = new Date(dateString);
@@ -32,7 +44,7 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
       <View className="flex-row items-center mb-3">
         {post.author?.profileImageUrl ? (
           <Image 
-            source={{ uri: post.author.profileImageUrl }} 
+            source={{ uri: getImageForPreset(post.author.profileImageUrl, 'profilePicture') }} 
             className="w-10 h-10 rounded-full mr-3"
             accessible={true}
             accessibilityLabel={`${authorName}'s profile picture`}
@@ -69,7 +81,7 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
       {/* Media */}
       {post.mediaUrl && post.mediaType === 'image' && (
         <Image 
-          source={{ uri: post.mediaUrl }} 
+          source={{ uri: getImageForPreset(post.mediaUrl, 'feedImage') }} 
           className="w-full h-52 rounded-lg mb-3"
           resizeMode="cover"
           accessible={true}
