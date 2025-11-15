@@ -3167,7 +3167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // MOBILE SPORTS SCORES (Phase 2 - Wrapper for ESPN)
   // ============================================================================
 
-  // Follow/unfollow a sports team
+  // Follow/unfollow a sports team with Kliq Koin rewards
   app.post('/api/mobile/sports/follow', verifyMobileToken, async (req, res) => {
     try {
       const userId = (req as any).userId;
@@ -3186,10 +3186,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'MLS': 'soccer'
       };
       const sport = sportMap[league] || 'basketball';
-      
-      await storage.addSportsPreference(userId, teamId, teamName, sport, league);
-      
-      res.json({ success: true, message: `Now following ${teamName}` });
+
+      const MAX_REWARDED_TEAMS = 50;
+      const TEAM_REWARD_AMOUNT = 100;
+      let koinsAwarded = 0;
+
+      // Use database transaction for atomicity
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        // Lock wallet to prevent concurrent cap violations (ensure wallet exists first)
+        const walletCheck = await client.query(
+          'SELECT id FROM kliq_koins WHERE user_id = $1',
+          [userId]
+        );
+
+        if (walletCheck.rows.length === 0) {
+          await client.query(
+            'INSERT INTO kliq_koins (user_id, balance, total_earned) VALUES ($1, 0, 0)',
+            [userId]
+          );
+        }
+
+        // Lock wallet row
+        await client.query(
+          'SELECT * FROM kliq_koins WHERE user_id = $1 FOR UPDATE',
+          [userId]
+        );
+
+        // Count existing sports team rewards
+        const rewardCountResult = await client.query(
+          'SELECT COUNT(*) as count FROM sports_team_rewards WHERE user_id = $1',
+          [userId]
+        );
+        const currentRewardCount = parseInt(rewardCountResult.rows[0].count);
+
+        // Insert preference (always, regardless of reward limit)
+        await client.query(
+          'INSERT INTO user_sports_preferences (user_id, sport, team_id, team_name) VALUES ($1, $2, $3, $4)',
+          [userId, sport, teamId, teamName]
+        );
+
+        // Try to award Koins only if under the 50-team limit
+        if (currentRewardCount < MAX_REWARDED_TEAMS) {
+          try {
+            await client.query(
+              'INSERT INTO sports_team_rewards (user_id, sport, team_id, team_name, koins_awarded) VALUES ($1, $2, $3, $4, $5)',
+              [userId, sport, teamId, teamName, TEAM_REWARD_AMOUNT]
+            );
+
+            // Update wallet atomically
+            await client.query(
+              'UPDATE kliq_koins SET balance = balance + $1, total_earned = total_earned + $1, updated_at = NOW() WHERE user_id = $2',
+              [TEAM_REWARD_AMOUNT, userId]
+            );
+
+            // Get new balance
+            const balanceResult = await client.query(
+              'SELECT balance FROM kliq_koins WHERE user_id = $1',
+              [userId]
+            );
+            const newBalance = balanceResult.rows[0].balance;
+
+            // Insert transaction record
+            await client.query(
+              'INSERT INTO kliq_koin_transactions (user_id, amount, type, source, balance_after) VALUES ($1, $2, $3, $4, $5)',
+              [userId, TEAM_REWARD_AMOUNT, 'earned', `sports_team_${teamName}`, newBalance]
+            );
+
+            koinsAwarded = TEAM_REWARD_AMOUNT;
+          } catch (insertError: any) {
+            // Unique constraint violation means already rewarded - still add preference
+            if (!insertError.message?.includes('duplicate key') && !insertError.code?.includes('23505')) {
+              throw insertError;
+            }
+          }
+        }
+
+        await client.query('COMMIT');
+
+        res.json({
+          success: true,
+          message: `Now following ${teamName}`,
+          koinsAwarded
+        });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
     } catch (error) {
       console.error('Follow team error:', error);
       res.status(500).json({ message: 'Failed to follow team' });
@@ -8726,7 +8813,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Save user's sports preferences (bulk)
+  // Save user's sports preferences (bulk) with Kliq Koin rewards
   app.post('/api/sports/preferences', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -8737,22 +8824,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Teams must be an array' });
       }
 
-      // Delete existing preferences
-      await storage.deleteUserSportsPreferences(userId);
+      const MAX_REWARDED_TEAMS = 50;
+      const TEAM_REWARD_AMOUNT = 100;
 
-      // Insert new preferences
-      for (const team of teams) {
-        await storage.createUserSportsPreference({
-          userId,
-          sport: team.sport,
-          teamId: team.teamId,
-          teamName: team.teamName,
-          teamLogo: team.teamLogo || null,
-          teamAbbr: team.teamAbbr || null,
+      // Use database transaction for atomicity
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        // Lock wallet to prevent concurrent cap violations (ensure wallet exists first)
+        const walletCheck = await client.query(
+          'SELECT id FROM kliq_koins WHERE user_id = $1',
+          [userId]
+        );
+
+        if (walletCheck.rows.length === 0) {
+          await client.query(
+            'INSERT INTO kliq_koins (user_id, balance, total_earned) VALUES ($1, 0, 0)',
+            [userId]
+          );
+        }
+
+        // Lock wallet row
+        await client.query(
+          'SELECT * FROM kliq_koins WHERE user_id = $1 FOR UPDATE',
+          [userId]
+        );
+
+        // Count existing sports team rewards
+        const rewardCountResult = await client.query(
+          'SELECT COUNT(*) as count FROM sports_team_rewards WHERE user_id = $1',
+          [userId]
+        );
+        const currentRewardCount = parseInt(rewardCountResult.rows[0].count);
+        const remainingSlots = MAX_REWARDED_TEAMS - currentRewardCount;
+
+        // Deduplicate input teams by teamId
+        const uniqueTeams = Array.from(
+          new Map(teams.map(team => [team.teamId, team])).values()
+        );
+
+        // Delete existing preferences
+        await client.query('DELETE FROM user_sports_preferences WHERE user_id = $1', [userId]);
+
+        // Track results
+        const awarded: string[] = [];
+        const alreadyRewarded: string[] = [];
+        const skippedDueToLimit: string[] = [];
+
+        // Process teams
+        for (let i = 0; i < uniqueTeams.length; i++) {
+          const team = uniqueTeams[i];
+
+          // Insert preference (always, regardless of reward limit)
+          await client.query(
+            'INSERT INTO user_sports_preferences (user_id, sport, team_id, team_name, team_logo, team_abbr) VALUES ($1, $2, $3, $4, $5, $6)',
+            [userId, team.sport, team.teamId, team.teamName, team.teamLogo || null, team.teamAbbr || null]
+          );
+
+          // Try to award Koins only if under the limit
+          if (awarded.length < remainingSlots) {
+            try {
+              await client.query(
+                'INSERT INTO sports_team_rewards (user_id, sport, team_id, team_name, koins_awarded) VALUES ($1, $2, $3, $4, $5)',
+                [userId, team.sport, team.teamId, team.teamName, TEAM_REWARD_AMOUNT]
+              );
+              awarded.push(team.teamName);
+            } catch (insertError: any) {
+              // Unique constraint violation means already rewarded
+              if (insertError.message?.includes('duplicate key') || insertError.code?.includes('23505')) {
+                alreadyRewarded.push(team.teamName);
+              } else {
+                throw insertError;
+              }
+            }
+          } else {
+            skippedDueToLimit.push(team.teamName);
+          }
+        }
+
+        // Calculate total Koins to award
+        const totalKoinsAwarded = awarded.length * TEAM_REWARD_AMOUNT;
+
+        if (totalKoinsAwarded > 0) {
+          // Update wallet atomically
+          await client.query(
+            'UPDATE kliq_koins SET balance = balance + $1, total_earned = total_earned + $1, updated_at = NOW() WHERE user_id = $2',
+            [totalKoinsAwarded, userId]
+          );
+
+          // Get new balance
+          const balanceResult = await client.query(
+            'SELECT balance FROM kliq_koins WHERE user_id = $1',
+            [userId]
+          );
+          const newBalance = balanceResult.rows[0].balance;
+
+          // Insert transaction record
+          await client.query(
+            'INSERT INTO kliq_koin_transactions (user_id, amount, type, source, balance_after) VALUES ($1, $2, $3, $4, $5)',
+            [userId, totalKoinsAwarded, 'earned', 'sports_team_selections', newBalance]
+          );
+        }
+
+        await client.query('COMMIT');
+
+        res.json({
+          success: true,
+          message: 'Sports preferences saved',
+          koinsEarned: totalKoinsAwarded,
+          details: {
+            awarded: awarded.length,
+            alreadyRewarded: alreadyRewarded.length,
+            skippedDueToLimit: skippedDueToLimit.length,
+            totalTeams: uniqueTeams.length,
+            rewardLimit: `${currentRewardCount + awarded.length}/${MAX_REWARDED_TEAMS}`
+          }
         });
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
       }
-
-      res.json({ success: true, message: 'Sports preferences saved' });
     } catch (error) {
       console.error('Error saving sports preferences:', error);
       res.status(500).json({ message: 'Failed to save preferences' });
