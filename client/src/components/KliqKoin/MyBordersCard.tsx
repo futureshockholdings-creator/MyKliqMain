@@ -55,7 +55,7 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, 
           <>
             {equippedBorder && (
               <div className="p-4 bg-gradient-to-r from-purple-600/30 to-pink-600/30 rounded-lg border-2 border-purple-400">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   <BorderedAvatar
                     src=""
                     fallback="★"
@@ -73,7 +73,7 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, 
                     disabled={isEquipping}
                     variant="destructive"
                     size="sm"
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
                     data-testid="button-unequip-border"
                   >
                     <X className="w-4 h-4 mr-1" />
