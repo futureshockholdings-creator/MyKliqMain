@@ -54,6 +54,19 @@ interface SocialAccount {
   createdAt: string;
 }
 
+// Custom text icons for platforms without official icons
+const BRIcon = () => (
+  <div className="w-5 h-5 flex items-center justify-center font-bold text-white text-xs">
+    BR
+  </div>
+);
+
+const LIcon = () => (
+  <div className="w-5 h-5 flex items-center justify-center font-bold text-white text-sm">
+    L
+  </div>
+);
+
 const platformInfo = {
   tiktok: {
     name: "TikTok",
@@ -99,14 +112,14 @@ const platformInfo = {
   },
   bereal: {
     name: "BeReal",
-    icon: MessageCircle,
+    icon: BRIcon,
     color: "bg-black",
     description: "Authentic moments with friends",
     requiresBusiness: false
   },
   locket: {
     name: "Locket",
-    icon: MessageCircle,
+    icon: LIcon,
     color: "bg-yellow-500",
     description: "Photo widget for close friends",
     requiresBusiness: false
