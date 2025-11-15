@@ -30,6 +30,9 @@ PostgreSQL with Drizzle ORM stores data for users, themes, friendships, posts, c
 ### Authentication & Authorization
 Authentication uses Replit OAuth with cookie-based sessions for web and JWT tokens for mobile. Security features include password requirements, PKCE support for OAuth 2.0, 4-step password recovery, and invite codes.
 
+### Social Media OAuth Integration
+External OAuth connections (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube) use an adaptive flow: popup windows for desktop browsers and full-page redirects for mobile browsers. This approach handles mobile browser popup blockers by detecting failed `window.open()` calls and automatically falling back to `window.location.assign()` redirects. Users connect social accounts to earn Kliq Koins (1,000 per platform, max 10 platforms).
+
 ### Content Management
 The system supports a hierarchical feed filtered by friend rankings, kliq-wide content aggregation, daily horoscopes/Bible verses, AI-powered mood boosts via Google Gemini API, real-time polling, and rich media (photos, videos, YouTube URLs, Moviecons). It also includes 24-hour disappearing stories, 7-day auto-deleting incognito messaging, live streaming, GPS-based meetups, event auto-posting, and social media aggregation from 7 external platforms. Personalized real-time sports updates from ESPN are integrated.
 
