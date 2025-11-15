@@ -831,16 +831,21 @@ export default function Settings() {
           return;
         }
         
+        console.log('[Social Connect] Opening popup window...');
         const popup = window.open(data.authUrl, '_blank', 'width=600,height=700');
+        console.log('[Social Connect] Popup result:', popup);
         
-        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+        if (!popup) {
+          console.error('[Social Connect] Popup blocked or failed to open');
           toast({
             title: "Popup Blocked",
-            description: "Please allow popups for this site in your browser settings to connect your social accounts.",
+            description: "Please enable popups for this site and try again.",
             variant: "destructive",
           });
           return;
         }
+        
+        console.log('[Social Connect] Popup opened successfully');
         
         // Listen for successful connection
         const checkConnection = () => {
