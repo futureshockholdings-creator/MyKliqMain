@@ -14,6 +14,16 @@ interface BorderMarketplaceCardProps {
   onPurchase: (borderId: string) => void;
 }
 
+// Helper function to format large numbers with K abbreviation
+function formatKoins(amount: number): string {
+  if (amount >= 1000) {
+    const thousands = amount / 1000;
+    // Remove decimal if it's a whole number
+    return thousands % 1 === 0 ? `${thousands}K` : `${thousands.toFixed(1)}K`;
+  }
+  return amount.toString();
+}
+
 export function BorderMarketplaceCard({ 
   bordersData, 
   walletData, 
@@ -120,11 +130,13 @@ export function BorderMarketplaceCard({
                       <Button
                         onClick={() => onPurchase(border.id)}
                         disabled={isPurchasing || balance < border.cost}
-                        className="w-full bg-purple-600 hover:bg-purple-700"
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-xs"
                         data-testid={`button-purchase-${border.id}`}
                       >
-                        <Coins className="w-4 h-4 mr-2" />
-                        {isPurchasing ? "Purchasing..." : `Buy (${border.cost} Koins)`}
+                        <Coins className="w-3 h-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">
+                          {isPurchasing ? "Purchasing..." : `${formatKoins(border.cost)}`}
+                        </span>
                       </Button>
                     )}
                   </div>
