@@ -1215,7 +1215,7 @@ export default function Settings() {
                                 connectAccount.mutate(platformKey);
                               }}
                               disabled={(platformKey !== 'tiktok' && platformKey !== 'twitch' && platformKey !== 'discord' && platformKey !== 'reddit' && platformKey !== 'pinterest' && platformKey !== 'youtube') || connectAccount.isPending}
-                              className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey !== 'reddit' || platformKey === 'pinterest' || platformKey === 'youtube')
+                              className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey === 'reddit' || platformKey === 'pinterest' || platformKey === 'youtube')
                                 ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
                                 : "w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed"}
                               data-testid={`button-connect-${platformKey}`}
