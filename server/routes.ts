@@ -8490,6 +8490,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       delete req.session.pkceCodeVerifier;
       
       if (result.success) {
+        // Award Kliq Koins for first-time connection using atomic transaction
+        try {
+          const SOCIAL_CONNECTION_REWARD = 1000;
+          
+          // Use database transaction to ensure atomicity
+          const client = await pool.connect();
+          try {
+            await client.query('BEGIN');
+            
+            // Try to insert reward record first - unique constraint prevents duplicates
+            try {
+              await client.query(
+                'INSERT INTO social_connection_rewards (user_id, platform, koins_awarded) VALUES ($1, $2, $3)',
+                [userId, platform, SOCIAL_CONNECTION_REWARD]
+              );
+              
+              // If insert succeeds, this is first connection - award Koins atomically
+              // Ensure wallet exists (create if needed)
+              const walletCheck = await client.query(
+                'SELECT id FROM kliq_koins WHERE user_id = $1',
+                [userId]
+              );
+              
+              if (walletCheck.rows.length === 0) {
+                await client.query(
+                  'INSERT INTO kliq_koins (user_id, balance, total_earned) VALUES ($1, $2, $3)',
+                  [userId, SOCIAL_CONNECTION_REWARD, SOCIAL_CONNECTION_REWARD]
+                );
+              } else {
+                // Use atomic UPDATE to increment balance (prevents lost updates)
+                await client.query(
+                  'UPDATE kliq_koins SET balance = balance + $1, total_earned = total_earned + $1, updated_at = NOW() WHERE user_id = $2',
+                  [SOCIAL_CONNECTION_REWARD, userId]
+                );
+              }
+              
+              // Get new balance for transaction record
+              const balanceResult = await client.query(
+                'SELECT balance FROM kliq_koins WHERE user_id = $1',
+                [userId]
+              );
+              const newBalance = balanceResult.rows[0].balance;
+              
+              // Record Koin transaction
+              await client.query(
+                'INSERT INTO kliq_koin_transactions (user_id, amount, type, source, balance_after) VALUES ($1, $2, $3, $4, $5)',
+                [userId, SOCIAL_CONNECTION_REWARD, 'earned', `social_connection_${platform}`, newBalance]
+              );
+              
+              await client.query('COMMIT');
+              console.log(`Awarded ${SOCIAL_CONNECTION_REWARD} Kliq Koins to user ${userId} for connecting ${platform}`);
+              
+            } catch (insertError: any) {
+              await client.query('ROLLBACK');
+              // Unique constraint violation means user already received reward - skip silently
+              if (!insertError.message?.includes('duplicate key') && !insertError.code?.includes('23505')) {
+                throw insertError; // Re-throw unexpected errors
+              }
+            }
+          } finally {
+            client.release();
+          }
+        } catch (error) {
+          console.error('Error awarding social connection Koins:', error);
+          // Don't fail the OAuth flow if Koin award fails
+        }
+        
         res.redirect('/settings?social=connected');
       } else {
         res.redirect(`/settings?social=error&message=${encodeURIComponent(result.error || 'OAuth failed')}`);

@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { relations } from 'drizzle-orm';
 import {
   index,
+  uniqueIndex,
   jsonb,
   pgTable,
   timestamp,
@@ -1471,6 +1472,18 @@ export const socialCredentials = pgTable("social_credentials", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Social connection rewards - tracks one-time Kliq Koin rewards for connecting platforms
+export const socialConnectionRewards = pgTable("social_connection_rewards", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  platform: varchar("platform").notNull(), // 'instagram', 'tiktok', 'twitch', 'discord', 'youtube', 'reddit', 'pinterest', 'facebook', 'espn'
+  koinsAwarded: numeric("koins_awarded", { precision: 12, scale: 2 }).notNull(), // Amount of Koins awarded (typically 1000)
+  awardedAt: timestamp("awarded_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("idx_social_rewards_user").on(table.userId), // Fast user lookup
+  userPlatformUnique: uniqueIndex("idx_social_rewards_unique_user_platform").on(table.userId, table.platform), // Unique constraint to prevent duplicate rewards
+}));
+
 // External posts aggregated from social media platforms
 export const externalPosts = pgTable("external_posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1594,6 +1607,13 @@ export const insertSocialCredentialSchema = createInsertSchema(socialCredentials
 });
 export type InsertSocialCredential = z.infer<typeof insertSocialCredentialSchema>;
 export type SocialCredential = typeof socialCredentials.$inferSelect;
+
+export const insertSocialConnectionRewardSchema = createInsertSchema(socialConnectionRewards).omit({ 
+  id: true, 
+  awardedAt: true 
+});
+export type InsertSocialConnectionReward = z.infer<typeof insertSocialConnectionRewardSchema>;
+export type SocialConnectionReward = typeof socialConnectionRewards.$inferSelect;
 
 export const insertExternalPostSchema = createInsertSchema(externalPosts).omit({ 
   id: true, 
