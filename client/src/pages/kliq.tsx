@@ -980,7 +980,7 @@ export default function Kliq() {
             <CardContent className="space-y-3">
               <div className="bg-muted rounded p-3">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="text-sm text-foreground font-medium flex-1" data-testid="text-invite-message">
+                  <div className="text-sm text-muted-foreground font-medium flex-1" data-testid="text-invite-message">
                     {userData?.inviteCode && userData?.firstName 
                       ? (
                           <>

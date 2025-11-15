@@ -66,6 +66,12 @@ const applyTheme = (theme: Partial<UserTheme>) => {
     root.style.setProperty('--foreground', `hsl(${hexToHsl(cardForeground)})`);
   }
   
+  // Auto-calculate muted-foreground based on hardcoded muted background
+  // --muted is always hsl(0, 0%, 9.4%) (dark), so foreground must be light for WCAG AA
+  const mutedBg = '#171717'; // RGB equivalent of hsl(0, 0%, 9.4%)
+  const mutedForeground = getAccessibleForeground(mutedBg);
+  root.style.setProperty('--muted-foreground', `hsl(${hexToHsl(mutedForeground)})`);
+  
   if (theme.fontFamily) {
     const fontMap = {
       comic: 'Comic Neue, Comic Sans MS, cursive',
