@@ -188,7 +188,7 @@ export default function ForgotPassword() {
 
         <Card className="bg-card border-border">
           <CardHeader className="text-center">
-            <CardTitle className="text-primary text-2xl">
+            <CardTitle className="text-card-foreground text-2xl">
               {step === 'name' && (
                 <>
                   <User className="w-8 h-8 mx-auto mb-2" />

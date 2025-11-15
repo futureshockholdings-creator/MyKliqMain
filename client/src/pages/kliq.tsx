@@ -968,7 +968,7 @@ export default function Kliq() {
           {/* Invite Code */}
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-mykliq-green text-lg flex items-center gap-2">
+              <CardTitle className="text-card-foreground text-lg flex items-center gap-2">
                 📱 Your Invite Message
                 {userData?.kliqClosed && (
                   <Badge variant="outline" className="text-xs border-orange-500 text-orange-500">

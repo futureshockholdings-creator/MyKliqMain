@@ -95,7 +95,7 @@ export default function UserProfile() {
             <CardHeader>
               <div className="flex items-center space-x-2">
                 <Music className="w-5 h-5 text-pink-400" />
-                <CardTitle className="text-pink-400">Profile Music</CardTitle>
+                <CardTitle className="text-card-foreground">Profile Music</CardTitle>
               </div>
               <CardDescription>
                 {displayName}'s profile music will auto-play when you visit

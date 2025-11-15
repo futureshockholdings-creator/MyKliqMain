@@ -212,7 +212,7 @@ export default function AdminPage() {
             <div className="mx-auto mb-4 p-3 rounded-full bg-primary/10">
               <Shield className="h-8 w-8 text-primary mx-auto" />
             </div>
-            <CardTitle className="text-2xl text-primary">Admin Access</CardTitle>
+            <CardTitle className="text-2xl text-card-foreground">Admin Access</CardTitle>
             <p className="text-muted-foreground">
               Enter the admin password to access the customer service dashboard
             </p>

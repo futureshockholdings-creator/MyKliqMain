@@ -191,7 +191,7 @@ export default function Login() {
 
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-primary">Account Login</CardTitle>
+              <CardTitle className="text-card-foreground">Account Login</CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...form}>
