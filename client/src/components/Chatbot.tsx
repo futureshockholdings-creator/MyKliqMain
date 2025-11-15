@@ -239,8 +239,8 @@ const knowledgeBase: KnowledgeBase = {
   },
   'kliq-koins': {
     keywords: ['kliq koins', 'koins', 'currency', 'coins', 'rewards', 'earn', 'wallet', 'balance', 'money', 'koin wallet'],
-    response: "Kliq Koins is MyKliq's reward currency system! Earn Koins by: 1) Connecting social media accounts (1,000 Koins per platform - TikTok, Discord, Reddit, Pinterest, Twitch, YouTube = up to 6,000 total), 2) Following sports teams (100 Koins per team, max 50 teams = up to 5,000 total), 3) Daily login streaks (increasing rewards for consecutive days). Maximum possible: 11,000 Koins! Spend Koins on profile borders and future premium features. Check your balance in Settings → Kliq Koin Wallet.",
-    relatedTopics: ['wallet', 'streak', 'borders', 'social-connections', 'sports-teams', 'rewards']
+    response: "Kliq Koins is MyKliq's reward currency system! Earn Koins by engaging with your kliq: 1) Creating posts - share content with your friends, 2) Liking posts - show appreciation for others' content, 3) Commenting on posts - engage in conversations, 4) Connecting social media accounts - 1,000 Koins per platform (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube), 5) Following sports teams - 100 Koins per team, 6) Daily login streaks - increasing rewards for consecutive days. The more you engage with your kliq, the more Koins you earn! Spend Koins on profile borders and future premium features. Check your balance in Settings → Kliq Koin Wallet.",
+    relatedTopics: ['wallet', 'streak', 'borders', 'social-connections', 'sports-teams', 'rewards', 'posts', 'engagement']
   },
   'wallet': {
     keywords: ['wallet', 'koin wallet', 'balance', 'my koins', 'how many koins', 'check balance', 'koin balance'],
@@ -279,8 +279,8 @@ const knowledgeBase: KnowledgeBase = {
   },
   'rewards': {
     keywords: ['rewards', 'earning koins', 'how to earn', 'get koins', 'free koins', 'earn rewards', 'koin rewards'],
-    response: "Earn Kliq Koins through multiple reward systems! Ways to earn: 1) Social Media Connections - 1,000 Koins per platform (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube = 6,000 max), 2) Sports Teams - 100 Koins per team followed (50 teams max = 5,000 Koins), 3) Daily Login Streaks - increasing tier rewards for consecutive days. Maximum possible earnings: 11,000+ Koins! Use Koins to purchase profile borders and unlock premium features. Start earning in Settings!",
-    relatedTopics: ['kliq-koins', 'social-connections', 'sports-teams', 'streak', 'wallet', 'borders']
+    response: "Earn Kliq Koins through engagement and activity! Ways to earn: 1) Creating posts - share your thoughts and content with your kliq, 2) Liking posts - engage with friends' content, 3) Commenting on posts - join conversations and discussions, 4) Social Media Connections - 1,000 Koins per platform (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube), 5) Sports Teams - 100 Koins per team followed, 6) Daily Login Streaks - increasing tier rewards for consecutive days. Stay active, engage with your friends, and watch your Koins grow! Use Koins to purchase profile borders and unlock premium features.",
+    relatedTopics: ['kliq-koins', 'social-connections', 'sports-teams', 'streak', 'wallet', 'borders', 'posts', 'engagement']
   },
   'espn': {
     keywords: ['espn', 'espn api', 'sports data', 'game data', 'score data'],
