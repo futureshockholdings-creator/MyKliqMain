@@ -7,15 +7,15 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-900 dark:text-gray-100">
           <div className="flex flex-col md:flex-row items-center gap-4">
             <span className="font-medium">© 2025 MyKliq</span>
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-              <Link href="/privacy-policy" className="font-medium hover:underline transition-all text-sm sm:text-base">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-4">
+              <Link href="/privacy-policy" className="font-medium hover:underline transition-all text-xs sm:text-sm">
                 Privacy Policy
               </Link>
-              <Link href="/disclaimer" className="font-medium hover:underline transition-all text-sm sm:text-base">
+              <Link href="/disclaimer" className="font-medium hover:underline transition-all text-xs sm:text-sm">
                 Disclaimer
               </Link>
-              <Link href="/community-guidelines" className="font-medium hover:underline transition-all text-sm sm:text-base whitespace-nowrap">
-                Community Guidelines
+              <Link href="/community-guidelines" className="font-medium hover:underline transition-all text-xs sm:text-sm">
+                Guidelines
               </Link>
             </div>
           </div>

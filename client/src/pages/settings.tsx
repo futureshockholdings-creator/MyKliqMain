@@ -1200,15 +1200,15 @@ export default function Settings() {
                         return (
                           <div 
                             key={platformKey}
-                            className="p-4 bg-white/5 rounded-lg border border-white/10"
+                            className="p-3 sm:p-4 bg-white/5 rounded-lg border border-white/10"
                           >
-                            <div className="flex items-center gap-3 mb-3">
-                              <div className={`p-2 rounded-lg ${platform?.color || 'bg-gray-600'}`}>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mb-3">
+                              <div className={`p-2 rounded-lg flex-shrink-0 ${platform?.color || 'bg-gray-600'}`}>
                                 <Icon className="w-5 h-5 text-white" />
                               </div>
-                              <div className="flex-1">
-                                <h4 className="text-white font-medium">{platform?.name || platformKey}</h4>
-                                <p className="text-purple-200 text-sm">{platform?.description}</p>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-white font-medium text-sm sm:text-base break-words">{platform?.name || platformKey}</h4>
+                                <p className="text-purple-200 text-xs sm:text-sm break-words">{platform?.description}</p>
                                 {platform?.requiresBusiness && (
                                   <p className="text-yellow-300 text-xs mt-1 flex items-center gap-1">
                                     <AlertTriangle className="w-3 h-3" />
@@ -1224,8 +1224,8 @@ export default function Settings() {
                               }}
                               disabled={(platformKey !== 'tiktok' && platformKey !== 'twitch' && platformKey !== 'discord' && platformKey !== 'reddit' && platformKey !== 'pinterest' && platformKey !== 'youtube') || connectAccount.isPending}
                               className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey === 'reddit' || platformKey === 'pinterest' || platformKey === 'youtube')
-                                ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
-                                : "w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed"}
+                                ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-sm sm:text-base" 
+                                : "w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed text-sm sm:text-base"}
                               data-testid={`button-connect-${platformKey}`}
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
