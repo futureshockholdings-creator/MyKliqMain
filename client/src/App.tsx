@@ -7,9 +7,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { useDailyCheckIn } from "@/hooks/useDailyCheckIn";
-import { mobileAnalytics } from "./lib/mobileAnalytics";
 import { useTranslation } from "react-i18next";
 import "./i18n/config"; // Initialize i18n
+import { initializeEnterpriseServices, cleanupEnterpriseServices } from "@/lib/enterprise/enterpriseInit";
 
 // Pages
 import Landing from "@/pages/landing";
@@ -242,7 +242,7 @@ function AppContent() {
   // Perform daily check-in for authenticated users
   useDailyCheckIn();
   
-  // Mobile analytics will handle screen tracking in React Native app
+  // Note: Mobile analytics initialization moved to mobile/src/App.tsx for React Native
 
   // Check if we're on a public page that doesn't require authentication
   const isPublicPage = ['/signup', '/privacy-policy', '/disclaimer', '/landing', '/marketing', '/forgot-password'].includes(currentPath);
@@ -288,10 +288,16 @@ function AppContent() {
 }
 
 function App() {
-  // Mobile Analytics initialization (for React Native)
+  // Web Enterprise Services Initialization (20k+ concurrent users)
   useEffect(() => {
-    // This will be replaced with actual Firebase Analytics in React Native build
-    mobileAnalytics.initialize();
+    // Initialize enterprise optimizations for web
+    // (Mobile analytics handled separately in mobile/src/App.tsx)
+    initializeEnterpriseServices();
+
+    // Cleanup on unmount
+    return () => {
+      cleanupEnterpriseServices();
+    };
   }, []);
 
   return (

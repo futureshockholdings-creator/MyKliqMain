@@ -1,4 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { enterpriseFetch, enterpriseApiRequest } from "./enterprise/enterpriseFetch";
+import { performanceMonitor } from "./enterprise/performanceMonitor";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -7,20 +9,13 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Enterprise-optimized API request (uses request scheduler, circuit breaker, cache, performance monitor)
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<any> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return await res.json();
+  return enterpriseApiRequest(method, url, data);
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -29,16 +24,22 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    try {
+      // Use enterprise fetch for optimized caching, deduplication, and resilience
+      // (cache tracking handled inside enterpriseFetch/enhancedCache)
+      const data = await enterpriseFetch<T>(queryKey.join("/") as string, {
+        credentials: "include",
+      });
+      
+      return data;
+    } catch (error: any) {
+      // Handle 401 unauthorized
+      if (unauthorizedBehavior === "returnNull" && error?.message?.includes('401')) {
+        return null;
+      }
+      
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({
