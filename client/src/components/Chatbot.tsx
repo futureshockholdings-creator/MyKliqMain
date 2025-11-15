@@ -456,7 +456,7 @@ export function Chatbot() {
       {!isOpen && (
         <Button
           onClick={toggleChatbot}
-          className="fixed bottom-6 right-6 h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-50 text-xs font-semibold"
+          className="fixed bottom-6 right-6 h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground z-50 text-xs font-semibold"
           data-testid="button-chatbot-toggle"
         >
           HELP
