@@ -46,24 +46,24 @@ export function SportsUpdateCard({ update }: SportsUpdateCardProps) {
           )}
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           {/* Away Team */}
-          <div className="flex-1 flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1">
             {update.awayTeamLogo && (
               <img 
                 src={update.awayTeamLogo} 
                 alt={update.awayTeam}
-                className="w-12 h-12 object-contain"
+                className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
                 data-testid="img-away-team-logo"
               />
             )}
-            <div className="flex-1">
-              <div className="font-bold text-foreground text-lg" data-testid="text-away-team-name">
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-foreground text-base sm:text-lg truncate" data-testid="text-away-team-name">
                 {update.awayTeam}
               </div>
             </div>
             <div className={cn(
-              "text-3xl font-bold",
+              "text-2xl sm:text-3xl font-bold flex-shrink-0",
               update.awayScore > update.homeScore ? "text-emerald-500" : "text-muted-foreground"
             )} data-testid="text-away-team-score">
               {update.awayScore}
@@ -71,27 +71,27 @@ export function SportsUpdateCard({ update }: SportsUpdateCardProps) {
           </div>
 
           {/* VS Divider */}
-          <div className="px-4 text-muted-foreground font-semibold">
+          <div className="px-2 sm:px-4 text-muted-foreground font-semibold text-center">
             @
           </div>
 
           {/* Home Team */}
-          <div className="flex-1 flex items-center gap-3 flex-row-reverse">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 flex-row-reverse">
             {update.homeTeamLogo && (
               <img 
                 src={update.homeTeamLogo} 
                 alt={update.homeTeam}
-                className="w-12 h-12 object-contain"
+                className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
                 data-testid="img-home-team-logo"
               />
             )}
-            <div className="flex-1 text-right">
-              <div className="font-bold text-foreground text-lg" data-testid="text-home-team-name">
+            <div className="flex-1 text-right min-w-0">
+              <div className="font-bold text-foreground text-base sm:text-lg truncate" data-testid="text-home-team-name">
                 {update.homeTeam}
               </div>
             </div>
             <div className={cn(
-              "text-3xl font-bold",
+              "text-2xl sm:text-3xl font-bold flex-shrink-0",
               update.homeScore > update.awayScore ? "text-emerald-500" : "text-muted-foreground"
             )} data-testid="text-home-team-score">
               {update.homeScore}

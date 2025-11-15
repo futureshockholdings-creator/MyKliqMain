@@ -1137,45 +1137,48 @@ export default function Settings() {
                         return (
                           <div 
                             key={account.id}
-                            className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10"
+                            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-white/5 rounded-lg border border-white/10"
                           >
-                            <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${platform?.color || 'bg-gray-600'}`}>
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className={`p-2 rounded-lg flex-shrink-0 ${platform?.color || 'bg-gray-600'}`}>
                                 <Icon className="w-5 h-5 text-white" />
                               </div>
-                              <div>
-                                <h4 className="text-white font-medium">{platform?.name || account.platform}</h4>
-                                <p className="text-purple-200 text-sm">@{account.username}</p>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-white font-medium truncate">{platform?.name || account.platform}</h4>
+                                <p className="text-purple-200 text-sm truncate">@{account.username}</p>
                                 {account.lastSyncAt && (
                                   <p className="text-purple-300 text-xs">
                                     Last sync: {new Date(account.lastSyncAt).toLocaleDateString()}
                                   </p>
                                 )}
                               </div>
-                              <Badge variant={account.isActive ? "default" : "secondary"}>
+                              <Badge variant={account.isActive ? "default" : "secondary"} className="flex-shrink-0 hidden sm:inline-flex">
                                 {account.isActive ? "Active" : "Inactive"}
                               </Badge>
                             </div>
                             
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 w-full sm:w-auto">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => syncAccount.mutate(account.platform)}
                                 disabled={syncAccount.isPending}
-                                className="border-white/20 text-white hover:bg-white/10"
+                                className="border-white/20 text-white hover:bg-white/10 flex-1 sm:flex-none"
                                 data-testid={`button-sync-${account.platform}`}
                               >
                                 <RefreshCw className={`w-4 h-4 ${syncAccount.isPending ? 'animate-spin' : ''}`} />
+                                <span className="ml-2 sm:hidden">Sync</span>
                               </Button>
                               <Button
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => removeAccount.mutate(account.id)}
                                 disabled={removeAccount.isPending}
+                                className="flex-1 sm:flex-none"
                                 data-testid={`button-remove-${account.platform}`}
                               >
                                 <Trash2 className="w-4 h-4" />
+                                <span className="ml-2 sm:hidden">Remove</span>
                               </Button>
                             </div>
                           </div>
