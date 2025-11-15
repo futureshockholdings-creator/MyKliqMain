@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -802,9 +802,6 @@ export default function Settings() {
     queryKey: ["/api/social/accounts"],
   });
 
-  // Store popup reference for OAuth flow (opened synchronously to avoid popup blockers)
-  const oauthPopupRef = useRef<Window | null>(null);
-
   // Connect social account mutation
   const connectAccount = useMutation({
     mutationFn: async (platform: string) => {
@@ -821,34 +818,25 @@ export default function Settings() {
         });
         queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
       } else {
-        // Navigate the pre-opened popup to the OAuth URL
+        // Real OAuth - open popup window
         if (!data.authUrl) {
           toast({
             title: "Connection Failed",
             description: "OAuth URL not provided. Please try again.",
             variant: "destructive",
           });
-          if (oauthPopupRef.current) {
-            oauthPopupRef.current.close();
-            oauthPopupRef.current = null;
-          }
           return;
         }
         
-        if (oauthPopupRef.current && !oauthPopupRef.current.closed) {
-          // Navigate to OAuth URL
-          oauthPopupRef.current.location.href = data.authUrl;
-        } else {
-          // Fallback: try opening popup again (may be blocked)
-          const popup = window.open(data.authUrl, '_blank', 'width=600,height=700');
-          if (!popup) {
-            toast({
-              title: "Popup Blocked",
-              description: "Please allow popups for this site to connect your social accounts.",
-              variant: "destructive",
-            });
-            return;
-          }
+        const popup = window.open(data.authUrl, '_blank', 'width=600,height=700');
+        
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+          toast({
+            title: "Popup Blocked",
+            description: "Please allow popups for this site in your browser settings to connect your social accounts.",
+            variant: "destructive",
+          });
+          return;
         }
         
         // Listen for successful connection
@@ -869,11 +857,6 @@ export default function Settings() {
         description: "Failed to start OAuth flow. Please try again.",
         variant: "destructive",
       });
-      // Close popup on error
-      if (oauthPopupRef.current) {
-        oauthPopupRef.current.close();
-        oauthPopupRef.current = null;
-      }
     },
   });
 
@@ -1223,11 +1206,7 @@ export default function Settings() {
                               </div>
                             </div>
                             <Button
-                              onClick={() => {
-                                // Open popup synchronously to avoid popup blockers
-                                oauthPopupRef.current = window.open('about:blank', '_blank', 'width=600,height=700');
-                                connectAccount.mutate(platformKey);
-                              }}
+                              onClick={() => connectAccount.mutate(platformKey)}
                               disabled={(platformKey !== 'tiktok' && platformKey !== 'twitch' && platformKey !== 'discord' && platformKey !== 'reddit' && platformKey !== 'pinterest' && platformKey !== 'youtube') || connectAccount.isPending}
                               className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey === 'reddit' || platformKey === 'pinterest' || platformKey === 'youtube')
                                 ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
