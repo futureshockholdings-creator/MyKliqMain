@@ -812,7 +812,6 @@ export default function Settings() {
       return response;
     },
     onSuccess: (data) => {
-      console.log(`[Social Connect] onSuccess called with:`, data);
       if (data.demo) {
         // Demo mode - show success message and refresh accounts
         toast({
@@ -821,7 +820,7 @@ export default function Settings() {
         });
         queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
       } else {
-        // Real OAuth - open popup window
+        // Real OAuth
         if (!data.authUrl) {
           toast({
             title: "Connection Failed",
@@ -831,29 +830,30 @@ export default function Settings() {
           return;
         }
         
-        console.log('[Social Connect] Opening popup window...');
+        // Try popup first (works on desktop)
         const popup = window.open(data.authUrl, '_blank', 'width=600,height=700');
-        console.log('[Social Connect] Popup result:', popup);
         
+        // If popup fails (mobile browsers or popup blockers), use redirect
         if (!popup) {
-          console.error('[Social Connect] Popup blocked or failed to open');
           toast({
-            title: "Popup Blocked",
-            description: "Please enable popups for this site and try again.",
-            variant: "destructive",
+            title: "Redirecting to authorize...",
+            description: "You'll be redirected back after connecting.",
           });
+          // Full page redirect - works reliably on mobile
+          window.location.assign(data.authUrl);
           return;
         }
         
-        console.log('[Social Connect] Popup opened successfully');
+        // Popup opened successfully (desktop)
+        toast({
+          title: "Authorization Window Opened",
+          description: "Complete the authorization in the popup window.",
+        });
         
-        // Listen for successful connection
-        const checkConnection = () => {
+        // Poll for connection updates
+        const interval = setInterval(() => {
           queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
-        };
-        
-        // Check every 2 seconds for updates
-        const interval = setInterval(checkConnection, 2000);
+        }, 2000);
         
         // Clear interval after 2 minutes
         setTimeout(() => clearInterval(interval), 120000);
