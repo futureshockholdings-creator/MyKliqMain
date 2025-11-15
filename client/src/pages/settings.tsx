@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -803,7 +803,7 @@ export default function Settings() {
   });
 
   // Store popup reference for OAuth flow (opened synchronously to avoid popup blockers)
-  const oauthPopupRef = React.useRef<Window | null>(null);
+  const oauthPopupRef = useRef<Window | null>(null);
 
   // Connect social account mutation
   const connectAccount = useMutation({
