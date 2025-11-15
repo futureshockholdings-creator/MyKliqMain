@@ -130,13 +130,10 @@ export function BorderMarketplaceCard({
                       <Button
                         onClick={() => onPurchase(border.id)}
                         disabled={isPurchasing || balance < border.cost}
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-xs"
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-xs font-semibold"
                         data-testid={`button-purchase-${border.id}`}
                       >
-                        <Coins className="w-3 h-3 mr-1 flex-shrink-0" />
-                        <span className="truncate">
-                          {isPurchasing ? "Purchasing..." : `${formatKoins(border.cost)}`}
-                        </span>
+                        {isPurchasing ? "Purchasing..." : formatKoins(border.cost)}
                       </Button>
                     )}
                   </div>
