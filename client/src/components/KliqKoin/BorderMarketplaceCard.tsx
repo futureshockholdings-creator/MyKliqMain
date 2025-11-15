@@ -14,14 +14,9 @@ interface BorderMarketplaceCardProps {
   onPurchase: (borderId: string) => void;
 }
 
-// Helper function to format large numbers with K abbreviation
+// Helper function to format numbers with commas for readability
 function formatKoins(amount: number): string {
-  if (amount >= 1000) {
-    const thousands = amount / 1000;
-    // Remove decimal if it's a whole number
-    return thousands % 1 === 0 ? `${thousands}K` : `${thousands.toFixed(1)}K`;
-  }
-  return amount.toString();
+  return amount.toLocaleString('en-US');
 }
 
 export function BorderMarketplaceCard({ 
