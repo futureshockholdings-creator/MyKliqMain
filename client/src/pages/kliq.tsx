@@ -702,18 +702,18 @@ export default function Kliq() {
           <div className="grid grid-cols-2 gap-4">
             <Card className="bg-card border-border">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-secondary" data-testid="text-friend-count">
+                <div className="text-2xl font-bold text-card-foreground" data-testid="text-friend-count">
                   {friends.length}/28
                 </div>
-                <div className="text-sm text-muted-foreground">Friends</div>
+                <div className="text-sm text-card-foreground">Friends</div>
               </CardContent>
             </Card>
             <Card className="bg-card border-border">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-mykliq-purple" data-testid="text-open-spots">
+                <div className="text-2xl font-bold text-card-foreground" data-testid="text-open-spots">
                   {28 - friends.length}
                 </div>
-                <div className="text-sm text-muted-foreground">Open Spots</div>
+                <div className="text-sm text-card-foreground">Open Spots</div>
               </CardContent>
             </Card>
           </div>
@@ -1010,7 +1010,7 @@ export default function Kliq() {
                   </Button>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-card-foreground">
                 {userData?.kliqClosed 
                   ? "Your kliq is closed to new members. Existing friends can still use your code but new people cannot join."
                   : "Copy and paste this complete message to invite friends to your kliq"
