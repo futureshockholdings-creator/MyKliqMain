@@ -802,17 +802,17 @@ export default function Settings() {
     queryKey: ["/api/social/accounts"],
   });
 
+  // Store popup reference for OAuth flow (opened synchronously to avoid popup blockers)
+  const oauthPopupRef = React.useRef<Window | null>(null);
+
   // Connect social account mutation
   const connectAccount = useMutation({
     mutationFn: async (platform: string) => {
       // Add cache-busting timestamp to prevent cached OAuth states
       const response = await apiRequest("GET", `/api/oauth/authorize/${platform}?t=${Date.now()}`);
-      console.log(`[OAuth] Received response for ${platform}:`, response);
       return response;
     },
     onSuccess: (data) => {
-      console.log('[OAuth] onSuccess called with data:', data);
-      
       if (data.demo) {
         // Demo mode - show success message and refresh accounts
         toast({
@@ -821,32 +821,35 @@ export default function Settings() {
         });
         queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
       } else {
-        // Real OAuth - open popup window
-        console.log('[OAuth] Opening popup with authUrl:', data.authUrl);
-        
+        // Navigate the pre-opened popup to the OAuth URL
         if (!data.authUrl) {
-          console.error('[OAuth] No authUrl in response!');
           toast({
             title: "Connection Failed",
             description: "OAuth URL not provided. Please try again.",
             variant: "destructive",
           });
+          if (oauthPopupRef.current) {
+            oauthPopupRef.current.close();
+            oauthPopupRef.current = null;
+          }
           return;
         }
         
-        const popup = window.open(data.authUrl, '_blank', 'width=600,height=700');
-        
-        if (!popup) {
-          console.error('[OAuth] Popup was blocked!');
-          toast({
-            title: "Popup Blocked",
-            description: "Please allow popups for this site to connect your social accounts.",
-            variant: "destructive",
-          });
-          return;
+        if (oauthPopupRef.current && !oauthPopupRef.current.closed) {
+          // Navigate to OAuth URL
+          oauthPopupRef.current.location.href = data.authUrl;
+        } else {
+          // Fallback: try opening popup again (may be blocked)
+          const popup = window.open(data.authUrl, '_blank', 'width=600,height=700');
+          if (!popup) {
+            toast({
+              title: "Popup Blocked",
+              description: "Please allow popups for this site to connect your social accounts.",
+              variant: "destructive",
+            });
+            return;
+          }
         }
-        
-        console.log('[OAuth] Popup opened successfully');
         
         // Listen for successful connection
         const checkConnection = () => {
@@ -861,12 +864,16 @@ export default function Settings() {
       }
     },
     onError: (error) => {
-      console.error('[OAuth] onError called:', error);
       toast({
         title: "Connection Failed",
         description: "Failed to start OAuth flow. Please try again.",
         variant: "destructive",
       });
+      // Close popup on error
+      if (oauthPopupRef.current) {
+        oauthPopupRef.current.close();
+        oauthPopupRef.current = null;
+      }
     },
   });
 
@@ -1216,7 +1223,11 @@ export default function Settings() {
                               </div>
                             </div>
                             <Button
-                              onClick={() => connectAccount.mutate(platformKey)}
+                              onClick={() => {
+                                // Open popup synchronously to avoid popup blockers
+                                oauthPopupRef.current = window.open('about:blank', '_blank', 'width=600,height=700');
+                                connectAccount.mutate(platformKey);
+                              }}
                               disabled={(platformKey !== 'tiktok' && platformKey !== 'twitch' && platformKey !== 'discord' && platformKey !== 'reddit' && platformKey !== 'pinterest' && platformKey !== 'youtube') || connectAccount.isPending}
                               className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey === 'reddit' || platformKey === 'pinterest' || platformKey === 'youtube')
                                 ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
