@@ -5,6 +5,7 @@ import { startMoodBoostScheduler } from "./services/moodBoostScheduler";
 import { setupVite, serveStatic, log } from "./vite";
 import { performanceOptimizer } from "./performanceOptimizer";
 import { rateLimitService } from "./rateLimitService";
+import { firebaseNotificationService } from "./firebase-notifications";
 
 const app = express();
 
@@ -96,6 +97,11 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Initialize Firebase Admin SDK for push notifications
+    if (firebaseNotificationService.isInitialized()) {
+      log('Firebase Admin SDK ready for push notifications');
+    }
     
     // Start the birthday service for automatic birthday messages
     startBirthdayService();

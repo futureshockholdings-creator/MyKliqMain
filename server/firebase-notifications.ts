@@ -1,4 +1,4 @@
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 import { getMessaging } from 'firebase-admin/messaging';
 import type { DeviceToken } from '@shared/schema';
 
@@ -39,11 +39,14 @@ export class FirebaseNotificationService {
       const serviceAccount = JSON.parse(serviceAccountJson);
 
       // Initialize Firebase Admin SDK
-      if (!admin.apps.length) {
+      // Check if already initialized (admin.apps is an array)
+      if (!admin.apps || admin.apps.length === 0) {
         admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount)
+          credential: admin.credential.cert(serviceAccount as any)
         });
         console.log('✅ Firebase Admin SDK initialized successfully');
+      } else {
+        console.log('ℹ️  Firebase Admin SDK already initialized');
       }
 
       this.initialized = true;
