@@ -236,20 +236,70 @@ const knowledgeBase: KnowledgeBase = {
     keywords: ['kliq calendar', 'shared calendar', 'calendar', 'calendar notes', 'kliq notes', 'reminders', 'kliq reminders', 'shared notes', 'group calendar', 'team calendar'],
     response: "Kliq Calendar is a shared calendar for you and your kliq members. Features: 1) Each kliq has its own shared calendar that all members can access, 2) You can view calendars for all kliqs you're part of (your own + friends' kliqs), 3) Add notes to any date with title, description, and optional reminders, 4) When reminders are enabled, everyone in the kliq gets notified on that date, 5) All kliq members can add, edit, or delete notes - it's fully collaborative, 6) Perfect for tracking birthdays, events, important dates, or group milestones. Access it from the Events page calendar section.",
     relatedTopics: ['events', 'kliq', 'collaboration', 'reminders', 'organization', 'notifications']
+  },
+  'kliq-koins': {
+    keywords: ['kliq koins', 'koins', 'currency', 'coins', 'rewards', 'earn', 'wallet', 'balance', 'money', 'koin wallet'],
+    response: "Kliq Koins is MyKliq's reward currency system! Earn Koins by: 1) Connecting social media accounts (1,000 Koins per platform - TikTok, Discord, Reddit, Pinterest, Twitch, YouTube = up to 6,000 total), 2) Following sports teams (100 Koins per team, max 50 teams = up to 5,000 total), 3) Daily login streaks (increasing rewards for consecutive days). Maximum possible: 11,000 Koins! Spend Koins on profile borders and future premium features. Check your balance in Settings → Kliq Koin Wallet.",
+    relatedTopics: ['wallet', 'streak', 'borders', 'social-connections', 'sports-teams', 'rewards']
+  },
+  'wallet': {
+    keywords: ['wallet', 'koin wallet', 'balance', 'my koins', 'how many koins', 'check balance', 'koin balance'],
+    response: "Your Kliq Koin Wallet shows your total balance and earnings breakdown. View it in Settings → Kliq Koin Wallet to see: 1) Total balance, 2) Koins earned from social media connections, 3) Koins earned from sports team follows, 4) Koins earned from daily streaks, 5) Transaction history, 6) Available borders to purchase. Your wallet updates in real-time as you earn and spend Koins!",
+    relatedTopics: ['kliq-koins', 'streak', 'social-connections', 'sports-teams', 'borders']
+  },
+  'streak': {
+    keywords: ['streak', 'daily streak', 'login streak', 'consecutive days', 'streak rewards', 'streak bonus'],
+    response: "Daily Login Streak rewards you for consistent activity! How it works: 1) Log in every day to maintain your streak, 2) Earn increasing Koin rewards (Tier 1-8 system with growing bonuses), 3) Miss a day and streak resets to 0, 4) Higher tiers = bigger rewards, 5) Streaks are calculated in your timezone. Stay consistent to maximize your Koin earnings! Check your current streak in Settings → Kliq Koin Wallet.",
+    relatedTopics: ['kliq-koins', 'wallet', 'rewards', 'daily-login']
+  },
+  'borders': {
+    keywords: ['borders', 'profile borders', 'border shop', 'buy borders', 'purchase borders', 'border styles', 'avatar borders', 'profile frames'],
+    response: "Profile Borders let you customize your avatar with stylish frames! Features: 1) Purchase borders with Kliq Koins in Settings → Border Shop, 2) 10+ unique border styles (Rainbow Glow, Neon Pulse, Gold Luxury, Fire Ring, Ice Frost, Galaxy, Emerald, etc.), 3) Each border costs 500-2,000 Koins, 4) Equip purchased borders instantly, 5) Switch between owned borders anytime for free, 6) Borders appear on your avatar throughout MyKliq. Show off your style and status!",
+    relatedTopics: ['kliq-koins', 'wallet', 'customization', 'profile', 'avatar']
+  },
+  'social-connections': {
+    keywords: ['connect social media', 'social accounts', 'link accounts', 'connect tiktok', 'connect discord', 'connect reddit', 'connect pinterest', 'connect twitch', 'connect youtube', 'oauth', 'social rewards'],
+    response: "Connect your social media accounts to earn 1,000 Kliq Koins per platform! Supported platforms: 1) TikTok (1,000 Koins), 2) Discord (1,000 Koins), 3) Reddit (1,000 Koins), 4) Pinterest (1,000 Koins), 5) Twitch (1,000 Koins), 6) YouTube (1,000 Koins). Total possible: 6,000 Koins! Go to Settings → Social Media Integration to connect accounts. On mobile, you'll be redirected to authorize; on desktop, a popup opens. Connections are secure with OAuth 2.0.",
+    relatedTopics: ['kliq-koins', 'wallet', 'settings', 'oauth-setup', 'rewards']
+  },
+  'sports-teams': {
+    keywords: ['sports', 'sports teams', 'follow teams', 'nba', 'nfl', 'mlb', 'nhl', 'ncaa', 'espn', 'sports scores', 'team following', 'sports rewards'],
+    response: "Follow your favorite sports teams to earn 100 Kliq Koins per team! Features: 1) Choose from 5 leagues: NBA, NFL, MLB, NHL, NCAA Football, 2) Earn 100 Koins for each team you follow (max 50 teams = 5,000 Koins), 3) Get real-time score updates from ESPN API, 4) View live game scores and schedules, 5) Personalized sports feed for your followed teams. Go to Settings → Sports Preferences to select teams and start earning! Perfect for sports fans who want rewards AND updates.",
+    relatedTopics: ['kliq-koins', 'wallet', 'settings', 'espn', 'rewards', 'sports-updates']
+  },
+  'sports-updates': {
+    keywords: ['sports updates', 'game scores', 'live scores', 'espn scores', 'game results', 'sports feed', 'team scores'],
+    response: "Sports Updates provide real-time scores and schedules for your followed teams via ESPN API. Features: 1) Live game scores update automatically, 2) See upcoming game schedules, 3) View recent game results, 4) Organized by league (NBA, NFL, MLB, NHL, NCAA), 5) Only see updates for teams you follow, 6) Integrated throughout MyKliq interface. Follow teams in Settings → Sports Preferences to customize your sports feed and earn Koins!",
+    relatedTopics: ['sports-teams', 'espn', 'settings', 'real-time']
+  },
+  'settings': {
+    keywords: ['settings', 'preferences', 'account settings', 'app settings', 'configure', 'options', 'settings page'],
+    response: "Settings is your control center for all MyKliq preferences! Key sections: 1) Social Media Integration - connect accounts for 1,000 Koins each, 2) Sports Preferences - follow teams for 100 Koins each, 3) Kliq Koin Wallet - view balance and earnings, 4) Border Shop - purchase profile borders, 5) Security settings - PIN and recovery, 6) Language preferences, 7) Account management. Access Settings through the gear icon to customize your MyKliq experience!",
+    relatedTopics: ['social-connections', 'sports-teams', 'wallet', 'borders', 'security', 'language-support']
+  },
+  'rewards': {
+    keywords: ['rewards', 'earning koins', 'how to earn', 'get koins', 'free koins', 'earn rewards', 'koin rewards'],
+    response: "Earn Kliq Koins through multiple reward systems! Ways to earn: 1) Social Media Connections - 1,000 Koins per platform (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube = 6,000 max), 2) Sports Teams - 100 Koins per team followed (50 teams max = 5,000 Koins), 3) Daily Login Streaks - increasing tier rewards for consecutive days. Maximum possible earnings: 11,000+ Koins! Use Koins to purchase profile borders and unlock premium features. Start earning in Settings!",
+    relatedTopics: ['kliq-koins', 'social-connections', 'sports-teams', 'streak', 'wallet', 'borders']
+  },
+  'espn': {
+    keywords: ['espn', 'espn api', 'sports data', 'game data', 'score data'],
+    response: "MyKliq uses ESPN API to provide accurate, real-time sports data! Features: 1) Live game scores updated automatically, 2) Team schedules and upcoming games, 3) Historical game results, 4) Coverage for NBA, NFL, MLB, NHL, NCAA Football, 5) Reliable professional sports data. The integration ensures you get official, accurate scores and updates for all your followed teams. Follow teams in Settings → Sports Preferences!",
+    relatedTopics: ['sports-teams', 'sports-updates', 'settings']
   }
 };
 
 const greetingMessages = [
-  "Hi! I'm your MyKliq expert assistant. I can help you with everything from basic navigation to advanced features like video calling, Mood Boost encouragement, Scrapbook organization, post highlighting, Kliq Calendar, incognito messaging, live streaming, auto-posting, social media integration, content filters, push notifications, and multi-language support. What would you like to know?",
-  "Hello! I know all about MyKliq's features - from the friend pyramid and video calling to Mood Boost messages, saving posts to Scrapbook, highlighting important posts, shared Kliq Calendars, daily horoscopes, polls, themes, GIFs, password recovery, and mobile app features. Ask me anything!",
-  "Hey there! I'm here to help you master MyKliq. Whether you need help with video calls, Mood Boost support, organizing your Scrapbook, highlighting posts, managing Kliq Calendars, messaging, events, live streaming, friend ranking, content filters, security setup, language translation, or any other feature, I've got detailed answers for you!"
+  "Hi! I'm your MyKliq expert assistant. I can help you with everything from Kliq Koins rewards, profile borders, social media connections, sports teams, and streaks to advanced features like video calling, Mood Boost, Scrapbook, post highlighting, Kliq Calendar, live streaming, and much more. What would you like to know?",
+  "Hello! I know all about MyKliq's features - from earning Kliq Koins through social connections (1,000 per platform!) and sports teams (100 per team) to purchasing borders, maintaining streaks, video calling, Scrapbook organization, Kliq Calendars, daily horoscopes, polls, themes, and password recovery. Ask me anything!",
+  "Hey there! I'm here to help you master MyKliq. Whether you need help earning Kliq Koins, connecting social media accounts, following sports teams, buying profile borders, maintaining daily streaks, or using features like video calls, Mood Boost, Scrapbook, Kliq Calendar, messaging, live streaming, and more - I've got detailed answers for you!"
 ];
 
 const fallbackResponses = [
-  "I have comprehensive knowledge about MyKliq! Try asking about: Mood Boost encouragement, Scrapbook for saving posts, post highlighting, Kliq Calendar, Headlines feed, friend pyramid, video calling, incognito messaging, live streaming, auto-posting, daily horoscopes, polls, events, themes, security settings, social media integration, content filters, push notifications, language support, or mobile app features.",
-  "I can provide detailed help with all MyKliq features! Ask about: Mood Boost messages, Scrapbook albums, highlighting posts, shared Kliq Calendars, navigation, notification badges, kliq customization with emojis, video calls, password recovery, moviecon manager, stories, meetup location sharing, bible verses, GIFs, multi-language support, or any specific functionality you're curious about.",
-  "Need detailed guidance? I know about: Mood Boost support system, organizing your Scrapbook, making posts stand out with highlighting, collaborating on Kliq Calendars, video calling, posting and interactions, real-time features, privacy settings, auto-deletion, live streaming with chat, event management, theme customization, friend ranking system, security PINs, social media setup, content filtering, or the mobile apps for iOS and Android.",
-  "I'm your complete MyKliq guide! I can explain: Mood Boost personalized messages, saving favorite posts to Scrapbook, post highlighting features, shared Kliq Calendar management, video calling, friend ranking system, kliq closure settings, incognito conversations, daily content features, notification system, profile customization, live actions, poll creation, GIF integration, content filters, push notification setup, language translation, password recovery process, moviecon library management, or any functionality step-by-step."
+  "I have comprehensive knowledge about MyKliq! Try asking about: Kliq Koins (earning & spending), social media connections (1,000 Koins each), sports teams (100 Koins each), profile borders, daily streaks, wallet, Mood Boost, Scrapbook, post highlighting, Kliq Calendar, Headlines feed, video calling, live streaming, auto-posting, horoscopes, polls, events, themes, security, content filters, push notifications, or mobile features.",
+  "I can provide detailed help with all MyKliq features! Ask about: earning Kliq Koins through social connections or sports teams, purchasing profile borders, maintaining daily streaks, checking your wallet, Mood Boost messages, Scrapbook albums, highlighting posts, Kliq Calendars, navigation, video calls, password recovery, moviecon manager, stories, meetup, bible verses, GIFs, ESPN scores, language support, or any functionality.",
+  "Need detailed guidance? I know about: Kliq Koin rewards system (social media + sports teams), border shop, streak bonuses, wallet balance, Mood Boost support, organizing Scrapbook, post highlighting, Kliq Calendar collaboration, video calling, real-time features, privacy settings, live streaming, event management, theme customization, friend ranking, security PINs, OAuth setup, content filtering, or mobile apps for iOS and Android.",
+  "I'm your complete MyKliq guide! I can explain: how to earn maximum Kliq Koins (11,000+ possible!), connect social accounts for rewards, follow sports teams for Koins, buy borders, maintain streaks, Mood Boost messages, Scrapbook organization, post highlighting, Kliq Calendar sharing, video calling, friend ranking, kliq closure, incognito messaging, daily content, notifications, profile customization, live streaming, polls, GIFs, filters, push notifications, language translation, password recovery, or any feature step-by-step."
 ];
 
 export function Chatbot() {
