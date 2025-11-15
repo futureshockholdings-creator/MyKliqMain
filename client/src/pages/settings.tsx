@@ -16,8 +16,6 @@ import { BorderMarketplaceCard } from "@/components/KliqKoin/BorderMarketplaceCa
 import { MyBordersCard } from "@/components/KliqKoin/MyBordersCard";
 
 import { 
-  Youtube, 
-  Twitch,
   MessageCircle,
   Trash2,
   RefreshCw,
@@ -34,7 +32,16 @@ import {
   Lock,
   Check,
 } from "lucide-react";
-import { SiPinterest } from "react-icons/si";
+import { 
+  SiPinterest, 
+  SiTiktok, 
+  SiTwitch, 
+  SiDiscord, 
+  SiYoutube, 
+  SiReddit,
+  SiBluesky,
+  SiSubstack
+} from "react-icons/si";
 import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
 
@@ -50,35 +57,35 @@ interface SocialAccount {
 const platformInfo = {
   tiktok: {
     name: "TikTok",
-    icon: MessageCircle,
+    icon: SiTiktok,
     color: "bg-black",
     description: "Short-form video content",
     requiresBusiness: false
   },
   twitch: {
     name: "Twitch",
-    icon: Twitch,
+    icon: SiTwitch,
     color: "bg-purple-600",
     description: "Live streaming and gaming",
     requiresBusiness: false
   },
   discord: {
     name: "Discord",
-    icon: MessageCircle,
+    icon: SiDiscord,
     color: "bg-indigo-600",
     description: "Gaming communities and chat",
     requiresBusiness: false
   },
   youtube: {
     name: "YouTube",
-    icon: Youtube,
+    icon: SiYoutube,
     color: "bg-red-600",
     description: "Video content and subscriptions",
     requiresBusiness: false
   },
   reddit: {
     name: "Reddit",
-    icon: MessageCircle,
+    icon: SiReddit,
     color: "bg-orange-600",
     description: "Communities and discussions",
     requiresBusiness: false
@@ -106,14 +113,14 @@ const platformInfo = {
   },
   bluesky: {
     name: "Bluesky",
-    icon: MessageCircle,
+    icon: SiBluesky,
     color: "bg-sky-500",
     description: "Decentralized social network",
     requiresBusiness: false
   },
   substack: {
     name: "Substack",
-    icon: MessageCircle,
+    icon: SiSubstack,
     color: "bg-orange-500",
     description: "Newsletter and publishing platform",
     requiresBusiness: false

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Coins, TrendingUp } from "lucide-react";
+import { Coins } from "lucide-react";
 import kliqKoinIcon from "@assets/kliq-koin.png";
 
 interface KoinWalletCardProps {
@@ -25,7 +25,6 @@ export function KoinWalletCard({ walletData, isLoading }: KoinWalletCardProps) {
   }
 
   const balance = parseFloat(walletData?.koins?.balance || 0);
-  const totalEarned = parseFloat(walletData?.koins?.totalEarned || 0);
 
   return (
     <Card className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 backdrop-blur-sm border-white/20">
@@ -39,21 +38,12 @@ export function KoinWalletCard({ walletData, isLoading }: KoinWalletCardProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-4 bg-white/10 rounded-lg">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <img src={kliqKoinIcon} alt="Koin" className="w-20 h-20" />
-              <div className="text-4xl font-bold text-yellow-400">{balance.toFixed(2)}</div>
-            </div>
-            <div className="text-purple-200 text-sm">Current Balance</div>
+        <div className="text-center p-4 bg-white/10 rounded-lg">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <img src={kliqKoinIcon} alt="Koin" className="w-20 h-20" />
+            <div className="text-4xl font-bold text-yellow-400">{balance.toFixed(2)}</div>
           </div>
-          <div className="text-center p-4 bg-white/10 rounded-lg">
-            <div className="flex items-center justify-center gap-1 mb-2">
-              <TrendingUp className="w-5 h-5 text-green-400" />
-              <div className="text-4xl font-bold text-green-400">{totalEarned.toFixed(2)}</div>
-            </div>
-            <div className="text-purple-200 text-sm">Total Earned</div>
-          </div>
+          <div className="text-purple-200 text-sm">Current Balance</div>
         </div>
       </CardContent>
     </Card>
