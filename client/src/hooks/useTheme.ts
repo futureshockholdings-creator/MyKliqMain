@@ -30,6 +30,20 @@ const hexToHsl = (hex: string) => {
   return `${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%`;
 };
 
+// Safe helper to convert accessible foreground color with validation
+const safeAccessibleForeground = (bgColor: string): string | null => {
+  try {
+    const foregroundHex = getAccessibleForeground(bgColor);
+    // Validate: must be 6-digit hex color
+    if (foregroundHex && /^#[0-9A-Fa-f]{6}$/.test(foregroundHex)) {
+      return hexToHsl(foregroundHex);
+    }
+  } catch (error) {
+    console.warn(`Failed to calculate accessible foreground for ${bgColor}`, error);
+  }
+  return null;
+};
+
 // Apply theme to document root
 const applyTheme = (theme: Partial<UserTheme>) => {
   const root = document.documentElement;
@@ -39,8 +53,10 @@ const applyTheme = (theme: Partial<UserTheme>) => {
     root.style.setProperty('--mykliq-pink', `hsl(${hexToHsl(theme.primaryColor)})`);
     
     // Auto-calculate accessible foreground color for primary
-    const primaryForeground = getAccessibleForeground(theme.primaryColor);
-    root.style.setProperty('--primary-foreground', `hsl(${hexToHsl(primaryForeground)})`);
+    const primaryForegroundHsl = safeAccessibleForeground(theme.primaryColor);
+    if (primaryForegroundHsl) {
+      root.style.setProperty('--primary-foreground', `hsl(${primaryForegroundHsl})`);
+    }
   }
   
   if (theme.secondaryColor) {
@@ -48,29 +64,38 @@ const applyTheme = (theme: Partial<UserTheme>) => {
     root.style.setProperty('--mykliq-blue', `hsl(${hexToHsl(theme.secondaryColor)})`);
     
     // Auto-calculate accessible foreground color for secondary
-    const secondaryForeground = getAccessibleForeground(theme.secondaryColor);
-    root.style.setProperty('--secondary-foreground', `hsl(${hexToHsl(secondaryForeground)})`);
+    const secondaryForegroundHsl = safeAccessibleForeground(theme.secondaryColor);
+    if (secondaryForegroundHsl) {
+      root.style.setProperty('--secondary-foreground', `hsl(${secondaryForegroundHsl})`);
+    }
   }
   
   // Auto-calculate navigation colors if navBgColor is set
   if (theme.navBgColor) {
     root.style.setProperty('--sidebar', `hsl(${hexToHsl(theme.navBgColor)})`);
-    const navForeground = getAccessibleForeground(theme.navBgColor);
-    root.style.setProperty('--sidebar-foreground', `hsl(${hexToHsl(navForeground)})`);
+    const navForegroundHsl = safeAccessibleForeground(theme.navBgColor);
+    if (navForegroundHsl) {
+      root.style.setProperty('--sidebar-foreground', `hsl(${navForegroundHsl})`);
+    }
   }
   
   // Auto-calculate card foreground if card background is customizable
   if (theme.backgroundColor) {
-    const cardForeground = getAccessibleForeground(theme.backgroundColor);
-    root.style.setProperty('--card-foreground', `hsl(${hexToHsl(cardForeground)})`);
-    root.style.setProperty('--foreground', `hsl(${hexToHsl(cardForeground)})`);
+    const cardForegroundHsl = safeAccessibleForeground(theme.backgroundColor);
+    if (cardForegroundHsl) {
+      root.style.setProperty('--card-foreground', `hsl(${cardForegroundHsl})`);
+      root.style.setProperty('--foreground', `hsl(${cardForegroundHsl})`);
+    }
   }
   
   // Auto-calculate muted-foreground based on hardcoded muted background
   // --muted is always hsl(0, 0%, 9.4%) (dark), so foreground must be light for WCAG AA
   const mutedBg = '#171717'; // RGB equivalent of hsl(0, 0%, 9.4%)
-  const mutedForeground = getAccessibleForeground(mutedBg);
-  root.style.setProperty('--muted-foreground', `hsl(${hexToHsl(mutedForeground)})`);
+  const mutedForegroundHsl = safeAccessibleForeground(mutedBg);
+  if (mutedForegroundHsl) {
+    root.style.setProperty('--muted-foreground', `hsl(${mutedForegroundHsl})`);
+  }
+  // Otherwise keep the base CSS value (white) which is already WCAG AA compliant
   
   if (theme.fontFamily) {
     const fontMap = {
