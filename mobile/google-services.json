@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "728126819544",
+    "project_id": "mykliq-ea8a3",
+    "storage_bucket": "mykliq-ea8a3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:728126819544:android:11a4b490870851c5a21bad",
+        "android_client_info": {
+          "package_name": "com.mykliq.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCu39seFQL1PSxqw4I5zWNNNQjDyL3NPj0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
