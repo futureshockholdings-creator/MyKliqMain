@@ -296,9 +296,11 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
       <div className="flex justify-between items-center mt-6">
         {/* Invite Friend Display - left side or center if no friends */}
         {friends.length < maxFriends && (
-          <div className="bg-gradient-to-r from-primary to-secondary text-primary-foreground font-bold px-4 py-2 rounded-md flex items-center">
-            <Users className="w-4 h-4 mr-2" />
-            Invite Friend ({maxFriends - friends.length} spots left)
+          <div className="relative bg-gradient-to-r from-primary to-secondary text-white font-bold px-4 py-2 rounded-md flex items-center overflow-hidden">
+            {/* Semi-transparent overlay to ensure WCAG AA contrast (≥4.5:1) for white text */}
+            <div className="absolute inset-0 bg-black/60 rounded-md"></div>
+            <Users className="w-4 h-4 mr-2 relative z-10" />
+            <span className="relative z-10">Invite Friend ({maxFriends - friends.length} spots left)</span>
           </div>
         )}
         

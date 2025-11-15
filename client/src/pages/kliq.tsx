@@ -1002,7 +1002,7 @@ export default function Kliq() {
                   <Button
                     size="sm"
                     onClick={copyInviteCode}
-                    className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground shrink-0"
+                    className="bg-mykliq-green hover:bg-mykliq-green/90 text-white shrink-0"
                     disabled={!userData?.inviteCode || !userData?.firstName}
                     data-testid="button-copy-invite"
                   >

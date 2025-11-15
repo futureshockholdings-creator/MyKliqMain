@@ -215,7 +215,7 @@ export default function Profile() {
                   maxFileSize={52428800} // 50MB limit for background images
                   onGetUploadParameters={handleBackgroundGetUploadParameters}
                   onComplete={handleBackgroundComplete}
-                  buttonClassName="!p-3 !rounded-full !bg-white/90 !text-gray-900 hover:!bg-white !border-2 !border-primary/20 !shadow-lg backdrop-blur-sm"
+                  buttonClassName="!p-3 !rounded-full !bg-white/90 !text-black hover:!bg-white !border-2 !border-primary/20 !shadow-lg backdrop-blur-sm"
                   allowedFileTypes={[
                     'image/jpeg',
                     'image/jpg', 
