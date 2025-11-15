@@ -16,7 +16,6 @@ import { BorderMarketplaceCard } from "@/components/KliqKoin/BorderMarketplaceCa
 import { MyBordersCard } from "@/components/KliqKoin/MyBordersCard";
 
 import { 
-  Linkedin, 
   Youtube, 
   Twitch,
   MessageCircle,
@@ -91,11 +90,32 @@ const platformInfo = {
     description: "Visual inspiration and ideas",
     requiresBusiness: false
   },
-  linkedin: {
-    name: "LinkedIn",
-    icon: Linkedin,
-    color: "bg-blue-700",
-    description: "Professional networking and career content",
+  bereal: {
+    name: "BeReal",
+    icon: MessageCircle,
+    color: "bg-black",
+    description: "Authentic moments with friends",
+    requiresBusiness: false
+  },
+  locket: {
+    name: "Locket",
+    icon: MessageCircle,
+    color: "bg-yellow-500",
+    description: "Photo widget for close friends",
+    requiresBusiness: false
+  },
+  bluesky: {
+    name: "Bluesky",
+    icon: MessageCircle,
+    color: "bg-sky-500",
+    description: "Decentralized social network",
+    requiresBusiness: false
+  },
+  substack: {
+    name: "Substack",
+    icon: MessageCircle,
+    color: "bg-orange-500",
+    description: "Newsletter and publishing platform",
     requiresBusiness: false
   }
 };
