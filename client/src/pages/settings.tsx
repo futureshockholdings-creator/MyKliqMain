@@ -807,9 +807,12 @@ export default function Settings() {
     mutationFn: async (platform: string) => {
       // Add cache-busting timestamp to prevent cached OAuth states
       const response = await apiRequest("GET", `/api/oauth/authorize/${platform}?t=${Date.now()}`);
+      console.log(`[OAuth] Received response for ${platform}:`, response);
       return response;
     },
     onSuccess: (data) => {
+      console.log('[OAuth] onSuccess called with data:', data);
+      
       if (data.demo) {
         // Demo mode - show success message and refresh accounts
         toast({
@@ -819,7 +822,31 @@ export default function Settings() {
         queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
       } else {
         // Real OAuth - open popup window
-        window.open(data.authUrl, '_blank', 'width=600,height=700');
+        console.log('[OAuth] Opening popup with authUrl:', data.authUrl);
+        
+        if (!data.authUrl) {
+          console.error('[OAuth] No authUrl in response!');
+          toast({
+            title: "Connection Failed",
+            description: "OAuth URL not provided. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        const popup = window.open(data.authUrl, '_blank', 'width=600,height=700');
+        
+        if (!popup) {
+          console.error('[OAuth] Popup was blocked!');
+          toast({
+            title: "Popup Blocked",
+            description: "Please allow popups for this site to connect your social accounts.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        console.log('[OAuth] Popup opened successfully');
         
         // Listen for successful connection
         const checkConnection = () => {
@@ -834,6 +861,7 @@ export default function Settings() {
       }
     },
     onError: (error) => {
+      console.error('[OAuth] onError called:', error);
       toast({
         title: "Connection Failed",
         description: "Failed to start OAuth flow. Please try again.",
