@@ -805,11 +805,14 @@ export default function Settings() {
   // Connect social account mutation
   const connectAccount = useMutation({
     mutationFn: async (platform: string) => {
+      console.log(`[Social Connect] Starting OAuth flow for: ${platform}`);
       // Add cache-busting timestamp to prevent cached OAuth states
       const response = await apiRequest("GET", `/api/oauth/authorize/${platform}?t=${Date.now()}`);
+      console.log(`[Social Connect] Got response:`, response);
       return response;
     },
     onSuccess: (data) => {
+      console.log(`[Social Connect] onSuccess called with:`, data);
       if (data.demo) {
         // Demo mode - show success message and refresh accounts
         toast({
@@ -852,6 +855,7 @@ export default function Settings() {
       }
     },
     onError: (error) => {
+      console.error(`[Social Connect] Error:`, error);
       toast({
         title: "Connection Failed",
         description: "Failed to start OAuth flow. Please try again.",
@@ -1206,9 +1210,12 @@ export default function Settings() {
                               </div>
                             </div>
                             <Button
-                              onClick={() => connectAccount.mutate(platformKey)}
+                              onClick={() => {
+                                console.log(`[Social Connect] Button clicked for platform: ${platformKey}`);
+                                connectAccount.mutate(platformKey);
+                              }}
                               disabled={(platformKey !== 'tiktok' && platformKey !== 'twitch' && platformKey !== 'discord' && platformKey !== 'reddit' && platformKey !== 'pinterest' && platformKey !== 'youtube') || connectAccount.isPending}
-                              className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey === 'reddit' || platformKey === 'pinterest' || platformKey === 'youtube')
+                              className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey !== 'reddit' || platformKey === 'pinterest' || platformKey === 'youtube')
                                 ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" 
                                 : "w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed"}
                               data-testid={`button-connect-${platformKey}`}
