@@ -70,7 +70,7 @@ export function getTextColorForBackground(backgroundColor: string): string {
   if (isDarkColor(backgroundColor)) {
     return '#ffffff'; // White text for dark backgrounds
   }
-  return '#111111'; // Dark gray text for light backgrounds (slightly softer than pure black)
+  return '#000000'; // Pure black text for light backgrounds to guarantee WCAG AA compliance
 }
 
 /**
@@ -83,7 +83,7 @@ export function getAccessibleForeground(
   backgroundColor: string,
   options: { threshold?: number; lightColor?: string; darkColor?: string } = {}
 ): string {
-  const { threshold = 0.179, lightColor = '#ffffff', darkColor = '#111111' } = options;
+  const { threshold = 0.179, lightColor = '#ffffff', darkColor = '#000000' } = options;
   
   const rgb = hexToRgb(backgroundColor);
   if (!rgb) return darkColor;
