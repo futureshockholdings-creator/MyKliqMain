@@ -30,9 +30,31 @@ const hexToHsl = (hex: string) => {
   return `${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%`;
 };
 
+// Safe helper to convert hex to HSL with validation
+const safeHexToHsl = (hex: string | undefined, context: string = ''): string | null => {
+  try {
+    // Validate: must be 6-digit hex color
+    if (hex && /^#[0-9A-Fa-f]{6}$/.test(hex)) {
+      return hexToHsl(hex);
+    }
+    if (hex && context) {
+      console.warn(`Invalid hex color for ${context}: ${hex}`);
+    }
+  } catch (error) {
+    console.warn(`Failed to convert hex to HSL for ${context}`, error);
+  }
+  return null;
+};
+
 // Safe helper to convert accessible foreground color with validation
 const safeAccessibleForeground = (bgColor: string): string | null => {
   try {
+    // First validate the background color input is a valid 6-digit hex
+    if (!bgColor || !/^#[0-9A-Fa-f]{6}$/.test(bgColor)) {
+      console.warn(`Invalid background color for foreground calculation: ${bgColor}`);
+      return null;
+    }
+    
     const foregroundHex = getAccessibleForeground(bgColor);
     // Validate: must be 6-digit hex color
     if (foregroundHex && /^#[0-9A-Fa-f]{6}$/.test(foregroundHex)) {
@@ -49,33 +71,42 @@ const applyTheme = (theme: Partial<UserTheme>) => {
   const root = document.documentElement;
   
   if (theme.primaryColor) {
-    root.style.setProperty('--primary', `hsl(${hexToHsl(theme.primaryColor)})`);
-    root.style.setProperty('--mykliq-pink', `hsl(${hexToHsl(theme.primaryColor)})`);
-    
-    // Auto-calculate accessible foreground color for primary
-    const primaryForegroundHsl = safeAccessibleForeground(theme.primaryColor);
-    if (primaryForegroundHsl) {
-      root.style.setProperty('--primary-foreground', `hsl(${primaryForegroundHsl})`);
+    const primaryHsl = safeHexToHsl(theme.primaryColor, 'primaryColor');
+    if (primaryHsl) {
+      root.style.setProperty('--primary', `hsl(${primaryHsl})`);
+      root.style.setProperty('--mykliq-pink', `hsl(${primaryHsl})`);
+      
+      // Auto-calculate accessible foreground color for primary
+      const primaryForegroundHsl = safeAccessibleForeground(theme.primaryColor);
+      if (primaryForegroundHsl) {
+        root.style.setProperty('--primary-foreground', `hsl(${primaryForegroundHsl})`);
+      }
     }
   }
   
   if (theme.secondaryColor) {
-    root.style.setProperty('--secondary', `hsl(${hexToHsl(theme.secondaryColor)})`);
-    root.style.setProperty('--mykliq-blue', `hsl(${hexToHsl(theme.secondaryColor)})`);
-    
-    // Auto-calculate accessible foreground color for secondary
-    const secondaryForegroundHsl = safeAccessibleForeground(theme.secondaryColor);
-    if (secondaryForegroundHsl) {
-      root.style.setProperty('--secondary-foreground', `hsl(${secondaryForegroundHsl})`);
+    const secondaryHsl = safeHexToHsl(theme.secondaryColor, 'secondaryColor');
+    if (secondaryHsl) {
+      root.style.setProperty('--secondary', `hsl(${secondaryHsl})`);
+      root.style.setProperty('--mykliq-blue', `hsl(${secondaryHsl})`);
+      
+      // Auto-calculate accessible foreground color for secondary
+      const secondaryForegroundHsl = safeAccessibleForeground(theme.secondaryColor);
+      if (secondaryForegroundHsl) {
+        root.style.setProperty('--secondary-foreground', `hsl(${secondaryForegroundHsl})`);
+      }
     }
   }
   
   // Auto-calculate navigation colors if navBgColor is set
   if (theme.navBgColor) {
-    root.style.setProperty('--sidebar', `hsl(${hexToHsl(theme.navBgColor)})`);
-    const navForegroundHsl = safeAccessibleForeground(theme.navBgColor);
-    if (navForegroundHsl) {
-      root.style.setProperty('--sidebar-foreground', `hsl(${navForegroundHsl})`);
+    const navHsl = safeHexToHsl(theme.navBgColor, 'navBgColor');
+    if (navHsl) {
+      root.style.setProperty('--sidebar', `hsl(${navHsl})`);
+      const navForegroundHsl = safeAccessibleForeground(theme.navBgColor);
+      if (navForegroundHsl) {
+        root.style.setProperty('--sidebar-foreground', `hsl(${navForegroundHsl})`);
+      }
     }
   }
   
@@ -110,20 +141,33 @@ const applyTheme = (theme: Partial<UserTheme>) => {
 
   // Apply background customization
   if (theme.backgroundType && theme.backgroundType === 'solid' && theme.backgroundColor) {
-    root.style.setProperty('--background', `hsl(${hexToHsl(theme.backgroundColor)})`);
+    const bgHsl = safeHexToHsl(theme.backgroundColor, 'backgroundColor');
+    if (bgHsl) {
+      root.style.setProperty('--background', `hsl(${bgHsl})`);
+    }
     root.style.removeProperty('background-image');
   } else if (theme.backgroundType === 'gradient' && theme.backgroundGradientStart && theme.backgroundGradientEnd) {
-    const startHsl = hexToHsl(theme.backgroundGradientStart);
-    const endHsl = hexToHsl(theme.backgroundGradientEnd);
-    root.style.setProperty('--background', `linear-gradient(135deg, hsl(${startHsl}), hsl(${endHsl}))`);
-    root.style.setProperty('background-image', `linear-gradient(135deg, hsl(${startHsl}), hsl(${endHsl}))`);
+    const startHsl = safeHexToHsl(theme.backgroundGradientStart, 'backgroundGradientStart');
+    const endHsl = safeHexToHsl(theme.backgroundGradientEnd, 'backgroundGradientEnd');
+    if (startHsl && endHsl) {
+      root.style.setProperty('--background', `linear-gradient(135deg, hsl(${startHsl}), hsl(${endHsl}))`);
+      root.style.setProperty('background-image', `linear-gradient(135deg, hsl(${startHsl}), hsl(${endHsl}))`);
+    }
   } else if (theme.backgroundType === 'pattern' && theme.backgroundPattern) {
     // Apply pattern backgrounds
+    const primaryHsl = theme.primaryColor ? safeHexToHsl(theme.primaryColor, 'primaryColor-pattern') : null;
+    const primaryHslStr = primaryHsl || '328, 100%, 54%';
+    
+    // Safe hex for SVG patterns - validate and strip # or use default
+    const svgFillHex = (theme.primaryColor && /^#[0-9A-Fa-f]{6}$/.test(theme.primaryColor)) 
+      ? theme.primaryColor.replace('#', '') 
+      : 'FF1493';
+    
     const patterns = {
-      dots: `radial-gradient(circle, hsl(${theme.primaryColor ? hexToHsl(theme.primaryColor) : '328, 100%, 54%'}) 1px, transparent 1px)`,
-      lines: `linear-gradient(45deg, hsl(${theme.primaryColor ? hexToHsl(theme.primaryColor) : '328, 100%, 54%'}) 1px, transparent 1px)`,
-      waves: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20c0-11 9-20 20-20s20 9 20 20-9 20-20 20-20-9-20-20z' fill='%23${theme.primaryColor?.replace('#', '') || 'FF1493'}' opacity='0.1'/%3E%3C/svg%3E")`,
-      geometric: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23${theme.primaryColor?.replace('#', '') || 'FF1493'}' opacity='0.1'%3E%3Cpath d='M30 30l15-15v30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+      dots: `radial-gradient(circle, hsl(${primaryHslStr}) 1px, transparent 1px)`,
+      lines: `linear-gradient(45deg, hsl(${primaryHslStr}) 1px, transparent 1px)`,
+      waves: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20c0-11 9-20 20-20s20 9 20 20-9 20-20 20-20-9-20-20z' fill='%23${svgFillHex}' opacity='0.1'/%3E%3C/svg%3E")`,
+      geometric: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23${svgFillHex}' opacity='0.1'%3E%3Cpath d='M30 30l15-15v30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
     };
     root.style.setProperty('background-image', patterns[theme.backgroundPattern as keyof typeof patterns] || patterns.dots);
     root.style.setProperty('background-size', theme.backgroundPattern === 'dots' ? '20px 20px' : '40px 40px');
