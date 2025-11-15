@@ -186,7 +186,7 @@ export default function Profile() {
                       maxFileSize={15728640} // 15MB limit for profile pictures
                       onGetUploadParameters={handleGetUploadParameters}
                       onComplete={handleProfilePictureComplete}
-                      buttonClassName="!p-2 !rounded-full !bg-primary !text-white hover:!bg-primary/90 !border-2 !border-white !shadow-lg"
+                      buttonClassName="!p-2 !rounded-full !bg-primary !text-primary-foreground hover:!bg-primary/90 !border-2 !border-white !shadow-lg"
                       allowedFileTypes={[
                         'image/jpeg',
                         'image/jpg', 
@@ -215,7 +215,7 @@ export default function Profile() {
                   maxFileSize={52428800} // 50MB limit for background images
                   onGetUploadParameters={handleBackgroundGetUploadParameters}
                   onComplete={handleBackgroundComplete}
-                  buttonClassName="!p-3 !rounded-full !bg-white/90 !text-primary hover:!bg-white !border-2 !border-primary/20 !shadow-lg backdrop-blur-sm"
+                  buttonClassName="!p-3 !rounded-full !bg-white/90 !text-gray-900 hover:!bg-white !border-2 !border-primary/20 !shadow-lg backdrop-blur-sm"
                   allowedFileTypes={[
                     'image/jpeg',
                     'image/jpg', 
