@@ -1484,6 +1484,20 @@ export const socialConnectionRewards = pgTable("social_connection_rewards", {
   userPlatformUnique: uniqueIndex("idx_social_rewards_unique_user_platform").on(table.userId, table.platform), // Unique constraint to prevent duplicate rewards
 }));
 
+// Sports/team connection rewards - tracks one-time Kliq Koin rewards for following sports teams
+export const sportsTeamRewards = pgTable("sports_team_rewards", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  sport: varchar("sport").notNull(), // 'nfl', 'nba', 'mlb', 'nhl', 'soccer'
+  teamId: varchar("team_id").notNull(), // ESPN team ID
+  teamName: varchar("team_name").notNull(), // For auditing
+  koinsAwarded: numeric("koins_awarded", { precision: 12, scale: 2 }).notNull(), // Amount of Koins awarded (100)
+  awardedAt: timestamp("awarded_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("idx_sports_rewards_user").on(table.userId), // Fast user lookup
+  userTeamUnique: uniqueIndex("idx_sports_rewards_unique_user_team").on(table.userId, table.teamId), // Unique constraint to prevent duplicate rewards (teamId is globally unique across sports)
+}));
+
 // External posts aggregated from social media platforms
 export const externalPosts = pgTable("external_posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1614,6 +1628,13 @@ export const insertSocialConnectionRewardSchema = createInsertSchema(socialConne
 });
 export type InsertSocialConnectionReward = z.infer<typeof insertSocialConnectionRewardSchema>;
 export type SocialConnectionReward = typeof socialConnectionRewards.$inferSelect;
+
+export const insertSportsTeamRewardSchema = createInsertSchema(sportsTeamRewards).omit({ 
+  id: true, 
+  awardedAt: true 
+});
+export type InsertSportsTeamReward = z.infer<typeof insertSportsTeamRewardSchema>;
+export type SportsTeamReward = typeof sportsTeamRewards.$inferSelect;
 
 export const insertExternalPostSchema = createInsertSchema(externalPosts).omit({ 
   id: true, 
