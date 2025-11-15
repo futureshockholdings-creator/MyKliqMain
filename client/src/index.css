@@ -156,7 +156,7 @@ p .emoji-large, span .emoji-large, div .emoji-large {
   --secondary: hsl(195, 100%, 50%);
   --secondary-foreground: hsl(0, 0%, 100%);
   --muted: hsl(0, 0%, 9.4%);
-  --muted-foreground: hsl(0, 0%, 63.9%);
+  --muted-foreground: hsl(0, 0%, 100%); /* Auto-calculated to white for WCAG AA on dark muted bg */
   --accent: hsl(228, 9.8%, 10%);
   --accent-foreground: hsl(0, 0%, 85.1%);
   --destructive: hsl(0, 84.2%, 60.2%);
@@ -225,7 +225,7 @@ p .emoji-large, span .emoji-large, div .emoji-large {
   --secondary: hsl(195, 100%, 50%);
   --secondary-foreground: hsl(0, 0%, 100%);
   --muted: hsl(0, 0%, 9.4%);
-  --muted-foreground: hsl(0, 0%, 63.9%);
+  --muted-foreground: hsl(0, 0%, 100%); /* Auto-calculated to white for WCAG AA on dark muted bg */
   --accent: hsl(228, 9.8%, 10%);
   --accent-foreground: hsl(0, 0%, 85.1%);
   --destructive: hsl(0, 84.2%, 60.2%);
