@@ -147,7 +147,7 @@ export default function Profile() {
         {/* Profile Picture & Background Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Profile Picture & Background</CardTitle>
+            <CardTitle className="text-card-foreground">Profile Picture & Background</CardTitle>
             <CardDescription>Upload and manage your profile picture and background wallpaper</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -254,7 +254,7 @@ export default function Profile() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Profile Information</CardTitle>
+              <CardTitle className="text-card-foreground">Profile Information</CardTitle>
               <ProfileSettings user={typedUser} />
             </div>
             <CardDescription>Your personal details, interests, and preferences</CardDescription>
@@ -269,7 +269,7 @@ export default function Profile() {
         {birthdayUsers.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>🎉 Birthdays Today!</CardTitle>
+              <CardTitle className="text-card-foreground">🎉 Birthdays Today!</CardTitle>
               <CardDescription>Send birthday wishes to your kliq members</CardDescription>
             </CardHeader>
             <CardContent>
@@ -314,7 +314,7 @@ export default function Profile() {
         {/* Profile Music Section */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-primary">🎵 Profile Music</CardTitle>
+            <CardTitle className="text-card-foreground">🎵 Profile Music</CardTitle>
             <CardDescription className="text-muted-foreground">Add music that plays when people visit your profile</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
