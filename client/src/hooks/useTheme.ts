@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { UserTheme } from "@shared/schema";
+import { getAccessibleForeground } from "@/lib/colorUtils";
 
 // Helper function to convert hex to HSL
 const hexToHsl = (hex: string) => {
@@ -36,11 +37,33 @@ const applyTheme = (theme: Partial<UserTheme>) => {
   if (theme.primaryColor) {
     root.style.setProperty('--primary', `hsl(${hexToHsl(theme.primaryColor)})`);
     root.style.setProperty('--mykliq-pink', `hsl(${hexToHsl(theme.primaryColor)})`);
+    
+    // Auto-calculate accessible foreground color for primary
+    const primaryForeground = getAccessibleForeground(theme.primaryColor);
+    root.style.setProperty('--primary-foreground', `hsl(${hexToHsl(primaryForeground)})`);
   }
   
   if (theme.secondaryColor) {
     root.style.setProperty('--secondary', `hsl(${hexToHsl(theme.secondaryColor)})`);
     root.style.setProperty('--mykliq-blue', `hsl(${hexToHsl(theme.secondaryColor)})`);
+    
+    // Auto-calculate accessible foreground color for secondary
+    const secondaryForeground = getAccessibleForeground(theme.secondaryColor);
+    root.style.setProperty('--secondary-foreground', `hsl(${hexToHsl(secondaryForeground)})`);
+  }
+  
+  // Auto-calculate navigation colors if navBgColor is set
+  if (theme.navBgColor) {
+    root.style.setProperty('--sidebar', `hsl(${hexToHsl(theme.navBgColor)})`);
+    const navForeground = getAccessibleForeground(theme.navBgColor);
+    root.style.setProperty('--sidebar-foreground', `hsl(${hexToHsl(navForeground)})`);
+  }
+  
+  // Auto-calculate card foreground if card background is customizable
+  if (theme.backgroundColor) {
+    const cardForeground = getAccessibleForeground(theme.backgroundColor);
+    root.style.setProperty('--card-foreground', `hsl(${hexToHsl(cardForeground)})`);
+    root.style.setProperty('--foreground', `hsl(${hexToHsl(cardForeground)})`);
   }
   
   if (theme.fontFamily) {

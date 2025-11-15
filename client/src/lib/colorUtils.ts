@@ -29,6 +29,7 @@ function getLuminance(r: number, g: number, b: number): number {
 
 /**
  * Determine if a color is dark (closer to black)
+ * Uses WCAG relative luminance threshold for better accessibility
  */
 function isDarkColor(color: string): boolean {
   // Handle hex colors
@@ -37,7 +38,8 @@ function isDarkColor(color: string): boolean {
     if (!rgb) return false;
     
     const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
-    return luminance < 0.5;
+    // WCAG threshold: 0.179 ensures proper contrast for text
+    return luminance < 0.179;
   }
   
   // Handle RGB/RGBA colors
@@ -48,7 +50,7 @@ function isDarkColor(color: string): boolean {
     const b = parseInt(rgbMatch[3]);
     
     const luminance = getLuminance(r, g, b);
-    return luminance < 0.5;
+    return luminance < 0.179;
   }
   
   // Handle named colors - assume common dark colors
@@ -62,12 +64,32 @@ function isDarkColor(color: string): boolean {
 
 /**
  * Get appropriate text color based on background color
+ * Ensures WCAG AA compliance (4.5:1 contrast ratio for normal text)
  */
 export function getTextColorForBackground(backgroundColor: string): string {
   if (isDarkColor(backgroundColor)) {
     return '#ffffff'; // White text for dark backgrounds
   }
-  return '#000000'; // Black text for light backgrounds
+  return '#111111'; // Dark gray text for light backgrounds (slightly softer than pure black)
+}
+
+/**
+ * Get accessible foreground color with custom threshold
+ * @param backgroundColor - The background color in hex format
+ * @param options - Options for customizing the foreground color selection
+ * @returns Hex color string for foreground that ensures readability
+ */
+export function getAccessibleForeground(
+  backgroundColor: string,
+  options: { threshold?: number; lightColor?: string; darkColor?: string } = {}
+): string {
+  const { threshold = 0.179, lightColor = '#ffffff', darkColor = '#111111' } = options;
+  
+  const rgb = hexToRgb(backgroundColor);
+  if (!rgb) return darkColor;
+  
+  const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
+  return luminance < threshold ? lightColor : darkColor;
 }
 
 /**
