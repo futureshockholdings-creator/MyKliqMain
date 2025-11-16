@@ -17,10 +17,12 @@ export default function Themes() {
   // Save theme mutation
   const saveThemeMutation = useMutation({
     mutationFn: async (themeData: any) => {
-      await apiRequest("POST", "/api/user/theme", themeData);
+      const response = await apiRequest("POST", "/api/user/theme", themeData);
+      return response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user/theme"] });
+    onSuccess: (savedTheme) => {
+      // Immediately update cache with the saved theme (no refetch needed)
+      queryClient.setQueryData(["/api/user/theme"], savedTheme);
       toast({
         title: "Theme saved!",
         description: "Your customization has been applied",
