@@ -87,21 +87,6 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     },
   });
 
-  const deleteNotificationMutation = useMutation({
-    mutationFn: async (notificationId: string) => {
-      await apiRequest("DELETE", `/api/notifications/${notificationId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete notification",
-        variant: "destructive",
-      });
-    },
-  });
 
   const deleteAllNotificationsMutation = useMutation({
     mutationFn: async (type?: string) => {
@@ -265,23 +250,9 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                                   )}>
                                     {notification.title}
                                   </h4>
-                                  <div className="flex items-center space-x-1">
-                                    {!notification.isRead && (
-                                      <div className="h-2 w-2 bg-primary rounded-full" />
-                                    )}
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 w-6 p-0"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        deleteNotificationMutation.mutate(notification.id);
-                                      }}
-                                      data-testid={`delete-notification-${notification.id}`}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </div>
+                                  {!notification.isRead && (
+                                    <div className="h-2 w-2 bg-primary rounded-full flex-shrink-0" />
+                                  )}
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                                   {notification.message}
