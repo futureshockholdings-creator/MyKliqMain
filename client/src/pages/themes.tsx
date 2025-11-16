@@ -20,9 +20,14 @@ export default function Themes() {
       const response = await apiRequest("POST", "/api/user/theme", themeData);
       return response;
     },
-    onSuccess: (savedTheme) => {
-      // Immediately update cache with the saved theme (no refetch needed)
+    onSuccess: async (savedTheme) => {
+      // Clear disk cache to prevent stale data on refresh
+      const { enhancedCache } = await import("@/lib/enterprise/enhancedCache");
+      await enhancedCache.remove("/api/user/theme|method:GET");
+      
+      // Immediately update TanStack Query cache with the saved theme
       queryClient.setQueryData(["/api/user/theme"], savedTheme);
+      
       toast({
         title: "Theme saved!",
         description: "Your customization has been applied",
