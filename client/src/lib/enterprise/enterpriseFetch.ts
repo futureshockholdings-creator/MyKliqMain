@@ -11,6 +11,7 @@ import { performanceMonitor } from './performanceMonitor';
 
 interface EnterpriseFetchOptions extends RequestInit {
   skipCache?: boolean;
+  skipDisk?: boolean;
   cacheTTL?: number;
   priority?: 'critical' | 'normal' | 'low';
 }
@@ -25,6 +26,7 @@ export async function enterpriseFetch<T = any>(
 ): Promise<T> {
   const {
     skipCache = false,
+    skipDisk = false,
     cacheTTL,
     priority = 'normal',
     ...fetchOptions
@@ -95,6 +97,7 @@ export async function enterpriseFetch<T = any>(
       fetchFn,
       {
         diskTTL: cacheTTL,
+        skipDisk: skipDisk,
       }
     );
   }

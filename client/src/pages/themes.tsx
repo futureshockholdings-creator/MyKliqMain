@@ -15,8 +15,7 @@ export default function Themes() {
     queryKey: ["/api/user/theme"],
     queryFn: async () => {
       return enterpriseFetch("/api/user/theme", {
-        skipCache: false, // Allow memory cache but skip disk
-        cacheTTL: 0, // Set disk TTL to 0 to disable disk caching
+        skipDisk: true, // CRITICAL: Skip disk cache completely to prevent stale themes
       });
     },
   });
