@@ -14,6 +14,8 @@ interface ThemeEditorProps {
   onSave: (theme: Partial<UserTheme>) => void;
   onReset: () => void;
   onSurpriseMe?: () => void;
+  isSaving?: boolean;
+  isFetching?: boolean;
 }
 
 const defaultTheme = {
@@ -23,7 +25,7 @@ const defaultTheme = {
   fontColor: "#FFFFFF",
   navBgColor: "#1F2937",
   navActiveColor: "#FF1493",
-  borderStyle: "retro",
+  borderStyle: "modern",
   enableSparkles: true,
   backgroundType: "solid",
   backgroundColor: "#000000",
@@ -32,17 +34,20 @@ const defaultTheme = {
   backgroundPattern: "dots",
 };
 
-export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe }: ThemeEditorProps) {
+export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = false, isFetching = false }: ThemeEditorProps) {
   const [currentTheme, setCurrentTheme] = useState(theme || defaultTheme);
 
   useEffect(() => {
-    if (theme) {
+    // Don't overwrite user edits while saving or refetching
+    // Only update when mutation is complete AND fresh data has arrived
+    if (theme && !isSaving && !isFetching) {
       setCurrentTheme(theme);
     }
-  }, [theme]);
+  }, [theme, isSaving, isFetching]);
 
   const handleSave = () => {
-    onSave(currentTheme);
+    // Clone the object to decouple from reactive state
+    onSave({ ...currentTheme });
   };
 
   const handleReset = () => {
@@ -231,7 +236,6 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe }: ThemeEdito
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="comic">Comic Sans MS (Default)</SelectItem>
-                <SelectItem value="retro">Courier New (Retro)</SelectItem>
                 <SelectItem value="helvetica">Helvetica (Clean)</SelectItem>
                 <SelectItem value="times">Times New Roman (Classic)</SelectItem>
                 <SelectItem value="impact">Impact (Bold)</SelectItem>
@@ -355,7 +359,6 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe }: ThemeEdito
               background: `linear-gradient(45deg, ${currentTheme.primaryColor || "#FF1493"}, ${currentTheme.secondaryColor || "#00BFFF"})`,
               color: currentTheme.fontColor || "#FFFFFF",
               fontFamily: (currentTheme.fontFamily || "comic") === "comic" ? "Comic Sans MS, cursive" : 
-                          currentTheme.fontFamily === "retro" ? "Courier New, monospace" :
                           currentTheme.fontFamily === "helvetica" ? "Helvetica, sans-serif" :
                           currentTheme.fontFamily === "times" ? "Times New Roman, serif" :
                           currentTheme.fontFamily === "impact" ? "Impact, sans-serif" : "inherit"
@@ -376,10 +379,11 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe }: ThemeEdito
       <div className="flex gap-3">
         <Button
           onClick={handleSave}
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold"
+          disabled={isSaving}
+          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="button-save-theme"
         >
-          💾 Save Theme
+          {isSaving ? "Saving..." : "💾 Save Theme"}
         </Button>
         <Button
           onClick={handleReset}

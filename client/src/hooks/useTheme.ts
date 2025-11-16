@@ -131,7 +131,6 @@ const applyTheme = (theme: Partial<UserTheme>) => {
   if (theme.fontFamily) {
     const fontMap = {
       comic: 'Comic Neue, Comic Sans MS, cursive',
-      retro: 'Courier Prime, Courier New, monospace',
       helvetica: 'Helvetica, sans-serif',
       times: 'Times New Roman, serif',
       impact: 'Impact, sans-serif'

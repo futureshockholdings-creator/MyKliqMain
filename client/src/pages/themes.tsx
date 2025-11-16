@@ -9,15 +9,9 @@ export default function Themes() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch user theme with aggressive caching to prevent excessive API calls
-  const { data: theme, isLoading } = useQuery({
+  // Fetch user theme
+  const { data: theme, isLoading, isFetching } = useQuery({
     queryKey: ["/api/user/theme"],
-    staleTime: Infinity, // Never consider data stale
-    gcTime: Infinity, // Never garbage collect
-    refetchOnWindowFocus: false, // Don't refetch when window gains focus
-    refetchOnMount: false, // Don't refetch on component mount if data exists
-    refetchInterval: false, // Disable automatic refetching
-    refetchOnReconnect: false, // Don't refetch on reconnect
   });
 
   // Save theme mutation
@@ -64,7 +58,7 @@ export default function Themes() {
       fontColor: "#FFFFFF",
       navBgColor: "#1F2937",
       navActiveColor: "#FF1493",
-      borderStyle: "retro",
+      borderStyle: "modern",
       enableSparkles: true,
     };
     
@@ -114,7 +108,7 @@ export default function Themes() {
       backgroundPattern = patterns[Math.floor(Math.random() * patterns.length)];
     }
 
-    const fontFamilies = ['comic', 'retro', 'helvetica', 'times', 'impact'];
+    const fontFamilies = ['comic', 'helvetica', 'times', 'impact'];
     const borderStyles = ['retro', 'modern'];
     
     const randomTheme = {
@@ -162,6 +156,8 @@ export default function Themes() {
         onSave={handleSaveTheme}
         onReset={handleResetTheme}
         onSurpriseMe={handleSurpriseMe}
+        isSaving={saveThemeMutation.isPending}
+        isFetching={isFetching}
       />
 
       <Footer />
