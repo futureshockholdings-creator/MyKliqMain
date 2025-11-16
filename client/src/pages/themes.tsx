@@ -3,15 +3,22 @@ import { ThemeEditor } from "@/components/theme-editor";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 import Footer from "@/components/Footer";
 
 export default function Themes() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch user theme
+  // Fetch user theme - disable disk cache to prevent stale data after saves
   const { data: theme, isLoading, isFetching, isError } = useQuery({
     queryKey: ["/api/user/theme"],
+    queryFn: async () => {
+      return enterpriseFetch("/api/user/theme", {
+        skipCache: false, // Allow memory cache but skip disk
+        cacheTTL: 0, // Set disk TTL to 0 to disable disk caching
+      });
+    },
   });
 
   // Save theme mutation
