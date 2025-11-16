@@ -10,7 +10,7 @@ export default function Themes() {
   const queryClient = useQueryClient();
 
   // Fetch user theme
-  const { data: theme, isLoading, isFetching } = useQuery({
+  const { data: theme, isLoading, isFetching, isError } = useQuery({
     queryKey: ["/api/user/theme"],
   });
 
@@ -158,6 +158,7 @@ export default function Themes() {
         onSurpriseMe={handleSurpriseMe}
         isSaving={saveThemeMutation.isPending}
         isFetching={isFetching}
+        isError={isError}
       />
 
       <Footer />

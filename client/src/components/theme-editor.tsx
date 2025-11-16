@@ -16,6 +16,7 @@ interface ThemeEditorProps {
   onSurpriseMe?: () => void;
   isSaving?: boolean;
   isFetching?: boolean;
+  isError?: boolean;
 }
 
 const defaultTheme = {
@@ -34,16 +35,25 @@ const defaultTheme = {
   backgroundPattern: "dots",
 };
 
-export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = false, isFetching = false }: ThemeEditorProps) {
-  const [currentTheme, setCurrentTheme] = useState(theme || defaultTheme);
+export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = false, isFetching = false, isError = false }: ThemeEditorProps) {
+  // Normalize legacy "retro" font in initial state
+  const normalizeTheme = (t: UserTheme | null | undefined) => {
+    if (!t) return defaultTheme;
+    return {
+      ...t,
+      fontFamily: t.fontFamily === 'retro' ? 'comic' : t.fontFamily
+    };
+  };
+  
+  const [currentTheme, setCurrentTheme] = useState(normalizeTheme(theme));
 
   useEffect(() => {
     // Don't overwrite user edits while saving or refetching
-    // Only update when mutation is complete AND fresh data has arrived
-    if (theme && !isSaving && !isFetching) {
-      setCurrentTheme(theme);
+    // Only update when mutation is complete, fresh data has arrived, and there are no errors
+    if (theme && !isSaving && !isFetching && !isError) {
+      setCurrentTheme(normalizeTheme(theme));
     }
-  }, [theme, isSaving, isFetching]);
+  }, [theme, isSaving, isFetching, isError]);
 
   const handleSave = () => {
     // Clone the object to decouple from reactive state
