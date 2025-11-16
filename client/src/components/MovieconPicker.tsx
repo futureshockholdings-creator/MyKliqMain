@@ -177,11 +177,11 @@ export function MovieconPicker({
                       moviecon={moviecon} 
                       className="rounded-lg hover:scale-105 transition-transform duration-200 shadow-sm hover:shadow-md"
                     />
-                    <div className="text-xs text-center text-foreground font-medium line-clamp-2 px-1">
+                    <div className="text-xs text-center text-black dark:text-white font-medium line-clamp-2 px-1">
                       {moviecon.title}
                     </div>
                     {moviecon.movieSource && (
-                      <div className="text-xs text-center text-muted-foreground line-clamp-1 px-1">
+                      <div className="text-xs text-center text-gray-600 dark:text-gray-400 line-clamp-1 px-1">
                         {moviecon.movieSource}
                       </div>
                     )}

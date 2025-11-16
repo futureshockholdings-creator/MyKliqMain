@@ -174,7 +174,7 @@ export function MemePicker({
                       meme={meme} 
                       className="rounded-lg hover:scale-105 transition-transform duration-200 shadow-sm hover:shadow-md"
                     />
-                    <p className="text-xs text-center text-foreground font-medium line-clamp-2 px-1">
+                    <p className="text-xs text-center text-black dark:text-white font-medium line-clamp-2 px-1">
                       {meme.title}
                     </p>
                   </div>
