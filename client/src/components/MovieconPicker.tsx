@@ -171,17 +171,17 @@ export function MovieconPicker({
                   <div
                     key={moviecon.id}
                     onClick={() => handleMovieconClick(moviecon)}
-                    className="moviecon-item group cursor-pointer"
+                    className="moviecon-item group cursor-pointer flex flex-col gap-1"
                   >
                     <MovieconVideo 
                       moviecon={moviecon} 
                       className="rounded-lg hover:scale-105 transition-transform duration-200 shadow-sm hover:shadow-md"
                     />
-                    <div className="text-xs text-center mt-2 text-muted-foreground group-hover:text-foreground transition-colors truncate px-1">
+                    <div className="text-xs text-center text-foreground font-medium line-clamp-2 px-1">
                       {moviecon.title}
                     </div>
                     {moviecon.movieSource && (
-                      <div className="text-xs text-center text-muted-foreground/70 truncate px-1">
+                      <div className="text-xs text-center text-muted-foreground line-clamp-1 px-1">
                         {moviecon.movieSource}
                       </div>
                     )}

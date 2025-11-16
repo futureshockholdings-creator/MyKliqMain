@@ -168,13 +168,13 @@ export function MemePicker({
                   <div
                     key={meme.id}
                     onClick={() => handleMemeClick(meme)}
-                    className="meme-item group cursor-pointer flex flex-col"
+                    className="meme-item group cursor-pointer flex flex-col gap-1"
                   >
                     <MemeImage 
                       meme={meme} 
                       className="rounded-lg hover:scale-105 transition-transform duration-200 shadow-sm hover:shadow-md"
                     />
-                    <p className="text-xs text-center mt-2 text-foreground font-medium truncate">
+                    <p className="text-xs text-center text-foreground font-medium line-clamp-2 px-1">
                       {meme.title}
                     </p>
                   </div>
