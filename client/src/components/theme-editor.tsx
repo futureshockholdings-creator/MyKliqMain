@@ -36,16 +36,17 @@ const defaultTheme = {
 };
 
 export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = false, isFetching = false, isError = false }: ThemeEditorProps) {
-  // Normalize legacy "retro" font in initial state
+  // Normalize legacy "retro" values in both font and borderStyle
   const normalizeTheme = (t: UserTheme | null | undefined) => {
     if (!t) return defaultTheme;
     return {
       ...t,
-      fontFamily: t.fontFamily === 'retro' ? 'comic' : t.fontFamily
+      fontFamily: t.fontFamily === 'retro' ? 'comic' : t.fontFamily,
+      borderStyle: t.borderStyle === 'retro' ? 'modern' : t.borderStyle
     };
   };
   
-  const [currentTheme, setCurrentTheme] = useState(normalizeTheme(theme));
+  const [currentTheme, setCurrentTheme] = useState(() => normalizeTheme(theme));
 
   useEffect(() => {
     // Don't overwrite user edits while saving or refetching
