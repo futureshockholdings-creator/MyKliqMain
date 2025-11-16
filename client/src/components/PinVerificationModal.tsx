@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, X } from "lucide-react";
+import { Shield } from "lucide-react";
 
 interface PinVerificationModalProps {
   isOpen: boolean;
@@ -94,15 +94,6 @@ export function PinVerificationModal({
           <DialogDescription className="text-gray-600 dark:text-gray-400">
             {description}
           </DialogDescription>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            onClick={handleClose}
-            data-testid="button-close-pin-modal"
-          >
-            <X className="w-4 h-4" />
-          </Button>
         </DialogHeader>
         
         <div className="space-y-4">
