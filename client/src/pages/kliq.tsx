@@ -1086,6 +1086,54 @@ export default function Kliq() {
         </TabsContent>
       </Tabs>
 
+      {/* Join a Kliq Dialog */}
+      <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+        <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
+          <DialogHeader>
+            <DialogTitle className="text-primary">Join a Kliq</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground">Invite Code</label>
+              <Input
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                placeholder="KLIQ-XXXX-XXXX"
+                className="mt-1"
+                disabled={joinKliqMutation.isPending}
+                data-testid="input-join-invite-code"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter the invite code you received from a friend
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsInviteDialogOpen(false);
+                  setInviteCode("");
+                }}
+                className="flex-1"
+                disabled={joinKliqMutation.isPending}
+                data-testid="button-cancel-join"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleJoinKliq}
+                disabled={!inviteCode.trim() || joinKliqMutation.isPending}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                data-testid="button-submit-join"
+              >
+                {joinKliqMutation.isPending ? "Joining..." : "Join Kliq"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Remove Friend Confirmation Dialog */}
       <Dialog open={!!friendToRemove} onOpenChange={() => setFriendToRemove(null)}>
         <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
