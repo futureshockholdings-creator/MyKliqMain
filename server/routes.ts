@@ -5085,6 +5085,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             user.firstName || "Someone",
             postId
           );
+          
+          // Broadcast notification to user immediately via WebSocket
+          if ((app as any).broadcastNotification) {
+            (app as any).broadcastNotification(post.userId);
+          }
         }
         
         // Award 0.25 Kliq Koins for liking a post (not own post)
@@ -8400,8 +8405,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Store broadcast function reference for use in routes
+  // Global function to broadcast notification to specific user
+  const broadcastNotification = (userId: string) => {
+    const message = JSON.stringify({
+      type: 'notification:new',
+      timestamp: new Date().toISOString(),
+    });
+
+    let sent = false;
+    wss.clients.forEach((client: ExtendedWebSocket) => {
+      if (client.readyState === WebSocket.OPEN && client.user_id === userId) {
+        client.send(message);
+        sent = true;
+      }
+    });
+
+    if (sent) {
+      console.log(`🔔 Broadcasted notification to user ${userId}`);
+    }
+  };
+
+  // Store broadcast function references for use in routes
   (app as any).broadcastFeedUpdate = broadcastFeedUpdate;
+  (app as any).broadcastNotification = broadcastNotification;
 
   // Maintenance dashboard routes
   app.get('/api/maintenance/metrics', async (req: any, res) => {

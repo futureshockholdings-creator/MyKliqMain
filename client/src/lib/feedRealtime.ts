@@ -37,6 +37,8 @@ class FeedRealtimeService {
           
           if (message.type === 'feed:new-content') {
             queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+          } else if (message.type === 'notification:new') {
+            queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
