@@ -4687,6 +4687,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user?.claims?.sub || "46297180"; // Use the logged-in user's ID as fallback
       const themeData = insertUserThemeSchema.parse({ ...req.body, userId });
       const theme = await storage.upsertUserTheme(themeData);
+      
+      // Invalidate cache so GET returns fresh theme
+      const { cacheService } = await import('./cacheService');
+      await cacheService.invalidatePattern('user/theme');
+      
       res.json(theme);
     } catch (error) {
       console.error("Error saving theme:", error);
