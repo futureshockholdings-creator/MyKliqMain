@@ -41,8 +41,6 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe }: ThemeEdito
     }
   }, [theme]);
 
-
-
   const handleSave = () => {
     onSave(currentTheme);
   };
@@ -378,10 +376,10 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe }: ThemeEdito
       <div className="flex gap-3">
         <Button
           onClick={handleSave}
-          className="flex-1 bg-green-600 hover:bg-green-700 text-black font-bold"
+          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold"
           data-testid="button-save-theme"
         >
-          Save Theme
+          💾 Save Theme
         </Button>
         <Button
           onClick={handleReset}
