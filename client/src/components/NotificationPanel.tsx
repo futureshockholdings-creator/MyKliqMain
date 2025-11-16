@@ -194,7 +194,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
 
           <CardContent className="flex-1 p-0">
             <Tabs value={selectedTab} onValueChange={setSelectedTab} className="h-full flex flex-col">
-              <TabsList className="grid grid-cols-3 w-full mx-4 mb-2">
+              <TabsList className="grid grid-cols-3 w-full px-4 mb-2">
                 {notificationTabs.slice(0, 3).map((tab) => {
                   const Icon = tab.icon;
                   const tabCount = notifications.filter((n: Notification) => 
