@@ -4674,6 +4674,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For debugging - use a default user ID if not authenticated
       const userId = req.user?.claims?.sub || "46297180"; // Use the logged-in user's ID as fallback
       const theme = await storage.getUserTheme(userId);
+      console.log(`🔍 GET /api/user/theme - Retrieved for user ${userId}:`, {
+        primaryColor: theme.primaryColor,
+        secondaryColor: theme.secondaryColor,
+        fontFamily: theme.fontFamily,
+        backgroundType: theme.backgroundType
+      });
       res.json(theme);
     } catch (error) {
       console.error("Error fetching theme:", error);
@@ -4685,8 +4691,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // For debugging - use a default user ID if not authenticated
       const userId = req.user?.claims?.sub || "46297180"; // Use the logged-in user's ID as fallback
+      console.log(`💾 POST /api/user/theme - Saving for user ${userId}:`, {
+        primaryColor: req.body.primaryColor,
+        secondaryColor: req.body.secondaryColor,
+        fontFamily: req.body.fontFamily,
+        backgroundType: req.body.backgroundType
+      });
       const themeData = insertUserThemeSchema.parse({ ...req.body, userId });
       const theme = await storage.upsertUserTheme(themeData);
+      console.log(`✅ POST /api/user/theme - Saved successfully:`, {
+        primaryColor: theme.primaryColor,
+        secondaryColor: theme.secondaryColor,
+        fontFamily: theme.fontFamily,
+        backgroundType: theme.backgroundType
+      });
       
       // Invalidate cache so GET returns fresh theme
       const { cacheService } = await import('./cacheService');
