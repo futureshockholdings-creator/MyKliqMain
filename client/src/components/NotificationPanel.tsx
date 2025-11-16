@@ -127,17 +127,6 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
 
 
 
-  const handleNotificationClick = (notification: Notification) => {
-    // Mark as read
-    if (!notification.isRead) {
-      markAsReadMutation.mutate(notification.id);
-    }
-
-    // Navigate if action URL exists
-    if (notification.actionUrl) {
-      window.location.href = notification.actionUrl;
-    }
-  };
 
   const filteredNotifications = notifications.filter((notification: Notification) => {
     if (!notification.isVisible) return false;
@@ -251,10 +240,9 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                         <Card
                           key={notification.id}
                           className={cn(
-                            "cursor-pointer transition-colors hover:bg-accent",
+                            "transition-colors",
                             !notification.isRead && "border-primary bg-primary/5"
                           )}
-                          onClick={() => handleNotificationClick(notification)}
                           data-testid={`notification-item-${notification.id}`}
                         >
                           <CardContent className="p-3">
