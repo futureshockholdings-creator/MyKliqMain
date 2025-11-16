@@ -1641,6 +1641,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             comment.id,
             commentPreview
           );
+          
+          // Broadcast notification to user immediately via WebSocket
+          if ((app as any).broadcastNotification) {
+            (app as any).broadcastNotification(comment.userId);
+          }
         }
       }
       
@@ -5196,6 +5201,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             comment.id,
             commentPreview
           );
+          
+          // Broadcast notification to user immediately via WebSocket
+          if ((app as any).broadcastNotification) {
+            (app as any).broadcastNotification(comment.userId);
+          }
         }
       }
       
