@@ -857,13 +857,11 @@ export default function Home() {
       }
     },
     onSuccess: () => {
+      // Invalidate feed immediately for instant like count updates
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       // Removed like toast for immediate feedback
-    },
-    onSettled: () => {
-      // Don't invalidate immediately to preserve optimistic updates
-      // Let the background refetch happen naturally
     },
   });
 

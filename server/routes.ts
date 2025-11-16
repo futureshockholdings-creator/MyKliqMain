@@ -5097,6 +5097,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Invalidate cache immediately for instant updates
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed');
+      invalidateCache('posts');
+      await cacheService.invalidatePattern('kliq-feed');
+      
       res.json({ success: true });
     } catch (error) {
       console.error("Error liking post:", error);
@@ -5110,6 +5116,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { postId } = req.params;
       
       await storage.unlikePost(postId, userId);
+      
+      // Invalidate cache immediately for instant updates
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed');
+      invalidateCache('posts');
+      await cacheService.invalidatePattern('kliq-feed');
+      
       res.json({ success: true });
     } catch (error) {
       console.error("Error unliking post:", error);
