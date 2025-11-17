@@ -2375,7 +2375,7 @@ export default function Home() {
             <Button
               variant="outline"
               onClick={() => setShowReflectDialog(false)}
-              className="border-border text-foreground"
+              className="bg-black dark:bg-black text-white dark:text-white border-black dark:border-black hover:bg-gray-800 dark:hover:bg-gray-800"
             >
               Close
             </Button>
