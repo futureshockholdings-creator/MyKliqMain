@@ -191,7 +191,7 @@ function Router() {
       <Route path="/community-guidelines" component={CommunityGuidelines} />
       <Route path="/landing" component={Landing} />
       <Route path="/marketing" component={Marketing} />
-      <Route path="/signup" component={Signup} />
+      <Route path="/signup*" component={Signup} />
       <Route path="/login" component={Login} />
       <Route path="/forgot-password" component={ForgotPassword} />
       
@@ -237,7 +237,7 @@ function AppContent() {
   // Mobile analytics will handle screen tracking in React Native app
 
   // Check if we're on a public page that doesn't require authentication
-  const isPublicPage = ['/signup', '/privacy-policy', '/disclaimer', '/landing', '/marketing', '/forgot-password'].includes(currentPath);
+  const isPublicPage = ['/signup', '/signup/', '/privacy-policy', '/disclaimer', '/landing', '/marketing', '/forgot-password'].includes(currentPath);
 
   return (
     <TooltipProvider>
