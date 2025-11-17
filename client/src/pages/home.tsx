@@ -193,6 +193,157 @@ function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
   );
 }
 
+// Edit Comment Form Component
+function EditCommentForm({ comment, onUpdate }: { comment: any; onUpdate: () => void }) {
+  const [editContent, setEditContent] = useState(comment.content || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { toast } = useToast();
+
+  const handleUpdate = async () => {
+    if (!editContent.trim()) {
+      toast({
+        title: "Error",
+        description: "Comment content cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await apiRequest("PUT", `/api/comments/${comment.id}`, {
+        content: editContent
+      });
+
+      toast({
+        title: "Comment Updated",
+        description: "Your comment has been successfully updated.",
+        className: "bg-white text-black border-gray-300",
+      });
+
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update comment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await apiRequest("DELETE", `/api/comments/${comment.id}`);
+
+      toast({
+        title: "Comment Deleted",
+        description: "Your comment has been successfully deleted.",
+        className: "bg-white text-black border-gray-300",
+      });
+
+      setShowDeleteDialog(false);
+      onUpdate();
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete comment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Textarea
+        value={editContent}
+        onChange={(e) => setEditContent(e.target.value)}
+        placeholder="Edit your comment..."
+        className="min-h-[100px] bg-background border-border text-foreground"
+        data-testid="textarea-edit-comment"
+      />
+      <div className="flex gap-2 justify-between">
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogTrigger asChild>
+            <Button
+              variant="destructive"
+              disabled={isDeleting || isSubmitting}
+              className="text-white"
+              data-testid="button-delete-comment"
+            >
+              Delete Comment
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md bg-card border-border">
+            <DialogHeader>
+              <DialogTitle className="text-foreground">Confirm Delete</DialogTitle>
+            </DialogHeader>
+            <div className="flex gap-2 justify-end pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteDialog(false)}
+                disabled={isDeleting}
+                className="border-border text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="text-white"
+                data-testid="button-confirm-delete-comment"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setEditContent(comment.content || '')}
+            disabled={isSubmitting || isDeleting}
+            className="border-border text-foreground"
+          >
+            Reset
+          </Button>
+          <Button
+            onClick={handleUpdate}
+            disabled={isSubmitting || isDeleting || !editContent.trim()}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            data-testid="button-update-comment"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Update Comment"
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [newPost, setNewPost] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -231,6 +382,8 @@ export default function Home() {
   // Scrapbook state
   const [showSavePostDialog, setShowSavePostDialog] = useState(false);
   const [selectedPostToSave, setSelectedPostToSave] = useState<any>(null);
+  const [showSaveCommentDialog, setShowSaveCommentDialog] = useState(false);
+  const [selectedCommentToSave, setSelectedCommentToSave] = useState<any>(null);
   const [saveAlbumId, setSaveAlbumId] = useState<string>("none");
   const [saveNote, setSaveNote] = useState("");
   const [showCreateAlbumDialog, setShowCreateAlbumDialog] = useState(false);
@@ -720,6 +873,52 @@ export default function Home() {
       toast({
         title: "Error",
         description: "Failed to update note. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Comment scrapbook mutations
+  const saveCommentMutation = useMutation({
+    mutationFn: async (data: { commentId: string; albumId?: string; note?: string }) => {
+      return await apiRequest("POST", "/api/scrapbook/save-comment", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+      setShowSaveCommentDialog(false);
+      setSaveAlbumId("none");
+      setSaveNote("");
+      toast({
+        title: "Comment Added!",
+        description: "The comment has been added to your scrapbook.",
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save comment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const unsaveCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      return await apiRequest("DELETE", `/api/scrapbook/save-comment/${commentId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+      toast({
+        title: "Comment Removed",
+        description: "The comment has been removed from your scrapbook.",
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove comment from scrapbook",
         variant: "destructive",
       });
     },
@@ -2844,6 +3043,47 @@ export default function Home() {
                                 {formatTimeAgo(comment.createdAt)}
                               </p>
                               <div className="flex items-center space-x-2">
+                                {/* Scrapbook button - visible to all users */}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                                  onClick={() => {
+                                    setSelectedCommentToSave(comment);
+                                    setShowSaveCommentDialog(true);
+                                  }}
+                                  data-testid={`button-add-comment-scrapbook-${comment.id}`}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+
+                                {/* Edit button - only show for comment author */}
+                                {comment.author?.id === userData?.id && (
+                                  <Dialog>
+                                    <DialogTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                                        data-testid={`button-edit-comment-${comment.id}`}
+                                      >
+                                        <Edit className="h-3 w-3" />
+                                      </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-md bg-card border-border">
+                                      <DialogHeader>
+                                        <DialogTitle className="text-foreground">Edit Comment</DialogTitle>
+                                      </DialogHeader>
+                                      <EditCommentForm 
+                                        comment={comment} 
+                                        onUpdate={() => {
+                                          queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
+                                        }}
+                                      />
+                                    </DialogContent>
+                                  </Dialog>
+                                )}
+
                                 <Button
                                   size="sm"
                                   variant="ghost"
@@ -3394,6 +3634,104 @@ export default function Home() {
                 data-testid="button-save-post"
               >
                 {savePostMutation.isPending ? "Adding..." : "Add"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Save Comment Dialog */}
+      <Dialog open={showSaveCommentDialog} onOpenChange={setShowSaveCommentDialog}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Add Comment to Scrapbook</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Add this comment to your scrapbook and optionally organize it in an album
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              {(scrapbookSaves as any[]).length}/1000 added
+            </div>
+            
+            <div>
+              <Label htmlFor="comment-album-select">Album (optional)</Label>
+              <Select value={saveAlbumId} onValueChange={setSaveAlbumId}>
+                <SelectTrigger data-testid="select-comment-album">
+                  <SelectValue placeholder="No album (add to All)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No album</SelectItem>
+                  {(scrapbookAlbums as any[]).map((album: any) => (
+                    <SelectItem key={album.id} value={album.id}>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: album.color }}
+                        />
+                        {album.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => setShowCreateAlbumDialog(true)}
+                className="mt-1 h-auto p-0 text-primary"
+                data-testid="button-create-comment-album"
+              >
+                + Create New Album
+              </Button>
+            </div>
+            
+            <div>
+              <Label htmlFor="comment-save-note">Note (optional)</Label>
+              <Textarea
+                id="comment-save-note"
+                placeholder="Add a personal note..."
+                value={saveNote}
+                onChange={(e) => setSaveNote(e.target.value)}
+                rows={3}
+                data-testid="textarea-comment-save-note"
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowSaveCommentDialog(false);
+                  setSaveAlbumId("none");
+                  setSaveNote("");
+                }}
+                className="border-border text-foreground"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if ((scrapbookSaves as any[]).length >= 1000) {
+                    toast({
+                      title: "Limit Reached",
+                      description: "You've reached the maximum of 1000 items in your scrapbook.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  saveCommentMutation.mutate({
+                    commentId: selectedCommentToSave?.id,
+                    albumId: saveAlbumId === "none" ? undefined : saveAlbumId,
+                    note: saveNote || undefined,
+                  });
+                }}
+                disabled={saveCommentMutation.isPending}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                data-testid="button-save-comment"
+              >
+                {saveCommentMutation.isPending ? "Adding..." : "Add"}
               </Button>
             </div>
           </div>

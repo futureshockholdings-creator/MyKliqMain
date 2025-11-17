@@ -462,17 +462,19 @@ export const scrapbookAlbums = pgTable("scrapbook_albums", {
   index("idx_scrapbook_albums_user").on(table.userId),
 ]);
 
-// Scrapbook Saves - saved posts with optional notes
+// Scrapbook Saves - saved posts and comments with optional notes
 export const scrapbookSaves = pgTable("scrapbook_saves", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }).notNull(),
+  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }),
+  commentId: varchar("comment_id").references(() => comments.id, { onDelete: "cascade" }),
   albumId: varchar("album_id").references(() => scrapbookAlbums.id, { onDelete: "cascade" }),
   note: text("note"),
   savedAt: timestamp("saved_at").defaultNow(),
 }, (table) => [
   index("idx_scrapbook_saves_user").on(table.userId),
   index("idx_scrapbook_saves_post").on(table.postId),
+  index("idx_scrapbook_saves_comment").on(table.commentId),
   index("idx_scrapbook_saves_album").on(table.albumId),
 ]);
 

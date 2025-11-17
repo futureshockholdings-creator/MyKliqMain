@@ -212,6 +212,8 @@ export interface IStorage {
   // Comment operations
   addComment(comment: InsertComment): Promise<Comment>;
   getCommentById(commentId: string): Promise<Comment | undefined>;
+  updateComment(commentId: string, updates: Partial<Pick<Comment, 'content'>>): Promise<Comment>;
+  deleteComment(commentId: string): Promise<void>;
   likeComment(commentId: string, userId: string): Promise<void>;
   unlikeComment(commentId: string, userId: string): Promise<void>;
   
@@ -371,10 +373,13 @@ export interface IStorage {
   deleteScrapbookAlbum(albumId: string): Promise<void>;
   savePostToScrapbook(save: InsertScrapbookSave): Promise<ScrapbookSave>;
   unsavePostFromScrapbook(userId: string, postId: string): Promise<void>;
+  saveCommentToScrapbook(save: InsertScrapbookSave): Promise<ScrapbookSave>;
+  unsaveCommentFromScrapbook(userId: string, commentId: string): Promise<void>;
   getUserScrapbookSaves(userId: string, albumId?: string): Promise<(ScrapbookSave & { post: Post & { author: User } })[]>;
   updateScrapbookSaveNote(saveId: string, note: string): Promise<ScrapbookSave>;
   getScrapbookSaveCount(userId: string): Promise<number>;
   isPostSavedByUser(userId: string, postId: string): Promise<boolean>;
+  isCommentSavedByUser(userId: string, commentId: string): Promise<boolean>;
 
   // GIF operations
   getAllGifs(): Promise<Gif[]>;
@@ -1286,6 +1291,22 @@ export class DatabaseStorage implements IStorage {
   async getCommentById(commentId: string): Promise<Comment | undefined> {
     const [comment] = await db.select().from(comments).where(eq(comments.id, commentId));
     return comment as Comment | undefined;
+  }
+
+  async updateComment(commentId: string, updates: Partial<Pick<Comment, 'content'>>): Promise<Comment> {
+    const [updatedComment] = await db
+      .update(comments)
+      .set(updates)
+      .where(eq(comments.id, commentId))
+      .returning();
+    if (!updatedComment) {
+      throw new Error('Failed to update comment');
+    }
+    return updatedComment as Comment;
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    await db.delete(comments).where(eq(comments.id, commentId));
   }
 
   async likeComment(commentId: string, userId: string): Promise<void> {
@@ -3042,6 +3063,35 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(scrapbookSaves.userId, userId),
         eq(scrapbookSaves.postId, postId)
+      ))
+      .limit(1);
+    return result.length > 0;
+  }
+
+  async saveCommentToScrapbook(save: InsertScrapbookSave): Promise<ScrapbookSave> {
+    const [newSave] = await db
+      .insert(scrapbookSaves)
+      .values(save)
+      .returning();
+    return newSave;
+  }
+
+  async unsaveCommentFromScrapbook(userId: string, commentId: string): Promise<void> {
+    await db
+      .delete(scrapbookSaves)
+      .where(and(
+        eq(scrapbookSaves.userId, userId),
+        eq(scrapbookSaves.commentId, commentId)
+      ));
+  }
+
+  async isCommentSavedByUser(userId: string, commentId: string): Promise<boolean> {
+    const result = await db
+      .select({ id: scrapbookSaves.id })
+      .from(scrapbookSaves)
+      .where(and(
+        eq(scrapbookSaves.userId, userId),
+        eq(scrapbookSaves.commentId, commentId)
       ))
       .limit(1);
     return result.length > 0;

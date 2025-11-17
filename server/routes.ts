@@ -5282,6 +5282,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update a comment
+  app.put('/api/comments/:commentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { commentId } = req.params;
+      
+      // Check if comment exists and belongs to user
+      const comment = await storage.getCommentById(commentId);
+      if (!comment) {
+        return res.status(404).json({ message: "Comment not found" });
+      }
+      if (comment.userId !== userId) {
+        return res.status(403).json({ message: "You can only edit your own comments" });
+      }
+      
+      const { content } = req.body;
+      if (!content?.trim()) {
+        return res.status(400).json({ message: "Comment content cannot be empty" });
+      }
+      
+      const updatedComment = await storage.updateComment(commentId, { content });
+      res.json(updatedComment);
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      res.status(500).json({ message: "Failed to update comment" });
+    }
+  });
+
+  // Delete a comment
+  app.delete('/api/comments/:commentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { commentId } = req.params;
+      
+      // Check if comment exists and belongs to user
+      const comment = await storage.getCommentById(commentId);
+      if (!comment) {
+        return res.status(404).json({ message: "Comment not found" });
+      }
+      if (comment.userId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own comments" });
+      }
+      
+      await storage.deleteComment(commentId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      res.status(500).json({ message: "Failed to delete comment" });
+    }
+  });
+
   // Report a post
   app.post('/api/reports', isAuthenticated, async (req: any, res) => {
     try {
@@ -7569,6 +7620,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating scrapbook save note:", error);
       res.status(500).json({ message: "Failed to update scrapbook save note" });
+    }
+  });
+
+  // Comment scrapbook routes
+  app.post('/api/scrapbook/save-comment', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { commentId, albumId, note } = req.body;
+      
+      if (!commentId) {
+        return res.status(400).json({ message: "Comment ID is required" });
+      }
+
+      // Check save limit
+      const currentCount = await storage.getScrapbookSaveCount(userId);
+      if (currentCount >= 1000) {
+        return res.status(400).json({ message: "Scrapbook save limit reached (1000 saves maximum)" });
+      }
+
+      // Check if already saved
+      const alreadySaved = await storage.isCommentSavedByUser(userId, commentId);
+      if (alreadySaved) {
+        return res.status(400).json({ message: "Comment is already saved to scrapbook" });
+      }
+
+      const save = await storage.saveCommentToScrapbook({
+        userId,
+        commentId,
+        albumId: albumId || null,
+        note: note || null,
+      });
+      
+      res.json(save);
+    } catch (error) {
+      console.error("Error saving comment to scrapbook:", error);
+      res.status(500).json({ message: "Failed to save comment to scrapbook" });
+    }
+  });
+
+  app.delete('/api/scrapbook/save-comment/:commentId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { commentId } = req.params;
+      
+      await storage.unsaveCommentFromScrapbook(userId, commentId);
+      res.json({ message: "Comment removed from scrapbook" });
+    } catch (error) {
+      console.error("Error removing comment from scrapbook:", error);
+      res.status(500).json({ message: "Failed to remove comment from scrapbook" });
+    }
+  });
+
+  app.post('/api/scrapbook/check-saved-comments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { commentIds } = req.body;
+      
+      if (!Array.isArray(commentIds)) {
+        return res.status(400).json({ message: "commentIds must be an array" });
+      }
+
+      // Batch check all comments at once
+      const savedMap: Record<string, boolean> = {};
+      await Promise.all(
+        commentIds.map(async (commentId: string) => {
+          savedMap[commentId] = await storage.isCommentSavedByUser(userId, commentId);
+        })
+      );
+      
+      res.json(savedMap);
+    } catch (error) {
+      console.error("Error checking saved comments:", error);
+      res.status(500).json({ message: "Failed to check saved comments" });
     }
   });
 
