@@ -3544,29 +3544,29 @@ export default function Home() {
 
       {/* Save Post Dialog */}
       <Dialog open={showSavePostDialog} onOpenChange={setShowSavePostDialog}>
-        <DialogContent className="sm:max-w-md bg-card border-border">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Add to Scrapbook</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogTitle className="text-black dark:text-black">Add to Scrapbook</DialogTitle>
+            <DialogDescription className="text-gray-700 dark:text-gray-700">
               Add this post to your scrapbook and optionally organize it in an album
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-gray-600 dark:text-gray-600">
               {(scrapbookSaves as any[]).length}/1000 added
             </div>
             
             <div>
-              <Label htmlFor="album-select">Album (optional)</Label>
+              <Label htmlFor="album-select" className="text-black dark:text-black">Album (optional)</Label>
               <Select value={saveAlbumId} onValueChange={setSaveAlbumId}>
-                <SelectTrigger data-testid="select-album">
+                <SelectTrigger data-testid="select-album" className="bg-white dark:bg-white text-black dark:text-black border-gray-300">
                   <SelectValue placeholder="No album (add to All)" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No album</SelectItem>
+                <SelectContent className="bg-white dark:bg-white border-gray-300">
+                  <SelectItem value="none" className="text-black dark:text-black">No album</SelectItem>
                   {(scrapbookAlbums as any[]).map((album: any) => (
-                    <SelectItem key={album.id} value={album.id}>
+                    <SelectItem key={album.id} value={album.id} className="text-black dark:text-black">
                       <div className="flex items-center gap-2">
                         <div 
                           className="w-3 h-3 rounded-full" 
@@ -3582,7 +3582,7 @@ export default function Home() {
                 variant="link"
                 size="sm"
                 onClick={() => setShowCreateAlbumDialog(true)}
-                className="mt-1 h-auto p-0 text-primary"
+                className="mt-1 h-auto p-0 text-blue-600 dark:text-blue-600"
                 data-testid="button-create-album"
               >
                 + Create New Album
@@ -3590,7 +3590,7 @@ export default function Home() {
             </div>
             
             <div>
-              <Label htmlFor="save-note">Note (optional)</Label>
+              <Label htmlFor="save-note" className="text-black dark:text-black">Note (optional)</Label>
               <Textarea
                 id="save-note"
                 placeholder="Add a personal note..."
@@ -3598,6 +3598,7 @@ export default function Home() {
                 onChange={(e) => setSaveNote(e.target.value)}
                 rows={3}
                 data-testid="textarea-save-note"
+                className="bg-white dark:bg-white text-black dark:text-black border-gray-300"
               />
             </div>
             
@@ -3609,7 +3610,7 @@ export default function Home() {
                   setSaveAlbumId("none");
                   setSaveNote("");
                 }}
-                className="border-border text-foreground"
+                className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
               >
                 Cancel
               </Button>
@@ -3630,7 +3631,7 @@ export default function Home() {
                   });
                 }}
                 disabled={savePostMutation.isPending}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                 data-testid="button-save-post"
               >
                 {savePostMutation.isPending ? "Adding..." : "Add"}
@@ -3642,29 +3643,29 @@ export default function Home() {
 
       {/* Save Comment Dialog */}
       <Dialog open={showSaveCommentDialog} onOpenChange={setShowSaveCommentDialog}>
-        <DialogContent className="sm:max-w-md bg-card border-border">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Add Comment to Scrapbook</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogTitle className="text-black dark:text-black">Add Comment to Scrapbook</DialogTitle>
+            <DialogDescription className="text-gray-700 dark:text-gray-700">
               Add this comment to your scrapbook and optionally organize it in an album
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-gray-600 dark:text-gray-600">
               {(scrapbookSaves as any[]).length}/1000 added
             </div>
             
             <div>
-              <Label htmlFor="comment-album-select">Album (optional)</Label>
+              <Label htmlFor="comment-album-select" className="text-black dark:text-black">Album (optional)</Label>
               <Select value={saveAlbumId} onValueChange={setSaveAlbumId}>
-                <SelectTrigger data-testid="select-comment-album">
+                <SelectTrigger data-testid="select-comment-album" className="bg-white dark:bg-white text-black dark:text-black border-gray-300">
                   <SelectValue placeholder="No album (add to All)" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No album</SelectItem>
+                <SelectContent className="bg-white dark:bg-white border-gray-300">
+                  <SelectItem value="none" className="text-black dark:text-black">No album</SelectItem>
                   {(scrapbookAlbums as any[]).map((album: any) => (
-                    <SelectItem key={album.id} value={album.id}>
+                    <SelectItem key={album.id} value={album.id} className="text-black dark:text-black">
                       <div className="flex items-center gap-2">
                         <div 
                           className="w-3 h-3 rounded-full" 
@@ -3680,7 +3681,7 @@ export default function Home() {
                 variant="link"
                 size="sm"
                 onClick={() => setShowCreateAlbumDialog(true)}
-                className="mt-1 h-auto p-0 text-primary"
+                className="mt-1 h-auto p-0 text-blue-600 dark:text-blue-600"
                 data-testid="button-create-comment-album"
               >
                 + Create New Album
@@ -3688,7 +3689,7 @@ export default function Home() {
             </div>
             
             <div>
-              <Label htmlFor="comment-save-note">Note (optional)</Label>
+              <Label htmlFor="comment-save-note" className="text-black dark:text-black">Note (optional)</Label>
               <Textarea
                 id="comment-save-note"
                 placeholder="Add a personal note..."
@@ -3696,6 +3697,7 @@ export default function Home() {
                 onChange={(e) => setSaveNote(e.target.value)}
                 rows={3}
                 data-testid="textarea-comment-save-note"
+                className="bg-white dark:bg-white text-black dark:text-black border-gray-300"
               />
             </div>
             
@@ -3707,7 +3709,7 @@ export default function Home() {
                   setSaveAlbumId("none");
                   setSaveNote("");
                 }}
-                className="border-border text-foreground"
+                className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
               >
                 Cancel
               </Button>
@@ -3728,7 +3730,7 @@ export default function Home() {
                   });
                 }}
                 disabled={saveCommentMutation.isPending}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                 data-testid="button-save-comment"
               >
                 {saveCommentMutation.isPending ? "Adding..." : "Add"}
@@ -3740,25 +3742,26 @@ export default function Home() {
 
       {/* Create Album Dialog */}
       <Dialog open={showCreateAlbumDialog} onOpenChange={setShowCreateAlbumDialog}>
-        <DialogContent className="sm:max-w-md bg-card border-border">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Create New Album</DialogTitle>
+            <DialogTitle className="text-black dark:text-black">Create New Album</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="album-name">Album Name</Label>
+              <Label htmlFor="album-name" className="text-black dark:text-black">Album Name</Label>
               <Input
                 id="album-name"
                 placeholder="Enter album name..."
                 value={newAlbumName}
                 onChange={(e) => setNewAlbumName(e.target.value)}
                 data-testid="input-album-name"
+                className="bg-white dark:bg-white text-black dark:text-black border-gray-300"
               />
             </div>
             
             <div>
-              <Label>Album Color</Label>
+              <Label className="text-black dark:text-black">Album Color</Label>
               <div className="flex gap-2 mt-2">
                 {["#FF1493", "#00BFFF", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"].map((color) => (
                   <button
@@ -3767,7 +3770,7 @@ export default function Home() {
                     onClick={() => setNewAlbumColor(color)}
                     className={cn(
                       "w-8 h-8 rounded-full border-2 transition-transform hover:scale-110",
-                      newAlbumColor === color ? "border-foreground scale-110" : "border-transparent"
+                      newAlbumColor === color ? "border-black scale-110" : "border-transparent"
                     )}
                     style={{ backgroundColor: color }}
                     data-testid={`button-color-${color}`}
@@ -3784,7 +3787,7 @@ export default function Home() {
                   setNewAlbumName("");
                   setNewAlbumColor("#FF1493");
                 }}
-                className="border-border text-foreground"
+                className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
               >
                 Cancel
               </Button>
@@ -3804,7 +3807,7 @@ export default function Home() {
                   });
                 }}
                 disabled={createAlbumMutation.isPending}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                 data-testid="button-create-album-submit"
               >
                 {createAlbumMutation.isPending ? "Creating..." : "Create"}
@@ -3816,25 +3819,26 @@ export default function Home() {
 
       {/* Edit Album Dialog */}
       <Dialog open={showEditAlbumDialog} onOpenChange={setShowEditAlbumDialog}>
-        <DialogContent className="sm:max-w-md bg-card border-border">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Edit Album</DialogTitle>
+            <DialogTitle className="text-black dark:text-black">Edit Album</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="edit-album-name">Album Name</Label>
+              <Label htmlFor="edit-album-name" className="text-black dark:text-black">Album Name</Label>
               <Input
                 id="edit-album-name"
                 placeholder="Enter album name..."
                 value={editAlbumName}
                 onChange={(e) => setEditAlbumName(e.target.value)}
                 data-testid="input-edit-album-name"
+                className="bg-white dark:bg-white text-black dark:text-black border-gray-300"
               />
             </div>
             
             <div>
-              <Label>Album Color</Label>
+              <Label className="text-black dark:text-black">Album Color</Label>
               <div className="flex gap-2 mt-2">
                 {["#FF1493", "#00BFFF", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"].map((color) => (
                   <button
@@ -3843,7 +3847,7 @@ export default function Home() {
                     onClick={() => setEditAlbumColor(color)}
                     className={cn(
                       "w-8 h-8 rounded-full border-2 transition-transform hover:scale-110",
-                      editAlbumColor === color ? "border-foreground scale-110" : "border-transparent"
+                      editAlbumColor === color ? "border-black scale-110" : "border-transparent"
                     )}
                     style={{ backgroundColor: color }}
                     data-testid={`button-edit-color-${color}`}
@@ -3859,7 +3863,7 @@ export default function Home() {
                   setShowEditAlbumDialog(false);
                   setEditingAlbum(null);
                 }}
-                className="border-border text-foreground"
+                className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
               >
                 Cancel
               </Button>
@@ -3882,7 +3886,7 @@ export default function Home() {
                   });
                 }}
                 disabled={updateAlbumMutation.isPending}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                 data-testid="button-update-album"
               >
                 {updateAlbumMutation.isPending ? "Updating..." : "Update"}
@@ -3894,9 +3898,9 @@ export default function Home() {
 
       {/* Edit Note Dialog */}
       <Dialog open={showEditNoteDialog} onOpenChange={setShowEditNoteDialog}>
-        <DialogContent className="sm:max-w-md bg-card border-border">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Edit Note</DialogTitle>
+            <DialogTitle className="text-black dark:text-black">Edit Note</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
@@ -3906,6 +3910,7 @@ export default function Home() {
               onChange={(e) => setEditNoteText(e.target.value)}
               rows={4}
               data-testid="textarea-edit-note"
+              className="bg-white dark:bg-white text-black dark:text-black border-gray-300"
             />
             
             <div className="flex justify-end space-x-2">
@@ -3915,7 +3920,7 @@ export default function Home() {
                   setShowEditNoteDialog(false);
                   setEditingSaveNote(null);
                 }}
-                className="border-border text-foreground"
+                className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
               >
                 Cancel
               </Button>
@@ -3927,7 +3932,7 @@ export default function Home() {
                   });
                 }}
                 disabled={updateNoteMutation.isPending}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                 data-testid="button-update-note"
               >
                 {updateNoteMutation.isPending ? "Updating..." : "Update"}
@@ -3939,10 +3944,10 @@ export default function Home() {
 
       {/* Unsave Confirmation Dialog */}
       <Dialog open={showUnsaveDialog} onOpenChange={setShowUnsaveDialog}>
-        <DialogContent className="sm:max-w-md bg-card border-border">
+        <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Remove from Scrapbook?</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogTitle className="text-black dark:text-black">Remove from Scrapbook?</DialogTitle>
+            <DialogDescription className="text-gray-700 dark:text-gray-700">
               This will remove the post from your scrapbook and delete any notes you've added.
             </DialogDescription>
           </DialogHeader>
@@ -3954,7 +3959,7 @@ export default function Home() {
                 setShowUnsaveDialog(false);
                 setPostToUnsave(null);
               }}
-              className="border-border text-foreground"
+              className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
             >
               Cancel
             </Button>
@@ -3963,7 +3968,7 @@ export default function Home() {
                 unsavePostMutation.mutate(postToUnsave?.id);
               }}
               disabled={unsavePostMutation.isPending}
-              variant="destructive"
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700 dark:text-white"
               data-testid="button-confirm-unsave"
             >
               {unsavePostMutation.isPending ? "Removing..." : "Remove"}
