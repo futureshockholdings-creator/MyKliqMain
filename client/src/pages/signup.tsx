@@ -11,6 +11,77 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, X, Plus, Calendar, Phone, Mail } from "lucide-react";
 
+const TagInput = ({ 
+  label, 
+  items, 
+  setItems, 
+  newItem, 
+  setNewItem, 
+  placeholder,
+  icon: Icon,
+  addItem,
+  removeItem
+}: {
+  label: string;
+  items: string[];
+  setItems: (items: string[]) => void;
+  newItem: string;
+  setNewItem: (item: string) => void;
+  placeholder: string;
+  icon: any;
+  addItem: (items: string[], setItems: (items: string[]) => void, newItem: string, setNewItem: (item: string) => void) => void;
+  removeItem: (items: string[], setItems: (items: string[]) => void, itemToRemove: string) => void;
+}) => (
+  <div className="space-y-2">
+    <Label className="text-foreground flex items-center gap-2">
+      <Icon className="w-4 h-4" />
+      {label}
+    </Label>
+    <div className="flex gap-2">
+      <Input
+        value={newItem}
+        onChange={(e) => setNewItem(e.target.value)}
+        placeholder={placeholder}
+        className="bg-input border-border text-foreground flex-1"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            addItem(items, setItems, newItem, setNewItem);
+          }
+        }}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => addItem(items, setItems, newItem, setNewItem)}
+        className="border-primary text-primary hover:bg-primary/20"
+      >
+        <Plus className="w-4 h-4" />
+      </Button>
+    </div>
+    <div className="flex flex-wrap gap-2">
+      {items.map((item, index) => (
+        <Badge
+          key={index}
+          variant="secondary"
+          className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+        >
+          {item}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-2 h-auto p-0 text-muted-foreground hover:text-foreground"
+            onClick={() => removeItem(items, setItems, item)}
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        </Badge>
+      ))}
+    </div>
+  </div>
+);
+
 export default function Signup() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -235,73 +306,6 @@ export default function Signup() {
       setIsSubmitting(false);
     }
   };
-
-  const TagInput = ({ 
-    label, 
-    items, 
-    setItems, 
-    newItem, 
-    setNewItem, 
-    placeholder,
-    icon: Icon 
-  }: {
-    label: string;
-    items: string[];
-    setItems: (items: string[]) => void;
-    newItem: string;
-    setNewItem: (item: string) => void;
-    placeholder: string;
-    icon: any;
-  }) => (
-    <div className="space-y-2">
-      <Label className="text-foreground flex items-center gap-2">
-        <Icon className="w-4 h-4" />
-        {label}
-      </Label>
-      <div className="flex gap-2">
-        <Input
-          value={newItem}
-          onChange={(e) => setNewItem(e.target.value)}
-          placeholder={placeholder}
-          className="bg-input border-border text-foreground flex-1"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              addItem(items, setItems, newItem, setNewItem);
-            }
-          }}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => addItem(items, setItems, newItem, setNewItem)}
-          className="border-primary text-primary hover:bg-primary/20"
-        >
-          <Plus className="w-4 h-4" />
-        </Button>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {items.map((item, index) => (
-          <Badge
-            key={index}
-            variant="secondary"
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
-          >
-            {item}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-2 h-auto p-0 text-muted-foreground hover:text-foreground"
-              onClick={() => removeItem(items, setItems, item)}
-            >
-              <X className="w-3 h-3" />
-            </Button>
-          </Badge>
-        ))}
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -550,6 +554,8 @@ export default function Signup() {
                     setNewItem={setNewInterest}
                     placeholder="Add an interest"
                     icon={Heart}
+                    addItem={addItem}
+                    removeItem={removeItem}
                   />
 
                   <TagInput
@@ -560,6 +566,8 @@ export default function Signup() {
                     setNewItem={setNewHobby}
                     placeholder="Add a hobby"
                     icon={Gamepad2}
+                    addItem={addItem}
+                    removeItem={removeItem}
                   />
 
                   <TagInput
@@ -570,6 +578,8 @@ export default function Signup() {
                     setNewItem={setNewLocation}
                     placeholder="Add a place"
                     icon={MapPin}
+                    addItem={addItem}
+                    removeItem={removeItem}
                   />
 
                   <TagInput
@@ -580,6 +590,8 @@ export default function Signup() {
                     setNewItem={setNewFood}
                     placeholder="Add a food"
                     icon={Utensils}
+                    addItem={addItem}
+                    removeItem={removeItem}
                   />
 
                   <TagInput
@@ -590,6 +602,8 @@ export default function Signup() {
                     setNewItem={setNewGenre}
                     placeholder="Add a genre"
                     icon={Music}
+                    addItem={addItem}
+                    removeItem={removeItem}
                   />
 
                   <TagInput
@@ -600,6 +614,8 @@ export default function Signup() {
                     setNewItem={setNewMovie}
                     placeholder="Add a movie"
                     icon={Film}
+                    addItem={addItem}
+                    removeItem={removeItem}
                   />
 
                   <TagInput
@@ -610,6 +626,8 @@ export default function Signup() {
                     setNewItem={setNewBook}
                     placeholder="Add a book"
                     icon={BookOpen}
+                    addItem={addItem}
+                    removeItem={removeItem}
                   />
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
