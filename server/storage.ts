@@ -4489,16 +4489,32 @@ export class DatabaseStorage implements IStorage {
         userStreak = await this.initializeUserStreak(userId);
       }
 
-      const today = new Date().toISOString().split('T')[0];
+      // Get current time in EST/EDT (America/New_York timezone)
+      const now = new Date();
+      const estTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      
+      // Calculate the "login day" based on noon EST reset time
+      // If it's before noon EST, use yesterday's date as the login day
+      // If it's noon or after, use today's date as the login day
+      const hour = estTime.getHours();
+      const loginDay = new Date(estTime);
+      if (hour < 12) {
+        // Before noon EST - use yesterday as the login day
+        loginDay.setDate(loginDay.getDate() - 1);
+      }
+      const loginDayStr = loginDay.toISOString().split('T')[0];
+      
       const lastLogin = userStreak.lastLoginDate?.toString();
 
-      if (lastLogin === today) {
+      // Check if already logged in during current login day (noon to noon period)
+      if (lastLogin === loginDayStr) {
         return { streak: userStreak, koinsAwarded: 0 };
       }
 
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      // Calculate yesterday's login day for streak checking
+      const yesterdayLoginDay = new Date(loginDay);
+      yesterdayLoginDay.setDate(yesterdayLoginDay.getDate() - 1);
+      const yesterdayStr = yesterdayLoginDay.toISOString().split('T')[0];
 
       let newStreak = userStreak.currentStreak;
       let tierUnlocked: ProfileBorder | undefined;
@@ -4516,7 +4532,7 @@ export class DatabaseStorage implements IStorage {
         .set({
           currentStreak: newStreak,
           longestStreak: newLongestStreak,
-          lastLoginDate: today as any,
+          lastLoginDate: loginDayStr as any,
           updatedAt: new Date(),
         })
         .where(eq(loginStreaks.userId, userId))
