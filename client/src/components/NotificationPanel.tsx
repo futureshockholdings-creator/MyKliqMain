@@ -196,7 +196,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                       <Icon className="h-3 w-3 mr-1" />
                       {tab.label}
                       {tabCount > 0 && (
-                        <Badge variant="destructive" className="ml-1 h-4 w-4 p-0 text-[10px]">
+                        <Badge variant="destructive" className="ml-1 h-4 w-4 p-0 text-[10px] flex items-center justify-center">
                           {tabCount}
                         </Badge>
                       )}
