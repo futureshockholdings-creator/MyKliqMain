@@ -1309,6 +1309,42 @@ export class DatabaseStorage implements IStorage {
     await db.delete(comments).where(eq(comments.id, commentId));
   }
 
+  async getCommentsByPostId(postId: string, userId: string): Promise<any[]> {
+    // Get all comments for the post with author info
+    const postComments = await db
+      .select({
+        comment: comments,
+        author: users,
+      })
+      .from(comments)
+      .leftJoin(users, eq(comments.userId, users.id))
+      .where(eq(comments.postId, postId))
+      .orderBy(desc(comments.createdAt));
+
+    // Get all comment likes for this post
+    const commentIds = postComments.map(pc => pc.comment.id);
+    const allLikes = commentIds.length > 0
+      ? await db
+          .select()
+          .from(commentLikes)
+          .where(sql`${commentLikes.commentId} IN ${commentIds}`)
+      : [];
+
+    // Map comments with like counts and user liked status
+    return postComments.map(({ comment, author }) => {
+      const commentLikesForThis = allLikes.filter(like => like.commentId === comment.id);
+      const likes_count = commentLikesForThis.length;
+      const user_liked = commentLikesForThis.some(like => like.userId === userId);
+
+      return {
+        ...comment,
+        author,
+        likes_count,
+        user_liked,
+      };
+    });
+  }
+
   async likeComment(commentId: string, userId: string): Promise<void> {
     // Check if already liked
     const [existingLike] = await db
