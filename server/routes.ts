@@ -5195,6 +5195,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Invalidate cache immediately for instant updates
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed');
+      invalidateCache('posts');
+      await cacheService.invalidatePattern('kliq-feed');
+      
       res.json(comment);
     } catch (error) {
       console.error("Error adding comment:", error);
