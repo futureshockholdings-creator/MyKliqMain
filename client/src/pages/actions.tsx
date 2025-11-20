@@ -23,7 +23,8 @@ import {
   Mic,
   MicOff,
   Camera,
-  CameraOff
+  CameraOff,
+  Trash2
 } from "lucide-react";
 import Footer from "@/components/Footer";
 
@@ -104,10 +105,12 @@ export default function Actions() {
       const response = await apiRequest("POST", "/api/actions", actionData);
       return response;
     },
-    onSuccess: (newAction) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+    onSuccess: async (newAction) => {
+      // Wait for actions list to refresh before showing the new action
+      await queryClient.refetchQueries({ queryKey: ["/api/actions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] }); // Refresh posts to show the auto-post
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] }); // Refresh feed
       setShowCreateAction(false);
       setSelectedAction(newAction);
       setNewAction({ title: "", description: "", chatEnabled: true });
@@ -142,6 +145,36 @@ export default function Actions() {
       toast({
         title: "Action ended",
         description: "Your live stream has been stopped",
+      });
+    },
+  });
+
+  // Delete action mutation
+  const deleteActionMutation = useMutation({
+    mutationFn: async (actionId: string) => {
+      await apiRequest("DELETE", `/api/actions/${actionId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] }); // Remove auto-generated post
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] }); // Remove from feed
+      setSelectedAction(null);
+      setIsStreaming(false);
+      stopStream();
+      if (ws) {
+        ws.close();
+        setWs(null);
+      }
+      toast({
+        title: "Stream deleted",
+        description: "Your live stream has been permanently removed",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete stream",
+        variant: "destructive",
       });
     },
   });
@@ -469,19 +502,35 @@ export default function Actions() {
                 onClick={() => setSelectedAction(null)}
                 variant="outline"
                 className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                data-testid="button-back-to-actions"
               >
                 Back to Actions
               </Button>
               
-              {userData && selectedAction.author.id !== userData.id && (
-                <Button
-                  onClick={() => leaveActionMutation.mutate(selectedAction.id)}
-                  variant="outline"
-                  className="border-red-600 text-red-400 hover:bg-red-900"
-                >
-                  Leave Stream
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {userData && selectedAction.author.id === userData.id && (
+                  <Button
+                    onClick={() => deleteActionMutation.mutate(selectedAction.id)}
+                    variant="destructive"
+                    disabled={deleteActionMutation.isPending}
+                    data-testid="button-delete-stream"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {deleteActionMutation.isPending ? "Deleting..." : "Delete Stream"}
+                  </Button>
+                )}
+                
+                {userData && selectedAction.author.id !== userData.id && (
+                  <Button
+                    onClick={() => leaveActionMutation.mutate(selectedAction.id)}
+                    variant="outline"
+                    className="border-red-600 text-red-400 hover:bg-red-900"
+                    data-testid="button-leave-stream"
+                  >
+                    Leave Stream
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
           
