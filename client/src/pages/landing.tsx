@@ -80,7 +80,7 @@ export default function Landing() {
         </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-sm md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto bg-card min-h-screen">
+      <div className="relative z-10 w-full bg-card min-h-screen">
         {/* Welcome Content */}
         <div className="p-4 md:p-6 lg:p-8 space-y-6">
           <div className="text-center">
