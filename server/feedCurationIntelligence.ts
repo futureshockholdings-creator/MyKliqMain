@@ -489,7 +489,10 @@ export class FeedCurationIntelligence {
   /**
    * Calculate content length optimization factor
    */
-  private calculateContentLengthFactor(content: string): number {
+  private calculateContentLengthFactor(content: string | null): number {
+    // Handle null content (e.g., image-only posts)
+    if (!content) return 0.7; // Image-only posts get a decent score
+    
     const length = content.length;
     
     // Optimal content length for engagement
