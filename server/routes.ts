@@ -5150,6 +5150,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get comments for a post
+  app.get('/api/posts/:postId/comments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { postId } = req.params;
+      
+      const comments = await storage.getCommentsByPostId(postId, userId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      res.status(500).json({ message: "Failed to fetch comments" });
+    }
+  });
+
   app.post('/api/posts/:postId/comments', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
