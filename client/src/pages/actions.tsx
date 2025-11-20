@@ -112,7 +112,13 @@ export default function Actions() {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] }); // Refresh feed
       setShowCreateAction(false);
-      setSelectedAction(newAction);
+      
+      // Find the fully populated action from the refetched list
+      const fullAction = queryClient.getQueryData<Action[]>(["/api/actions"])?.find(a => a.id === newAction.id);
+      if (fullAction) {
+        setSelectedAction(fullAction);
+      }
+      
       setNewAction({ title: "", description: "", chatEnabled: true });
       toast({
         title: "Action started!",
