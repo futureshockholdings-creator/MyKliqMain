@@ -236,11 +236,11 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
         </h3>
         
         <Button
-          variant="outline"
           size="sm"
           onClick={() => generateSuggestionsMutation.mutate()}
           disabled={generateSuggestionsMutation.isPending}
           data-testid="button-generate-suggestions"
+          className="bg-green-600 text-white hover:bg-green-700 disabled:bg-green-600/50 disabled:text-white/70"
         >
           {generateSuggestionsMutation.isPending ? "Analyzing..." : "Analyze Interactions"}
         </Button>
