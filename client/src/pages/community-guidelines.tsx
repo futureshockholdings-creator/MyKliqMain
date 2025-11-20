@@ -3,8 +3,7 @@ import Footer from "@/components/Footer";
 export default function CommunityGuidelines() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
           <h1 className="text-3xl font-bold mb-8">Community Guidelines</h1>
           
           <div className="prose prose-slate dark:prose-invert max-w-none space-y-6">
@@ -170,7 +169,6 @@ export default function CommunityGuidelines() {
             </section>
           </div>
         </div>
-      </div>
       <Footer />
     </div>
   );

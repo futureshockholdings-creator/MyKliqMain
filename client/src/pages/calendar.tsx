@@ -276,7 +276,7 @@ export default function Calendar() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="bg-card border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="w-full max-w-6xl mx-auto px-4 py-4">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -343,7 +343,7 @@ export default function Calendar() {
       </div>
 
       {/* Calendar Grid */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="w-full max-w-6xl mx-auto px-4 py-6">
         {/* Day headers */}
         <div className="grid grid-cols-7 gap-2 mb-2">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
