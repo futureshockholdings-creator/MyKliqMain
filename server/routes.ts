@@ -5216,30 +5216,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.likeComment(commentId, userId);
       
-      // Get comment details to notify the author
-      const comment = await storage.getCommentById(commentId);
-      console.log("Comment like notification check:", { commentUserId: comment?.userId, currentUserId: userId, shouldNotify: comment && comment.userId !== userId });
-      
-      if (comment && comment.userId !== userId) {
-        const user = await storage.getUser(userId);
-        if (user) {
-          console.log("Creating comment like notification for:", comment.userId, "from:", user.firstName);
-          const commentPreview = comment.content.slice(0, 50) + (comment.content.length > 50 ? "..." : "");
-          await notificationService.notifyCommentLike(
-            comment.userId,
-            user.firstName || "Someone",
-            comment.id,
-            commentPreview
-          );
-          
-          // Broadcast notification to user immediately via WebSocket
-          if ((app as any).broadcastNotification) {
-            (app as any).broadcastNotification(comment.userId);
-          }
-        }
-      }
-      
+      // Respond immediately for instant UI feedback
       res.json({ success: true });
+      
+      // Handle notifications asynchronously (fire-and-forget)
+      (async () => {
+        try {
+          const comment = await storage.getCommentById(commentId);
+          
+          if (comment && comment.userId !== userId) {
+            const user = await storage.getUser(userId);
+            if (user) {
+              const commentPreview = comment.content.slice(0, 50) + (comment.content.length > 50 ? "..." : "");
+              await notificationService.notifyCommentLike(
+                comment.userId,
+                user.firstName || "Someone",
+                comment.id,
+                commentPreview
+              );
+              
+              // Broadcast notification via WebSocket
+              if ((app as any).broadcastNotification) {
+                (app as any).broadcastNotification(comment.userId);
+              }
+            }
+          }
+        } catch (notifError) {
+          console.error("Error sending comment like notification:", notifError);
+        }
+      })();
     } catch (error) {
       console.error("Error liking comment:", error);
       res.status(500).json({ message: "Failed to like comment" });
