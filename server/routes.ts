@@ -5367,6 +5367,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.deleteComment(commentId);
+      
+      // Invalidate cache immediately for instant updates
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed');
+      invalidateCache('posts');
+      await cacheService.invalidatePattern('kliq-feed');
+      
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting comment:", error);
