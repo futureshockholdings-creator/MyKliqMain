@@ -401,11 +401,18 @@ export default function Home() {
   const [postToUnsave, setPostToUnsave] = useState<any>(null);
   const [reflectTab, setReflectTab] = useState("reflection");
 
-  const { user } = useAuth();
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const userData = user as any;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { translatePost, translateMoodText } = usePostTranslation();
+
+  // Redirect to landing if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      window.location.href = "/";
+    }
+  }, [authLoading, isAuthenticated]);
 
   // Add click outside to close comments
   useEffect(() => {

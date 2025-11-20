@@ -3916,18 +3916,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
         
-        console.log("Login successful for user:", user.id);
-        res.setHeader('Content-Type', 'application/json');
-        res.json({ 
-          message: "Login successful",
-          success: true,
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            profileImageUrl: user.profileImageUrl
+        // Save session explicitly before sending response
+        req.session.save((saveErr: any) => {
+          if (saveErr) {
+            console.error("Session save error:", saveErr);
+            return res.status(500).json({ 
+              message: "Failed to save session" 
+            });
           }
+          
+          console.log("Login successful for user:", user.id, "Session saved");
+          res.setHeader('Content-Type', 'application/json');
+          res.json({ 
+            message: "Login successful",
+            success: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              profileImageUrl: user.profileImageUrl
+            }
+          });
         });
       });
 
