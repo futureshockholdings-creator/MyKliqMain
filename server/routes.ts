@@ -5286,31 +5286,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const reply = await storage.addComment(replyData);
       
-      // Notify the parent comment author
-      console.log("Comment reply notification check:", { parentCommentUserId: parentComment.userId, currentUserId: userId, shouldNotify: parentComment.userId !== userId });
+      // Invalidate cache immediately for instant updates
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed');
+      invalidateCache('posts');
+      await cacheService.invalidatePattern('kliq-feed');
       
-      if (parentComment.userId !== userId) {
-        const user = await storage.getUser(userId);
-        if (user) {
-          console.log("Creating comment reply notification for:", parentComment.userId, "from:", user.firstName);
-          const replyPreview = reply.content.slice(0, 50) + (reply.content.length > 50 ? "..." : "");
-          await notificationService.notifyComment(
-            parentComment.userId,
-            `${user.firstName || "Someone"} replied to your comment`,
-            parentComment.postId,
-            replyPreview
-          );
-        }
-        
-        // Award 0.25 Kliq Koins for replying to another user's comment (not own comment)
-        try {
-          await storage.awardKoins(userId, 0.25, 'comment_reply', reply.id);
-        } catch (koinError) {
-          console.error("Error awarding Koins for comment reply:", koinError);
-        }
-      }
-      
+      // Respond immediately
       res.json(reply);
+      
+      // Handle notifications and Koins asynchronously (fire-and-forget)
+      if (parentComment.userId !== userId) {
+        (async () => {
+          try {
+            const user = await storage.getUser(userId);
+            if (user) {
+              const replyPreview = reply.content.slice(0, 50) + (reply.content.length > 50 ? "..." : "");
+              await notificationService.notifyComment(
+                parentComment.userId,
+                `${user.firstName || "Someone"} replied to your comment`,
+                parentComment.postId,
+                replyPreview
+              );
+            }
+            
+            // Award Koins for replying
+            await storage.awardKoins(userId, 0.25, 'comment_reply', reply.id);
+          } catch (bgError) {
+            console.error("Error in reply background tasks:", bgError);
+          }
+        })();
+      }
     } catch (error) {
       console.error("Error adding reply:", error);
       res.status(500).json({ message: "Failed to add reply" });
