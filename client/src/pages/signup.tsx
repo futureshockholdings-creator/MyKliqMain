@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 import { User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, X, Plus, Calendar, Phone, Mail } from "lucide-react";
 
 const TagInput = ({ 
@@ -134,6 +136,9 @@ export default function Signup() {
   const [newHobby, setNewHobby] = useState("");
   const [newMovie, setNewMovie] = useState("");
   const [newBook, setNewBook] = useState("");
+  
+  // Terms acceptance checkbox
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const addItem = (items: string[], setItems: (items: string[]) => void, newItem: string, setNewItem: (item: string) => void) => {
     if (newItem.trim() && !items.includes(newItem.trim())) {
@@ -255,6 +260,16 @@ export default function Signup() {
       toast({
         title: "Invalid PIN",
         description: "Security PIN must be exactly 4 digits",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate terms acceptance
+    if (!termsAccepted) {
+      toast({
+        title: "Terms Not Accepted",
+        description: "You must agree to the Privacy Policy, Disclaimer, and Community Guidelines to create an account",
         variant: "destructive"
       });
       return;
@@ -681,6 +696,61 @@ export default function Signup() {
                     </div>
                   </div>
                 </div>
+                </div>
+              )}
+
+              {/* Terms and Conditions Checkbox - Shown on Step 3 */}
+              {currentStep === 3 && (
+                <div className="space-y-4 pt-4 pb-2">
+                  <div className="border border-border rounded-lg p-4 bg-muted/50">
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        id="terms-checkbox"
+                        checked={termsAccepted}
+                        onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                        className="mt-1"
+                        data-testid="checkbox-terms-acceptance"
+                      />
+                      <div className="flex-1">
+                        <label
+                          htmlFor="terms-checkbox"
+                          className="text-sm text-foreground leading-relaxed cursor-pointer"
+                        >
+                          I agree to the{" "}
+                          <Link 
+                            href="/privacy-policy" 
+                            className="text-primary hover:underline font-medium"
+                            target="_blank"
+                            data-testid="link-privacy-policy"
+                          >
+                            Privacy Policy
+                          </Link>
+                          {", "}
+                          <Link 
+                            href="/disclaimer" 
+                            className="text-primary hover:underline font-medium"
+                            target="_blank"
+                            data-testid="link-disclaimer"
+                          >
+                            Disclaimer
+                          </Link>
+                          {", and "}
+                          <Link 
+                            href="/community-guidelines" 
+                            className="text-primary hover:underline font-medium"
+                            target="_blank"
+                            data-testid="link-community-guidelines"
+                          >
+                            Community Guidelines
+                          </Link>
+                          {" *"}
+                        </label>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          By creating an account, you acknowledge that you have read and agree to our policies
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 

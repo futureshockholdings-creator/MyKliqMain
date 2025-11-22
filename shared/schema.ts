@@ -72,6 +72,8 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").default(false),
   // Kliq Koin - Equipped profile border
   equippedBorderId: varchar("equipped_border_id").references(() => profileBorders.id),
+  // Terms acceptance for legal compliance
+  termsAcceptedAt: timestamp("terms_accepted_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

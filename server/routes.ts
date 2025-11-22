@@ -369,7 +369,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         favoriteBooks: favoriteBooks?.filter((item: string) => item.trim()) || [],
         relationshipStatus: relationshipStatus || null,
         petPreferences: petPreferences || null,
-        lifestyle: lifestyle || null
+        lifestyle: lifestyle || null,
+        termsAcceptedAt: new Date()
       });
 
       // Create user session (authenticate them)
