@@ -30,6 +30,13 @@ PostgreSQL with Drizzle ORM stores data for users, themes, friendships, posts, c
 ### Authentication & Authorization
 Authentication uses Replit OAuth with cookie-based sessions for web and JWT tokens for mobile. Security features include password requirements, PKCE support for OAuth 2.0, 4-step password recovery, and invite codes.
 
+**Recent Security Fixes (Nov 22, 2025)**:
+- Fixed authentication loop: Removed hardcoded fallback user ID from theme endpoints
+- All theme endpoints now require authentication via `isAuthenticated` middleware
+- Logout properly destroys Express session and clears cookies
+- Theme loading on frontend now conditional on authentication status
+- Unauthenticated users can no longer access protected endpoints or see "generic user" data
+
 ### Social Media OAuth Integration
 External OAuth connections (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube) use an adaptive flow: popup windows for desktop browsers and full-page redirects for mobile browsers. This approach handles mobile browser popup blockers by detecting failed `window.open()` calls and automatically falling back to `window.location.assign()` redirects. Users connect social accounts to earn Kliq Koins (1,000 per platform, max 10 platforms).
 
