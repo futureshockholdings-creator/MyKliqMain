@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { UserTheme } from "@shared/schema";
 import { getAccessibleForeground } from "@/lib/colorUtils";
+import { useAuth } from "./useAuth";
 
 // Helper function to convert hex to HSL
 const hexToHsl = (hex: string) => {
@@ -174,9 +175,11 @@ const applyTheme = (theme: Partial<UserTheme>) => {
 };
 
 export function useTheme() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  
   const { data: theme, isLoading } = useQuery({
     queryKey: ["/api/user/theme"],
-    enabled: true, // Re-enabled with proper caching
+    enabled: isAuthenticated && !authLoading, // Only fetch when authenticated
     retry: false,
     staleTime: Infinity, // Never consider data stale
     gcTime: Infinity, // Never garbage collect

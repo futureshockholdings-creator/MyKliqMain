@@ -4684,11 +4684,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Theme routes
-  app.get('/api/user/theme', async (req: any, res) => {
+  // Theme routes - REQUIRES AUTHENTICATION
+  app.get('/api/user/theme', isAuthenticated, async (req: any, res) => {
     try {
-      // For debugging - use a default user ID if not authenticated
-      const userId = req.user?.claims?.sub || "46297180"; // Use the logged-in user's ID as fallback
+      const userId = req.user.claims.sub;
       const theme = await storage.getUserTheme(userId);
       
       // Return default theme if user doesn't have one yet
@@ -4725,10 +4724,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/user/theme', async (req: any, res) => {
+  app.post('/api/user/theme', isAuthenticated, async (req: any, res) => {
     try {
-      // For debugging - use a default user ID if not authenticated
-      const userId = req.user?.claims?.sub || "46297180"; // Use the logged-in user's ID as fallback
+      const userId = req.user.claims.sub;
       console.log(`💾 POST /api/user/theme - Saving for user ${userId}:`, {
         primaryColor: req.body.primaryColor,
         secondaryColor: req.body.secondaryColor,
