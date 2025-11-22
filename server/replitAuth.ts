@@ -67,7 +67,8 @@ async function upsertUser(
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
+    // Don't include profileImageUrl - preserve existing values for returning users,
+    // new users will get NULL by default
   });
 }
 

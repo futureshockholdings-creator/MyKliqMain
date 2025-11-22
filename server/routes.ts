@@ -4690,6 +4690,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For debugging - use a default user ID if not authenticated
       const userId = req.user?.claims?.sub || "46297180"; // Use the logged-in user's ID as fallback
       const theme = await storage.getUserTheme(userId);
+      
+      // Return default theme if user doesn't have one yet
+      if (!theme) {
+        const defaultTheme = {
+          primaryColor: '#316bf1',
+          secondaryColor: '#de7a9a',
+          fontFamily: 'helvetica',
+          fontColor: '#000000',
+          navBgColor: '#ffffff',
+          navActiveColor: '#316bf1',
+          borderStyle: 'solid',
+          backgroundType: 'solid',
+          backgroundColor: '#000000',
+          backgroundGradientStart: '#316bf1',
+          backgroundGradientEnd: '#de7a9a',
+          backgroundPattern: 'dots',
+          enableSparkles: false
+        };
+        console.log(`🔍 GET /api/user/theme - No theme found for user ${userId}, returning defaults`);
+        return res.json(defaultTheme);
+      }
+      
       console.log(`🔍 GET /api/user/theme - Retrieved for user ${userId}:`, {
         primaryColor: theme.primaryColor,
         secondaryColor: theme.secondaryColor,
