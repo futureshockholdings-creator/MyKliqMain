@@ -846,49 +846,37 @@ export class DatabaseStorage implements IStorage {
 
     const feedItems: any[] = [];
     
-    // Educational posts: Show 1-2 randomly selected posts for users <7 days old
-    // Rate limited to every 6 hours (max 4 times per day)
+    // TEMPORARY: Show ALL 25 educational posts for review
+    // TODO: Revert back to showing 1-2 random posts every 6 hours after review
     let educationalPostsToAdd: any[] = [];
     if (includeEducationalPosts && page === 1) {
-      // Check 6-hour rate limit
-      const sixHoursInMs = 6 * 60 * 60 * 1000;
-      const lastViewCacheKey = `edu-posts-last-view:${userId}`;
-      const lastViewTime = await cacheService.get<number>(lastViewCacheKey);
-      const now = Date.now();
-      const shouldShowEducationalPosts = !lastViewTime || (now - lastViewTime) >= sixHoursInMs;
+      // Get ALL educational posts for review (normally would be 1-2 random)
+      const educationalPosts = await this.getEducationalPosts(25);
       
-      if (shouldShowEducationalPosts) {
-        // Update last view time in cache (expires in 7 days)
-        await cacheService.set(lastViewCacheKey, now, 7 * 24 * 60 * 60);
-        
-        // Get 1-2 random educational posts
-        const educationalPosts = await this.getRandomEducationalPosts(2);
-        
-        educationalPostsToAdd = educationalPosts.map(eduPost => ({
-          id: `edu_${eduPost.id}`,
-          type: 'educational',
-          title: eduPost.title,
-          content: eduPost.content,
-          featureName: eduPost.featureName,
-          icon: eduPost.icon,
-          accentColor: eduPost.accentColor,
-          createdAt: eduPost.createdAt,
-          activityDate: eduPost.createdAt,
-          userId: 'system',
-          author: {
-            id: 'system',
-            firstName: 'MyKliq',
-            lastName: 'Tips',
-            profileImageUrl: null,
-            kliqName: null,
-          },
-          likes: [],
-          comments: [],
-          likeCount: 0,
-          commentCount: 0,
-          isLiked: false,
-        }));
-      }
+      educationalPostsToAdd = educationalPosts.map(eduPost => ({
+        id: `edu_${eduPost.id}`,
+        type: 'educational',
+        title: eduPost.title,
+        content: eduPost.content,
+        featureName: eduPost.featureName,
+        icon: eduPost.icon,
+        accentColor: eduPost.accentColor,
+        createdAt: eduPost.createdAt,
+        activityDate: eduPost.createdAt,
+        userId: 'system',
+        author: {
+          id: 'system',
+          firstName: 'MyKliq',
+          lastName: 'Tips',
+          profileImageUrl: null,
+          kliqName: null,
+        },
+        likes: [],
+        comments: [],
+        likeCount: 0,
+        commentCount: 0,
+        isLiked: false,
+      }));
     }
 
     try {
