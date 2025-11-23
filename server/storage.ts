@@ -162,6 +162,7 @@ import {
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, countDistinct, not, isNull, isNotNull } from "drizzle-orm";
 import { FeedCurationIntelligence } from './feedCurationIntelligence';
+import { cacheService } from './cacheService';
 import { randomUUID } from "crypto";
 
 export interface IStorage {
