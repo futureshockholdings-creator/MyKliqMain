@@ -49,6 +49,31 @@ interface Report {
   };
 }
 
+// Helper to normalize error objects from apiRequest/TanStack Query
+function normalizeError(error: unknown): { status: number | null; message: string } {
+  // Handle Error objects (primary case from enterpriseApiRequest)
+  if (error instanceof Error) {
+    // Format is "STATUS: message" (e.g., "403: Access denied")
+    const match = error.message.match(/^(\d{3}):\s*(.+)$/);
+    if (match) {
+      return { status: parseInt(match[1], 10), message: match[2] };
+    }
+    return { status: null, message: error.message };
+  }
+  
+  // Handle plain objects with status property
+  if (typeof error === 'object' && error !== null) {
+    const errorObj = error as any;
+    return {
+      status: errorObj.status ?? errorObj.statusCode ?? null,
+      message: errorObj.message ?? errorObj.statusText ?? 'An error occurred'
+    };
+  }
+  
+  // Fallback for unexpected error types
+  return { status: null, message: 'An unexpected error occurred' };
+}
+
 export default function AdminReports() {
   const [statusFilter, setStatusFilter] = useState("pending");
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
@@ -62,12 +87,13 @@ export default function AdminReports() {
   const queryClient = useQueryClient();
 
   // Fetch reports
-  const { data: reports = [], isLoading } = useQuery<Report[]>({
+  const { data: reports = [], isLoading, error } = useQuery<Report[]>({
     queryKey: ['/api/admin/reports', statusFilter],
     queryFn: () => {
       const statusParam = statusFilter === "all" ? "" : statusFilter;
       return apiRequest("GET", `/api/admin/reports?status=${statusParam}`);
     },
+    retry: false,
   });
 
   // Update report mutation
@@ -181,6 +207,48 @@ export default function AdminReports() {
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
+      </div>
+    );
+  }
+
+  // Check for authorization errors
+  if (error) {
+    const { status, message } = normalizeError(error);
+    const isAuthError = status === 403;
+    
+    return (
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-6">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="py-12">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <div className="rounded-full bg-red-100 p-3">
+                  <Ban className="w-12 h-12 text-red-600" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-red-900">
+                  {isAuthError ? 'Access Denied' : 'Error Loading Reports'}
+                </h3>
+                <p className="text-red-700 max-w-md mx-auto">
+                  {isAuthError 
+                    ? 'You need administrator privileges to access this page. Please contact a system administrator to grant you admin access.'
+                    : message || 'An error occurred while loading reports. Please try again later.'}
+                </p>
+              </div>
+              {!isAuthError && (
+                <Button
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/reports'] })}
+                  variant="outline"
+                  className="mt-4"
+                  data-testid="button-retry-reports"
+                >
+                  Try Again
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
