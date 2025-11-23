@@ -22,43 +22,25 @@ export default function Landing() {
       const isPostLogout = sessionStorage.getItem('forceLogout') === 'true';
       
       if (isPostLogout || window.location.pathname === '/landing') {
-        console.log('[Landing] Clearing all caches for post-logout cleanup...');
-        
-        // 1. Clear IndexedDB cache
-        await enhancedCache.clearAll();
-        
-        // 2. Completely REMOVE all user-specific queries from TanStack Query
-        const userSpecificQueries = [
-          '/api/auth/user',
-          '/api/profile',
-          '/api/user',
-          '/api/kliq-koins',
-          '/api/social',
-          '/api/sports',
-          '/api/notifications',
-          '/api/kliq-feed',
-          '/api/friends',
-          '/api/friend-ranking',
-          '/api/messages',
-          '/api/polls',
-          '/api/events',
-          '/api/actions',
-          '/api/birthdays',
-          '/api/posts',
-          '/api/moviecons',
-          '/api/calendar',
-          '/api/filters',
-          '/api/stories',
-          '/api/ads',
-          '/api/mood-boost',
-          '/api/scrapbook',
-        ];
-        
-        userSpecificQueries.forEach(queryKey => {
-          queryClient.removeQueries({ queryKey: [queryKey] });
-        });
-        
-        console.log('[Landing] All caches cleared successfully');
+        try {
+          console.log('[Landing] Clearing all caches for post-logout cleanup...');
+          
+          // 1. Clear IndexedDB cache
+          await enhancedCache.clearAll();
+          
+          // 2. Completely REMOVE all user-specific queries from TanStack Query
+          // Using predicate-based removal to catch ALL API queries regardless of structure
+          queryClient.removeQueries({
+            predicate: (query) => {
+              const firstKey = query.queryKey[0];
+              return typeof firstKey === 'string' && firstKey.startsWith('/api/');
+            }
+          });
+          
+          console.log('[Landing] All caches cleared successfully');
+        } catch (error) {
+          console.error('[Landing] Failed to clear caches:', error);
+        }
       }
     };
     
