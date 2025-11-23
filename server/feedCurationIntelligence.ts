@@ -320,14 +320,6 @@ export class FeedCurationIntelligence {
    * Apply content type balancing for optimal engagement mix
    */
   private applyContentTypeBalancing(items: CuratedFeedItem[]): CuratedFeedItem[] {
-    // Target distribution for optimal engagement
-    const targetDistribution = {
-      post: 0.60,    // 60% posts - main content
-      poll: 0.20,    // 20% polls - interactive content
-      event: 0.15,   // 15% events - important activities
-      action: 0.05,  // 5% live streams - special content
-    };
-
     // Group items by type
     const itemsByType = new Map<string, CuratedFeedItem[]>();
     items.forEach(item => {
@@ -337,9 +329,19 @@ export class FeedCurationIntelligence {
       itemsByType.get(item.type)!.push(item);
     });
 
-    // Balance according to target distribution
-    const balancedItems: CuratedFeedItem[] = [];
-    const totalItems = items.length;
+    // Educational posts ALWAYS get included (they're for new user onboarding)
+    const educationalPosts = itemsByType.get('educational') || [];
+    const balancedItems: CuratedFeedItem[] = [...educationalPosts];
+    
+    // Target distribution for optimal engagement (excluding educational)
+    const targetDistribution = {
+      post: 0.60,    // 60% posts - main content
+      poll: 0.20,    // 20% polls - interactive content
+      event: 0.15,   // 15% events - important activities
+      action: 0.05,  // 5% live streams - special content
+    };
+
+    const totalItems = items.length - educationalPosts.length; // Total minus educational posts
 
     Object.entries(targetDistribution).forEach(([type, percentage]) => {
       const targetCount = Math.floor(totalItems * percentage);
@@ -351,7 +353,7 @@ export class FeedCurationIntelligence {
     // Add remaining high-scoring items to fill the quota
     const usedIds = new Set(balancedItems.map(item => item.id));
     const remainingItems = items.filter(item => !usedIds.has(item.id));
-    const remainingSlots = totalItems - balancedItems.length;
+    const remainingSlots = totalItems - (balancedItems.length - educationalPosts.length);
     
     if (remainingSlots > 0) {
       balancedItems.push(...remainingItems.slice(0, remainingSlots));

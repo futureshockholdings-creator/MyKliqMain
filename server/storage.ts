@@ -1580,12 +1580,12 @@ export class DatabaseStorage implements IStorage {
 
   // Educational Posts operations
   async getEducationalPosts(limit = 12): Promise<EducationalPost[]> {
-    // Cache educational posts for 1 hour since they're static content
-    const cacheKey = `educational-posts:${limit}`;
-    const cached = await cacheService.get<EducationalPost[]>(cacheKey);
-    if (cached) {
-      return cached;
-    }
+    // TEMPORARY: Cache disabled for review - will re-enable after user reviews all 25 tips
+    // const cacheKey = `educational-posts:${limit}`;
+    // const cached = await cacheService.get<EducationalPost[]>(cacheKey);
+    // if (cached) {
+    //   return cached;
+    // }
     
     const posts = await db.select()
       .from(educationalPosts)
@@ -1593,8 +1593,8 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(educationalPosts.priority))
       .limit(limit);
     
-    // Cache for 1 hour (3600 seconds)
-    await cacheService.set(cacheKey, posts, 3600);
+    // Cache for 1 hour (3600 seconds) - DISABLED FOR REVIEW
+    // await cacheService.set(cacheKey, posts, 3600);
     return posts;
   }
 
