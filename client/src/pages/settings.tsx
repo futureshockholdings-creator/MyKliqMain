@@ -793,8 +793,13 @@ export default function Settings() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const handleLogout = async () => {
-    // Clear all cached data before logout to prevent stale sessions
-    queryClient.clear();
+    // Selectively remove only auth-related cache to prevent stale sessions
+    // Keep profile/theme cache intact so user data persists
+    queryClient.removeQueries({ queryKey: ['/api/auth/user'], exact: true });
+    
+    // Invalidate profile/theme queries so they refetch fresh data on next login
+    queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/user/theme'] });
     
     // Mark that we're logging out to prevent auto-redirect on login page
     sessionStorage.setItem('forceLogout', 'true');

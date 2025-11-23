@@ -13,15 +13,19 @@ export default function Landing() {
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
   
-  // Clear all cached data when landing on this page after logout
+  // Selectively clear auth cache when landing on this page after logout
   useEffect(() => {
     // Check if this is a post-logout redirect
     const urlParams = new URLSearchParams(window.location.search);
     const isPostLogout = sessionStorage.getItem('forceLogout') === 'true';
     
     if (isPostLogout || window.location.pathname === '/landing') {
-      // Clear all query cache to prevent stale session data
-      queryClient.clear();
+      // Only remove auth-related queries, keep profile/theme data intact
+      queryClient.removeQueries({ queryKey: ['/api/auth/user'], exact: true });
+      
+      // Invalidate profile/theme queries so next login gets fresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/theme'] });
     }
   }, []);
 
