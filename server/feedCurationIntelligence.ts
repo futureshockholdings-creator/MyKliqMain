@@ -300,12 +300,17 @@ export class FeedCurationIntelligence {
       const authorPostCountForType = authorTypes.get(item.type) || 0;
       const contentTypeCount_ = contentTypeCount.get(item.type) || 0;
 
+      // Educational posts bypass author limits (they're from system and need to show all)
+      const isEducationalPost = item.type === 'educational';
+      
       // Limit same author to 3 items per content type (not globally)
       // This allows users to have 3 posts + 3 events + 3 polls, etc.
-      if (authorPostCountForType >= 3) continue;
+      // Exception: Educational posts are always included for new user onboarding
+      if (!isEducationalPost && authorPostCountForType >= 3) continue;
 
       // Ensure content type variety (no more than 50% of one type)
-      if (contentTypeCount_ >= Math.floor(maxItems * 0.5)) continue;
+      // Exception: Educational posts are always included for new user onboarding
+      if (!isEducationalPost && contentTypeCount_ >= Math.floor(maxItems * 0.5)) continue;
 
       // Add item to curated feed
       curatedItems.push(item);
