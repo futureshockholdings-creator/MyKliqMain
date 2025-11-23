@@ -135,6 +135,60 @@ export async function seedEducationalPosts() {
       priority: 6,
       isActive: true,
     },
+    {
+      title: '🤖 AI-Powered Friend Analysis',
+      content: 'Discover how close you really are with your friends! Our AI analyzes your interactions, shared moments, and communication patterns to give you insights about your friendships.',
+      featureName: 'Friend Analysis AI',
+      icon: '🤖',
+      accentColor: '#7c3aed', // Violet
+      priority: 5,
+      isActive: true,
+    },
+    {
+      title: '📔 Create Your Digital Scrapbook',
+      content: 'Save your favorite memories in a beautiful scrapbook! Collect special moments, photos, and posts to look back on anytime. Your personal timeline of cherished memories.',
+      featureName: 'Scrapbook',
+      icon: '📔',
+      accentColor: '#f472b6', // Rose
+      priority: 5,
+      isActive: true,
+    },
+    {
+      title: '⭐ Daily Horoscopes Just for You',
+      content: 'Start your day with personalized horoscopes! Get daily insights based on your zodiac sign and share them with friends who believe in the stars.',
+      featureName: 'Horoscopes',
+      icon: '⭐',
+      accentColor: '#fbbf24', // Yellow
+      priority: 4,
+      isActive: true,
+    },
+    {
+      title: '📿 Daily Bible Verses for Inspiration',
+      content: 'Receive daily Bible verses to uplift and inspire you. Share faith-based content with your kliq and stay connected spiritually with your community.',
+      featureName: 'Bible Verses',
+      icon: '📿',
+      accentColor: '#84cc16', // Lime
+      priority: 4,
+      isActive: true,
+    },
+    {
+      title: '👥 Create Group Chats for Your Crews',
+      content: 'Bring your whole friend group together! Create group chats for different crews - study groups, sports teams, or just your closest friends. Keep everyone connected in one place.',
+      featureName: 'Group Chats',
+      icon: '👥',
+      accentColor: '#22d3ee', // Cyan
+      priority: 7,
+      isActive: true,
+    },
+    {
+      title: '🔗 Connect Your Social Media Accounts',
+      content: 'Link your TikTok, Instagram, YouTube, and other social accounts to earn Kliq Koins! Get 1,000 Koins per platform (up to 10 platforms). Share content across your networks effortlessly.',
+      featureName: 'Social Integration',
+      icon: '🔗',
+      accentColor: '#fb923c', // Orange
+      priority: 6,
+      isActive: true,
+    },
   ];
 
   try {

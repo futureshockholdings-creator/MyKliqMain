@@ -4913,7 +4913,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const daysSinceCreation = Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24));
             
             // Inject 1-2 educational posts for users < 7 days old (only on first page)
-            if (daysSinceCreation < 7 && page === 1) {
+            // Check 6-hour rate limit: users see educational posts max 4 times per day
+            const sixHoursInMs = 6 * 60 * 60 * 1000;
+            const lastViewCacheKey = `edu-posts-last-view:${userId}`;
+            const lastViewTime = await cache.get<number>(lastViewCacheKey);
+            const now = Date.now();
+            const shouldShowEducationalPosts = !lastViewTime || (now - lastViewTime) >= sixHoursInMs;
+            
+            if (daysSinceCreation < 7 && page === 1 && shouldShowEducationalPosts) {
+              // Update last view time in cache (expires in 7 days)
+              await cache.set(lastViewCacheKey, now, 7 * 24 * 60 * 60);
+              
               const educationalPosts = await storage.getRandomEducationalPosts(2);
               
               // Format educational posts to look like regular posts but marked as educational
