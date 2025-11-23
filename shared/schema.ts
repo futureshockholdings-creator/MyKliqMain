@@ -229,6 +229,23 @@ export const referralBonuses = pgTable("referral_bonuses", {
   index("idx_referral_bonuses_status").on(table.status),
 ]);
 
+// Educational posts - auto-injected tips for new users (<7 days old)
+export const educationalPosts = pgTable("educational_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  content: text("content").notNull(),
+  featureName: varchar("feature_name").notNull(), // e.g., "Stories", "Kliq Koins", "Referrals"
+  icon: varchar("icon").default("💡"), // Emoji icon for the post
+  accentColor: varchar("accent_color").default("#3b82f6"), // Hex color for special styling
+  priority: integer("priority").default(5), // 1-10, higher = shown more often
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_educational_posts_active").on(table.isActive),
+  index("idx_educational_posts_priority").on(table.priority),
+]);
+
 // Media type enum
 export const mediaTypeEnum = pgEnum("media_type", ["image", "video"]);
 
@@ -1749,3 +1766,12 @@ export const insertReferralBonusSchema = createInsertSchema(referralBonuses).omi
 });
 export type InsertReferralBonus = z.infer<typeof insertReferralBonusSchema>;
 export type ReferralBonus = typeof referralBonuses.$inferSelect;
+
+// Educational Posts types
+export const insertEducationalPostSchema = createInsertSchema(educationalPosts).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertEducationalPost = z.infer<typeof insertEducationalPostSchema>;
+export type EducationalPost = typeof educationalPosts.$inferSelect;

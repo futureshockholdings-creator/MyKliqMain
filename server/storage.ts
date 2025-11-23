@@ -155,6 +155,9 @@ import {
   type InsertUserBorder,
   type ReferralBonus,
   type InsertReferralBonus,
+  educationalPosts,
+  type EducationalPost,
+  type InsertEducationalPost,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, countDistinct, not, isNull, isNotNull } from "drizzle-orm";
@@ -463,6 +466,11 @@ export interface IStorage {
   purchaseBorder(userId: string, borderId: string): Promise<UserBorder>;
   equipBorder(userId: string, borderId: string): Promise<void>;
   unlockStreakBorder(userId: string, tier: number): Promise<UserBorder | undefined>;
+  
+  // Educational Posts operations
+  getEducationalPosts(): Promise<EducationalPost[]>;
+  getRandomEducationalPosts(count: number, excludeIds?: string[]): Promise<EducationalPost[]>;
+  createEducationalPost(post: InsertEducationalPost): Promise<EducationalPost>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1529,6 +1537,50 @@ export class DatabaseStorage implements IStorage {
         .filter(b => b.status === 'completed')
         .reduce((sum, b) => sum + (b.koinsAwarded || 0), 0)
     };
+  }
+
+  // Educational Posts operations
+  async getEducationalPosts(): Promise<EducationalPost[]> {
+    const posts = await db.select()
+      .from(educationalPosts)
+      .where(eq(educationalPosts.isActive, true))
+      .orderBy(desc(educationalPosts.priority));
+    return posts;
+  }
+
+  async getRandomEducationalPosts(count: number, excludeIds: string[] = []): Promise<EducationalPost[]> {
+    const query = db.select()
+      .from(educationalPosts)
+      .where(
+        and(
+          eq(educationalPosts.isActive, true),
+          excludeIds.length > 0 ? not(inArray(educationalPosts.id, excludeIds)) : undefined
+        )
+      );
+    
+    const allPosts = await query;
+    
+    // Weighted random selection based on priority (higher priority = more likely)
+    const weightedPosts: EducationalPost[] = [];
+    allPosts.forEach(post => {
+      const weight = post.priority || 5;
+      for (let i = 0; i < weight; i++) {
+        weightedPosts.push(post);
+      }
+    });
+    
+    // Shuffle and take count
+    const shuffled = weightedPosts.sort(() => Math.random() - 0.5);
+    const uniquePosts = Array.from(new Set(shuffled.map(p => p.id)))
+      .map(id => allPosts.find(p => p.id === id)!)
+      .slice(0, count);
+    
+    return uniquePosts;
+  }
+
+  async createEducationalPost(post: InsertEducationalPost): Promise<EducationalPost> {
+    const [newPost] = await db.insert(educationalPosts).values(post).returning();
+    return newPost;
   }
 
   // Story operations

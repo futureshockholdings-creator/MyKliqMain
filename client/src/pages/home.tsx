@@ -2744,6 +2744,54 @@ export default function Home() {
             );
           }
           
+          if (item.type === 'educational') {
+            // Educational posts - special styling with custom accent colors
+            return (
+              <Card
+                key={item.id}
+                className="mb-4 border-2 transition-all duration-300 hover:shadow-xl"
+                style={{
+                  borderColor: item.accentColor,
+                  backgroundColor: `${item.accentColor}15`, // 15% opacity background
+                  boxShadow: `0 4px 12px ${item.accentColor}40` // Colored shadow
+                }}
+              >
+                <CardContent className="p-4">
+                  {/* Badge */}
+                  <div 
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold mb-3"
+                    style={{
+                      backgroundColor: item.accentColor,
+                      color: 'white'
+                    }}
+                  >
+                    <span className="text-lg">{item.icon}</span>
+                    <span>MyKliq Tip</span>
+                  </div>
+                  
+                  {/* Content */}
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground mb-2">
+                      {item.title}
+                    </h3>
+                    <p className="text-foreground/90 mb-3">
+                      {item.content}
+                    </p>
+                    <div 
+                      className="text-xs font-medium px-3 py-1 rounded inline-block"
+                      style={{
+                        backgroundColor: `${item.accentColor}30`,
+                        color: item.accentColor
+                      }}
+                    >
+                      Learn about: {item.featureName}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
+          
           if (item.type === 'post') {
             return (
           <Card

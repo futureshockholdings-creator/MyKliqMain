@@ -4905,7 +4905,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
         async () => {
           const filters = await storage.getContentFilters(userId);
           const filterKeywords = filters.map(f => f.keyword);
-          return await storage.getKliqFeed(userId, filterKeywords, page, limit);
+          const feedData = await storage.getKliqFeed(userId, filterKeywords, page, limit);
+          
+          // Check if user is less than 7 days old and inject educational posts
+          const user = await storage.getUser(userId);
+          if (user && user.createdAt) {
+            const daysSinceCreation = Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+            
+            // Inject 1-2 educational posts for users < 7 days old (only on first page)
+            if (daysSinceCreation < 7 && page === 1) {
+              const educationalPosts = await storage.getRandomEducationalPosts(2);
+              
+              // Format educational posts to look like regular posts but marked as educational
+              const formattedEduPosts = educationalPosts.map((eduPost) => ({
+                id: `edu_${eduPost.id}`,
+                type: 'educational', // Special type marker
+                title: eduPost.title,
+                content: eduPost.content,
+                featureName: eduPost.featureName,
+                icon: eduPost.icon,
+                accentColor: eduPost.accentColor,
+                createdAt: eduPost.createdAt,
+                userId: 'system',
+                author: {
+                  id: 'system',
+                  firstName: 'MyKliq',
+                  lastName: 'Tips',
+                  profileImageUrl: null,
+                  kliqName: null,
+                },
+                likes: [],
+                comments: [],
+                likeCount: 0,
+                commentCount: 0,
+                isLiked: false,
+              }));
+              
+              // Inject educational posts - show them even if feed is empty!
+              const items = Array.isArray(feedData) ? feedData : feedData.items || [];
+              
+              // If feed is empty, just show the educational posts
+              if (items.length === 0) {
+                const educationalOnlyItems = formattedEduPosts;
+                if (Array.isArray(feedData)) {
+                  return educationalOnlyItems;
+                } else {
+                  return { 
+                    ...feedData, 
+                    items: educationalOnlyItems,
+                    hasMore: false,
+                    totalPages: 1
+                  };
+                }
+              }
+              
+              // If feed has items, inject educational posts at strategic positions
+              const originalItemCount = items.length; // Store original count before mutations
+              
+              // Insert first educational post after 1st regular post (position 2 = index 1)
+              if (originalItemCount >= 1 && formattedEduPosts[0]) {
+                items.splice(1, 0, formattedEduPosts[0]);
+              }
+              
+              // Insert second educational post at position 5 (index 4) ONLY if feed had 5+ original items
+              if (originalItemCount >= 5 && formattedEduPosts[1]) {
+                items.splice(4, 0, formattedEduPosts[1]);
+              }
+              
+              // Update feedData with injected posts
+              if (Array.isArray(feedData)) {
+                return items;
+              } else {
+                return { ...feedData, items };
+              }
+            }
+          }
+          
+          return feedData;
         },
         cacheKey,
         120 // Cache for 2 minutes (longer for paginated content)
