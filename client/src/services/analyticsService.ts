@@ -61,10 +61,28 @@ class AnalyticsService {
       });
 
       this.initialized = true;
-      console.log('[Analytics] GA4 initialized (users consented during sign-up via termsAcceptedAt)');
+      console.log('[Analytics] GA4 initialized with user consent');
     } catch (error) {
       console.error('[Analytics] Failed to initialize GA4:', error);
     }
+  }
+
+  /**
+   * Revoke analytics consent and disable tracking
+   * Called when user opts out of analytics in Settings
+   */
+  revokeConsent() {
+    if (window.gtag) {
+      // Update consent to denied
+      window.gtag('consent', 'update', {
+        analytics_storage: 'denied',
+        ad_storage: 'denied',
+      });
+      
+      console.log('[Analytics] User revoked analytics consent - tracking disabled');
+    }
+    
+    this.initialized = false;
   }
 
   /**

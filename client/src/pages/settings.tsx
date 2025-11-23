@@ -15,6 +15,7 @@ import { KoinWalletCard } from "@/components/KliqKoin/KoinWalletCard";
 import { BorderMarketplaceCard } from "@/components/KliqKoin/BorderMarketplaceCard";
 import { MyBordersCard } from "@/components/KliqKoin/MyBordersCard";
 import { NotificationSettings } from "@/components/NotificationSettings";
+import { AnalyticsConsentSettings } from "@/components/AnalyticsConsentSettings";
 
 import { 
   MessageCircle,
@@ -49,6 +50,7 @@ import {
 } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/hooks/useAuth";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 
 interface SocialAccount {
@@ -791,6 +793,7 @@ function SportsPreferences() {
 export default function Settings() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const { user } = useAuth();
   
   // Delete account state management
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -1461,6 +1464,11 @@ export default function Settings() {
             <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg">
               <NotificationSettings />
             </div>
+
+            {/* Analytics Consent Settings */}
+            {user && (
+              <AnalyticsConsentSettings initialConsent={user.analyticsConsent !== false} />
+            )}
 
             {/* Account Management */}
             <Card className="bg-white/10 backdrop-blur-sm border-white/20">

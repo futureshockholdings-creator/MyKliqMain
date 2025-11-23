@@ -74,6 +74,8 @@ export const users = pgTable("users", {
   equippedBorderId: varchar("equipped_border_id").references(() => profileBorders.id),
   // Terms acceptance for legal compliance
   termsAcceptedAt: timestamp("terms_accepted_at"),
+  // Analytics consent (granular GDPR compliance - users can revoke in settings)
+  analyticsConsent: boolean("analytics_consent").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

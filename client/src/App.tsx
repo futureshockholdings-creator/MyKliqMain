@@ -234,7 +234,7 @@ function Router() {
 }
 
 function AppContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [currentPath] = useLocation();
   
   // Load and apply user theme globally
@@ -243,16 +243,26 @@ function AppContent() {
   // Perform daily check-in for authenticated users
   useDailyCheckIn();
   
-  // Initialize Google Analytics ONLY for authenticated users (GDPR compliance)
-  // Users consent to analytics when they accept Terms & Privacy during sign-up (termsAcceptedAt)
+  // Initialize Google Analytics ONLY if user has granted consent (GDPR compliance)
+  // Users grant consent during sign-up (default true) but can revoke in Settings
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      // User is authenticated and has consented during sign-up
-      import("@/services/analyticsService").then(({ analyticsService }) => {
-        analyticsService.init();
-      });
+    if (isAuthenticated && !isLoading && user) {
+      // Check if user has analytics consent enabled
+      const hasConsent = user.analyticsConsent !== false; // default true if undefined
+      
+      if (hasConsent) {
+        // User has granted analytics consent
+        import("@/services/analyticsService").then(({ analyticsService }) => {
+          analyticsService.init();
+        });
+      } else {
+        // User has revoked consent - ensure analytics is disabled
+        import("@/services/analyticsService").then(({ analyticsService }) => {
+          analyticsService.revokeConsent();
+        });
+      }
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, user?.analyticsConsent]);
 
   // Check if we're on a public page that doesn't require authentication
   const isPublicPage = ['/signup', '/privacy-policy', '/disclaimer', '/landing', '/marketing', '/forgot-password'].includes(currentPath);

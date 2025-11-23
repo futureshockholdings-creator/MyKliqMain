@@ -4503,6 +4503,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analytics consent toggle (GDPR compliance)
+  app.patch("/api/user/analytics-consent", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { analyticsConsent } = req.body;
+
+      // Validate boolean input
+      if (typeof analyticsConsent !== 'boolean') {
+        return res.status(400).json({ message: "analyticsConsent must be a boolean" });
+      }
+
+      // Update user's analytics consent
+      await storage.updateUser(userId, { analyticsConsent });
+
+      console.log(`[Analytics Consent] User ${userId} ${analyticsConsent ? 'granted' : 'revoked'} analytics consent`);
+
+      res.json({ 
+        success: true, 
+        analyticsConsent,
+        message: analyticsConsent ? 'Analytics consent granted' : 'Analytics consent revoked'
+      });
+    } catch (error) {
+      console.error("Error updating analytics consent:", error);
+      res.status(500).json({ message: "Failed to update analytics consent" });
+    }
+  });
+
   // Profile music endpoints
   app.put("/api/user/profile-music", isAuthenticated, async (req: any, res) => {
     try {
