@@ -44,4 +44,8 @@ updateFavicon();
 setTimeout(updateFavicon, 1000);
 setTimeout(updateFavicon, 3000);
 
+// Register Service Worker for PWA
+import { registerServiceWorker } from "./utils/registerServiceWorker";
+registerServiceWorker();
+
 createRoot(document.getElementById("root")!).render(<App />);

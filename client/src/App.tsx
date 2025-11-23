@@ -50,6 +50,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { Chatbot } from "@/components/Chatbot";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { PinVerificationModal } from "@/components/PinVerificationModal";
+import { InstallPWA } from "@/components/InstallPWA";
 import { useState } from "react";
 
 function Navigation({ currentPath }: { currentPath: string }) {
@@ -281,6 +282,9 @@ function AppContent() {
         
         {/* Chatbot - Only show when authenticated and not on public pages */}
         {isAuthenticated && !isLoading && !isPublicPage && <Chatbot />}
+        
+        {/* PWA Install Prompt */}
+        <InstallPWA />
       </div>
       <Toaster />
     </TooltipProvider>
