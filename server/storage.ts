@@ -3,6 +3,7 @@ import {
   userThemes,
   friendships,
   usedInviteCodes,
+  referralBonuses,
   posts,
   stories,
   storyViews,
@@ -152,6 +153,8 @@ import {
   type InsertLoginStreak,
   type UserBorder,
   type InsertUserBorder,
+  type ReferralBonus,
+  type InsertReferralBonus,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, countDistinct, not, isNull, isNotNull } from "drizzle-orm";
@@ -1419,6 +1422,89 @@ export class DatabaseStorage implements IStorage {
       usedBy,
       ownedBy,
     });
+  }
+
+  // Referral Bonus operations
+  async createReferralBonus(data: InsertReferralBonus): Promise<ReferralBonus> {
+    const [bonus] = await db.insert(referralBonuses).values(data).returning();
+    return bonus;
+  }
+
+  async getReferralBonusesByInviter(inviterId: string): Promise<ReferralBonus[]> {
+    return await db.select().from(referralBonuses).where(eq(referralBonuses.inviterId, inviterId));
+  }
+
+  async getReferralBonusesByInvitee(inviteeId: string): Promise<ReferralBonus[]> {
+    return await db.select().from(referralBonuses).where(eq(referralBonuses.inviteeId, inviteeId));
+  }
+
+  async updateReferralBonusFirstLogin(inviteeId: string): Promise<void> {
+    await db.update(referralBonuses)
+      .set({ firstLoginAt: new Date(), updatedAt: new Date() })
+      .where(
+        and(
+          eq(referralBonuses.inviteeId, inviteeId),
+          eq(referralBonuses.status, 'pending'),
+          sql`${referralBonuses.firstLoginAt} IS NULL`
+        )
+      );
+  }
+
+  async getEligibleReferralBonuses(): Promise<ReferralBonus[]> {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    return await db.select()
+      .from(referralBonuses)
+      .where(
+        and(
+          eq(referralBonuses.status, 'pending'),
+          sql`${referralBonuses.firstLoginAt} IS NOT NULL`,
+          sql`${referralBonuses.signupAt} <= ${twentyFourHoursAgo}`
+        )
+      );
+  }
+
+  async awardReferralBonus(bonusId: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Get the bonus details
+      const [bonus] = await tx.select()
+        .from(referralBonuses)
+        .where(eq(referralBonuses.id, bonusId));
+      
+      if (!bonus || bonus.status !== 'pending') {
+        return;
+      }
+
+      // Award Koins to inviter
+      await this.awardKoins(bonus.inviterId, bonus.koinsAwarded, 'referral_bonus');
+
+      // Mark bonus as completed
+      await tx.update(referralBonuses)
+        .set({ 
+          status: 'completed',
+          awardedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(referralBonuses.id, bonusId));
+    });
+  }
+
+  async getReferralStats(userId: string): Promise<{
+    totalReferred: number;
+    pendingBonuses: number;
+    completedBonuses: number;
+    totalKoinsEarned: number;
+  }> {
+    const bonuses = await this.getReferralBonusesByInviter(userId);
+    
+    return {
+      totalReferred: bonuses.length,
+      pendingBonuses: bonuses.filter(b => b.status === 'pending').length,
+      completedBonuses: bonuses.filter(b => b.status === 'completed').length,
+      totalKoinsEarned: bonuses
+        .filter(b => b.status === 'completed')
+        .reduce((sum, b) => sum + (b.koinsAwarded || 0), 0)
+    };
   }
 
   // Story operations

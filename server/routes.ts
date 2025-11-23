@@ -413,6 +413,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Mark invite code as used
               await storage.markInviteCodeAsUsed(receivedInviteCode.trim(), userId, inviteCodeOwner.id);
               
+              // Create pending referral bonus (will be awarded after 24hrs + login)
+              await storage.createReferralBonus({
+                inviterId: inviteCodeOwner.id,
+                inviteeId: userId,
+                signupAt: new Date(),
+                koinsAwarded: 10,
+                status: "pending"
+              });
+              
               console.log(`User ${userId} joined ${inviteCodeOwner.id}'s kliq via invite code ${receivedInviteCode}`);
             }
           } catch (error) {
