@@ -97,17 +97,17 @@
     }
     </script>
     
-    <!-- Google Analytics 4 (GA4) - Placeholder for measurement ID -->
-    <!-- User will provide GA4 measurement ID to enable tracking -->
+    <!-- Google Analytics 4 (GA4) -->
+    <!-- Analytics consent is granted when users accept Terms & Privacy during sign-up -->
+    <!-- This is recorded in the database as termsAcceptedAt -->
     <script>
-      // Google Analytics will be initialized dynamically if measurement ID is provided
+      // Initialize Google Analytics dataLayer
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       window.gtag = gtag;
       gtag('js', new Date());
       
-      // GA4 Measurement ID will be configured via environment variable
-      // Example: gtag('config', 'G-XXXXXXXXXX');
+      // GA4 will be configured dynamically by the app if VITE_GA4_MEASUREMENT_ID is provided
     </script>
   </head>
   <body>

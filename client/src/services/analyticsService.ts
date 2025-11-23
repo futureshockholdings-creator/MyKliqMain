@@ -13,10 +13,12 @@ declare global {
 class AnalyticsService {
   private initialized = false;
   private measurementId: string | null = null;
+  private scriptLoaded = false;
 
   /**
    * Initialize Google Analytics 4
-   * Called automatically when the app loads
+   * Users grant consent during sign-up when accepting Terms & Privacy Policy
+   * This is recorded in the database as termsAcceptedAt
    */
   init() {
     // Get GA4 measurement ID from environment variable
@@ -27,22 +29,39 @@ class AnalyticsService {
       return;
     }
 
-    try {
-      // Load GA4 script
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${this.measurementId}`;
-      document.head.appendChild(script);
+    if (this.initialized) {
+      console.log('[Analytics] GA4 already initialized');
+      return;
+    }
 
-      // Configure GA4
+    try {
+      // Grant consent (users accepted terms during sign-up)
+      if (window.gtag) {
+        window.gtag('consent', 'default', {
+          analytics_storage: 'granted',
+          ad_storage: 'denied', // We don't use ads
+        });
+      }
+
+      // Only load script if not already loaded
+      if (!this.scriptLoaded) {
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${this.measurementId}`;
+        document.head.appendChild(script);
+        this.scriptLoaded = true;
+      }
+
+      // Configure GA4 with privacy-focused settings
       window.gtag('config', this.measurementId, {
         send_page_view: true,
-        anonymize_ip: true, // GDPR compliance
+        anonymize_ip: true, // GDPR compliance - anonymize IP addresses
         cookie_flags: 'SameSite=None;Secure', // Cookie security
+        cookie_expires: 63072000, // 2 years in seconds
       });
 
       this.initialized = true;
-      console.log('[Analytics] GA4 initialized successfully');
+      console.log('[Analytics] GA4 initialized (users consented during sign-up via termsAcceptedAt)');
     } catch (error) {
       console.error('[Analytics] Failed to initialize GA4:', error);
     }

@@ -48,8 +48,8 @@ setTimeout(updateFavicon, 3000);
 import { registerServiceWorker } from "./utils/registerServiceWorker";
 registerServiceWorker();
 
-// Initialize Google Analytics
-import { analyticsService } from "./services/analyticsService";
-analyticsService.init();
+// NOTE: Google Analytics is NOT initialized here for GDPR compliance
+// It will only be initialized for authenticated users in App.tsx
+// after verifying they accepted Terms & Privacy during sign-up (termsAcceptedAt)
 
 createRoot(document.getElementById("root")!).render(<App />);

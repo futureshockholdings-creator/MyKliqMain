@@ -243,7 +243,16 @@ function AppContent() {
   // Perform daily check-in for authenticated users
   useDailyCheckIn();
   
-  // Note: Mobile analytics initialization moved to mobile/src/App.tsx for React Native
+  // Initialize Google Analytics ONLY for authenticated users (GDPR compliance)
+  // Users consent to analytics when they accept Terms & Privacy during sign-up (termsAcceptedAt)
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      // User is authenticated and has consented during sign-up
+      import("@/services/analyticsService").then(({ analyticsService }) => {
+        analyticsService.init();
+      });
+    }
+  }, [isAuthenticated, isLoading]);
 
   // Check if we're on a public page that doesn't require authentication
   const isPublicPage = ['/signup', '/privacy-policy', '/disclaimer', '/landing', '/marketing', '/forgot-password'].includes(currentPath);
