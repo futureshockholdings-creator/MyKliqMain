@@ -4896,7 +4896,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
-      const limit = Math.min(50, Math.max(5, parseInt(req.query.limit as string) || 20)); // Between 5-50 items
+      const limit = Math.min(100, Math.max(5, parseInt(req.query.limit as string) || 100)); // Between 5-100 items, default 100
       
       const cacheKey = `kliq-feed:${userId}:${page}:${limit}`;
       

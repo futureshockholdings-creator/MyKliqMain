@@ -838,7 +838,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Get paginated aggregated kliq feed including posts, polls, events, and actions with intelligent curation
-  async getKliqFeed(userId: string, filters: string[], page = 1, limit = 20, includeEducationalPosts = false): Promise<{ items: any[], hasMore: boolean, totalPages: number }> {
+  async getKliqFeed(userId: string, filters: string[], page = 1, limit = 100, includeEducationalPosts = false): Promise<{ items: any[], hasMore: boolean, totalPages: number }> {
     // Get user's friends first
     const userFriends = await this.getFriends(userId);
     const friendIds = userFriends.map(f => f.friendId);
@@ -884,7 +884,9 @@ export class DatabaseStorage implements IStorage {
     
     // If user should see educational posts and has friends, fetch them
     if (includeEducationalPosts) {
-      const educationalPosts = await this.getEducationalPosts(8); // Limit to 8 posts
+      // Scale educational posts based on feed size: ~12% of feed (12 for 100 posts, 6 for 50, etc)
+      const eduPostCount = Math.max(6, Math.min(12, Math.ceil(limit * 0.12)));
+      const educationalPosts = await this.getEducationalPosts(eduPostCount);
       // Add educational posts to feed items (they'll be sorted chronologically with other content)
       feedItems.push(...educationalPosts.map(eduPost => ({
         id: `edu_${eduPost.id}`,
@@ -1607,7 +1609,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Educational Posts operations
-  async getEducationalPosts(limit = 8): Promise<EducationalPost[]> {
+  async getEducationalPosts(limit = 12): Promise<EducationalPost[]> {
     // Cache educational posts for 1 hour since they're static content
     const cacheKey = `educational-posts:${limit}`;
     const cached = await cacheService.get<EducationalPost[]>(cacheKey);
