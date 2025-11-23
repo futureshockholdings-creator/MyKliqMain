@@ -14,29 +14,38 @@ const app = express();
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = [
-    'https://kliqlife.com',
-    'https://www.kliqlife.com',
-    'http://localhost:5000',
-    'http://127.0.0.1:5000',
-    'http://0.0.0.0:5000',
-    'http://172.31.65.34:5000',
-    process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DEV_DOMAIN}` : null
+    "https://kliqlife.com",
+    "https://www.kliqlife.com",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
+    "http://0.0.0.0:5000",
+    "http://172.31.65.34:5000",
+    "https://main.d1dc1ug0nbi5ry.amplifyapp.com",
+    process.env.REPL_SLUG
+      ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DEV_DOMAIN}`
+      : null,
   ].filter(Boolean);
 
   if (origin && allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
+    res.header("Access-Control-Allow-Origin", origin);
   } else if (!origin) {
     // Allow same-origin requests (no origin header)
-    res.header('Access-Control-Allow-Origin', '*');
+    res.header("Access-Control-Allow-Origin", "*");
   }
 
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie",
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Max-Age", "86400"); // 24 hours
 
   // Handle preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
@@ -48,8 +57,8 @@ app.use(performanceOptimizer.responseTimeMiddleware());
 app.use(performanceOptimizer.memoryOptimizationMiddleware());
 
 // Optimize Express settings for production scaling
-app.use(express.json({ limit: '50mb' })); // Set payload limit for large metadata
-app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+app.use(express.json({ limit: "50mb" })); // Set payload limit for large metadata
+app.use(express.urlencoded({ extended: false, limit: "50mb" }));
 
 // Production-ready request logging (no PII exposure)
 app.use((req, res, next) => {
@@ -91,42 +100,45 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-    
-    // Initialize Firebase Admin SDK for push notifications
-    if (firebaseNotificationService.isInitialized()) {
-      log('Firebase Admin SDK ready for push notifications');
-    }
-    
-    // Start the birthday service for automatic birthday messages
-    startBirthdayService();
-    
-    // Start the mood boost scheduler for AI-powered uplifting posts
-    startMoodBoostScheduler();
-    
-    // Start the referral bonus service to award referral bonuses
-    startReferralBonusService();
-    
-    // Setup graceful shutdown for production
-    const gracefulShutdown = (signal: string) => {
-      log(`Received ${signal}, shutting down gracefully`);
-      server.close(() => {
-        log('HTTP server closed');
-        const { pool } = require('./db');
-        pool.end(() => {
-          log('Database pool closed');
-          process.exit(0);
-        });
-      });
-    };
+  const port = parseInt(process.env.PORT || "5000", 10);
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    },
+    () => {
+      log(`serving on port ${port}`);
 
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-  });
+      // Initialize Firebase Admin SDK for push notifications
+      if (firebaseNotificationService.isInitialized()) {
+        log("Firebase Admin SDK ready for push notifications");
+      }
+
+      // Start the birthday service for automatic birthday messages
+      startBirthdayService();
+
+      // Start the mood boost scheduler for AI-powered uplifting posts
+      startMoodBoostScheduler();
+
+      // Start the referral bonus service to award referral bonuses
+      startReferralBonusService();
+
+      // Setup graceful shutdown for production
+      const gracefulShutdown = (signal: string) => {
+        log(`Received ${signal}, shutting down gracefully`);
+        server.close(() => {
+          log("HTTP server closed");
+          const { pool } = require("./db");
+          pool.end(() => {
+            log("Database pool closed");
+            process.exit(0);
+          });
+        });
+      };
+
+      process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+      process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+    },
+  );
 })();

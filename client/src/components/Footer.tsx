@@ -17,6 +17,9 @@ export default function Footer() {
               <Link href="/community-guidelines" className="font-medium hover:underline transition-all text-xs sm:text-sm">
                 Guidelines
               </Link>
+              <Link href="/contact-us" className="font-medium hover:underline transition-all text-xs sm:text-sm" data-testid="link-contact-us">
+                Contact Us
+              </Link>
             </div>
           </div>
           <div className="text-center md:text-right">
