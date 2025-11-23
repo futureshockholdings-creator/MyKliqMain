@@ -31,6 +31,10 @@ import {
   Crown,
   Lock,
   Check,
+  Users,
+  Gift,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 import { 
   SiPinterest, 
@@ -963,6 +967,15 @@ export default function Settings() {
     queryKey: ["/api/kliq-koins/my-borders"],
   });
 
+  const { data: referralStats, isLoading: referralStatsLoading } = useQuery<{
+    totalReferred: number;
+    pendingBonuses: number;
+    completedBonuses: number;
+    totalKoinsEarned: number;
+  }>({
+    queryKey: ["/api/referrals/stats"],
+  });
+
   // Kliq Koin mutations
   const purchaseBorder = useMutation({
     mutationFn: async (borderId: string) => {
@@ -1303,6 +1316,92 @@ export default function Settings() {
               walletData={walletData}
               isLoading={walletLoading}
             />
+
+            {/* Referral Stats Card */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Referral Program
+                </CardTitle>
+                <CardDescription className="text-purple-200">
+                  Earn 10 Kliq Koins for each friend who joins using your invite code
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {referralStatsLoading ? (
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-20 bg-white/10 rounded-lg" />
+                    <div className="h-20 bg-white/10 rounded-lg" />
+                    <div className="h-20 bg-white/10 rounded-lg" />
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-lg bg-blue-600/20">
+                          <Users className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-white">{referralStats?.totalReferred || 0}</p>
+                          <p className="text-sm text-purple-200">Total Referred</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-purple-300 mt-2">
+                        Friends who joined with your code
+                      </p>
+                    </div>
+
+                    <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-lg bg-yellow-600/20">
+                          <Clock className="w-5 h-5 text-yellow-400" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-white">{referralStats?.pendingBonuses || 0}</p>
+                          <p className="text-sm text-purple-200">Pending Bonuses</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-purple-300 mt-2">
+                        Waiting for 24hr period + login
+                      </p>
+                    </div>
+
+                    <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-lg bg-green-600/20">
+                          <Gift className="w-5 h-5 text-green-400" />
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-white">{referralStats?.totalKoinsEarned || 0}</p>
+                          <p className="text-sm text-purple-200">Koins Earned</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-purple-300 mt-2">
+                        {referralStats?.completedBonuses || 0} bonuses completed
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-6 p-4 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-lg border border-purple-400/30">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg bg-purple-600/40">
+                      <CheckCircle className="w-5 h-5 text-purple-200" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-white font-semibold mb-2">How Referral Bonuses Work</h4>
+                      <ul className="text-sm text-purple-200 space-y-1">
+                        <li>✅ Share your invite code from the MyKliq page</li>
+                        <li>✅ New user signs up with your code</li>
+                        <li>✅ They must wait 24 hours and log in at least once</li>
+                        <li>✅ You automatically receive 10 Kliq Koins!</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <Accordion type="multiple" className="space-y-4">
               <AccordionItem value="marketplace" className="border-0">

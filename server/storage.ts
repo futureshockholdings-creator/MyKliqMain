@@ -1475,8 +1475,32 @@ export class DatabaseStorage implements IStorage {
         return;
       }
 
-      // Award Koins to inviter
-      await this.awardKoins(bonus.inviterId, bonus.koinsAwarded, 'referral_bonus');
+      // Award Koins to inviter atomically within the same transaction
+      let userKoins = await this.getUserKoins(bonus.inviterId);
+      if (!userKoins) {
+        userKoins = await this.initializeUserKoins(bonus.inviterId);
+      }
+
+      const newBalance = parseFloat(userKoins.balance as any) + bonus.koinsAwarded;
+      const newTotalEarned = parseFloat(userKoins.totalEarned as any) + bonus.koinsAwarded;
+
+      await tx
+        .update(kliqKoins)
+        .set({ 
+          balance: newBalance, 
+          totalEarned: newTotalEarned,
+          updatedAt: new Date() 
+        })
+        .where(eq(kliqKoins.userId, bonus.inviterId));
+
+      await tx.insert(kliqKoinTransactions).values({
+        userId: bonus.inviterId,
+        amount: bonus.koinsAwarded,
+        type: 'earned',
+        source: 'referral_bonus',
+        referenceId: bonusId,
+        balanceAfter: newBalance,
+      });
 
       // Mark bonus as completed
       await tx.update(referralBonuses)
