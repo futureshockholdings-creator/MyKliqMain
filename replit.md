@@ -2,6 +2,9 @@
 
 MyKliq is a social media application designed for private, close-knit friend groups ("kliqs"), emphasizing intimate sharing, privacy, and extensive UI customization. Key features include hierarchical friend ranking, content filtering, and rich media sharing (photos, videos, disappearing stories, polls, live streaming). The platform aims to foster quality interactions within private circles with the ambition to evolve into an AI-powered intelligent social network.
 
+## Recent Updates (Nov 23, 2025)
+- **Referral Bonus System**: Implemented automated referral rewards - users earn 10 Kliq Koins for each friend who joins using their invite code (requires 24hr wait period + invitee's first login). Background service processes eligible bonuses hourly with atomic transaction handling.
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
