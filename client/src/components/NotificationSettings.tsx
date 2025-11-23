@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Bell, BellOff, Check } from "lucide-react";
+import { Bell, BellOff, Check, Smartphone } from "lucide-react";
 import { webPushService } from "@/services/webPushService";
 import { useToast } from "@/hooks/use-toast";
 
@@ -11,9 +11,13 @@ export function NotificationSettings() {
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
   const [isEnabled, setIsEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [needsPWA, setNeedsPWA] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check if user needs to install PWA first (iOS Safari requirement)
+    setNeedsPWA(webPushService.needsPWAInstall());
+    
     // Check initial permission status
     const status = webPushService.getPermissionStatus();
     setPermissionStatus(status);
@@ -103,15 +107,63 @@ export function NotificationSettings() {
     }
   };
 
+  // Show PWA install instructions for iOS Safari users
+  if (needsPWA) {
+    return (
+      <Card className="bg-white text-gray-900 dark:bg-gray-800 dark:text-white">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="w-5 h-5" />
+            Install MyKliq to Enable Notifications
+          </CardTitle>
+          <CardDescription className="text-gray-600 dark:text-gray-300">
+            Safari requires MyKliq to be installed as an app on your home screen to receive push notifications.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <p className="font-semibold text-blue-900 dark:text-blue-100 mb-2">📱 How to Install:</p>
+            <ol className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+              <li className="flex items-start gap-2">
+                <span className="font-bold">1.</span>
+                <span>Tap the Share button (square with arrow) in Safari</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold">2.</span>
+                <span>Scroll down and tap "Add to Home Screen"</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold">3.</span>
+                <span>Tap "Add" to confirm</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold">4.</span>
+                <span>Open MyKliq from your home screen</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold">5.</span>
+                <span>Return to Settings to enable push notifications</span>
+              </li>
+            </ol>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Once installed, you'll be able to receive notifications for posts, comments, messages, and more!
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Browser doesn't support notifications at all
   if (!webPushService.isSupported()) {
     return (
-      <Card>
+      <Card className="bg-white text-gray-900 dark:bg-gray-800 dark:text-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BellOff className="w-5 h-5" />
             Push Notifications Not Supported
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-600 dark:text-gray-300">
             Your browser doesn't support push notifications.
           </CardDescription>
         </CardHeader>

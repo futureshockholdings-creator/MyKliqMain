@@ -160,10 +160,41 @@ export class WebPushNotificationService {
   }
 
   /**
+   * Check if we're on iOS/Safari
+   */
+  private isIOS(): boolean {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  /**
+   * Check if app is running in PWA standalone mode
+   */
+  isPWAMode(): boolean {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           (window.navigator as any).standalone === true; // iOS specific
+  }
+
+  /**
    * Check if notifications are supported and enabled
+   * On iOS Safari, notifications only work in PWA standalone mode
    */
   isSupported(): boolean {
-    return 'Notification' in window && 'serviceWorker' in navigator;
+    const hasBasicSupport = 'Notification' in window && 'serviceWorker' in navigator;
+    
+    // On iOS, push notifications only work when installed as PWA
+    if (this.isIOS()) {
+      return hasBasicSupport && this.isPWAMode();
+    }
+    
+    return hasBasicSupport;
+  }
+
+  /**
+   * Check if we need to show PWA install instructions
+   */
+  needsPWAInstall(): boolean {
+    return this.isIOS() && !this.isPWAMode();
   }
 
   /**
