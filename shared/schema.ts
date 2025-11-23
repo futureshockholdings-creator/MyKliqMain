@@ -208,6 +208,27 @@ export const usedInviteCodes = pgTable("used_invite_codes", {
   usedAt: timestamp("used_at").defaultNow().notNull(),
 });
 
+// Referral bonus status enum
+export const referralBonusStatusEnum = pgEnum("referral_bonus_status", ["pending", "completed", "cancelled"]);
+
+// Referral bonuses - tracks invite code referrals and rewards (10 Koins after 24hrs + login)
+export const referralBonuses = pgTable("referral_bonuses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  inviterId: varchar("inviter_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  inviteeId: varchar("invitee_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  signupAt: timestamp("signup_at").defaultNow().notNull(),
+  firstLoginAt: timestamp("first_login_at"), // Set when invitee logs in for first time
+  awardedAt: timestamp("awarded_at"), // Set when bonus is awarded
+  koinsAwarded: integer("koins_awarded").default(10),
+  status: referralBonusStatusEnum("status").default("pending").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_referral_bonuses_inviter").on(table.inviterId),
+  index("idx_referral_bonuses_invitee").on(table.inviteeId),
+  index("idx_referral_bonuses_status").on(table.status),
+]);
+
 // Media type enum
 export const mediaTypeEnum = pgEnum("media_type", ["image", "video"]);
 
@@ -1719,3 +1740,12 @@ export const insertNotificationPreferenceSchema = createInsertSchema(notificatio
 });
 export type InsertNotificationPreference = z.infer<typeof insertNotificationPreferenceSchema>;
 export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+
+// Referral Bonus types
+export const insertReferralBonusSchema = createInsertSchema(referralBonuses).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
+export type InsertReferralBonus = z.infer<typeof insertReferralBonusSchema>;
+export type ReferralBonus = typeof referralBonuses.$inferSelect;
