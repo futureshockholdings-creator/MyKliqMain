@@ -846,72 +846,49 @@ export class DatabaseStorage implements IStorage {
 
     const feedItems: any[] = [];
     
-    // Short-circuit for new users with no friends: skip heavy queries and just return educational posts
-    // This optimization reduces latency from ~990ms to ~50ms for new users
-    if (includeEducationalPosts && friendIds.length === 1) {
-      const educationalPosts = await this.getEducationalPosts(limit);
-      const formattedItems = educationalPosts.map(eduPost => ({
-        id: `edu_${eduPost.id}`,
-        type: 'educational',
-        title: eduPost.title,
-        content: eduPost.content,
-        featureName: eduPost.featureName,
-        icon: eduPost.icon,
-        accentColor: eduPost.accentColor,
-        createdAt: eduPost.createdAt,
-        activityDate: eduPost.createdAt,
-        userId: 'system',
-        author: {
-          id: 'system',
-          firstName: 'MyKliq',
-          lastName: 'Tips',
-          profileImageUrl: null,
-          kliqName: null,
-        },
-        likes: [],
-        comments: [],
-        likeCount: 0,
-        commentCount: 0,
-        isLiked: false,
-      }));
+    // Educational posts: Show 1-2 randomly selected posts for users <7 days old
+    // Rate limited to every 6 hours (max 4 times per day)
+    let educationalPostsToAdd: any[] = [];
+    if (includeEducationalPosts && page === 1) {
+      // Check 6-hour rate limit
+      const sixHoursInMs = 6 * 60 * 60 * 1000;
+      const lastViewCacheKey = `edu-posts-last-view:${userId}`;
+      const lastViewTime = await cacheService.get<number>(lastViewCacheKey);
+      const now = Date.now();
+      const shouldShowEducationalPosts = !lastViewTime || (now - lastViewTime) >= sixHoursInMs;
       
-      return {
-        items: formattedItems,
-        hasMore: false,
-        totalPages: 1,
-      };
-    }
-    
-    // If user should see educational posts and has friends, fetch them
-    if (includeEducationalPosts) {
-      // Scale educational posts based on feed size: ~12% of feed (12 for 100 posts, 6 for 50, etc)
-      const eduPostCount = Math.max(6, Math.min(12, Math.ceil(limit * 0.12)));
-      const educationalPosts = await this.getEducationalPosts(eduPostCount);
-      // Add educational posts to feed items (they'll be sorted chronologically with other content)
-      feedItems.push(...educationalPosts.map(eduPost => ({
-        id: `edu_${eduPost.id}`,
-        type: 'educational',
-        title: eduPost.title,
-        content: eduPost.content,
-        featureName: eduPost.featureName,
-        icon: eduPost.icon,
-        accentColor: eduPost.accentColor,
-        createdAt: eduPost.createdAt,
-        activityDate: eduPost.createdAt,
-        userId: 'system',
-        author: {
-          id: 'system',
-          firstName: 'MyKliq',
-          lastName: 'Tips',
-          profileImageUrl: null,
-          kliqName: null,
-        },
-        likes: [],
-        comments: [],
-        likeCount: 0,
-        commentCount: 0,
-        isLiked: false,
-      })));
+      if (shouldShowEducationalPosts) {
+        // Update last view time in cache (expires in 7 days)
+        await cacheService.set(lastViewCacheKey, now, 7 * 24 * 60 * 60);
+        
+        // Get 1-2 random educational posts
+        const educationalPosts = await this.getRandomEducationalPosts(2);
+        
+        educationalPostsToAdd = educationalPosts.map(eduPost => ({
+          id: `edu_${eduPost.id}`,
+          type: 'educational',
+          title: eduPost.title,
+          content: eduPost.content,
+          featureName: eduPost.featureName,
+          icon: eduPost.icon,
+          accentColor: eduPost.accentColor,
+          createdAt: eduPost.createdAt,
+          activityDate: eduPost.createdAt,
+          userId: 'system',
+          author: {
+            id: 'system',
+            firstName: 'MyKliq',
+            lastName: 'Tips',
+            profileImageUrl: null,
+            kliqName: null,
+          },
+          likes: [],
+          comments: [],
+          likeCount: 0,
+          commentCount: 0,
+          isLiked: false,
+        }));
+      }
     }
 
     try {
@@ -1129,6 +1106,11 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error fetching kliq feed items:', error);
       // Return posts only if there are errors with other queries
+    }
+
+    // Inject educational posts (1-2 random posts every 6 hours)
+    if (educationalPostsToAdd.length > 0) {
+      feedItems.push(...educationalPostsToAdd);
     }
 
     // Apply intelligent feed curation instead of simple chronological sort

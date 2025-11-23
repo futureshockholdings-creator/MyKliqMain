@@ -225,6 +225,15 @@ export async function seedEducationalPosts() {
       priority: 7,
       isActive: true,
     },
+    {
+      title: '😊 Express Your Mood & Get AI Boosts',
+      content: 'Share how you\'re feeling with mood tags on your posts! Feeling down? Get personalized AI-powered mood boosts using Google Gemini to lift your spirits and brighten your day.',
+      featureName: 'Moods & Mood Boosts',
+      icon: '😊',
+      accentColor: '#fbbf24', // Yellow
+      priority: 8,
+      isActive: true,
+    },
   ];
 
   try {
