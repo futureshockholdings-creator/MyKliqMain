@@ -24,13 +24,29 @@ export default function Login() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  
+  // Track if we should force showing the login form (user just logged out)
+  const [shouldForceLogin, setShouldForceLogin] = useState(() => {
+    const forceLogout = sessionStorage.getItem('forceLogout');
+    if (forceLogout) {
+      sessionStorage.removeItem('forceLogout');
+      return true;
+    }
+    return false;
+  });
 
   // If user is already logged in, redirect to home
+  // BUT don't redirect if they just logged out (forces re-authentication)
   useEffect(() => {
+    // Don't redirect if we're forcing login (user just logged out)
+    if (shouldForceLogin) {
+      return;
+    }
+    
     if (!authLoading && isAuthenticated) {
       setLocation("/");
     }
-  }, [isAuthenticated, authLoading, setLocation]);
+  }, [isAuthenticated, authLoading, setLocation, shouldForceLogin]);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -100,6 +116,9 @@ export default function Login() {
           description: "Welcome back to MyKliq!",
         });
 
+        // Clear the force login flag since they successfully logged in
+        setShouldForceLogin(false);
+
         // Force a complete page reload to ensure session is properly loaded
         setTimeout(() => {
           window.location.href = "/";
@@ -139,9 +158,9 @@ export default function Login() {
       </div>
     );
   }
-
-  // If already authenticated, don't render login form (useEffect will redirect)
-  if (isAuthenticated) {
+  
+  // If already authenticated AND not forcing login, don't render login form (useEffect will redirect)
+  if (isAuthenticated && !shouldForceLogin) {
     return null;
   }
 

@@ -1,17 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Users, Crown, Palette, Shield, Video, LogIn, Link as LinkIcon } from "lucide-react";
 import { Link } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Landing() {
   const [inviteCode, setInviteCode] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
+  
+  // Clear all cached data when landing on this page after logout
+  useEffect(() => {
+    // Check if this is a post-logout redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPostLogout = sessionStorage.getItem('forceLogout') === 'true';
+    
+    if (isPostLogout || window.location.pathname === '/landing') {
+      // Clear all query cache to prevent stale session data
+      queryClient.clear();
+    }
+  }, []);
 
   const validateInviteCode = async () => {
     if (!inviteCode.trim()) {

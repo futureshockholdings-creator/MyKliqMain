@@ -792,7 +792,14 @@ export default function Settings() {
   const [pin, setPin] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Clear all cached data before logout to prevent stale sessions
+    queryClient.clear();
+    
+    // Mark that we're logging out to prevent auto-redirect on login page
+    sessionStorage.setItem('forceLogout', 'true');
+    
+    // Redirect to logout endpoint
     window.location.href = '/api/logout';
   };
 
