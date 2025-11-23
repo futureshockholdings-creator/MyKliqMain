@@ -41,6 +41,12 @@ export async function enterpriseFetch<T = any>(
     ...fetchOptions,
     method: fetchOptions.method || 'GET'
   });
+  
+  // Debug logging for cache key (only for auth/user endpoint)
+  if (url.includes('/api/auth/user')) {
+    console.log('[EnterpriseFetch] Cache key for', url, ':', cacheKey);
+    console.log('[EnterpriseFetch] Fetch options:', fetchOptions);
+  }
 
   // Define the actual fetch function
   const fetchFn = async (): Promise<T> => {

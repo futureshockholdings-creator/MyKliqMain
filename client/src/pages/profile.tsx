@@ -74,9 +74,10 @@ export default function Profile() {
       await apiRequest("PUT", "/api/user/profile-picture", { profileImageURL: profileImageURL });
     },
     onSuccess: async () => {
-      // Clear enhanced cache for auth/user endpoint
-      const cacheKey = buildCacheKey('/api/auth/user', { method: 'GET', credentials: 'include' });
-      await enhancedCache.delete(cacheKey);
+      // Clear enhanced cache for auth/user endpoint (match enterpriseFetch default key)
+      const cacheKey = buildCacheKey('/api/auth/user', { method: 'GET' });
+      console.log('[ProfilePicture] Clearing cache with key:', cacheKey);
+      await enhancedCache.remove(cacheKey);
       
       // Invalidate TanStack Query cache to trigger refetch
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -116,9 +117,10 @@ export default function Profile() {
       return await apiRequest("PATCH", "/api/user/background", { backgroundImageUrl: backgroundUrl });
     },
     onSuccess: async () => {
-      // Clear enhanced cache for auth/user endpoint
-      const cacheKey = buildCacheKey('/api/auth/user', { method: 'GET', credentials: 'include' });
-      await enhancedCache.delete(cacheKey);
+      // Clear enhanced cache for auth/user endpoint (match enterpriseFetch default key)
+      const cacheKey = buildCacheKey('/api/auth/user', { method: 'GET' });
+      console.log('[Background] Clearing cache with key:', cacheKey);
+      await enhancedCache.remove(cacheKey);
       
       // Invalidate TanStack Query cache to trigger refetch
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
