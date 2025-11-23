@@ -183,6 +183,9 @@ function Navigation({ currentPath }: { currentPath: string }) {
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  console.log(isAuthenticated, "--->isAuth");
+  
+
   return (
     <Switch>
       {/* Public routes - accessible without authentication */}
