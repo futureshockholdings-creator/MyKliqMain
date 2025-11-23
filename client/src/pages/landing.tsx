@@ -7,53 +7,62 @@ import { Users, Crown, Palette, Shield, Video, LogIn, Link as LinkIcon } from "l
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 
 export default function Landing() {
   const [inviteCode, setInviteCode] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
   
-  // Selectively clear auth cache when landing on this page after logout
+  // Completely clear all caches when landing on this page after logout
   useEffect(() => {
-    // Check if this is a post-logout redirect
-    const urlParams = new URLSearchParams(window.location.search);
-    const isPostLogout = sessionStorage.getItem('forceLogout') === 'true';
+    const clearCaches = async () => {
+      // Check if this is a post-logout redirect
+      const urlParams = new URLSearchParams(window.location.search);
+      const isPostLogout = sessionStorage.getItem('forceLogout') === 'true';
+      
+      if (isPostLogout || window.location.pathname === '/landing') {
+        console.log('[Landing] Clearing all caches for post-logout cleanup...');
+        
+        // 1. Clear IndexedDB cache
+        await enhancedCache.clearAll();
+        
+        // 2. Completely REMOVE all user-specific queries from TanStack Query
+        const userSpecificQueries = [
+          '/api/auth/user',
+          '/api/profile',
+          '/api/user',
+          '/api/kliq-koins',
+          '/api/social',
+          '/api/sports',
+          '/api/notifications',
+          '/api/kliq-feed',
+          '/api/friends',
+          '/api/friend-ranking',
+          '/api/messages',
+          '/api/polls',
+          '/api/events',
+          '/api/actions',
+          '/api/birthdays',
+          '/api/posts',
+          '/api/moviecons',
+          '/api/calendar',
+          '/api/filters',
+          '/api/stories',
+          '/api/ads',
+          '/api/mood-boost',
+          '/api/scrapbook',
+        ];
+        
+        userSpecificQueries.forEach(queryKey => {
+          queryClient.removeQueries({ queryKey: [queryKey] });
+        });
+        
+        console.log('[Landing] All caches cleared successfully');
+      }
+    };
     
-    if (isPostLogout || window.location.pathname === '/landing') {
-      // Only remove auth-related queries
-      queryClient.removeQueries({ queryKey: ['/api/auth/user'], exact: true });
-      
-      // Invalidate ALL user-specific queries so next login gets fresh data
-      // This ensures no data leakage between user accounts
-      const userSpecificQueries = [
-        '/api/profile',
-        '/api/user',
-        '/api/kliq-koins',
-        '/api/social',
-        '/api/sports',
-        '/api/notifications',
-        '/api/kliq-feed',
-        '/api/friends',
-        '/api/friend-ranking',
-        '/api/messages',
-        '/api/polls',
-        '/api/events',
-        '/api/actions',
-        '/api/birthdays',
-        '/api/posts',
-        '/api/moviecons',
-        '/api/calendar',
-        '/api/filters',
-        '/api/stories',
-        '/api/ads',
-        '/api/mood-boost',
-        '/api/scrapbook',
-      ];
-      
-      userSpecificQueries.forEach(queryKey => {
-        queryClient.invalidateQueries({ queryKey: [queryKey] });
-      });
-    }
+    clearCaches();
   }, []);
 
   const validateInviteCode = async () => {

@@ -42,8 +42,9 @@ import {
   SiBluesky,
   SiSubstack
 } from "react-icons/si";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
+import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 
 interface SocialAccount {
   id: string;
@@ -793,12 +794,15 @@ export default function Settings() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const handleLogout = async () => {
-    // Selectively remove only auth-related cache to prevent stale sessions
-    queryClient.removeQueries({ queryKey: ['/api/auth/user'], exact: true });
+    // 1. Clear client-side disk cache (IndexedDB) to prevent stale data
+    console.log('[Logout] Clearing IndexedDB cache...');
+    await enhancedCache.clearAll();
     
-    // Invalidate ALL user-specific queries so they refetch fresh data on next login
-    // This ensures no data leakage between user accounts
+    // 2. Completely REMOVE all user-specific queries from TanStack Query
+    // Using removeQueries instead of invalidateQueries ensures complete cache removal
+    console.log('[Logout] Removing TanStack Query cache...');
     const userSpecificQueries = [
+      '/api/auth/user',
       '/api/profile',
       '/api/user',
       '/api/kliq-koins',
@@ -824,13 +828,15 @@ export default function Settings() {
     ];
     
     userSpecificQueries.forEach(queryKey => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      queryClient.removeQueries({ queryKey: [queryKey] });
     });
     
-    // Mark that we're logging out to prevent auto-redirect on login page
+    // 3. Mark that we're logging out to prevent auto-redirect on login page
     sessionStorage.setItem('forceLogout', 'true');
     
-    // Redirect to logout endpoint
+    console.log('[Logout] Cache cleared, redirecting to logout...');
+    
+    // 4. Redirect to logout endpoint
     window.location.href = '/api/logout';
   };
 
