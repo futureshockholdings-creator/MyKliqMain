@@ -4,6 +4,7 @@ MyKliq is a social media application designed for private, close-knit friend gro
 
 ## Recent Updates (Nov 23, 2025)
 - **Referral Bonus System**: Implemented automated referral rewards - users earn 10 Kliq Koins for each friend who joins using their invite code (requires 24hr wait period + invitee's first login). Background service processes eligible bonuses hourly with atomic transaction handling.
+- **Educational Posts System**: New user onboarding through contextual tips displayed in feed. Users <7 days old see 1-2 educational posts every 6 hours (max 4 times per day) covering 20 MyKliq features: Stories, Kliq Koins, Referrals, Friend Rankings, Incognito Messaging, Polls, Events, Moviecons, Sports, Themes, Streaks, Rich Media, Content Filters, Direct Messaging, Friend Analysis AI, Scrapbook, Horoscopes, Bible Verses, Group Chats, and Social Integration. Each tip features unique accent colors, "💡 Tip" badges, and custom styling. Empty feeds show 2 educational posts; feeds with content inject posts at strategic positions (2nd and 5th). 6-hour rate limiting via cache ensures users aren't overwhelmed.
 
 # User Preferences
 
