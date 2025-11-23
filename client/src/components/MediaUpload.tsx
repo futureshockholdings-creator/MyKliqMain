@@ -591,35 +591,34 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
             </Card>
           )}
 
-          <div className="flex justify-between items-center">
-            <div className="flex flex-col sm:flex-row gap-2 flex-1">
-              <div className="space-y-2">
-                <ObjectUploader
-                  maxNumberOfFiles={1}
-                  maxFileSize={262144000} // 250MB
-                  allowedFileTypes={[
-                    // Image formats
-                    'image/*',
-                    '.jpg', '.jpeg', '.png', '.gif', '.webp',
-                    '.heic', '.heif', '.bmp', '.tiff', '.tif',
-                    // Video formats  
-                    'video/*',
-                    '.mp4', '.mov', '.hevc', '.h265', '.avi',
-                    '.mkv', '.3gp', '.webm'
-                  ]}
-                  onGetUploadParameters={handleGetUploadParameters}
-                  onComplete={handleUploadComplete}
-                  buttonClassName="bg-white text-black border-2 border-black hover:bg-gray-50"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  📸📹 Add Photos & Videos
-                </ObjectUploader>
-              </div>
+          {/* Upload Options */}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <ObjectUploader
+                maxNumberOfFiles={1}
+                maxFileSize={262144000} // 250MB
+                allowedFileTypes={[
+                  // Image formats
+                  'image/*',
+                  '.jpg', '.jpeg', '.png', '.gif', '.webp',
+                  '.heic', '.heif', '.bmp', '.tiff', '.tif',
+                  // Video formats  
+                  'video/*',
+                  '.mp4', '.mov', '.hevc', '.h265', '.avi',
+                  '.mkv', '.3gp', '.webm'
+                ]}
+                onGetUploadParameters={handleGetUploadParameters}
+                onComplete={handleUploadComplete}
+                buttonClassName="bg-white text-black border-2 border-black hover:bg-gray-50 w-full sm:w-auto"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                📸 Add Photos & Videos
+              </ObjectUploader>
               
               <Button
                 onClick={startCamera}
                 disabled={cameraMode !== "off" || !!capturedMedia || !!uploadedMedia}
-                className="bg-blue-600 hover:bg-blue-700 text-white border-2 border-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 text-white border-2 border-blue-700 w-full sm:w-auto"
                 data-testid="button-access-camera"
               >
                 <Camera className="w-4 h-4 mr-2" />
@@ -627,11 +626,12 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
               </Button>
             </div>
 
-            <div className="flex space-x-2 ml-2">
+            {/* Action Buttons */}
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="border-border text-muted-foreground hover:bg-muted"
+                className="border-border text-muted-foreground hover:bg-muted w-full sm:w-auto"
                 data-testid="button-cancel"
               >
                 Cancel
@@ -639,7 +639,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
               <Button
                 onClick={handleSubmit}
                 disabled={isUploading}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
                 data-testid="button-submit-post"
               >
 {type === "event" 
