@@ -3927,7 +3927,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Save session explicitly before sending response
-        req.session.save((saveErr: any) => {
+        req.session.save(async (saveErr: any) => {
           if (saveErr) {
             console.error("Session save error:", saveErr);
             return res.status(500).json({ 
