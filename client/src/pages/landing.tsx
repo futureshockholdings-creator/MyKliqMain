@@ -23,9 +23,12 @@ export default function Landing() {
       // Only remove auth-related queries, keep profile/theme data intact
       queryClient.removeQueries({ queryKey: ['/api/auth/user'], exact: true });
       
-      // Invalidate profile/theme queries so next login gets fresh data
+      // Invalidate all user-specific queries so next login gets fresh data
       queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
       queryClient.invalidateQueries({ queryKey: ['/api/user/theme'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/kliq-koins'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/social'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/sports'] });
     }
   }, []);
 

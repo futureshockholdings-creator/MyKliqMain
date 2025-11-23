@@ -797,9 +797,12 @@ export default function Settings() {
     // Keep profile/theme cache intact so user data persists
     queryClient.removeQueries({ queryKey: ['/api/auth/user'], exact: true });
     
-    // Invalidate profile/theme queries so they refetch fresh data on next login
+    // Invalidate all user-specific queries so they refetch fresh data on next login
     queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
     queryClient.invalidateQueries({ queryKey: ['/api/user/theme'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/kliq-koins'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/social'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/sports'] });
     
     // Mark that we're logging out to prevent auto-redirect on login page
     sessionStorage.setItem('forceLogout', 'true');
