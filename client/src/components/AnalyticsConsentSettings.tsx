@@ -17,10 +17,10 @@ export function AnalyticsConsentSettings({ initialConsent }: AnalyticsConsentSet
   const queryClient = useQueryClient();
 
   const updateConsentMutation = useMutation({
-    mutationFn: async (consent: boolean) => {
+    mutationFn: async ({ consent, previousValue }: { consent: boolean; previousValue: boolean }) => {
       return await apiRequest('PATCH', '/api/user/analytics-consent', { analyticsConsent: consent });
     },
-    onSuccess: (_, consent) => {
+    onSuccess: (_, { consent }) => {
       // Invalidate user query to refresh analytics consent status
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       
@@ -31,9 +31,11 @@ export function AnalyticsConsentSettings({ initialConsent }: AnalyticsConsentSet
           : 'We won\'t collect analytics data from your account.',
       });
     },
-    onError: () => {
-      // Revert the toggle on error
-      setIsEnabled(!isEnabled);
+    onError: (error, { previousValue }) => {
+      // Revert to exact previous state before this mutation attempt
+      setIsEnabled(previousValue);
+      
+      console.error('[Analytics] Failed to update consent:', error);
       
       toast({
         title: 'Error',
@@ -44,8 +46,19 @@ export function AnalyticsConsentSettings({ initialConsent }: AnalyticsConsentSet
   });
 
   const handleToggle = async (checked: boolean) => {
+    // Prevent rapid toggles - only allow one mutation at a time
+    if (updateConsentMutation.isPending) {
+      return;
+    }
+    
+    // Store current state before optimistic update
+    const previousValue = isEnabled;
+    
+    // Optimistically update UI
     setIsEnabled(checked);
-    updateConsentMutation.mutate(checked);
+    
+    // Mutation will revert to previousValue on error
+    updateConsentMutation.mutate({ consent: checked, previousValue });
   };
 
   return (

@@ -22,7 +22,7 @@ class AnalyticsService {
    */
   init() {
     // Get GA4 measurement ID from environment variable
-    this.measurementId = import.meta.env.VITE_GA4_MEASUREMENT_ID;
+    this.measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
 
     if (!this.measurementId) {
       console.log('[Analytics] GA4 measurement ID not configured - analytics disabled');
