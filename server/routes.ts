@@ -3936,6 +3936,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           console.log("Login successful for user:", user.id, "Session saved");
+          
+          // Update referral bonus first login timestamp if this is a pending referral
+          try {
+            await storage.updateReferralBonusFirstLogin(user.id);
+          } catch (error) {
+            console.error("Error updating referral bonus first login:", error);
+            // Don't fail the login if this fails
+          }
+          
           res.setHeader('Content-Type', 'application/json');
           res.json({ 
             message: "Login successful",
