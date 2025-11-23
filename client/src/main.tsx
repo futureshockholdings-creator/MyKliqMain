@@ -12,11 +12,11 @@ function updateFavicon() {
   // Clear browser favicon cache by adding timestamp
   const timestamp = Date.now();
   
-  // Add multiple favicon formats
+  // Add multiple favicon formats (updated to MyKliq brand pink)
   const favicons = [
     { rel: 'icon', type: 'image/x-icon', href: `/favicon.ico?t=${timestamp}` },
     { rel: 'shortcut icon', type: 'image/x-icon', href: `/favicon.ico?t=${timestamp}` },
-    { rel: 'icon', type: 'image/svg+xml', href: `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23000'/><g fill='%2300FF00'><circle cx='8' cy='6' r='2'/><rect x='7' y='8' width='2' height='3'/><rect x='5' y='9' width='6' height='1'/><rect x='7' y='3' width='2' height='1'/><rect x='5' y='4' width='6' height='1'/></g></svg>` }
+    { rel: 'icon', type: 'image/svg+xml', href: `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23000'/><g fill='%23FF1B8D'><circle cx='8' cy='6' r='2'/><rect x='7' y='8' width='2' height='3'/><rect x='5' y='9' width='6' height='1'/><rect x='7' y='3' width='2' height='1'/><rect x='5' y='4' width='6' height='1'/></g></svg>` }
   ];
   
   favicons.forEach(favicon => {
@@ -47,5 +47,9 @@ setTimeout(updateFavicon, 3000);
 // Register Service Worker for PWA
 import { registerServiceWorker } from "./utils/registerServiceWorker";
 registerServiceWorker();
+
+// Initialize Google Analytics
+import { analyticsService } from "./services/analyticsService";
+analyticsService.init();
 
 createRoot(document.getElementById("root")!).render(<App />);
