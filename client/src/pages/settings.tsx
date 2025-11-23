@@ -14,6 +14,7 @@ import { StreakDashboardCard } from "@/components/KliqKoin/StreakDashboardCard";
 import { KoinWalletCard } from "@/components/KliqKoin/KoinWalletCard";
 import { BorderMarketplaceCard } from "@/components/KliqKoin/BorderMarketplaceCard";
 import { MyBordersCard } from "@/components/KliqKoin/MyBordersCard";
+import { NotificationSettings } from "@/components/NotificationSettings";
 
 import { 
   MessageCircle,
@@ -1456,6 +1457,10 @@ export default function Settings() {
               </CardContent>
             </Card>
 
+            {/* Push Notification Settings */}
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg">
+              <NotificationSettings />
+            </div>
 
             {/* Account Management */}
             <Card className="bg-white/10 backdrop-blur-sm border-white/20">

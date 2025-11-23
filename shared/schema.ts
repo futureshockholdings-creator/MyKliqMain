@@ -1603,7 +1603,7 @@ export const deviceTokens = pgTable("device_tokens", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   token: text("token").notNull().unique(), // FCM/APNS device token
-  platform: varchar("platform").notNull(), // 'ios' or 'android'
+  platform: varchar("platform").notNull(), // 'ios', 'android', or 'web'
   deviceId: varchar("device_id"), // Optional device identifier
   isActive: boolean("is_active").default(true), // Can be disabled without deleting
   createdAt: timestamp("created_at").defaultNow(),

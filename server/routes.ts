@@ -1511,6 +1511,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
+   * POST /api/push/register-device - Register web device token for push notifications
+   */
+  app.post('/api/push/register-device', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { token, platform, deviceId } = req.body;
+
+      if (!token || !platform) {
+        return res.status(400).json({ message: 'Token and platform are required' });
+      }
+
+      if (!['web'].includes(platform)) {
+        return res.status(400).json({ message: 'Platform must be web' });
+      }
+
+      const deviceToken = await storage.registerDeviceToken({
+        userId,
+        token,
+        platform,
+        deviceId
+      });
+
+      res.json({ success: true, tokenId: deviceToken.id });
+    } catch (error) {
+      console.error('Web device token registration error:', error);
+      res.status(500).json({ message: 'Failed to register device token' });
+    }
+  });
+
+  /**
    * DELETE /api/mobile/push/unregister-device - Unregister device token
    */
   app.delete('/api/mobile/push/unregister-device', verifyMobileToken, async (req, res) => {
@@ -1526,6 +1556,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error('Device token unregistration error:', error);
+      res.status(500).json({ message: 'Failed to unregister device token' });
+    }
+  });
+
+  /**
+   * DELETE /api/push/unregister-device - Unregister web device token
+   */
+  app.delete('/api/push/unregister-device', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({ message: 'Token is required' });
+      }
+
+      await storage.unregisterDeviceToken(userId, token);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Web device token unregistration error:', error);
       res.status(500).json({ message: 'Failed to unregister device token' });
     }
   });
