@@ -846,14 +846,25 @@ export class DatabaseStorage implements IStorage {
 
     const feedItems: any[] = [];
     
-    // TEMPORARY: Show ALL 25 educational posts for review
-    // TODO: Revert back to showing 1-2 random posts every 6 hours after review
+    // Educational posts: Show 1-2 randomly selected posts for users <7 days old
+    // Rate limited to every 6 hours (max 4 times per day)
     let educationalPostsToAdd: any[] = [];
     if (includeEducationalPosts && page === 1) {
-      // Get ALL educational posts for review (normally would be 1-2 random)
-      const educationalPosts = await this.getEducationalPosts(25);
+      // Check 6-hour rate limit
+      const sixHoursInMs = 6 * 60 * 60 * 1000;
+      const lastViewCacheKey = `edu-posts-last-view:${userId}`;
+      const lastViewTime = await cacheService.get<number>(lastViewCacheKey);
+      const now = Date.now();
+      const shouldShowEducationalPosts = !lastViewTime || (now - lastViewTime) >= sixHoursInMs;
       
-      educationalPostsToAdd = educationalPosts.map(eduPost => ({
+      if (shouldShowEducationalPosts) {
+        // Update last view time in cache (expires in 7 days)
+        await cacheService.set(lastViewCacheKey, now, 7 * 24 * 60 * 60);
+        
+        // Get 1-2 random educational posts
+        const educationalPosts = await this.getRandomEducationalPosts(2);
+        
+        educationalPostsToAdd = educationalPosts.map(eduPost => ({
         id: `edu_${eduPost.id}`,
         type: 'educational',
         title: eduPost.title,
@@ -877,6 +888,7 @@ export class DatabaseStorage implements IStorage {
         commentCount: 0,
         isLiked: false,
       }));
+      }
     }
 
     try {
@@ -1580,12 +1592,12 @@ export class DatabaseStorage implements IStorage {
 
   // Educational Posts operations
   async getEducationalPosts(limit = 12): Promise<EducationalPost[]> {
-    // TEMPORARY: Cache disabled for review - will re-enable after user reviews all 25 tips
-    // const cacheKey = `educational-posts:${limit}`;
-    // const cached = await cacheService.get<EducationalPost[]>(cacheKey);
-    // if (cached) {
-    //   return cached;
-    // }
+    // Cache educational posts for 1 hour since they're static content
+    const cacheKey = `educational-posts:${limit}`;
+    const cached = await cacheService.get<EducationalPost[]>(cacheKey);
+    if (cached) {
+      return cached;
+    }
     
     const posts = await db.select()
       .from(educationalPosts)
@@ -1593,8 +1605,8 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(educationalPosts.priority))
       .limit(limit);
     
-    // Cache for 1 hour (3600 seconds) - DISABLED FOR REVIEW
-    // await cacheService.set(cacheKey, posts, 3600);
+    // Cache for 1 hour (3600 seconds)
+    await cacheService.set(cacheKey, posts, 3600);
     return posts;
   }
 

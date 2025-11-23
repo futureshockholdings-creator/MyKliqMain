@@ -4905,28 +4905,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const includeEducationalPosts = user && user.createdAt && 
         Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)) < 7;
       
-      // TEMPORARY: Cache disabled for review - will re-enable after user reviews all 25 tips
       // Get feed with educational posts included if applicable
       // Educational posts are fetched from DB and persist like regular posts
-      const filters = await storage.getContentFilters(userId);
-      const filterKeywords = filters.map(f => f.keyword);
-      const feed = await storage.getKliqFeed(userId, filterKeywords, page, limit, includeEducationalPosts);
+      const feed = await performanceOptimizer.optimizeQuery(
+        async () => {
+          const filters = await storage.getContentFilters(userId);
+          const filterKeywords = filters.map(f => f.keyword);
+          const feedData = await storage.getKliqFeed(userId, filterKeywords, page, limit, includeEducationalPosts);
+          return feedData;
+        },
+        cacheKey,
+        300 // Cache for 5 minutes (educational posts persist, so longer cache is fine)
+      );
       
-      // const feed = await performanceOptimizer.optimizeQuery(
-      //   async () => {
-      //     const filters = await storage.getContentFilters(userId);
-      //     const filterKeywords = filters.map(f => f.keyword);
-      //     const feedData = await storage.getKliqFeed(userId, filterKeywords, page, limit, includeEducationalPosts);
-      //     return feedData;
-      //   },
-      //   cacheKey,
-      //   300 // Cache for 5 minutes (educational posts persist, so longer cache is fine)
-      // );
-      
-      // TEMPORARY: Disable browser caching for review
-      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', '0');
       res.json(feed);
     } catch (error) {
       console.error("Error fetching kliq feed:", error);

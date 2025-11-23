@@ -282,43 +282,10 @@ export class FeedCurationIntelligence {
    * Apply intelligent curation algorithm with diversity balancing
    */
   private applyCurationAlgorithm(items: CuratedFeedItem[], maxItems: number): CuratedFeedItem[] {
+    // MyKliq is all about freedom and personalization - users can post whatever they want
+    // Simply sort by recency and return up to maxItems
     const sortedItems = [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    // Apply diversity constraints to prevent feed monotony
-    const curatedItems: CuratedFeedItem[] = [];
-    const contentTypeCount = new Map<string, number>();
-    const authorTypeCount = new Map<string, Map<string, number>>(); // Track author count per content type
-
-    for (const item of sortedItems) {
-      if (curatedItems.length >= maxItems) break;
-
-      // Diversity constraints
-      if (!authorTypeCount.has(item.userId)) {
-        authorTypeCount.set(item.userId, new Map());
-      }
-      const authorTypes = authorTypeCount.get(item.userId)!;
-      const authorPostCountForType = authorTypes.get(item.type) || 0;
-      const contentTypeCount_ = contentTypeCount.get(item.type) || 0;
-
-      // Educational posts bypass author limits (they're from system and need to show all)
-      const isEducationalPost = item.type === 'educational';
-      
-      // Limit same author to 3 items per content type (not globally)
-      // This allows users to have 3 posts + 3 events + 3 polls, etc.
-      // Exception: Educational posts are always included for new user onboarding
-      if (!isEducationalPost && authorPostCountForType >= 3) continue;
-
-      // Ensure content type variety (no more than 50% of one type)
-      // Exception: Educational posts are always included for new user onboarding
-      if (!isEducationalPost && contentTypeCount_ >= Math.floor(maxItems * 0.5)) continue;
-
-      // Add item to curated feed
-      curatedItems.push(item);
-      authorTypes.set(item.type, authorPostCountForType + 1);
-      contentTypeCount.set(item.type, contentTypeCount_ + 1);
-    }
-
-    return curatedItems;
+    return sortedItems.slice(0, maxItems);
   }
 
   /**

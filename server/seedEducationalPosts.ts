@@ -182,7 +182,7 @@ export async function seedEducationalPosts() {
     },
     {
       title: '🔗 Connect Your Social Media Accounts',
-      content: 'Link your TikTok, Instagram, YouTube, and other social accounts to earn Kliq Koins! Get 1,000 Koins per platform (up to 10 platforms). Share content across your networks effortlessly.',
+      content: 'Link your TikTok, YouTube, and other social accounts to earn Kliq Koins! Get 1,000 Koins per platform (up to 10 platforms). Share content across your networks effortlessly.',
       featureName: 'Social Integration',
       icon: '🔗',
       accentColor: '#fb923c', // Orange
