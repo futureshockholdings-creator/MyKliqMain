@@ -4900,101 +4900,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const cacheKey = `kliq-feed:${userId}:${page}:${limit}`;
       
-      // Try to get from cache first using our optimized cache service
+      // Check if user should see educational posts (< 7 days old)
+      const user = await storage.getUser(userId);
+      const includeEducationalPosts = user && user.createdAt && 
+        Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)) < 7;
+      
+      // Get feed with educational posts included if applicable
+      // Educational posts are fetched from DB and persist like regular posts
       const feed = await performanceOptimizer.optimizeQuery(
         async () => {
           const filters = await storage.getContentFilters(userId);
           const filterKeywords = filters.map(f => f.keyword);
-          const feedData = await storage.getKliqFeed(userId, filterKeywords, page, limit);
-          
-          // Check if user is less than 7 days old and inject educational posts
-          const user = await storage.getUser(userId);
-          if (user && user.createdAt) {
-            const daysSinceCreation = Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-            
-            // Inject 1-2 educational posts for users < 7 days old (only on first page)
-            // Check 6-hour rate limit: users see educational posts max 4 times per day
-            const sixHoursInMs = 6 * 60 * 60 * 1000;
-            const lastViewCacheKey = `edu-posts-last-view:${userId}`;
-            const lastViewTime = await cacheService.get<number>(lastViewCacheKey);
-            const now = Date.now();
-            const shouldShowEducationalPosts = !lastViewTime || (now - lastViewTime) >= sixHoursInMs;
-            
-            if (daysSinceCreation < 7 && page === 1 && shouldShowEducationalPosts) {
-              // Update last view time in cache (expires in 7 days)
-              await cacheService.set(lastViewCacheKey, now, 7 * 24 * 60 * 60);
-              
-              const educationalPosts = await storage.getRandomEducationalPosts(2);
-              
-              // Format educational posts to look like regular posts but marked as educational
-              const formattedEduPosts = educationalPosts.map((eduPost) => ({
-                id: `edu_${eduPost.id}`,
-                type: 'educational', // Special type marker
-                title: eduPost.title,
-                content: eduPost.content,
-                featureName: eduPost.featureName,
-                icon: eduPost.icon,
-                accentColor: eduPost.accentColor,
-                createdAt: eduPost.createdAt,
-                userId: 'system',
-                author: {
-                  id: 'system',
-                  firstName: 'MyKliq',
-                  lastName: 'Tips',
-                  profileImageUrl: null,
-                  kliqName: null,
-                },
-                likes: [],
-                comments: [],
-                likeCount: 0,
-                commentCount: 0,
-                isLiked: false,
-              }));
-              
-              // Inject educational posts - show them even if feed is empty!
-              const items = Array.isArray(feedData) ? feedData : feedData.items || [];
-              
-              // If feed is empty, just show the educational posts
-              if (items.length === 0) {
-                const educationalOnlyItems = formattedEduPosts;
-                if (Array.isArray(feedData)) {
-                  return educationalOnlyItems;
-                } else {
-                  return { 
-                    ...feedData, 
-                    items: educationalOnlyItems,
-                    hasMore: false,
-                    totalPages: 1
-                  };
-                }
-              }
-              
-              // If feed has items, inject educational posts at strategic positions
-              const originalItemCount = items.length; // Store original count before mutations
-              
-              // Insert first educational post after 1st regular post (position 2 = index 1)
-              if (originalItemCount >= 1 && formattedEduPosts[0]) {
-                items.splice(1, 0, formattedEduPosts[0]);
-              }
-              
-              // Insert second educational post at position 5 (index 4) ONLY if feed had 5+ original items
-              if (originalItemCount >= 5 && formattedEduPosts[1]) {
-                items.splice(4, 0, formattedEduPosts[1]);
-              }
-              
-              // Update feedData with injected posts
-              if (Array.isArray(feedData)) {
-                return items;
-              } else {
-                return { ...feedData, items };
-              }
-            }
-          }
-          
+          const feedData = await storage.getKliqFeed(userId, filterKeywords, page, limit, includeEducationalPosts);
           return feedData;
         },
         cacheKey,
-        120 // Cache for 2 minutes (longer for paginated content)
+        300 // Cache for 5 minutes (educational posts persist, so longer cache is fine)
       );
       
       res.json(feed);

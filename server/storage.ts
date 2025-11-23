@@ -207,7 +207,7 @@ export interface IStorage {
   getUserPostCount(userId: string): Promise<number>;
   
   // Feed operations
-  getKliqFeed(userId: string, filters: string[], page?: number, limit?: number): Promise<{ items: any[], hasMore: boolean, totalPages: number } | any[]>;
+  getKliqFeed(userId: string, filters: string[], page?: number, limit?: number, includeEducationalPosts?: boolean): Promise<{ items: any[], hasMore: boolean, totalPages: number } | any[]>;
   
   // Story operations
   getActiveStories(userId: string): Promise<(Story & { author: User; viewCount: number; hasViewed: boolean })[]>;
@@ -837,13 +837,43 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Get paginated aggregated kliq feed including posts, polls, events, and actions with intelligent curation
-  async getKliqFeed(userId: string, filters: string[], page = 1, limit = 20): Promise<{ items: any[], hasMore: boolean, totalPages: number }> {
+  async getKliqFeed(userId: string, filters: string[], page = 1, limit = 20, includeEducationalPosts = false): Promise<{ items: any[], hasMore: boolean, totalPages: number }> {
     // Get user's friends first
     const userFriends = await this.getFriends(userId);
     const friendIds = userFriends.map(f => f.friendId);
     friendIds.push(userId); // Include user's own content
 
     const feedItems: any[] = [];
+    
+    // If user should see educational posts, fetch them
+    if (includeEducationalPosts) {
+      const educationalPosts = await this.getEducationalPosts();
+      // Add educational posts to feed items (they'll be sorted chronologically with other content)
+      feedItems.push(...educationalPosts.map(eduPost => ({
+        id: `edu_${eduPost.id}`,
+        type: 'educational',
+        title: eduPost.title,
+        content: eduPost.content,
+        featureName: eduPost.featureName,
+        icon: eduPost.icon,
+        accentColor: eduPost.accentColor,
+        createdAt: eduPost.createdAt,
+        activityDate: eduPost.createdAt,
+        userId: 'system',
+        author: {
+          id: 'system',
+          firstName: 'MyKliq',
+          lastName: 'Tips',
+          profileImageUrl: null,
+          kliqName: null,
+        },
+        likes: [],
+        comments: [],
+        likeCount: 0,
+        commentCount: 0,
+        isLiked: false,
+      })));
+    }
 
     try {
       // Execute all queries in parallel for better performance

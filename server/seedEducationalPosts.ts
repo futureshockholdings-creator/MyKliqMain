@@ -189,6 +189,42 @@ export async function seedEducationalPosts() {
       priority: 6,
       isActive: true,
     },
+    {
+      title: '📺 Go Live & Stream with Friends',
+      content: 'Start live video streams to connect with your kliq in real-time! Share your experiences, host Q&As, or just hang out. Your friends get notified when you go live.',
+      featureName: 'Live Streaming',
+      icon: '📺',
+      accentColor: '#ef4444', // Red
+      priority: 7,
+      isActive: true,
+    },
+    {
+      title: '🎉 Create Events & Plan Hangouts',
+      content: 'Organize events with built-in RSVP tracking, reminders, and auto-posting! From study sessions to birthday parties, keep your kliq coordinated and never miss a gathering.',
+      featureName: 'Event Creation',
+      icon: '🎉',
+      accentColor: '#ec4899', // Pink
+      priority: 8,
+      isActive: true,
+    },
+    {
+      title: '💭 Let\'s Reflect - Your Daily Check-In',
+      content: 'Take a moment to reflect on your day, mood, and thoughts. Let\'s Reflect helps you track your mental wellness and share what matters with close friends when you\'re ready.',
+      featureName: 'Let\'s Reflect',
+      icon: '💭',
+      accentColor: '#a78bfa', // Purple
+      priority: 6,
+      isActive: true,
+    },
+    {
+      title: '📆 MyKliq Calendar - Stay Organized',
+      content: 'Your personal calendar syncs with kliq events, birthdays, and reminders. Never miss important dates - from friend meetups to project deadlines, it\'s all in one place!',
+      featureName: 'MyKliq Calendar',
+      icon: '📆',
+      accentColor: '#06b6d4', // Cyan
+      priority: 7,
+      isActive: true,
+    },
   ];
 
   try {
