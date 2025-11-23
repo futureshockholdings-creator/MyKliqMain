@@ -20,15 +20,39 @@ export default function Landing() {
     const isPostLogout = sessionStorage.getItem('forceLogout') === 'true';
     
     if (isPostLogout || window.location.pathname === '/landing') {
-      // Only remove auth-related queries, keep profile/theme data intact
+      // Only remove auth-related queries
       queryClient.removeQueries({ queryKey: ['/api/auth/user'], exact: true });
       
-      // Invalidate all user-specific queries so next login gets fresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/profile'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/user/theme'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/kliq-koins'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/social'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/sports'] });
+      // Invalidate ALL user-specific queries so next login gets fresh data
+      // This ensures no data leakage between user accounts
+      const userSpecificQueries = [
+        '/api/profile',
+        '/api/user',
+        '/api/kliq-koins',
+        '/api/social',
+        '/api/sports',
+        '/api/notifications',
+        '/api/kliq-feed',
+        '/api/friends',
+        '/api/friend-ranking',
+        '/api/messages',
+        '/api/polls',
+        '/api/events',
+        '/api/actions',
+        '/api/birthdays',
+        '/api/posts',
+        '/api/moviecons',
+        '/api/calendar',
+        '/api/filters',
+        '/api/stories',
+        '/api/ads',
+        '/api/mood-boost',
+        '/api/scrapbook',
+      ];
+      
+      userSpecificQueries.forEach(queryKey => {
+        queryClient.invalidateQueries({ queryKey: [queryKey] });
+      });
     }
   }, []);
 
