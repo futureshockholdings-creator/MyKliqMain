@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { SmartVideoUploader } from "./SmartVideoUploader";
 import { ObjectUploader } from "./ObjectUploader";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Image as ImageIcon, Video, X, Upload } from "lucide-react";
+import { Image as ImageIcon, Video, X, Upload, Camera, StopCircle, Circle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,11 +44,220 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
   
+  // Camera state
+  const [cameraMode, setCameraMode] = useState<"off" | "preview" | "photo" | "video">("off");
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [capturedMedia, setCapturedMedia] = useState<{ blob: Blob; type: "image" | "video" } | null>(null);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
     return (bytes / 1048576).toFixed(1) + " MB";
   };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Camera functions
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: true
+      });
+      
+      setStream(mediaStream);
+      setCameraMode("preview");
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+      
+      toast({
+        title: "Camera ready!",
+        description: "Choose to take a photo or record a video"
+      });
+    } catch (error) {
+      console.error("Camera access error:", error);
+      toast({
+        title: "Camera access denied",
+        description: "Please allow camera access to capture photos and videos",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const stopCamera = (preserveCaptured = false) => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setCameraMode("off");
+    setIsRecording(false);
+    setRecordingTime(0);
+    
+    // Only clear captured media if we're not preserving it
+    if (!preserveCaptured) {
+      setCapturedMedia(null);
+    }
+    
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+      recordingIntervalRef.current = null;
+    }
+  };
+
+  const takePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.drawImage(video, 0, 0);
+    
+    canvas.toBlob((blob) => {
+      if (blob) {
+        setCapturedMedia({ blob, type: "image" });
+        setCameraMode("off");
+        stopCamera(true); // Preserve the captured photo
+        
+        toast({
+          title: "Photo captured!",
+          description: "Review your photo and upload when ready"
+        });
+      }
+    }, 'image/jpeg', 0.95);
+  };
+
+  const startVideoRecording = () => {
+    if (!stream) return;
+    
+    recordedChunksRef.current = [];
+    
+    const mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp8,opus'
+    });
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        recordedChunksRef.current.push(event.data);
+      }
+    };
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+      setCapturedMedia({ blob, type: "video" });
+      setCameraMode("off");
+      stopCamera(true); // Preserve the captured video
+      
+      toast({
+        title: "Video recorded!",
+        description: "Review your video and upload when ready"
+      });
+    };
+    
+    mediaRecorder.start();
+    mediaRecorderRef.current = mediaRecorder;
+    setIsRecording(true);
+    setRecordingTime(0);
+    
+    recordingIntervalRef.current = setInterval(() => {
+      setRecordingTime(prev => prev + 1);
+    }, 1000);
+  };
+
+  const stopVideoRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+        recordingIntervalRef.current = null;
+      }
+    }
+  };
+
+  const uploadCapturedMedia = async () => {
+    if (!capturedMedia) return;
+    
+    try {
+      const fileName = `camera-${Date.now()}.${capturedMedia.type === "image" ? "jpg" : "webm"}`;
+      const file = new File([capturedMedia.blob], fileName, {
+        type: capturedMedia.type === "image" ? "image/jpeg" : "video/webm"
+      });
+      
+      const uploadParams = await handleGetUploadParameters();
+      
+      const uploadResponse = await fetch(uploadParams.url, {
+        method: uploadParams.method,
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+      
+      if (!uploadResponse.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      const mediaUrl = uploadParams.url.split('?')[0];
+      
+      setUploadedMedia({
+        url: mediaUrl,
+        type: capturedMedia.type,
+        fileName: fileName,
+        fileSize: capturedMedia.blob.size
+      });
+      
+      setCapturedMedia(null);
+      
+      toast({
+        title: "Media uploaded!",
+        description: "Your captured media has been uploaded successfully."
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload captured media. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const retakeCapturedMedia = () => {
+    setCapturedMedia(null);
+    startCamera();
+  };
+
+  // Cleanup on unmount or dialog close
+  useEffect(() => {
+    if (!open) {
+      stopCamera();
+    }
+    
+    return () => {
+      stopCamera();
+    };
+  }, [open]);
 
   const handleGetUploadParameters = async () => {
     try {
@@ -265,38 +474,165 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
             </>
           )}
 
+          {/* Camera Preview */}
+          {cameraMode === "preview" && (
+            <Card className="relative bg-black border-border overflow-hidden">
+              <CardContent className="p-0">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-auto max-h-96 object-cover"
+                  data-testid="camera-preview"
+                />
+                <canvas ref={canvasRef} className="hidden" />
+                
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                  <div className="flex justify-center items-center space-x-4">
+                    <Button
+                      onClick={takePhoto}
+                      className="bg-white hover:bg-gray-100 text-black"
+                      size="lg"
+                      data-testid="button-take-photo"
+                    >
+                      <Camera className="w-5 h-5 mr-2" />
+                      Take Photo
+                    </Button>
+                    
+                    {!isRecording ? (
+                      <Button
+                        onClick={startVideoRecording}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                        size="lg"
+                        data-testid="button-start-recording"
+                      >
+                        <Circle className="w-5 h-5 mr-2" />
+                        Start Recording
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={stopVideoRecording}
+                        className="bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                        size="lg"
+                        data-testid="button-stop-recording"
+                      >
+                        <StopCircle className="w-5 h-5 mr-2" />
+                        Stop ({formatTime(recordingTime)})
+                      </Button>
+                    )}
+                    
+                    <Button
+                      onClick={stopCamera}
+                      variant="outline"
+                      className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+                      data-testid="button-close-camera"
+                    >
+                      <X className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Captured Media Preview */}
+          {capturedMedia && (
+            <Card className="relative bg-muted border-border">
+              <CardContent className="p-3">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      {capturedMedia.type === "image" ? (
+                        <ImageIcon className="w-8 h-8 text-green-400" />
+                      ) : (
+                        <Video className="w-8 h-8 text-blue-400" />
+                      )}
+                      <div>
+                        <p className="text-sm text-foreground font-medium">
+                          {capturedMedia.type === "image" ? "Photo" : "Video"} captured
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatFileSize(capturedMedia.blob.size)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={uploadCapturedMedia}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      data-testid="button-upload-captured"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload
+                    </Button>
+                    <Button
+                      onClick={retakeCapturedMedia}
+                      variant="outline"
+                      className="flex-1"
+                      data-testid="button-retake"
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Retake
+                    </Button>
+                    <Button
+                      onClick={() => setCapturedMedia(null)}
+                      variant="ghost"
+                      className="text-destructive hover:bg-destructive/10"
+                      data-testid="button-discard-captured"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="flex justify-between items-center">
-            <div className="space-y-2">
-              <ObjectUploader
-                maxNumberOfFiles={1}
-                maxFileSize={262144000} // 250MB
-                allowedFileTypes={[
-                  // Image formats
-                  'image/*',
-                  '.jpg', '.jpeg', '.png', '.gif', '.webp',
-                  '.heic', '.heif', '.bmp', '.tiff', '.tif',
-                  // Video formats  
-                  'video/*',
-                  '.mp4', '.mov', '.hevc', '.h265', '.avi',
-                  '.mkv', '.3gp', '.webm'
-                ]}
-                onGetUploadParameters={handleGetUploadParameters}
-                onComplete={handleUploadComplete}
-                buttonClassName="bg-white text-black border-2 border-black hover:bg-gray-50"
+            <div className="flex flex-col sm:flex-row gap-2 flex-1">
+              <div className="space-y-2">
+                <ObjectUploader
+                  maxNumberOfFiles={1}
+                  maxFileSize={262144000} // 250MB
+                  allowedFileTypes={[
+                    // Image formats
+                    'image/*',
+                    '.jpg', '.jpeg', '.png', '.gif', '.webp',
+                    '.heic', '.heif', '.bmp', '.tiff', '.tif',
+                    // Video formats  
+                    'video/*',
+                    '.mp4', '.mov', '.hevc', '.h265', '.avi',
+                    '.mkv', '.3gp', '.webm'
+                  ]}
+                  onGetUploadParameters={handleGetUploadParameters}
+                  onComplete={handleUploadComplete}
+                  buttonClassName="bg-white text-black border-2 border-black hover:bg-gray-50"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  📸📹 Add Photos & Videos
+                </ObjectUploader>
+              </div>
+              
+              <Button
+                onClick={startCamera}
+                disabled={cameraMode !== "off" || !!capturedMedia || !!uploadedMedia}
+                className="bg-blue-600 hover:bg-blue-700 text-white border-2 border-blue-700"
+                data-testid="button-access-camera"
               >
-                <Upload className="w-4 h-4 mr-2" />
-                📸📹 Add Photos & Videos
-              </ObjectUploader>
-              <p className="text-xs text-muted-foreground text-center">
-                Supports: JPEG, PNG, GIF, WebP, HEIC, MP4, MOV, HEVC, 3GP, WebM + more (max 250MB)
-              </p>
+                <Camera className="w-4 h-4 mr-2" />
+                📷 Access Camera
+              </Button>
             </div>
 
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 ml-2">
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
                 className="border-border text-muted-foreground hover:bg-muted"
+                data-testid="button-cancel"
               >
                 Cancel
               </Button>
@@ -304,6 +640,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                 onClick={handleSubmit}
                 disabled={isUploading}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                data-testid="button-submit-post"
               >
 {type === "event" 
                   ? (isUploading ? "Uploading..." : "Upload Media")
