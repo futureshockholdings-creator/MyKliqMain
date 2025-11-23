@@ -30,12 +30,13 @@ PostgreSQL with Drizzle ORM stores data for users, themes, friendships, posts, c
 ### Authentication & Authorization
 Authentication uses Replit OAuth with cookie-based sessions for web and JWT tokens for mobile. Security features include password requirements, PKCE support for OAuth 2.0, 4-step password recovery, and invite codes.
 
-**Recent Security Fixes (Nov 22, 2025)**:
+**Recent Security Fixes (Nov 22-23, 2025)**:
 - Fixed authentication loop: Removed hardcoded fallback user ID from theme endpoints
 - All theme endpoints now require authentication via `isAuthenticated` middleware
 - Logout properly destroys Express session and clears cookies
 - Theme loading on frontend now conditional on authentication status
 - Unauthenticated users can no longer access protected endpoints or see "generic user" data
+- **Cache Clearing Fix (Nov 23)**: Implemented comprehensive cache clearing on logout to prevent cross-session data leakage. Uses predicate-based removal to clear ALL API queries from TanStack Query and `enhancedCache.clearAll()` to wipe IndexedDB. Ensures fresh data fetch on account switch with no stale data persistence.
 
 ### Social Media OAuth Integration
 External OAuth connections (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube) use an adaptive flow: popup windows for desktop browsers and full-page redirects for mobile browsers. This approach handles mobile browser popup blockers by detecting failed `window.open()` calls and automatically falling back to `window.location.assign()` redirects. Users connect social accounts to earn Kliq Koins (1,000 per platform, max 10 platforms).
@@ -44,7 +45,9 @@ External OAuth connections (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube)
 The system supports a hierarchical feed filtered by friend rankings, kliq-wide content aggregation, daily horoscopes/Bible verses, AI-powered mood boosts via Google Gemini API, real-time polling, and rich media (photos, videos, YouTube URLs, Moviecons). It also includes 24-hour disappearing stories, 7-day auto-deleting incognito messaging, live streaming, GPS-based meetups, event auto-posting, and social media aggregation from 7 external platforms. Personalized real-time sports updates from ESPN are integrated.
 
 ### Caching Architecture
-A dual-cache system (SimpleCache and CacheService) with Redis support, in-memory fallback, pattern-based invalidation, and LRU eviction optimizes performance.
+A dual-cache system (SimpleCache and CacheService) with Redis support, in-memory fallback, pattern-based invalidation, and LRU eviction optimizes performance. 
+
+**Web Client Cache (EnhancedCache)**: Two-tier architecture with memory (SimpleLRU 5MB, 5min TTL) and disk (IndexedDB 15MB, 1hr TTL) storage. On logout, both tiers are completely cleared using `enhancedCache.clearAll()` and predicate-based TanStack Query removal to prevent cross-session data leakage. All queries starting with `/api/` are removed to ensure no stale data persists between user accounts.
 
 ### Real-time Feed Updates
 WebSocket-based real-time updates broadcast new content, with a polling fallback and cache invalidation for immediate consistency.
