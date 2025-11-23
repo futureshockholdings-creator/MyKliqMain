@@ -250,7 +250,7 @@ function AppContent() {
   useEffect(() => {
     if (isAuthenticated && !isLoading && user) {
       // Check if user has analytics consent enabled
-      const hasConsent = user.analyticsConsent !== false; // default true if undefined
+      const hasConsent = (user as any).analyticsConsent !== false; // default true if undefined
       
       if (hasConsent) {
         // User has granted analytics consent
@@ -264,7 +264,7 @@ function AppContent() {
         });
       }
     }
-  }, [isAuthenticated, isLoading, user?.analyticsConsent]);
+  }, [isAuthenticated, isLoading, (user as any)?.analyticsConsent]);
 
   // Check if we're on a public page that doesn't require authentication
   const isPublicPage = ['/signup', '/privacy-policy', '/disclaimer', '/landing', '/marketing', '/forgot-password'].includes(currentPath);
