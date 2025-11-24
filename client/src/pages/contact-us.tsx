@@ -28,12 +28,12 @@ export default function ContactUs() {
               </CardHeader>
               <CardContent>
                 <a 
-                  href="mailto:ads@mykliq.com" 
+                  href="mailto:mykliqadsmanagement@outlook.com" 
                   className="inline-flex items-center gap-2 text-purple-600 hover:underline font-medium"
                   data-testid="link-ads-email"
                 >
                   <Mail className="w-4 h-4" />
-                  ads@mykliq.com
+                  mykliqadsmanagement@outlook.com
                 </a>
                 <p className="mt-3 text-sm !text-gray-700">
                   Our marketing team will respond within 1-2 business days with information about advertising packages, partnerships, and collaboration opportunities.
@@ -53,12 +53,12 @@ export default function ContactUs() {
               </CardHeader>
               <CardContent>
                 <a 
-                  href="mailto:support@mykliq.com" 
+                  href="mailto:mykliqassistance@outlook.com" 
                   className="inline-flex items-center gap-2 text-blue-600 hover:underline font-medium"
                   data-testid="link-support-email"
                 >
                   <Mail className="w-4 h-4" />
-                  support@mykliq.com
+                  mykliqassistance@outlook.com
                 </a>
                 <p className="mt-3 text-sm !text-gray-700">
                   Our support team is available to assist with account questions, feature explanations, troubleshooting, and general inquiries. We aim to respond within 24 hours.
@@ -78,12 +78,12 @@ export default function ContactUs() {
               </CardHeader>
               <CardContent>
                 <a 
-                  href="mailto:billing@mykliq.com" 
+                  href="mailto:mykliqAP.ARdepartment@outlook.com" 
                   className="inline-flex items-center gap-2 text-green-600 hover:underline font-medium"
                   data-testid="link-billing-email"
                 >
                   <Mail className="w-4 h-4" />
-                  billing@mykliq.com
+                  mykliqAP.ARdepartment@outlook.com
                 </a>
                 <p className="mt-3 text-sm !text-gray-700">
                   For all billing-related matters including invoices, payments, account balances, and financial inquiries. Our accounting team will respond within 2-3 business days.
