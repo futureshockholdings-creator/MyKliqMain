@@ -113,26 +113,26 @@ function Navigation({ currentPath }: { currentPath: string }) {
   return (
     <>
       {/* Left Side Navigation */}
-      <div className="fixed left-0 top-0 bottom-0 bg-card border-r-2 border-primary z-50 w-20">
-        <div className="flex flex-col items-center py-4 h-full">
+      <div className="fixed left-0 top-0 bottom-0 bg-card border-r-2 border-primary z-50 w-16">
+        <div className="flex flex-col items-center py-3 h-full">
           {/* Notification Bell */}
           <button
             onClick={toggleNotificationPanel}
             className={cn(
-              "flex flex-col items-center p-3 mb-6 transition-colors rounded-lg w-16 relative",
+              "flex flex-col items-center p-2 mb-4 transition-colors rounded-lg w-14 min-h-11 relative",
               "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
             data-testid="notification-bell"
           >
             {getTotalUnreadCount() > 0 && (
-              <div className="absolute -top-1 -right-1 h-4 w-4 bg-destructive rounded-full flex items-center justify-center">
+              <div className="absolute -top-0.5 -right-0.5 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
                 <span className="text-[10px] text-destructive-foreground font-bold">
                   {getTotalUnreadCount() > 99 ? "99+" : getTotalUnreadCount()}
                 </span>
               </div>
             )}
-            <Bell className="w-6 h-6" />
-            <span className="text-xs mt-1">{t('navigation.alerts')}</span>
+            <Bell className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">{t('navigation.alerts')}</span>
           </button>
 
           {navItems.map((item) => {
@@ -144,18 +144,18 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 key={item.path}
                 onClick={() => handleNavigation(item.path, item.path === "/settings")}
                 className={cn(
-                  "flex flex-col items-center p-3 mb-4 transition-colors rounded-lg w-16 relative",
+                  "flex flex-col items-center p-2 mb-3 transition-colors rounded-lg w-14 min-h-11 relative",
                   isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
                 data-testid={`nav-${item.tab}`}
               >
                 {item.badgeType && (
-                  <div className="absolute -top-1 -right-1">
+                  <div className="absolute -top-0.5 -right-0.5">
                     <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className={cn("h-5 w-5", item.badgeType === "messages" && "-right-0.5")} />
                   </div>
                 )}
-                <item.icon className="w-6 h-6" />
-                <span className="text-xs mt-1 text-center leading-tight break-words whitespace-pre-line max-w-14">{item.label}</span>
+                <item.icon className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5 text-center leading-tight break-words whitespace-pre-line max-w-12">{item.label}</span>
               </button>
             );
           })}
@@ -280,7 +280,7 @@ function AppContent() {
         {/* Main App Container with responsive margins */}
         <div className={cn(
           "min-h-screen h-screen bg-background relative",
-          isAuthenticated && !isLoading && !isPublicPage ? "ml-20 w-[calc(100vw-5rem)]" : ""
+          isAuthenticated && !isLoading && !isPublicPage ? "ml-16 w-[calc(100vw-4rem)]" : ""
         )}>
           {/* Full Screen App Container with scroll */}
           <div className="w-full h-full relative overflow-y-auto overflow-x-hidden">
