@@ -342,7 +342,7 @@ Before submitting to stores, verify:
 ## 📞 Support
 
 **Issues?** Contact:
-- **Email**: futureshockholdings@gmail.com
+- **Email**: mykliqchatbot@gmail.com
 - **EAS Docs**: https://docs.expo.dev/eas/
 - **Expo Forums**: https://forums.expo.dev/
 
