@@ -2,11 +2,11 @@ import Footer from "@/components/Footer";
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
-          <h1 className="text-3xl font-bold mb-8">Privacy Policy</h1>
+    <div className="min-h-screen !bg-white">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8 !bg-white !text-black">
+          <h1 className="text-3xl font-bold mb-8 !text-black">Privacy Policy</h1>
           
-          <div className="prose prose-slate dark:prose-invert max-w-none space-y-6">
+          <div className="prose prose-slate max-w-none space-y-6 !text-black">
             <section>
               <h2 className="text-2xl font-semibold mb-4">Information We Collect</h2>
               <p className="mb-4">
