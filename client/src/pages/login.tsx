@@ -304,8 +304,43 @@ export default function Login() {
 
           {/* Footer */}
           <div className="text-center pt-6 border-t border-border space-y-3">
-            <p className="text-xs text-muted-foreground">
-              © 2024 MyKliq. All rights reserved.
+            {/* Privacy Policy, Disclaimer, Guidelines, and Contact Us Links */}
+            <div className="flex justify-center items-center gap-4 text-xs flex-wrap">
+              <button 
+                className="text-muted-foreground hover:text-primary underline transition-colors"
+                onClick={() => window.open('/privacy-policy', '_blank')}
+                data-testid="link-privacy-policy"
+              >
+                Privacy Policy
+              </button>
+              <span className="text-gray-600">•</span>
+              <button 
+                className="text-muted-foreground hover:text-primary underline transition-colors"
+                onClick={() => window.open('/disclaimer', '_blank')}
+                data-testid="link-disclaimer"
+              >
+                Disclaimer
+              </button>
+              <span className="text-gray-600">•</span>
+              <button 
+                className="text-muted-foreground hover:text-primary underline transition-colors"
+                onClick={() => window.open('/community-guidelines', '_blank')}
+                data-testid="link-guidelines"
+              >
+                Guidelines
+              </button>
+              <span className="text-gray-600">•</span>
+              <button 
+                className="text-muted-foreground hover:text-primary underline transition-colors"
+                onClick={() => window.open('/contact-us', '_blank')}
+                data-testid="link-contact-us"
+              >
+                Contact Us
+              </button>
+            </div>
+            
+            <p className="text-xs text-muted-foreground mt-2">
+              © 2025 MyKliq. All rights reserved.
             </p>
           </div>
         </div>
