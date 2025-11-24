@@ -289,6 +289,6 @@ it('should show error boundary on component error', () => {
 ## Support Contact
 
 If users encounter persistent errors:
-- Email: support@mykliq.com
+- Email: mykliqassistance@outlook.com
 - In-app support: Settings → Help & Support
 - Error reports automatically include user ID for tracking

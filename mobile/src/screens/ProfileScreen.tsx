@@ -514,7 +514,7 @@ export default function ProfileScreen() {
           onPress={() => {
             Alert.alert(
               'Help & Support',
-              'Help center coming soon! For immediate assistance, please contact support@mykliq.com',
+              'Help center coming soon! For immediate assistance, please contact mykliqassistance@outlook.com',
               [{ text: 'OK' }]
             );
           }}

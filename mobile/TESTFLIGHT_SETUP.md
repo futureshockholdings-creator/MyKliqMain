@@ -121,7 +121,7 @@ eas submit --platform ios --latest
 2. Wait for build to process (10-30 minutes)
 3. Click on the build version
 4. Add **Beta App Review Information:**
-   - Contact email: support@mykliq.com
+   - Contact email: mykliqassistance@outlook.com
    - First name, last name
    - Phone number
    - Demo account credentials (create test account)
@@ -425,5 +425,5 @@ Once beta testing is complete:
 - [EAS Submit Documentation](https://docs.expo.dev/submit/introduction/)
 
 **MyKliq Support:**
-- Email: dev@mykliq.com
+- Email: mykliqassistance@outlook.com
 - Documentation: See mobile/README.md

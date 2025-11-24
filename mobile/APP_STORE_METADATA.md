@@ -165,7 +165,7 @@ Just you and your real friends.
 
 **Join thousands building authentic connections. Download MyKliq today!**
 
-Support: support@mykliq.com
+Support: mykliqassistance@outlook.com
 Privacy Policy: mykliq.com/privacy
 Terms of Service: mykliq.com/terms
 
@@ -202,7 +202,7 @@ Welcome to MyKliq v1.0! Here's what you can do:
 
 This is just the beginning. We're building the future of authentic social networking—one kliq at a time.
 
-Questions or feedback? Reach out to support@mykliq.com
+Questions or feedback? Reach out to mykliqassistance@outlook.com
 
 ---
 
@@ -233,7 +233,7 @@ Social media for your real friends. Share stories, earn rewards, and build deepe
 
 ## Support & Contact Information
 
-**Support Email:** support@mykliq.com
+**Support Email:** mykliqassistance@outlook.com
 **Website:** https://mykliq.com
 **Privacy Policy URL:** https://mykliq.com/privacy
 **Terms of Service URL:** https://mykliq.com/terms
