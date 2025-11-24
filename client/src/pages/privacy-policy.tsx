@@ -189,8 +189,8 @@ export default function PrivacyPolicy() {
               <h2 className="text-2xl font-semibold mb-4">Contact Us</h2>
               <p className="mb-4">
                 If you have questions about this Privacy Policy, please contact us at{" "}
-                <a href="mailto:mykliqchatbot@gmail.com" className="text-primary hover:underline">
-                  mykliqchatbot@gmail.com
+                <a href="mailto:mykliqassistance@outlook.com" className="text-primary hover:underline">
+                  mykliqassistance@outlook.com
                 </a>
               </p>
             </section>

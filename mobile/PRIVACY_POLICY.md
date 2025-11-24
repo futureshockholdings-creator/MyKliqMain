@@ -184,7 +184,7 @@ We may update this Privacy Policy periodically. You'll be notified of significan
 ## Contact Us
 
 **Questions about privacy?**
-- Email: mykliqchatbot@gmail.com
+- Email: mykliqassistance@outlook.com
 - In-App: Settings > Help & Support > Contact Us
 
 ## Legal Compliance

@@ -118,8 +118,8 @@ export default function CommunityGuidelines() {
               <p className="mb-4">
                 If you believe your account was suspended or content was removed in error, you may appeal by 
                 contacting us at{" "}
-                <a href="mailto:mykliqchatbot@gmail.com" className="text-primary hover:underline">
-                  mykliqchatbot@gmail.com
+                <a href="mailto:mykliqassistance@outlook.com" className="text-primary hover:underline">
+                  mykliqassistance@outlook.com
                 </a>{" "}
                 within 30 days of the enforcement action. Include your username and a detailed explanation of why 
                 you believe the action was incorrect.
@@ -144,8 +144,8 @@ export default function CommunityGuidelines() {
               <h2 className="text-2xl font-semibold mb-4">Contact and Support</h2>
               <p className="mb-4">
                 For questions about these community guidelines or to report violations, contact us at{" "}
-                <a href="mailto:mykliqchatbot@gmail.com" className="text-primary hover:underline">
-                  mykliqchatbot@gmail.com
+                <a href="mailto:mykliqassistance@outlook.com" className="text-primary hover:underline">
+                  mykliqassistance@outlook.com
                 </a>
               </p>
               <p className="mb-4">

@@ -342,7 +342,7 @@ Before submitting to stores, verify:
 ## 📞 Support
 
 **Issues?** Contact:
-- **Email**: mykliqchatbot@gmail.com
+- **Email**: mykliqassistance@outlook.com
 - **EAS Docs**: https://docs.expo.dev/eas/
 - **Expo Forums**: https://forums.expo.dev/
 
