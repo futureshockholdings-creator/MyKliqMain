@@ -4422,8 +4422,8 @@ export class DatabaseStorage implements IStorage {
       await db.delete(userBorders).where(eq(userBorders.userId, userId));
       
       // Referral system
-      await db.delete(referralBonuses).where(eq(referralBonuses.referrerId, userId));
-      await db.delete(referralBonuses).where(eq(referralBonuses.referredUserId, userId));
+      await db.delete(referralBonuses).where(eq(referralBonuses.inviterId, userId));
+      await db.delete(referralBonuses).where(eq(referralBonuses.inviteeId, userId));
       
       // Social connections and rewards
       await db.delete(socialConnectionRewards).where(eq(socialConnectionRewards.userId, userId));
@@ -4445,7 +4445,7 @@ export class DatabaseStorage implements IStorage {
       await db.delete(contentEngagements).where(eq(contentEngagements.userId, userId));
       
       // Rules reports (both reporter and reported)
-      await db.delete(rulesReports).where(eq(rulesReports.reporterId, userId));
+      await db.delete(rulesReports).where(eq(rulesReports.reportedBy, userId));
       await db.delete(rulesReports).where(eq(rulesReports.postAuthorId, userId));
       
       // Birthday messages
@@ -4518,7 +4518,7 @@ export class DatabaseStorage implements IStorage {
       await db.delete(passwordResetAttempts).where(eq(passwordResetAttempts.userId, userId));
       
       // Used invite codes
-      await db.delete(usedInviteCodes).where(eq(usedInviteCodes.usedByUserId, userId));
+      await db.delete(usedInviteCodes).where(eq(usedInviteCodes.usedBy, userId));
       
       // Finally, delete the user
       await db.delete(users).where(eq(users.id, userId));
