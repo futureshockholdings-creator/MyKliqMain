@@ -227,7 +227,7 @@ export default function AdvertiserOnboarding() {
           </CardContent>
         </Card>
         <Footer />
-      </div>
+      </ForcedLightSurface>
     );
   }
 

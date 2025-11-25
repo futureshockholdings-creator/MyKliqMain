@@ -258,7 +258,7 @@ export default function AdminPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </ForcedLightSurface>
     );
   }
 

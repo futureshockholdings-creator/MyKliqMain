@@ -360,6 +360,7 @@ export default function MaintenanceDashboard() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </ForcedLightSurface>
   );
 }

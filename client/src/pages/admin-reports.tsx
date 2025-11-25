@@ -536,6 +536,7 @@ export default function AdminReports() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </ForcedLightSurface>
   );
 }
