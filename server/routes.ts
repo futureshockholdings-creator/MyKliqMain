@@ -8534,7 +8534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const [updated] = await db.update(advertiserApplications)
         .set(updateData)
-        .where(eq(advertiserApplications.id, parseInt(id)))
+        .where(eq(advertiserApplications.id, id))
         .returning();
 
       if (!updated) {

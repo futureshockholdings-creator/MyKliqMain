@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,9 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Edit, Plus, Eye, MousePointer, Calendar } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Trash2, Edit, Plus, Eye, MousePointer, Calendar, FileText, CheckCircle, XCircle, Clock, AlertCircle, Mail, Phone, Globe, Building2, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { SponsoredAd } from "@shared/schema";
+import type { SponsoredAd, AdvertiserApplication } from "@shared/schema";
 import { getTextColorForBackground, isBlackBackground } from "@/lib/colorUtils";
 import Footer from "@/components/Footer";
 
@@ -113,11 +114,34 @@ export default function AdsManager() {
   const { toast } = useToast();
   const [editingAd, setEditingAd] = useState<SponsoredAd | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showApplications, setShowApplications] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<AdvertiserApplication | null>(null);
+  const [applicationFilter, setApplicationFilter] = useState<string>("all");
 
   // Fetch ads
   const { data: ads = [], isLoading } = useQuery<SponsoredAd[]>({
     queryKey: ['/api/ads'],
   });
+
+  // Fetch advertiser applications
+  const { data: applications = [], isLoading: applicationsLoading, error: applicationsError } = useQuery<AdvertiserApplication[]>({
+    queryKey: ['/api/advertiser-applications', applicationFilter],
+    queryFn: async () => {
+      const url = applicationFilter && applicationFilter !== 'all' 
+        ? `/api/advertiser-applications?status=${applicationFilter}`
+        : '/api/advertiser-applications';
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch applications');
+      }
+      return response.json();
+    },
+    enabled: showApplications,
+  });
+
+  // Count pending applications for badge
+  const pendingCount = applications.filter(app => app.status === 'pending').length;
 
   // Form setup
   const form = useForm<AdFormData>({
@@ -245,6 +269,43 @@ export default function AdsManager() {
     },
   });
 
+  // Update advertiser application status
+  const updateApplicationMutation = useMutation({
+    mutationFn: async ({ id, status, adminNotes }: { id: string; status: string; adminNotes?: string }) => {
+      return apiRequest(`/api/advertiser-applications/${id}`, 'PATCH', { status, adminNotes });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/advertiser-applications'] });
+      setSelectedApplication(null);
+      toast({ title: "Success", description: "Application status updated" });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to update application",
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; icon: any; label: string }> = {
+      pending: { variant: "secondary", icon: Clock, label: "Pending" },
+      under_review: { variant: "outline", icon: Eye, label: "Under Review" },
+      approved: { variant: "default", icon: CheckCircle, label: "Approved" },
+      rejected: { variant: "destructive", icon: XCircle, label: "Rejected" },
+      needs_info: { variant: "outline", icon: AlertCircle, label: "Needs Info" },
+    };
+    const config = variants[status] || variants.pending;
+    const Icon = config.icon;
+    return (
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        <Icon className="w-3 h-3" />
+        {config.label}
+      </Badge>
+    );
+  };
+
   const handleEdit = (ad: SponsoredAd) => {
     setEditingAd(ad);
     setShowForm(true);
@@ -295,16 +356,291 @@ export default function AdsManager() {
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-black dark:text-white">Sponsored Ads Manager</h1>
           <p className="text-gray-600 dark:text-gray-300">Manage your sponsored advertisements</p>
         </div>
-        <Button onClick={handleNewAd} data-testid="new-ad-button">
-          <Plus className="w-4 h-4 mr-2" />
-          New Ad
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant={showApplications ? "default" : "outline"}
+            onClick={() => setShowApplications(!showApplications)} 
+            data-testid="pending-applications-button"
+            className="relative"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Pending Applications
+            {pendingCount > 0 && (
+              <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                {pendingCount}
+              </Badge>
+            )}
+          </Button>
+          <Button onClick={handleNewAd} data-testid="new-ad-button">
+            <Plus className="w-4 h-4 mr-2" />
+            New Ad
+          </Button>
+        </div>
       </div>
+
+      {/* Advertiser Applications Section */}
+      {showApplications && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Advertiser Applications
+                </CardTitle>
+                <CardDescription>Review and manage advertiser onboarding applications</CardDescription>
+              </div>
+              <Select value={applicationFilter} onValueChange={setApplicationFilter}>
+                <SelectTrigger className="w-40" data-testid="application-filter">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Applications</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="under_review">Under Review</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="needs_info">Needs Info</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {applicationsLoading ? (
+              <div className="text-center py-8 text-gray-500">Loading applications...</div>
+            ) : applicationsError ? (
+              <div className="text-center py-8 text-red-500">
+                {(applicationsError as Error).message || "Failed to load applications. You may need admin privileges."}
+              </div>
+            ) : applications.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">No applications found</div>
+            ) : (
+              <div className="space-y-4">
+                {applications.map((app) => (
+                  <Card key={app.id} className="border-l-4 border-l-purple-500" data-testid={`application-card-${app.id}`}>
+                    <CardContent className="p-4">
+                      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-semibold text-lg">{app.businessName}</h3>
+                            {getStatusBadge(app.status)}
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                            <div className="flex items-center gap-1">
+                              <Building2 className="w-4 h-4" />
+                              <span>{app.contactPerson}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Mail className="w-4 h-4" />
+                              <a href={`mailto:${app.email}`} className="text-blue-600 hover:underline">{app.email}</a>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Phone className="w-4 h-4" />
+                              <span>{app.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Globe className="w-4 h-4" />
+                              <a href={app.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate max-w-[200px]">
+                                {app.website}
+                              </a>
+                            </div>
+                          </div>
+
+                          {(app.proposedDailyBudget || app.proposedCostPerClick) && (
+                            <div className="flex items-center gap-4 text-sm">
+                              {app.proposedDailyBudget && (
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="w-4 h-4 text-green-600" />
+                                  <span>Daily: ${app.proposedDailyBudget}</span>
+                                </div>
+                              )}
+                              {app.proposedCostPerClick && (
+                                <div className="flex items-center gap-1">
+                                  <MousePointer className="w-4 h-4 text-blue-600" />
+                                  <span>CPC: ${app.proposedCostPerClick}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <div className="text-xs text-gray-400">
+                            Submitted: {new Date(app.submittedAt).toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => setSelectedApplication(app)}
+                            data-testid={`view-application-${app.id}`}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            View Details
+                          </Button>
+                          {app.status === 'pending' && (
+                            <>
+                              <Button 
+                                size="sm" 
+                                variant="default"
+                                onClick={() => updateApplicationMutation.mutate({ id: app.id, status: 'approved' })}
+                                disabled={updateApplicationMutation.isPending}
+                                data-testid={`approve-application-${app.id}`}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => updateApplicationMutation.mutate({ id: app.id, status: 'rejected' })}
+                                disabled={updateApplicationMutation.isPending}
+                                data-testid={`reject-application-${app.id}`}
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Application Detail Dialog */}
+      <Dialog open={!!selectedApplication} onOpenChange={() => setSelectedApplication(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {selectedApplication && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {selectedApplication.businessName}
+                  {getStatusBadge(selectedApplication.status)}
+                </DialogTitle>
+                <DialogDescription>
+                  Application ID: {selectedApplication.id} | Submitted: {new Date(selectedApplication.submittedAt).toLocaleString()}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Business Information</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                    <div><strong>Contact:</strong> {selectedApplication.contactPerson}</div>
+                    <div><strong>Email:</strong> {selectedApplication.email}</div>
+                    <div><strong>Phone:</strong> {selectedApplication.phone}</div>
+                    <div><strong>Website:</strong> <a href={selectedApplication.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{selectedApplication.website}</a></div>
+                    {selectedApplication.taxId && <div><strong>Tax ID:</strong> {selectedApplication.taxId}</div>}
+                    {selectedApplication.businessAddress && <div className="col-span-2"><strong>Address:</strong> {selectedApplication.businessAddress}</div>}
+                  </div>
+                </div>
+
+                {selectedApplication.adCreatives && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Ad Creative Details</h4>
+                    <div className="text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                      <pre className="whitespace-pre-wrap">{JSON.stringify(selectedApplication.adCreatives, null, 2)}</pre>
+                    </div>
+                  </div>
+                )}
+
+                {selectedApplication.targetingPrefs && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Targeting Preferences</h4>
+                    <div className="text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                      <pre className="whitespace-pre-wrap">{JSON.stringify(selectedApplication.targetingPrefs, null, 2)}</pre>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <h4 className="font-semibold mb-2">Budget & Timeline</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded">
+                    <div><strong>Daily Budget:</strong> ${selectedApplication.proposedDailyBudget || 'Not specified'}</div>
+                    <div><strong>CPC:</strong> ${selectedApplication.proposedCostPerClick || 'Not specified'}</div>
+                    <div><strong>Start Date:</strong> {selectedApplication.campaignStartDate || 'Not specified'}</div>
+                    <div><strong>End Date:</strong> {selectedApplication.campaignEndDate || 'Not specified'}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">Legal Compliance</h4>
+                  <div className="text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded space-y-1">
+                    <div className="flex items-center gap-2">
+                      {selectedApplication.termsAccepted ? <CheckCircle className="w-4 h-4 text-green-600" /> : <XCircle className="w-4 h-4 text-red-600" />}
+                      Terms & Conditions Accepted
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {selectedApplication.privacyPolicyAccepted ? <CheckCircle className="w-4 h-4 text-green-600" /> : <XCircle className="w-4 h-4 text-red-600" />}
+                      Privacy Policy Accepted
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {selectedApplication.businessLicenseVerified ? <CheckCircle className="w-4 h-4 text-green-600" /> : <XCircle className="w-4 h-4 text-red-600" />}
+                      Business License Verified
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="flex gap-2">
+                {selectedApplication.status === 'pending' && (
+                  <>
+                    <Button 
+                      variant="outline"
+                      onClick={() => updateApplicationMutation.mutate({ id: selectedApplication.id, status: 'under_review' })}
+                      disabled={updateApplicationMutation.isPending}
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Mark Under Review
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => updateApplicationMutation.mutate({ id: selectedApplication.id, status: 'needs_info' })}
+                      disabled={updateApplicationMutation.isPending}
+                    >
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      Request Info
+                    </Button>
+                    <Button 
+                      variant="default"
+                      onClick={() => updateApplicationMutation.mutate({ id: selectedApplication.id, status: 'approved' })}
+                      disabled={updateApplicationMutation.isPending}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Approve
+                    </Button>
+                    <Button 
+                      variant="destructive"
+                      onClick={() => updateApplicationMutation.mutate({ id: selectedApplication.id, status: 'rejected' })}
+                      disabled={updateApplicationMutation.isPending}
+                    >
+                      <XCircle className="w-4 h-4 mr-1" />
+                      Reject
+                    </Button>
+                  </>
+                )}
+                {selectedApplication.status !== 'pending' && (
+                  <Button variant="outline" onClick={() => setSelectedApplication(null)}>
+                    Close
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {showForm && (
         <Card>
