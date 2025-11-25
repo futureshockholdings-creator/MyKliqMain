@@ -309,8 +309,8 @@ export default function Signup() {
         description: "Your profile has been created successfully.",
       });
 
-      // Redirect to home page
-      window.location.href = "/";
+      // Redirect to the new user's profile page
+      window.location.href = "/profile";
     } catch (error: any) {
       toast({
         title: "Signup Failed",
