@@ -158,6 +158,11 @@ import {
   educationalPosts,
   type EducationalPost,
   type InsertEducationalPost,
+  notifications,
+  notificationPreferences,
+  contentEngagements,
+  socialConnectionRewards,
+  sessions,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, countDistinct, not, isNull, isNotNull } from "drizzle-orm";
@@ -4398,34 +4403,127 @@ export class DatabaseStorage implements IStorage {
   // Admin-specific methods
   async deleteUser(userId: string): Promise<void> {
     try {
+      console.log(`Starting comprehensive user deletion for userId: ${userId}`);
+      
       // Delete in order due to foreign key constraints
+      // Start with tables that have no dependencies first
+      
+      // Session cleanup - delete sessions containing this user's ID
+      await db.execute(sql`DELETE FROM sessions WHERE sess::text LIKE ${'%"sub":"' + userId + '"%'}`);
+      
+      // Notifications and preferences
+      await db.delete(notifications).where(eq(notifications.userId, userId));
+      await db.delete(notificationPreferences).where(eq(notificationPreferences.userId, userId));
+      
+      // Kliq Koins system
+      await db.delete(kliqKoinTransactions).where(eq(kliqKoinTransactions.userId, userId));
+      await db.delete(kliqKoins).where(eq(kliqKoins.userId, userId));
+      await db.delete(loginStreaks).where(eq(loginStreaks.userId, userId));
+      await db.delete(userBorders).where(eq(userBorders.userId, userId));
+      
+      // Referral system
+      await db.delete(referralBonuses).where(eq(referralBonuses.referrerId, userId));
+      await db.delete(referralBonuses).where(eq(referralBonuses.referredUserId, userId));
+      
+      // Social connections and rewards
+      await db.delete(socialConnectionRewards).where(eq(socialConnectionRewards.userId, userId));
+      await db.delete(socialCredentials).where(eq(socialCredentials.userId, userId));
+      
+      // Device tokens
+      await db.delete(deviceTokens).where(eq(deviceTokens.userId, userId));
+      
+      // Sports preferences
+      await db.delete(userSportsPreferences).where(eq(userSportsPreferences.userId, userId));
+      
+      // Ad preferences and interactions
+      await db.delete(userAdPreferences).where(eq(userAdPreferences.userId, userId));
+      await db.delete(adInteractions).where(eq(adInteractions.userId, userId));
+      
+      // Analytics and suggestions
+      await db.delete(userInteractionAnalytics).where(eq(userInteractionAnalytics.userId, userId));
+      await db.delete(friendRankingSuggestions).where(eq(friendRankingSuggestions.userId, userId));
+      await db.delete(contentEngagements).where(eq(contentEngagements.userId, userId));
+      
+      // Rules reports (both reporter and reported)
+      await db.delete(rulesReports).where(eq(rulesReports.reporterId, userId));
+      await db.delete(rulesReports).where(eq(rulesReports.postAuthorId, userId));
+      
+      // Birthday messages
       await db.delete(birthdayMessages).where(eq(birthdayMessages.birthdayUserId, userId));
       await db.delete(birthdayMessages).where(eq(birthdayMessages.senderUserId, userId));
+      
+      // Video calls
       await db.delete(callParticipants).where(eq(callParticipants.userId, userId));
       await db.delete(videoCalls).where(eq(videoCalls.initiatorId, userId));
+      
+      // Meetups
       await db.delete(meetupCheckIns).where(eq(meetupCheckIns.userId, userId));
       await db.delete(meetups).where(eq(meetups.userId, userId));
+      
+      // Actions (live streams)
       await db.delete(actionChatMessages).where(eq(actionChatMessages.userId, userId));
       await db.delete(actionViewers).where(eq(actionViewers.userId, userId));
       await db.delete(actions).where(eq(actions.userId, userId));
+      
+      // Calendar
+      await db.delete(calendarNotes).where(eq(calendarNotes.userId, userId));
       await db.delete(eventReminders).where(eq(eventReminders.userId, userId));
       await db.delete(eventAttendees).where(eq(eventAttendees.userId, userId));
       await db.delete(events).where(eq(events.userId, userId));
+      
+      // Messages and conversations
       await db.delete(messages).where(eq(messages.senderId, userId));
+      await db.delete(conversationParticipants).where(eq(conversationParticipants.userId, userId));
       await db.delete(conversations).where(eq(conversations.user1Id, userId));
       await db.delete(conversations).where(eq(conversations.user2Id, userId));
+      
+      // Polls
+      await db.delete(pollVotes).where(eq(pollVotes.userId, userId));
+      await db.delete(polls).where(eq(polls.userId, userId));
+      
+      // Content filters
       await db.delete(contentFilters).where(eq(contentFilters.userId, userId));
+      
+      // Scrapbook
+      await db.delete(scrapbookSaves).where(eq(scrapbookSaves.userId, userId));
+      await db.delete(scrapbookAlbums).where(eq(scrapbookAlbums.userId, userId));
+      
+      // Post highlights
+      await db.delete(postHighlights).where(eq(postHighlights.userId, userId));
+      
+      // Comments and likes
+      await db.delete(commentLikes).where(eq(commentLikes.userId, userId));
       await db.delete(postLikes).where(eq(postLikes.userId, userId));
       await db.delete(comments).where(eq(comments.userId, userId));
+      
+      // Mood boost posts
+      await db.delete(moodBoostPosts).where(eq(moodBoostPosts.userId, userId));
+      
+      // Stories
       await db.delete(storyViews).where(eq(storyViews.userId, userId));
       await db.delete(stories).where(eq(stories.userId, userId));
+      
+      // Posts (must be after comments and likes)
       await db.delete(posts).where(eq(posts.userId, userId));
+      
+      // Friendships
       await db.delete(friendships).where(eq(friendships.userId, userId));
       await db.delete(friendships).where(eq(friendships.friendId, userId));
+      
+      // User theme
       await db.delete(userThemes).where(eq(userThemes.userId, userId));
-      await db.delete(socialCredentials).where(eq(socialCredentials.userId, userId));
+      
+      // Password reset tokens and attempts
       await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+      await db.delete(passwordResetAttempts).where(eq(passwordResetAttempts.userId, userId));
+      
+      // Used invite codes
+      await db.delete(usedInviteCodes).where(eq(usedInviteCodes.usedByUserId, userId));
+      
+      // Finally, delete the user
       await db.delete(users).where(eq(users.id, userId));
+      
+      console.log(`Successfully deleted user ${userId} and all associated data`);
     } catch (error) {
       console.error("Error deleting user:", error);
       throw error;
