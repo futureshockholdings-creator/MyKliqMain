@@ -18,7 +18,11 @@ import {
   Clock,
   HardDrive,
   Zap,
-  ArrowLeft
+  ArrowLeft,
+  Server,
+  Gauge,
+  Shield,
+  Lightbulb
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -62,6 +66,45 @@ interface HealthStatus {
   issues: string[];
 }
 
+interface ScalingMetrics {
+  currentLoad: {
+    activeUsers: number;
+    memoryUsageMB: number;
+    databaseConnections: {
+      total: number;
+      idle: number;
+      waiting: number;
+      utilization: string;
+    };
+    cachePerformance: {
+      redisConnected: boolean;
+      memoryCacheSize: number;
+      rateLimitEntries: number;
+    };
+  };
+  performance: {
+    averageResponseTimes: Record<string, number>;
+    slowEndpoints: string[];
+    databaseHealth: {
+      status: string;
+      poolUtilization: number;
+    };
+    optimizationSuggestions: string[];
+  };
+  scalingCapacity: {
+    estimatedConcurrentUsers: number;
+    memoryCapacityUsed: string;
+    dbCapacityUsed: string;
+    scalingStatus: string;
+  };
+  rateLimiting: {
+    limits: Record<string, number>;
+    activeRateLimits: number;
+    effectiveness: string;
+  };
+  recommendations: string[];
+}
+
 export default function MaintenanceDashboard() {
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
@@ -78,9 +121,14 @@ export default function MaintenanceDashboard() {
     refetchInterval: 30000,
   });
 
+  const { data: scalingMetrics, refetch: refetchScaling } = useQuery<ScalingMetrics>({
+    queryKey: ["/api/admin/scaling-dashboard"],
+    refetchInterval: 30000,
+  });
+
   const handleRefresh = async () => {
     setRefreshing(true);
-    await refetch();
+    await Promise.all([refetch(), refetchScaling()]);
     setRefreshing(false);
     toast({
       title: "Dashboard Refreshed",
@@ -326,6 +374,141 @@ export default function MaintenanceDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Scaling Metrics */}
+      {scalingMetrics && (
+        <>
+          {/* Scaling Capacity & Connection Pool */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Scaling Capacity</CardTitle>
+                <Gauge className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{scalingMetrics.scalingCapacity.estimatedConcurrentUsers.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">Max concurrent users</p>
+                <Badge 
+                  variant={scalingMetrics.scalingCapacity.scalingStatus === 'optimal' ? 'default' : 'secondary'}
+                  className="mt-2"
+                >
+                  {scalingMetrics.scalingCapacity.scalingStatus}
+                </Badge>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Memory Capacity</CardTitle>
+                <HardDrive className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{scalingMetrics.currentLoad.memoryUsageMB}MB</div>
+                <p className="text-xs text-muted-foreground">Used: {scalingMetrics.scalingCapacity.memoryCapacityUsed}</p>
+                <Progress 
+                  value={parseFloat(scalingMetrics.scalingCapacity.memoryCapacityUsed)} 
+                  className="mt-2"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">DB Connections</CardTitle>
+                <Database className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{scalingMetrics.currentLoad.databaseConnections.total}/50</div>
+                <p className="text-xs text-muted-foreground">
+                  Idle: {scalingMetrics.currentLoad.databaseConnections.idle} | 
+                  Waiting: {scalingMetrics.currentLoad.databaseConnections.waiting}
+                </p>
+                <Progress 
+                  value={parseFloat(scalingMetrics.scalingCapacity.dbCapacityUsed)} 
+                  className="mt-2"
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Rate Limiting</CardTitle>
+                <Shield className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{scalingMetrics.rateLimiting.activeRateLimits}</div>
+                <p className="text-xs text-muted-foreground">Active rate limits</p>
+                <Badge variant="outline" className="mt-2">
+                  {scalingMetrics.rateLimiting.effectiveness}
+                </Badge>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Cache & Recommendations */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Server className="w-5 h-5" />
+                  <span>Cache Performance</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Redis Connection</span>
+                  <Badge variant={scalingMetrics.currentLoad.cachePerformance.redisConnected ? 'default' : 'secondary'}>
+                    {scalingMetrics.currentLoad.cachePerformance.redisConnected ? 'Connected' : 'Memory Fallback'}
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Memory Cache Size</span>
+                  <span className="font-medium">{scalingMetrics.currentLoad.cachePerformance.memoryCacheSize} entries</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Rate Limit Entries</span>
+                  <span className="font-medium">{scalingMetrics.currentLoad.cachePerformance.rateLimitEntries}</span>
+                </div>
+                {scalingMetrics.performance.slowEndpoints.length > 0 && (
+                  <div>
+                    <span className="text-sm text-muted-foreground">Slow Endpoints:</span>
+                    <div className="mt-1 space-y-1">
+                      {scalingMetrics.performance.slowEndpoints.slice(0, 3).map((endpoint, i) => (
+                        <Badge key={i} variant="destructive" className="mr-1 text-xs">
+                          {endpoint}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Lightbulb className="w-5 h-5" />
+                  <span>Scaling Recommendations</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {scalingMetrics.recommendations.map((rec, index) => (
+                    <li key={index} className="flex items-start space-x-2 text-sm">
+                      {rec.includes('optimal') || rec.includes('healthy') || rec.includes('good') || rec.includes('operational') ? (
+                        <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                      )}
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
 
       {/* Last Maintenance */}
       <Card>
