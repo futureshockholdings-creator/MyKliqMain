@@ -437,7 +437,7 @@ export interface IStorage {
 
   // Report operations
   createReport(report: InsertReport): Promise<Report>;
-  getReports(filters: { status?: string; page?: number; limit?: number }): Promise<Report[]>;
+  getReports(filters: { status?: string; page?: number; limit?: number }): Promise<any[]>;
   updateReport(reportId: string, updates: Partial<Report>): Promise<Report>;
   suspendUser(userId: string, suspensionData: { suspensionType: string; suspendedAt: string; suspensionExpiresAt: string | null }): Promise<void>;
 
@@ -4589,9 +4589,16 @@ export class DatabaseStorage implements IStorage {
     return newReport;
   }
 
-  async getReports(filters: { status?: string; page?: number; limit?: number }): Promise<Report[]> {
+  async getReports(filters: { status?: string; page?: number; limit?: number }): Promise<any[]> {
     const { status, page = 1, limit = 20 } = filters;
-    let query = db
+    const offset = (page - 1) * limit;
+    
+    // Build the base query with proper aliasing for the post author
+    const reporterUsers = users;
+    
+    let whereClause = status ? eq(rulesReports.status, status as any) : undefined;
+    
+    const results = await db
       .select({
         id: rulesReports.id,
         reportedBy: rulesReports.reportedBy,
@@ -4606,21 +4613,33 @@ export class DatabaseStorage implements IStorage {
         actionTaken: rulesReports.actionTaken,
         createdAt: rulesReports.createdAt,
         updatedAt: rulesReports.updatedAt,
-        reporter: users,
+        reporter: reporterUsers,
         post: posts,
-        postAuthor: sql<User>`NULL`.as('postAuthor')
       })
       .from(rulesReports)
-      .leftJoin(users, eq(rulesReports.reportedBy, users.id))
+      .leftJoin(reporterUsers, eq(rulesReports.reportedBy, reporterUsers.id))
       .leftJoin(posts, eq(rulesReports.postId, posts.id))
-      .orderBy(desc(rulesReports.createdAt));
-
-    if (status) {
-      query = query.where(eq(rulesReports.status, status as any));
-    }
-
-    const offset = (page - 1) * limit;
-    return await query.limit(limit).offset(offset);
+      .where(whereClause)
+      .orderBy(desc(rulesReports.createdAt))
+      .limit(limit)
+      .offset(offset);
+    
+    // Fetch post authors for the results
+    const enrichedResults = await Promise.all(
+      results.map(async (report) => {
+        let postAuthor = null;
+        if (report.postAuthorId) {
+          const [author] = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, report.postAuthorId));
+          postAuthor = author;
+        }
+        return { ...report, postAuthor };
+      })
+    );
+    
+    return enrichedResults;
   }
 
   async updateReport(reportId: string, updates: Partial<Report>): Promise<Report> {

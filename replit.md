@@ -25,7 +25,17 @@ A shared TypeScript contract system ensures type safety across web and mobile pl
 The MyKliq mobile application utilizes React Native with Expo SDK 51 and TypeScript, featuring a 5-tab Bottom Tab Navigator, React Context (Auth Provider), TanStack Query v5, `expo-secure-store` for JWT persistence, and NativeWind for Tailwind CSS. Mobile APIs are optimized for bandwidth and battery, employing JWT authentication, media URL transformation, polling for updates, and optimistic UI.
 
 ### Database Design
-PostgreSQL with Drizzle ORM stores data for users, themes, friendships, posts, comments, content filters, messages, stories, sessions, invite codes, and advertiser applications. Performance is optimized through indexing and connection pooling.
+PostgreSQL with Drizzle ORM stores data for users, themes, friendships, posts, comments, content filters, messages, stories, sessions, invite codes, advertiser applications, and content moderation reports. Performance is optimized through indexing and connection pooling.
+
+### Content Moderation (Rules Reports)
+The admin dashboard includes a "Rules Reports" tab for managing user-reported content. Features include:
+- Report status workflow: OPEN (pending) → PENDING (reviewed/under review) → CLOSED (resolved/dismissed)
+- Statistics cards showing report counts by status
+- Filterable reports table displaying: status, reported user (name/email), reason, reporter, date
+- Review modal with full post content and reported user details
+- Admin actions: Mark as Pending, Dismiss, Issue Warning, Remove Post
+- User suspension options: 24 hours, 7 days, Permanent Ban
+- Database table: `rules_reports` with fields for reporter, post author, reason, status, admin notes, and action taken
 
 ### Authentication & Authorization
 Authentication uses Replit OAuth with cookie-based sessions for web and JWT tokens for mobile. Security features include password requirements, PKCE support for OAuth 2.0, 4-step password recovery, and invite codes. Logout processes ensure comprehensive cache clearing to prevent cross-session data leakage.

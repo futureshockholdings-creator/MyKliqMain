@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Search, Shield, Users, Database, Activity, AlertTriangle, BarChart3, Download, RefreshCw, Trash2, UserX, Calendar, Ban } from "lucide-react";
+import { Eye, EyeOff, Search, Shield, Users, Database, Activity, AlertTriangle, BarChart3, Download, RefreshCw, Trash2, UserX, Calendar, Ban, Flag, FileWarning } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 import {
@@ -38,8 +38,10 @@ export default function AdminPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [selectedTab, setSelectedTab] = useState("users"); // users, analytics, system
+  const [selectedTab, setSelectedTab] = useState("users"); // users, analytics, system, reports
   const [systemStats, setSystemStats] = useState<any>(null);
+  const [reportStatusFilter, setReportStatusFilter] = useState<string>("all");
+  const [selectedReport, setSelectedReport] = useState<any>(null);
   const queryClient = useQueryClient();
 
   // Admin authentication
@@ -85,6 +87,45 @@ export default function AdminPage() {
     queryFn: () => fetch(`/api/admin/system-health?password=${encodeURIComponent("mykliq2025admin!")}`).then(res => res.json()),
     enabled: isAuthenticated && selectedTab === "system",
     refetchInterval: 10000, // Refresh every 10 seconds
+  });
+
+  // Fetch rules reports
+  const { data: reports = [], isLoading: reportsLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/reports", reportStatusFilter],
+    queryFn: () => fetch(`/api/admin/reports${reportStatusFilter !== "all" ? `?status=${reportStatusFilter}` : ""}`).then(res => res.json()),
+    enabled: isAuthenticated && selectedTab === "reports",
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Update report mutation
+  const updateReport = useMutation({
+    mutationFn: async ({ reportId, status, adminNotes, actionTaken }: { 
+      reportId: string; 
+      status: string; 
+      adminNotes?: string; 
+      actionTaken?: string 
+    }) => {
+      return await apiRequest("PATCH", `/api/admin/reports/${reportId}`, { 
+        status, 
+        adminNotes, 
+        actionTaken 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reports"] });
+      setSelectedReport(null);
+      toast({
+        title: "Report Updated",
+        description: "The report status has been updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update report.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Fetch user details
@@ -325,6 +366,15 @@ export default function AdminPage() {
           >
             <Activity className="h-4 w-4 mr-2" />
             System Health
+          </Button>
+          <Button
+            variant={selectedTab === "reports" ? "default" : "ghost"}
+            onClick={() => setSelectedTab("reports")}
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+            data-testid="tab-reports"
+          >
+            <Flag className="h-4 w-4 mr-2" />
+            Rules Reports
           </Button>
         </div>
 
@@ -863,6 +913,315 @@ export default function AdminPage() {
                     <span className="text-green-600 font-medium">0.01%</span>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Rules Reports Tab */}
+        {selectedTab === "reports" && (
+          <div className="space-y-6">
+            {/* Report Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="bg-card/80 backdrop-blur-sm border-border">
+                <CardContent className="flex items-center p-6">
+                  <Flag className="h-8 w-8 text-red-500 mr-4" />
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">
+                      {reports.filter((r: any) => r.status === "pending").length}
+                    </p>
+                    <p className="text-muted-foreground">OPEN</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/80 backdrop-blur-sm border-border">
+                <CardContent className="flex items-center p-6">
+                  <FileWarning className="h-8 w-8 text-yellow-500 mr-4" />
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">
+                      {reports.filter((r: any) => r.status === "reviewed").length}
+                    </p>
+                    <p className="text-muted-foreground">PENDING</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/80 backdrop-blur-sm border-border">
+                <CardContent className="flex items-center p-6">
+                  <Shield className="h-8 w-8 text-green-500 mr-4" />
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">
+                      {reports.filter((r: any) => r.status === "resolved" || r.status === "dismissed").length}
+                    </p>
+                    <p className="text-muted-foreground">CLOSED</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="bg-card/80 backdrop-blur-sm border-border">
+                <CardContent className="flex items-center p-6">
+                  <Database className="h-8 w-8 text-blue-500 mr-4" />
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{reports.length}</p>
+                    <p className="text-muted-foreground">Total Reports</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Reports Table */}
+            <Card className="bg-card/80 backdrop-blur-sm border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-foreground">
+                  <div className="flex items-center gap-2">
+                    <Flag className="h-5 w-5" />
+                    Content Reports
+                  </div>
+                  <Select value={reportStatusFilter} onValueChange={setReportStatusFilter}>
+                    <SelectTrigger className="w-[180px]" data-testid="select-report-status-filter">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Reports</SelectItem>
+                      <SelectItem value="pending">OPEN (Not Reviewed)</SelectItem>
+                      <SelectItem value="reviewed">PENDING (Under Review)</SelectItem>
+                      <SelectItem value="resolved">CLOSED (Resolved)</SelectItem>
+                      <SelectItem value="dismissed">CLOSED (Dismissed)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {reportsLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">Loading reports...</div>
+                ) : reports.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No reports found. All clear!
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-foreground">Status</TableHead>
+                        <TableHead className="text-foreground">Reported User</TableHead>
+                        <TableHead className="text-foreground">Reason</TableHead>
+                        <TableHead className="text-foreground">Reporter</TableHead>
+                        <TableHead className="text-foreground">Date</TableHead>
+                        <TableHead className="text-foreground">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {reports.map((report: any) => (
+                        <TableRow key={report.id}>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              report.status === "pending" 
+                                ? "bg-red-100 text-red-700" 
+                                : report.status === "reviewed"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : report.status === "resolved"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}>
+                              {report.status === "pending" ? "OPEN" 
+                                : report.status === "reviewed" ? "PENDING" 
+                                : "CLOSED"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-foreground">
+                            <div>
+                              <p className="font-medium">
+                                {report.postAuthor?.firstName || report.postAuthorId?.substring(0, 8)}
+                              </p>
+                              {report.postAuthor?.email && (
+                                <p className="text-xs text-muted-foreground">{report.postAuthor.email}</p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-foreground capitalize">{report.reason}</TableCell>
+                          <TableCell className="text-foreground">
+                            {report.reporter?.firstName || "Anonymous"}
+                          </TableCell>
+                          <TableCell className="text-foreground">
+                            {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => setSelectedReport(report)}
+                                  data-testid={`button-review-report-${report.id}`}
+                                >
+                                  Review
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                  <DialogTitle>Review Report</DialogTitle>
+                                  <DialogDescription>
+                                    Review this content report and take appropriate action.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-muted-foreground">Reported User</Label>
+                                      <p className="font-medium">
+                                        {report.postAuthor?.firstName} {report.postAuthor?.lastName}
+                                      </p>
+                                      {report.postAuthor?.email && (
+                                        <p className="text-sm text-muted-foreground">{report.postAuthor.email}</p>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <Label className="text-muted-foreground">Reported By</Label>
+                                      <p className="font-medium">
+                                        {report.reporter?.firstName} {report.reporter?.lastName}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <Label className="text-muted-foreground">Reason</Label>
+                                    <p className="font-medium capitalize">{report.reason}</p>
+                                  </div>
+                                  {report.description && (
+                                    <div>
+                                      <Label className="text-muted-foreground">Description</Label>
+                                      <p>{report.description}</p>
+                                    </div>
+                                  )}
+                                  {report.post?.content && (
+                                    <div>
+                                      <Label className="text-muted-foreground">Post Content</Label>
+                                      <p className="p-3 bg-muted rounded-md">{report.post.content}</p>
+                                    </div>
+                                  )}
+                                  <div className="border-t pt-4">
+                                    <Label className="mb-2 block">Take Action</Label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => updateReport.mutate({
+                                          reportId: report.id,
+                                          status: "reviewed",
+                                          adminNotes: "Under review"
+                                        })}
+                                        disabled={updateReport.isPending}
+                                      >
+                                        Mark as Pending
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        className="text-green-600 border-green-200 hover:bg-green-50"
+                                        onClick={() => updateReport.mutate({
+                                          reportId: report.id,
+                                          status: "dismissed",
+                                          actionTaken: "none"
+                                        })}
+                                        disabled={updateReport.isPending}
+                                      >
+                                        Dismiss
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        className="text-yellow-600 border-yellow-200 hover:bg-yellow-50"
+                                        onClick={() => updateReport.mutate({
+                                          reportId: report.id,
+                                          status: "resolved",
+                                          actionTaken: "warning"
+                                        })}
+                                        disabled={updateReport.isPending}
+                                      >
+                                        Issue Warning
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        className="text-red-600 border-red-200 hover:bg-red-50"
+                                        onClick={() => updateReport.mutate({
+                                          reportId: report.id,
+                                          status: "resolved",
+                                          actionTaken: "post_removed"
+                                        })}
+                                        disabled={updateReport.isPending}
+                                      >
+                                        Remove Post
+                                      </Button>
+                                    </div>
+                                    <div className="mt-4 pt-4 border-t">
+                                      <Label className="mb-2 block text-red-600">Suspend User</Label>
+                                      <div className="grid grid-cols-3 gap-2">
+                                        <Button
+                                          variant="destructive"
+                                          size="sm"
+                                          onClick={() => {
+                                            if (confirm(`Suspend this user for 24 hours?`)) {
+                                              suspendUser.mutate({ 
+                                                userId: report.postAuthorId, 
+                                                suspensionType: "24hours" 
+                                              });
+                                              updateReport.mutate({
+                                                reportId: report.id,
+                                                status: "resolved",
+                                                actionTaken: "user_suspended"
+                                              });
+                                            }
+                                          }}
+                                          disabled={suspendUser.isPending || updateReport.isPending}
+                                        >
+                                          24h
+                                        </Button>
+                                        <Button
+                                          variant="destructive"
+                                          size="sm"
+                                          onClick={() => {
+                                            if (confirm(`Suspend this user for 7 days?`)) {
+                                              suspendUser.mutate({ 
+                                                userId: report.postAuthorId, 
+                                                suspensionType: "7days" 
+                                              });
+                                              updateReport.mutate({
+                                                reportId: report.id,
+                                                status: "resolved",
+                                                actionTaken: "user_suspended"
+                                              });
+                                            }
+                                          }}
+                                          disabled={suspendUser.isPending || updateReport.isPending}
+                                        >
+                                          7 Days
+                                        </Button>
+                                        <Button
+                                          variant="destructive"
+                                          size="sm"
+                                          onClick={() => {
+                                            if (confirm(`PERMANENTLY BAN this user? This cannot be undone.`)) {
+                                              suspendUser.mutate({ 
+                                                userId: report.postAuthorId, 
+                                                suspensionType: "banned" 
+                                              });
+                                              updateReport.mutate({
+                                                reportId: report.id,
+                                                status: "resolved",
+                                                actionTaken: "user_banned"
+                                              });
+                                            }
+                                          }}
+                                          disabled={suspendUser.isPending || updateReport.isPending}
+                                        >
+                                          Ban
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </div>

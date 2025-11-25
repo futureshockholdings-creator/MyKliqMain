@@ -1638,14 +1638,14 @@ export const notificationPreferences = pgTable("notification_preferences", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Report status enum
+// Report status enum - Maps to UI: pending=OPEN, reviewed=PENDING, resolved/dismissed=CLOSED
 export const reportStatusEnum = pgEnum("report_status", ["pending", "reviewed", "resolved", "dismissed"]);
 
 // Reports table for content moderation
-export const rulesReports = pgTable("rules-reports", {
+export const rulesReports = pgTable("rules_reports", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   reportedBy: varchar("reported_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }).notNull(),
+  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }),
   postAuthorId: varchar("post_author_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   reason: varchar("reason").notNull(), // "hate", "discrimination", "offensive", "pornographic", "spam", "other"
   description: text("description"), // Optional additional details
