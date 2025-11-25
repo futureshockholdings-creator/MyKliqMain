@@ -9847,11 +9847,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Comprehensive scaling dashboard for 5000+ user monitoring
-  app.get('/api/admin/scaling-dashboard', async (req, res) => {
+  app.get('/api/admin/scaling-dashboard', isAuthenticated, async (req: any, res) => {
     try {
       const { password } = req.query;
+      const userId = req.user?.claims?.sub;
       
-      if (password !== ADMIN_PASSWORD) {
+      // Allow either password-based or session-based admin access
+      let isAdminUser = password === ADMIN_PASSWORD;
+      
+      if (!isAdminUser && userId) {
+        const user = await storage.getUser(userId);
+        isAdminUser = user?.isAdmin === true;
+      }
+      
+      if (!isAdminUser) {
         return res.status(401).json({ message: "Admin access required" });
       }
 

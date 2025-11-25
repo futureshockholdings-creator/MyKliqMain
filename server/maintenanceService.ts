@@ -108,7 +108,7 @@ class MaintenanceService {
       const upcomingEvents = await db
         .select({ count: sql<number>`count(*)` })
         .from(events)
-        .where(sql`date_time > NOW()`);
+        .where(sql`event_date > NOW()`);
       this.metrics.database.upcomingEvents = upcomingEvents[0]?.count || 0;
 
       // Estimate query performance (average from recent performance log)
@@ -175,7 +175,7 @@ class MaintenanceService {
       const pastEvents = await db
         .select({ count: sql<number>`count(*)` })
         .from(events)
-        .where(sql`date_time < NOW()`);
+        .where(sql`event_date < NOW()`);
       this.metrics.cleanup.pastEvents = pastEvents[0]?.count || 0;
 
     } catch (error) {
