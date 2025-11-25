@@ -8479,6 +8479,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all advertiser applications (admin only)
+  app.get('/api/advertiser-applications', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+
+      const { status } = req.query;
+      
+      let applications;
+      if (status && status !== 'all') {
+        applications = await db.select().from(advertiserApplications)
+          .where(eq(advertiserApplications.status, status as string))
+          .orderBy(desc(advertiserApplications.submittedAt));
+      } else {
+        applications = await db.select().from(advertiserApplications)
+          .orderBy(desc(advertiserApplications.submittedAt));
+      }
+      
+      res.json(applications);
+    } catch (error) {
+      console.error("Error fetching advertiser applications:", error);
+      res.status(500).json({ message: "Failed to fetch applications" });
+    }
+  });
+
+  // Update advertiser application status (admin only)
+  app.patch('/api/advertiser-applications/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      }
+
+      const { id } = req.params;
+      const { status, adminNotes } = req.body;
+
+      const validStatuses = ['pending', 'under_review', 'approved', 'rejected', 'needs_info'];
+      if (status && !validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+      }
+
+      const updateData: any = {};
+      if (status) updateData.status = status;
+      if (adminNotes !== undefined) updateData.adminNotes = adminNotes;
+      updateData.reviewedAt = new Date();
+      updateData.reviewedBy = userId;
+
+      const [updated] = await db.update(advertiserApplications)
+        .set(updateData)
+        .where(eq(advertiserApplications.id, parseInt(id)))
+        .returning();
+
+      if (!updated) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      // Send email notification to applicant about status change
+      if (status === 'approved' || status === 'rejected') {
+        try {
+          const statusMessage = status === 'approved' 
+            ? 'Congratulations! Your advertiser application has been approved. Our team will be in touch shortly to set up your advertising campaign.'
+            : 'Unfortunately, your advertiser application was not approved at this time. Please contact us for more information.';
+          
+          await sendChatbotConversation(
+            `MyKliq Advertiser Application - ${status === 'approved' ? 'Approved' : 'Update'}`,
+            `
+            Dear ${updated.contactPerson},
+            
+            ${statusMessage}
+            
+            Application ID: ${updated.id}
+            Business Name: ${updated.businessName}
+            
+            If you have any questions, please contact us at mykliqadsmanagement@outlook.com.
+            
+            Best regards,
+            MyKliq Advertising Team
+            `,
+            updated.email,
+            'mykliqadsmanagement@outlook.com'
+          );
+        } catch (emailError) {
+          console.error("Failed to send status notification email:", emailError);
+        }
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating advertiser application:", error);
+      res.status(500).json({ message: "Failed to update application" });
+    }
+  });
+
   app.put('/api/ads/:adId', isAuthenticated, async (req, res) => {
     try {
       // Note: In a real app, this would be admin-only
