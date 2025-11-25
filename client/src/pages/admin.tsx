@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Search, Shield, Users, Database, Activity, AlertTriangle, BarChart3, Download, RefreshCw, Trash2, UserX, Calendar, Ban } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 import {
   Table,
   TableBody,
@@ -206,20 +207,20 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-card/80 backdrop-blur-sm border-border shadow-lg">
+      <ForcedLightSurface className="flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-gray-300 shadow-lg">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 p-3 rounded-full bg-primary/10">
-              <Shield className="h-8 w-8 text-primary mx-auto" />
+            <div className="mx-auto mb-4 p-3 rounded-full bg-gray-100">
+              <Shield className="h-8 w-8 text-gray-800 mx-auto" />
             </div>
-            <CardTitle className="text-2xl text-card-foreground">Admin Access</CardTitle>
-            <p className="text-muted-foreground">
+            <CardTitle className="text-2xl">Admin Access</CardTitle>
+            <p className="text-gray-600">
               Enter the admin password to access the customer service dashboard
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground">Admin Password</Label>
+              <Label htmlFor="password">Admin Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -227,7 +228,7 @@ export default function AdminPage() {
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   placeholder="Enter admin password"
-                  className="bg-input border-border text-foreground pr-10"
+                  className="border-gray-300 pr-10"
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                   data-testid="input-admin-password"
                 />
@@ -262,7 +263,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 p-2 sm:p-4 md:p-6">
+    <ForcedLightSurface className="p-2 sm:p-4 md:p-6">
       <div className="w-full max-w-6xl mx-auto space-y-4 md:space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -867,6 +868,6 @@ export default function AdminPage() {
           </div>
         )}
       </div>
-    </div>
+    </ForcedLightSurface>
   );
 }

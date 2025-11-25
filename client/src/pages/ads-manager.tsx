@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { SponsoredAd, AdvertiserApplication } from "@shared/schema";
 import { getTextColorForBackground, isBlackBackground } from "@/lib/colorUtils";
 import Footer from "@/components/Footer";
+import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 
 // Ad Preview Component with dynamic text colors
 interface AdPreviewProps {
@@ -351,16 +352,17 @@ export default function AdsManager() {
   };
 
   if (isLoading) {
-    return <div className="p-6">Loading ads...</div>;
+    return <ForcedLightSurface className="p-6">Loading ads...</ForcedLightSurface>;
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-black dark:text-white">Sponsored Ads Manager</h1>
-          <p className="text-gray-600 dark:text-gray-300">Manage your sponsored advertisements</p>
-        </div>
+    <ForcedLightSurface>
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Sponsored Ads Manager</h1>
+            <p className="text-gray-600">Manage your sponsored advertisements</p>
+          </div>
         <div className="flex items-center gap-2">
           <Button 
             variant={showApplications ? "default" : "outline"}
@@ -1142,6 +1144,6 @@ export default function AdsManager() {
       </div>
 
       <Footer />
-    </div>
+    </ForcedLightSurface>
   );
 }

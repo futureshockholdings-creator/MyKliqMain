@@ -12,6 +12,7 @@ import { AlertTriangle, Eye, Ban, Clock, CheckCircle, XCircle, UserX } from "luc
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 
 interface Report {
   id: string;
@@ -203,11 +204,11 @@ export default function AdminReports() {
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-6xl mx-auto p-4 md:p-6">
+      <ForcedLightSurface className="w-full max-w-6xl mx-auto p-4 md:p-6">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-800"></div>
         </div>
-      </div>
+      </ForcedLightSurface>
     );
   }
 
@@ -217,7 +218,7 @@ export default function AdminReports() {
     const isAuthError = status === 403;
     
     return (
-      <div className="w-full max-w-6xl mx-auto p-4 md:p-6">
+      <ForcedLightSurface className="w-full max-w-6xl mx-auto p-4 md:p-6">
         <Card className="border-red-200 bg-red-50">
           <CardContent className="py-12">
             <div className="text-center space-y-4">
@@ -249,19 +250,20 @@ export default function AdminReports() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </ForcedLightSurface>
     );
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Content Reports</h1>
-          <p className="text-muted-foreground">Review and moderate reported content</p>
-        </div>
+    <ForcedLightSurface>
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Content Reports</h1>
+            <p className="text-gray-600">Review and moderate reported content</p>
+          </div>
         
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-48">
             <SelectValue />
           </SelectTrigger>
@@ -534,6 +536,6 @@ export default function AdminReports() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </ForcedLightSurface>
   );
 }

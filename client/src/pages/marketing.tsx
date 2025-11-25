@@ -23,6 +23,7 @@ import {
   User
 } from "lucide-react";
 import Footer from "@/components/Footer";
+import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 
 export default function Marketing() {
   const [email, setEmail] = useState("");
@@ -62,16 +63,12 @@ export default function Marketing() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse"></div>
-      </div>
+    <ForcedLightSurface className="overflow-hidden">
+      {/* Clean Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none bg-white"></div>
 
       {/* Navigation */}
-      <nav className="relative z-50 flex justify-between items-center p-6">
+      <nav className="relative z-50 flex justify-between items-center p-6 bg-white">
         <div className="flex items-center space-x-3">
           <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center border border-green-500">
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -82,48 +79,48 @@ export default function Marketing() {
               </g>
             </svg>
           </div>
-          <span className="text-2xl font-bold">MyKliq</span>
+          <span className="text-2xl font-bold !text-black">MyKliq</span>
         </div>
         <div className="flex items-center space-x-4">
-          <Badge variant="secondary" className="bg-blue-500/20 text-blue-300 animate-pulse">
-            <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+          <Badge variant="secondary" className="bg-blue-100 !text-blue-800">
+            <div className="w-2 h-2 bg-blue-600 rounded-full mr-2"></div>
             Coming Soon
           </Badge>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative z-40 text-center px-6 pt-20 pb-32">
+      <section className="relative z-40 text-center px-6 pt-20 pb-32 !bg-white">
         <div className="max-w-6xl mx-auto">
           {/* Rotating Feature Badge */}
           <div className="mb-8 flex justify-center">
-            <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 text-sm animate-fade-in">
+            <Badge className="bg-purple-100 !text-purple-800 px-4 py-2 text-sm">
               {React.createElement(features[currentFeature].icon, { className: `h-4 w-4 mr-2 ${features[currentFeature].color}` })}
               {features[currentFeature].text}
             </Badge>
           </div>
 
-          <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
-            Your <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Closest</span> Circle
+          <h1 className="text-6xl md:text-8xl font-bold mb-6 !text-black">
+            Your <span className="text-purple-600">Closest</span> Circle
           </h1>
           
-          <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl !text-gray-700 mb-8 max-w-3xl mx-auto leading-relaxed">
             The first social media that actually brings friends closer together. 
-            <span className="text-purple-300 font-semibold"> Rank your friends</span>, 
-            <span className="text-blue-300 font-semibold"> create meaningful content</span>, and 
-            <span className="text-pink-300 font-semibold"> build authentic connections</span>.
+            <span className="text-purple-600 font-semibold"> Rank your friends</span>, 
+            <span className="text-blue-600 font-semibold"> create meaningful content</span>, and 
+            <span className="text-pink-600 font-semibold"> build authentic connections</span>.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Button size="lg" className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-4 text-lg font-semibold shadow-2xl shadow-purple-500/25 transition-all hover:scale-105">
+            <Button size="lg" className="!bg-black hover:!bg-gray-800 !text-white px-8 py-4 text-lg font-semibold shadow-lg transition-all hover:scale-105">
               <Download className="h-5 w-5 mr-2" />
               Download Now
             </Button>
             <Button 
               variant="outline" 
               size="lg" 
-              className="border-white/30 text-white hover:bg-white/10 px-8 py-4 text-lg"
+              className="!border-black !text-black hover:!bg-gray-100 px-8 py-4 text-lg"
               onClick={() => setShowDemo(true)}
             >
               <PlayCircle className="h-5 w-5 mr-2" />
@@ -132,17 +129,17 @@ export default function Marketing() {
           </div>
 
           {/* Social Proof */}
-          <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-400">
+          <div className="flex flex-wrap justify-center items-center gap-8 text-sm !text-gray-600">
             <div className="flex items-center">
-              <Star className="h-4 w-4 text-yellow-400 mr-1" />
+              <Star className="h-4 w-4 !text-gray-800 mr-1" />
               <span>N/A App Store Rating</span>
             </div>
             <div className="flex items-center">
-              <TrendingUp className="h-4 w-4 text-green-400 mr-1" />
+              <TrendingUp className="h-4 w-4 !text-gray-800 mr-1" />
               <span>Coming to App Store</span>
             </div>
             <div className="flex items-center">
-              <Users className="h-4 w-4 text-blue-400 mr-1" />
+              <Users className="h-4 w-4 !text-gray-800 mr-1" />
               <span>N/A Active Users</span>
             </div>
           </div>
@@ -150,59 +147,59 @@ export default function Marketing() {
       </section>
 
       {/* Features Grid */}
-      <section className="relative z-40 px-6 py-20 bg-black/20 backdrop-blur-sm">
+      <section className="relative z-40 px-6 py-20 !bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Why MyKliq is <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Different</span>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 !text-black">
+              Why MyKliq is <span className="!text-gray-800">Different</span>
             </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+            <p className="text-xl !text-gray-600 max-w-2xl mx-auto">
               Stop scrolling through strangers. Start connecting with friends who actually matter.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Friend Ranking */}
-            <Card className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-purple-500/20 backdrop-blur-sm hover:scale-105 transition-transform">
+            <Card className="!bg-white border-gray-200 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mb-4">
-                  <Crown className="h-6 w-6 text-white" />
+                <div className="w-12 h-12 !bg-gray-800 rounded-lg flex items-center justify-center mb-4">
+                  <Crown className="h-6 w-6 !text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white">Friend Pyramid</h3>
-                <p className="text-gray-300">Rank your friends 1-28. See who your real ones are and strengthen those bonds.</p>
+                <h3 className="text-xl font-semibold mb-2 !text-black">Friend Pyramid</h3>
+                <p className="!text-gray-600">Rank your friends 1-28. See who your real ones are and strengthen those bonds.</p>
               </CardContent>
             </Card>
 
             {/* Content Filtering */}
-            <Card className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 border-blue-500/20 backdrop-blur-sm hover:scale-105 transition-transform">
+            <Card className="!bg-white border-gray-200 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mb-4">
-                  <Shield className="h-6 w-6 text-white" />
+                <div className="w-12 h-12 !bg-gray-800 rounded-lg flex items-center justify-center mb-4">
+                  <Shield className="h-6 w-6 !text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white">Content Filtering</h3>
-                <p className="text-gray-300">Customize what content you see based on friend rankings and personal preferences.</p>
+                <h3 className="text-xl font-semibold mb-2 !text-black">Content Filtering</h3>
+                <p className="!text-gray-600">Customize what content you see based on friend rankings and personal preferences.</p>
               </CardContent>
             </Card>
 
             {/* Moviecons */}
-            <Card className="bg-gradient-to-br from-green-900/50 to-green-800/30 border-green-500/20 backdrop-blur-sm hover:scale-105 transition-transform">
+            <Card className="!bg-white border-gray-200 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4">
-                  <PlayCircle className="h-6 w-6 text-white" />
+                <div className="w-12 h-12 !bg-gray-800 rounded-lg flex items-center justify-center mb-4">
+                  <PlayCircle className="h-6 w-6 !text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white">Moviecons</h3>
-                <p className="text-gray-300">Create custom video reactions and emotes to express yourself uniquely in conversations.</p>
+                <h3 className="text-xl font-semibold mb-2 !text-black">Moviecons</h3>
+                <p className="!text-gray-600">Create custom video reactions and emotes to express yourself uniquely in conversations.</p>
               </CardContent>
             </Card>
 
             {/* Meaningful Stories */}
-            <Card className="bg-gradient-to-br from-pink-900/50 to-pink-800/30 border-pink-500/20 backdrop-blur-sm hover:scale-105 transition-transform">
+            <Card className="!bg-white border-gray-200 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-rose-500 rounded-lg flex items-center justify-center mb-4">
-                  <Camera className="h-6 w-6 text-white" />
+                <div className="w-12 h-12 !bg-gray-800 rounded-lg flex items-center justify-center mb-4">
+                  <Camera className="h-6 w-6 !text-white" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white">Stories That Matter</h3>
-                <p className="text-gray-300">Share moments with people who actually care. No algorithm, just genuine connections.</p>
+                <h3 className="text-xl font-semibold mb-2 !text-black">Stories That Matter</h3>
+                <p className="!text-gray-600">Share moments with people who actually care. No algorithm, just genuine connections.</p>
               </CardContent>
             </Card>
 
@@ -493,6 +490,6 @@ export default function Marketing() {
       )}
 
       <Footer />
-    </div>
+    </ForcedLightSurface>
   );
 }

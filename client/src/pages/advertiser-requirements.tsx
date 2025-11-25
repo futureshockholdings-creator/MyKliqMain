@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/Footer";
+import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 
 export default function AdvertiserRequirements() {
   return (
-    <div className="min-h-screen bg-white text-black">
+    <ForcedLightSurface>
       <div className="w-full max-w-5xl mx-auto p-6 md:p-8 space-y-8">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-black">
+          <h1 className="text-4xl md:text-5xl font-bold !text-black">
             Advertiser Requirements
           </h1>
           <p className="text-lg text-gray-700 max-w-3xl mx-auto">
@@ -31,14 +32,14 @@ export default function AdvertiserRequirements() {
           </div>
         </div>
 
-        <Card className="bg-white border-2 border-black">
+        <Card className="!bg-white border-2 !border-black">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-black">
+            <CardTitle className="flex items-center gap-2 !text-black">
               <Image className="w-6 h-6" />
               Image Creative Requirements
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-black">
+          <CardContent className="space-y-4 !text-black">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <h3 className="font-semibold text-black flex items-center gap-2">
@@ -72,14 +73,14 @@ export default function AdvertiserRequirements() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-2 border-black">
+        <Card className="!bg-white border-2 !border-black">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-black">
+            <CardTitle className="flex items-center gap-2 !text-black">
               <Video className="w-6 h-6" />
               Video Creative Requirements
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-black">
+          <CardContent className="space-y-4 !text-black">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <h3 className="font-semibold text-black flex items-center gap-2">
@@ -113,14 +114,14 @@ export default function AdvertiserRequirements() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-2 border-black">
+        <Card className="!bg-white border-2 !border-black">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-black">
+            <CardTitle className="flex items-center gap-2 !text-black">
               <FileText className="w-6 h-6" />
               Ad Copy Requirements
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-black">
+          <CardContent className="space-y-4 !text-black">
             <div className="space-y-3">
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                 <h3 className="font-semibold text-black mb-2">Headline / Title</h3>
@@ -152,9 +153,9 @@ export default function AdvertiserRequirements() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-2 border-black">
+        <Card className="!bg-white border-2 !border-black">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-black">
+            <CardTitle className="flex items-center gap-2 !text-black">
               <Globe className="w-6 h-6" />
               Landing Page Requirements
             </CardTitle>
@@ -198,14 +199,14 @@ export default function AdvertiserRequirements() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-2 border-black">
+        <Card className="!bg-white border-2 !border-black">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-black">
+            <CardTitle className="flex items-center gap-2 !text-black">
               <Shield className="w-6 h-6" />
               Legal & Compliance
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4 text-black">
+          <CardContent className="space-y-4 !text-black">
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <Badge variant="default" className="mt-1">Required</Badge>
@@ -246,14 +247,14 @@ export default function AdvertiserRequirements() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-2 border-red-600">
+        <Card className="!bg-white border-2 border-red-600">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-black">
+            <CardTitle className="flex items-center gap-2 !text-black">
               <XCircle className="w-6 h-6 text-red-600" />
               Prohibited Content
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-black">
+          <CardContent className="!text-black">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <h3 className="font-semibold text-red-600">Strictly Prohibited</h3>
@@ -326,6 +327,6 @@ export default function AdvertiserRequirements() {
       </div>
       
       <Footer />
-    </div>
+    </ForcedLightSurface>
   );
 }

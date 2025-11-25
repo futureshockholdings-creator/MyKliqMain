@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, ArrowRight, ArrowLeft, Building, Image as ImageIcon, Target, DollarSign, Shield } from "lucide-react";
 import Footer from "@/components/Footer";
+import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 
 const formSchema = z.object({
   // Business Info
@@ -168,7 +169,7 @@ export default function AdvertiserOnboarding() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-white text-black flex items-center justify-center p-6">
+      <ForcedLightSurface className="flex items-center justify-center p-6">
         <Card className="max-w-2xl w-full border-2 border-green-600">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -231,10 +232,10 @@ export default function AdvertiserOnboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black">
+    <ForcedLightSurface>
       <div className="w-full max-w-4xl mx-auto p-6 md:p-8 space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-black">Advertiser Application</h1>
+          <h1 className="text-4xl font-bold">Advertiser Application</h1>
           <p className="text-gray-700">
             Complete this form to start advertising on MyKliq
           </p>
@@ -786,7 +787,7 @@ export default function AdvertiserOnboarding() {
       </div>
       
       <Footer />
-    </div>
+    </ForcedLightSurface>
   );
 }
 
