@@ -41,6 +41,8 @@ import ForgotPassword from "@/pages/forgot-password";
 import AdminPage from "@/pages/admin";
 import AdminReports from "@/pages/admin-reports";
 import Marketing from "@/pages/marketing";
+import AdvertiserRequirements from "@/pages/advertiser-requirements";
+import AdvertiserOnboarding from "@/pages/advertiser-onboarding";
 
 // Navigation Component
 import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell, Settings as SettingsIcon } from "lucide-react";
@@ -195,6 +197,8 @@ function Router() {
       <Route path="/disclaimer" component={Disclaimer} />
       <Route path="/community-guidelines" component={CommunityGuidelines} />
       <Route path="/contact-us" component={ContactUs} />
+      <Route path="/advertiser-requirements" component={AdvertiserRequirements} />
+      <Route path="/advertiser-onboarding" component={AdvertiserOnboarding} />
       <Route path="/landing" component={Landing} />
       <Route path="/marketing" component={Marketing} />
       <Route path="/signup" component={Signup} />

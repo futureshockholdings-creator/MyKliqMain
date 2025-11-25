@@ -1,6 +1,8 @@
 import Footer from "@/components/Footer";
-import { Mail, Megaphone, HeadphonesIcon, DollarSign } from "lucide-react";
+import { Mail, Megaphone, HeadphonesIcon, DollarSign, FileText, PenTool } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 export default function ContactUs() {
   return (
@@ -26,7 +28,7 @@ export default function ContactUs() {
                   Interested in advertising on MyKliq? Want to partner with us for marketing opportunities?
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <a 
                   href="mailto:mykliqadsmanagement@outlook.com" 
                   className="inline-flex items-center gap-2 text-purple-600 hover:underline font-medium"
@@ -35,9 +37,27 @@ export default function ContactUs() {
                   <Mail className="w-4 h-4" />
                   mykliqadsmanagement@outlook.com
                 </a>
-                <p className="mt-3 text-sm !text-gray-700">
+                <p className="text-sm !text-gray-700">
                   Our marketing team will respond within 1-2 business days with information about advertising packages, partnerships, and collaboration opportunities.
                 </p>
+                
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <p className="text-sm font-semibold !text-black mb-3">Ready to advertise with us?</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Link href="/advertiser-requirements">
+                      <Button variant="outline" size="sm" className="text-xs" data-testid="button-view-requirements">
+                        <FileText className="w-3 h-3 mr-1" />
+                        View Requirements
+                      </Button>
+                    </Link>
+                    <Link href="/advertiser-onboarding">
+                      <Button size="sm" className="text-xs" data-testid="button-start-application">
+                        <PenTool className="w-3 h-3 mr-1" />
+                        Start Application
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 

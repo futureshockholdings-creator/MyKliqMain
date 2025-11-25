@@ -18,13 +18,16 @@ import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
 import { performanceOptimizer } from "./performanceOptimizer";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, messages, conversations, stories, users, storyViews } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications } from "@shared/schema";
 import { eq, and, or, desc, sql as sqlOp, isNotNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
 import { z } from "zod";
 import multer from "multer";
+import { upload as adMediaUpload, validateImage, validateVideo } from "./uploadMiddleware";
+import path from "path";
+import fs from "fs";
 
 // Configure multer for in-memory storage (MVP)
 // TODO: Post-MVP - Migrate to ObjectStorageService for persistent storage
@@ -8366,6 +8369,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating ad:", error);
       res.status(500).json({ message: "Failed to create ad" });
+    }
+  });
+
+  // Upload ad media (images/videos) with validation
+  app.post('/api/upload/ad-media', isAuthenticated, adMediaUpload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const file = req.file;
+      const filePath = file.path;
+      const fileType = file.mimetype.startsWith('image/') ? 'image' : 'video';
+
+      // Validate based on file type
+      let validation;
+      if (fileType === 'image') {
+        validation = await validateImage(filePath);
+      } else {
+        validation = await validateVideo(filePath);
+      }
+
+      if (!validation.valid) {
+        // Delete invalid file
+        fs.unlinkSync(filePath);
+        return res.status(400).json({ message: validation.error });
+      }
+
+      // Return file URL and metadata
+      const fileUrl = `/uploads/ads/${path.basename(filePath)}`;
+      res.json({
+        url: fileUrl,
+        type: fileType,
+        metadata: validation.metadata,
+        filename: file.filename
+      });
+    } catch (error) {
+      console.error("Error uploading ad media:", error);
+      // Clean up file if error occurred
+      if (req.file?.path) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (e) {
+          console.error("Error deleting file after upload failure:", e);
+        }
+      }
+      res.status(500).json({ message: "Failed to upload media" });
+    }
+  });
+
+  // Serve uploaded ad media files
+  app.use('/uploads/ads', express.static(path.join(process.cwd(), 'uploads', 'ads')));
+
+  // Submit advertiser application
+  app.post('/api/advertiser-applications', async (req, res) => {
+    try {
+      const applicationData = insertAdvertiserApplicationSchema.parse(req.body);
+      
+      // Insert into database
+      const [application] = await db.insert(advertiserApplications)
+        .values(applicationData)
+        .returning();
+
+      // Send notification email to ads management team
+      try {
+        await sendChatbotConversation(
+          'New Advertiser Application Received',
+          `
+          A new advertiser application has been submitted:
+          
+          Business Name: ${applicationData.businessName}
+          Contact Person: ${applicationData.contactPerson}
+          Email: ${applicationData.email}
+          Phone: ${applicationData.phone}
+          Website: ${applicationData.website}
+          
+          Proposed Daily Budget: $${applicationData.proposedDailyBudget || 'Not specified'}
+          Proposed Cost Per Click: $${applicationData.proposedCostPerClick || 'Not specified'}
+          Campaign Start: ${applicationData.campaignStartDate || 'Not specified'}
+          Campaign End: ${applicationData.campaignEndDate || 'Not specified'}
+          
+          Application ID: ${application.id}
+          Submitted: ${new Date().toLocaleString()}
+          
+          Please review this application in the admin dashboard.
+          `,
+          'mykliqadsmanagement@outlook.com',
+          'mykliqadsmanagement@outlook.com'
+        );
+      } catch (emailError) {
+        console.error("Failed to send notification email:", emailError);
+        // Don't fail the request if email fails
+      }
+
+      res.json({ 
+        message: "Application submitted successfully",
+        applicationId: application.id 
+      });
+    } catch (error) {
+      console.error("Error submitting advertiser application:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid application data",
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: "Failed to submit application" });
     }
   });
 

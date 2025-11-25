@@ -1777,3 +1777,61 @@ export const insertEducationalPostSchema = createInsertSchema(educationalPosts).
 });
 export type InsertEducationalPost = z.infer<typeof insertEducationalPostSchema>;
 export type EducationalPost = typeof educationalPosts.$inferSelect;
+
+// Application status enum for advertiser applications
+export const applicationStatusEnum = pgEnum("application_status", [
+  "pending", "under_review", "approved", "rejected", "needs_info"
+]);
+
+// Advertiser Applications - Track advertiser onboarding submissions
+export const advertiserApplications = pgTable("advertiser_applications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Business Information
+  businessName: varchar("business_name").notNull(),
+  contactPerson: varchar("contact_person").notNull(),
+  email: varchar("email").notNull(),
+  phone: varchar("phone").notNull(),
+  website: varchar("website").notNull(),
+  taxId: varchar("tax_id"), // EIN or SSN (encrypted/secured)
+  businessAddress: text("business_address"),
+  
+  // Ad Creative Information (stored as JSON)
+  adCreatives: jsonb("ad_creatives"), // { imageUrls: [], videoUrls: [], title: '', description: '', cta: '' }
+  
+  // Targeting Preferences (stored as JSON)
+  targetingPrefs: jsonb("targeting_prefs"), // { interests: [], ageRange: {}, musicGenres: [], etc. }
+  
+  // Budget & Timeline
+  proposedDailyBudget: numeric("proposed_daily_budget", { precision: 10, scale: 2 }),
+  proposedCostPerClick: numeric("proposed_cost_per_click", { precision: 10, scale: 2 }),
+  campaignStartDate: date("campaign_start_date"),
+  campaignEndDate: date("campaign_end_date"),
+  
+  // Legal & Compliance
+  termsAccepted: boolean("terms_accepted").default(false),
+  privacyPolicyAccepted: boolean("privacy_policy_accepted").default(false),
+  businessLicenseVerified: boolean("business_license_verified").default(false),
+  
+  // Application Status
+  status: applicationStatusEnum("status").default("pending"),
+  reviewNotes: text("review_notes"), // Internal notes from review team
+  reviewedBy: varchar("reviewed_by"), // Admin user who reviewed
+  reviewedAt: timestamp("reviewed_at"),
+  
+  // Metadata
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Advertiser Application types
+export const insertAdvertiserApplicationSchema = createInsertSchema(advertiserApplications).omit({ 
+  id: true, 
+  submittedAt: true, 
+  updatedAt: true,
+  reviewedBy: true,
+  reviewedAt: true,
+  reviewNotes: true
+});
+export type InsertAdvertiserApplication = z.infer<typeof insertAdvertiserApplicationSchema>;
+export type AdvertiserApplication = typeof advertiserApplications.$inferSelect;
