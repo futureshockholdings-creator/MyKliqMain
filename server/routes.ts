@@ -3970,45 +3970,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expires_at: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 days
       };
 
-      // Authenticate the user in the session
-      req.login(userSession, (err: any) => {
-        if (err) {
-          console.error("Session login error:", err);
+      // Regenerate session to prevent session fixation and ensure fresh cookie
+      req.session.regenerate((regenErr: any) => {
+        if (regenErr) {
+          console.error("Session regeneration error:", regenErr);
           return res.status(500).json({ 
             message: "Failed to create session" 
           });
         }
         
-        // Save session explicitly before sending response
-        req.session.save(async (saveErr: any) => {
-          if (saveErr) {
-            console.error("Session save error:", saveErr);
+        console.log("Session regenerated, new session ID:", req.sessionID);
+
+        // Authenticate the user in the session
+        req.login(userSession, (err: any) => {
+          if (err) {
+            console.error("Session login error:", err);
             return res.status(500).json({ 
-              message: "Failed to save session" 
+              message: "Failed to create session" 
             });
           }
           
-          console.log("Login successful for user:", user.id, "Session saved");
-          
-          // Update referral bonus first login timestamp if this is a pending referral
-          try {
-            await storage.updateReferralBonusFirstLogin(user.id);
-          } catch (error) {
-            console.error("Error updating referral bonus first login:", error);
-            // Don't fail the login if this fails
-          }
-          
-          res.setHeader('Content-Type', 'application/json');
-          res.json({ 
-            message: "Login successful",
-            success: true,
-            user: {
-              id: user.id,
-              email: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              profileImageUrl: user.profileImageUrl
+          // Save session explicitly before sending response
+          req.session.save(async (saveErr: any) => {
+            if (saveErr) {
+              console.error("Session save error:", saveErr);
+              return res.status(500).json({ 
+                message: "Failed to save session" 
+              });
             }
+            
+            console.log("Login successful for user:", user.id, "Session ID:", req.sessionID);
+            console.log("Session cookie will be set:", req.session.cookie);
+            
+            // Update referral bonus first login timestamp if this is a pending referral
+            try {
+              await storage.updateReferralBonusFirstLogin(user.id);
+            } catch (error) {
+              console.error("Error updating referral bonus first login:", error);
+              // Don't fail the login if this fails
+            }
+            
+            res.setHeader('Content-Type', 'application/json');
+            res.json({ 
+              message: "Login successful",
+              success: true,
+              user: {
+                id: user.id,
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                profileImageUrl: user.profileImageUrl
+              }
+            });
           });
         });
       });

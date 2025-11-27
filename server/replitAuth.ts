@@ -161,8 +161,15 @@ export async function setupAuth(app: Express) {
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
+  
+  // Debug logging for session issues
+  console.log("Auth check - Session ID:", req.sessionID);
+  console.log("Auth check - isAuthenticated:", req.isAuthenticated());
+  console.log("Auth check - User exists:", !!user);
+  console.log("Auth check - Cookies received:", req.headers.cookie);
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!req.isAuthenticated() || !user?.expires_at) {
+    console.log("Auth failed - isAuthenticated:", req.isAuthenticated(), "expires_at:", user?.expires_at);
     return res.status(401).json({ message: "Unauthorized" });
   }
 
