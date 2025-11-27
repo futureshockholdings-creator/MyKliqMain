@@ -62,8 +62,20 @@ export async function enterpriseFetch<T = any>(
             return performanceMonitor.trackApiCall(
               url,
               async () => {
+                // Add JWT token to Authorization header as fallback for cookie-less auth
+                const headers: Record<string, string> = {
+                  ...(fetchOptions.headers as Record<string, string> || {}),
+                };
+                
+                // Add JWT token if available (for iPad/webview that can't use cookies)
+                const authToken = localStorage.getItem('mykliq_auth_token');
+                if (authToken && !headers['Authorization']) {
+                  headers['Authorization'] = `Bearer ${authToken}`;
+                }
+                
                 const res = await fetch(url, {
                   ...fetchOptions,
+                  headers,
                   credentials: fetchOptions.credentials || 'include',
                 });
 

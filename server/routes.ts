@@ -17,6 +17,7 @@ import { friendRankingIntelligence } from "./friendRankingIntelligence";
 import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
 import { performanceOptimizer } from "./performanceOptimizer";
+import { generateMobileToken, verifyMobileToken } from "./mobile-auth";
 
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications } from "@shared/schema";
 import { eq, and, or, desc, sql as sqlOp, isNotNull } from "drizzle-orm";
@@ -4010,10 +4011,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
               // Don't fail the login if this fails
             }
             
+            // Generate JWT token as fallback for clients that can't use cookies
+            let authToken = null;
+            try {
+              authToken = generateMobileToken(user.id, user.phoneNumber || '');
+              console.log("JWT token generated for user:", user.id);
+            } catch (tokenError) {
+              console.error("Failed to generate JWT token:", tokenError);
+              // Don't fail login if token generation fails - session still works
+            }
+            
             res.setHeader('Content-Type', 'application/json');
             res.json({ 
               message: "Login successful",
               success: true,
+              token: authToken, // JWT token for cookie-less auth
               user: {
                 id: user.id,
                 email: user.email,

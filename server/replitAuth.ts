@@ -162,27 +162,65 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
   
-  // Debug logging for session issues
-  console.log("Auth check - Session ID:", req.sessionID);
-  console.log("Auth check - isAuthenticated:", req.isAuthenticated());
-  console.log("Auth check - User exists:", !!user);
-  console.log("Auth check - Cookies received:", req.headers.cookie);
-
-  if (!req.isAuthenticated() || !user?.expires_at) {
-    console.log("Auth failed - isAuthenticated:", req.isAuthenticated(), "expires_at:", user?.expires_at);
-    return res.status(401).json({ message: "Unauthorized" });
+  // Debug logging for session issues (reduced verbosity)
+  const hasCookies = !!req.headers.cookie;
+  
+  // First try session-based auth
+  if (req.isAuthenticated() && user?.expires_at) {
+    // Session auth succeeded, continue with suspension check
+  } else {
+    // Session auth failed, try JWT token fallback
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        const { verifyMobileToken } = await import('./mobile-auth');
+        const payload = verifyMobileToken(token);
+        
+        // Get user from database
+        const dbUser = await storage.getUser(payload.userId);
+        if (dbUser) {
+          // Create a user session object compatible with Passport
+          (req as any).user = {
+            claims: {
+              sub: dbUser.id,
+              email: dbUser.email,
+              first_name: dbUser.firstName,
+              last_name: dbUser.lastName,
+              profile_image_url: dbUser.profileImageUrl
+            },
+            access_token: 'jwt-token-auth',
+            refresh_token: null,
+            expires_at: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60)
+          };
+          console.log("JWT auth succeeded for user:", payload.userId);
+        } else {
+          console.log("JWT auth failed - user not found:", payload.userId);
+          return res.status(401).json({ message: "Unauthorized" });
+        }
+      } catch (tokenError) {
+        console.log("JWT auth failed - invalid token");
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+    } else {
+      console.log("Auth failed - no session, no JWT. Cookies present:", hasCookies);
+      return res.status(401).json({ message: "Unauthorized" });
+    }
   }
+  
+  // Get the user (either from session or JWT)
+  const authUser = (req as any).user;
 
   // Check if user is suspended
   try {
-    const dbUser = await storage.getUser(user.claims?.sub || user.id);
+    const dbUser = await storage.getUser(authUser.claims?.sub || authUser.id);
     if (dbUser && dbUser.isSuspended) {
       // Auto-check if suspension has expired
       if (dbUser.suspensionExpiresAt && new Date() > new Date(dbUser.suspensionExpiresAt)) {
         // Suspension has expired, unsuspend the user
         await storage.checkAndUnsuspendExpiredUsers();
         // Re-fetch user to get updated status
-        const updatedUser = await storage.getUser(user.claims?.sub || user.id);
+        const updatedUser = await storage.getUser(authUser.claims?.sub || authUser.id);
         if (updatedUser && updatedUser.isSuspended) {
           return res.status(403).json({ message: "Account suspended" });
         }
@@ -204,11 +242,16 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   }
 
   const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
+  if (now <= authUser.expires_at) {
     return next();
   }
 
-  const refreshToken = user.refresh_token;
+  // JWT tokens don't need refresh - they're already validated
+  if (authUser.access_token === 'jwt-token-auth') {
+    return next();
+  }
+
+  const refreshToken = authUser.refresh_token;
   if (!refreshToken) {
     res.status(401).json({ message: "Unauthorized" });
     return;
@@ -217,7 +260,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   try {
     const config = await getOidcConfig();
     const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
+    updateUserSession(authUser, tokenResponse);
     return next();
   } catch (error) {
     res.status(401).json({ message: "Unauthorized" });

@@ -79,13 +79,22 @@ export default function Login() {
         if (contentType && contentType.includes("application/json")) {
           const data = await response.json();
           console.log("Login response:", data);
+          
+          // Store JWT token for cookie-less auth (iPad/webview fallback)
+          if (data.token) {
+            localStorage.setItem('mykliq_auth_token', data.token);
+            console.log("JWT token stored for auth fallback");
+          }
         }
 
         // Track daily login and award Kliq Koin
         try {
+          // Get stored token for auth
+          const storedToken = localStorage.getItem('mykliq_auth_token');
           const loginResponse = await fetch("/api/kliq-koins/login", {
             method: "POST",
             credentials: "include",
+            headers: storedToken ? { 'Authorization': `Bearer ${storedToken}` } : {},
           });
           
           if (loginResponse.ok) {

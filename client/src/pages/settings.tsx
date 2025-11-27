@@ -817,7 +817,11 @@ export default function Settings() {
         }
       });
       
-      // 3. Mark that we're logging out to prevent auto-redirect on login page
+      // 3. Clear JWT auth token (for iPad/webview cookie-less auth)
+      console.log('[Logout] Clearing JWT auth token...');
+      localStorage.removeItem('mykliq_auth_token');
+      
+      // 4. Mark that we're logging out to prevent auto-redirect on login page
       sessionStorage.setItem('forceLogout', 'true');
       
       console.log('[Logout] All caches cleared successfully, redirecting to logout...');
@@ -826,7 +830,7 @@ export default function Settings() {
       // Continue with logout even if cache clearing fails
     }
     
-    // 4. Redirect to logout endpoint
+    // 5. Redirect to logout endpoint
     window.location.href = '/api/logout';
   };
 
