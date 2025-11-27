@@ -42,9 +42,17 @@ export function useDailyCheckIn() {
       checkInAttempted.current = true;
 
       try {
+        // Get JWT token for iPad/webview that can't use cookies
+        const authToken = localStorage.getItem('mykliq_auth_token');
+        const headers: Record<string, string> = {};
+        if (authToken) {
+          headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
         const response = await fetch("/api/kliq-koins/login", {
           method: "POST",
           credentials: "include",
+          headers,
         });
 
         if (response.ok) {

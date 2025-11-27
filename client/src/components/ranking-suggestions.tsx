@@ -51,11 +51,19 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
   // Accept suggestion mutation
   const acceptSuggestionMutation = useMutation({
     mutationFn: async (suggestionId: string) => {
+      // Get JWT token for iPad/webview that can't use cookies
+      const authToken = localStorage.getItem('mykliq_auth_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await fetch(`/api/friend-ranking/suggestions/${suggestionId}/accept`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
+        credentials: 'include',
       });
       
       if (!response.ok) {
@@ -87,11 +95,19 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
   // Dismiss suggestion mutation
   const dismissSuggestionMutation = useMutation({
     mutationFn: async (suggestionId: string) => {
+      // Get JWT token for iPad/webview that can't use cookies
+      const authToken = localStorage.getItem('mykliq_auth_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await fetch(`/api/friend-ranking/suggestions/${suggestionId}/dismiss`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
+        credentials: 'include',
       });
       
       if (!response.ok) {
@@ -119,11 +135,19 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
   // Generate new suggestions mutation
   const generateSuggestionsMutation = useMutation({
     mutationFn: async () => {
+      // Get JWT token for iPad/webview that can't use cookies
+      const authToken = localStorage.getItem('mykliq_auth_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await fetch('/api/friend-ranking/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
+        credentials: 'include',
       });
       
       if (!response.ok) {

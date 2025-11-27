@@ -416,11 +416,19 @@ export function Chatbot() {
         .map(msg => `${msg.type.toUpperCase()}: ${msg.message}`)
         .join('\n\n');
       
+      // Get JWT token for iPad/webview that can't use cookies
+      const authToken = localStorage.getItem('mykliq_auth_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await fetch('/api/chatbot/conversation', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify({
           conversationHistory,
           timestamp: new Date().toISOString(),

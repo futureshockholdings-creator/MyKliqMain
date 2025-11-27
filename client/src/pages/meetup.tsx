@@ -38,11 +38,18 @@ export default function MeetupPage() {
         content += ` at ${locationData.latitude.toFixed(4)}, ${locationData.longitude.toFixed(4)}`;
       }
       
+      // Get JWT token for iPad/webview that can't use cookies
+      const authToken = localStorage.getItem('mykliq_auth_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       const response = await fetch('/api/posts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify({
           content: content,
@@ -221,12 +228,19 @@ export default function MeetupPage() {
 
     
     try {
+      // Get JWT token for iPad/webview that can't use cookies
+      const authToken = localStorage.getItem('mykliq_auth_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
       // Use direct API call instead of mutation
       const response = await fetch('/api/posts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify({
           content: content,

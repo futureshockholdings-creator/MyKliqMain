@@ -489,7 +489,17 @@ export default function Home() {
   } = useInfiniteQuery({
     queryKey: ["/api/kliq-feed"],
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await fetch(`/api/kliq-feed?page=${pageParam}&limit=100`);
+      // Get JWT token for iPad/webview that can't use cookies
+      const authToken = localStorage.getItem('mykliq_auth_token');
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      const response = await fetch(`/api/kliq-feed?page=${pageParam}&limit=100`, {
+        credentials: "include",
+        headers,
+      });
       if (!response.ok) throw new Error('Failed to fetch feed');
       return response.json();
     },
