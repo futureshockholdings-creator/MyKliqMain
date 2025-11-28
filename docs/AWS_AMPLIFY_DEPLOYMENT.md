@@ -89,10 +89,16 @@ YOUTUBE_CLIENT_SECRET=your-youtube-client-secret
 REDIS_URL=redis://your-redis-host:6379
 ```
 
+### Scheduled Task Triggers
+```
+TASK_SECRET=your-secure-task-trigger-secret
+```
+
 ### Production Settings
 ```
 NODE_ENV=production
 AMPLIFY_APP_URL=https://mykliq.app
+AMPLIFY_APP_ID=your-amplify-app-id
 ```
 
 ## Custom Domain Setup
@@ -175,17 +181,22 @@ The following tasks must be triggered via AWS CloudWatch Events + Lambda:
 3. **Referral Bonus Processing** - Every hour
 
 ### Option 1: Create Scheduled Lambda Functions
-Create a Lambda function that calls these endpoints:
+Create a Lambda function that calls these endpoints with the task secret:
 ```bash
 # Birthday messages (run daily at 00:00 UTC)
-curl -X POST https://mykliq.app/api/admin/tasks/birthday
+curl -X POST https://mykliq.app/api/admin/tasks/birthday \
+  -H "X-Task-Secret: your-task-secret"
 
 # Mood boost cleanup (run every 30 minutes)
-curl -X POST https://mykliq.app/api/admin/tasks/mood-boost-cleanup
+curl -X POST https://mykliq.app/api/admin/tasks/mood-boost-cleanup \
+  -H "X-Task-Secret: your-task-secret"
 
 # Referral bonus processing (run hourly)
-curl -X POST https://mykliq.app/api/admin/tasks/referral-bonus
+curl -X POST https://mykliq.app/api/admin/tasks/referral-bonus \
+  -H "X-Task-Secret: your-task-secret"
 ```
+
+**Security Note:** The `X-Task-Secret` header must match the `TASK_SECRET` environment variable configured in your Amplify app. Alternatively, authenticated admin users can call these endpoints directly.
 
 ### Option 2: Use Replit as Task Runner
 Keep a separate Replit deployment running these scheduled tasks, connecting to the same production database.
