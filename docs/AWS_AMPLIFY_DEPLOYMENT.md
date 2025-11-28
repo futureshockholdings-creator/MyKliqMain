@@ -116,13 +116,32 @@ Add these records at your domain registrar:
 ### Step 3: SSL Certificate
 Amplify automatically provisions and manages SSL certificates. This may take up to 48 hours for DNS propagation.
 
-## WebSocket Considerations
+## WebSocket / Real-Time Features
 
-AWS Amplify has limitations with WebSocket connections. For real-time features, consider:
+AWS Amplify has limitations with native WebSocket connections. The MyKliq app handles this gracefully:
 
-1. **AWS API Gateway WebSocket API** - Separate service for WebSocket connections
-2. **Polling fallback** - The app already has polling as a fallback
-3. **AWS Fargate/ECS** - Alternative for full WebSocket support
+### Built-in Fallback Mechanism
+The `FeedRealtimeService` (`client/src/lib/feedRealtime.ts`) automatically:
+1. Attempts WebSocket connection (5 retry attempts with exponential backoff)
+2. Falls back to polling every 30 seconds if WebSocket fails
+3. Resumes WebSocket when connection becomes available
+
+### Current Behavior on Amplify
+- **Real-time feed updates**: Uses 30-second polling (automatic fallback)
+- **Push notifications**: Work via Firebase Cloud Messaging (no WebSocket needed)
+- **Chat messages**: Will use polling fallback
+
+### Future Enhancement Options
+If real-time latency is critical, consider:
+1. **AWS API Gateway WebSocket API** - Dedicated WebSocket service ($1/million messages)
+2. **AWS Fargate/ECS** - Full WebSocket support with dedicated containers
+3. **Pusher/Ably** - Third-party real-time service integration
+
+### Configuration for Polling-Only Mode
+To force polling mode (skip WebSocket attempts), set this environment variable:
+```
+VITE_FORCE_POLLING=true
+```
 
 ## Deployment Commands
 
