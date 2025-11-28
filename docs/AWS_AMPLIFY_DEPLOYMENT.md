@@ -163,6 +163,36 @@ git push origin main
 
 Amplify automatically triggers a build on push to the main branch.
 
+## Background Tasks (Scheduled Jobs)
+
+AWS Amplify's serverless compute is ephemeral, so background schedulers (`setInterval`) won't work reliably. The app automatically detects serverless environments and disables these schedulers.
+
+### Tasks That Need External Scheduling
+The following tasks must be triggered via AWS CloudWatch Events + Lambda:
+
+1. **Birthday Messages** - Daily at midnight
+2. **Mood Boost Cleanup** - Every 30 minutes
+3. **Referral Bonus Processing** - Every hour
+
+### Option 1: Create Scheduled Lambda Functions
+Create a Lambda function that calls these endpoints:
+```bash
+# Birthday messages (run daily at 00:00 UTC)
+curl -X POST https://mykliq.app/api/admin/tasks/birthday
+
+# Mood boost cleanup (run every 30 minutes)
+curl -X POST https://mykliq.app/api/admin/tasks/mood-boost-cleanup
+
+# Referral bonus processing (run hourly)
+curl -X POST https://mykliq.app/api/admin/tasks/referral-bonus
+```
+
+### Option 2: Use Replit as Task Runner
+Keep a separate Replit deployment running these scheduled tasks, connecting to the same production database.
+
+### Option 3: AWS EventBridge Scheduler
+Use EventBridge Scheduler to trigger API Gateway endpoints that call your task endpoints.
+
 ## Monitoring
 
 ### CloudWatch Logs

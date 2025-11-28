@@ -118,14 +118,24 @@ app.use((req, res, next) => {
         log("Firebase Admin SDK ready for push notifications");
       }
 
-      // Start the birthday service for automatic birthday messages
-      startBirthdayService();
+      // Detect serverless environment (AWS Lambda/Amplify)
+      const isServerless = !!(process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.AMPLIFY_APP_ID);
 
-      // Start the mood boost scheduler for AI-powered uplifting posts
-      startMoodBoostScheduler();
+      // Start background services only in non-serverless environments
+      // In serverless, these should be triggered via scheduled Lambda/CloudWatch Events
+      if (!isServerless) {
+        // Start the birthday service for automatic birthday messages
+        startBirthdayService();
 
-      // Start the referral bonus service to award referral bonuses
-      startReferralBonusService();
+        // Start the mood boost scheduler for AI-powered uplifting posts
+        startMoodBoostScheduler();
+
+        // Start the referral bonus service to award referral bonuses
+        startReferralBonusService();
+      } else {
+        log("Running in serverless mode - scheduled tasks disabled");
+        log("Use CloudWatch Events or Lambda triggers for background tasks");
+      }
 
       // Setup graceful shutdown for production
       const gracefulShutdown = (signal: string) => {

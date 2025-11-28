@@ -9948,6 +9948,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // =====================================
+  // SCHEDULED TASK ENDPOINTS (For CloudWatch Events/Lambda)
+  // =====================================
+
+  // Internal task trigger endpoint (requires task secret or admin)
+  const verifyTaskSecret = (req: any, res: any, next: any) => {
+    const taskSecret = req.headers['x-task-secret'];
+    const expectedSecret = process.env.TASK_SECRET || process.env.ADMIN_URL_SECRET;
+    
+    if (taskSecret && taskSecret === expectedSecret) {
+      return next();
+    }
+    
+    // Fall back to admin authentication
+    isAdmin(req, res, next);
+  };
+
+  // Birthday message task
+  app.post('/api/admin/tasks/birthday', verifyTaskSecret, async (req, res) => {
+    try {
+      const { sendAutomaticBirthdayMessages } = await import('./birthdayService');
+      await sendAutomaticBirthdayMessages();
+      res.json({ success: true, task: 'birthday', timestamp: new Date().toISOString() });
+    } catch (error) {
+      console.error("Error running birthday task:", error);
+      res.status(500).json({ success: false, error: 'Failed to run birthday task' });
+    }
+  });
+
+  // Mood boost cleanup task
+  app.post('/api/admin/tasks/mood-boost-cleanup', verifyTaskSecret, async (req, res) => {
+    try {
+      const { runMoodBoostCleanup } = await import('./services/moodBoostScheduler');
+      await runMoodBoostCleanup();
+      res.json({ success: true, task: 'mood-boost-cleanup', timestamp: new Date().toISOString() });
+    } catch (error) {
+      console.error("Error running mood boost cleanup task:", error);
+      res.status(500).json({ success: false, error: 'Failed to run mood boost cleanup task' });
+    }
+  });
+
+  // Referral bonus processing task
+  app.post('/api/admin/tasks/referral-bonus', verifyTaskSecret, async (req, res) => {
+    try {
+      const { processReferralBonuses } = await import('./referralBonusService');
+      await processReferralBonuses();
+      res.json({ success: true, task: 'referral-bonus', timestamp: new Date().toISOString() });
+    } catch (error) {
+      console.error("Error running referral bonus task:", error);
+      res.status(500).json({ success: false, error: 'Failed to run referral bonus task' });
+    }
+  });
+
+  // =====================================
   // SMART FRIEND RANKING INTELLIGENCE API
   // =====================================
 

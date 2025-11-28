@@ -12,8 +12,21 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// High-performance connection pooling optimized for 5000+ concurrent users
-export const pool = new Pool({ 
+// Detect serverless environment (AWS Lambda/Amplify)
+const isServerless = !!(process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.AMPLIFY_APP_ID);
+
+// Optimized pool settings based on environment
+const poolConfig = isServerless ? {
+  connectionString: process.env.DATABASE_URL,
+  ssl: true,
+  connectionTimeoutMillis: 5000,    // Faster timeout for serverless
+  idleTimeoutMillis: 10000,         // Shorter idle for serverless
+  max: 10,                          // Lower max for serverless (shared pool)
+  min: 1,                           // Minimal connections for cold starts
+  maxUses: 1000,                    // Lower reuse for serverless
+  allowExitOnIdle: true,            // Allow exit for serverless cleanup
+  keepAlive: false,                 // Disable keep-alive for serverless
+} : {
   connectionString: process.env.DATABASE_URL,
   ssl: true,
   connectionTimeoutMillis: 15000,   // Higher timeout for heavy load
@@ -23,6 +36,11 @@ export const pool = new Pool({
   maxUses: 10000,                   // Higher connection reuse for efficiency
   allowExitOnIdle: false,           // Keep pool alive for performance
   keepAlive: true,                  // Enable TCP keep-alive
+};
+
+// High-performance connection pooling
+export const pool = new Pool({ 
+  ...poolConfig,
   log: (message, level) => {
     if (level === 'error' || message.includes('timeout')) {
       console.error('[DB Pool]', message);
@@ -39,20 +57,23 @@ pool.on('error', (err) => {
   }
 });
 
-// High-performance monitoring with scaling alerts
-setInterval(() => {
-  const memoryMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
-  const poolUsage = (pool.totalCount / 50) * 100; // Updated to match new max pool size
-  
-  if (memoryMB > 800 || poolUsage > 80) {
-    console.warn(`🔥 HIGH LOAD: Pool: ${pool.totalCount}/50 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
-  }
-  
-  // Critical alerts for 5000+ user capacity
-  if (memoryMB > 1200 || poolUsage > 95) {
-    console.error(`🚨 CRITICAL: Pool: ${pool.totalCount}/50 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
-  }
-}, 30000); // Check every 30 seconds for faster response under high load
+// High-performance monitoring with scaling alerts (skip in serverless)
+if (!isServerless) {
+  setInterval(() => {
+    const memoryMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
+    const maxPool = isServerless ? 10 : 50;
+    const poolUsage = (pool.totalCount / maxPool) * 100;
+    
+    if (memoryMB > 800 || poolUsage > 80) {
+      console.warn(`🔥 HIGH LOAD: Pool: ${pool.totalCount}/${maxPool} (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
+    }
+    
+    // Critical alerts for 5000+ user capacity
+    if (memoryMB > 1200 || poolUsage > 95) {
+      console.error(`🚨 CRITICAL: Pool: ${pool.totalCount}/${maxPool} (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
+    }
+  }, 30000); // Check every 30 seconds for faster response under high load
+}
 
 // Graceful shutdown
 process.on('SIGTERM', () => pool.end());
