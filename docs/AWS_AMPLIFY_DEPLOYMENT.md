@@ -122,32 +122,46 @@ Add these records at your domain registrar:
 ### Step 3: SSL Certificate
 Amplify automatically provisions and manages SSL certificates. This may take up to 48 hours for DNS propagation.
 
-## WebSocket / Real-Time Features
+## Real-Time Features (Posts, Likes, Comments)
 
-AWS Amplify has limitations with native WebSocket connections. The MyKliq app handles this gracefully:
+**CRITICAL**: Posts, likes, and comments appear within 2 seconds - never delayed!
 
-### Built-in Fallback Mechanism
+AWS Amplify's serverless compute cannot maintain WebSocket connections, but MyKliq handles this automatically with a fast polling fallback.
+
+### How It Works
 The `FeedRealtimeService` (`client/src/lib/feedRealtime.ts`) automatically:
 1. Attempts WebSocket connection (5 retry attempts with exponential backoff)
-2. Falls back to polling every 30 seconds if WebSocket fails
-3. Resumes WebSocket when connection becomes available
+2. Falls back to **2-second polling** for near-immediate updates
+3. Periodically probes for WebSocket reconnection every 15 seconds
+4. Invalidates all relevant queries (feed, posts, comments, likes, stories)
 
 ### Current Behavior on Amplify
-- **Real-time feed updates**: Uses 30-second polling (automatic fallback)
-- **Push notifications**: Work via Firebase Cloud Messaging (no WebSocket needed)
-- **Chat messages**: Will use polling fallback
+- **Real-time feed updates**: 2-second polling (posts appear within 2 seconds)
+- **Likes & Comments**: Instantly reflected via query invalidation
+- **Push notifications**: Work via Firebase Cloud Messaging (no polling needed)
+- **Stories**: Updated every 2 seconds
 
-### Future Enhancement Options
-If real-time latency is critical, consider:
-1. **AWS API Gateway WebSocket API** - Dedicated WebSocket service ($1/million messages)
-2. **AWS Fargate/ECS** - Full WebSocket support with dedicated containers
-3. **Pusher/Ably** - Third-party real-time service integration
+### Scaling Options for 20k+ Concurrent Users
 
-### Configuration for Polling-Only Mode
-To force polling mode (skip WebSocket attempts), set this environment variable:
+#### Option 1: Fast Polling (Default - Good for <5k users)
+- No additional setup required
+- ~30 requests/minute per user
+- Posts/likes/comments appear within 2 seconds
+
+#### Option 2: External WebSocket Service (Recommended for 20k+ users)
+For true real-time at enterprise scale, add an external WebSocket service:
+
+1. **AWS API Gateway WebSocket API** - Native AWS, ~$1/million messages
+2. **Pusher** - Managed service, easy setup
+3. **Ably** - Global edge network, enterprise-ready
+4. **Socket.IO on ECS/Fargate** - Self-hosted, full control
+
+Set the WebSocket URL in environment variables:
 ```
-VITE_FORCE_POLLING=true
+VITE_REALTIME_URL=wss://your-websocket-service.com
 ```
+
+The app will automatically use this endpoint instead of the built-in WebSocket.
 
 ## Deployment Commands
 
