@@ -14,6 +14,8 @@ const app = express();
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = [
+    "https://mykliq.app",
+    "https://www.mykliq.app",
     "https://kliqlife.com",
     "https://www.kliqlife.com",
     "http://localhost:5000",
@@ -21,6 +23,7 @@ app.use((req, res, next) => {
     "http://0.0.0.0:5000",
     "http://172.31.65.34:5000",
     "https://main.d1dc1ug0nbi5ry.amplifyapp.com",
+    process.env.AMPLIFY_APP_URL || null,
     process.env.REPL_SLUG
       ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DEV_DOMAIN}`
       : null,
