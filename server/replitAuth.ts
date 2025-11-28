@@ -159,6 +159,84 @@ export async function setupAuth(app: Express) {
   });
 }
 
+// Admin role-based access control middleware with security headers
+export const isAdmin: RequestHandler = async (req, res, next) => {
+  // Add security headers for admin routes
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'");
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  
+  // First check authentication
+  const user = req.user as any;
+  const authHeader = req.headers.authorization;
+  
+  let userId: string | undefined;
+  
+  // Get user ID from session or JWT
+  if (req.isAuthenticated() && user?.claims?.sub) {
+    userId = user.claims.sub;
+  } else if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    try {
+      const { verifyMobileToken } = await import('./mobile-auth');
+      const payload = verifyMobileToken(token);
+      userId = payload.userId;
+    } catch (error) {
+      return res.status(401).json({ message: "Unauthorized - Invalid token" });
+    }
+  } else {
+    return res.status(401).json({ message: "Unauthorized - Authentication required" });
+  }
+  
+  // Check if user has admin role
+  try {
+    const dbUser = await storage.getUser(userId);
+    if (!dbUser) {
+      return res.status(401).json({ message: "Unauthorized - User not found" });
+    }
+    
+    if (!dbUser.isAdmin) {
+      console.log(`[RBAC] Access denied: User ${userId} attempted admin action without admin role`);
+      return res.status(403).json({ message: "Forbidden - Admin access required" });
+    }
+    
+    // Add user info to request for downstream use
+    (req as any).adminUser = dbUser;
+    console.log(`[RBAC] Admin access granted: User ${userId}`);
+    next();
+  } catch (error) {
+    console.error("[RBAC] Error checking admin status:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Audit logging for admin actions
+export const auditLog = (action: string) => {
+  return async (req: any, res: any, next: any) => {
+    const startTime = Date.now();
+    const userId = req.user?.claims?.sub || req.adminUser?.id || 'unknown';
+    const ip = req.ip || req.connection.remoteAddress;
+    
+    // Log the action start
+    console.log(`[AUDIT] ${new Date().toISOString()} | Action: ${action} | User: ${userId} | IP: ${ip} | Method: ${req.method} | Path: ${req.originalUrl}`);
+    
+    // Capture response
+    const originalSend = res.send;
+    res.send = function(body: any) {
+      const duration = Date.now() - startTime;
+      console.log(`[AUDIT] ${new Date().toISOString()} | Action: ${action} | User: ${userId} | Status: ${res.statusCode} | Duration: ${duration}ms`);
+      return originalSend.call(this, body);
+    };
+    
+    next();
+  };
+};
+
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const user = req.user as any;
   

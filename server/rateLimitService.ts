@@ -21,9 +21,12 @@ class RateLimitService {
     search: { requests: 30, window: 60000 },       // 30 searches per minute
     admin: { requests: 100, window: 60000 },       // 100 admin actions per minute
     
-    // Authentication endpoints
-    auth: { requests: 10, window: 300000 },        // 10 auth attempts per 5 minutes
+    // Authentication endpoints (strict limits to prevent brute force)
+    auth: { requests: 5, window: 300000 },          // 5 auth attempts per 5 minutes
+    login: { requests: 5, window: 300000 },         // 5 login attempts per 5 minutes
+    pinVerify: { requests: 5, window: 300000 },     // 5 PIN verification attempts per 5 minutes
     passwordReset: { requests: 3, window: 900000 }, // 3 attempts per 15 minutes
+    adminAuth: { requests: 3, window: 600000 },     // 3 admin auth attempts per 10 minutes
     
     // Real-time features
     websocket: { requests: 1000, window: 60000 },  // 1000 WebSocket messages per minute

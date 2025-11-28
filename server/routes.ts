@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated, isAdmin, auditLog } from "./replitAuth";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { performanceMonitor, performanceMiddleware } from './performanceMonitor';
 import { requestManagerMiddleware, getLoadBalancerStatus } from './loadBalancer';
@@ -3900,7 +3900,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Alternative login endpoint to avoid Replit auth conflicts
-  app.post('/api/user/login', async (req, res) => {
+  // Rate limited: 5 attempts per 5 minutes to prevent brute force
+  app.post('/api/user/login', rateLimitService.createRateLimitMiddleware('login'), async (req, res) => {
     console.log('=== LOGIN ATTEMPT ===', new Date().toISOString());
     console.log('Request body:', req.body);
     console.log('User agent:', req.headers['user-agent']);
@@ -4261,7 +4262,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PIN verification for password viewing
-  app.post('/api/user/verify-pin', isAuthenticated, async (req: any, res) => {
+  // Rate limited: 5 attempts per 5 minutes to prevent brute force
+  app.post('/api/user/verify-pin', isAuthenticated, rateLimitService.createRateLimitMiddleware('pinVerify'), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { pin } = req.body;
@@ -5564,17 +5566,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all reports (admin only)
-  app.get('/api/admin/reports', isAuthenticated, async (req: any, res) => {
+  // Get all reports (admin only) - RBAC protected with audit logging
+  app.get('/api/admin/reports', isAdmin, auditLog('view_reports'), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      
-      // Check if user is admin
-      const user = await storage.getUser(userId);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Access denied. Admin privileges required." });
-      }
-      
       const { status, page = 1, limit = 20 } = req.query;
       const reports = await storage.getReports({ 
         status: status || undefined, 
@@ -5589,17 +5583,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update report status (admin only)
-  app.patch('/api/admin/reports/:reportId', isAuthenticated, async (req: any, res) => {
+  // Update report status (admin only) - RBAC protected with audit logging
+  app.patch('/api/admin/reports/:reportId', isAdmin, auditLog('update_report'), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
       const { reportId } = req.params;
-      
-      // Check if user is admin
-      const user = await storage.getUser(userId);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Access denied. Admin privileges required." });
-      }
+      const adminUser = req.adminUser;
       
       const { status, adminNotes, actionTaken } = req.body;
       
@@ -5607,7 +5595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status,
         adminNotes,
         actionTaken,
-        reviewedBy: userId,
+        reviewedBy: adminUser.id,
         reviewedAt: new Date()
       });
       
@@ -5618,18 +5606,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Suspend/ban user (admin only)
-  app.patch('/api/admin/users/:userId/suspend', isAuthenticated, async (req: any, res) => {
+  // Suspend/ban user (admin only) - RBAC protected with audit logging
+  app.patch('/api/admin/users/:userId/suspend', isAdmin, auditLog('suspend_user'), async (req: any, res) => {
     try {
-      const adminUserId = req.user.claims.sub;
       const { userId } = req.params;
-      
-      // Check if user is admin
-      const adminUser = await storage.getUser(adminUserId);
-      if (!adminUser?.isAdmin) {
-        return res.status(403).json({ message: "Access denied. Admin privileges required." });
-      }
-      
       const { suspensionType, reason } = req.body;
       
       // Calculate suspension end date
@@ -5668,17 +5648,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Remove post (admin only)
-  app.delete('/api/admin/posts/:postId', isAuthenticated, async (req: any, res) => {
+  // Remove post (admin only) - RBAC protected with audit logging
+  app.delete('/api/admin/posts/:postId', isAdmin, auditLog('delete_post'), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
       const { postId } = req.params;
-      
-      // Check if user is admin
-      const user = await storage.getUser(userId);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Access denied. Admin privileges required." });
-      }
       
       // Check if post has a mood before deleting
       const existingPost = await storage.getPostById(postId);
@@ -9731,13 +9704,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "mykliq2025admin!";
 
   // Admin authentication
-  app.post('/api/admin/auth', async (req, res) => {
+  // Rate limited: 3 attempts per 10 minutes to prevent brute force + audit logging
+  app.post('/api/admin/auth', rateLimitService.createRateLimitMiddleware('adminAuth'), auditLog('admin_auth_attempt'), async (req, res) => {
     try {
       const { password } = req.body;
       
       if (password === ADMIN_PASSWORD) {
+        console.log('[AUDIT] Admin authentication successful from IP:', req.ip);
         res.json({ success: true });
       } else {
+        console.log('[AUDIT] Admin authentication FAILED from IP:', req.ip);
         res.status(401).json({ message: "Invalid admin password" });
       }
     } catch (error) {
@@ -9746,16 +9722,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all users for admin dashboard
-  app.get('/api/admin/users', async (req, res) => {
+  // Get all users for admin dashboard - RBAC protected with audit logging
+  app.get('/api/admin/users', isAdmin, auditLog('view_all_users'), async (req, res) => {
     try {
-      const { password } = req.query;
-      
-      // Simple password check for API access
-      if (password !== ADMIN_PASSWORD) {
-        return res.status(401).json({ message: "Admin access required" });
-      }
-
       const users = await storage.getAllUsersForAdmin();
       res.json(users);
     } catch (error) {
@@ -9764,16 +9733,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get specific user details for admin
-  app.get('/api/admin/users/:userId', async (req, res) => {
+  // Get specific user details for admin - RBAC protected with audit logging
+  app.get('/api/admin/users/:userId', isAdmin, auditLog('view_user_details'), async (req, res) => {
     try {
-      const { password } = req.query;
       const { userId } = req.params;
-      
-      // Simple password check for API access
-      if (password !== ADMIN_PASSWORD) {
-        return res.status(401).json({ message: "Admin access required" });
-      }
 
       const user = await storage.getUserDetailsForAdmin(userId);
       if (!user) {
@@ -9787,15 +9750,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete user endpoint for admin
-  app.delete('/api/admin/users/:userId', async (req, res) => {
+  // Delete user endpoint for admin - RBAC protected with audit logging
+  app.delete('/api/admin/users/:userId', isAdmin, auditLog('delete_user'), async (req, res) => {
     try {
-      const { password } = req.body;
       const { userId } = req.params;
-      
-      if (password !== ADMIN_PASSWORD) {
-        return res.status(401).json({ message: "Admin access required" });
-      }
 
       await storage.deleteUser(userId);
       res.json({ success: true, message: "User deleted successfully" });
@@ -9805,15 +9763,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Suspend user endpoint for admin
-  app.post('/api/admin/users/:userId/suspend', async (req, res) => {
+  // Suspend user endpoint for admin - RBAC protected with audit logging (POST version)
+  app.post('/api/admin/users/:userId/suspend', isAdmin, auditLog('suspend_user_post'), async (req, res) => {
     try {
-      const { password, suspensionType } = req.body;
+      const { suspensionType } = req.body;
       const { userId } = req.params;
-      
-      if (password !== ADMIN_PASSWORD) {
-        return res.status(401).json({ message: "Admin access required" });
-      }
 
       // Calculate expiration date based on suspension type
       let expiresAt: Date | null = null;
@@ -9854,15 +9808,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Analytics endpoint for admin
-  app.get('/api/admin/analytics', async (req, res) => {
+  // Analytics endpoint for admin - RBAC protected with audit logging
+  app.get('/api/admin/analytics', isAdmin, auditLog('view_analytics'), async (req, res) => {
     try {
-      const { password } = req.query;
-      
-      if (password !== ADMIN_PASSWORD) {
-        return res.status(401).json({ message: "Admin access required" });
-      }
-
       const analytics = await storage.getAnalytics();
       res.json(analytics);
     } catch (error) {
@@ -9871,23 +9819,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Comprehensive scaling dashboard for 5000+ user monitoring
-  app.get('/api/admin/scaling-dashboard', isAuthenticated, async (req: any, res) => {
+  // Comprehensive scaling dashboard for 5000+ user monitoring - RBAC protected
+  app.get('/api/admin/scaling-dashboard', isAdmin, auditLog('view_scaling_dashboard'), async (req: any, res) => {
     try {
-      const { password } = req.query;
-      const userId = req.user?.claims?.sub;
-      
-      // Allow either password-based or session-based admin access
-      let isAdminUser = password === ADMIN_PASSWORD;
-      
-      if (!isAdminUser && userId) {
-        const user = await storage.getUser(userId);
-        isAdminUser = user?.isAdmin === true;
-      }
-      
-      if (!isAdminUser) {
-        return res.status(401).json({ message: "Admin access required" });
-      }
 
       // Gather comprehensive metrics for 5000+ user scaling
       const [
@@ -9968,19 +9902,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // System health endpoint for admin
-  app.get('/api/admin/system-health', async (req, res) => {
+  // System health endpoint for admin - RBAC protected with audit logging
+  app.get('/api/admin/system-health', isAdmin, auditLog('view_system_health'), async (req, res) => {
     try {
-      const { password } = req.query;
-      
-      if (password !== ADMIN_PASSWORD) {
-        return res.status(401).json({ message: "Admin access required" });
-      }
-
       const systemHealth = {
-        dbConnections: "25/25",
-        memoryUsage: "45%", 
-        uptime: "7d 12h",
+        dbConnections: `${pool.totalCount}/${pool.totalCount + pool.idleCount}`,
+        memoryUsage: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`, 
+        uptime: `${Math.floor(process.uptime() / 3600)}h ${Math.floor((process.uptime() % 3600) / 60)}m`,
         timestamp: new Date().toISOString()
       };
       
@@ -9991,15 +9919,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Export data endpoint for admin
-  app.get('/api/admin/export/:type', async (req, res) => {
+  // Export data endpoint for admin - RBAC protected with audit logging
+  app.get('/api/admin/export/:type', isAdmin, auditLog('export_data'), async (req, res) => {
     try {
-      const { password } = req.query;
       const { type } = req.params;
-      
-      if (password !== ADMIN_PASSWORD) {
-        return res.status(401).json({ message: "Admin access required" });
-      }
 
       if (type === 'users') {
         const users = await storage.getAllUsersForAdmin();
