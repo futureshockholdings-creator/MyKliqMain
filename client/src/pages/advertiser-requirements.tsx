@@ -51,7 +51,7 @@ export default function AdvertiserRequirements() {
                   <li>• <strong>Recommended:</strong> 2400 × 1256 pixels</li>
                   <li>• <strong>Aspect Ratio:</strong> 1.91:1 (landscape)</li>
                   <li>• <strong>File Formats:</strong> JPG, PNG, WebP</li>
-                  <li>• <strong>Maximum File Size:</strong> 5 MB</li>
+                  <li>• <strong>Maximum File Size:</strong> 25 MB</li>
                   <li>• <strong>Color Space:</strong> RGB (not CMYK)</li>
                 </ul>
               </div>
@@ -92,7 +92,7 @@ export default function AdvertiserRequirements() {
                   <li>• <strong>Resolution:</strong> 1080p (1920 × 1080)</li>
                   <li>• <strong>Frame Rate:</strong> 30 fps minimum</li>
                   <li>• <strong>Duration:</strong> 6-30 seconds</li>
-                  <li>• <strong>Maximum File Size:</strong> 100 MB</li>
+                  <li>• <strong>Maximum File Size:</strong> 250 MB</li>
                   <li>• <strong>Audio:</strong> AAC codec, 128 kbps+</li>
                 </ul>
               </div>
@@ -298,8 +298,8 @@ export default function AdvertiserRequirements() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-gray-800">
-              If you meet all the requirements above and are ready to reach our engaged community 
-              of college students and faith-based users, start your application today.
+              If you meet all the requirements above and are ready to reach our engaged community, 
+              start your application today.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/advertiser-onboarding">
