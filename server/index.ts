@@ -22,8 +22,7 @@ app.use((req, res, next) => {
     "http://127.0.0.1:5000",
     "http://0.0.0.0:5000",
     "http://172.31.65.34:5000",
-    "https://main.d1dc1ug0nbi5ry.amplifyapp.com",
-    "https://production.d1dc1ug0nbi5ry.amplifyapp.com"
+    "https://production.d1dc1ug0nbi5ry.amplifyapp.com",
     process.env.AMPLIFY_APP_URL || null,
     process.env.REPL_SLUG
       ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DEV_DOMAIN}`
@@ -32,6 +31,7 @@ app.use((req, res, next) => {
 
   if (origin && allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
   } else if (!origin) {
     // Allow same-origin requests (no origin header)
     res.header("Access-Control-Allow-Origin", "*");
