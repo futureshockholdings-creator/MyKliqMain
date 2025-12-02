@@ -14,8 +14,7 @@ if (!process.env.DATABASE_URL) {
 
 // High-performance connection pooling optimized for 5000+ concurrent users
 export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
-  ssl: true,
+  connectionString: "postgresql://neondb_owner:npg_ksCGE0Kml9ew@ep-curly-wildflower-aesnkfg2-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require",  ssl: true,
   connectionTimeoutMillis: 15000,   // Higher timeout for heavy load
   idleTimeoutMillis: 60000,         // Longer idle time for connection reuse
   max: 50,                          // Increased max connections for 5000+ users
