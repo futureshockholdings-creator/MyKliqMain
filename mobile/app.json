@@ -83,13 +83,13 @@
     "extra": {
       "apiUrl": "https://api.mykliq.com",
       "eas": {
-        "projectId": "REPLACE_WITH_YOUR_EAS_PROJECT_ID"
+        "projectId": "151d8bfd-7b02-4a03-9c18-54555950035b"
       }
     },
     "owner": "REPLACE_WITH_YOUR_EXPO_USERNAME",
     "updates": {
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/REPLACE_WITH_YOUR_EAS_PROJECT_ID"
+      "url": "https://u.expo.dev/151d8bfd-7b02-4a03-9c18-54555950035b"
     },
     "runtimeVersion": {
       "policy": "sdkVersion"

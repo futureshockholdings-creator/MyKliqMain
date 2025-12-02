@@ -190,6 +190,9 @@ function Navigation({ currentPath }: { currentPath: string }) {
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  console.log(isAuthenticated, "--->isAuth");
+  
+
   return (
     <Switch>
       {/* Public routes - accessible without authentication */}
@@ -201,7 +204,7 @@ function Router() {
       <Route path="/advertiser-onboarding" component={AdvertiserOnboarding} />
       <Route path="/landing" component={Landing} />
       <Route path="/marketing" component={Marketing} />
-      <Route path="/signup" component={Signup} />
+      <Route path="/signup*" component={Signup} />
       <Route path="/login" component={Login} />
       <Route path="/forgot-password" component={ForgotPassword} />
       
@@ -271,7 +274,7 @@ function AppContent() {
   }, [isAuthenticated, isLoading, (user as any)?.analyticsConsent]);
 
   // Check if we're on a public page that doesn't require authentication
-  const isPublicPage = ['/signup', '/privacy-policy', '/disclaimer', '/landing', '/marketing', '/forgot-password'].includes(currentPath);
+  const isPublicPage = ['/signup', '/signup/', '/privacy-policy', '/disclaimer', '/landing', '/marketing', '/forgot-password'].includes(currentPath);
 
   return (
     <TooltipProvider>

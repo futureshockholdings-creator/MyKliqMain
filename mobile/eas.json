@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 5.9.0"
+    "version": ">= 5.9.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -9,8 +10,6 @@
       "env": {
         "APP_VARIANT": "development",
         "API_URL": "https://c7dd138c-576d-4490-a426-c0be6e6124ca-00-1u3lut3kqrgq6.kirk.replit.dev"
-      },
-      "comment": "Development uses dev URL - this is correct"
       },
       "ios": {
         "resourceClass": "m-medium",
@@ -39,6 +38,7 @@
       }
     },
     "production": {
+      "autoIncrement": true,
       "env": {
         "APP_VARIANT": "production",
         "API_URL": "https://api.mykliq.com"
