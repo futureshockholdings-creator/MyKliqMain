@@ -23,6 +23,7 @@ app.use((req, res, next) => {
     "http://0.0.0.0:5000",
     "http://172.31.65.34:5000",
     "https://main.d1dc1ug0nbi5ry.amplifyapp.com",
+    "https://production.d1dc1ug0nbi5ry.amplifyapp.com"
     process.env.AMPLIFY_APP_URL || null,
     process.env.REPL_SLUG
       ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DEV_DOMAIN}`
