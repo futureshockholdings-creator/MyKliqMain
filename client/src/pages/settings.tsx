@@ -806,10 +806,7 @@ export default function Settings() {
       // 1. Clear client-side disk cache (IndexedDB) to prevent stale data
       console.log('[Logout] Clearing IndexedDB cache...');
       await enhancedCache.clearAll();
-      
-        // Redirect to login page instead of reloading
-      window.location.href = "/login";
-      window.location.reload()
+
       // 2. Completely REMOVE all user-specific queries from TanStack Query
       // Using predicate-based removal to catch ALL API queries regardless of structure
       console.log('[Logout] Removing TanStack Query cache...');
@@ -822,6 +819,7 @@ export default function Settings() {
       
       // 3. Mark that we're logging out to prevent auto-redirect on login page
       sessionStorage.setItem('forceLogout', 'true');
+       await apiRequest("GET", "/api/logout");
       
       console.log('[Logout] All caches cleared successfully, redirecting to logout...');
     } catch (error) {
@@ -830,7 +828,7 @@ export default function Settings() {
     }
     
     // 4. Redirect to logout endpoint
-    window.location.href = '/login';
+    window.location.href = '/landing';
   };
 
 
