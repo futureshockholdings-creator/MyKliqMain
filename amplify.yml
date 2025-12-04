@@ -1,63 +1,21 @@
-# version: 1
-# frontend:
-#   phases:
-#     preBuild:
-#       commands:
-#         - npm install --force
-#     build:
-#       commands:
-#         - rm -rf dist
-#         - npm run build
-#   artifacts:
-#     baseDirectory: dist
-#     files:
-#       - '**/*'
-#   cache:
-#     paths:
-#       - node_modules/**/*
 
 version: 1
 frontend:
   phases:
     preBuild:
       commands:
+        - cd client
         - npm install --force
     build:
       commands:
+        - cd client
+        - rm -rf dist
         - npm run build
   artifacts:
-    baseDirectory: dist
+    baseDirectory: client/dist
     files:
       - '**/*'
   cache:
     paths:
-      - node_modules/**/*
-  customHeaders:
-    - pattern: 'sw.js'
-      headers:
-        - key: Content-Type
-          value: application/javascript
-    - pattern: 'manifest.json'
-      headers:
-        - key: Content-Type
-          value: application/manifest+json
-
-# 🚀 THE KEY FIX (no fallback override for PWA files)
-  redirects:
-    - source: /sw.js
-      target: /sw.js
-      status: 200
-    - source: /manifest.json
-      target: /manifest.json
-      status: 200
-    - source: /icons/*
-      target: /icons/*
-      status: 200
-
-# Default SPA fallback
-    - source: </^(?!.*(sw\.js$|manifest\.json$|icons\/)).*$/>
-      target: /index.html
-      status: 200
-
-
+      - client/node_modules/**/*
 
