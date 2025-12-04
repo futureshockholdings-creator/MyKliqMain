@@ -1,3 +1,20 @@
+# version: 1
+# frontend:
+#   phases:
+#     preBuild:
+#       commands:
+#         - npm install --force
+#     build:
+#       commands:
+#         - rm -rf dist
+#         - npm run build
+#   artifacts:
+#     baseDirectory: dist
+#     files:
+#       - '**/*'
+#   cache:
+#     paths:
+#       - node_modules/**/*
 version: 1
 frontend:
   phases:
@@ -15,4 +32,15 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
+  customHeaders:
+    - pattern: '**/manifest.json'
+      headers:
+        - key: Content-Type
+          value: application/manifest+json
+    - pattern: '**/sw.js'
+      headers:
+        - key: Content-Type
+          value: application/javascript
+
+
 
