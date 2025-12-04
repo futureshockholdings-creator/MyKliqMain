@@ -807,6 +807,9 @@ export default function Settings() {
       console.log('[Logout] Clearing IndexedDB cache...');
       await enhancedCache.clearAll();
       
+        // Redirect to login page instead of reloading
+      window.location.href = "/login";
+      window.location.reload()
       // 2. Completely REMOVE all user-specific queries from TanStack Query
       // Using predicate-based removal to catch ALL API queries regardless of structure
       console.log('[Logout] Removing TanStack Query cache...');
