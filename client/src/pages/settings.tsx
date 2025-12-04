@@ -830,7 +830,7 @@ export default function Settings() {
     }
     
     // 4. Redirect to logout endpoint
-    window.location.href = '/api/logout';
+    window.location.href = '/login';
   };
 
 
