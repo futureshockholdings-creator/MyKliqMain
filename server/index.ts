@@ -16,6 +16,8 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     "https://kliqlife.com",
     "https://www.kliqlife.com",
+    "https://mykliq.app",
+    "https://www.mykliq.app",
     "http://localhost:5000",
     "http://127.0.0.1:5000",
     "http://0.0.0.0:5000",
