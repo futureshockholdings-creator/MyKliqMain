@@ -15,24 +15,6 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
-
-version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - npm install --force
-    build:
-      commands:
-        - rm -rf dist
-        - npm run build
-  artifacts:
-    baseDirectory: dist
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - node_modules/**/*
   redirects:
     # PWA assets must be served as real files
     - source: /manifest.json
