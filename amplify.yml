@@ -16,3 +16,47 @@ frontend:
     paths:
       - node_modules/**/*
 
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm install --force
+    build:
+      commands:
+        - rm -rf dist
+        - npm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+  redirects:
+    # PWA assets must be served as real files
+    - source: /manifest.json
+      target: /manifest.json
+      status: 200
+      condition: null
+
+    - source: /sw.js
+      target: /sw.js
+      status: 200
+      condition: null
+
+    - source: /icons/<*>
+      target: /icons/<*>
+      status: 200
+      condition: null
+
+    - source: /screenshots/<*>
+      target: /screenshots/<*>
+      status: 200
+      condition: null
+
+    # SPA fallback for the rest of your routes
+    - source: /<*>
+      target: /index.html
+      status: 200
+      condition: null
