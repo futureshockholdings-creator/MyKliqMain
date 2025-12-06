@@ -76,45 +76,45 @@ export default function Login() {
       console.log("[Login] Response status:", response.status, "type:", response.type);
 
       if (response.ok) {
-        // Login successful - parse JSON response
+        // Login successful - extract JWT token
         let authToken: string | null = null;
         
-        // SAFARI FIX: Clone response before reading body to avoid Safari CORS+Cookie bug
-        // Safari's fetch polyfill fails on response.json() for CORS responses with Set-Cookie
-        // Using response.text() + JSON.parse() ensures body is read exactly once
-        try {
-          const responseText = await response.text();
-          console.log("[Login] Response text length:", responseText.length);
-          
-          const data = JSON.parse(responseText);
-          console.log("[Login] Parsed response keys:", Object.keys(data));
-          console.log("[Login] Token in response:", !!data.token, "length:", data.token?.length || 0);
-          
-          if (data.token) {
-            authToken = data.token;
-            setAuthToken(data.token);
-            console.log("[Login] Auth token stored successfully from response body");
-          } else {
-            // Fallback to header if body token missing
-            const headerToken = response.headers.get('X-Auth-Token');
-            console.log("[Login] No body token, header token:", !!headerToken);
-            if (headerToken) {
-              authToken = headerToken;
-              setAuthToken(headerToken);
-              console.log("[Login] Auth token stored from header fallback");
+        // SAFARI FIX: Try header FIRST before any body read
+        // Safari's fetch can fail entirely on body reads for CORS + Set-Cookie responses
+        // Headers are accessible immediately without consuming the response
+        const headerToken = response.headers.get('X-Auth-Token');
+        console.log("[Login] Header token check:", !!headerToken, "length:", headerToken?.length || 0);
+        
+        if (headerToken) {
+          // Header token available - use it immediately (Safari-safe)
+          authToken = headerToken;
+          setAuthToken(headerToken);
+          console.log("[Login] Auth token stored from header (Safari-safe path)");
+        } else {
+          // No header token - try body (works on Chrome, Firefox, etc.)
+          try {
+            const responseText = await response.text();
+            console.log("[Login] Response text length:", responseText.length);
+            
+            const data = JSON.parse(responseText);
+            console.log("[Login] Parsed response, token present:", !!data.token);
+            
+            if (data.token) {
+              authToken = data.token;
+              setAuthToken(data.token);
+              console.log("[Login] Auth token stored from response body");
             } else {
-              console.error("[Login] CRITICAL: No token in response body or header!");
+              console.error("[Login] CRITICAL: No token in response body!");
             }
+          } catch (parseError) {
+            console.error("[Login] Failed to parse response body:", parseError);
+            // This is expected on Safari - login may still work via session cookie
           }
-        } catch (parseError) {
-          console.error("[Login] Failed to parse response:", parseError);
-          // Last resort: try header
-          const headerToken = response.headers.get('X-Auth-Token');
-          if (headerToken) {
-            authToken = headerToken;
-            setAuthToken(headerToken);
-            console.log("[Login] Using header token after parse failure");
-          }
+        }
+        
+        // If we still have no token, log it but don't fail - session cookie may work
+        if (!authToken) {
+          console.warn("[Login] No JWT token extracted - relying on session cookie fallback");
         }
 
         // Track daily login and award Kliq Koin
