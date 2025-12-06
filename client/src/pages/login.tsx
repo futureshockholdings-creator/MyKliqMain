@@ -79,31 +79,44 @@ export default function Login() {
         // Login successful - parse JSON response
         let authToken: string | null = null;
         
+        // Try to get token from header first (Safari cross-origin fix)
+        const headerToken = response.headers.get('X-Auth-Token');
+        console.log("[Login] Header token present:", !!headerToken, "length:", headerToken?.length || 0);
+        
         try {
           const data = await response.json();
           console.log("[Login] Response data keys:", Object.keys(data));
-          console.log("[Login] Token present:", !!data.token, "Token length:", data.token?.length || 0);
+          console.log("[Login] Body token present:", !!data.token, "Token length:", data.token?.length || 0);
+          
+          // Prefer body token, fallback to header token
+          authToken = data.token || headerToken;
           
           // Store JWT token for cross-domain authentication (AWS Amplify → Replit)
-          if (data.token) {
-            authToken = data.token;
-            setAuthToken(data.token);
-            console.log("[Login] Auth token stored successfully");
+          if (authToken) {
+            setAuthToken(authToken);
+            console.log("[Login] Auth token stored successfully, source:", data.token ? "body" : "header");
           } else {
-            console.error("[Login] CRITICAL: No token in response!", data);
+            console.error("[Login] CRITICAL: No token in response body or header!");
           }
         } catch (parseError) {
           console.error("[Login] Failed to parse response as JSON:", parseError);
+          // Try header token as last resort
+          if (headerToken) {
+            authToken = headerToken;
+            setAuthToken(headerToken);
+            console.log("[Login] Using header token after JSON parse failure");
+          }
         }
 
         // Track daily login and award Kliq Koin
         // Use the token directly from the response (not from storage) to avoid Safari ITP issues
+        console.log('[Login] About to make kliq-koins request. authToken type:', typeof authToken, 'truthy:', !!authToken);
         try {
           if (!authToken) {
             console.warn('[Login] No token available - skipping kliq-koins request');
           } else {
             const kliqKoinsUrl = buildApiUrl("/api/kliq-koins/login");
-            console.log('[Login] Making kliq-koins request with token length:', authToken.length);
+            console.log('[Login] Making kliq-koins request to:', kliqKoinsUrl, 'with token length:', authToken.length);
             
             const loginResponse = await fetch(kliqKoinsUrl, {
               method: "POST",
@@ -113,6 +126,7 @@ export default function Login() {
               },
               credentials: "include",
             });
+            console.log('[Login] kliq-koins response status:', loginResponse.status);
           
             if (loginResponse.ok) {
               const loginData = await loginResponse.json();

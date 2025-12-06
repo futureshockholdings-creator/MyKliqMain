@@ -59,6 +59,8 @@ app.use((req, res, next) => {
   );
   res.header("Access-Control-Allow-Credentials", "true");
   res.header("Access-Control-Max-Age", "86400"); // 24 hours
+  // Expose headers so JavaScript can read them (critical for Safari cross-origin)
+  res.header("Access-Control-Expose-Headers", "X-Auth-Token, Authorization");
 
   // Handle preflight requests
   if (req.method === "OPTIONS") {

@@ -4004,6 +4004,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('[LOGIN] Generated JWT token for user:', user.id, 'Token length:', token?.length || 0);
           
           res.setHeader('Content-Type', 'application/json');
+          // Also send token in header as backup for Safari cross-origin issues
+          res.setHeader('X-Auth-Token', token);
           res.json({ 
             message: "Login successful",
             success: true,
