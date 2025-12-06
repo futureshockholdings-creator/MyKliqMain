@@ -73,74 +73,67 @@ export default function Login() {
         }),
       });
       
+      console.log("[Login] Response status:", response.status);
 
       if (response.ok) {
-        // Login successful - check if we got JSON or HTML
-        const contentType = response.headers.get("content-type");
+        // Login successful - parse JSON response
         let authToken: string | null = null;
         
-        if (contentType && contentType.includes("application/json")) {
+        try {
           const data = await response.json();
-          console.log("Login response:", data);
+          console.log("[Login] Response data keys:", Object.keys(data));
+          console.log("[Login] Token present:", !!data.token, "Token length:", data.token?.length || 0);
           
           // Store JWT token for cross-domain authentication (AWS Amplify → Replit)
           if (data.token) {
             authToken = data.token;
             setAuthToken(data.token);
-            console.log("[Login] Auth token stored successfully, token length:", data.token.length);
+            console.log("[Login] Auth token stored successfully");
           } else {
-            console.warn("[Login] No token in response - server may not have returned JWT");
+            console.error("[Login] CRITICAL: No token in response!", data);
           }
+        } catch (parseError) {
+          console.error("[Login] Failed to parse response as JSON:", parseError);
         }
 
         // Track daily login and award Kliq Koin
         // Use the token directly from the response (not from storage) to avoid Safari ITP issues
         try {
-          const headers: HeadersInit = {
-            'Content-Type': 'application/json',
-          };
-          // Use token directly from login response (avoids storage timing/partitioning issues)
-          if (authToken) {
-            headers['Authorization'] = `Bearer ${authToken}`;
-            console.log('[Login] Using direct token for kliq-koins request, token length:', authToken.length);
+          if (!authToken) {
+            console.warn('[Login] No token available - skipping kliq-koins request');
           } else {
-            // Fallback to stored token
-            const storedToken = getAuthToken();
-            if (storedToken) {
-              headers['Authorization'] = `Bearer ${storedToken}`;
-              console.log('[Login] Using stored token for kliq-koins request');
+            const kliqKoinsUrl = buildApiUrl("/api/kliq-koins/login");
+            console.log('[Login] Making kliq-koins request with token length:', authToken.length);
+            
+            const loginResponse = await fetch(kliqKoinsUrl, {
+              method: "POST",
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+              },
+              credentials: "include",
+            });
+          
+            if (loginResponse.ok) {
+              const loginData = await loginResponse.json();
+              
+              // Show notification if Koin was awarded
+              if (loginData.koinAwarded) {
+                toast({
+                  title: "Daily Login Bonus! 🪙",
+                  description: `+1 Kliq Koin earned! Current streak: ${loginData.currentStreak} days`,
+                });
+              }
+              
+              // Show streak milestone notification
+              if (loginData.borderUnlocked) {
+                toast({
+                  title: `🎉 ${loginData.borderUnlocked.border.name} Unlocked!`,
+                  description: `You've reached a ${loginData.currentStreak}-day streak! Check your borders in Settings.`,
+                });
+              }
             } else {
-              console.warn('[Login] No token available for kliq-koins request - skipping');
-            }
-          }
-          
-          const kliqKoinsUrl = buildApiUrl("/api/kliq-koins/login");
-          console.log('[Login] Making kliq-koins request to:', kliqKoinsUrl);
-          console.log('[Login] Headers:', JSON.stringify(headers));
-          
-          const loginResponse = await fetch(kliqKoinsUrl, {
-            method: "POST",
-            headers,
-            credentials: "include",
-          });
-          
-          if (loginResponse.ok) {
-            const loginData = await loginResponse.json();
-            
-            // Show notification if Koin was awarded
-            if (loginData.koinAwarded) {
-              toast({
-                title: "Daily Login Bonus! 🪙",
-                description: `+1 Kliq Koin earned! Current streak: ${loginData.currentStreak} days`,
-              });
-            }
-            
-            // Show streak milestone notification
-            if (loginData.borderUnlocked) {
-              toast({
-                title: `🎉 ${loginData.borderUnlocked.border.name} Unlocked!`,
-                description: `You've reached a ${loginData.currentStreak}-day streak! Check your borders in Settings.`,
-              });
+              console.error('[Login] kliq-koins request failed:', loginResponse.status);
             }
           }
         } catch (err) {
