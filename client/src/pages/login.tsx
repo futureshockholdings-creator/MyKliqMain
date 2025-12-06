@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { buildApiUrl } from "@/lib/apiConfig";
-import { setAuthToken } from "@/lib/tokenStorage";
+import { setAuthToken, getAuthToken } from "@/lib/tokenStorage";
 
 const loginSchema = z.object({
   phoneNumber: z.string().min(1, "Phone number is required"),
@@ -91,11 +91,14 @@ export default function Login() {
 
         // Track daily login and award Kliq Koin
         try {
-          // Get stored token to include in request
-          const storedToken = localStorage.getItem('mykliq_auth_token');
+          // Get stored token to include in request (uses memory fallback if localStorage blocked)
+          const storedToken = getAuthToken();
           const headers: HeadersInit = {};
           if (storedToken) {
             headers['Authorization'] = `Bearer ${storedToken}`;
+            console.log('[Login] Token found, adding to kliq-koins request');
+          } else {
+            console.warn('[Login] No token available for kliq-koins request');
           }
           
           const loginResponse = await fetch(buildApiUrl("/api/kliq-koins/login"), {
