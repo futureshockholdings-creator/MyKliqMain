@@ -19,6 +19,7 @@ import { rateLimitService } from "./rateLimitService";
 import { performanceOptimizer } from "./performanceOptimizer";
 
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications } from "@shared/schema";
+import { generateMobileToken, verifyMobileToken, JWT_CONFIG } from "./mobile-auth";
 import { eq, and, or, desc, sql as sqlOp, isNotNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
@@ -3998,10 +3999,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Don't fail the login if this fails
           }
           
+          // Generate JWT token for cross-domain authentication (AWS Amplify -> Replit)
+          const token = generateMobileToken(user.id, user.phoneNumber || '');
+          
           res.setHeader('Content-Type', 'application/json');
           res.json({ 
             message: "Login successful",
             success: true,
+            token, // JWT token for cross-domain auth
             user: {
               id: user.id,
               email: user.email,

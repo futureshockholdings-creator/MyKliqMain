@@ -9,6 +9,7 @@ import { requestScheduler } from './requestScheduler';
 import { circuitBreaker } from './circuitBreaker';
 import { performanceMonitor } from './performanceMonitor';
 import { buildApiUrl } from '../apiConfig';
+import { getAuthToken, removeAuthToken, isTokenExpired } from '../tokenStorage';
 
 interface EnterpriseFetchOptions extends RequestInit {
   skipCache?: boolean;
@@ -66,12 +67,34 @@ export async function enterpriseFetch<T = any>(
             return performanceMonitor.trackApiCall(
               url,
               async () => {
+                // Include Authorization header if we have a valid token (for cross-domain auth)
+                const token = getAuthToken();
+                const headers = new Headers(fetchOptions.headers as HeadersInit || {});
+                
+                // Only attach token if it's not expired
+                if (token && !isTokenExpired(token) && !headers.has('Authorization')) {
+                  headers.set('Authorization', `Bearer ${token}`);
+                } else if (token && isTokenExpired(token)) {
+                  // Token is expired, clear it
+                  console.log('[EnterpriseFetch] Clearing expired token');
+                  removeAuthToken();
+                }
+                
                 const res = await fetch(fullUrl, {
                   ...fetchOptions,
+                  headers,
                   credentials: fetchOptions.credentials || 'include',
                 });
 
                 if (!res.ok) {
+                  // Handle 401 by clearing invalid token
+                  if (res.status === 401) {
+                    const currentToken = getAuthToken();
+                    if (currentToken) {
+                      console.log('[EnterpriseFetch] Received 401, clearing invalid token');
+                      removeAuthToken();
+                    }
+                  }
                   const text = (await res.text()) || res.statusText;
                   throw new Error(`${res.status}: ${text}`);
                 }

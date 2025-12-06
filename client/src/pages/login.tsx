@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { buildApiUrl } from "@/lib/apiConfig";
+import { setAuthToken } from "@/lib/tokenStorage";
 
 const loginSchema = z.object({
   phoneNumber: z.string().min(1, "Phone number is required"),
@@ -80,12 +81,26 @@ export default function Login() {
         if (contentType && contentType.includes("application/json")) {
           const data = await response.json();
           console.log("Login response:", data);
+          
+          // Store JWT token for cross-domain authentication (AWS Amplify → Replit)
+          if (data.token) {
+            setAuthToken(data.token);
+            console.log("Auth token stored successfully");
+          }
         }
 
         // Track daily login and award Kliq Koin
         try {
+          // Get stored token to include in request
+          const storedToken = localStorage.getItem('mykliq_auth_token');
+          const headers: HeadersInit = {};
+          if (storedToken) {
+            headers['Authorization'] = `Bearer ${storedToken}`;
+          }
+          
           const loginResponse = await fetch(buildApiUrl("/api/kliq-koins/login"), {
             method: "POST",
+            headers,
             credentials: "include",
           });
           

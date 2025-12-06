@@ -52,6 +52,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
+import { removeAuthToken } from "@/lib/tokenStorage";
 
 interface SocialAccount {
   id: string;
@@ -803,11 +804,15 @@ export default function Settings() {
 
   const handleLogout = async () => {
     try {
-      // 1. Clear client-side disk cache (IndexedDB) to prevent stale data
+      // 1. Clear JWT token (for cross-domain auth with AWS Amplify)
+      console.log('[Logout] Clearing JWT token...');
+      removeAuthToken();
+      
+      // 2. Clear client-side disk cache (IndexedDB) to prevent stale data
       console.log('[Logout] Clearing IndexedDB cache...');
       await enhancedCache.clearAll();
 
-      // 2. Completely REMOVE all user-specific queries from TanStack Query
+      // 3. Completely REMOVE all user-specific queries from TanStack Query
       // Using predicate-based removal to catch ALL API queries regardless of structure
       console.log('[Logout] Removing TanStack Query cache...');
       queryClient.removeQueries({
@@ -817,7 +822,7 @@ export default function Settings() {
         }
       });
       
-      // 3. Mark that we're logging out to prevent auto-redirect on login page
+      // 4. Mark that we're logging out to prevent auto-redirect on login page
       sessionStorage.setItem('forceLogout', 'true');
        await apiRequest("GET", "/api/logout");
       
@@ -827,7 +832,7 @@ export default function Settings() {
       // Continue with logout even if cache clearing fails
     }
     
-    // 4. Redirect to logout endpoint
+    // 5. Redirect to logout endpoint
     window.location.href = '/landing';
   };
 

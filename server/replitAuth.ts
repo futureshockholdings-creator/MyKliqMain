@@ -7,6 +7,7 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
+import { verifyMobileToken } from "./mobile-auth";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -159,9 +160,54 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // First, try JWT token authentication (for cross-domain requests from AWS Amplify)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const token = authHeader.split(' ')[1];
+      const decoded = verifyMobileToken(token);
+      
+      // Attach user info to request for downstream handlers
+      (req as any).userId = decoded.userId;
+      
+      // Check if user is suspended
+      const dbUser = await storage.getUser(decoded.userId);
+      if (dbUser && dbUser.isSuspended) {
+        if (dbUser.suspensionExpiresAt && new Date() > new Date(dbUser.suspensionExpiresAt)) {
+          await storage.checkAndUnsuspendExpiredUsers();
+          const updatedUser = await storage.getUser(decoded.userId);
+          if (updatedUser && updatedUser.isSuspended) {
+            return res.status(403).json({ message: "Account suspended" });
+          }
+        } else {
+          const expiresAt = dbUser.suspensionExpiresAt 
+            ? new Date(dbUser.suspensionExpiresAt).toLocaleDateString()
+            : "permanently";
+          return res.status(403).json({ 
+            message: "Account suspended",
+            details: `Your account is suspended until ${expiresAt}`,
+            suspensionType: dbUser.suspensionType
+          });
+        }
+      }
+      
+      // Also set req.user for compatibility with existing code
+      (req as any).user = {
+        claims: { sub: decoded.userId },
+        expires_at: decoded.exp
+      };
+      
+      return next();
+    } catch (error) {
+      // JWT verification failed, fall through to cookie-based auth
+      console.log('JWT token verification failed, trying cookie auth');
+    }
+  }
+  
+  // Fall back to cookie-based session authentication
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!req.isAuthenticated() || !user?.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
