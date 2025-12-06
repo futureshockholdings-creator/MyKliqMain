@@ -8,7 +8,7 @@ import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
@@ -149,10 +149,17 @@ export default function Login() {
         // Clear the force login flag since they successfully logged in
         setShouldForceLogin(false);
 
-        // Force a complete page reload to ensure session is properly loaded
+        // Use React Router navigation instead of full page reload
+        // This preserves the in-memory token for Safari ITP compatibility
+        // Invalidate auth query to trigger re-fetch with new token
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+        
+        // Small delay to ensure token is stored, then navigate
         setTimeout(() => {
-          window.location.href = "/";
-        }, 1000);
+          setLocation("/");
+        }, 500);
       } else {
         // Handle error response
         let errorMessage = "Invalid phone number or password";

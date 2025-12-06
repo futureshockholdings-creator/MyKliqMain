@@ -50,14 +50,23 @@ function isSessionStorageAvailable(): boolean {
 
 /**
  * Cookie-based storage for maximum browser compatibility
- * Uses SameSite=Lax for same-origin requests
+ * Uses SameSite=None; Secure for cross-origin requests (AWS Amplify → Replit)
  */
 function setCookieToken(token: string): void {
   try {
-    // Set cookie with 7-day expiry, SameSite=Lax for security
+    // Set cookie with 7-day expiry
+    // SameSite=None + Secure required for cross-origin requests
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
-    document.cookie = `${COOKIE_TOKEN_KEY}=${encodeURIComponent(token)}; expires=${expires}; path=/; SameSite=Lax`;
-    console.log('[TokenStorage] Token stored in cookie');
+    const isSecure = window.location.protocol === 'https:';
+    
+    // For cross-origin to work, we need SameSite=None + Secure
+    // On localhost (http), fall back to SameSite=Lax
+    const cookieString = isSecure
+      ? `${COOKIE_TOKEN_KEY}=${encodeURIComponent(token)}; expires=${expires}; path=/; SameSite=None; Secure`
+      : `${COOKIE_TOKEN_KEY}=${encodeURIComponent(token)}; expires=${expires}; path=/; SameSite=Lax`;
+    
+    document.cookie = cookieString;
+    console.log('[TokenStorage] Token stored in cookie (secure:', isSecure, ')');
   } catch (e) {
     console.warn('[TokenStorage] Failed to store in cookie:', e);
   }
@@ -80,7 +89,12 @@ function getCookieToken(): string | null {
 
 function removeCookieToken(): void {
   try {
-    document.cookie = `${COOKIE_TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
+    const isSecure = window.location.protocol === 'https:';
+    // Must use same SameSite/Secure settings as when cookie was set
+    const cookieString = isSecure
+      ? `${COOKIE_TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=None; Secure`
+      : `${COOKIE_TOKEN_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax`;
+    document.cookie = cookieString;
   } catch (e) {
     console.warn('[TokenStorage] Failed to remove cookie:', e);
   }
