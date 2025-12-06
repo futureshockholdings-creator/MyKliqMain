@@ -29,7 +29,7 @@ app.use((req, res, next) => {
       ? `https://${process.env.REPLIT_DEV_DOMAIN}`
       : null,
     // Replit production deployment URL
-    "https://workspace-mykliq.replit.app",
+    "https://my-kliq-futureshock.replit.app",
   ].filter(Boolean) as string[];
 
   // Log CORS debug info for troubleshooting
