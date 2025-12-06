@@ -8,6 +8,7 @@ import { enhancedCache } from './enhancedCache';
 import { requestScheduler } from './requestScheduler';
 import { circuitBreaker } from './circuitBreaker';
 import { performanceMonitor } from './performanceMonitor';
+import { buildApiUrl } from '../apiConfig';
 
 interface EnterpriseFetchOptions extends RequestInit {
   skipCache?: boolean;
@@ -31,6 +32,9 @@ export async function enterpriseFetch<T = any>(
     priority = 'normal',
     ...fetchOptions
   } = options;
+
+  // Build the full URL with API base for cross-origin requests (AWS Amplify → Replit backend)
+  const fullUrl = url.startsWith('/api') ? buildApiUrl(url) : url;
 
   // Only cache GET requests
   const isGET = !fetchOptions.method || fetchOptions.method === 'GET';
@@ -62,7 +66,7 @@ export async function enterpriseFetch<T = any>(
             return performanceMonitor.trackApiCall(
               url,
               async () => {
-                const res = await fetch(url, {
+                const res = await fetch(fullUrl, {
                   ...fetchOptions,
                   credentials: fetchOptions.credentials || 'include',
                 });

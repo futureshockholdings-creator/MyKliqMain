@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Shield } from "lucide-react";
+import { buildApiUrl } from "@/lib/apiConfig";
 
 interface PinVerificationModalProps {
   isOpen: boolean;
@@ -39,11 +40,12 @@ export function PinVerificationModal({
     setIsVerifying(true);
     
     try {
-      const response = await fetch("/api/user/verify-pin", {
+      const response = await fetch(buildApiUrl("/api/user/verify-pin"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ pin }),
       });
 

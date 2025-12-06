@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { buildApiUrl } from "@/lib/apiConfig";
 
 const loginSchema = z.object({
   phoneNumber: z.string().min(1, "Phone number is required"),
@@ -59,12 +60,12 @@ export default function Login() {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/user/login", {
+      const response = await fetch(buildApiUrl("/api/user/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Important: include cookies for session
+        credentials: "include",
         body: JSON.stringify({
           phoneNumber: values.phoneNumber,
           password: values.password,
@@ -83,7 +84,7 @@ export default function Login() {
 
         // Track daily login and award Kliq Koin
         try {
-          const loginResponse = await fetch("/api/kliq-koins/login", {
+          const loginResponse = await fetch(buildApiUrl("/api/kliq-koins/login"), {
             method: "POST",
             credentials: "include",
           });

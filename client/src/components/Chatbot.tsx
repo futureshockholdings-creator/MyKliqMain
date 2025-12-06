@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { buildApiUrl } from '@/lib/apiConfig';
 
 interface ChatMessage {
   id: string;
@@ -416,11 +417,12 @@ export function Chatbot() {
         .map(msg => `${msg.type.toUpperCase()}: ${msg.message}`)
         .join('\n\n');
       
-      const response = await fetch('/api/chatbot/conversation', {
+      const response = await fetch(buildApiUrl('/api/chatbot/conversation'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           conversationHistory,
           timestamp: new Date().toISOString(),

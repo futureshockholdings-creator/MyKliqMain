@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { buildApiUrl } from "@/lib/apiConfig";
 
 const LAST_CHECKIN_PREFIX = "mykliq_last_checkin_";
 
@@ -42,7 +43,7 @@ export function useDailyCheckIn() {
       checkInAttempted.current = true;
 
       try {
-        const response = await fetch("/api/kliq-koins/login", {
+        const response = await fetch(buildApiUrl("/api/kliq-koins/login"), {
           method: "POST",
           credentials: "include",
         });

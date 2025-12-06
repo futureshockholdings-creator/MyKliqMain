@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronUp, ChevronDown, TrendingUp, MessageCircle, Eye, X, Check, Lightbulb, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { buildApiUrl } from "@/lib/apiConfig";
 
 interface RankingSuggestion {
   id: string;
@@ -51,11 +52,12 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
   // Accept suggestion mutation
   const acceptSuggestionMutation = useMutation({
     mutationFn: async (suggestionId: string) => {
-      const response = await fetch(`/api/friend-ranking/suggestions/${suggestionId}/accept`, {
+      const response = await fetch(buildApiUrl(`/api/friend-ranking/suggestions/${suggestionId}/accept`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
       
       if (!response.ok) {
@@ -87,11 +89,12 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
   // Dismiss suggestion mutation
   const dismissSuggestionMutation = useMutation({
     mutationFn: async (suggestionId: string) => {
-      const response = await fetch(`/api/friend-ranking/suggestions/${suggestionId}/dismiss`, {
+      const response = await fetch(buildApiUrl(`/api/friend-ranking/suggestions/${suggestionId}/dismiss`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
       
       if (!response.ok) {
@@ -119,11 +122,12 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
   // Generate new suggestions mutation
   const generateSuggestionsMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/friend-ranking/generate', {
+      const response = await fetch(buildApiUrl('/api/friend-ranking/generate'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
       });
       
       if (!response.ok) {
