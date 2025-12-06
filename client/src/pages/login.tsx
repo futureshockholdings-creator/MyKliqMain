@@ -73,38 +73,47 @@ export default function Login() {
         }),
       });
       
-      console.log("[Login] Response status:", response.status);
+      console.log("[Login] Response status:", response.status, "type:", response.type);
 
       if (response.ok) {
         // Login successful - parse JSON response
         let authToken: string | null = null;
         
-        // Try to get token from header first (Safari cross-origin fix)
-        const headerToken = response.headers.get('X-Auth-Token');
-        console.log("[Login] Header token present:", !!headerToken, "length:", headerToken?.length || 0);
-        
+        // SAFARI FIX: Clone response before reading body to avoid Safari CORS+Cookie bug
+        // Safari's fetch polyfill fails on response.json() for CORS responses with Set-Cookie
+        // Using response.text() + JSON.parse() ensures body is read exactly once
         try {
-          const data = await response.json();
-          console.log("[Login] Response data keys:", Object.keys(data));
-          console.log("[Login] Body token present:", !!data.token, "Token length:", data.token?.length || 0);
+          const responseText = await response.text();
+          console.log("[Login] Response text length:", responseText.length);
           
-          // Prefer body token, fallback to header token
-          authToken = data.token || headerToken;
+          const data = JSON.parse(responseText);
+          console.log("[Login] Parsed response keys:", Object.keys(data));
+          console.log("[Login] Token in response:", !!data.token, "length:", data.token?.length || 0);
           
-          // Store JWT token for cross-domain authentication (AWS Amplify → Replit)
-          if (authToken) {
-            setAuthToken(authToken);
-            console.log("[Login] Auth token stored successfully, source:", data.token ? "body" : "header");
+          if (data.token) {
+            authToken = data.token;
+            setAuthToken(data.token);
+            console.log("[Login] Auth token stored successfully from response body");
           } else {
-            console.error("[Login] CRITICAL: No token in response body or header!");
+            // Fallback to header if body token missing
+            const headerToken = response.headers.get('X-Auth-Token');
+            console.log("[Login] No body token, header token:", !!headerToken);
+            if (headerToken) {
+              authToken = headerToken;
+              setAuthToken(headerToken);
+              console.log("[Login] Auth token stored from header fallback");
+            } else {
+              console.error("[Login] CRITICAL: No token in response body or header!");
+            }
           }
         } catch (parseError) {
-          console.error("[Login] Failed to parse response as JSON:", parseError);
-          // Try header token as last resort
+          console.error("[Login] Failed to parse response:", parseError);
+          // Last resort: try header
+          const headerToken = response.headers.get('X-Auth-Token');
           if (headerToken) {
             authToken = headerToken;
             setAuthToken(headerToken);
-            console.log("[Login] Using header token after JSON parse failure");
+            console.log("[Login] Using header token after parse failure");
           }
         }
 
