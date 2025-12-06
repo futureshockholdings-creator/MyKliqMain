@@ -38,7 +38,7 @@ The admin dashboard includes a "Rules Reports" tab for managing user-reported co
 - Database table: `rules_reports` with fields for reporter, post author, reason, status, admin notes, and action taken
 
 ### Authentication & Authorization
-Authentication uses Replit OAuth with cookie-based sessions for web and JWT tokens for mobile. Security features include password requirements, PKCE support for OAuth 2.0, 4-step password recovery, and invite codes. Logout processes ensure comprehensive cache clearing to prevent cross-session data leakage.
+Authentication uses JWT tokens for both web and mobile clients to support cross-domain deployment (AWS Amplify frontend with Replit backend API). The server supports hybrid authentication: JWT tokens via Authorization header (primary for cross-domain) with cookie-based session fallback (legacy support). JWT tokens are stored in localStorage on web and SecureStore on mobile, with automatic expiration validation and cleanup on 401 responses. Security features include password requirements, PKCE support for OAuth 2.0, 4-step password recovery, and invite codes. Logout processes ensure comprehensive cache clearing (JWT token, IndexedDB, TanStack Query cache) to prevent cross-session data leakage.
 
 ### Social Media OAuth Integration
 External OAuth connections (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube) use an adaptive flow with popup windows for desktop and full-page redirects for mobile. Users connect social accounts to earn Kliq Koins.
