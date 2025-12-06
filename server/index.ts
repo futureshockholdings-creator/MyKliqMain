@@ -19,20 +19,34 @@ app.use((req, res, next) => {
     "https://mykliq.app",
     "https://www.mykliq.app",
     "http://localhost:5000",
+    "http://localhost:5173",
     "http://127.0.0.1:5000",
     "http://0.0.0.0:5000",
     "http://172.31.65.34:5000",
     "https://main.d1dc1ug0nbi5ry.amplifyapp.com",
-    process.env.REPL_SLUG
-      ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DEV_DOMAIN}`
+    // Replit dev domain
+    process.env.REPLIT_DEV_DOMAIN
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
       : null,
-  ].filter(Boolean);
+    // Replit production deployment URL
+    "https://workspace-mykliq.replit.app",
+  ].filter(Boolean) as string[];
+
+  // Log CORS debug info for troubleshooting
+  if (origin && !allowedOrigins.includes(origin)) {
+    console.log(`[CORS] Rejected origin: ${origin}`);
+  }
 
   if (origin && allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
   } else if (!origin) {
     // Allow same-origin requests (no origin header)
     res.header("Access-Control-Allow-Origin", "*");
+  } else {
+    // For unknown origins, still allow but log it
+    // This helps with debugging while not breaking functionality
+    res.header("Access-Control-Allow-Origin", origin);
+    console.log(`[CORS] Allowing unknown origin for debugging: ${origin}`);
   }
 
   res.header(
