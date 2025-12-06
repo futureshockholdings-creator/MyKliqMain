@@ -45,6 +45,7 @@ export function getSession() {
     cookie: {
       httpOnly: true,
       secure: true,
+      sameSite: 'none', // Required for cross-origin cookies (AWS Amplify → Replit)
       maxAge: sessionTtl,
     },
   });

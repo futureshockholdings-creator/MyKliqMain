@@ -77,6 +77,7 @@ export default function Login() {
       if (response.ok) {
         // Login successful - check if we got JSON or HTML
         const contentType = response.headers.get("content-type");
+        let authToken: string | null = null;
         
         if (contentType && contentType.includes("application/json")) {
           const data = await response.json();
@@ -84,21 +85,31 @@ export default function Login() {
           
           // Store JWT token for cross-domain authentication (AWS Amplify → Replit)
           if (data.token) {
+            authToken = data.token;
             setAuthToken(data.token);
-            console.log("Auth token stored successfully");
+            console.log("[Login] Auth token stored successfully, token length:", data.token.length);
+          } else {
+            console.warn("[Login] No token in response - server may not have returned JWT");
           }
         }
 
         // Track daily login and award Kliq Koin
+        // Use the token directly from the response (not from storage) to avoid Safari ITP issues
         try {
-          // Get stored token to include in request (uses memory fallback if localStorage blocked)
-          const storedToken = getAuthToken();
           const headers: HeadersInit = {};
-          if (storedToken) {
-            headers['Authorization'] = `Bearer ${storedToken}`;
-            console.log('[Login] Token found, adding to kliq-koins request');
+          // Use token directly from login response (avoids storage timing/partitioning issues)
+          if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+            console.log('[Login] Using direct token for kliq-koins request');
           } else {
-            console.warn('[Login] No token available for kliq-koins request');
+            // Fallback to stored token
+            const storedToken = getAuthToken();
+            if (storedToken) {
+              headers['Authorization'] = `Bearer ${storedToken}`;
+              console.log('[Login] Using stored token for kliq-koins request');
+            } else {
+              console.warn('[Login] No token available for kliq-koins request');
+            }
           }
           
           const loginResponse = await fetch(buildApiUrl("/api/kliq-koins/login"), {
@@ -156,9 +167,22 @@ export default function Login() {
       }
     } catch (error: any) {
       console.error("Login error:", error);
+      
+      // Enhanced error messaging for debugging cross-browser issues
+      let errorDescription = error.message || "Invalid phone number or password. Please try again.";
+      
+      // Check for network errors (common on older browsers like Silk)
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorDescription = "Network error - please check your internet connection and try again.";
+        console.error("[Login] Network/Fetch error - possible CORS or browser compatibility issue");
+      } else if (error.message?.includes('Failed to fetch')) {
+        errorDescription = "Unable to connect to server. Please check your connection.";
+        console.error("[Login] Failed to fetch - server may be unreachable or CORS blocked");
+      }
+      
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid phone number or password. Please try again.",
+        description: errorDescription,
         variant: "destructive",
       });
     } finally {

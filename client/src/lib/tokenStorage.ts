@@ -1,6 +1,14 @@
 const TOKEN_KEY = 'mykliq_auth_token';
 const COOKIE_TOKEN_KEY = 'mykliq_jwt';
 
+// Track storage availability for debugging
+let storageDebugInfo = {
+  localStorage: false,
+  sessionStorage: false,
+  cookie: false,
+  testedAt: 0
+};
+
 /**
  * Check if localStorage is available (Safari ITP may block it in some contexts)
  */
@@ -8,9 +16,15 @@ function isLocalStorageAvailable(): boolean {
   try {
     const testKey = '__storage_test__';
     localStorage.setItem(testKey, testKey);
+    const retrieved = localStorage.getItem(testKey);
     localStorage.removeItem(testKey);
-    return true;
+    const isAvailable = retrieved === testKey;
+    storageDebugInfo.localStorage = isAvailable;
+    storageDebugInfo.testedAt = Date.now();
+    return isAvailable;
   } catch (e) {
+    console.warn('[TokenStorage] localStorage not available:', e);
+    storageDebugInfo.localStorage = false;
     return false;
   }
 }
@@ -22,9 +36,14 @@ function isSessionStorageAvailable(): boolean {
   try {
     const testKey = '__session_test__';
     sessionStorage.setItem(testKey, testKey);
+    const retrieved = sessionStorage.getItem(testKey);
     sessionStorage.removeItem(testKey);
-    return true;
+    const isAvailable = retrieved === testKey;
+    storageDebugInfo.sessionStorage = isAvailable;
+    return isAvailable;
   } catch (e) {
+    console.warn('[TokenStorage] sessionStorage not available:', e);
+    storageDebugInfo.sessionStorage = false;
     return false;
   }
 }
@@ -111,15 +130,23 @@ export function setAuthToken(token: string): void {
     return;
   }
   
-  console.log('[TokenStorage] Storing token in all available storage mechanisms');
+  const storageSummary: string[] = [];
   
-  // Always store in memory as fallback
+  // Always store in memory as fallback (most reliable)
   memoryToken = token;
+  storageSummary.push('memory');
   
   // Store in localStorage if available
   if (isLocalStorageAvailable()) {
     try {
       localStorage.setItem(TOKEN_KEY, token);
+      // Verify it was actually stored
+      const verified = localStorage.getItem(TOKEN_KEY);
+      if (verified === token) {
+        storageSummary.push('localStorage');
+      } else {
+        console.warn('[TokenStorage] localStorage write succeeded but read failed');
+      }
     } catch (e) {
       console.warn('[TokenStorage] localStorage failed:', e);
     }
@@ -129,6 +156,10 @@ export function setAuthToken(token: string): void {
   if (isSessionStorageAvailable()) {
     try {
       sessionStorage.setItem(TOKEN_KEY, token);
+      const verified = sessionStorage.getItem(TOKEN_KEY);
+      if (verified === token) {
+        storageSummary.push('sessionStorage');
+      }
     } catch (e) {
       console.warn('[TokenStorage] sessionStorage failed:', e);
     }
@@ -136,6 +167,13 @@ export function setAuthToken(token: string): void {
   
   // Always store in cookie for maximum Safari/Silk compatibility
   setCookieToken(token);
+  const cookieVerified = getCookieToken();
+  if (cookieVerified) {
+    storageSummary.push('cookie');
+    storageDebugInfo.cookie = true;
+  }
+  
+  console.log('[TokenStorage] Token stored in:', storageSummary.join(', '));
 }
 
 export function removeAuthToken(): void {
