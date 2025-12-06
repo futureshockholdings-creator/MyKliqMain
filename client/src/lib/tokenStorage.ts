@@ -21,13 +21,37 @@ export function removeAuthToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+/**
+ * Decode base64url to string (Safari-compatible)
+ * JWTs use base64url encoding which differs from standard base64:
+ * - Uses '-' instead of '+'
+ * - Uses '_' instead of '/'
+ * - May omit padding '='
+ */
+function base64UrlDecode(str: string): string {
+  // Replace base64url characters with base64 equivalents
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  
+  // Add padding if needed (base64 requires length to be multiple of 4)
+  const padding = base64.length % 4;
+  if (padding) {
+    base64 += '='.repeat(4 - padding);
+  }
+  
+  return atob(base64);
+}
+
 export function isTokenExpired(token: string): boolean {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    
+    const payload = JSON.parse(base64UrlDecode(parts[1]));
     const exp = payload.exp;
     if (!exp) return true;
     return Date.now() >= exp * 1000;
-  } catch {
+  } catch (e) {
+    console.error('[TokenStorage] Failed to parse token:', e);
     return true;
   }
 }
