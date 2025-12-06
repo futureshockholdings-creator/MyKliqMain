@@ -15,6 +15,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { buildApiUrl } from "@/lib/apiConfig";
 import { setAuthToken, getAuthToken } from "@/lib/tokenStorage";
 
+// Direct fetch for login - bypasses service worker to fix Safari cross-origin issues
+async function loginFetch(url: string, options: RequestInit): Promise<Response> {
+  const fullUrl = buildApiUrl(url);
+  console.log('[LoginFetch] Making request to:', fullUrl);
+  
+  return fetch(fullUrl, {
+    ...options,
+    mode: 'cors',
+    credentials: 'include',
+    // Bypass service worker cache
+    cache: 'no-store',
+  });
+}
+
 const loginSchema = z.object({
   phoneNumber: z.string().min(1, "Phone number is required"),
   password: z.string().min(1, "Password is required"),
@@ -61,12 +75,12 @@ export default function Login() {
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     try {
-      const response = await fetch(buildApiUrl("/api/user/login"), {
+      // Use loginFetch to bypass service worker - fixes Safari cross-origin issues
+      const response = await loginFetch("/api/user/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify({
           phoneNumber: values.phoneNumber,
           password: values.password,
