@@ -163,6 +163,8 @@ export async function setupAuth(app: Express) {
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
   // First, try JWT token authentication (for cross-domain requests from AWS Amplify)
   const authHeader = req.headers.authorization;
+  console.log('[AUTH] Request:', req.method, req.path, '| Auth header:', authHeader ? `Bearer ${authHeader.split(' ')[1]?.substring(0, 20)}...` : 'NONE');
+  
   if (authHeader && authHeader.startsWith('Bearer ')) {
     try {
       const token = authHeader.split(' ')[1];

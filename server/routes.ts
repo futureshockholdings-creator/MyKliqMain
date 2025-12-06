@@ -4001,6 +4001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Generate JWT token for cross-domain authentication (AWS Amplify -> Replit)
           const token = generateMobileToken(user.id, user.phoneNumber || '');
+          console.log('[LOGIN] Generated JWT token for user:', user.id, 'Token length:', token?.length || 0);
           
           res.setHeader('Content-Type', 'application/json');
           res.json({ 

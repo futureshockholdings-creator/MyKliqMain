@@ -96,11 +96,13 @@ export default function Login() {
         // Track daily login and award Kliq Koin
         // Use the token directly from the response (not from storage) to avoid Safari ITP issues
         try {
-          const headers: HeadersInit = {};
+          const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+          };
           // Use token directly from login response (avoids storage timing/partitioning issues)
           if (authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
-            console.log('[Login] Using direct token for kliq-koins request');
+            console.log('[Login] Using direct token for kliq-koins request, token length:', authToken.length);
           } else {
             // Fallback to stored token
             const storedToken = getAuthToken();
@@ -108,11 +110,15 @@ export default function Login() {
               headers['Authorization'] = `Bearer ${storedToken}`;
               console.log('[Login] Using stored token for kliq-koins request');
             } else {
-              console.warn('[Login] No token available for kliq-koins request');
+              console.warn('[Login] No token available for kliq-koins request - skipping');
             }
           }
           
-          const loginResponse = await fetch(buildApiUrl("/api/kliq-koins/login"), {
+          const kliqKoinsUrl = buildApiUrl("/api/kliq-koins/login");
+          console.log('[Login] Making kliq-koins request to:', kliqKoinsUrl);
+          console.log('[Login] Headers:', JSON.stringify(headers));
+          
+          const loginResponse = await fetch(kliqKoinsUrl, {
             method: "POST",
             headers,
             credentials: "include",
