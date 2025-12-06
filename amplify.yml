@@ -14,8 +14,7 @@ frontend:
     files:
       - '**/*'
   cache:
-    paths:
-      - node_modules/**/*
+    paths: []
   redirects:
     # PWA assets must be served as real files
     - source: /manifest.json

@@ -12,9 +12,9 @@
 
 const AWS_DOMAINS = ['mykliq.app', 'www.mykliq.app'];
 
-// Use environment variable if available, otherwise fall back to the deployed Replit URL
-// Update this URL when you deploy the Replit backend to production
-const REPLIT_BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'https://my-kliq-futureshock.replit.app';
+// Hardcoded backend URL - bypasses environment variable issues
+// This URL is baked into the production build
+const REPLIT_BACKEND_URL = 'https://my-kliq-futureshock.replit.app';
 
 let cachedApiBaseUrl: string | null = null;
 
