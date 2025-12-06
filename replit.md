@@ -91,3 +91,54 @@ Mobile optimizations prioritize bandwidth (paginated responses), battery efficie
 - **Gmail SMTP**: Chatbot conversation delivery
 - **Outlook**: User support and departmental email
 - **SendGrid**: Transactional email delivery
+
+# Deployment Architecture
+
+## Split Deployment (AWS Amplify + Replit)
+
+### Overview
+- **Frontend**: Deployed on AWS Amplify at `mykliq.app`
+- **Backend API**: Deployed on Replit as autoscale service at `workspace-mykliq.replit.app`
+- **Database**: PostgreSQL on Neon (serverless)
+
+### Streamlined Workflow: GitHub → AWS Amplify
+
+1. **Make changes** in Replit development environment
+2. **Test locally** using `npm run dev` workflow
+3. **Push to GitHub** - Replit syncs changes to your connected GitHub repository
+4. **AWS Amplify auto-deploys** - Amplify watches the GitHub repo and auto-builds/deploys frontend
+5. **Backend updates** - Click Publish in Replit to deploy backend API changes
+
+### API Configuration
+The frontend automatically detects its environment:
+- When on `mykliq.app` → API calls route to `https://workspace-mykliq.replit.app`
+- When on Replit dev → API calls stay on same origin
+
+File: `client/src/lib/apiConfig.ts`
+
+### CORS Configuration
+The backend allows requests from:
+- `https://mykliq.app`
+- `https://www.mykliq.app`
+- Replit development domains
+- AWS Amplify staging domain
+
+File: `server/index.ts`
+
+### Authentication Flow
+JWT tokens support cross-domain authentication:
+1. User logs in via frontend on mykliq.app
+2. Backend on Replit issues JWT token
+3. Token stored in localStorage (with cookie fallback for Safari)
+4. Token sent in Authorization header for API requests
+
+### Deployment Commands
+- **Frontend build**: `npm run build` (Vite builds to `dist/`)
+- **Backend start**: `npm run start` (runs compiled `dist/index.js`)
+- **Development**: `npm run dev` (tsx for hot reload)
+
+### Autoscale Configuration
+Replit backend uses autoscale deployment:
+- Scales from 0 to handle traffic automatically
+- Optimized for 5000+ concurrent users
+- Includes enterprise caching, circuit breakers, and request deduplication
