@@ -461,7 +461,7 @@ export default function Calendar() {
                           <div className="font-medium flex items-center gap-2">
                             {note.title}
                             {note.remindKliq && (
-                              <Bell className="h-3 w-3 text-primary" title="Kliq will be reminded" />
+                              <Bell className="h-3 w-3 text-primary" />
                             )}
                           </div>
                           {note.description && (

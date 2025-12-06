@@ -9,21 +9,8 @@ import { Image as ImageIcon, Video, X, Upload, Camera, StopCircle, Circle } from
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-export interface UploadResult {
-  successful?: Array<{
-    type: string;
-    uploadURL: string;
-    name: string;
-    size: number;
-    response?: {
-      uploadURL: string;
-    };
-  }>;
-  failed?: Array<{
-    name: string;
-    error: string;
-  }>;
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type UploadResult = any;
 
 interface UploadedMediaObject {
   objectURL: string;
@@ -286,19 +273,19 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
   const handleUploadComplete = async (result: UploadResult) => {
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
-      const fileType = uploadedFile.type;
+      const fileType = uploadedFile.type || '';
       const mediaType = fileType.startsWith('image/') ? 'image' : 'video';
       
-      const mediaUrl = uploadedFile.uploadURL || uploadedFile.response?.uploadURL;
+      const mediaUrl = uploadedFile.uploadURL || uploadedFile.response?.uploadURL || '';
       
       setUploadedMedia({
         url: mediaUrl,
         type: mediaType,
-        fileName: uploadedFile.name,
-        fileSize: uploadedFile.size
+        fileName: uploadedFile.name || 'uploaded-file',
+        fileSize: uploadedFile.size || 0
       });
 
-      const sizeWarning = uploadedFile.size > 200 * 1024 * 1024;
+      const sizeWarning = (uploadedFile.size || 0) > 200 * 1024 * 1024;
       
       toast({
         title: "Media uploaded!",
@@ -523,7 +510,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                     )}
                     
                     <Button
-                      onClick={stopCamera}
+                      onClick={() => stopCamera()}
                       variant="outline"
                       className="bg-white/10 text-white border-white/20 hover:bg-white/20"
                       data-testid="button-close-camera"

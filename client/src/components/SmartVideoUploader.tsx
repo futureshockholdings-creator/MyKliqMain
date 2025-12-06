@@ -42,9 +42,11 @@ export function SmartVideoUploader({
     if (result.successful && result.successful.length > 0) {
       const uploadedFile = result.successful[0];
       const fileType = uploadedFile.type || '';
+      const fileName = uploadedFile.name || '';
       
-      // Check if this is a video that might need conversion
-      if (fileType.startsWith('video/') && isHEVCFile(uploadedFile)) {
+      // Check if this is a video that might need conversion by file extension
+      const isHEVC = ['hevc', 'h265', 'mov'].some(ext => fileName.toLowerCase().endsWith(`.${ext}`));
+      if (fileType.startsWith('video/') && isHEVC) {
         if (!isVideoConversionSupported()) {
           toast({
             title: "HEVC/H.265 Video Uploaded",
@@ -73,11 +75,15 @@ export function SmartVideoUploader({
     setConversionProgress(0);
 
     try {
-      // Production video conversion would integrate with media processing service
-      // For mobile deployment, this would use native video conversion APIs
-      const originalFileData = originalFile.file || originalFile;
+      // Get the file data from the result - check for data property or file property
+      const fileData = (originalFile as { data?: File; file?: File }).data || 
+                       (originalFile as { data?: File; file?: File }).file;
+      
+      if (!fileData || !(fileData instanceof File)) {
+        throw new Error('File data not available for conversion');
+      }
 
-      const converted = await convertVideoToMP4(originalFileData, (progress) => {
+      const converted = await convertVideoToMP4(fileData, (progress) => {
         setConversionProgress(progress);
       });
 
@@ -103,17 +109,15 @@ export function SmartVideoUploader({
   };
 
   const useConvertedVideo = () => {
-    if (convertedFile && pendingResult) {
+    if (convertedFile && pendingResult?.successful?.[0]) {
       // Create a new result with the converted file
-      const updatedResult = {
+      const updatedResult: UploadResult = {
         ...pendingResult,
         successful: [{
           ...pendingResult.successful[0],
           name: convertedFile.name,
           type: convertedFile.type,
           size: convertedFile.size,
-          // Note: In a real implementation, you'd need to upload the converted file
-          // This is a simplified version for demo purposes
         }]
       };
       

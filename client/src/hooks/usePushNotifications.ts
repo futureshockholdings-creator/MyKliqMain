@@ -40,7 +40,7 @@ export function usePushNotifications(): PushNotificationHook {
     // Find the most recent unread notification
     const unreadNotifications = notifications
       .filter((n: Notification) => !n.isRead && n.isVisible)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
     if (unreadNotifications.length === 0) {
       return;

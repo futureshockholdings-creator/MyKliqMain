@@ -44,7 +44,7 @@ interface GroupConversationData {
 
 export function GroupChat() {
   const { groupChatId } = useParams<{ groupChatId: string }>();
-  const { user } = useAuth() as { user: User | null };
+  const { user } = useAuth() as unknown as { user: User | null };
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [messageText, setMessageText] = useState("");

@@ -24,7 +24,7 @@ export function getApiBaseUrl(): string {
   }
 
   // Return cached value if available
-  if (cachedApiBaseUrl !== null) {
+  if (cachedApiBaseUrl) {
     return cachedApiBaseUrl;
   }
 

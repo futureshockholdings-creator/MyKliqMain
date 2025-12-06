@@ -11,7 +11,7 @@ import { performanceMonitor } from './performanceMonitor';
 import { buildApiUrl } from '../apiConfig';
 import { getAuthToken, removeAuthToken, isTokenExpired } from '../tokenStorage';
 
-interface EnterpriseFetchOptions extends RequestInit {
+interface EnterpriseFetchOptions extends Omit<RequestInit, 'priority'> {
   skipCache?: boolean;
   skipDisk?: boolean;
   cacheTTL?: number;

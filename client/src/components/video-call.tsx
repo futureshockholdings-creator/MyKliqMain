@@ -69,7 +69,7 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
     setIsMuted(!isMuted);
   };
 
-  const otherParticipants = call.participants.filter(p => p.userId !== (user as User)?.id);
+  const otherParticipants = call.participants.filter(p => p.userId !== (user as unknown as User)?.id);
 
   return (
     <Card className="w-full h-full bg-card text-foreground">
@@ -106,10 +106,10 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
                 <div className="text-center">
                   <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-2">
                     <span className="text-lg font-bold text-primary-foreground">
-                      {(user as User)?.firstName?.[0]}
+                      {(user as unknown as User)?.firstName?.[0]}
                     </span>
                   </div>
-                  <p className="text-sm text-foreground">{(user as User)?.firstName} (You)</p>
+                  <p className="text-sm text-foreground">{(user as unknown as User)?.firstName} (You)</p>
                 </div>
               </div>
             )}
@@ -207,7 +207,7 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
                 </div>
                 <span className="text-sm truncate flex-1">
                   {participant.user.firstName}
-                  {participant.userId === (user as User)?.id && " (You)"}
+                  {participant.userId === (user as unknown as User)?.id && " (You)"}
                 </span>
                 <Badge variant={participant.status === 'joined' ? 'default' : 'secondary'}>
                   {participant.status}

@@ -472,7 +472,7 @@ export default function AdsManager() {
                           )}
 
                           <div className="text-xs text-gray-400">
-                            Submitted: {new Date(app.submittedAt).toLocaleString()}
+                            Submitted: {new Date(app.submittedAt || 0).toLocaleString()}
                           </div>
                         </div>
 
@@ -529,10 +529,10 @@ export default function AdsManager() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   {selectedApplication.businessName}
-                  {getStatusBadge(selectedApplication.status)}
+                  {getStatusBadge(selectedApplication.status || 'pending')}
                 </DialogTitle>
                 <DialogDescription>
-                  Application ID: {selectedApplication.id} | Submitted: {new Date(selectedApplication.submittedAt).toLocaleString()}
+                  Application ID: {selectedApplication.id} | Submitted: {new Date(selectedApplication.submittedAt || 0).toLocaleString()}
                 </DialogDescription>
               </DialogHeader>
               
@@ -562,7 +562,7 @@ export default function AdsManager() {
                   <div>
                     <h4 className="font-semibold mb-2">Targeting Preferences</h4>
                     <div className="text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded">
-                      <pre className="whitespace-pre-wrap">{JSON.stringify(selectedApplication.targetingPrefs, null, 2)}</pre>
+                      <pre className="whitespace-pre-wrap">{String(JSON.stringify(selectedApplication.targetingPrefs, null, 2))}</pre>
                     </div>
                   </div>
                 )}

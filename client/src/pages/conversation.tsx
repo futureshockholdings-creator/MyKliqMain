@@ -87,7 +87,7 @@ export function Conversation() {
   const { conversationId } = useParams<{ conversationId: string }>();
   // For now, treat conversationId as otherUserId - in a real app we'd fetch conversation details
   const otherUserId = conversationId;
-  const { user } = useAuth() as { user: User | null };
+  const { user } = useAuth() as unknown as { user: User | null };
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [messageText, setMessageText] = useState("");

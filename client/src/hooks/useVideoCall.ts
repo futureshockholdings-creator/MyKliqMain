@@ -36,7 +36,7 @@ export function useVideoCall() {
       // Join user to call signaling
       ws.send(JSON.stringify({
         type: 'join-call-signaling',
-        userId: (user as User).id
+        userId: (user as unknown as User).id
       }));
     };
 
