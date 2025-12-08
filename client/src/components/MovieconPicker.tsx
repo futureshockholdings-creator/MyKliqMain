@@ -35,7 +35,7 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
       <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
         {!videoLoaded && !videoError && (
           <div className={`absolute inset-0 bg-gradient-to-br ${getMovieconColor(moviecon)} flex items-center justify-center animate-pulse`}>
-            <Play className="w-6 h-6 text-white/50" />
+            <Play className="w-8 h-8 text-white/70" />
           </div>
         )}
         {!videoError ? (
@@ -47,9 +47,8 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
             onError={() => setVideoError(true)}
           />
         ) : (
-          <div className={`relative w-full h-full bg-gradient-to-br ${getMovieconColor(moviecon)} flex flex-col items-center justify-center text-white`}>
-            <div className="text-xs font-bold text-center px-2 mb-1">{moviecon.title}</div>
-            <div className="text-xs opacity-90">Custom Clip</div>
+          <div className={`relative w-full h-full bg-gradient-to-br ${getMovieconColor(moviecon)} flex items-center justify-center`}>
+            <Play className="w-8 h-8 text-white/70" />
           </div>
         )}
         <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -59,12 +58,11 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
     );
   }
   
-  // Fallback to gradient design for demo/default moviecons - these load instantly
+  // Fallback to gradient design for demo/default moviecons - just show visual preview, no text
   return (
     <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg`}>
-      <div className={`relative w-full h-full bg-gradient-to-br ${getMovieconColor(moviecon)} flex flex-col items-center justify-center text-white`}>
-        <div className="text-xs font-bold text-center px-2 mb-1">{moviecon.title}</div>
-        <div className="text-xs opacity-90">{moviecon.duration}s clip</div>
+      <div className={`relative w-full h-full bg-gradient-to-br ${getMovieconColor(moviecon)} flex items-center justify-center`}>
+        <Play className="w-8 h-8 text-white/70" />
         <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
           <Play className="w-6 h-6 text-white" />
         </div>
