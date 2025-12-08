@@ -164,7 +164,7 @@ export async function seedEducationalPosts() {
     },
     {
       title: '📿 Daily Bible Verses for Inspiration',
-      content: 'Receive daily Bible verses to uplift and inspire you. Share faith-based content with your kliq and stay connected spiritually with your community.',
+      content: 'Receive daily Bible verses to uplift and inspire you. Share inspirational content with your kliq and stay connected spiritually with your community.',
       featureName: 'Bible Verses',
       icon: '📿',
       accentColor: '#84cc16', // Lime

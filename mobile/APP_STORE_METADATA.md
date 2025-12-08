@@ -74,11 +74,11 @@ MyKliq is designed exclusively for tight-knit friend groups (your "kliq"). No in
 • Your moments stay within your circle
 
 **💪 Perfect For:**
-• College friend groups
-• Faith communities
+• Close friend groups
 • Sports teams
 • Family circles
 • Close-knit crews
+• Any private social circle
 
 **Why MyKliq?**
 We believe social media should strengthen existing friendships, not replace them with superficial connections. MyKliq gives you all the features of major platforms—stories, messaging, feeds, rewards—but exclusively for your real friends.
@@ -150,12 +150,12 @@ A private social platform designed exclusively for tight-knit friend groups. Sha
 ✓ Your data stays yours
 
 **👥 Perfect For:**
-• College students and campus groups
-• Faith-based communities
+• Close friend groups
 • Sports teams and clubs
 • Family groups
 • Close friend circles
 • Any tight-knit community
+• Private social circles
 
 **Why Choose MyKliq?**
 Traditional social media platforms prioritize engagement metrics over genuine connections. MyKliq flips the script—giving you powerful features (stories, messaging, rewards, events) exclusively for the people who actually matter in your life.
@@ -174,13 +174,13 @@ Terms of Service: mykliq.com/terms
 ## Keywords & Search Terms
 
 ### iOS App Store (Max 100 characters)
-private social network,close friends app,friend group chat,kliq,social circle,private messaging,stories app,college social app,friend rewards,exclusive social
+private social network,close friends app,friend group chat,kliq,social circle,private messaging,stories app,friend rewards,exclusive social
 
 ### Google Play Store (Max 80 characters each, 5 sections)
 1. private social network,close friends,friend groups,social circle,private feed
 2. disappearing stories,24 hour stories,story app,ephemeral content,friends stories
 3. group messaging,private chat,friend chat,secure messaging,kliq chat
-4. college social app,campus social,student social network,university app
+4. private circle app,friend network,close friends social,inner circle app
 5. rewards app,social rewards,streak system,engagement rewards,kliq koin
 
 ---

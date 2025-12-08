@@ -130,7 +130,7 @@ const knowledgeBase: KnowledgeBase = {
   },
   'bible-verse': {
     keywords: ['bible', 'verse', 'spiritual', 'inspiration', 'daily verse', 'christian', 'faith'],
-    response: "Daily Bible Verse feature provides spiritual inspiration. Includes: 1) 15 carefully curated inspirational verses, 2) Daily reflections and commentary, 3) Timezone-aware rotation ensuring fresh content, 4) One-click posting to Headlines to share inspiration with your kliq, 5) Perfect for users seeking daily spiritual encouragement and community sharing of faith-based content.",
+    response: "Daily Bible Verse feature provides spiritual inspiration. Includes: 1) 15 carefully curated inspirational verses, 2) Daily reflections and commentary, 3) Timezone-aware rotation ensuring fresh content, 4) One-click posting to Headlines to share inspiration with your kliq, 5) Perfect for users seeking daily spiritual encouragement and community sharing.",
     relatedTopics: ['daily-content', 'inspiration', 'spiritual', 'sharing']
   },
   'auto-posting': {

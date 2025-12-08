@@ -15,7 +15,7 @@ export default function AdvertiserRequirements() {
             Advertiser Requirements
           </h1>
           <p className="text-lg text-gray-700 max-w-3xl mx-auto">
-            MyKliq offers targeted advertising to reach college students and faith communities. 
+            MyKliq offers targeted advertising to reach our engaged community of close-knit friend groups. 
             Review our comprehensive requirements to ensure your ads meet our quality standards.
           </p>
           <div className="flex gap-4 justify-center pt-4">
@@ -299,7 +299,7 @@ export default function AdvertiserRequirements() {
           <CardContent className="space-y-4">
             <p className="text-gray-800">
               If you meet all the requirements above and are ready to reach our engaged community 
-              of college students and faith-based users, start your application today.
+              of private social circles, start your application today.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/advertiser-onboarding">

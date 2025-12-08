@@ -277,7 +277,7 @@ export default function Marketing() {
                   <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mr-3"></div>
                   <div>
                     <p className="font-semibold">Sarah M.</p>
-                    <p className="text-sm text-gray-400">College Student</p>
+                    <p className="text-sm text-gray-400">MyKliq User</p>
                   </div>
                 </div>
               </CardContent>
