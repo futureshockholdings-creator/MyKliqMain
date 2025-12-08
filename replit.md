@@ -46,6 +46,9 @@ External OAuth connections (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube)
 ### Content Management
 The system supports a hierarchical feed filtered by friend rankings, kliq-wide content aggregation, daily horoscopes/Bible verses, AI-powered mood boosts, real-time polling, and rich media (photos, videos, YouTube URLs, Moviecons). It includes 24-hour disappearing stories, 7-day auto-deleting incognito messaging, live streaming, GPS-based meetups, event auto-posting, social media aggregation, and personalized real-time sports updates. A camera capture feature is integrated into the media upload component. Educational posts are displayed to new users for onboarding.
 
+### Moviecon Thumbnail System
+Moviecons use pre-generated JPEG thumbnails (stored in `thumbnailUrl` column) for fast loading in pickers. Thumbnails are extracted from video frames using ffmpeg and stored in object storage at `/objects/thumbnails/{movieconId}.jpg`. The `ThumbnailService` (`server/thumbnailService.ts`) handles generation, and new admin-uploaded moviecons automatically get thumbnails via async background processing. The `scripts/generateMovieconThumbnails.ts` script can batch-generate thumbnails for existing moviecons.
+
 ### Caching Architecture
 A dual-cache system (SimpleCache and CacheService) with Redis support, in-memory fallback, pattern-based invalidation, and LRU eviction optimizes performance. The web client uses a two-tier `EnhancedCache` (memory and IndexedDB) with comprehensive clearing on logout.
 
