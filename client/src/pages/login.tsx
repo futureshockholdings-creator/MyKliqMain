@@ -186,8 +186,8 @@ export default function Login() {
         // Small delay to ensure token is stored, then navigate
         setTimeout(() => setLocation("/"), 500); 
         setUser(data.user); 
+        setLocation("/");
         window.location.href = "/";
-        // setLocation("/");
       } else {
         // Handle error response
         let errorMessage = "Invalid phone number or password";
