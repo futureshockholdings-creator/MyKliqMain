@@ -2683,24 +2683,41 @@ export default function Home() {
             const moodBoostCount = (moodBoostPosts as any[]).length;
             const regularItems = combinedFeed.filter((i: any) => i.type !== 'sports_update');
             const regularItemCount = regularItems.length;
+            const currentUserId = user?.id;
+            
+            let moodPostPosition = -1;
+            let regularIdx = 0;
+            for (const item of combinedFeed) {
+              if (item.type === 'sports_update') continue;
+              if (item.type === 'post' && item.mood && item.userId === currentUserId) {
+                moodPostPosition = regularIdx;
+                break;
+              }
+              regularIdx++;
+            }
             
             const moodBoostPositions: number[] = [];
             if (moodBoostCount > 0 && regularItemCount > 0) {
-              const maxToShow = Math.min(moodBoostCount, regularItemCount);
-              const spacing = Math.max(1, Math.floor(regularItemCount / (maxToShow + 1)));
-              for (let i = 0; i < maxToShow; i++) {
-                const position = Math.min(spacing * (i + 1), regularItemCount - 1);
-                if (!moodBoostPositions.includes(position)) {
-                  moodBoostPositions.push(position);
-                } else {
-                  const nextAvailable = moodBoostPositions.length > 0 
-                    ? Math.max(...moodBoostPositions) + 1 
-                    : 1;
-                  if (nextAvailable < regularItemCount) {
-                    moodBoostPositions.push(nextAvailable);
+              if (moodPostPosition >= 0) {
+                moodBoostPositions.push(moodPostPosition + 1);
+              }
+              
+              const remainingBoosts = moodBoostCount - moodBoostPositions.length;
+              if (remainingBoosts > 0) {
+                const availableSlots = regularItemCount - moodBoostPositions.length;
+                const spacing = Math.max(1, Math.floor(availableSlots / (remainingBoosts + 1)));
+                let nextPos = moodBoostPositions.length > 0 
+                  ? Math.max(...moodBoostPositions) + spacing 
+                  : spacing;
+                
+                for (let i = 0; i < remainingBoosts && nextPos < regularItemCount; i++) {
+                  if (!moodBoostPositions.includes(nextPos)) {
+                    moodBoostPositions.push(nextPos);
                   }
+                  nextPos += spacing;
                 }
               }
+              
               if (moodBoostPositions.length === 0 && regularItemCount > 0) {
                 moodBoostPositions.push(0);
               }
