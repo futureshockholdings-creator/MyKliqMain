@@ -23,7 +23,7 @@ export function MoodBoostCard({ post }: MoodBoostCardProps) {
       <Card 
         className="relative overflow-hidden rounded-3xl border-2 shadow-lg hover:shadow-xl transition-all duration-300"
         style={{
-          background: "linear-gradient(135deg, rgba(255, 20, 147, 0.1) 0%, rgba(0, 191, 255, 0.1) 100%)",
+          background: "linear-gradient(135deg, #ffffff 0%, #fff5fa 100%)",
           borderImage: "linear-gradient(135deg, rgba(255, 20, 147, 0.5), rgba(0, 191, 255, 0.5)) 1",
         }}
         data-testid={`card-mood-boost-${post.id}`}
@@ -42,7 +42,7 @@ export function MoodBoostCard({ post }: MoodBoostCardProps) {
           {/* "Just for you" label */}
           <div className="flex items-center gap-2 opacity-90">
             <Sparkles className="h-4 w-4 text-yellow-500" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-foreground/80" data-testid="text-just-for-you">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-600" data-testid="text-just-for-you">
               ✨ Just for you
             </span>
           </div>
@@ -50,7 +50,7 @@ export function MoodBoostCard({ post }: MoodBoostCardProps) {
           {/* Content with gradient overlay effect */}
           <div className="relative">
             <p 
-              className="text-lg font-bold leading-relaxed bg-gradient-to-r from-pink-600 to-purple-600 dark:from-pink-400 dark:to-purple-400 bg-clip-text text-transparent"
+              className="text-lg font-bold leading-relaxed bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent"
               data-testid="text-mood-boost-content"
             >
               {post.content}
@@ -58,7 +58,7 @@ export function MoodBoostCard({ post }: MoodBoostCardProps) {
           </div>
 
           {/* Bottom section with subtle timestamp */}
-          <div className="flex items-center justify-end text-xs text-muted-foreground pt-2 border-t border-border/30">
+          <div className="flex items-center justify-end text-xs pt-2 border-t border-gray-200" style={{ color: '#6b7280' }}>
             <span className="opacity-70" data-testid="text-expires-at">
               Expires in {getTimeRemaining(post.expiresAt)}
             </span>
