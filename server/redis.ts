@@ -5,9 +5,9 @@ let redis: Redis.RedisClientType | null = null;
 // Initialize Redis connection with production optimizations
 export async function initializeRedis() {
   try {
-    // Skip Redis initialization in development if not available
-    if (!process.env.REDIS_URL && process.env.NODE_ENV === 'development') {
-      console.log('Redis not available in development, using memory cache fallback');
+    // Skip Redis initialization if REDIS_URL is not configured
+    if (!process.env.REDIS_URL) {
+      console.log('Redis not configured, using optimized memory cache for scaling');
       return null;
     }
     

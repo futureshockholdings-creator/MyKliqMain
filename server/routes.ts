@@ -7,7 +7,7 @@ import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { performanceMonitor, performanceMiddleware } from './performanceMonitor';
 import { requestManagerMiddleware, getLoadBalancerStatus } from './loadBalancer';
 import { memoryOptimizer } from './memoryOptimizer';
-import { healthCheckHandler, scalabilityReportHandler } from './healthcheck';
+import { healthCheckHandler, simpleHealthCheckHandler, scalabilityReportHandler } from './healthcheck';
 import { queryOptimizer } from './queryOptimizer';
 import { notificationService } from "./notificationService";
 import { thumbnailService } from "./thumbnailService";
@@ -8743,8 +8743,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Advanced scalability monitoring endpoints
-  app.get('/health', healthCheckHandler);
+  // Simple health check for Autoscale (fast, no external dependencies)
+  app.get('/health', simpleHealthCheckHandler);
+  
+  // Comprehensive health check for monitoring dashboards
+  app.get('/health/detailed', healthCheckHandler);
   app.get('/internal/scalability', scalabilityReportHandler);
   app.get('/internal/load-balancer', (req, res) => {
     res.json(getLoadBalancerStatus());

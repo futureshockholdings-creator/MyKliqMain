@@ -280,7 +280,16 @@ class HealthMonitor {
 
 export const healthMonitor = new HealthMonitor();
 
-// Health check endpoint handler
+// Simple health check for Autoscale/load balancer (fast, no external dependencies)
+export function simpleHealthCheckHandler(req: Request, res: Response) {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+}
+
+// Comprehensive health check endpoint handler (for monitoring dashboards)
 export async function healthCheckHandler(req: Request, res: Response) {
   try {
     const healthStatus = await healthMonitor.getHealthStatus();
