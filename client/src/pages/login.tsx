@@ -26,7 +26,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, setUser } = useAuth();
   
   // Track if we should force showing the login form (user just logged out)
   const [shouldForceLogin, setShouldForceLogin] = useState(() => {
@@ -184,7 +184,6 @@ export default function Login() {
         queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
         
         // Small delay to ensure token is stored, then navigate
-        authContext.setUser(data.user);
         setLocation("/");
       } else {
         // Handle error response
