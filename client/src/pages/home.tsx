@@ -551,9 +551,34 @@ export default function Home() {
     refetchOnWindowFocus: true, // Refetch when user returns to app
   });
 
-  // Create combined feed by merging sports updates with feed items
-  // Insert sports updates at regular intervals (every 3 items)
-  const combinedFeed = [...feedItems];
+  // Create combined feed by merging mood boosts and sports updates with feed items
+  // Mood boosts are treated like regular posts and sorted by createdAt
+  const moodBoostsArray = Array.isArray(moodBoostPosts) ? moodBoostPosts : [];
+  const normalizedMoodBoosts = moodBoostsArray
+    .filter((boost: any) => boost.createdAt || boost.timestamp) // Only include items with valid timestamps
+    .map((boost: any) => ({
+      ...boost,
+      type: 'mood_boost',
+      createdAt: boost.createdAt ?? boost.timestamp ?? new Date().toISOString(), // Ensure createdAt exists
+    }));
+  
+  // Merge feed items with mood boosts, deduplicate by id+type, and sort by createdAt (newest first)
+  const allItems = [...feedItems, ...normalizedMoodBoosts];
+  const seenKeys = new Set<string>();
+  const deduplicatedFeed = allItems.filter((item: any) => {
+    const key = `${item.type}-${item.id}`;
+    if (seenKeys.has(key)) return false;
+    seenKeys.add(key);
+    return true;
+  });
+  
+  const mergedFeed = deduplicatedFeed.sort((a: any, b: any) => {
+    const dateA = new Date(a.createdAt || 0).getTime() || 0;
+    const dateB = new Date(b.createdAt || 0).getTime() || 0;
+    return dateB - dateA;
+  });
+  
+  const combinedFeed = [...mergedFeed];
   const sportsUpdatesArray = Array.isArray(sportsUpdates) ? sportsUpdates : [];
   
   if (sportsUpdatesArray.length > 0) {
@@ -2679,78 +2704,16 @@ export default function Home() {
         </Card>
       ) : (
         <>
-          {(() => {
-            const moodBoostCount = (moodBoostPosts as any[]).length;
-            const regularItems = combinedFeed.filter((i: any) => i.type !== 'sports_update');
-            const regularItemCount = regularItems.length;
-            const currentUserId = user?.id;
-            
-            let moodPostPosition = -1;
-            let regularIdx = 0;
-            for (const item of combinedFeed) {
-              if (item.type === 'sports_update') continue;
-              const authorId = item.userId ?? item.authorId ?? item.author?.id;
-              if (item.type === 'post' && item.mood && authorId === currentUserId) {
-                moodPostPosition = regularIdx;
-                break;
-              }
-              regularIdx++;
-            }
-            
-            const moodBoostPositions: number[] = [];
-            if (moodBoostCount > 0 && regularItemCount > 0) {
-              if (moodPostPosition >= 0) {
-                moodBoostPositions.push(moodPostPosition + 1);
-              }
-              
-              const remainingBoosts = moodBoostCount - moodBoostPositions.length;
-              if (remainingBoosts > 0) {
-                const availableSlots = regularItemCount - moodBoostPositions.length;
-                const spacing = Math.max(1, Math.floor(availableSlots / (remainingBoosts + 1)));
-                let nextPos = moodBoostPositions.length > 0 
-                  ? Math.max(...moodBoostPositions) + spacing 
-                  : spacing;
-                
-                for (let i = 0; i < remainingBoosts && nextPos < regularItemCount; i++) {
-                  if (!moodBoostPositions.includes(nextPos)) {
-                    moodBoostPositions.push(nextPos);
-                  }
-                  nextPos += spacing;
-                }
-              }
-              
-              if (moodBoostPositions.length === 0 && regularItemCount > 0) {
-                moodBoostPositions.push(0);
-              }
-            }
-            
-            let moodBoostDisplayed = 0;
-            
-            return combinedFeed.map((item: any, index: number) => {
+          {combinedFeed.map((item: any, index: number) => {
+          const regularItemIndex = combinedFeed.slice(0, index).filter((i: any) => i.type !== 'sports_update' && i.type !== 'mood_boost').length;
           
-          const regularItemIndex = combinedFeed.slice(0, index).filter((i: any) => i.type !== 'sports_update').length;
-          
-          const shouldShowMoodBoost = moodBoostPositions.includes(regularItemIndex) && 
-                                       moodBoostDisplayed < moodBoostCount;
-          const currentMoodBoostIndex = shouldShowMoodBoost ? moodBoostDisplayed : -1;
-          if (shouldShowMoodBoost) {
-            moodBoostDisplayed++;
-          }
-          
-          const showAd = regularItemIndex > 0 && (regularItemIndex + 1) % 4 === 0 && (targetedAds as any[]).length > 0 && !shouldShowMoodBoost;
+          const showAd = regularItemIndex > 0 && (regularItemIndex + 1) % 4 === 0 && (targetedAds as any[]).length > 0;
 
           const adIndex = Math.floor((regularItemIndex + 1) / 4 - 1) % (targetedAds as any[]).length;
 
           return (
             <div key={`feed-wrapper-${item.id}-${index}`}>
-              {/* Show mood boost post before this item if conditions are met - each shown only once */}
-              {shouldShowMoodBoost && (moodBoostPosts as any[])[currentMoodBoostIndex] && (
-                <div className="mb-6" key={`mood-boost-${(moodBoostPosts as any[])[currentMoodBoostIndex].id}`}>
-                  <MoodBoostCard post={(moodBoostPosts as any[])[currentMoodBoostIndex]} />
-                </div>
-              )}
-              
-              {/* Show sponsored ad before this item if conditions are met (blocked by mood boosts) */}
+              {/* Show sponsored ad before this item if conditions are met */}
               {showAd && (targetedAds as any[])[adIndex] && (
                 <div className="mb-4" key={`ad-${adIndex}-${index}`}>
                   <SponsoredAd ad={(targetedAds as any[])[adIndex]} />
@@ -2758,6 +2721,15 @@ export default function Home() {
               )}
               
               {(() => {
+          
+          // Mood boost posts - rendered like regular feed items but with special styling
+          if (item.type === 'mood_boost') {
+            return (
+              <div className="mb-6" key={`mood-boost-${item.id}`}>
+                <MoodBoostCard post={item} />
+              </div>
+            );
+          }
           
           if (item.type === 'sports_update') {
             return (
@@ -3480,8 +3452,7 @@ export default function Home() {
         })()}
       </div>
     );
-  });
-          })()}
+  })}
           
           {/* Infinite scroll trigger and loading indicator */}
           {hasNextPage && (
