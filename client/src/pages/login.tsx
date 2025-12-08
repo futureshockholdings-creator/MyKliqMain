@@ -184,10 +184,13 @@ export default function Login() {
         queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
         
         // Small delay to ensure token is stored, then navigate
-        setTimeout(() => setLocation("/"), 500); 
-        setUser(data.user); 
-        setLocation("/");
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        setUser(data.user);
+        await sleep(1500);
         window.location.href = "/";
+        setTimeout(() => {
+          window.location.reload();
+        }, 200); 
       } else {
         // Handle error response
         let errorMessage = "Invalid phone number or password";
