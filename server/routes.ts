@@ -10,6 +10,7 @@ import { memoryOptimizer } from './memoryOptimizer';
 import { healthCheckHandler, scalabilityReportHandler } from './healthcheck';
 import { queryOptimizer } from './queryOptimizer';
 import { notificationService } from "./notificationService";
+import { thumbnailService } from "./thumbnailService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
 import { pool, db } from "./db";
@@ -7437,13 +7438,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         normalizedUrl = objectStorageService.normalizeObjectEntityPath(videoUrlValue);
       }
 
+      const movieconId = `mv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const moviecon = await storage.createMoviecon({
-        id: `mv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: movieconId,
         title,
         videoUrl: normalizedUrl,
-        duration: 0, // Will be determined later if needed
+        duration: 0,
         uploadedBy: userId,
       });
+      
+      // Generate thumbnail asynchronously (don't block the response)
+      if (normalizedUrl.startsWith('/objects/')) {
+        thumbnailService.generateThumbnailFromVideo(normalizedUrl, movieconId)
+          .then(async (thumbnailUrl) => {
+            if (thumbnailUrl) {
+              await storage.updateMoviecon(movieconId, { thumbnailUrl });
+              console.log(`✅ Generated thumbnail for moviecon: ${movieconId}`);
+            }
+          })
+          .catch((err) => console.error(`Failed to generate thumbnail for ${movieconId}:`, err));
+      }
       
       res.json(moviecon);
     } catch (error) {

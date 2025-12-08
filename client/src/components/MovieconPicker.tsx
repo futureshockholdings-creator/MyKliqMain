@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,19 +24,13 @@ function getMovieconColor(moviecon: Moviecon): string {
   return colors[moviecon.title as keyof typeof colors] || 'from-slate-500 to-slate-600';
 }
 
-function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?: string }) {
-  const [videoError, setVideoError] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+function MovieconThumbnail({ moviecon, className }: { moviecon: Moviecon; className?: string }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
-  // Force video to seek to first frame after metadata loads
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0.1; // Seek to 0.1s to get a frame
-    }
-  };
+  const thumbnailSrc = moviecon.thumbnailUrl || null;
   
-  if (!moviecon.videoUrl) {
-    // No video URL - show placeholder
+  if (!thumbnailSrc || imageError) {
     return (
       <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-gray-800`}>
         <div className="w-full h-full flex items-center justify-center">
@@ -48,21 +42,16 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
 
   return (
     <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
-      {!videoError ? (
-        <video
-          ref={videoRef}
-          src={moviecon.videoUrl}
-          className="w-full h-full object-cover"
-          preload="metadata"
-          muted
-          playsInline
-          onLoadedMetadata={handleLoadedMetadata}
-          onError={() => setVideoError(true)}
-        />
-      ) : (
-        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-          <Play className="w-8 h-8 text-white/50" />
-        </div>
+      <img
+        src={thumbnailSrc}
+        alt={moviecon.title}
+        className={`w-full h-full object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        loading="eager"
+        onLoad={() => setImageLoaded(true)}
+        onError={() => setImageError(true)}
+      />
+      {!imageLoaded && (
+        <div className="absolute inset-0 bg-gray-800 animate-pulse" />
       )}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="w-10 h-10 bg-black/50 rounded-full flex items-center justify-center">
@@ -200,7 +189,7 @@ export function MovieconPicker({
                     onClick={() => handleMovieconClick(moviecon)}
                     className="moviecon-item group cursor-pointer flex flex-col gap-1"
                   >
-                    <MovieconVideo 
+                    <MovieconThumbnail 
                       moviecon={moviecon} 
                       className="rounded-lg hover:scale-105 transition-transform duration-200 shadow-sm hover:shadow-md"
                     />
