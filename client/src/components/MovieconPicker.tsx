@@ -26,17 +26,24 @@ function getMovieconColor(moviecon: Moviecon): string {
 
 function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?: string }) {
   const [videoError, setVideoError] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   
   // Show actual video thumbnail for uploaded moviecons, fallback to gradient for old ones
   if (moviecon.videoUrl && (moviecon.videoUrl.includes('storage.googleapis.com') || moviecon.videoUrl.startsWith('/objects/'))) {
     // This is a custom uploaded moviecon - show video thumbnail
     return (
       <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
+        {!videoLoaded && !videoError && (
+          <div className={`absolute inset-0 bg-gradient-to-br ${getMovieconColor(moviecon)} flex items-center justify-center animate-pulse`}>
+            <Play className="w-6 h-6 text-white/50" />
+          </div>
+        )}
         {!videoError ? (
           <video
             src={moviecon.videoUrl}
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover transition-opacity duration-200 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
             preload="metadata"
+            onLoadedMetadata={() => setVideoLoaded(true)}
             onError={() => setVideoError(true)}
           />
         ) : (
@@ -52,7 +59,7 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
     );
   }
   
-  // Fallback to gradient design for demo/default moviecons
+  // Fallback to gradient design for demo/default moviecons - these load instantly
   return (
     <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg`}>
       <div className={`relative w-full h-full bg-gradient-to-br ${getMovieconColor(moviecon)} flex flex-col items-center justify-center text-white`}>
@@ -99,18 +106,38 @@ export function MovieconPicker({
     }
   }, [dialogOpen]);
 
-  const { data: moviecons = [], isLoading } = useQuery<Moviecon[]>({
+  // Prefetch base moviecons data on component mount (before dialog opens)
+  const { data: prefetchedMoviecons = [], isPending: isPrefetching } = useQuery<Moviecon[]>({
+    queryKey: ['/api/moviecons', ''],
+    queryFn: async () => {
+      const response = await fetch('/api/moviecons', { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  });
+
+  // Search query - only fetch when searching and dialog is open
+  const { data: searchedMoviecons = [], isPending: isSearching } = useQuery<Moviecon[]>({
     queryKey: ['/api/moviecons', searchQuery],
     queryFn: async () => {
-      const url = searchQuery ? `/api/moviecons?q=${encodeURIComponent(searchQuery)}` : '/api/moviecons';
+      const url = `/api/moviecons?q=${encodeURIComponent(searchQuery)}`;
       const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) {
         throw new Error(`${response.status}: ${response.statusText}`);
       }
       return response.json();
     },
-    enabled: dialogOpen, // Only fetch when dialog is open
+    enabled: dialogOpen && searchQuery.length > 0,
+    staleTime: 60 * 1000, // Cache search results for 1 minute
   });
+
+  // Use searched moviecons if searching, otherwise use prefetched
+  const moviecons = searchQuery ? searchedMoviecons : prefetchedMoviecons;
+  const isLoading = searchQuery ? isSearching : isPrefetching;
 
   const handleMovieconClick = (moviecon: Moviecon) => {
     onSelectMoviecon(moviecon);

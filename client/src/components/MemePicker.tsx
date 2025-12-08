@@ -25,6 +25,20 @@ function getMemeColor(meme: Meme): string {
 
 function MemeImage({ meme, className }: { meme: Meme; className?: string }) {
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // Convert Google Cloud Storage URLs to local object serving URLs
+  const imageUrl = meme.imageUrl.startsWith('https://storage.googleapis.com/') 
+    ? meme.imageUrl.replace(/^https:\/\/storage\.googleapis\.com\/[^\/]+\/\.private\//, '/objects/')
+    : meme.imageUrl;
+
+  // Preload image on mount
+  useEffect(() => {
+    const img = new Image();
+    img.src = imageUrl;
+    img.onload = () => setImageLoaded(true);
+    img.onerror = () => setImageError(true);
+  }, [imageUrl]);
   
   if (imageError) {
     // Fallback to gradient design if image fails to load
@@ -37,19 +51,21 @@ function MemeImage({ meme, className }: { meme: Meme; className?: string }) {
       </div>
     );
   }
-  
-  // Convert Google Cloud Storage URLs to local object serving URLs
-  const imageUrl = meme.imageUrl.startsWith('https://storage.googleapis.com/') 
-    ? meme.imageUrl.replace(/^https:\/\/storage\.googleapis\.com\/[^\/]+\/\.private\//, '/objects/')
-    : meme.imageUrl;
 
   return (
     <div className={`${className} relative h-32 overflow-hidden meme-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
+      {!imageLoaded && (
+        <div className={`absolute inset-0 bg-gradient-to-br ${getMemeColor(meme)} flex items-center justify-center animate-pulse`}>
+          <ImageIcon className="w-6 h-6 text-white/50" />
+        </div>
+      )}
       <img
         src={imageUrl}
         alt={meme.title}
-        className="w-full h-full object-cover"
+        className={`w-full h-full object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setImageLoaded(true)}
         onError={() => setImageError(true)}
+        loading="eager"
       />
       {meme.isAnimated && (
         <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
@@ -96,18 +112,38 @@ export function MemePicker({
     }
   }, [dialogOpen]);
 
-  const { data: memes = [], isLoading } = useQuery<Meme[]>({
+  // Prefetch base memes data on component mount (before dialog opens)
+  const { data: prefetchedMemes = [], isPending: isPrefetching } = useQuery<Meme[]>({
+    queryKey: ['/api/memes', ''],
+    queryFn: async () => {
+      const response = await fetch('/api/memes', { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  });
+
+  // Search query - only fetch when searching and dialog is open
+  const { data: searchedMemes = [], isPending: isSearching } = useQuery<Meme[]>({
     queryKey: ['/api/memes', searchQuery],
     queryFn: async () => {
-      const url = searchQuery ? `/api/memes?q=${encodeURIComponent(searchQuery)}` : '/api/memes';
+      const url = `/api/memes?q=${encodeURIComponent(searchQuery)}`;
       const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) {
         throw new Error(`${response.status}: ${response.statusText}`);
       }
       return response.json();
     },
-    enabled: dialogOpen, // Only fetch when dialog is open
+    enabled: dialogOpen && searchQuery.length > 0,
+    staleTime: 60 * 1000, // Cache search results for 1 minute
   });
+
+  // Use searched memes if searching, otherwise use prefetched
+  const memes = searchQuery ? searchedMemes : prefetchedMemes;
+  const isLoading = searchQuery ? isSearching : isPrefetching;
 
   const handleMemeClick = (meme: Meme) => {
     onSelectMeme(meme);
