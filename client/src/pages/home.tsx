@@ -2689,7 +2689,8 @@ export default function Home() {
             let regularIdx = 0;
             for (const item of combinedFeed) {
               if (item.type === 'sports_update') continue;
-              if (item.type === 'post' && item.mood && item.userId === currentUserId) {
+              const authorId = item.userId ?? item.authorId ?? item.author?.id;
+              if (item.type === 'post' && item.mood && authorId === currentUserId) {
                 moodPostPosition = regularIdx;
                 break;
               }
