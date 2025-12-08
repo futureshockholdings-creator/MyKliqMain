@@ -184,6 +184,8 @@ export default function Login() {
         queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
         
         // Small delay to ensure token is stored, then navigate
+        setTimeout(() => setLocation("/"), 500);
+        setUser(data.user);
         setLocation("/");
       } else {
         // Handle error response
