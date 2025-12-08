@@ -2679,27 +2679,56 @@ export default function Home() {
         </Card>
       ) : (
         <>
-          {combinedFeed.map((item: any, index: number) => {
+          {(() => {
+            const moodBoostCount = (moodBoostPosts as any[]).length;
+            const regularItems = combinedFeed.filter((i: any) => i.type !== 'sports_update');
+            const regularItemCount = regularItems.length;
+            
+            const moodBoostPositions: number[] = [];
+            if (moodBoostCount > 0 && regularItemCount > 0) {
+              const maxToShow = Math.min(moodBoostCount, regularItemCount);
+              const spacing = Math.max(1, Math.floor(regularItemCount / (maxToShow + 1)));
+              for (let i = 0; i < maxToShow; i++) {
+                const position = Math.min(spacing * (i + 1), regularItemCount - 1);
+                if (!moodBoostPositions.includes(position)) {
+                  moodBoostPositions.push(position);
+                } else {
+                  const nextAvailable = moodBoostPositions.length > 0 
+                    ? Math.max(...moodBoostPositions) + 1 
+                    : 1;
+                  if (nextAvailable < regularItemCount) {
+                    moodBoostPositions.push(nextAvailable);
+                  }
+                }
+              }
+              if (moodBoostPositions.length === 0 && regularItemCount > 0) {
+                moodBoostPositions.push(0);
+              }
+            }
+            
+            let moodBoostDisplayed = 0;
+            
+            return combinedFeed.map((item: any, index: number) => {
           
-          // Skip sports updates for injection calculations (they're already in the feed)
           const regularItemIndex = combinedFeed.slice(0, index).filter((i: any) => i.type !== 'sports_update').length;
           
-          // Check conditions for mood boosts and ads (based on regular item positions only)
-          const showMoodBoost = regularItemIndex > 0 && (regularItemIndex + 1) % 2 === 0 && (moodBoostPosts as any[]).length > 0;
+          const shouldShowMoodBoost = moodBoostPositions.includes(regularItemIndex) && 
+                                       moodBoostDisplayed < moodBoostCount;
+          const currentMoodBoostIndex = shouldShowMoodBoost ? moodBoostDisplayed : -1;
+          if (shouldShowMoodBoost) {
+            moodBoostDisplayed++;
+          }
           
-          // Mood boosts take priority over ads - only show ad if no mood boost at this position
-          const showAd = regularItemIndex > 0 && (regularItemIndex + 1) % 4 === 0 && (targetedAds as any[]).length > 0 && !showMoodBoost;
+          const showAd = regularItemIndex > 0 && (regularItemIndex + 1) % 4 === 0 && (targetedAds as any[]).length > 0 && !shouldShowMoodBoost;
 
-          // Calculate indices
           const adIndex = Math.floor((regularItemIndex + 1) / 4 - 1) % (targetedAds as any[]).length;
-          const moodBoostIndex = Math.floor((regularItemIndex + 1) / 2 - 1) % (moodBoostPosts as any[]).length;
 
           return (
             <div key={`feed-wrapper-${item.id}-${index}`}>
-              {/* Show mood boost post before this item if conditions are met */}
-              {showMoodBoost && (moodBoostPosts as any[])[moodBoostIndex] && (
-                <div className="mb-6" key={`mood-boost-${moodBoostIndex}-${index}`}>
-                  <MoodBoostCard post={(moodBoostPosts as any[])[moodBoostIndex]} />
+              {/* Show mood boost post before this item if conditions are met - each shown only once */}
+              {shouldShowMoodBoost && (moodBoostPosts as any[])[currentMoodBoostIndex] && (
+                <div className="mb-6" key={`mood-boost-${(moodBoostPosts as any[])[currentMoodBoostIndex].id}`}>
+                  <MoodBoostCard post={(moodBoostPosts as any[])[currentMoodBoostIndex]} />
                 </div>
               )}
               
@@ -3433,7 +3462,8 @@ export default function Home() {
         })()}
       </div>
     );
-  })}
+  });
+          })()}
           
           {/* Infinite scroll trigger and loading indicator */}
           {hasNextPage && (
