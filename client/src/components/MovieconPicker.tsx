@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,54 +26,48 @@ function getMovieconColor(moviecon: Moviecon): string {
 
 function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?: string }) {
   const [videoError, setVideoError] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
-  // Show actual video thumbnail for uploaded moviecons
-  if (moviecon.videoUrl && (moviecon.videoUrl.includes('storage.googleapis.com') || moviecon.videoUrl.startsWith('/objects/'))) {
+  // Force video to seek to first frame after metadata loads
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0.1; // Seek to 0.1s to get a frame
+    }
+  };
+  
+  if (!moviecon.videoUrl) {
+    // No video URL - show placeholder
     return (
-      <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
-        {!videoError ? (
-          <video
-            src={moviecon.videoUrl}
-            className="w-full h-full object-cover"
-            preload="metadata"
-            onLoadedData={() => setVideoLoaded(true)}
-            onError={() => setVideoError(true)}
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-            <Play className="w-8 h-8 text-white/50" />
-          </div>
-        )}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Play className="w-8 h-8 text-white drop-shadow-lg" />
+      <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-gray-800`}>
+        <div className="w-full h-full flex items-center justify-center">
+          <Play className="w-8 h-8 text-white/50" />
         </div>
       </div>
     );
   }
-  
-  // For moviecons without video URL, show the video using the videoUrl field
-  if (moviecon.videoUrl) {
-    return (
-      <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
+
+  return (
+    <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
+      {!videoError ? (
         <video
+          ref={videoRef}
           src={moviecon.videoUrl}
           className="w-full h-full object-cover"
           preload="metadata"
+          muted
+          playsInline
+          onLoadedMetadata={handleLoadedMetadata}
           onError={() => setVideoError(true)}
         />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Play className="w-8 h-8 text-white drop-shadow-lg" />
+      ) : (
+        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+          <Play className="w-8 h-8 text-white/50" />
         </div>
-      </div>
-    );
-  }
-  
-  // Fallback for moviecons without any video - show play icon on dark background
-  return (
-    <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-gray-800`}>
-      <div className="w-full h-full flex items-center justify-center">
-        <Play className="w-8 h-8 text-white/50" />
+      )}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-10 h-10 bg-black/50 rounded-full flex items-center justify-center">
+          <Play className="w-5 h-5 text-white ml-0.5" />
+        </div>
       </div>
     </div>
   );
