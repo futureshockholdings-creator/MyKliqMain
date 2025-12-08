@@ -28,44 +28,52 @@ function MovieconVideo({ moviecon, className }: { moviecon: Moviecon; className?
   const [videoError, setVideoError] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   
-  // Show actual video thumbnail for uploaded moviecons, fallback to gradient for old ones
+  // Show actual video thumbnail for uploaded moviecons
   if (moviecon.videoUrl && (moviecon.videoUrl.includes('storage.googleapis.com') || moviecon.videoUrl.startsWith('/objects/'))) {
-    // This is a custom uploaded moviecon - show video thumbnail
     return (
       <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
-        {!videoLoaded && !videoError && (
-          <div className={`absolute inset-0 bg-gradient-to-br ${getMovieconColor(moviecon)} flex items-center justify-center animate-pulse`}>
-            <Play className="w-8 h-8 text-white/70" />
-          </div>
-        )}
         {!videoError ? (
           <video
             src={moviecon.videoUrl}
-            className={`w-full h-full object-cover transition-opacity duration-200 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
+            className="w-full h-full object-cover"
             preload="metadata"
-            onLoadedMetadata={() => setVideoLoaded(true)}
+            onLoadedData={() => setVideoLoaded(true)}
             onError={() => setVideoError(true)}
           />
         ) : (
-          <div className={`relative w-full h-full bg-gradient-to-br ${getMovieconColor(moviecon)} flex items-center justify-center`}>
-            <Play className="w-8 h-8 text-white/70" />
+          <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+            <Play className="w-8 h-8 text-white/50" />
           </div>
         )}
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-          <Play className="w-6 h-6 text-white drop-shadow-lg" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Play className="w-8 h-8 text-white drop-shadow-lg" />
         </div>
       </div>
     );
   }
   
-  // Fallback to gradient design for demo/default moviecons - just show visual preview, no text
-  return (
-    <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg`}>
-      <div className={`relative w-full h-full bg-gradient-to-br ${getMovieconColor(moviecon)} flex items-center justify-center`}>
-        <Play className="w-8 h-8 text-white/70" />
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-          <Play className="w-6 h-6 text-white" />
+  // For moviecons without video URL, show the video using the videoUrl field
+  if (moviecon.videoUrl) {
+    return (
+      <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-black`}>
+        <video
+          src={moviecon.videoUrl}
+          className="w-full h-full object-cover"
+          preload="metadata"
+          onError={() => setVideoError(true)}
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Play className="w-8 h-8 text-white drop-shadow-lg" />
         </div>
+      </div>
+    );
+  }
+  
+  // Fallback for moviecons without any video - show play icon on dark background
+  return (
+    <div className={`${className} relative h-24 overflow-hidden moviecon-container cursor-pointer border-2 border-primary rounded-lg bg-gray-800`}>
+      <div className="w-full h-full flex items-center justify-center">
+        <Play className="w-8 h-8 text-white/50" />
       </div>
     </div>
   );
