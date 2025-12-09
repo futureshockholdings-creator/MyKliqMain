@@ -9805,6 +9805,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete user by email endpoint for admin (cleanup orphaned accounts)
+  app.delete('/api/admin/users/by-email/:email', async (req, res) => {
+    try {
+      const { password } = req.body;
+      const { email } = req.params;
+      
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(decodeURIComponent(email));
+      if (!user) {
+        return res.status(404).json({ message: `No user found with email: ${email}` });
+      }
+
+      // Delete the user
+      await storage.deleteUser(user.id);
+      res.json({ 
+        success: true, 
+        message: `User with email ${email} deleted successfully`,
+        deletedUserId: user.id 
+      });
+    } catch (error) {
+      console.error("Error deleting user by email:", error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
   // Suspend user endpoint for admin
   app.post('/api/admin/users/:userId/suspend', async (req, res) => {
     try {
