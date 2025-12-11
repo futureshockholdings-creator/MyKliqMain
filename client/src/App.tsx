@@ -189,9 +189,22 @@ function Navigation({ currentPath }: { currentPath: string }) {
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [location] = useLocation();
 
   console.log(isAuthenticated, "--->isAuth");
   
+  // Show loading spinner while checking auth state on root path
+  // This prevents the Landing page from flashing before redirect to Home
+  if (isLoading && location === "/") {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Switch>
