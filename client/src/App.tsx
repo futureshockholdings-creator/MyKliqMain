@@ -216,17 +216,19 @@ function Router() {
       <Route path="/meme-manager" component={MemeManagerPage} />
       <Route path="/maintenance" component={MaintenanceDashboard} />
       
-      {/* Protected routes - require authentication */}
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
+      {/* NOT AUTHENTICATED → Show Landing */}
+      {!isAuthenticated && (
+        <Route exact path="/" component={Landing} />
+      )}
+    
+      {/* AUTHENTICATED ROUTES */}
+      {isAuthenticated && (
         <>
-          <Route path="/" component={Home} />
+          <Route exact path="/" component={Home} />
           <Route path="/kliq" component={Kliq} />
           <Route path="/events" component={Events} />
           <Route path="/calendar" component={CalendarPage} />
           <Route path="/actions" component={Actions} />
-
           <Route path="/messages" component={Messages} />
           <Route path="/messages/:conversationId" component={Conversation} />
           <Route path="/group-chat/:groupChatId" component={GroupChat} />
