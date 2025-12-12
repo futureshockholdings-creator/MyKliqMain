@@ -489,9 +489,8 @@ export default function Home() {
   } = useInfiniteQuery({
     queryKey: ["/api/kliq-feed"],
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await fetch(`/api/kliq-feed?page=${pageParam}&limit=100`);
-      if (!response.ok) throw new Error('Failed to fetch feed');
-      return response.json();
+      // Use apiRequest to include JWT auth header
+      return await apiRequest("GET", `/api/kliq-feed?page=${pageParam}&limit=100`);
     },
     getNextPageParam: (lastPage, allPages) => {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
