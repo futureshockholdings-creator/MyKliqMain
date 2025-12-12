@@ -258,3 +258,24 @@ export function hasValidToken(): boolean {
   if (!token) return false;
   return !isTokenExpired(token);
 }
+
+/**
+ * Extract user ID from JWT token
+ * Used for cache key generation to prevent cross-user data leakage
+ */
+export function getUserIdFromToken(): string | null {
+  try {
+    const token = getAuthToken();
+    if (!token) return null;
+    
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    
+    const payload = JSON.parse(base64UrlDecode(parts[1]));
+    // JWT typically stores user ID in 'sub' (subject) claim
+    return payload.sub || payload.userId || payload.user_id || null;
+  } catch (e) {
+    console.error('[TokenStorage] Failed to extract userId from token:', e);
+    return null;
+  }
+}

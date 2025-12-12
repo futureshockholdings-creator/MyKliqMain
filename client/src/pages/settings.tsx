@@ -52,6 +52,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
+import { cleanupEnterpriseServices } from "@/lib/enterprise/enterpriseInit";
 import { removeAuthToken } from "@/lib/tokenStorage";
 
 interface SocialAccount {
@@ -804,15 +805,19 @@ export default function Settings() {
 
   const handleLogout = async () => {
     try {
-      // 1. Clear JWT token (for cross-domain auth with AWS Amplify)
+      // 1. Clear JWT token first (for cross-domain auth with AWS Amplify)
       console.log('[Logout] Clearing JWT token...');
       removeAuthToken();
       
-      // 2. Clear client-side disk cache (IndexedDB) to prevent stale data
-      console.log('[Logout] Clearing IndexedDB cache...');
-      await enhancedCache.clearAll();
-
-      // 3. Completely REMOVE all user-specific queries from TanStack Query
+      // 2. Mark that we're logging out to prevent auto-redirect on login page
+      sessionStorage.setItem('forceLogout', 'true');
+      
+      // 3. Clear ALL enterprise caches (memory + IndexedDB + request scheduler + circuit breakers)
+      // This is now async and properly awaited
+      console.log('[Logout] Cleaning up enterprise services...');
+      await cleanupEnterpriseServices();
+      
+      // 4. Completely REMOVE all user-specific queries from TanStack Query
       // Using predicate-based removal to catch ALL API queries regardless of structure
       console.log('[Logout] Removing TanStack Query cache...');
       queryClient.removeQueries({
@@ -822,17 +827,24 @@ export default function Settings() {
         }
       });
       
-      // 4. Mark that we're logging out to prevent auto-redirect on login page
-      sessionStorage.setItem('forceLogout', 'true');
-       await apiRequest("GET", "/api/logout");
+      // 5. Also clear the query client cache entirely
+      queryClient.clear();
       
-      console.log('[Logout] All caches cleared successfully, redirecting to logout...');
+      // 6. Call server logout endpoint to invalidate server session
+      try {
+        await apiRequest("GET", "/api/logout");
+      } catch (serverLogoutError) {
+        // Server logout failure is not critical, continue with client-side logout
+        console.warn('[Logout] Server logout failed, continuing with client logout:', serverLogoutError);
+      }
+      
+      console.log('[Logout] All caches cleared successfully, redirecting...');
     } catch (error) {
       console.error('[Logout] Failed to clear caches:', error);
       // Continue with logout even if cache clearing fails
     }
     
-    // 5. Redirect to logout endpoint
+    // 7. Redirect to landing page
     window.location.href = '/landing';
   };
 

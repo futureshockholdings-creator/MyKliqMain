@@ -9,7 +9,7 @@ import { requestScheduler } from './requestScheduler';
 import { circuitBreaker } from './circuitBreaker';
 import { performanceMonitor } from './performanceMonitor';
 import { buildApiUrl } from '../apiConfig';
-import { getAuthToken, removeAuthToken, isTokenExpired } from '../tokenStorage';
+import { getAuthToken, removeAuthToken, isTokenExpired, getUserIdFromToken } from '../tokenStorage';
 
 interface EnterpriseFetchOptions extends Omit<RequestInit, 'priority'> {
   skipCache?: boolean;
@@ -41,11 +41,15 @@ export async function enterpriseFetch<T = any>(
   const isGET = !fetchOptions.method || fetchOptions.method === 'GET';
   const shouldCache = isGET && !skipCache;
 
+  // Get userId from token for user-specific cache keys (prevents cross-user cache leakage)
+  const userId = getUserIdFromToken();
+
   // Build cache key (ensure method is included to prevent POST/DELETE/GET collisions)
+  // Include userId for user-specific endpoints to prevent cross-user data leakage
   const cacheKey = buildCacheKey(url, {
     ...fetchOptions,
     method: fetchOptions.method || 'GET'
-  });
+  }, userId);
   
   // Debug logging for cache key (only for auth/user endpoint)
   if (url.includes('/api/auth/user')) {

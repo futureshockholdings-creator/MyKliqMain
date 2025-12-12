@@ -3,12 +3,79 @@
  * Handles non-serializable objects like Headers, AbortController, etc.
  */
 
+// User-specific endpoints that should include userId in cache key to prevent cross-user data leakage
+// This list should include ANY endpoint that returns user-specific data
+const USER_SPECIFIC_ENDPOINTS = [
+  '/api/kliq-feed',
+  '/api/posts',
+  '/api/notifications',
+  '/api/stories',
+  '/api/friends',
+  '/api/messages',
+  '/api/events',
+  '/api/polls',
+  '/api/user',
+  '/api/filters',
+  '/api/ads/targeted',
+  '/api/mood-boost',
+  '/api/sports/updates',
+  '/api/kliq-koins',
+  '/api/social/accounts',
+  '/api/calendar',
+  '/api/auth/user',
+  '/api/scrapbook',
+  '/api/meetups',
+  '/api/actions',
+  '/api/highlights',
+  '/api/invite',
+  '/api/profile',
+];
+
+// Endpoints that are public/non-user-specific and should NOT include userId in cache key
+const PUBLIC_ENDPOINTS = [
+  '/api/memes',
+  '/api/moviecons',
+  '/api/gifs',
+  '/api/health',
+  '/api/version',
+];
+
+/**
+ * Check if an endpoint is user-specific (requires userId in cache key)
+ * Uses a combination of explicit lists and heuristics
+ */
+function isUserSpecificEndpoint(endpoint: string): boolean {
+  // If explicitly marked as public, skip userId
+  if (PUBLIC_ENDPOINTS.some(pattern => endpoint.startsWith(pattern))) {
+    return false;
+  }
+  
+  // If explicitly marked as user-specific, include userId
+  if (USER_SPECIFIC_ENDPOINTS.some(pattern => endpoint.startsWith(pattern))) {
+    return true;
+  }
+  
+  // Default heuristic: any /api/ endpoint that's not explicitly public is user-specific
+  // This is a safety measure to prevent accidental data leakage
+  if (endpoint.startsWith('/api/')) {
+    return true;
+  }
+  
+  return false;
+}
+
 /**
  * Build a safe cache key from endpoint and request options
  * Extracts only serializable parts (method, headers, body)
+ * Includes userId for user-specific endpoints to prevent cross-user cache leakage
  */
-export function buildCacheKey(endpoint: string, options: RequestInit = {}): string {
+export function buildCacheKey(endpoint: string, options: RequestInit = {}, userId?: string | null): string {
   const parts: string[] = [endpoint];
+  
+  // Include userId in cache key for user-specific endpoints to prevent cross-user data leakage
+  if (isUserSpecificEndpoint(endpoint) && userId) {
+    parts.push(`uid:${userId}`);
+  }
 
   // Add method if present
   if (options.method) {

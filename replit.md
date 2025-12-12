@@ -52,6 +52,10 @@ Moviecons use pre-generated JPEG thumbnails (stored in `thumbnailUrl` column) fo
 ### Caching Architecture
 A dual-cache system (SimpleCache and CacheService) with Redis support, in-memory fallback, pattern-based invalidation, and LRU eviction optimizes performance. The web client uses a two-tier `EnhancedCache` (memory and IndexedDB) with comprehensive clearing on logout.
 
+**Cross-User Cache Isolation**: Client-side cache keys include the userId for all user-specific API endpoints (via `cacheKeyBuilder.ts`). This prevents cached data from one user's session leaking to another user's session. The `isUserSpecificEndpoint()` function determines which endpoints need userId in cache keys, with a safe default that treats any `/api/` endpoint as user-specific unless explicitly marked as public (like `/api/memes`, `/api/moviecons`, `/api/gifs`).
+
+**Logout Cache Clearing**: The logout flow (`settings.tsx`) properly awaits all async cache clearing operations via `cleanupEnterpriseServices()` before redirecting, ensuring no stale data persists across sessions.
+
 ### Real-time Feed Updates
 WebSocket-based real-time updates broadcast new content, with a polling fallback and cache invalidation.
 

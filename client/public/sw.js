@@ -1,6 +1,6 @@
-const CACHE_NAME = 'mykliq-v3';
-const STATIC_CACHE = 'mykliq-static-v3';
-const DYNAMIC_CACHE = 'mykliq-dynamic-v3';
+const CACHE_NAME = 'mykliq-v4';
+const STATIC_CACHE = 'mykliq-static-v4';
+const DYNAMIC_CACHE = 'mykliq-dynamic-v4';
 
 // Assets to cache on install
 const STATIC_ASSETS = [

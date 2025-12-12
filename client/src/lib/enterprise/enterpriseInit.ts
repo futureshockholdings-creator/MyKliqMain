@@ -37,15 +37,16 @@ export function initializeEnterpriseServices(): void {
 
 /**
  * Cleanup enterprise services (on logout/unmount)
+ * Returns a Promise to ensure all async cleanup operations complete
  */
-export function cleanupEnterpriseServices(): void {
+export async function cleanupEnterpriseServices(): Promise<void> {
   console.log('[EnterpriseInit] Cleaning up enterprise services...');
   
   // Stop memory monitoring
   memoryManager.stopMonitoring();
 
-  // Clear all caches
-  enhancedCache.clearAll();
+  // Clear all caches (async operation - await to ensure completion)
+  await enhancedCache.clearAll();
 
   // Clear request scheduler
   requestScheduler.clearAll();
