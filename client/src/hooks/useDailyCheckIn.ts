@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
-import { buildApiUrl } from "@/lib/apiConfig";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 
 const LAST_CHECKIN_PREFIX = "mykliq_last_checkin_";
 
@@ -43,57 +42,38 @@ export function useDailyCheckIn() {
       checkInAttempted.current = true;
 
       try {
-        const response = await fetch(buildApiUrl("/api/kliq-koins/login"), {
-          method: "POST",
-          credentials: "include",
-        });
+        // Use apiRequest to include JWT auth header
+        const data = await apiRequest("POST", "/api/kliq-koins/login");
 
-        if (response.ok) {
-          // Always update localStorage and invalidate queries on success, regardless of response body
-          localStorage.setItem(LAST_CHECKIN_KEY, today);
-          queryClient.invalidateQueries({ queryKey: ['/api/kliq-koins/wallet'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/kliq-koins/streak'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/kliq-koins/my-borders'] });
-          
-          // Check if response has JSON content before parsing
-          const contentType = response.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            try {
-              const data = await response.json();
-              
-              // Only show notifications if user actually earned something today
-              if (data.koinsAwarded > 0) {
-                // Show streak update toast
-                toast({
-                  title: "Streaking 🔥",
-                  description: `You earned ${data.koinsAwarded} Kliq Koin${data.koinsAwarded > 1 ? 's' : ''} 🪙`,
-                  duration: 5000,
-                });
+        // Always update localStorage and invalidate queries on success
+        localStorage.setItem(LAST_CHECKIN_KEY, today);
+        queryClient.invalidateQueries({ queryKey: ['/api/kliq-koins/wallet'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/kliq-koins/streak'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/kliq-koins/my-borders'] });
+        
+        // Only show notifications if user actually earned something today
+        if (data && data.koinsAwarded > 0) {
+          // Show streak update toast
+          toast({
+            title: "Streaking 🔥",
+            description: `You earned ${data.koinsAwarded} Kliq Koin${data.koinsAwarded > 1 ? 's' : ''} 🪙`,
+            duration: 5000,
+          });
 
-                // If a tier was unlocked, show special celebration
-                if (data.tierUnlocked) {
-                  setTimeout(() => {
-                    toast({
-                      title: "🎉 New Border Unlocked!",
-                      description: `Congratulations! You unlocked the ${data.tierUnlocked.name}!`,
-                      duration: 7000,
-                    });
-                  }, 1500);
-                }
-              }
-            } catch (jsonError) {
-              // JSON parsing failed but check-in was successful (localStorage already updated)
-              console.warn("Check-in succeeded but response parsing failed:", jsonError);
-            }
+          // If a tier was unlocked, show special celebration
+          if (data.tierUnlocked) {
+            setTimeout(() => {
+              toast({
+                title: "🎉 New Border Unlocked!",
+                description: `Congratulations! You unlocked the ${data.tierUnlocked.name}!`,
+                duration: 7000,
+              });
+            }, 1500);
           }
-        } else {
-          // Retry failed check-ins (e.g., network issues)
-          const statusText = `${response.status} ${response.statusText}`;
-          console.warn(`Check-in failed (${statusText}), will retry on next app load`);
         }
       } catch (error) {
         // Log error but don't update localStorage so we retry on next load
-        console.error("Daily check-in failed:", error);
+        console.warn("Check-in failed, will retry on next app load");
       } finally {
         checkInAttempted.current = false;
       }

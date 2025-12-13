@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Shield } from "lucide-react";
-import { buildApiUrl } from "@/lib/apiConfig";
+import { apiRequest } from "@/lib/queryClient";
 
 interface PinVerificationModalProps {
   isOpen: boolean;
@@ -40,16 +40,10 @@ export function PinVerificationModal({
     setIsVerifying(true);
     
     try {
-      const response = await fetch(buildApiUrl("/api/user/verify-pin"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ pin }),
-      });
-
-      if (response.ok) {
+      // Use apiRequest to include JWT auth header
+      const result = await apiRequest("POST", "/api/user/verify-pin", { pin });
+      
+      if (result.success) {
         toast({
           title: "PIN Verified",
           description: "Access granted to settings",
@@ -57,17 +51,16 @@ export function PinVerificationModal({
         setPin("");
         onSuccess();
       } else {
-        const errorData = await response.json();
         toast({
           title: "PIN Verification Failed",
-          description: errorData.message || "Incorrect PIN entered",
+          description: result.message || "Incorrect PIN entered",
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Verification Error",
-        description: "Unable to verify PIN. Please try again.",
+        title: "PIN Verification Failed",
+        description: error.message || "Unable to verify PIN. Please try again.",
         variant: "destructive",
       });
     } finally {
