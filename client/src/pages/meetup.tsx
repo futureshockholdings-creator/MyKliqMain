@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { MapPin, Loader2, Edit } from 'lucide-react';
-import { buildApiUrl } from '@/lib/apiConfig';
+import { apiRequest } from '@/lib/queryClient';
 
 export default function MeetupPage() {
   const { toast } = useToast();
@@ -39,28 +39,13 @@ export default function MeetupPage() {
         content += ` at ${locationData.latitude.toFixed(4)}, ${locationData.longitude.toFixed(4)}`;
       }
       
-      const response = await fetch(buildApiUrl('/api/posts'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          content: content,
-          latitude: locationData.latitude,
-          longitude: locationData.longitude,
-          locationName: locationData.locationName || null,
-          address: locationData.address || null,
-        }),
+      return await apiRequest("POST", "/api/posts", {
+        content: content,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        locationName: locationData.locationName || null,
+        address: locationData.address || null,
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to check in');
-      }
-      
-      const result = await response.json();
-      return result;
     },
     onMutate: async (locationData) => {
       
@@ -222,27 +207,14 @@ export default function MeetupPage() {
 
     
     try {
-      // Use direct API call instead of mutation
-      const response = await fetch(buildApiUrl('/api/posts'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          content: content,
-          latitude: userLocation.lat,
-          longitude: userLocation.lng,
-          locationName: locationName || null,
-          address: address || null,
-        }),
+      // Use apiRequest to include JWT auth header
+      const result = await apiRequest("POST", "/api/posts", {
+        content: content,
+        latitude: userLocation.lat,
+        longitude: userLocation.lng,
+        locationName: locationName || null,
+        address: address || null,
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create location post');
-      }
-      
-      const result = await response.json();
       
       // Force refresh the feed immediately and aggressively
       await queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });

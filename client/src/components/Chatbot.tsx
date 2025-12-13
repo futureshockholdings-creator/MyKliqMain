@@ -417,22 +417,11 @@ export function Chatbot() {
         .map(msg => `${msg.type.toUpperCase()}: ${msg.message}`)
         .join('\n\n');
       
-      const response = await fetch(buildApiUrl('/api/chatbot/conversation'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          conversationHistory,
-          timestamp: new Date().toISOString(),
-          messageCount: messages.length
-        }),
+      await apiRequest("POST", "/api/chatbot/conversation", {
+        conversationHistory,
+        timestamp: new Date().toISOString(),
+        messageCount: messages.length
       });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
       
       console.log('Conversation email sent successfully');
     } catch (error) {

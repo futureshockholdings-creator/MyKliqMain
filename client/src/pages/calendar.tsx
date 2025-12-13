@@ -115,9 +115,7 @@ export default function Calendar() {
       if (!selectedKliqId) return [];
       const startDate = viewMode === "month" ? format(monthStart, 'yyyy-MM-dd') : format(weekStart, 'yyyy-MM-dd');
       const endDate = viewMode === "month" ? format(monthEnd, 'yyyy-MM-dd') : format(weekEnd, 'yyyy-MM-dd');
-      const response = await fetch(`/api/calendar/notes?kliqId=${selectedKliqId}&startDate=${startDate}&endDate=${endDate}`);
-      if (!response.ok) throw new Error('Failed to fetch calendar notes');
-      return response.json();
+      return await apiRequest("GET", `/api/calendar/notes?kliqId=${selectedKliqId}&startDate=${startDate}&endDate=${endDate}`);
     },
     enabled: !!selectedKliqId,
   });

@@ -201,9 +201,11 @@ function SportsPreferences() {
       }
 
       const teamPromises = teamBasedSports.map(async (sport) => {
-        const response = await fetch(`/api/sports/teams/${sport}`);
-        if (!response.ok) return [];
-        return response.json();
+        try {
+          return await apiRequest("GET", `/api/sports/teams/${sport}`);
+        } catch {
+          return [];
+        }
       });
 
       const teamsArrays = await Promise.all(teamPromises);

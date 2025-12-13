@@ -68,13 +68,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
   // Mutation to update attendance
   const updateAttendanceMutation = useMutation({
     mutationFn: async (status: string) => {
-      const response = await fetch(`/api/events/${event.id}/attendance`, {
-        method: 'POST',
-        body: JSON.stringify({ status }),
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) throw new Error('Failed to update attendance');
-      return response.json();
+      return await apiRequest("POST", `/api/events/${event.id}/attendance`, { status });
     },
     onSuccess: (_, status) => {
       setSelectedAttendance(status);
