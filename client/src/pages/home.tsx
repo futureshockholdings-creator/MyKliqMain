@@ -1058,30 +1058,31 @@ export default function Home() {
       // Snapshot the previous value
       const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
       
-      // Optimistically update the cache
+      // Optimistically update the cache (infinite query has pages structure)
       queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
-        if (!old || !old.items) return old;
+        if (!old || !old.pages) return old;
         return {
           ...old,
-          items: old.items.map((item: any) => {
-            if (item.id === postId) {
-              const isAlreadyLiked = Array.isArray(item.likes) && user && item.likes.some((like: any) => like.userId === (user as any).id);
-              if (isAlreadyLiked) {
-                // Remove like
-                return {
-                  ...item,
-                  likes: item.likes.filter((like: any) => like.userId !== (user as any).id)
-                };
-              } else {
-                // Add like
-                return {
-                  ...item,
-                  likes: [...(Array.isArray(item.likes) ? item.likes : []), { userId: (user as any).id }]
-                };
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items?.map((item: any) => {
+              if (item.id === postId) {
+                const isAlreadyLiked = Array.isArray(item.likes) && user && item.likes.some((like: any) => like.userId === (user as any).id);
+                if (isAlreadyLiked) {
+                  return {
+                    ...item,
+                    likes: item.likes.filter((like: any) => like.userId !== (user as any).id)
+                  };
+                } else {
+                  return {
+                    ...item,
+                    likes: [...(Array.isArray(item.likes) ? item.likes : []), { userId: (user as any).id }]
+                  };
+                }
               }
-            }
-            return item;
-          })
+              return item;
+            }) || []
+          }))
         };
       });
       
@@ -1132,20 +1133,23 @@ export default function Home() {
         replies: [],
       };
       
-      // Optimistically update the cache
+      // Optimistically update the cache (infinite query has pages structure)
       queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
-        if (!old || !old.items) return old;
+        if (!old || !old.pages) return old;
         return {
           ...old,
-          items: old.items.map((item: any) => {
-            if (item.id === postId) {
-              return {
-                ...item,
-                comments: [...(Array.isArray(item.comments) ? item.comments : []), optimisticComment]
-              };
-            }
-            return item;
-          })
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items?.map((item: any) => {
+              if (item.id === postId) {
+                return {
+                  ...item,
+                  comments: [...(Array.isArray(item.comments) ? item.comments : []), optimisticComment]
+                };
+              }
+              return item;
+            }) || []
+          }))
         };
       });
       
@@ -1212,34 +1216,37 @@ export default function Home() {
       // Snapshot the previous value
       const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
       
-      // Optimistically update the cache
+      // Optimistically update the cache (infinite query has pages structure)
       queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
-        if (!old || !old.items) return old;
+        if (!old || !old.pages) return old;
         return {
           ...old,
-          items: old.items.map((item: any) => {
-            if (!item.comments) return item;
-            return {
-              ...item,
-              comments: item.comments.map((comment: any) => {
-                if (comment.id === commentId) {
-                  const isAlreadyLiked = Array.isArray(comment.likes) && user && comment.likes.some((like: any) => like.userId === (user as any).id);
-                  if (isAlreadyLiked) {
-                    return {
-                      ...comment,
-                      likes: comment.likes.filter((like: any) => like.userId !== (user as any).id)
-                    };
-                  } else {
-                    return {
-                      ...comment,
-                      likes: [...(Array.isArray(comment.likes) ? comment.likes : []), { userId: (user as any).id }]
-                    };
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items?.map((item: any) => {
+              if (!item.comments) return item;
+              return {
+                ...item,
+                comments: item.comments.map((comment: any) => {
+                  if (comment.id === commentId) {
+                    const isAlreadyLiked = Array.isArray(comment.likes) && user && comment.likes.some((like: any) => like.userId === (user as any).id);
+                    if (isAlreadyLiked) {
+                      return {
+                        ...comment,
+                        likes: comment.likes.filter((like: any) => like.userId !== (user as any).id)
+                      };
+                    } else {
+                      return {
+                        ...comment,
+                        likes: [...(Array.isArray(comment.likes) ? comment.likes : []), { userId: (user as any).id }]
+                      };
+                    }
                   }
-                }
-                return comment;
-              })
-            };
-          })
+                  return comment;
+                })
+              };
+            }) || []
+          }))
         };
       });
       
@@ -1300,26 +1307,29 @@ export default function Home() {
         likes: [],
       };
       
-      // Optimistically update the cache
+      // Optimistically update the cache (infinite query has pages structure)
       queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
-        if (!old || !old.items) return old;
+        if (!old || !old.pages) return old;
         return {
           ...old,
-          items: old.items.map((item: any) => {
-            if (!item.comments) return item;
-            return {
-              ...item,
-              comments: item.comments.map((comment: any) => {
-                if (comment.id === commentId) {
-                  return {
-                    ...comment,
-                    replies: [...(Array.isArray(comment.replies) ? comment.replies : []), optimisticReply]
-                  };
-                }
-                return comment;
-              })
-            };
-          })
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            items: page.items?.map((item: any) => {
+              if (!item.comments) return item;
+              return {
+                ...item,
+                comments: item.comments.map((comment: any) => {
+                  if (comment.id === commentId) {
+                    return {
+                      ...comment,
+                      replies: [...(Array.isArray(comment.replies) ? comment.replies : []), optimisticReply]
+                    };
+                  }
+                  return comment;
+                })
+              };
+            }) || []
+          }))
         };
       });
       
@@ -3047,12 +3057,15 @@ export default function Home() {
                           queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
                         }}
                         onOptimisticDelete={(postId) => {
-                          // Immediately remove post from cache
+                          // Immediately remove post from cache (infinite query has pages structure)
                           queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
-                            if (!old || !old.items) return old;
+                            if (!old || !old.pages) return old;
                             return {
                               ...old,
-                              items: old.items.filter((p: any) => p.id !== postId)
+                              pages: old.pages.map((page: any) => ({
+                                ...page,
+                                items: page.items?.filter((p: any) => p.id !== postId) || []
+                              }))
                             };
                           });
                         }}
