@@ -7059,10 +7059,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // GIF API routes
   
-  // Get all GIFs
+  // Get all GIFs (cached for 30 minutes - static content)
   app.get('/api/gifs', async (req, res) => {
     try {
+      const cacheKey = 'static:gifs:all';
+      const cached = await cacheService.get(cacheKey);
+      if (cached) {
+        return res.json(cached);
+      }
+      
       const gifs = await storage.getAllGifs();
+      await cacheService.set(cacheKey, gifs, 1800); // 30 minutes
       res.json(gifs);
     } catch (error) {
       console.error("Error fetching gifs:", error);
@@ -7144,6 +7151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const gif = await storage.createGif(gifData);
+      await cacheService.del('static:gifs:all'); // Invalidate cache
       res.json(gif);
     } catch (error) {
       console.error("Error creating gif:", error);
@@ -7158,6 +7166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates = req.body;
       
       const gif = await storage.updateGif(id, updates);
+      await cacheService.del('static:gifs:all'); // Invalidate cache
       res.json(gif);
     } catch (error) {
       console.error("Error updating gif:", error);
@@ -7170,6 +7179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       await storage.deleteGif(id);
+      await cacheService.del('static:gifs:all'); // Invalidate cache
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting gif:", error);
@@ -7179,18 +7189,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Meme API routes
   
-  // Get all Memes
+  // Get all Memes (cached for 30 minutes - static content)
   app.get('/api/memes', async (req, res) => {
     try {
       const { q } = req.query;
       let memes;
       
       if (q && typeof q === 'string') {
-        // If search query provided, search memes
+        // Search queries not cached (dynamic)
         memes = await storage.searchMemes(q);
       } else {
-        // Otherwise get all memes
+        // Cache the full list
+        const cacheKey = 'static:memes:all';
+        const cached = await cacheService.get(cacheKey);
+        if (cached) {
+          return res.json(cached);
+        }
         memes = await storage.getAllMemes();
+        await cacheService.set(cacheKey, memes, 1800); // 30 minutes
       }
       
       res.json(memes);
@@ -7296,6 +7312,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         uploadedBy: userId
       });
       
+      await cacheService.del('static:memes:all'); // Invalidate cache
       res.json(meme);
     } catch (error) {
       console.error("Error creating meme:", error);
@@ -7310,6 +7327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates = req.body;
       
       const meme = await storage.updateMeme(id, updates);
+      await cacheService.del('static:memes:all'); // Invalidate cache
       res.json(meme);
     } catch (error) {
       console.error("Error updating meme:", error);
@@ -7322,6 +7340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       await storage.deleteMeme(id);
+      await cacheService.del('static:memes:all'); // Invalidate cache
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting meme:", error);
@@ -7331,18 +7350,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Moviecon API routes
   
-  // Get all Moviecons
+  // Get all Moviecons (cached for 30 minutes - static content)
   app.get('/api/moviecons', async (req, res) => {
     try {
       const { q } = req.query;
       let moviecons;
       
       if (q && typeof q === 'string') {
-        // If search query provided, search moviecons
+        // Search queries not cached (dynamic)
         moviecons = await storage.searchMoviecons(q);
       } else {
-        // Otherwise get all moviecons
+        // Cache the full list
+        const cacheKey = 'static:moviecons:all';
+        const cached = await cacheService.get(cacheKey);
+        if (cached) {
+          return res.json(cached);
+        }
         moviecons = await storage.getAllMoviecons();
+        await cacheService.set(cacheKey, moviecons, 1800); // 30 minutes
       }
       
       res.json(moviecons);
@@ -7459,6 +7484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .catch((err) => console.error(`Failed to generate thumbnail for ${movieconId}:`, err));
       }
       
+      await cacheService.del('static:moviecons:all'); // Invalidate cache
       res.json(moviecon);
     } catch (error) {
       console.error("Error creating moviecon:", error);
@@ -7473,6 +7499,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updates = req.body;
       
       const moviecon = await storage.updateMoviecon(id, updates);
+      await cacheService.del('static:moviecons:all'); // Invalidate cache
       res.json(moviecon);
     } catch (error) {
       console.error("Error updating moviecon:", error);
@@ -7485,6 +7512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       await storage.deleteMoviecon(id);
+      await cacheService.del('static:moviecons:all'); // Invalidate cache
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting moviecon:", error);
