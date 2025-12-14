@@ -28,20 +28,23 @@ export async function sendAutomaticBirthdayMessages(): Promise<void> {
     
     console.log(`Found ${birthdayUsers.length} birthday user(s)`);
     
-    // Get all users (kliq members)
-    const allUsers = await storage.getAllUsers();
     const currentYear = new Date().getFullYear();
     
     // Send messages from each kliq member to birthday users
     for (const birthdayUser of birthdayUsers) {
       console.log(`Processing birthday messages for ${birthdayUser.firstName}`);
       
+      // Get followers of the birthday user (users who have the birthday user in their kliq)
+      // This ensures birthday posts are only created by users who actually know the birthday person
+      const birthdayUserFollowers = await storage.getFollowers(birthdayUser.id);
+      const followerUsers = birthdayUserFollowers.map(f => f.follower);
+      
       // Get existing messages sent this year
       const existingMessages = await storage.getBirthdayMessagesSentThisYear(birthdayUser.id, currentYear);
       const senderIds = new Set(existingMessages.map(msg => msg.senderUserId));
       
-      // Find kliq members who haven't sent messages yet
-      const sendersToProcess = allUsers.filter(user => 
+      // Find followers who haven't sent messages yet (only users who have the birthday person in their kliq)
+      const sendersToProcess = followerUsers.filter(user => 
         user.id !== birthdayUser.id && // Don't send to self
         !senderIds.has(user.id) // Haven't sent message this year
       );

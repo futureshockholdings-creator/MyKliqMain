@@ -195,6 +195,7 @@ export interface IStorage {
   
   // Friend operations
   getFriends(userId: string): Promise<(Friendship & { friend: User })[]>;
+  getFollowers(userId: string): Promise<(Friendship & { follower: User })[]>;
   addFriend(friendship: InsertFriendship): Promise<Friendship>;
   updateFriendRank(userId: string, friendId: string, rank: number): Promise<void>;
   acceptFriendship(userId: string, friendId: string): Promise<void>;
@@ -617,6 +618,26 @@ export class DatabaseStorage implements IStorage {
       .orderBy(friendships.rank);
     
     return friends;
+  }
+
+  async getFollowers(userId: string): Promise<(Friendship & { follower: User })[]> {
+    // Get users who have this userId in THEIR kliq (reverse of getFriends)
+    const followers = await db
+      .select({
+        id: friendships.id,
+        userId: friendships.userId,
+        friendId: friendships.friendId,
+        rank: friendships.rank,
+        status: friendships.status,
+        createdAt: friendships.createdAt,
+        updatedAt: friendships.updatedAt,
+        follower: users,
+      })
+      .from(friendships)
+      .innerJoin(users, eq(friendships.userId, users.id))
+      .where(and(eq(friendships.friendId, userId), eq(friendships.status, "accepted")));
+    
+    return followers;
   }
 
   async addFriend(friendship: InsertFriendship): Promise<Friendship> {
