@@ -43,7 +43,7 @@ import { feedRealtimeService } from "@/lib/feedRealtime";
 import type { Meme, Moviecon } from "@shared/schema";
 
 // Edit Post Form Component
-function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
+function EditPostForm({ post, onUpdate, onOptimisticDelete }: { post: any; onUpdate: () => void; onOptimisticDelete?: (postId: string) => void }) {
   const [editContent, setEditContent] = useState(post.content || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -87,19 +87,26 @@ function EditPostForm({ post, onUpdate }: { post: any; onUpdate: () => void }) {
 
   const handleDelete = async () => {
     setIsDeleting(true);
+    setShowDeleteDialog(false);
+    
+    // Optimistically remove from UI immediately
+    if (onOptimisticDelete) {
+      onOptimisticDelete(post.id);
+    }
+    
+    toast({
+      title: "Post Deleted",
+      description: "Your post has been successfully deleted.",
+      className: "bg-white text-black border-gray-300",
+    });
+    
+    // Fire API call in background
     try {
       await apiRequest("DELETE", `/api/posts/${post.id}`);
-
-      toast({
-        title: "Post Deleted",
-        description: "Your post has been successfully deleted.",
-        className: "bg-white text-black border-gray-300",
-      });
-
-      setShowDeleteDialog(false);
-      onUpdate();
     } catch (error) {
       console.error('Error deleting post:', error);
+      // Rollback by refetching if delete fails
+      onUpdate();
       toast({
         title: "Error",
         description: "Failed to delete post. Please try again.",
@@ -1086,12 +1093,11 @@ export default function Home() {
         queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
       }
     },
-    onSuccess: () => {
-      // Invalidate feed immediately for instant like count updates
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    onSettled: () => {
+      // Only invalidate non-feed queries to avoid overwriting optimistic updates
+      // The like count is already correct from the optimistic update
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
-      // Removed like toast for immediate feedback
     },
   });
 
@@ -2885,6 +2891,16 @@ export default function Home() {
                         post={item} 
                         onUpdate={() => {
                           queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
+                        }}
+                        onOptimisticDelete={(postId) => {
+                          // Immediately remove post from cache
+                          queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+                            if (!old || !old.items) return old;
+                            return {
+                              ...old,
+                              items: old.items.filter((p: any) => p.id !== postId)
+                            };
+                          });
                         }}
                       />
                     </DialogContent>
