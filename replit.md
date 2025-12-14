@@ -52,6 +52,20 @@ Moviecons use pre-generated JPEG thumbnails (stored in `thumbnailUrl` column) fo
 ### Caching Architecture
 A dual-cache system (SimpleCache and CacheService) with Redis support, in-memory fallback, pattern-based invalidation, and LRU eviction optimizes performance. The web client uses a two-tier `EnhancedCache` (memory and IndexedDB) with comprehensive clearing on logout.
 
+**Server-Side Caching (December 2025):**
+- Static content (memes, moviecons, GIFs): 30-minute TTL with cache invalidation on POST/PUT/DELETE
+- User profile (`/api/auth/user`): 10-minute TTL with smart invalidation on profile updates
+- Kliq-feed: 3-minute TTL with cache-first strategy
+- Content filters: 5-minute TTL
+- Educational post eligibility: 1-hour TTL
+
+**Database Indexes (December 2025):** 12 critical indexes added for performance:
+- Posts: `idx_posts_user_created`, `idx_posts_created`, `idx_posts_user`
+- Friendships: `idx_friendships_user`, `idx_friendships_friend`, `idx_friendships_status`
+- Comments: `idx_comments_post`, `idx_comments_user`
+- Post likes: `idx_post_likes_post`, `idx_post_likes_user`
+- Notifications: `idx_notifications_user`, `idx_notifications_read`
+
 **Cross-User Cache Isolation**: Client-side cache keys include the userId for all user-specific API endpoints (via `cacheKeyBuilder.ts`). This prevents cached data from one user's session leaking to another user's session. The `isUserSpecificEndpoint()` function determines which endpoints need userId in cache keys, with a safe default that treats any `/api/` endpoint as user-specific unless explicitly marked as public (like `/api/memes`, `/api/moviecons`, `/api/gifs`).
 
 **Logout Cache Clearing**: The logout flow (`settings.tsx`) properly awaits all async cache clearing operations via `cleanupEnterpriseServices()` before redirecting, ensuring no stale data persists across sessions.
