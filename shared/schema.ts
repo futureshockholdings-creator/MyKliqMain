@@ -475,7 +475,10 @@ export const comments = pgTable("comments", {
   movieconId: varchar("moviecon_id").references(() => moviecons.id),
   parentCommentId: varchar("parent_comment_id"), // For nested replies
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_comments_post").on(table.postId), // Fast comment lookup by post
+  index("idx_comments_user").on(table.userId), // User's comments lookup
+]);
 
 // Post likes
 export const postLikes = pgTable("post_likes", {
@@ -483,7 +486,10 @@ export const postLikes = pgTable("post_likes", {
   postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }).notNull(),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_post_likes_post").on(table.postId), // Fast like count by post
+  index("idx_post_likes_user").on(table.userId), // User's likes lookup
+]);
 
 // Comment likes
 export const commentLikes = pgTable("comment_likes", {
@@ -785,7 +791,10 @@ export const notifications = pgTable("notifications", {
   expiresAt: timestamp("expires_at"), // Auto-expire notifications
   createdAt: timestamp("created_at").defaultNow(),
   readAt: timestamp("read_at"),
-});
+}, (table) => [
+  index("idx_notifications_user").on(table.userId), // User's notifications lookup
+  index("idx_notifications_read").on(table.userId, table.isRead), // Unread notifications
+]);
 
 // User Interaction Analytics for Smart Friend Ranking
 export const userInteractionAnalytics = pgTable("user_interaction_analytics", {

@@ -453,34 +453,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      
+      // Check cache first for user profile (10 minute TTL)
+      const cacheKey = `user:profile:${userId}`;
+      let user = await cacheService.get(cacheKey);
+      
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        // Cache miss - fetch from database
+        user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        // Cache the user data (without password processing)
+        await cacheService.set(cacheKey, user, 600); // 10 minutes
       }
       
-      // Decrypt password for UI display if it exists
-      if (user.password) {
+      // Always process password decryption fresh for security (don't cache decrypted passwords)
+      const userResponse = { ...user };
+      if (userResponse.password) {
         try {
           const { decryptFromStorage } = await import('./cryptoService');
           // Check if it's an old hashed password (starts with $2b$ for bcrypt)
-          if (user.password.startsWith('$2b$')) {
+          if (userResponse.password.startsWith('$2b$')) {
             // Old hashed password, can't decrypt - clear it so user can set a new one
-            user.password = null;
+            userResponse.password = null;
           } else {
-            user.password = decryptFromStorage(user.password);
+            userResponse.password = decryptFromStorage(userResponse.password);
           }
         } catch (error) {
           // If decryption fails, clear password so user can set a new one
           console.error("Error decrypting password:", error);
-          user.password = null;
+          userResponse.password = null;
         }
       }
       
       // Add security setup status to response
-      const securitySetupComplete = !!(user.password && user.securityAnswer1 && user.securityAnswer2 && user.securityAnswer3 && user.securityPin);
+      const securitySetupComplete = !!(userResponse.password && userResponse.securityAnswer1 && userResponse.securityAnswer2 && userResponse.securityAnswer3 && userResponse.securityPin);
       
       res.json({
-        ...user,
+        ...userResponse,
         securitySetupComplete,
         requiresSecuritySetup: !securitySetupComplete
       });
@@ -512,6 +523,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update user with encrypted password
       await storage.updateUserPassword(userId, encryptedPassword);
+      
+      // Invalidate user profile cache
+      await cacheService.del(`user:profile:${userId}`);
 
       res.json({ 
         message: "Password set up successfully",
@@ -4506,6 +4520,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (profileData.lifestyle !== undefined) cleanedData.lifestyle = profileData.lifestyle;
 
       await storage.updateUser(userId, cleanedData);
+      
+      // Invalidate user profile cache
+      await cacheService.del(`user:profile:${userId}`);
 
       const updatedUser = await storage.getUser(userId);
       res.json(updatedUser);
@@ -4528,6 +4545,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update user's analytics consent
       await storage.updateUser(userId, { analyticsConsent });
+      
+      // Invalidate user profile cache
+      await cacheService.del(`user:profile:${userId}`);
 
       console.log(`[Analytics Consent] User ${userId} ${analyticsConsent ? 'granted' : 'revoked'} analytics consent`);
 
@@ -4586,6 +4606,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         profileMusicUrls: finalMusicUrls,
         profileMusicTitles: finalMusicTitles,
       });
+      
+      // Invalidate user profile cache
+      await cacheService.del(`user:profile:${userId}`);
 
       const updatedUser = await storage.getUser(userId);
       res.json(updatedUser);
@@ -4622,6 +4645,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           profileMusicTitles: [],
         });
       }
+      
+      // Invalidate user profile cache
+      await cacheService.del(`user:profile:${userId}`);
 
       const updatedUser = await storage.getUser(userId);
       res.json(updatedUser);
@@ -4645,6 +4671,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUser(userId, {
         backgroundImageUrl: normalizedPath,
       });
+      
+      // Invalidate user profile cache
+      await cacheService.del(`user:profile:${userId}`);
 
       const updatedUser = await storage.getUser(userId);
       res.json(updatedUser);
@@ -4659,6 +4688,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const inviteCode = await storage.generateInviteCode();
       await storage.updateUser(userId, { inviteCode });
+      
+      // Invalidate user profile cache
+      await cacheService.del(`user:profile:${userId}`);
+      
       res.json({ inviteCode });
     } catch (error) {
       console.error("Error generating invite code:", error);
@@ -4783,6 +4816,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update user's profile image URL in database
       await storage.updateUser(userId, { profileImageUrl: objectPath });
+      
+      // Invalidate user profile cache
+      await cacheService.del(`user:profile:${userId}`);
 
       res.status(200).json({ objectPath });
     } catch (error) {
@@ -4989,23 +5025,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const cacheKey = `kliq-feed:${userId}:${page}:${limit}`;
       
-      // Check if user should see educational posts (< 7 days old)
-      const user = await storage.getUser(userId);
-      const includeEducationalPosts = user && user.createdAt && 
-        Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)) < 7;
+      // Check cache FIRST before any DB queries
+      const cachedFeed = await cacheService.get(cacheKey);
+      if (cachedFeed) {
+        return res.json(cachedFeed);
+      }
       
-      // Get feed with educational posts included if applicable
-      // Educational posts are fetched from DB and persist like regular posts
-      const feed = await performanceOptimizer.optimizeQuery(
-        async () => {
-          const filters = await storage.getContentFilters(userId);
-          const filterKeywords = filters.map(f => f.keyword);
-          const feedData = await storage.getKliqFeed(userId, filterKeywords, page, limit, includeEducationalPosts);
-          return feedData;
-        },
-        cacheKey,
-        300 // Cache for 5 minutes (educational posts persist, so longer cache is fine)
-      );
+      // Only fetch user and filters if no cache hit
+      // Cache user's educational post eligibility separately for 1 hour
+      const userCacheKey = `user-edu-eligible:${userId}`;
+      let includeEducationalPosts = await cacheService.get(userCacheKey);
+      if (includeEducationalPosts === null) {
+        const user = await storage.getUser(userId);
+        includeEducationalPosts = user && user.createdAt && 
+          Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)) < 7;
+        await cacheService.set(userCacheKey, includeEducationalPosts, 3600); // 1 hour cache
+      }
+      
+      // Cache content filters for 5 minutes (rarely change)
+      const filtersCacheKey = `user-filters:${userId}`;
+      let filterKeywords = await cacheService.get(filtersCacheKey);
+      if (!filterKeywords) {
+        const filters = await storage.getContentFilters(userId);
+        filterKeywords = filters.map((f: any) => f.keyword);
+        await cacheService.set(filtersCacheKey, filterKeywords, 300);
+      }
+      
+      // Get feed data
+      const feed = await storage.getKliqFeed(userId, filterKeywords, page, limit, includeEducationalPosts);
+      
+      // Cache the feed for 3 minutes (shorter TTL for dynamic content)
+      await cacheService.set(cacheKey, feed, 180);
       
       res.json(feed);
     } catch (error) {
@@ -8054,6 +8104,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { birthdate } = req.body;
       
       const updatedUser = await storage.updateUser(userId, { birthdate });
+      
+      // Invalidate user profile cache
+      await cacheService.del(`user:profile:${userId}`);
+      
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating birthdate:", error);
