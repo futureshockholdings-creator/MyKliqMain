@@ -1101,12 +1101,67 @@ export default function Home() {
     },
   });
 
-  // Add comment mutation
+  // Add comment mutation with optimistic updates
   const addCommentMutation = useMutation({
     mutationFn: async ({ postId, content, gifId, memeId, movieconId }: { postId: string; content: string; gifId?: string; memeId?: string; movieconId?: string }) => {
-      await apiRequest("POST", `/api/posts/${postId}/comments`, { content, gifId, memeId, movieconId });
+      return await apiRequest("POST", `/api/posts/${postId}/comments`, { content, gifId, memeId, movieconId });
     },
-    onError: (err) => {
+    onMutate: async ({ postId, content, gifId, memeId, movieconId }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
+      
+      // Snapshot the previous value
+      const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
+      
+      // Create optimistic comment
+      const optimisticComment = {
+        id: `temp-${Date.now()}`,
+        content,
+        gifId,
+        memeId,
+        movieconId,
+        createdAt: new Date().toISOString(),
+        author: {
+          id: (user as any)?.id,
+          username: (user as any)?.username,
+          firstName: (user as any)?.firstName,
+          lastName: (user as any)?.lastName,
+          avatarUrl: (user as any)?.avatarUrl,
+        },
+        likes: [],
+        replies: [],
+      };
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+        if (!old || !old.items) return old;
+        return {
+          ...old,
+          items: old.items.map((item: any) => {
+            if (item.id === postId) {
+              return {
+                ...item,
+                comments: [...(Array.isArray(item.comments) ? item.comments : []), optimisticComment]
+              };
+            }
+            return item;
+          })
+        };
+      });
+      
+      // Clear inputs immediately for instant feedback
+      setCommentInputs(prev => ({ ...prev, [postId]: "" }));
+      setCommentMemes(prev => ({ ...prev, [postId]: null }));
+      setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
+      
+      return { previousFeed, postId };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousFeed) {
+        queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
+      }
+      
       if (isUnauthorizedError(err)) {
         toast({
           title: "Unauthorized",
@@ -1125,9 +1180,6 @@ export default function Home() {
       });
     },
     onSuccess: (response, { postId }) => {
-      setCommentInputs(prev => ({ ...prev, [postId]: "" }));
-      setCommentMemes(prev => ({ ...prev, [postId]: null }));
-      setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
       // Close the comment box after posting
       setExpandedComments(prev => {
         const newSet = new Set(prev);
@@ -1135,28 +1187,70 @@ export default function Home() {
         return newSet;
       });
       
-      // Immediately refresh to get real comment with proper ID
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
-      
       toast({
         title: "Comment posted!",
         description: "Your comment has been added to the conversation",
       });
     },
+    onSettled: () => {
+      // Background refresh to get real comment ID (but UI already shows optimistic comment)
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
+    },
   });
 
-  // Like comment mutation
+  // Like comment mutation with optimistic updates
   const likeCommentMutation = useMutation({
     mutationFn: async (commentId: string) => {
       await apiRequest("POST", `/api/comments/${commentId}/like`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
+    onMutate: async (commentId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
+      
+      // Snapshot the previous value
+      const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+        if (!old || !old.items) return old;
+        return {
+          ...old,
+          items: old.items.map((item: any) => {
+            if (!item.comments) return item;
+            return {
+              ...item,
+              comments: item.comments.map((comment: any) => {
+                if (comment.id === commentId) {
+                  const isAlreadyLiked = Array.isArray(comment.likes) && user && comment.likes.some((like: any) => like.userId === (user as any).id);
+                  if (isAlreadyLiked) {
+                    return {
+                      ...comment,
+                      likes: comment.likes.filter((like: any) => like.userId !== (user as any).id)
+                    };
+                  } else {
+                    return {
+                      ...comment,
+                      likes: [...(Array.isArray(comment.likes) ? comment.likes : []), { userId: (user as any).id }]
+                    };
+                  }
+                }
+                return comment;
+              })
+            };
+          })
+        };
+      });
+      
+      return { previousFeed };
     },
-    onError: (error) => {
+    onError: (error, commentId, context) => {
+      // Rollback on error
+      if (context?.previousFeed) {
+        queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
+      }
+      
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -1174,24 +1268,79 @@ export default function Home() {
         variant: "destructive",
       });
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
+    },
   });
 
-  // Reply to comment mutation
+  // Reply to comment mutation with optimistic updates
   const replyCommentMutation = useMutation({
     mutationFn: async ({ commentId, content }: { commentId: string; content: string }) => {
-      await apiRequest("POST", `/api/comments/${commentId}/reply`, { content });
+      return await apiRequest("POST", `/api/comments/${commentId}/reply`, { content });
     },
-    onSuccess: (response, { commentId }) => {
+    onMutate: async ({ commentId, content }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
+      
+      // Snapshot the previous value
+      const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
+      
+      // Create optimistic reply
+      const optimisticReply = {
+        id: `temp-reply-${Date.now()}`,
+        content,
+        createdAt: new Date().toISOString(),
+        author: {
+          id: (user as any)?.id,
+          username: (user as any)?.username,
+          firstName: (user as any)?.firstName,
+          lastName: (user as any)?.lastName,
+          avatarUrl: (user as any)?.avatarUrl,
+        },
+        likes: [],
+      };
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+        if (!old || !old.items) return old;
+        return {
+          ...old,
+          items: old.items.map((item: any) => {
+            if (!item.comments) return item;
+            return {
+              ...item,
+              comments: item.comments.map((comment: any) => {
+                if (comment.id === commentId) {
+                  return {
+                    ...comment,
+                    replies: [...(Array.isArray(comment.replies) ? comment.replies : []), optimisticReply]
+                  };
+                }
+                return comment;
+              })
+            };
+          })
+        };
+      });
+      
+      // Clear inputs immediately
       setReplyInputs(prev => ({ ...prev, [commentId]: "" }));
       setReplyingToComment(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
+      
+      return { previousFeed };
+    },
+    onSuccess: () => {
       toast({
         title: "Reply posted!",
         description: "Your reply has been added to the conversation",
       });
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousFeed) {
+        queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
+      }
+      
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -1208,6 +1357,11 @@ export default function Home() {
         description: "Failed to post reply",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      // Background refresh to get real reply ID
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
     },
   });
 
