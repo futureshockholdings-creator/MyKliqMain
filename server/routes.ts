@@ -4426,6 +4426,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Update user password
       await storage.updateUser(tokenData.userId, { password: hashedPassword });
+      
+      // Invalidate user profile cache
+      await cacheService.del(`user:profile:${tokenData.userId}`);
 
       // Clear password reset attempts on successful reset
       await storage.clearPasswordResetAttempts(tokenData.userId);
