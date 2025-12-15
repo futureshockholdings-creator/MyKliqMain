@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 import { buildCacheKey } from "@/lib/enterprise/cacheKeyBuilder";
+import { getUserIdFromToken } from "@/lib/tokenStorage";
 
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
@@ -75,9 +76,16 @@ export default function Profile() {
     },
     onSuccess: async () => {
       // Clear enhanced cache for auth/user endpoint (match enterpriseFetch default key)
-      const cacheKey = buildCacheKey('/api/auth/user', { method: 'GET' });
-      console.log('[ProfilePicture] Clearing cache with key:', cacheKey);
+      // Must include userId to match the key used by enterpriseFetch
+      // Use token-based userId first, fallback to user object for cookie-based sessions
+      const userId = getUserIdFromToken() || (user as any)?.id;
+      const cacheKey = buildCacheKey('/api/auth/user', { method: 'GET' }, userId);
+      console.log('[ProfilePicture] Clearing cache with key:', cacheKey, 'userId:', userId);
       await enhancedCache.remove(cacheKey);
+      
+      // Also clear cache without userId as fallback for edge cases
+      const fallbackCacheKey = buildCacheKey('/api/auth/user', { method: 'GET' }, null);
+      await enhancedCache.remove(fallbackCacheKey);
       
       // Invalidate TanStack Query cache to trigger refetch
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -118,9 +126,16 @@ export default function Profile() {
     },
     onSuccess: async () => {
       // Clear enhanced cache for auth/user endpoint (match enterpriseFetch default key)
-      const cacheKey = buildCacheKey('/api/auth/user', { method: 'GET' });
-      console.log('[Background] Clearing cache with key:', cacheKey);
+      // Must include userId to match the key used by enterpriseFetch
+      // Use token-based userId first, fallback to user object for cookie-based sessions
+      const userId = getUserIdFromToken() || (user as any)?.id;
+      const cacheKey = buildCacheKey('/api/auth/user', { method: 'GET' }, userId);
+      console.log('[Background] Clearing cache with key:', cacheKey, 'userId:', userId);
       await enhancedCache.remove(cacheKey);
+      
+      // Also clear cache without userId as fallback for edge cases
+      const fallbackCacheKey = buildCacheKey('/api/auth/user', { method: 'GET' }, null);
+      await enhancedCache.remove(fallbackCacheKey);
       
       // Invalidate TanStack Query cache to trigger refetch
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
