@@ -546,7 +546,7 @@ export default function Marketing() {
               <div className="relative">
                 <div className="aspect-[9/16] max-h-[60vh] mx-auto bg-gray-800 rounded-xl overflow-hidden flex items-center justify-center">
                   <img 
-                    src={buildApiUrl(demoScreenshots[currentScreenshot].url)}
+                    src={buildApiUrl(encodeURI(demoScreenshots[currentScreenshot].url))}
                     alt={demoScreenshots[currentScreenshot].title}
                     className="w-full h-full object-contain"
                     onError={(e) => {
