@@ -527,7 +527,7 @@ export default function Marketing() {
       )}
 
       {/* Demo Screenshots Gallery Modal */}
-      {showGallery && (
+      {showGallery && demoScreenshots.length > 0 && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-gray-900 rounded-2xl border border-gray-700 max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
             <div className="flex items-center justify-between p-6 border-b border-gray-700">
@@ -546,7 +546,7 @@ export default function Marketing() {
               <div className="relative">
                 <div className="aspect-[9/16] max-h-[60vh] mx-auto bg-gray-800 rounded-xl overflow-hidden flex items-center justify-center">
                   <img 
-                    src={demoScreenshots[currentScreenshot].url}
+                    src={buildApiUrl(demoScreenshots[currentScreenshot].url)}
                     alt={demoScreenshots[currentScreenshot].title}
                     className="w-full h-full object-contain"
                     onError={(e) => {
@@ -579,7 +579,6 @@ export default function Marketing() {
 
               <div className="mt-6 text-center">
                 <h4 className="text-xl font-semibold text-white">{demoScreenshots[currentScreenshot].title}</h4>
-                <p className="text-gray-400 mt-2">{demoScreenshots[currentScreenshot].description}</p>
               </div>
 
               <div className="flex justify-center gap-2 mt-6">
