@@ -8,8 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
-import { buildCacheKey } from "@/lib/enterprise/cacheKeyBuilder";
-import { getUserIdFromToken } from "@/lib/tokenStorage";
 
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
@@ -75,19 +73,12 @@ export default function Profile() {
       await apiRequest("PUT", "/api/user/profile-picture", { profileImageURL: profileImageURL });
     },
     onSuccess: async () => {
-      // Clear enhanced cache for auth/user endpoint (match enterpriseFetch default key)
-      // Must include userId to match the key used by enterpriseFetch
-      // Use token-based userId first, fallback to user object for cookie-based sessions
-      const userId = getUserIdFromToken() || (user as any)?.id;
-      const cacheKey = buildCacheKey('/api/auth/user', { method: 'GET' }, userId);
-      console.log('[ProfilePicture] Clearing cache with key:', cacheKey, 'userId:', userId);
-      await enhancedCache.remove(cacheKey);
+      // Clear ALL cached entries for /api/auth/user using pattern match
+      // This ensures we clear any variations of the cache key regardless of format
+      console.log('[ProfilePicture] Clearing all /api/auth/user cache entries...');
+      await enhancedCache.removeByPattern('/api/auth/user');
       
-      // Also clear cache without userId as fallback for edge cases
-      const fallbackCacheKey = buildCacheKey('/api/auth/user', { method: 'GET' }, null);
-      await enhancedCache.remove(fallbackCacheKey);
-      
-      // Invalidate TanStack Query cache to trigger refetch
+      // Invalidate TanStack Query cache to trigger refetch from server
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
@@ -125,19 +116,12 @@ export default function Profile() {
       return await apiRequest("PATCH", "/api/user/background", { backgroundImageUrl: backgroundUrl });
     },
     onSuccess: async () => {
-      // Clear enhanced cache for auth/user endpoint (match enterpriseFetch default key)
-      // Must include userId to match the key used by enterpriseFetch
-      // Use token-based userId first, fallback to user object for cookie-based sessions
-      const userId = getUserIdFromToken() || (user as any)?.id;
-      const cacheKey = buildCacheKey('/api/auth/user', { method: 'GET' }, userId);
-      console.log('[Background] Clearing cache with key:', cacheKey, 'userId:', userId);
-      await enhancedCache.remove(cacheKey);
+      // Clear ALL cached entries for /api/auth/user using pattern match
+      // This ensures we clear any variations of the cache key regardless of format
+      console.log('[Background] Clearing all /api/auth/user cache entries...');
+      await enhancedCache.removeByPattern('/api/auth/user');
       
-      // Also clear cache without userId as fallback for edge cases
-      const fallbackCacheKey = buildCacheKey('/api/auth/user', { method: 'GET' }, null);
-      await enhancedCache.remove(fallbackCacheKey);
-      
-      // Invalidate TanStack Query cache to trigger refetch
+      // Invalidate TanStack Query cache to trigger refetch from server
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
       toast({

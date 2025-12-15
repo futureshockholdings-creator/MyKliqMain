@@ -239,6 +239,40 @@ class EnhancedCache {
   }
 
   /**
+   * Remove all cache entries matching a pattern (prefix match)
+   * Useful for invalidating all variations of a cached endpoint
+   */
+  async removeByPattern(pattern: string): Promise<number> {
+    let removed = 0;
+    
+    // Clear from memory cache
+    const memoryKeys = this.memoryCache.keys();
+    for (const key of memoryKeys) {
+      if (key.startsWith(pattern)) {
+        this.memoryCache.delete(key);
+        removed++;
+      }
+    }
+    
+    // Clear from disk cache
+    try {
+      const diskKeys = await this.diskCache.keys();
+      for (const key of diskKeys) {
+        if (key.startsWith(pattern)) {
+          await this.diskCache.removeItem(key);
+          removed++;
+        }
+      }
+    } catch (e) {
+      console.error('[EnhancedCache] Failed to clear disk cache by pattern:', e);
+    }
+    
+    await this.calculateDiskSize();
+    console.log(`[EnhancedCache] Removed ${removed} entries matching pattern: ${pattern}`);
+    return removed;
+  }
+
+  /**
    * Clear all caches
    */
   async clearAll(): Promise<void> {
