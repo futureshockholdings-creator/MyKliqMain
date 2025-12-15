@@ -583,6 +583,7 @@ export default function Calendar() {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         data-testid="switch-remind-kliq"
+                        className="data-[state=unchecked]:bg-gray-300 data-[state=unchecked]:border-gray-400"
                       />
                     </FormControl>
                   </FormItem>
