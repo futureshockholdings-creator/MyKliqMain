@@ -1039,6 +1039,7 @@ export default function Kliq() {
                 Create polls and vote with your friends
               </p>
             </div>
+            <CreatePollDialog />
           </div>
 
           {pollsLoading ? (
@@ -1070,7 +1071,7 @@ export default function Kliq() {
                   trigger={
                     <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                       <Plus className="w-4 h-4 mr-2" />
-                      Create Poll
+                      Create First Poll
                     </Button>
                   }
                 />
@@ -1081,16 +1082,6 @@ export default function Kliq() {
               {polls.map((poll) => (
                 <PollCard key={poll.id} poll={poll} />
               ))}
-              <div className="flex justify-center pt-4">
-                <CreatePollDialog
-                  trigger={
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Poll
-                    </Button>
-                  }
-                />
-              </div>
             </div>
           )}
         </TabsContent>
