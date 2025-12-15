@@ -4729,6 +4729,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve static files from attached_assets (border images, etc.)
   app.use("/attached_assets", express.static("attached_assets"));
 
+  // Serve demo screenshots for marketing page
+  app.use("/demo-screenshots", express.static(path.join(process.cwd(), "public", "demo-screenshots")));
+
   // Serve uploaded objects (profile pictures, etc.)
   app.get("/objects/:objectPath(*)", async (req, res) => {
     const objectStorageService = new ObjectStorageService();
