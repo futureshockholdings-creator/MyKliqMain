@@ -512,9 +512,9 @@ export default function Calendar() {
 
       {/* Add/Edit Note Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
+        <DialogContent className="!bg-white !text-black border-gray-300">
           <DialogHeader>
-            <DialogTitle>{editingNote ? 'Edit Note' : 'Add Note'}</DialogTitle>
+            <DialogTitle className="!text-black">{editingNote ? 'Edit Note' : 'Add Note'}</DialogTitle>
           </DialogHeader>
 
           <Form {...form}>
@@ -524,9 +524,9 @@ export default function Calendar() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Title</FormLabel>
+                    <FormLabel className="!text-black">Title</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g., Sarah's surgery" data-testid="input-title" />
+                      <Input {...field} placeholder="e.g., Sarah's surgery" data-testid="input-title" className="!bg-white !text-black border-gray-300 placeholder:text-gray-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -538,13 +538,14 @@ export default function Calendar() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormLabel className="!text-black">Description (Optional)</FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
                         placeholder="Add any additional details..."
                         rows={3}
                         data-testid="input-description"
+                        className="!bg-white !text-black border-gray-300 placeholder:text-gray-500"
                       />
                     </FormControl>
                     <FormMessage />
@@ -557,9 +558,9 @@ export default function Calendar() {
                 name="noteDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date</FormLabel>
+                    <FormLabel className="!text-black">Date</FormLabel>
                     <FormControl>
-                      <Input {...field} type="date" data-testid="input-date" />
+                      <Input {...field} type="date" data-testid="input-date" className="!bg-white !text-black border-gray-300" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -570,10 +571,10 @@ export default function Calendar() {
                 control={form.control}
                 name="remindKliq"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <FormItem className="flex items-center justify-between rounded-lg border border-gray-300 p-4 !bg-white">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Remind Kliq</FormLabel>
-                      <div className="text-sm text-muted-foreground">
+                      <FormLabel className="text-base !text-black">Remind Kliq</FormLabel>
+                      <div className="text-sm !text-gray-600">
                         Send a notification to all kliq members on this day
                       </div>
                     </div>
@@ -598,6 +599,7 @@ export default function Calendar() {
                     form.reset();
                   }}
                   data-testid="button-cancel"
+                  className="!bg-white !text-black border-gray-300 hover:!bg-gray-100"
                 >
                   Cancel
                 </Button>
