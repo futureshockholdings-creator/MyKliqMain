@@ -161,12 +161,16 @@ const applyTheme = (theme: Partial<UserTheme>) => {
     const fontIsLight = isLightColor(theme.fontColor);
     
     // Set card background to contrast with font color
-    // Light font (white) -> dark card background (black)
+    // Light font (white) -> dark card background (gray)
     // Dark font (black) -> light card background (white)
     const cardBgColor = fontIsLight ? '#1f2937' : '#ffffff'; // dark gray vs white
     const cardBgHsl = safeHexToHsl(cardBgColor, 'cardBgColor');
     if (cardBgHsl) {
+      // CSS variables expect full hsl() format
       root.style.setProperty('--card', `hsl(${cardBgHsl})`);
+      // Also update sidebar to match card for consistent navigation appearance
+      root.style.setProperty('--sidebar', `hsl(${cardBgHsl})`);
+      root.style.setProperty('--sidebar-accent', `hsl(${cardBgHsl})`);
     }
     
     // Also set the card foreground to match the font color for consistency
@@ -174,6 +178,9 @@ const applyTheme = (theme: Partial<UserTheme>) => {
     if (fontColorHsl) {
       root.style.setProperty('--card-foreground', `hsl(${fontColorHsl})`);
       root.style.setProperty('--foreground', `hsl(${fontColorHsl})`);
+      // Update sidebar foreground to match
+      root.style.setProperty('--sidebar-foreground', `hsl(${fontColorHsl})`);
+      root.style.setProperty('--sidebar-accent-foreground', `hsl(${fontColorHsl})`);
     }
     
     // Set muted background to also contrast with font color
