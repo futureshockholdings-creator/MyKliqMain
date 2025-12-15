@@ -20,16 +20,62 @@ import {
   Download,
   Smartphone,
   X,
-  User
+  User,
+  ChevronLeft,
+  ChevronRight,
+  Images
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
+
+const demoScreenshots = [
+  {
+    url: "/demo-screenshots/profile-view.png",
+    title: "Profile View",
+    description: "Customize your profile with themes, borders, and personal info"
+  },
+  {
+    url: "/demo-screenshots/feed-view.png",
+    title: "Feed View", 
+    description: "See posts from your closest friends in your personalized feed"
+  },
+  {
+    url: "/demo-screenshots/friend-ranking.png",
+    title: "Friend Ranking",
+    description: "Rank your friends 1-28 to prioritize who matters most"
+  },
+  {
+    url: "/demo-screenshots/messaging.png",
+    title: "Messaging",
+    description: "Private conversations with your kliq members"
+  },
+  {
+    url: "/demo-screenshots/stories.png",
+    title: "Stories",
+    description: "Share 24-hour stories with your inner circle"
+  },
+  {
+    url: "/demo-screenshots/theme-customization.png",
+    title: "Theme Customization",
+    description: "Make the app your own with custom colors and styles"
+  }
+];
 
 export default function Marketing() {
   const [email, setEmail] = useState("");
   const [currentFeature, setCurrentFeature] = useState(0);
   const [userCount, setUserCount] = useState(10000);
   const [showDemo, setShowDemo] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
+  const [currentScreenshot, setCurrentScreenshot] = useState(0);
+
+  const nextScreenshot = () => {
+    setCurrentScreenshot((prev) => (prev + 1) % demoScreenshots.length);
+  };
+
+  const prevScreenshot = () => {
+    setCurrentScreenshot((prev) => (prev - 1 + demoScreenshots.length) % demoScreenshots.length);
+  };
 
   // Simulate growing user count for social proof
   useEffect(() => {
@@ -458,10 +504,13 @@ export default function Marketing() {
                       </Button>
                       
                       <Button 
-                        onClick={() => window.open('/user/58add0ed-aeeb-4911-b7be-5131b1b8dc29', '_blank')}
+                        onClick={() => {
+                          setShowDemo(false);
+                          setShowGallery(true);
+                        }}
                         className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white mr-4"
                       >
-                        <User className="h-4 w-4 mr-2" />
+                        <Images className="h-4 w-4 mr-2" />
                         View Demo Profile
                       </Button>
                       
@@ -484,6 +533,82 @@ export default function Marketing() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Demo Screenshots Gallery Modal */}
+      {showGallery && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-gray-900 rounded-2xl border border-gray-700 max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
+            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <h3 className="text-2xl font-bold text-white">MyKliq App Screenshots</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowGallery(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="h-6 w-6" />
+              </Button>
+            </div>
+            
+            <div className="p-6">
+              <div className="relative">
+                <div className="aspect-[9/16] max-h-[60vh] mx-auto bg-gray-800 rounded-xl overflow-hidden flex items-center justify-center">
+                  <img 
+                    src={demoScreenshots[currentScreenshot].url}
+                    alt={demoScreenshots[currentScreenshot].title}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      target.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="hidden absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                    <Images className="h-16 w-16 mb-4" />
+                    <p className="text-lg font-medium">Screenshot Coming Soon</p>
+                    <p className="text-sm mt-2">{demoScreenshots[currentScreenshot].title}</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={prevScreenshot}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-colors"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+
+                <button
+                  onClick={nextScreenshot}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-colors"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="mt-6 text-center">
+                <h4 className="text-xl font-semibold text-white">{demoScreenshots[currentScreenshot].title}</h4>
+                <p className="text-gray-400 mt-2">{demoScreenshots[currentScreenshot].description}</p>
+              </div>
+
+              <div className="flex justify-center gap-2 mt-6">
+                {demoScreenshots.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentScreenshot(index)}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      index === currentScreenshot ? 'bg-purple-500' : 'bg-gray-600 hover:bg-gray-500'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <p className="text-center text-gray-500 text-sm mt-4">
+                {currentScreenshot + 1} of {demoScreenshots.length}
+              </p>
             </div>
           </div>
         </div>
