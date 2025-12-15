@@ -14,7 +14,8 @@ const AWS_DOMAINS = ['mykliq.app', 'www.mykliq.app'];
 
 // Hardcoded backend URL - bypasses environment variable issues
 // This URL is baked into the production build
-const REPLIT_BACKEND_URL = 'https://my-kliq-futureshock.replit.app';
+// Using api.mykliq.app subdomain for same-site cookies (Safari ITP compatibility)
+const REPLIT_BACKEND_URL = 'https://api.mykliq.app';
 
 let cachedApiBaseUrl: string | null = null;
 
