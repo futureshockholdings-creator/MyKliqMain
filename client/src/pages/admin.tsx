@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Search, Shield, Users, Database, Activity, AlertTriangle, BarChart3, Download, RefreshCw, Trash2, UserX, Calendar, Ban, Flag, FileWarning } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { buildApiUrl } from "@/lib/apiConfig";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 import {
   Table,
@@ -68,7 +69,7 @@ export default function AdminPage() {
   // Fetch all users for admin
   const { data: users = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/users"],
-    queryFn: () => fetch(`/api/admin/users?password=${encodeURIComponent("mykliq2025admin!")}`).then(res => res.json()),
+    queryFn: () => fetch(buildApiUrl(`/api/admin/users?password=${encodeURIComponent("mykliq2025admin!")}`)).then(res => res.json()),
     enabled: isAuthenticated,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
@@ -76,7 +77,7 @@ export default function AdminPage() {
   // Fetch system analytics
   const { data: analytics } = useQuery<any>({
     queryKey: ["/api/admin/analytics"],
-    queryFn: () => fetch(`/api/admin/analytics?password=${encodeURIComponent("mykliq2025admin!")}`).then(res => res.json()),
+    queryFn: () => fetch(buildApiUrl(`/api/admin/analytics?password=${encodeURIComponent("mykliq2025admin!")}`)).then(res => res.json()),
     enabled: isAuthenticated && selectedTab === "analytics",
     refetchInterval: 60000, // Refresh every minute
   });
@@ -84,7 +85,7 @@ export default function AdminPage() {
   // Fetch system health
   const { data: systemHealth } = useQuery<any>({
     queryKey: ["/api/admin/system-health"],
-    queryFn: () => fetch(`/api/admin/system-health?password=${encodeURIComponent("mykliq2025admin!")}`).then(res => res.json()),
+    queryFn: () => fetch(buildApiUrl(`/api/admin/system-health?password=${encodeURIComponent("mykliq2025admin!")}`)).then(res => res.json()),
     enabled: isAuthenticated && selectedTab === "system",
     refetchInterval: 10000, // Refresh every 10 seconds
   });
@@ -92,7 +93,7 @@ export default function AdminPage() {
   // Fetch rules reports
   const { data: reports = [], isLoading: reportsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/reports", reportStatusFilter],
-    queryFn: () => fetch(`/api/admin/reports${reportStatusFilter !== "all" ? `?status=${reportStatusFilter}` : ""}`).then(res => res.json()),
+    queryFn: () => fetch(buildApiUrl(`/api/admin/reports${reportStatusFilter !== "all" ? `?status=${reportStatusFilter}` : ""}`)).then(res => res.json()),
     enabled: isAuthenticated && selectedTab === "reports",
     refetchInterval: 30000, // Refresh every 30 seconds
   });
@@ -131,7 +132,7 @@ export default function AdminPage() {
   // Fetch user details
   const fetchUserDetails = useMutation({
     mutationFn: async (userId: string) => {
-      return await fetch(`/api/admin/users/${userId}?password=${encodeURIComponent("mykliq2025admin!")}`).then(res => res.json());
+      return await fetch(buildApiUrl(`/api/admin/users/${userId}?password=${encodeURIComponent("mykliq2025admin!")}`)).then(res => res.json());
     },
     onSuccess: (data) => {
       setSelectedUser(data);
@@ -201,7 +202,7 @@ export default function AdminPage() {
   // Export data mutation
   const exportData = useMutation({
     mutationFn: async (type: string) => {
-      const response = await fetch(`/api/admin/export/${type}?password=${encodeURIComponent("mykliq2025admin!")}`);
+      const response = await fetch(buildApiUrl(`/api/admin/export/${type}?password=${encodeURIComponent("mykliq2025admin!")}`));
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
