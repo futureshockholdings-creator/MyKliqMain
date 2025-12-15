@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { startBirthdayService } from "./birthdayService";
 import { startMoodBoostScheduler } from "./services/moodBoostScheduler";
@@ -106,6 +107,9 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
+
+  // Serve demo screenshots BEFORE Vite catches all requests
+  app.use("/demo-screenshots", express.static(path.join(process.cwd(), "public", "demo-screenshots")));
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
