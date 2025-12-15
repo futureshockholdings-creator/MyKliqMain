@@ -70,15 +70,21 @@ export default function Profile() {
 
   const updateProfilePictureMutation = useMutation({
     mutationFn: async (profileImageURL: string) => {
-      await apiRequest("PUT", "/api/user/profile-picture", { profileImageURL: profileImageURL });
+      return await apiRequest("PUT", "/api/user/profile-picture", { profileImageURL: profileImageURL });
     },
-    onSuccess: async () => {
+    onSuccess: async (updatedUser) => {
       // Clear ALL cached entries for /api/auth/user using pattern match
-      // This ensures we clear any variations of the cache key regardless of format
       console.log('[ProfilePicture] Clearing all /api/auth/user cache entries...');
       await enhancedCache.removeByPattern('/api/auth/user');
       
-      // Invalidate TanStack Query cache to trigger refetch from server
+      // Directly update TanStack Query cache with the response data
+      // This is more reliable than invalidating and refetching
+      if (updatedUser) {
+        console.log('[ProfilePicture] Setting query data with updated user:', updatedUser.profileImageUrl);
+        queryClient.setQueryData(["/api/auth/user"], updatedUser);
+      }
+      
+      // Also invalidate to ensure any other components get fresh data
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
@@ -115,13 +121,19 @@ export default function Profile() {
     mutationFn: async (backgroundUrl: string) => {
       return await apiRequest("PATCH", "/api/user/background", { backgroundImageUrl: backgroundUrl });
     },
-    onSuccess: async () => {
+    onSuccess: async (updatedUser) => {
       // Clear ALL cached entries for /api/auth/user using pattern match
-      // This ensures we clear any variations of the cache key regardless of format
       console.log('[Background] Clearing all /api/auth/user cache entries...');
       await enhancedCache.removeByPattern('/api/auth/user');
       
-      // Invalidate TanStack Query cache to trigger refetch from server
+      // Directly update TanStack Query cache with the response data
+      // This is more reliable than invalidating and refetching
+      if (updatedUser) {
+        console.log('[Background] Setting query data with updated user:', updatedUser.backgroundImageUrl);
+        queryClient.setQueryData(["/api/auth/user"], updatedUser);
+      }
+      
+      // Also invalidate to ensure any other components get fresh data
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
