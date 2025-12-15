@@ -27,39 +27,13 @@ import {
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
+import { buildApiUrl } from "@/lib/apiConfig";
 
-const demoScreenshots = [
-  {
-    url: "/demo-screenshots/profile-view.png",
-    title: "Profile View",
-    description: "Customize your profile with themes, borders, and personal info"
-  },
-  {
-    url: "/demo-screenshots/feed-view.png",
-    title: "Feed View", 
-    description: "See posts from your closest friends in your personalized feed"
-  },
-  {
-    url: "/demo-screenshots/friend-ranking.png",
-    title: "Friend Ranking",
-    description: "Rank your friends 1-28 to prioritize who matters most"
-  },
-  {
-    url: "/demo-screenshots/messaging.png",
-    title: "Messaging",
-    description: "Private conversations with your kliq members"
-  },
-  {
-    url: "/demo-screenshots/stories.png",
-    title: "Stories",
-    description: "Share 24-hour stories with your inner circle"
-  },
-  {
-    url: "/demo-screenshots/theme-customization.png",
-    title: "Theme Customization",
-    description: "Make the app your own with custom colors and styles"
-  }
-];
+interface DemoScreenshot {
+  url: string;
+  filename: string;
+  title: string;
+}
 
 export default function Marketing() {
   const [email, setEmail] = useState("");
@@ -68,12 +42,26 @@ export default function Marketing() {
   const [showDemo, setShowDemo] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [currentScreenshot, setCurrentScreenshot] = useState(0);
+  const [demoScreenshots, setDemoScreenshots] = useState<DemoScreenshot[]>([]);
+
+  useEffect(() => {
+    fetch(buildApiUrl('/api/demo-screenshots'))
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setDemoScreenshots(data);
+        }
+      })
+      .catch(err => console.error('Error loading demo screenshots:', err));
+  }, []);
 
   const nextScreenshot = () => {
+    if (demoScreenshots.length === 0) return;
     setCurrentScreenshot((prev) => (prev + 1) % demoScreenshots.length);
   };
 
   const prevScreenshot = () => {
+    if (demoScreenshots.length === 0) return;
     setCurrentScreenshot((prev) => (prev - 1 + demoScreenshots.length) % demoScreenshots.length);
   };
 

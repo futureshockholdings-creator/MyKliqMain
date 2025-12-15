@@ -7110,6 +7110,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Demo Screenshots API - dynamically lists all images in demo-screenshots folder
+  app.get('/api/demo-screenshots', async (req, res) => {
+    try {
+      const screenshotsDir = path.join(process.cwd(), 'public', 'demo-screenshots');
+      
+      // Check if directory exists
+      if (!fs.existsSync(screenshotsDir)) {
+        return res.json([]);
+      }
+      
+      // Read all files in the directory
+      const files = fs.readdirSync(screenshotsDir);
+      
+      // Filter for image files and create URL list
+      const imageExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+      const screenshots = files
+        .filter(file => imageExtensions.includes(path.extname(file).toLowerCase()))
+        .sort() // Sort alphabetically
+        .map(file => ({
+          url: `/demo-screenshots/${file}`,
+          filename: file,
+          title: path.basename(file, path.extname(file)).replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        }));
+      
+      res.json(screenshots);
+    } catch (error) {
+      console.error("Error fetching demo screenshots:", error);
+      res.status(500).json({ message: "Failed to fetch demo screenshots" });
+    }
+  });
+
   // GIF API routes
   
   // Get all GIFs (cached for 30 minutes - static content)
