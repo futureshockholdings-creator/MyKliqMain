@@ -21,7 +21,7 @@ import { getInviteMessage, getAppStoreUrl, getDownloadText } from "@/lib/deviceD
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 
 export default function Kliq() {
   const [kliqName, setKliqName] = useState("");
@@ -598,11 +598,12 @@ export default function Kliq() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <Users className="w-6 h-6 text-primary" />
+    <PageWrapper>
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+        {/* Header */}
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Users className="w-6 h-6 text-primary" />
           <h1 className="text-2xl font-bold text-primary">
             {editingName ? (
               <div className="space-y-3">
@@ -1153,20 +1154,19 @@ export default function Kliq() {
               >
                 Cancel
               </Button>
-              <Button
-                onClick={confirmRemoveFriend}
-                disabled={removeFriendMutation.isPending}
-                className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                data-testid="button-confirm-remove"
-              >
-                {removeFriendMutation.isPending ? "Removing..." : "Remove"}
-              </Button>
+                <Button
+                  onClick={confirmRemoveFriend}
+                  disabled={removeFriendMutation.isPending}
+                  className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                  data-testid="button-confirm-remove"
+                >
+                  {removeFriendMutation.isPending ? "Removing..." : "Remove"}
+                </Button>
+              </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Footer />
-    </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </PageWrapper>
   );
 }

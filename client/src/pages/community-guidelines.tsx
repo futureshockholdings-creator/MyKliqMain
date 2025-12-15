@@ -1,8 +1,8 @@
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 
 export default function CommunityGuidelines() {
   return (
-    <div className="min-h-screen !bg-white">
+    <PageWrapper className="!bg-white">
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8 !bg-white !text-black">
           <h1 className="text-3xl font-bold mb-8 !text-black">Community Guidelines</h1>
           
@@ -169,7 +169,6 @@ export default function CommunityGuidelines() {
             </section>
           </div>
         </div>
-      <Footer />
-    </div>
+    </PageWrapper>
   );
 }

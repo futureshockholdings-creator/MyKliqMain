@@ -36,7 +36,7 @@ import { EventCard } from "@/components/EventCard";
 import { MoodBoostCard } from "@/components/MoodBoostCard";
 import { SportsUpdateCard } from "@/components/SportsUpdateCard";
 import { trackMobileEvent } from "@/lib/mobileAnalytics";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 import { usePostTranslation } from "@/lib/translationService";
 import { feedRealtimeService } from "@/lib/feedRealtime";
 
@@ -1913,9 +1913,10 @@ export default function Home() {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-      {/* Post Creation */}
-      <Card className="bg-gradient-to-r from-mykliq-purple/20 to-secondary/20 border-mykliq-purple/30">
+    <PageWrapper>
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+        {/* Post Creation */}
+        <Card className="bg-gradient-to-r from-mykliq-purple/20 to-secondary/20 border-mykliq-purple/30">
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-3">
             <Avatar className="w-10 h-10 border-2 border-mykliq-orange">
@@ -4219,21 +4220,21 @@ export default function Home() {
             >
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                unsavePostMutation.mutate(postToUnsave?.id);
-              }}
-              disabled={unsavePostMutation.isPending}
-              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700 dark:text-white"
-              data-testid="button-confirm-unsave"
-            >
-              {unsavePostMutation.isPending ? "Removing..." : "Remove"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+              <Button
+                onClick={() => {
+                  unsavePostMutation.mutate(postToUnsave?.id);
+                }}
+                disabled={unsavePostMutation.isPending}
+                className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700 dark:text-white"
+                data-testid="button-confirm-unsave"
+              >
+                {unsavePostMutation.isPending ? "Removing..." : "Remove"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
-      <Footer />
-    </div>
+      </div>
+    </PageWrapper>
   );
 }

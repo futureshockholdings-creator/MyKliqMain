@@ -18,7 +18,7 @@ import { Trash2, Edit, Plus, Eye, MousePointer, Calendar, FileText, CheckCircle,
 import { useToast } from "@/hooks/use-toast";
 import type { SponsoredAd, AdvertiserApplication } from "@shared/schema";
 import { getTextColorForBackground, isBlackBackground } from "@/lib/colorUtils";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 
 // Ad Preview Component with dynamic text colors
@@ -352,11 +352,16 @@ export default function AdsManager() {
   };
 
   if (isLoading) {
-    return <ForcedLightSurface className="p-6">Loading ads...</ForcedLightSurface>;
+    return (
+      <PageWrapper className="!bg-white">
+        <ForcedLightSurface className="p-6">Loading ads...</ForcedLightSurface>
+      </PageWrapper>
+    );
   }
 
   return (
-    <ForcedLightSurface>
+    <PageWrapper className="!bg-white">
+      <ForcedLightSurface>
       <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -1143,8 +1148,8 @@ export default function AdsManager() {
         )}
       </div>
 
-      <Footer />
       </div>
-    </ForcedLightSurface>
+      </ForcedLightSurface>
+    </PageWrapper>
   );
 }

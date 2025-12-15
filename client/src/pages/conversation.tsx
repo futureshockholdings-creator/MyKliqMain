@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MessageMediaPicker } from "@/components/MessageMediaPicker";
 import { MemeDisplay } from "@/components/MemeDisplay";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 
 interface MessageData {
   id: string;
@@ -206,7 +206,7 @@ export function Conversation() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background text-foreground p-4">
+      <PageWrapper className="bg-background text-foreground p-4">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-6">
             <Link to="/messages">
@@ -220,7 +220,7 @@ export function Conversation() {
             </div>
           </div>
         </div>
-      </div>
+      </PageWrapper>
     );
   }
 
@@ -231,32 +231,33 @@ export function Conversation() {
     null;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Header */}
-      <div className="border-b border-border p-4 bg-background">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-4">
-            <Link to="/messages">
-              <Button variant="ghost" size="sm" data-testid="button-back">
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-            </Link>
-            {displayUser && (
-              <div className="flex items-center gap-3">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src={displayUser.profileImageUrl} />
-                  <AvatarFallback className="bg-blue-100 text-blue-600">
-                    {getInitials(displayUser)}
-                  </AvatarFallback>
-                </Avatar>
-                <h1 className="text-lg font-semibold text-foreground" data-testid="text-conversation-title">
-                  {getDisplayName(displayUser)}
-                </h1>
-              </div>
-            )}
+    <PageWrapper className="bg-background text-foreground">
+      <div className="flex flex-col flex-1">
+        {/* Header */}
+        <div className="border-b border-border p-4 bg-background">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex items-center gap-4">
+              <Link to="/messages">
+                <Button variant="ghost" size="sm" data-testid="button-back">
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+              </Link>
+              {displayUser && (
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={displayUser.profileImageUrl} />
+                    <AvatarFallback className="bg-blue-100 text-blue-600">
+                      {getInitials(displayUser)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <h1 className="text-lg font-semibold text-foreground" data-testid="text-conversation-title">
+                    {getDisplayName(displayUser)}
+                  </h1>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 bg-background">
@@ -409,8 +410,7 @@ export function Conversation() {
           </form>
         </div>
       </div>
-
-      <Footer />
-    </div>
+      </div>
+    </PageWrapper>
   );
 }

@@ -5,7 +5,7 @@ import { MessageCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 
 interface ConversationData {
   id: string;
@@ -48,7 +48,7 @@ export function Messages() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background text-foreground p-4">
+      <PageWrapper className="bg-background text-foreground p-4">
         <div className="w-full max-w-6xl mx-auto px-4 md:px-6">
           <div className="flex items-center gap-4 mb-6">
             <Link to="/">
@@ -72,12 +72,12 @@ export function Messages() {
             ))}
           </div>
         </div>
-      </div>
+      </PageWrapper>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4">
+    <PageWrapper className="bg-background text-foreground p-4">
       <div className="w-full max-w-6xl mx-auto px-4 md:px-6">
         <div className="flex items-center gap-4 mb-6">
           <Link to="/">
@@ -143,8 +143,6 @@ export function Messages() {
           </div>
         )}
       </div>
-
-      <Footer />
-    </div>
+    </PageWrapper>
   );
 }

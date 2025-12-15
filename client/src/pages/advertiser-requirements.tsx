@@ -3,13 +3,14 @@ import { CheckCircle2, AlertCircle, FileText, Image, Video, Globe, Shield, XCirc
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 
 export default function AdvertiserRequirements() {
   return (
-    <ForcedLightSurface>
-      <div className="w-full max-w-5xl mx-auto p-6 md:p-8 space-y-8">
+    <PageWrapper className="!bg-white">
+      <ForcedLightSurface>
+        <div className="w-full max-w-5xl mx-auto p-6 md:p-8 space-y-8">
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold !text-black">
             Advertiser Requirements
@@ -324,9 +325,8 @@ export default function AdvertiserRequirements() {
             </p>
           </CardContent>
         </Card>
-      </div>
-      
-      <Footer />
-    </ForcedLightSurface>
+        </div>
+      </ForcedLightSurface>
+    </PageWrapper>
   );
 }

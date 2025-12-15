@@ -26,7 +26,7 @@ import {
   CameraOff,
   Trash2
 } from "lucide-react";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 
 interface User {
   id: string;
@@ -593,12 +593,13 @@ export default function Actions() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Action</h1>
-          <p className="text-gray-400">Live streams from your kliq</p>
-        </div>
+    <PageWrapper>
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Action</h1>
+            <p className="text-gray-400">Live streams from your kliq</p>
+          </div>
         
         <Dialog open={showCreateAction} onOpenChange={setShowCreateAction}>
           <DialogTrigger asChild>
@@ -726,18 +727,18 @@ export default function Actions() {
             <p className="text-gray-400 mb-4">
               Be the first to start a live stream in your kliq!
             </p>
-            <Button
-              onClick={() => setShowCreateAction(true)}
-              className="bg-gradient-to-r from-red-600 to-pink-600 text-white"
-            >
-              <Video className="w-4 h-4 mr-2" />
-              Start Your First Action
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+              <Button
+                onClick={() => setShowCreateAction(true)}
+                className="bg-gradient-to-r from-red-600 to-pink-600 text-white"
+              >
+                <Video className="w-4 h-4 mr-2" />
+                Start Your First Action
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-      <Footer />
-    </div>
+      </div>
+    </PageWrapper>
   );
 }

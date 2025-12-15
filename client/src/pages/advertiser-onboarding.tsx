@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, ArrowRight, ArrowLeft, Building, Image as ImageIcon, Target, DollarSign, Shield } from "lucide-react";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 
 const formSchema = z.object({
@@ -169,7 +169,8 @@ export default function AdvertiserOnboarding() {
 
   if (isSubmitted) {
     return (
-      <ForcedLightSurface className="flex items-center justify-center p-6">
+      <PageWrapper className="!bg-white">
+        <ForcedLightSurface className="flex items-center justify-center p-6">
         <Card className="max-w-2xl w-full border-2 border-green-600">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -226,13 +227,14 @@ export default function AdvertiserOnboarding() {
             </div>
           </CardContent>
         </Card>
-        <Footer />
-      </ForcedLightSurface>
+        </ForcedLightSurface>
+      </PageWrapper>
     );
   }
 
   return (
-    <ForcedLightSurface>
+    <PageWrapper className="!bg-white">
+      <ForcedLightSurface>
       <div className="w-full max-w-4xl mx-auto p-6 md:p-8 space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold">Advertiser Application</h1>
@@ -785,9 +787,8 @@ export default function AdvertiserOnboarding() {
           </Link>
         </div>
       </div>
-      
-      <Footer />
-    </ForcedLightSurface>
+      </ForcedLightSurface>
+    </PageWrapper>
   );
 }
 

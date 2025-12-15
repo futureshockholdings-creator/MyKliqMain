@@ -1,4 +1,4 @@
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 import { Mail, Megaphone, HeadphonesIcon, DollarSign, FileText, PenTool } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Link } from "wouter";
 
 export default function ContactUs() {
   return (
-    <div className="min-h-screen !bg-white">
+    <PageWrapper className="!bg-white">
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8 !bg-white !text-black">
         <h1 className="text-3xl font-bold mb-8 !text-black">Contact Us</h1>
         
@@ -128,8 +128,6 @@ export default function ContactUs() {
           </section>
         </div>
       </div>
-      
-      <Footer />
-    </div>
+    </PageWrapper>
   );
 }

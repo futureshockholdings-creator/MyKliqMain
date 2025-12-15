@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 
 export default function Themes() {
   const { toast } = useToast();
@@ -163,18 +163,18 @@ export default function Themes() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-6">
-      <ThemeEditor
-        theme={theme as any}
-        onSave={handleSaveTheme}
-        onReset={handleResetTheme}
-        onSurpriseMe={handleSurpriseMe}
-        isSaving={saveThemeMutation.isPending}
-        isFetching={isFetching}
-        isError={isError}
-      />
-
-      <Footer />
-    </div>
+    <PageWrapper>
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-6">
+        <ThemeEditor
+          theme={theme as any}
+          onSave={handleSaveTheme}
+          onReset={handleResetTheme}
+          onSurpriseMe={handleSurpriseMe}
+          isSaving={saveThemeMutation.isPending}
+          isFetching={isFetching}
+          isError={isError}
+        />
+      </div>
+    </PageWrapper>
   );
 }

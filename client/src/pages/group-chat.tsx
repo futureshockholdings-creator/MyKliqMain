@@ -10,7 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 
 interface MessageData {
   id: string;
@@ -118,7 +118,7 @@ export function GroupChat() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background text-foreground p-4">
+      <PageWrapper className="bg-background text-foreground p-4">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-6">
             <Link to="/kliq">
@@ -132,13 +132,13 @@ export function GroupChat() {
             </div>
           </div>
         </div>
-      </div>
+      </PageWrapper>
     );
   }
 
   if (!groupChat) {
     return (
-      <div className="min-h-screen bg-background text-foreground p-4">
+      <PageWrapper className="bg-background text-foreground p-4">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-6">
             <Link to="/kliq">
@@ -149,12 +149,12 @@ export function GroupChat() {
             <h1 className="text-xl font-bold">Group Chat Not Found</h1>
           </div>
         </div>
-      </div>
+      </PageWrapper>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <PageWrapper className="bg-background text-foreground">
       <div className="max-w-2xl mx-auto w-full flex flex-col flex-1">
         {/* Header */}
         <div className="flex items-center gap-4 p-4 border-b border-border bg-card">
@@ -262,8 +262,6 @@ export function GroupChat() {
           </p>
         </form>
       </div>
-
-      <Footer />
-    </div>
+    </PageWrapper>
   );
 }

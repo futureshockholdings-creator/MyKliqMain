@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { cn } from "@/lib/utils";
 import { MediaUpload } from "@/components/MediaUpload";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 
 interface CountdownProps {
   targetDate: string;
@@ -364,7 +364,8 @@ export default function Events() {
 
   if (eventsLoading) {
     return (
-      <div className="max-w-2xl mx-auto p-6 space-y-6">
+      <PageWrapper>
+        <div className="max-w-2xl mx-auto p-6 space-y-6">
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="bg-card border-border">
@@ -375,15 +376,17 @@ export default function Events() {
             </Card>
           ))}
         </div>
-      </div>
+        </div>
+      </PageWrapper>
     );
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Events</h1>
+    <PageWrapper>
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Events</h1>
           <p className="text-muted-foreground">Create and join events with your kliq</p>
         </div>
         
@@ -853,15 +856,15 @@ export default function Events() {
       )}
 
       {/* Media Upload Modal */}
-      <MediaUpload
-        open={showMediaUpload}
-        onOpenChange={setShowMediaUpload}
-        onSuccess={handleMediaUploadSuccess}
-        type="event"
-        userId={userData?.id}
-      />
+        <MediaUpload
+          open={showMediaUpload}
+          onOpenChange={setShowMediaUpload}
+          onSuccess={handleMediaUploadSuccess}
+          type="event"
+          userId={userData?.id}
+        />
 
-      <Footer />
-    </div>
+      </div>
+    </PageWrapper>
   );
 }

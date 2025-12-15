@@ -1,8 +1,8 @@
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 
 export default function Disclaimer() {
   return (
-    <div className="min-h-screen !bg-white">
+    <PageWrapper className="!bg-white">
       <div className="w-full max-w-6xl mx-auto p-4 md:p-6 !bg-white !text-black">
         <div>
           <h1 className="text-3xl font-bold mb-8 !text-black">Disclaimer</h1>
@@ -101,7 +101,6 @@ export default function Disclaimer() {
           </div>
         </div>
       </div>
-      <Footer />
-    </div>
+    </PageWrapper>
   );
 }

@@ -17,7 +17,7 @@ import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
-import Footer from "@/components/Footer";
+import { PageWrapper } from "@/components/PageWrapper";
 
 
 
@@ -158,8 +158,9 @@ export default function Profile() {
 
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 md:p-6">
-      <div className="space-y-4 md:space-y-6">
+    <PageWrapper>
+      <div className="w-full max-w-6xl mx-auto p-4 md:p-6">
+        <div className="space-y-4 md:space-y-6">
         {/* Profile Picture & Background Section */}
         <Card>
           <CardHeader>
@@ -362,9 +363,8 @@ export default function Profile() {
           </CardContent>
         </Card>
 
+        </div>
       </div>
-      
-      <Footer />
-    </div>
+    </PageWrapper>
   );
 }
