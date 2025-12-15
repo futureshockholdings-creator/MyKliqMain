@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Search, Image as ImageIcon } from 'lucide-react';
+import { buildApiUrl } from '@/lib/apiConfig';
 import type { Meme } from '@shared/schema';
 
 // Get color scheme based on category for consistent theming
@@ -116,7 +117,7 @@ export function MemePicker({
   const { data: prefetchedMemes = [], isPending: isPrefetching } = useQuery<Meme[]>({
     queryKey: ['/api/memes', ''],
     queryFn: async () => {
-      const response = await fetch('/api/memes', { credentials: 'include' });
+      const response = await fetch(buildApiUrl('/api/memes'), { credentials: 'include' });
       if (!response.ok) {
         throw new Error(`${response.status}: ${response.statusText}`);
       }
@@ -130,7 +131,7 @@ export function MemePicker({
   const { data: searchedMemes = [], isPending: isSearching } = useQuery<Meme[]>({
     queryKey: ['/api/memes', searchQuery],
     queryFn: async () => {
-      const url = `/api/memes?q=${encodeURIComponent(searchQuery)}`;
+      const url = buildApiUrl(`/api/memes?q=${encodeURIComponent(searchQuery)}`);
       const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) {
         throw new Error(`${response.status}: ${response.statusText}`);

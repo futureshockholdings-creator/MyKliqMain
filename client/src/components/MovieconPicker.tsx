@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Search, Play } from 'lucide-react';
+import { buildApiUrl } from '@/lib/apiConfig';
 import type { Moviecon } from '@shared/schema';
 
 // Force video loading with proper error handling
@@ -99,7 +100,7 @@ export function MovieconPicker({
   const { data: prefetchedMoviecons = [], isPending: isPrefetching } = useQuery<Moviecon[]>({
     queryKey: ['/api/moviecons', ''],
     queryFn: async () => {
-      const response = await fetch('/api/moviecons', { credentials: 'include' });
+      const response = await fetch(buildApiUrl('/api/moviecons'), { credentials: 'include' });
       if (!response.ok) {
         throw new Error(`${response.status}: ${response.statusText}`);
       }
@@ -113,7 +114,7 @@ export function MovieconPicker({
   const { data: searchedMoviecons = [], isPending: isSearching } = useQuery<Moviecon[]>({
     queryKey: ['/api/moviecons', searchQuery],
     queryFn: async () => {
-      const url = `/api/moviecons?q=${encodeURIComponent(searchQuery)}`;
+      const url = buildApiUrl(`/api/moviecons?q=${encodeURIComponent(searchQuery)}`);
       const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) {
         throw new Error(`${response.status}: ${response.statusText}`);
