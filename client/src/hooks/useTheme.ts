@@ -157,8 +157,10 @@ const applyTheme = (theme: Partial<UserTheme>) => {
   // Dynamic card/sidebar background based on font color for visibility
   // When font is dark/black, background should be white/light
   // When font is white/light, background should stay dark (current default)
-  if (theme.fontColor) {
-    const fontIsLight = isLightColor(theme.fontColor);
+  // Use fallback to #FFFFFF (white) if fontColor is missing - prevents black backgrounds on refresh
+  const effectiveFontColor = theme.fontColor || '#FFFFFF';
+  {
+    const fontIsLight = isLightColor(effectiveFontColor);
     
     // Set card background to contrast with font color
     // Light font (white) -> dark card background (gray)
@@ -174,7 +176,7 @@ const applyTheme = (theme: Partial<UserTheme>) => {
     }
     
     // Also set the card foreground to match the font color for consistency
-    const fontColorHsl = safeHexToHsl(theme.fontColor, 'fontColor');
+    const fontColorHsl = safeHexToHsl(effectiveFontColor, 'fontColor');
     if (fontColorHsl) {
       root.style.setProperty('--card-foreground', `hsl(${fontColorHsl})`);
       root.style.setProperty('--foreground', `hsl(${fontColorHsl})`);
@@ -191,7 +193,7 @@ const applyTheme = (theme: Partial<UserTheme>) => {
     }
     
     // Muted foreground should also be based on font color
-    const mutedFgHsl = safeHexToHsl(theme.fontColor, 'mutedFontColor');
+    const mutedFgHsl = safeHexToHsl(effectiveFontColor, 'mutedFontColor');
     if (mutedFgHsl) {
       root.style.setProperty('--muted-foreground', `hsl(${mutedFgHsl})`);
     }
