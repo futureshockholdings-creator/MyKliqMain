@@ -1,8 +1,33 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { UserTheme } from "@shared/schema";
 import { getAccessibleForeground } from "@/lib/colorUtils";
 import { useAuth } from "./useAuth";
+
+// localStorage key for theme persistence (survives hard refresh)
+const THEME_STORAGE_KEY = 'mykliq_user_theme';
+
+// Get cached theme from localStorage (synchronous, runs immediately)
+const getCachedTheme = (): Partial<UserTheme> | null => {
+  try {
+    const cached = localStorage.getItem(THEME_STORAGE_KEY);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (e) {
+    console.warn('[Theme] Failed to read cached theme:', e);
+  }
+  return null;
+};
+
+// Save theme to localStorage for instant application on next load
+const cacheTheme = (theme: Partial<UserTheme>) => {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(theme));
+  } catch (e) {
+    console.warn('[Theme] Failed to cache theme:', e);
+  }
+};
 
 // Helper function to determine if a color is light or dark based on luminance
 const isLightColor = (hex: string): boolean => {
@@ -236,6 +261,20 @@ const applyTheme = (theme: Partial<UserTheme>) => {
 
 export function useTheme() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const hasAppliedCachedTheme = useRef(false);
+  
+  // Apply cached theme IMMEDIATELY on first render (before API call completes)
+  // This prevents the flash of default dark theme on hard refresh
+  useEffect(() => {
+    if (!hasAppliedCachedTheme.current) {
+      const cachedTheme = getCachedTheme();
+      if (cachedTheme) {
+        console.log('[Theme] Applying cached theme immediately');
+        applyTheme(cachedTheme);
+      }
+      hasAppliedCachedTheme.current = true;
+    }
+  }, []);
   
   const { data: theme, isLoading } = useQuery({
     queryKey: ["/api/user/theme"],
@@ -249,10 +288,12 @@ export function useTheme() {
     refetchOnReconnect: false, // Don't refetch on reconnect
   });
 
-  // Apply theme when it loads or changes
+  // Apply theme from API and cache it for future hard refreshes
   useEffect(() => {
     if (theme) {
+      console.log('[Theme] Applying theme from API and caching');
       applyTheme(theme);
+      cacheTheme(theme); // Save to localStorage for instant load on next refresh
     }
   }, [theme]);
 
