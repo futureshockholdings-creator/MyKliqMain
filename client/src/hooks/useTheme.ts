@@ -4,6 +4,21 @@ import type { UserTheme } from "@shared/schema";
 import { getAccessibleForeground } from "@/lib/colorUtils";
 import { useAuth } from "./useAuth";
 
+// Helper function to determine if a color is light or dark based on luminance
+const isLightColor = (hex: string): boolean => {
+  try {
+    if (!hex || !/^#[0-9A-Fa-f]{6}$/.test(hex)) return false;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    // Calculate relative luminance
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5;
+  } catch {
+    return false;
+  }
+};
+
 // Helper function to convert hex to HSL
 const hexToHsl = (hex: string) => {
   const r = parseInt(hex.slice(1, 3), 16) / 255;
@@ -137,6 +152,42 @@ const applyTheme = (theme: Partial<UserTheme>) => {
       impact: 'Impact, sans-serif'
     };
     root.style.setProperty('--font-sans', fontMap[theme.fontFamily as keyof typeof fontMap] || fontMap.comic);
+  }
+
+  // Dynamic card/sidebar background based on font color for visibility
+  // When font is dark/black, background should be white/light
+  // When font is white/light, background should stay dark (current default)
+  if (theme.fontColor) {
+    const fontIsLight = isLightColor(theme.fontColor);
+    
+    // Set card background to contrast with font color
+    // Light font (white) -> dark card background (black)
+    // Dark font (black) -> light card background (white)
+    const cardBgColor = fontIsLight ? '#1f2937' : '#ffffff'; // dark gray vs white
+    const cardBgHsl = safeHexToHsl(cardBgColor, 'cardBgColor');
+    if (cardBgHsl) {
+      root.style.setProperty('--card', `hsl(${cardBgHsl})`);
+    }
+    
+    // Also set the card foreground to match the font color for consistency
+    const fontColorHsl = safeHexToHsl(theme.fontColor, 'fontColor');
+    if (fontColorHsl) {
+      root.style.setProperty('--card-foreground', `hsl(${fontColorHsl})`);
+      root.style.setProperty('--foreground', `hsl(${fontColorHsl})`);
+    }
+    
+    // Set muted background to also contrast with font color
+    const mutedBgColor = fontIsLight ? '#374151' : '#f3f4f6'; // darker gray vs light gray
+    const mutedBgHsl = safeHexToHsl(mutedBgColor, 'mutedBgColor');
+    if (mutedBgHsl) {
+      root.style.setProperty('--muted', `hsl(${mutedBgHsl})`);
+    }
+    
+    // Muted foreground should also be based on font color
+    const mutedFgHsl = safeHexToHsl(theme.fontColor, 'mutedFontColor');
+    if (mutedFgHsl) {
+      root.style.setProperty('--muted-foreground', `hsl(${mutedFgHsl})`);
+    }
   }
 
   // Apply background customization
