@@ -225,12 +225,12 @@ class PerformanceOptimizer {
       suggestions.push(`Optimize slow endpoints: ${stats.slowEndpoints.join(', ')}`);
     }
     
-    // Cache suggestions
-    if (!stats.cacheStats.redisConnected) {
+    // Cache suggestions - only suggest Redis if not configured at all
+    if (!stats.cacheStats.redisConnected && !process.env.REDIS_URL) {
       suggestions.push('Consider setting up Redis for better caching performance');
     }
     
-    if (stats.cacheStats.memoryCacheSize > 500) {
+    if (stats.cacheStats.memoryCacheSize > 500 && !process.env.REDIS_URL) {
       suggestions.push('Memory cache is large, consider cache cleanup or Redis migration');
     }
     
