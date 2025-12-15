@@ -38,17 +38,9 @@ export const detectDevice = (): DeviceInfo => {
   let appStoreUrl: string;
   let downloadText: string;
   
-  if (isApple) {
-    appStoreUrl = 'https://apps.apple.com/app/mykliq/id123456789'; // Replace with actual App Store ID
-    downloadText = 'download MyKliq from the App Store';
-  } else if (isAndroid) {
-    appStoreUrl = 'https://play.google.com/store/apps/details?id=com.mykliq.app'; // Replace with actual package name
-    downloadText = 'download MyKliq from Google Play';
-  } else {
-    // Fallback for desktop/other devices - could show both or a landing page
-    appStoreUrl = 'https://kliqlife.com';
-    downloadText = 'get MyKliq mobile app';
-  }
+  // All devices link to the main website
+  appStoreUrl = 'https://mykliq.app';
+  downloadText = 'join MyKliq at mykliq.app';
   
   return {
     isApple,
