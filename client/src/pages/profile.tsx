@@ -70,22 +70,27 @@ export default function Profile() {
 
   const updateProfilePictureMutation = useMutation({
     mutationFn: async (profileImageURL: string) => {
+      console.log('[ProfilePicture] Starting update with URL:', profileImageURL);
       return await apiRequest("PUT", "/api/user/profile-picture", { profileImageURL: profileImageURL });
     },
     onSuccess: async (updatedUser) => {
+      console.log('[ProfilePicture] Server response:', updatedUser);
+      
       // Clear ALL cached entries for /api/auth/user using pattern match
       console.log('[ProfilePicture] Clearing all /api/auth/user cache entries...');
       await enhancedCache.removeByPattern('/api/auth/user');
       
       // Directly update TanStack Query cache with the response data
-      // This is more reliable than invalidating and refetching
-      if (updatedUser) {
-        console.log('[ProfilePicture] Setting query data with updated user:', updatedUser.profileImageUrl);
+      if (updatedUser && updatedUser.id) {
+        console.log('[ProfilePicture] Setting query data with updated user, profileImageUrl:', updatedUser.profileImageUrl);
         queryClient.setQueryData(["/api/auth/user"], updatedUser);
+      } else {
+        console.warn('[ProfilePicture] No valid user data returned from server');
       }
       
-      // Also invalidate to ensure any other components get fresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Force refetch to ensure UI updates
+      console.log('[ProfilePicture] Forcing refetch...');
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
         title: "Success",
@@ -93,6 +98,7 @@ export default function Profile() {
       });
     },
     onError: (error) => {
+      console.error('[ProfilePicture] Error:', error);
       toast({
         title: "Error",
         description: "Failed to update profile picture",
@@ -119,22 +125,27 @@ export default function Profile() {
 
   const updateBackgroundMutation = useMutation({
     mutationFn: async (backgroundUrl: string) => {
+      console.log('[Background] Starting update with URL:', backgroundUrl);
       return await apiRequest("PATCH", "/api/user/background", { backgroundImageUrl: backgroundUrl });
     },
     onSuccess: async (updatedUser) => {
+      console.log('[Background] Server response:', updatedUser);
+      
       // Clear ALL cached entries for /api/auth/user using pattern match
       console.log('[Background] Clearing all /api/auth/user cache entries...');
       await enhancedCache.removeByPattern('/api/auth/user');
       
       // Directly update TanStack Query cache with the response data
-      // This is more reliable than invalidating and refetching
-      if (updatedUser) {
-        console.log('[Background] Setting query data with updated user:', updatedUser.backgroundImageUrl);
+      if (updatedUser && updatedUser.id) {
+        console.log('[Background] Setting query data with updated user, backgroundImageUrl:', updatedUser.backgroundImageUrl);
         queryClient.setQueryData(["/api/auth/user"], updatedUser);
+      } else {
+        console.warn('[Background] No valid user data returned from server');
       }
       
-      // Also invalidate to ensure any other components get fresh data
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Force refetch to ensure UI updates
+      console.log('[Background] Forcing refetch...');
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
         title: "Success",
@@ -142,7 +153,7 @@ export default function Profile() {
       });
     },
     onError: (error: any) => {
-      console.error("Background update error:", error);
+      console.error("[Background] Error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to update background image",
