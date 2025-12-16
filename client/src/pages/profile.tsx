@@ -177,7 +177,8 @@ export default function Profile() {
 
   const typedUser = user as User;
   
-
+  // Debug: Log the current background URL on every render
+  console.log('[Profile Render] Current backgroundImageUrl:', typedUser.backgroundImageUrl);
 
   return (
     <PageWrapper>
@@ -191,10 +192,11 @@ export default function Profile() {
           </CardHeader>
           <CardContent className="p-0">
             <div 
+              key={typedUser.backgroundImageUrl || 'no-bg'}
               className="relative h-48 bg-gradient-to-br from-primary/20 to-secondary/20 bg-cover bg-center bg-no-repeat"
               style={{
                 backgroundImage: typedUser.backgroundImageUrl 
-                  ? `url("${typedUser.backgroundImageUrl}")` 
+                  ? `url("${typedUser.backgroundImageUrl}?t=${Date.now()}")` 
                   : undefined,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
