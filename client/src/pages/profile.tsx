@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 import { resolveAssetUrl } from "@/lib/apiConfig";
+import { getUserIdFromToken } from "@/lib/tokenStorage";
 
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
@@ -85,13 +86,17 @@ export default function Profile() {
       if (updatedUser && updatedUser.id) {
         console.log('[ProfilePicture] Setting query data with updated user, profileImageUrl:', updatedUser.profileImageUrl);
         queryClient.setQueryData(["/api/auth/user"], updatedUser);
+        
+        // Also set the fresh data in EnhancedCache with the correct cache key
+        const userId = getUserIdFromToken();
+        if (userId) {
+          const cacheKey = `/api/auth/user|uid:${userId}|method:GET`;
+          console.log('[ProfilePicture] Setting EnhancedCache with key:', cacheKey);
+          await enhancedCache.set(cacheKey, updatedUser);
+        }
       } else {
         console.warn('[ProfilePicture] No valid user data returned from server');
       }
-      
-      // Force refetch to ensure UI updates
-      console.log('[ProfilePicture] Forcing refetch...');
-      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
         title: "Success",
@@ -140,13 +145,18 @@ export default function Profile() {
       if (updatedUser && updatedUser.id) {
         console.log('[Background] Setting query data with updated user, backgroundImageUrl:', updatedUser.backgroundImageUrl);
         queryClient.setQueryData(["/api/auth/user"], updatedUser);
+        
+        // Also set the fresh data in EnhancedCache with the correct cache key
+        // This ensures the cache has fresh data on page refresh
+        const userId = getUserIdFromToken();
+        if (userId) {
+          const cacheKey = `/api/auth/user|uid:${userId}|method:GET`;
+          console.log('[Background] Setting EnhancedCache with key:', cacheKey);
+          await enhancedCache.set(cacheKey, updatedUser);
+        }
       } else {
         console.warn('[Background] No valid user data returned from server');
       }
-      
-      // Force refetch to ensure UI updates
-      console.log('[Background] Forcing refetch...');
-      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
         title: "Success",
