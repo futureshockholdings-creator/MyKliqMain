@@ -19,16 +19,26 @@ export async function apiRequest(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
+// Endpoints that should skip disk cache to ensure fresh data on page load
+const SKIP_DISK_CACHE_ENDPOINTS = [
+  '/api/auth/user',  // User profile data must always be fresh after mutations
+];
+
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     try {
+      const url = queryKey.join("/") as string;
+      
+      // Skip disk cache for critical endpoints that need fresh data on page load
+      const skipDisk = SKIP_DISK_CACHE_ENDPOINTS.some(ep => url.includes(ep));
+      
       // Use enterprise fetch for optimized caching, deduplication, and resilience
-      // (cache tracking handled inside enterpriseFetch/enhancedCache)
-      const data = await enterpriseFetch<T>(queryKey.join("/") as string, {
+      const data = await enterpriseFetch<T>(url, {
         credentials: "include",
+        skipDisk,  // Skip IndexedDB cache for critical user data
       });
       
       return data;
