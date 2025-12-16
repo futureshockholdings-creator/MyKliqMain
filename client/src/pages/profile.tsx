@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
@@ -177,8 +178,12 @@ export default function Profile() {
 
   const typedUser = user as User;
   
+  // Resolve asset URLs to absolute URLs for split deployment (AWS Amplify + Replit)
+  const resolvedBackgroundUrl = resolveAssetUrl(typedUser.backgroundImageUrl);
+  const resolvedProfileUrl = resolveAssetUrl(typedUser.profileImageUrl);
+  
   // Debug: Log the current background URL on every render
-  console.log('[Profile Render] Current backgroundImageUrl:', typedUser.backgroundImageUrl);
+  console.log('[Profile Render] backgroundImageUrl:', typedUser.backgroundImageUrl, '-> resolved:', resolvedBackgroundUrl);
 
   return (
     <PageWrapper>
@@ -192,11 +197,11 @@ export default function Profile() {
           </CardHeader>
           <CardContent className="p-0">
             <div 
-              key={typedUser.backgroundImageUrl || 'no-bg'}
+              key={resolvedBackgroundUrl || 'no-bg'}
               className="relative h-48 bg-gradient-to-br from-primary/20 to-secondary/20 bg-cover bg-center bg-no-repeat"
               style={{
-                backgroundImage: typedUser.backgroundImageUrl 
-                  ? `url("${typedUser.backgroundImageUrl}?t=${Date.now()}")` 
+                backgroundImage: resolvedBackgroundUrl 
+                  ? `url("${resolvedBackgroundUrl}?t=${Date.now()}")` 
                   : undefined,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
@@ -211,7 +216,7 @@ export default function Profile() {
                 <div className="relative">
                   <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
                     <AvatarImage 
-                      src={typedUser.profileImageUrl} 
+                      src={resolvedProfileUrl} 
                       alt="Profile picture" 
                       className="object-cover"
                     />

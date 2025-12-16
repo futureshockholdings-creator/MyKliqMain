@@ -59,3 +59,27 @@ export function isAwsEnvironment(): boolean {
   }
   return AWS_DOMAINS.includes(window.location.hostname);
 }
+
+/**
+ * Resolves asset URLs (images, uploads) to absolute URLs pointing to the backend
+ * In production (AWS Amplify), assets are served from Replit backend
+ * Relative paths like /objects/uploads/... need to be prefixed with backend URL
+ */
+export function resolveAssetUrl(url: string | null | undefined): string | undefined {
+  if (!url) {
+    return undefined;
+  }
+  
+  // Already an absolute URL
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  // Relative path starting with / - prefix with backend URL
+  if (url.startsWith('/')) {
+    return getApiBaseUrl() + url;
+  }
+  
+  // Return as-is for other cases
+  return url;
+}
