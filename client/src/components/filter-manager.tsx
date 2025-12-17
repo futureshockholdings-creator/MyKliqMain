@@ -47,7 +47,7 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
             onChange={(e) => setNewKeyword(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Enter keyword to filter..."
-            className="flex-1 bg-input border-border text-foreground placeholder-muted-foreground"
+            className="flex-1 bg-white border-gray-300 text-black placeholder-gray-500"
           />
           <Button
             onClick={handleAddFilter}

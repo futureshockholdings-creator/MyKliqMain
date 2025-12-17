@@ -102,7 +102,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
               <Input
                 value={currentTheme.primaryColor || "#FF1493"}
                 onChange={(e) => updateTheme('primaryColor', e.target.value)}
-                className="flex-1 bg-input border-border text-foreground"
+                className="flex-1 bg-white border-gray-300 text-black"
               />
             </div>
           </div>
@@ -119,7 +119,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
               <Input
                 value={currentTheme.secondaryColor || "#00BFFF"}
                 onChange={(e) => updateTheme('secondaryColor', e.target.value)}
-                className="flex-1 bg-input border-border text-foreground"
+                className="flex-1 bg-white border-gray-300 text-black"
               />
             </div>
           </div>
@@ -141,7 +141,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
               value={currentTheme.backgroundType || "solid"} 
               onValueChange={(value) => updateTheme('backgroundType', value)}
             >
-              <SelectTrigger className="bg-input border-border text-foreground">
+              <SelectTrigger className="bg-white border-gray-300 text-black">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-card border-border">
@@ -165,7 +165,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                 <Input
                   value={currentTheme.backgroundColor || "#000000"}
                   onChange={(e) => updateTheme('backgroundColor', e.target.value)}
-                  className="flex-1 bg-input border-border text-foreground"
+                  className="flex-1 bg-white border-gray-300 text-black"
                 />
               </div>
             </div>
@@ -185,7 +185,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                   <Input
                     value={currentTheme.backgroundGradientStart || "#FF1493"}
                     onChange={(e) => updateTheme('backgroundGradientStart', e.target.value)}
-                    className="flex-1 bg-input border-border text-foreground"
+                    className="flex-1 bg-white border-gray-300 text-black"
                   />
                 </div>
               </div>
@@ -201,7 +201,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                   <Input
                     value={currentTheme.backgroundGradientEnd || "#00BFFF"}
                     onChange={(e) => updateTheme('backgroundGradientEnd', e.target.value)}
-                    className="flex-1 bg-input border-border text-foreground"
+                    className="flex-1 bg-white border-gray-300 text-black"
                   />
                 </div>
               </div>
@@ -215,7 +215,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                 value={currentTheme.backgroundPattern || "dots"} 
                 onValueChange={(value) => updateTheme('backgroundPattern', value)}
               >
-                <SelectTrigger className="bg-input border-border text-foreground">
+                <SelectTrigger className="bg-white border-gray-300 text-black">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
