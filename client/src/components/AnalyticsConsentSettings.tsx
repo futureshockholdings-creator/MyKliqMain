@@ -87,6 +87,7 @@ export function AnalyticsConsentSettings({ initialConsent }: AnalyticsConsentSet
             checked={isEnabled}
             onCheckedChange={handleToggle}
             disabled={updateConsentMutation.isPending}
+            className={isEnabled ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-gray-600"}
             data-testid="switch-analytics-consent"
           />
         </div>

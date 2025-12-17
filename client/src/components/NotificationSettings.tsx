@@ -110,20 +110,20 @@ export function NotificationSettings() {
   // Show PWA install instructions for iOS Safari users
   if (needsPWA) {
     return (
-      <Card className="bg-white text-gray-900 dark:bg-gray-800 dark:text-white">
+      <Card className="bg-transparent border-0 shadow-none">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white">
             <Smartphone className="w-5 h-5" />
             Install MyKliq to Enable Notifications
           </CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-300">
+          <CardDescription className="text-purple-200">
             Safari requires MyKliq to be installed as an app on your home screen to receive push notifications.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <p className="font-semibold text-blue-900 dark:text-blue-100 mb-2">📱 How to Install:</p>
-            <ol className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+          <div className="bg-white/10 border border-white/20 rounded-lg p-4">
+            <p className="font-semibold text-white mb-2">📱 How to Install:</p>
+            <ol className="space-y-2 text-sm text-purple-200">
               <li className="flex items-start gap-2">
                 <span className="font-bold">1.</span>
                 <span>Tap the Share button (square with arrow) in Safari</span>
@@ -146,7 +146,7 @@ export function NotificationSettings() {
               </li>
             </ol>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-purple-300">
             Once installed, you'll be able to receive notifications for posts, comments, messages, and more!
           </p>
         </CardContent>
@@ -157,13 +157,13 @@ export function NotificationSettings() {
   // Browser doesn't support notifications at all
   if (!webPushService.isSupported()) {
     return (
-      <Card className="bg-white text-gray-900 dark:bg-gray-800 dark:text-white">
+      <Card className="bg-transparent border-0 shadow-none">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-white">
             <BellOff className="w-5 h-5" />
             Push Notifications Not Supported
           </CardTitle>
-          <CardDescription className="text-gray-600 dark:text-gray-300">
+          <CardDescription className="text-purple-200">
             Your browser doesn't support push notifications.
           </CardDescription>
         </CardHeader>
@@ -172,21 +172,21 @@ export function NotificationSettings() {
   }
 
   return (
-    <Card>
+    <Card className="bg-transparent border-0 shadow-none">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-white">
           <Bell className="w-5 h-5" />
           Push Notifications
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-purple-200">
           Get notified about new posts, comments, likes, and more
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <Label htmlFor="push-notifications" className="flex flex-col space-y-1">
-            <span className="font-medium">Enable Push Notifications</span>
-            <span className="text-sm text-muted-foreground">
+            <span className="font-medium text-white">Enable Push Notifications</span>
+            <span className="text-sm text-purple-300">
               {isEnabled 
                 ? "You're receiving push notifications" 
                 : "Turn on to receive notifications"}
@@ -197,20 +197,21 @@ export function NotificationSettings() {
             checked={isEnabled}
             onCheckedChange={handleToggle}
             disabled={isLoading}
+            className={isEnabled ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-gray-600"}
             data-testid="switch-push-notifications"
           />
         </div>
 
         {isEnabled && (
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-            <Check className="w-4 h-4 text-green-600" />
-            <span className="text-sm">Push notifications are active</span>
+          <div className="flex items-center gap-2 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
+            <Check className="w-4 h-4 text-green-400" />
+            <span className="text-sm text-green-200">Push notifications are active</span>
           </div>
         )}
 
         {permissionStatus === 'denied' && (
-          <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-            <p className="text-sm text-destructive">
+          <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+            <p className="text-sm text-red-200">
               You've blocked notifications. To enable them, please allow notifications in your browser settings.
             </p>
           </div>
