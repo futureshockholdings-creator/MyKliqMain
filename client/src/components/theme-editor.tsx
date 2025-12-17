@@ -328,7 +328,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-gray-400">Border Style</Label>
+            <Label className="text-white">Border Style</Label>
             <Select value={currentTheme.borderStyle || "retro"} onValueChange={(value) => updateTheme('borderStyle', value)}>
               <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                 <SelectValue />
@@ -344,10 +344,11 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
           </div>
           
           <div className="flex items-center justify-between">
-            <Label className="text-gray-400">Enable Sparkle Effects ✨</Label>
+            <Label className="text-white">Enable Sparkle Effects ✨</Label>
             <Switch
               checked={currentTheme.enableSparkles ?? true}
               onCheckedChange={(value) => updateTheme('enableSparkles', value)}
+              className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-400"
             />
           </div>
         </CardContent>
