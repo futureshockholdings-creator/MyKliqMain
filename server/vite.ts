@@ -71,7 +71,8 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  // Production build outputs to dist/ (not dist/public)
+  const distPath = path.resolve(process.cwd(), "dist");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -81,8 +82,12 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  // fall through to index.html if the file doesn't exist (but not for /health or /api routes)
+  app.use("*", (req, res, next) => {
+    // Don't catch API routes or health endpoint
+    if (req.originalUrl.startsWith('/api') || req.originalUrl === '/health') {
+      return next();
+    }
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
