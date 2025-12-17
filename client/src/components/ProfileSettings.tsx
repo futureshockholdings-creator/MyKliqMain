@@ -84,7 +84,7 @@ const TagInput = ({
           value={newItem}
           onChange={handleInputChange}
           placeholder={placeholder}
-          className="bg-input border-border text-foreground flex-1"
+          className="bg-white border-gray-300 text-black flex-1"
           onKeyDown={handleKeyDown}
           data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}`}
         />
@@ -451,7 +451,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="Tell your kliq about yourself..."
-                      className="bg-input border-border text-foreground"
+                      className="bg-white border-gray-300 text-black"
                       rows={3}
                       data-testid="textarea-bio"
                     />
@@ -466,7 +466,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       placeholder="+1 (555) 123-4567"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white border-gray-300 text-black"
                       data-testid="input-phone-number"
                     />
                   </div>
@@ -480,7 +480,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       value={kliqName}
                       onChange={(e) => setKliqName(e.target.value)}
                       placeholder="My Kliq"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white border-gray-300 text-black"
                       data-testid="input-kliq-name"
                     />
                   </div>
@@ -494,7 +494,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       type="date"
                       value={birthdate}
                       onChange={(e) => setBirthdate(e.target.value)}
-                      className="bg-input border-border text-foreground"
+                      className="bg-white border-gray-300 text-black"
                       data-testid="input-birthdate"
                       required
                     />
@@ -538,7 +538,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       value={securityAnswer1}
                       onChange={(e) => setSecurityAnswer1(e.target.value)}
                       placeholder="Enter your answer..."
-                      className="bg-input border-border text-foreground"
+                      className="bg-white border-gray-300 text-black"
                       data-testid="input-security-answer-1"
                     />
                   </div>
@@ -551,7 +551,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       value={securityAnswer2}
                       onChange={(e) => setSecurityAnswer2(e.target.value)}
                       placeholder="Enter your answer..."
-                      className="bg-input border-border text-foreground"
+                      className="bg-white border-gray-300 text-black"
                       data-testid="input-security-answer-2"
                     />
                   </div>
@@ -564,7 +564,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       value={securityAnswer3}
                       onChange={(e) => setSecurityAnswer3(e.target.value)}
                       placeholder="Enter your answer..."
-                      className="bg-input border-border text-foreground"
+                      className="bg-white border-gray-300 text-black"
                       data-testid="input-security-answer-3"
                     />
                   </div>
@@ -582,7 +582,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                         setSecurityPin(value);
                       }}
                       placeholder="Enter 4-digit PIN..."
-                      className="bg-input border-border text-foreground"
+                      className="bg-white border-gray-300 text-black"
                       maxLength={10}
                       data-testid="input-security-pin"
                     />
@@ -692,7 +692,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                       Relationship Status
                     </Label>
                     <Select value={relationshipStatus} onValueChange={setRelationshipStatus}>
-                      <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-relationship-status">
+                      <SelectTrigger className="bg-white border-gray-300 text-black" data-testid="select-relationship-status">
                         <SelectValue placeholder="Select relationship status" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border">
@@ -708,7 +708,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   <div className="space-y-2">
                     <Label className="text-foreground">Pet Preferences</Label>
                     <Select value={petPreferences} onValueChange={setPetPreferences}>
-                      <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-pet-preferences">
+                      <SelectTrigger className="bg-white border-gray-300 text-black" data-testid="select-pet-preferences">
                         <SelectValue placeholder="Select pet preferences" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border">
@@ -724,7 +724,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   <div className="space-y-2">
                     <Label className="text-foreground">Lifestyle</Label>
                     <Select value={lifestyle} onValueChange={setLifestyle}>
-                      <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-lifestyle">
+                      <SelectTrigger className="bg-white border-gray-300 text-black" data-testid="select-lifestyle">
                         <SelectValue placeholder="Select lifestyle" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border">
@@ -822,7 +822,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                                   }
                                 }}
                                 placeholder="Enter your password"
-                                className="bg-input border-border text-foreground pr-10"
+                                className="bg-white border-gray-300 text-black pr-10"
                                 data-testid="input-password"
                               />
                               <Button
@@ -883,7 +883,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                                   }
                                 }}
                                 placeholder="Confirm your password"
-                                className="bg-input border-border text-foreground pr-10"
+                                className="bg-white border-gray-300 text-black pr-10"
                                 data-testid="input-confirm-password"
                               />
                               <Button
@@ -943,7 +943,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                     setPinInput(value);
                   }}
                   placeholder="Enter 4-digit PIN"
-                  className="bg-input border-border text-foreground text-center text-lg tracking-widest"
+                  className="bg-white border-gray-300 text-black text-center text-lg tracking-widest"
                   maxLength={4}
                   data-testid="input-pin-verify"
                 />
