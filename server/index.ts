@@ -97,6 +97,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint for UptimeRobot (registered BEFORE Vite to avoid catch-all)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 (async () => {
   const server = await registerRoutes(app);
 
