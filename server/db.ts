@@ -12,14 +12,14 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// High-performance connection pooling optimized for 5000+ concurrent users
+// High-performance connection pooling optimized for production
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
   ssl: true,
   connectionTimeoutMillis: 15000,   // Higher timeout for heavy load
   idleTimeoutMillis: 60000,         // Longer idle time for connection reuse
-  max: 50,                          // Increased max connections for 5000+ users
-  min: 10,                          // Higher minimum for immediate availability
+  max: 40,                          // Optimized for autoscale cold starts
+  min: 5,                           // Lower minimum to reduce cold start connection attempts
   maxUses: 10000,                   // Higher connection reuse for efficiency
   allowExitOnIdle: false,           // Keep pool alive for performance
   keepAlive: true,                  // Enable TCP keep-alive
@@ -42,15 +42,15 @@ pool.on('error', (err) => {
 // High-performance monitoring with scaling alerts
 setInterval(() => {
   const memoryMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
-  const poolUsage = (pool.totalCount / 50) * 100; // Updated to match new max pool size
+  const poolUsage = (pool.totalCount / 40) * 100; // Match max pool size of 40
   
   if (memoryMB > 800 || poolUsage > 80) {
-    console.warn(`🔥 HIGH LOAD: Pool: ${pool.totalCount}/50 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
+    console.warn(`🔥 HIGH LOAD: Pool: ${pool.totalCount}/40 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
   }
   
-  // Critical alerts for 5000+ user capacity
+  // Critical alerts for high capacity
   if (memoryMB > 1200 || poolUsage > 95) {
-    console.error(`🚨 CRITICAL: Pool: ${pool.totalCount}/50 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
+    console.error(`🚨 CRITICAL: Pool: ${pool.totalCount}/40 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
   }
 }, 30000); // Check every 30 seconds for faster response under high load
 
