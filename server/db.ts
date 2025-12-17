@@ -12,16 +12,16 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// High-performance connection pooling optimized for production
+// Connection pooling optimized for Neon serverless (autoscale cold starts)
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
   ssl: true,
   connectionTimeoutMillis: 15000,   // Higher timeout for heavy load
-  idleTimeoutMillis: 60000,         // Longer idle time for connection reuse
-  max: 20,                          // Reduced for Neon cold start rate limits
-  min: 2,                           // Lower minimum to reduce cold start connection attempts
+  idleTimeoutMillis: 30000,         // Shorter idle time for serverless
+  max: 5,                           // Neon serverless recommendation: keep very small
+  min: 0,                           // Zero minimum to avoid cold start connection bursts
   maxUses: 10000,                   // Higher connection reuse for efficiency
-  allowExitOnIdle: false,           // Keep pool alive for performance
+  allowExitOnIdle: true,            // Allow pool to shrink when idle
   keepAlive: true,                  // Enable TCP keep-alive
   log: (message, level) => {
     if (level === 'error' || message.includes('timeout')) {
@@ -39,20 +39,20 @@ pool.on('error', (err) => {
   }
 });
 
-// High-performance monitoring with scaling alerts
+// Monitoring with scaling alerts (optimized for Neon serverless)
 setInterval(() => {
   const memoryMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
-  const poolUsage = (pool.totalCount / 20) * 100; // Match max pool size of 20
+  const poolUsage = (pool.totalCount / 5) * 100; // Match max pool size of 5
   
   if (memoryMB > 800 || poolUsage > 80) {
-    console.warn(`🔥 HIGH LOAD: Pool: ${pool.totalCount}/20 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
+    console.warn(`🔥 HIGH LOAD: Pool: ${pool.totalCount}/5 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
   }
   
-  // Critical alerts for high capacity
+  // Critical alerts
   if (memoryMB > 1200 || poolUsage > 95) {
-    console.error(`🚨 CRITICAL: Pool: ${pool.totalCount}/20 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
+    console.error(`🚨 CRITICAL: Pool: ${pool.totalCount}/5 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
   }
-}, 30000); // Check every 30 seconds for faster response under high load
+}, 30000); // Check every 30 seconds
 
 // Graceful shutdown
 process.on('SIGTERM', () => pool.end());
