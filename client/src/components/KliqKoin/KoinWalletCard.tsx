@@ -27,7 +27,7 @@ export function KoinWalletCard({ walletData, isLoading }: KoinWalletCardProps) {
   const balance = parseFloat(walletData?.koins?.balance || 0);
 
   return (
-    <Card className="bg-gradient-to-br from-yellow-500/20 to-amber-500/20 backdrop-blur-sm border-white/20">
+    <Card className="bg-white/10 backdrop-blur-sm border-white/20">
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-3">
           <img src={kliqKoinIcon} alt="Kliq Koin" className="w-16 h-16" />

@@ -49,7 +49,7 @@ export function StreakDashboardCard({ streakData, isLoading, onBuyFreeze, isBuyi
     : 100;
 
   return (
-    <Card className="bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-sm border-white/20">
+    <Card className="bg-white/10 backdrop-blur-sm border-white/20">
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <Flame className="w-5 h-5 text-orange-400" />

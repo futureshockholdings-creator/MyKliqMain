@@ -10,10 +10,9 @@ import { cn } from '@/lib/utils';
 interface PushNotificationSetupProps {
   onDismiss?: () => void;
   compact?: boolean;
-  darkStyle?: boolean;
 }
 
-export function PushNotificationSetup({ onDismiss, compact = false, darkStyle = false }: PushNotificationSetupProps) {
+export function PushNotificationSetup({ onDismiss, compact = false }: PushNotificationSetupProps) {
   const { permission, requestPermission, isSupported } = usePushNotifications();
   const [isRequesting, setIsRequesting] = useState(false);
 
@@ -37,44 +36,25 @@ export function PushNotificationSetup({ onDismiss, compact = false, darkStyle = 
   const isBlocked = permission === 'denied';
 
   return (
-    <Card className={cn(
-      "transition-all duration-200",
-      darkStyle 
-        ? "bg-black border-gray-700 text-white" 
-        : "bg-card border-border"
-    )}>
+    <Card className="bg-white/10 backdrop-blur-sm border-white/20 transition-all duration-200">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={cn(
               "p-2 rounded-full transition-colors",
-              darkStyle 
-                ? isEnabled ? "bg-green-600" : "bg-gray-600"
-                : isEnabled ? "bg-green-500" : "bg-muted"
+              isEnabled ? "bg-green-500" : "bg-white/20"
             )}>
               {isEnabled ? (
-                <Bell className={cn(
-                  "w-4 h-4",
-                  darkStyle ? "text-white" : "text-white"
-                )} />
+                <Bell className="w-4 h-4 text-white" />
               ) : (
-                <BellOff className={cn(
-                  "w-4 h-4",
-                  darkStyle ? "text-gray-300" : "text-muted-foreground"
-                )} />
+                <BellOff className="w-4 h-4 text-purple-200" />
               )}
             </div>
             <div>
-              <h3 className={cn(
-                "font-medium text-sm",
-                darkStyle ? "text-white" : "text-foreground"
-              )}>
+              <h3 className="font-medium text-sm text-white">
                 Push Notifications
               </h3>
-              <p className={cn(
-                "text-xs",
-                darkStyle ? "text-gray-300" : "text-muted-foreground"
-              )}>
+              <p className="text-xs text-purple-200">
                 {isEnabled 
                   ? "Receiving real-time alerts" 
                   : isBlocked 
@@ -109,10 +89,7 @@ export function PushNotificationSetup({ onDismiss, compact = false, darkStyle = 
         </div>
         
         {isBlocked && (
-          <div className={cn(
-            "mt-3 p-2 rounded text-xs",
-            darkStyle ? "bg-gray-800 text-gray-300" : "bg-orange-50 text-orange-700 border border-orange-200"
-          )}>
+          <div className="mt-3 p-2 rounded text-xs bg-white/10 text-purple-200">
             To enable notifications, click the notification icon in your browser's address bar and allow notifications.
           </div>
         )}
