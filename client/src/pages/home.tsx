@@ -2154,7 +2154,7 @@ export default function Home() {
                 value={locationName}
                 onChange={(e) => setLocationName(e.target.value)}
                 placeholder="e.g., Starbucks, Central Park, Home"
-                className="bg-input border-border text-foreground"
+                className="bg-white border-gray-300 text-black placeholder-gray-500"
               />
             </div>
             
@@ -2166,7 +2166,7 @@ export default function Home() {
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="e.g., 123 Main St, New York, NY"
-                className="bg-input border-border text-foreground"
+                className="bg-white border-gray-300 text-black placeholder-gray-500"
               />
             </div>
             

@@ -182,7 +182,7 @@ export function MemePicker({
               placeholder="Search memes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-input border-border text-foreground placeholder-muted-foreground"
+              className="pl-10 bg-white border-gray-300 text-black placeholder-gray-500"
             />
           </div>
 

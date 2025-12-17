@@ -404,7 +404,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder={`What's happening in your ${type === "post" ? "kliq" : "story"}?`}
-              className="bg-input text-foreground placeholder-muted-foreground border-border"
+              className="bg-white text-black placeholder-gray-500 border-gray-300"
               rows={3}
             />
           )}
