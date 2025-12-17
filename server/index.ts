@@ -116,15 +116,12 @@ app.get('/health', (req, res) => {
   // Serve demo screenshots BEFORE Vite catches all requests
   app.use("/demo-screenshots", express.static(path.join(process.cwd(), "public", "demo-screenshots")));
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Setup Vite in development, serve static files in production
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    await setupVite(app, server);
-    // serveStatic(app);
-
+    // Use static file serving in production (no catch-all that blocks /health)
+    serveStatic(app);
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
@@ -146,14 +143,19 @@ app.get('/health', (req, res) => {
         log("Firebase Admin SDK ready for push notifications");
       }
 
-      // Start the birthday service for automatic birthday messages
-      startBirthdayService();
+      // Delay background services to avoid connection burst on cold start
+      setTimeout(() => {
+        // Start the birthday service for automatic birthday messages
+        startBirthdayService();
 
-      // Start the mood boost scheduler for AI-powered uplifting posts
-      startMoodBoostScheduler();
+        // Start the mood boost scheduler for AI-powered uplifting posts
+        startMoodBoostScheduler();
 
-      // Start the referral bonus service to award referral bonuses
-      startReferralBonusService();
+        // Start the referral bonus service to award referral bonuses
+        startReferralBonusService();
+        
+        log("Background services started");
+      }, 10000); // 10 second delay to let connections stabilize
 
       // Setup graceful shutdown for production
       const gracefulShutdown = (signal: string) => {
