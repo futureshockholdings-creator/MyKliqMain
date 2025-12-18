@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 
 interface BorderedAvatarProps {
   src: string | undefined;
@@ -783,6 +784,10 @@ export function BorderedAvatar({
   const iconSize = iconSizeClasses[size];
   const borderStyle = borderName && borderStyles[borderName] ? borderStyles[borderName] : null;
   const streakIcon = borderName && streakBorderIcons[borderName] ? streakBorderIcons[borderName] : null;
+  
+  // Transform URLs for production (AWS Amplify needs full backend URL for assets)
+  const resolvedSrc = resolveAssetUrl(src);
+  const resolvedBorderImageUrl = resolveAssetUrl(borderImageUrl);
 
   // Render streak icon badge if applicable
   const renderStreakBadge = () => {
@@ -804,7 +809,7 @@ export function BorderedAvatar({
       <div className="relative inline-block">
         <div className={borderStyle.wrapper}>
           <Avatar className={cn(sizeClass, className)}>
-            <AvatarImage src={src} alt={alt} className="object-cover" />
+            <AvatarImage src={resolvedSrc} alt={alt} className="object-cover" />
             <AvatarFallback className="bg-muted text-foreground">
               {fallback}
             </AvatarFallback>
@@ -820,13 +825,13 @@ export function BorderedAvatar({
     return (
       <div className="relative inline-block">
         <Avatar className={cn(sizeClass, className)}>
-          <AvatarImage src={src} alt={alt} className="object-cover" />
+          <AvatarImage src={resolvedSrc} alt={alt} className="object-cover" />
           <AvatarFallback className="bg-muted text-foreground">
             {fallback}
           </AvatarFallback>
         </Avatar>
         <img 
-          src={borderImageUrl} 
+          src={resolvedBorderImageUrl} 
           alt={borderName || "border"}
           className={cn("absolute inset-0 pointer-events-none", sizeClass)}
         />
@@ -843,7 +848,7 @@ export function BorderedAvatar({
         borderStyle ? borderStyle.avatar : "border-2 border-primary",
         className
       )}>
-        <AvatarImage src={src} alt={alt} className="object-cover" />
+        <AvatarImage src={resolvedSrc} alt={alt} className="object-cover" />
         <AvatarFallback className="bg-muted text-foreground">
           {fallback}
         </AvatarFallback>
