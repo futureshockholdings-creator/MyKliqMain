@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { apiRequest } from "@/lib/queryClient";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useAuth } from "@/hooks/useAuth";
 import type { User, Meme, Moviecon } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -245,7 +246,7 @@ export function Conversation() {
               {displayUser && (
                 <div className="flex items-center gap-3">
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src={displayUser.profileImageUrl} />
+                    <AvatarImage src={resolveAssetUrl(displayUser.profileImageUrl)} />
                     <AvatarFallback className="bg-blue-100 text-blue-600">
                       {getInitials(displayUser)}
                     </AvatarFallback>
@@ -279,7 +280,7 @@ export function Conversation() {
                 >
                   <div className={`flex gap-3 max-w-xs lg:max-w-md ${isOwn ? "flex-row-reverse" : ""}`}>
                     <Avatar className="w-8 h-8">
-                      <AvatarImage src={message.sender.profileImageUrl} />
+                      <AvatarImage src={resolveAssetUrl(message.sender.profileImageUrl)} />
                       <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
                         {getInitials(message.sender)}
                       </AvatarFallback>

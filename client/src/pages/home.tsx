@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -1920,7 +1921,7 @@ export default function Home() {
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-3">
             <Avatar className="w-10 h-10 border-2 border-mykliq-orange">
-              <AvatarImage src={userData?.profileImageUrl} />
+              <AvatarImage src={resolveAssetUrl(userData?.profileImageUrl)} />
               <AvatarFallback className="bg-muted text-foreground">
                 {userData?.firstName?.[0] || "U"}
               </AvatarFallback>
@@ -2493,7 +2494,7 @@ export default function Home() {
                               {/* Author Info */}
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Avatar className="h-6 w-6">
-                                  <AvatarImage src={save.post?.author?.profileImageUrl} />
+                                  <AvatarImage src={resolveAssetUrl(save.post?.author?.profileImageUrl)} />
                                   <AvatarFallback>{save.post?.author?.firstName?.[0]}</AvatarFallback>
                                 </Avatar>
                                 <span>{save.post?.author?.firstName} {save.post?.author?.lastName}</span>
@@ -2773,7 +2774,7 @@ export default function Home() {
                       story.hasViewed ? "border-muted" : "border-primary"
                     )}>
                       <Avatar className="w-full h-full">
-                        <AvatarImage src={story.author.profileImageUrl} />
+                        <AvatarImage src={resolveAssetUrl(story.author.profileImageUrl)} />
                         <AvatarFallback className="bg-muted text-muted-foreground text-sm">
                           {story.author.firstName?.[0] || story.author.email?.[0]?.toUpperCase()}
                         </AvatarFallback>
@@ -3370,7 +3371,7 @@ export default function Home() {
                               <div className="mt-3 pl-4 border-l-2 border-muted">
                                 <div className="flex space-x-2">
                                   <Avatar className="w-6 h-6 border border-border">
-                                    <AvatarImage src={userData?.profileImageUrl} />
+                                    <AvatarImage src={resolveAssetUrl(userData?.profileImageUrl)} />
                                     <AvatarFallback className="bg-muted text-foreground text-xs">
                                       {userData?.firstName?.[0] || "U"}
                                     </AvatarFallback>
@@ -3420,7 +3421,7 @@ export default function Home() {
                   {/* Add Comment Input */}
                   <div className="flex space-x-3">
                     <Avatar className="w-8 h-8 border border-border">
-                      <AvatarImage src={userData?.profileImageUrl} />
+                      <AvatarImage src={resolveAssetUrl(userData?.profileImageUrl)} />
                       <AvatarFallback className="bg-muted text-foreground text-xs">
                         {userData?.firstName?.[0] || "U"}
                       </AvatarFallback>
@@ -3584,7 +3585,7 @@ export default function Home() {
                 <CardContent className="p-4">
                   <div className="flex items-center space-x-3 mb-3">
                     <Avatar className="w-10 h-10 border-2 border-primary">
-                      <AvatarImage src={item.author.profileImageUrl} />
+                      <AvatarImage src={resolveAssetUrl(item.author.profileImageUrl)} />
                       <AvatarFallback className="bg-muted text-foreground">
                         {item.author.firstName?.[0] || "U"}
                       </AvatarFallback>

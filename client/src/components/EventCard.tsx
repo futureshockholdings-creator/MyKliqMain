@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Users, Check, X, Clock } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -145,7 +146,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
           {/* Event Header */}
           <div className="flex items-center space-x-3">
             <Avatar className="w-10 h-10 border-2 border-primary">
-              <AvatarImage src={event.author.profileImageUrl} />
+              <AvatarImage src={resolveAssetUrl(event.author.profileImageUrl)} />
               <AvatarFallback className="bg-muted text-foreground">
                 {event.author.firstName?.[0] || "U"}
               </AvatarFallback>

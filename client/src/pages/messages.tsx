@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PageWrapper } from "@/components/PageWrapper";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 
 interface ConversationData {
   id: string;
@@ -108,7 +109,7 @@ export function Messages() {
               >
                 <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-white text-black hover:bg-gray-50 transition-colors cursor-pointer">
                   <Avatar className="w-12 h-12">
-                    <AvatarImage src={conversation.otherUser.profileImageUrl} />
+                    <AvatarImage src={resolveAssetUrl(conversation.otherUser.profileImageUrl)} />
                     <AvatarFallback className="bg-blue-100 text-blue-600">
                       {getInitials(conversation.otherUser)}
                     </AvatarFallback>

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Calendar, Clock, MapPin, Users, Plus, Check, X, HelpCircle, Image as ImageIcon, Edit } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -668,7 +669,7 @@ export default function Events() {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center space-x-3">
                       <Avatar className="w-12 h-12 border-2 border-primary">
-                        <AvatarImage src={event.author.profileImageUrl} />
+                        <AvatarImage src={resolveAssetUrl(event.author.profileImageUrl)} />
                         <AvatarFallback className="bg-muted text-muted-foreground">
                           {event.author.firstName?.[0] || "U"}
                         </AvatarFallback>

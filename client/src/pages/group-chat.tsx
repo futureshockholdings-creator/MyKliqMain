@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { apiRequest } from "@/lib/queryClient";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useAuth } from "@/hooks/useAuth";
 import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -203,7 +204,7 @@ export function GroupChat() {
                 >
                   {!isCurrentUser && (
                     <Avatar className="w-8 h-8 flex-shrink-0">
-                      <AvatarImage src={message.sender.profileImageUrl} />
+                      <AvatarImage src={resolveAssetUrl(message.sender.profileImageUrl)} />
                       <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
                         {getInitials(message.sender)}
                       </AvatarFallback>

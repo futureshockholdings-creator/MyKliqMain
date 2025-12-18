@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Phone, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useLocation } from "wouter";
 
 interface Friend {
@@ -248,7 +249,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
         data-testid={`friend-avatar-${friend.id}`}
       >
         <Avatar className="w-20 h-20 border-4 border-background">
-          <AvatarImage src={friend.profileImageUrl} />
+          <AvatarImage src={resolveAssetUrl(friend.profileImageUrl)} />
           <AvatarFallback className="bg-muted text-muted-foreground text-lg font-bold">
             {getInitials(friend)}
           </AvatarFallback>

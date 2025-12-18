@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { AlertTriangle, Eye, Ban, Clock, CheckCircle, XCircle, UserX } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
@@ -321,7 +322,7 @@ export default function AdminReports() {
                     <p className="text-sm font-medium mb-2">Reported by:</p>
                     <div className="flex items-center space-x-2">
                       <Avatar className="w-6 h-6">
-                        <AvatarImage src={report.reporter.profileImageUrl} />
+                        <AvatarImage src={resolveAssetUrl(report.reporter.profileImageUrl)} />
                         <AvatarFallback className="text-xs">
                           {report.reporter.firstName[0]}{report.reporter.lastName[0]}
                         </AvatarFallback>
@@ -353,7 +354,7 @@ export default function AdminReports() {
                       <div className="flex items-center justify-between mt-3 pt-3 border-t">
                         <div className="flex items-center space-x-2">
                           <Avatar className="w-6 h-6">
-                            <AvatarImage src={report.postAuthor.profileImageUrl} />
+                            <AvatarImage src={resolveAssetUrl(report.postAuthor.profileImageUrl)} />
                             <AvatarFallback className="text-xs">
                               {report.postAuthor.firstName[0]}{report.postAuthor.lastName[0]}
                             </AvatarFallback>
@@ -483,7 +484,7 @@ export default function AdminReports() {
             <div className="space-y-4">
               <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
                 <Avatar>
-                  <AvatarImage src={selectedUser.profileImageUrl} />
+                  <AvatarImage src={resolveAssetUrl(selectedUser.profileImageUrl)} />
                   <AvatarFallback>
                     {selectedUser.firstName[0]}{selectedUser.lastName[0]}
                   </AvatarFallback>
