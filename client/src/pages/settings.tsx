@@ -1429,8 +1429,8 @@ export default function Settings() {
 
             <Accordion type="multiple" className="space-y-4">
               <AccordionItem value="marketplace" className="border-0">
-                <AccordionTrigger className="bg-gradient-to-r from-purple-600/30 to-pink-600/30 backdrop-blur-sm border border-purple-400/30 rounded-lg px-6 py-4 hover:from-purple-600/40 hover:to-pink-600/40 transition-colors data-[state=open]:rounded-b-none">
-                  <div className="flex items-center gap-2 text-white">
+                <AccordionTrigger className="bg-gradient-to-r from-purple-600/30 to-pink-600/30 backdrop-blur-sm border border-purple-400/30 rounded-lg px-6 py-4 hover:from-purple-600/40 hover:to-pink-600/40 transition-colors data-[state=open]:rounded-b-none text-white hover:no-underline">
+                  <div className="flex items-center gap-2">
                     <ShoppingCart className="w-5 h-5" />
                     <span className="text-lg font-semibold">Border Marketplace</span>
                   </div>
@@ -1447,8 +1447,8 @@ export default function Settings() {
               </AccordionItem>
 
               <AccordionItem value="collection" className="border-0">
-                <AccordionTrigger className="bg-gradient-to-r from-purple-600/30 to-pink-600/30 backdrop-blur-sm border border-purple-400/30 rounded-lg px-6 py-4 hover:from-purple-600/40 hover:to-pink-600/40 transition-colors data-[state=open]:rounded-b-none">
-                  <div className="flex items-center gap-2 text-white">
+                <AccordionTrigger className="bg-gradient-to-r from-purple-600/30 to-pink-600/30 backdrop-blur-sm border border-purple-400/30 rounded-lg px-6 py-4 hover:from-purple-600/40 hover:to-pink-600/40 transition-colors data-[state=open]:rounded-b-none text-white hover:no-underline">
+                  <div className="flex items-center gap-2">
                     <Crown className="w-5 h-5" />
                     <span className="text-lg font-semibold">My Borders Collection</span>
                   </div>
