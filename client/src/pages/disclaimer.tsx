@@ -1,10 +1,21 @@
 import { PageWrapper } from "@/components/PageWrapper";
+import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+import { Home } from "lucide-react";
 
 export default function Disclaimer() {
+  const { user, isLoading } = useAuth();
+
   return (
     <PageWrapper className="!bg-white">
       <div className="w-full max-w-6xl mx-auto p-4 md:p-6 !bg-white !text-black">
         <div>
+          <Link href={user ? "/profile" : "/"}>
+            <button className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium mb-6 transition-colors">
+              <Home className="w-5 h-5" />
+              <span>HOME</span>
+            </button>
+          </Link>
           <h1 className="text-3xl font-bold mb-8 !text-black">Disclaimer</h1>
           
           <div className="prose prose-slate max-w-none space-y-6 !text-black">
