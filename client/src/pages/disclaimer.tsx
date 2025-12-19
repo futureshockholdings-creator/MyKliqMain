@@ -2,9 +2,14 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Home } from "lucide-react";
+import { useEffect } from "react";
 
 export default function Disclaimer() {
   const { user, isLoading } = useAuth();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <PageWrapper className="!bg-white">
