@@ -303,7 +303,7 @@ function AppContent() {
           isAuthenticated && !isLoading && !isPublicPage ? "ml-16 w-[calc(100vw-4rem)]" : ""
         )}>
           {/* Full Screen App Container with scroll */}
-          <div className="w-full h-full relative overflow-y-auto overflow-x-hidden">
+          <div id="main-scroll-container" className="w-full h-full relative overflow-y-auto overflow-x-hidden">
             {/* Animated Background Pattern - Don't show on signup page */}
             {!isPublicPage && (
               <div className="fixed inset-0 opacity-10 pointer-events-none z-0">

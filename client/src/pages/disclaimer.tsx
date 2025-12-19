@@ -8,7 +8,13 @@ export default function Disclaimer() {
   const { user, isLoading } = useAuth();
 
   useEffect(() => {
+    const scrollContainer = document.getElementById('main-scroll-container');
+    if (scrollContainer) {
+      scrollContainer.scrollTop = 0;
+    }
     window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }, []);
 
   return (
