@@ -32,7 +32,7 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, 
   const equippedBorder = myBordersData.find((b: any) => b.isEquipped);
 
   return (
-    <Card className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm border-white/20">
+    <Card className="bg-white/10 backdrop-blur-sm border-white/20">
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <Crown className="w-5 h-5" />
