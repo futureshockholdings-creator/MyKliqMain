@@ -5,6 +5,7 @@ import { startBirthdayService } from "./birthdayService";
 import { startMoodBoostScheduler } from "./services/moodBoostScheduler";
 import { startReferralBonusService } from "./referralBonusService";
 import { seedBorders } from "./seedBorders";
+import { reconcileAllUsersWithStreaks } from "./borderReconciliation";
 import { setupVite, serveStatic, log } from "./vite";
 import { performanceOptimizer } from "./performanceOptimizer";
 import { rateLimitService } from "./rateLimitService";
@@ -152,8 +153,14 @@ app.get('/health', (req, res) => {
           if (result.inserted > 0) {
             log(`Seeded ${result.inserted} profile borders`);
           }
+          
+          // Reconcile borders for users who may have missed rewards
+          const reconcileResult = await reconcileAllUsersWithStreaks();
+          if (reconcileResult.totalStreakBorders > 0 || reconcileResult.totalReferralBorders > 0 || reconcileResult.totalSportsBorders > 0) {
+            log(`Reconciled borders: ${reconcileResult.totalStreakBorders} streak, ${reconcileResult.totalReferralBorders} referral, ${reconcileResult.totalSportsBorders} sports`);
+          }
         } catch (error) {
-          console.error("Failed to seed borders:", error);
+          console.error("Failed to seed/reconcile borders:", error);
         }
 
         // Start the birthday service for automatic birthday messages

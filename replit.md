@@ -76,6 +76,25 @@ WebSocket-based real-time updates broadcast new content, with a polling fallback
 ### Internal Post Sharing
 Users can share posts within their kliq, creating copies in their feed without external sharing or notifications to the original author.
 
+### Profile Border System (December 2025)
+Profile borders are earned through login streaks, referrals, and sports team follows. The system includes:
+
+**Border Types:**
+- Streak borders: 3, 7, 30, 90, 180, 365, 730, 1000-day milestones (8 tiers: Bronze → Ultimate)
+- Referral borders: 1, 5, 10, 25, 50 successful referral milestones (5 tiers)
+- Sports team borders: Awarded when users follow specific teams via `user_sports_preferences` table
+- Marketplace borders: Purchasable with Kliq Koins
+
+**Self-Healing Award System:**
+- `processLogin()` uses >= comparisons instead of === to award any missed streak borders
+- Auto-reconciliation runs on server startup via `reconcileAllUsersWithStreaks()` for users with 3+ day streaks
+- Manual reconciliation available via `/api/kliq-koins/reconcile-borders` endpoint (admin only)
+
+**Implementation Files:**
+- `server/borderReconciliation.ts`: Core reconciliation logic for streak/referral/sports borders
+- `server/seedBorders.ts`: Border catalog seeding (90 borders total)
+- `server/storage.ts`: Border ownership and database interactions
+
 ## Feature Specifications
 Core features include a Headlines Feed (infinite scroll, pull-to-refresh, native camera post creation), Stories, 1:1 Messaging, Kliq Koin (8-tier streak system), and a customizable Profile. Mobile-specific features include Calendar & Events, GPS Meetups, Sports Scores, Push Notifications (9 types), AI Mood Boost, Daily Content, and Live Streaming. A referral bonus system rewards users for inviting friends. Granular analytics consent is implemented for GDPR compliance.
 

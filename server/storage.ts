@@ -4968,12 +4968,16 @@ export class DatabaseStorage implements IStorage {
       const koinsAwarded = await this.awardKoins(userId, 1, 'daily_login');
 
       // Streak reward tiers matching profile_borders tier values
+      // Use >= to self-heal and award any missing borders from past milestones
       const tiers = [3, 7, 30, 90, 180, 365, 730, 1000];
       for (const tier of tiers) {
-        if (newStreak === tier) {
+        if (newStreak >= tier) {
           const unlockedBorder = await this.unlockStreakBorder(userId, tier);
           if (unlockedBorder) {
-            tierUnlocked = unlockedBorder.border;
+            // Only show the most recently unlocked tier (exact match)
+            if (newStreak === tier) {
+              tierUnlocked = unlockedBorder.border;
+            }
           }
         }
       }

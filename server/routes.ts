@@ -13,6 +13,7 @@ import { notificationService } from "./notificationService";
 import { thumbnailService } from "./thumbnailService";
 import { maintenanceService } from "./maintenanceService";
 import { sendChatbotConversation } from "./emailService";
+import { reconcileUserBorders } from "./borderReconciliation";
 import { pool, db } from "./db";
 import { friendRankingIntelligence } from "./friendRankingIntelligence";
 import { cacheService } from "./cacheService";
@@ -3349,6 +3350,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         await client.query('COMMIT');
+
+        // Award any applicable sports team borders
+        try {
+          await reconcileUserBorders(userId);
+        } catch (borderError) {
+          console.error('Failed to reconcile borders after team follow:', borderError);
+        }
 
         res.json({
           success: true,
@@ -10311,6 +10319,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const result = await storage.processLogin(userId);
       
+      // Reconcile any missing borders (self-healing for users who missed awards)
+      try {
+        await reconcileUserBorders(userId);
+      } catch (borderError) {
+        console.error('Failed to reconcile borders on login:', borderError);
+      }
+      
       res.json({
         success: true,
         koinsAwarded: result.koinsAwarded,
@@ -10369,6 +10384,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       res.status(400).json({ message: error.message || "Failed to buy streak freeze" });
+    }
+  });
+
+  // Manually reconcile borders for the current user (self-healing endpoint)
+  app.post('/api/kliq-koins/reconcile-borders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const result = await reconcileUserBorders(userId);
+      
+      res.json({
+        success: true,
+        bordersAwarded: {
+          streak: result.streakBordersAwarded,
+          referral: result.referralBordersAwarded,
+          sports: result.sportsBordersAwarded
+        },
+        message: `Awarded ${result.streakBordersAwarded + result.referralBordersAwarded + result.sportsBordersAwarded} missing borders`
+      });
+    } catch (error) {
+      console.error('Error reconciling borders:', error);
+      res.status(500).json({ message: 'Failed to reconcile borders' });
     }
   });
 
