@@ -1429,13 +1429,13 @@ export default function Settings() {
 
             <Accordion type="multiple" className="space-y-4">
               <AccordionItem value="marketplace" className="border-0">
-                <AccordionTrigger className="bg-gradient-to-r from-purple-600/30 to-pink-600/30 backdrop-blur-sm border border-purple-400/30 rounded-lg px-6 py-4 hover:from-purple-600/40 hover:to-pink-600/40 transition-colors data-[state=open]:rounded-b-none text-white hover:no-underline">
+                <AccordionTrigger className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-6 py-4 hover:bg-white/15 transition-colors data-[state=open]:rounded-b-none text-white hover:no-underline">
                   <div className="flex items-center gap-2">
                     <ShoppingCart className="w-5 h-5" />
                     <span className="text-lg font-semibold">Border Marketplace</span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-t-0 border-purple-400/30 rounded-b-lg p-0">
+                <AccordionContent className="bg-white/10 backdrop-blur-sm border border-t-0 border-white/20 rounded-b-lg p-0">
                   <BorderMarketplaceCard 
                     bordersData={bordersData}
                     walletData={walletData}
@@ -1447,13 +1447,13 @@ export default function Settings() {
               </AccordionItem>
 
               <AccordionItem value="collection" className="border-0">
-                <AccordionTrigger className="bg-gradient-to-r from-purple-600/30 to-pink-600/30 backdrop-blur-sm border border-purple-400/30 rounded-lg px-6 py-4 hover:from-purple-600/40 hover:to-pink-600/40 transition-colors data-[state=open]:rounded-b-none text-white hover:no-underline">
+                <AccordionTrigger className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-6 py-4 hover:bg-white/15 transition-colors data-[state=open]:rounded-b-none text-white hover:no-underline">
                   <div className="flex items-center gap-2">
                     <Crown className="w-5 h-5" />
                     <span className="text-lg font-semibold">My Borders Collection</span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm border border-t-0 border-purple-400/30 rounded-b-lg p-0">
+                <AccordionContent className="bg-white/10 backdrop-blur-sm border border-t-0 border-white/20 rounded-b-lg p-0">
                   <MyBordersCard 
                     myBordersData={myBordersData}
                     isLoading={myBordersLoading}
