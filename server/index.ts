@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { startBirthdayService } from "./birthdayService";
 import { startMoodBoostScheduler } from "./services/moodBoostScheduler";
 import { startReferralBonusService } from "./referralBonusService";
+import { seedBorders } from "./seedBorders";
 import { setupVite, serveStatic, log } from "./vite";
 import { performanceOptimizer } from "./performanceOptimizer";
 import { rateLimitService } from "./rateLimitService";
@@ -144,7 +145,17 @@ app.get('/health', (req, res) => {
       }
 
       // Delay background services to avoid connection burst on cold start
-      setTimeout(() => {
+      setTimeout(async () => {
+        // Seed borders if they don't exist (ensures production has all borders)
+        try {
+          const result = await seedBorders();
+          if (result.inserted > 0) {
+            log(`Seeded ${result.inserted} profile borders`);
+          }
+        } catch (error) {
+          console.error("Failed to seed borders:", error);
+        }
+
         // Start the birthday service for automatic birthday messages
         startBirthdayService();
 
