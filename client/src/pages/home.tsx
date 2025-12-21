@@ -2625,11 +2625,15 @@ export default function Home() {
                   variant="outline"
                   onClick={() => setShowHoroscopeDialog(false)}
                   className="border-border text-foreground"
+                  disabled={isSubmitting}
                 >
                   Close
                 </Button>
                 <Button
+                  disabled={isSubmitting}
                   onClick={async () => {
+                    if (isSubmitting) return;
+                    setIsSubmitting(true);
                     const horoscopePost = `🔮 My Daily Horoscope (${horoscopeData.sign}) 🔮\n\n${horoscopeData.horoscope}\n\n✨ Lucky Number: ${horoscopeData.luckyNumber}\n🎨 Lucky Color: ${horoscopeData.luckyColor}`;
                     
                     try {
@@ -2659,11 +2663,13 @@ export default function Home() {
                         variant: "destructive",
                         duration: 3000,
                       });
+                    } finally {
+                      setIsSubmitting(false);
                     }
                   }}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  Post to Headlines
+                  {isSubmitting ? "Posting..." : "Post to Headlines"}
                 </Button>
               </div>
             </div>
@@ -2709,11 +2715,15 @@ export default function Home() {
                   variant="outline"
                   onClick={() => setShowBibleVerseDialog(false)}
                   className="border-border text-foreground"
+                  disabled={isSubmitting}
                 >
                   Close
                 </Button>
                 <Button
+                  disabled={isSubmitting}
                   onClick={async () => {
+                    if (isSubmitting) return;
+                    setIsSubmitting(true);
                     const versePost = `📖 Daily Bible Verse 📖\n\n"${bibleVerseData.verse}"\n\n— ${bibleVerseData.reference}\n\n💭 ${bibleVerseData.reflection}`;
                     
                     try {
@@ -2743,11 +2753,13 @@ export default function Home() {
                         variant: "destructive",
                         duration: 3000,
                       });
+                    } finally {
+                      setIsSubmitting(false);
                     }
                   }}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  Post to Headlines
+                  {isSubmitting ? "Posting..." : "Post to Headlines"}
                 </Button>
               </div>
             </div>
