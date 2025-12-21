@@ -10512,6 +10512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Invalidate all feed caches (user's posts appear in friends' feeds too)
       await cacheService.invalidatePattern('kliq-feed');
       await cacheService.invalidatePattern(`user:${userId}`);
+      const { invalidateCache } = await import('./cache');
       invalidateCache('kliq-feed');
       invalidateCache('posts');
       
@@ -10535,6 +10536,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Invalidate all feed caches (user's posts appear in friends' feeds too)
       await cacheService.invalidatePattern('kliq-feed');
       await cacheService.invalidatePattern(`user:${userId}`);
+      const { invalidateCache } = await import('./cache');
       invalidateCache('kliq-feed');
       invalidateCache('posts');
       
