@@ -386,6 +386,8 @@ export default function Home() {
   const [selectedPostToReport, setSelectedPostToReport] = useState<any>(null);
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
+  const [isPostingHoroscope, setIsPostingHoroscope] = useState(false);
+  const [isPostingBibleVerse, setIsPostingBibleVerse] = useState(false);
   
   // Scrapbook state
   const [showSavePostDialog, setShowSavePostDialog] = useState(false);
@@ -2625,15 +2627,15 @@ export default function Home() {
                   variant="outline"
                   onClick={() => setShowHoroscopeDialog(false)}
                   className="border-border text-foreground"
-                  disabled={isSubmitting}
+                  disabled={isPostingHoroscope}
                 >
                   Close
                 </Button>
                 <Button
-                  disabled={isSubmitting}
+                  disabled={isPostingHoroscope}
                   onClick={async () => {
-                    if (isSubmitting) return;
-                    setIsSubmitting(true);
+                    if (isPostingHoroscope) return;
+                    setIsPostingHoroscope(true);
                     const horoscopePost = `🔮 My Daily Horoscope (${horoscopeData.sign}) 🔮\n\n${horoscopeData.horoscope}\n\n✨ Lucky Number: ${horoscopeData.luckyNumber}\n🎨 Lucky Color: ${horoscopeData.luckyColor}`;
                     
                     try {
@@ -2664,12 +2666,12 @@ export default function Home() {
                         duration: 3000,
                       });
                     } finally {
-                      setIsSubmitting(false);
+                      setIsPostingHoroscope(false);
                     }
                   }}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  {isSubmitting ? "Posting..." : "Post to Headlines"}
+                  {isPostingHoroscope ? "Posting..." : "Post to Headlines"}
                 </Button>
               </div>
             </div>
@@ -2715,15 +2717,15 @@ export default function Home() {
                   variant="outline"
                   onClick={() => setShowBibleVerseDialog(false)}
                   className="border-border text-foreground"
-                  disabled={isSubmitting}
+                  disabled={isPostingBibleVerse}
                 >
                   Close
                 </Button>
                 <Button
-                  disabled={isSubmitting}
+                  disabled={isPostingBibleVerse}
                   onClick={async () => {
-                    if (isSubmitting) return;
-                    setIsSubmitting(true);
+                    if (isPostingBibleVerse) return;
+                    setIsPostingBibleVerse(true);
                     const versePost = `📖 Daily Bible Verse 📖\n\n"${bibleVerseData.verse}"\n\n— ${bibleVerseData.reference}\n\n💭 ${bibleVerseData.reflection}`;
                     
                     try {
@@ -2754,12 +2756,12 @@ export default function Home() {
                         duration: 3000,
                       });
                     } finally {
-                      setIsSubmitting(false);
+                      setIsPostingBibleVerse(false);
                     }
                   }}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  {isSubmitting ? "Posting..." : "Post to Headlines"}
+                  {isPostingBibleVerse ? "Posting..." : "Post to Headlines"}
                 </Button>
               </div>
             </div>
