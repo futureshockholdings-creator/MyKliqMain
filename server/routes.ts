@@ -10526,6 +10526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Invalidate caches so the new border shows immediately on posts
       // Invalidate all feed caches (user's posts appear in friends' feeds too)
       await cacheService.invalidatePattern('kliq-feed');
+      await cacheService.invalidatePattern(`user:profile:${userId}`); // Match the cache key used in /api/auth/user
       await cacheService.invalidatePattern(`user:${userId}`);
       const { invalidateCache } = await import('./cache');
       invalidateCache('kliq-feed');
@@ -10550,6 +10551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Invalidate caches so the border removal shows immediately on posts
       // Invalidate all feed caches (user's posts appear in friends' feeds too)
       await cacheService.invalidatePattern('kliq-feed');
+      await cacheService.invalidatePattern(`user:profile:${userId}`); // Match the cache key used in /api/auth/user
       await cacheService.invalidatePattern(`user:${userId}`);
       const { invalidateCache } = await import('./cache');
       invalidateCache('kliq-feed');

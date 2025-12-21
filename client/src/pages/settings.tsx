@@ -1028,20 +1028,29 @@ export default function Settings() {
       return await apiRequest("POST", "/api/kliq-koins/equip-border", { borderId });
     },
     onSuccess: async () => {
-      // Clear all relevant caches before reload
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Clear all caches and wait for completion before reload
+      // Use refetchQueries to ensure fresh data is fetched before reload
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/kliq-koins/my-borders"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/kliq-koins/borders"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/auth/user"] }),
+      ]);
       
       // Clear enterprise cache (IndexedDB) for feed data
       try {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/kliq-feed');
         await enhancedCache.removeByPattern('/api/auth/user');
+        await enhancedCache.removeByPattern('/api/kliq-koins');
       } catch (e) {
         console.log('Cache clear error (non-critical):', e);
       }
+      
+      // Also invalidate feed queries
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      
+      // Small delay to ensure server cache is invalidated before reload
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Force hard refresh by reloading the page
       window.location.reload();
@@ -1060,20 +1069,29 @@ export default function Settings() {
       return await apiRequest("POST", "/api/kliq-koins/unequip-border", {});
     },
     onSuccess: async () => {
-      // Clear all relevant caches before reload
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Clear all caches and wait for completion before reload
+      // Use refetchQueries to ensure fresh data is fetched before reload
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/kliq-koins/my-borders"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/kliq-koins/borders"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/auth/user"] }),
+      ]);
       
       // Clear enterprise cache (IndexedDB) for feed data
       try {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/kliq-feed');
         await enhancedCache.removeByPattern('/api/auth/user');
+        await enhancedCache.removeByPattern('/api/kliq-koins');
       } catch (e) {
         console.log('Cache clear error (non-critical):', e);
       }
+      
+      // Also invalidate feed queries
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      
+      // Small delay to ensure server cache is invalidated before reload
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Force hard refresh by reloading the page
       window.location.reload();
