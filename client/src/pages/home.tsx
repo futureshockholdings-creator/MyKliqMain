@@ -1015,7 +1015,15 @@ export default function Home() {
     mutationFn: async (postData: { content: string; memeId?: string; movieconId?: string; mood?: string }) => {
       await apiRequest("POST", "/api/posts", postData);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Clear enterprise cache (IndexedDB) before refetching to ensure fresh data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {
+        console.log('Cache clear (non-critical):', e);
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       setNewPost("");
@@ -1470,6 +1478,14 @@ export default function Home() {
       return result;
     },
     onSuccess: async () => {
+      // Clear enterprise cache before refetching
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {
+        console.log('Cache clear (non-critical):', e);
+      }
+      await queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       setShowLocationDialog(false);
       setLocationName('');
@@ -2649,6 +2665,15 @@ export default function Home() {
                       });
                       
                       setShowHoroscopeDialog(false);
+                      
+                      // Clear enterprise cache before refetching
+                      try {
+                        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+                        await enhancedCache.removeByPattern('/api/kliq-feed');
+                      } catch (e) {
+                        console.log('Cache clear (non-critical):', e);
+                      }
+                      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
                       queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
                       
                       toast({
@@ -2739,6 +2764,15 @@ export default function Home() {
                       });
                       
                       setShowBibleVerseDialog(false);
+                      
+                      // Clear enterprise cache before refetching
+                      try {
+                        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+                        await enhancedCache.removeByPattern('/api/kliq-feed');
+                      } catch (e) {
+                        console.log('Cache clear (non-critical):', e);
+                      }
+                      queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
                       queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
                       
                       toast({
