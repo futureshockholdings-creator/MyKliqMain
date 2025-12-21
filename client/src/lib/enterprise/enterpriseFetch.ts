@@ -84,10 +84,11 @@ export async function enterpriseFetch<T = any>(
                   removeAuthToken();
                 }
                 
-                // Disable browser HTTP cache for feed endpoints to ensure fresh data
+                // Disable browser HTTP cache for feed and user endpoints to ensure fresh data
                 const shouldBypassBrowserCache = url.includes('/api/kliq-feed') || 
                                                   url.includes('/api/posts') ||
-                                                  url.includes('/api/notifications');
+                                                  url.includes('/api/notifications') ||
+                                                  url.includes('/api/auth/user');
                 
                 const res = await fetch(fullUrl, {
                   ...fetchOptions,
