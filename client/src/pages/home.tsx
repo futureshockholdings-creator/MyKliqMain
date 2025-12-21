@@ -970,8 +970,16 @@ export default function Home() {
     mutationFn: async (postId: string) => {
       return await apiRequest("POST", `/api/posts/${postId}/highlight`, {});
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Clear enterprise cache before refetching
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {
+        console.log('Cache clear (non-critical):', e);
+      }
       queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+      queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
       toast({
         title: "Post Highlighted! ⭐",
         description: "Your post will stand out for the next 6 hours.",
@@ -993,8 +1001,16 @@ export default function Home() {
     mutationFn: async (postId: string) => {
       return await apiRequest("DELETE", `/api/posts/${postId}/highlight`, {});
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Clear enterprise cache before refetching
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {
+        console.log('Cache clear (non-critical):', e);
+      }
       queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+      queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
       toast({
         title: "Highlight Removed",
         description: "Your post is back to normal.",
