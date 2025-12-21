@@ -5033,6 +5033,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get aggregated kliq feed with posts, polls, events, and actions from all kliq members
   app.get('/api/kliq-feed', isAuthenticated, rateLimitService.createRateLimitMiddleware('feed'), async (req: any, res) => {
     try {
+      // Disable browser caching and ETags to ensure fresh feed data after post creation/deletion
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      res.set('Surrogate-Control', 'no-store');
+      res.set('ETag', ''); // Disable ETag
+      res.removeHeader('ETag');
+      
       const userId = req.user.claims.sub;
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(100, Math.max(5, parseInt(req.query.limit as string) || 100)); // Between 5-100 items, default 100
