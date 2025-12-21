@@ -10508,6 +10508,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.equipBorder(userId, borderId);
       
+      // Invalidate caches so the new border shows immediately on posts
+      // Invalidate all feed caches (user's posts appear in friends' feeds too)
+      await cacheService.invalidatePattern('kliq-feed');
+      await cacheService.invalidatePattern(`user:${userId}`);
+      invalidateCache('kliq-feed');
+      invalidateCache('posts');
+      
       res.json({ 
         success: true,
         message: "Border equipped successfully!" 
@@ -10523,6 +10530,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       
       await storage.unequipBorder(userId);
+      
+      // Invalidate caches so the border removal shows immediately on posts
+      // Invalidate all feed caches (user's posts appear in friends' feeds too)
+      await cacheService.invalidatePattern('kliq-feed');
+      await cacheService.invalidatePattern(`user:${userId}`);
+      invalidateCache('kliq-feed');
+      invalidateCache('posts');
       
       res.json({ 
         success: true,
