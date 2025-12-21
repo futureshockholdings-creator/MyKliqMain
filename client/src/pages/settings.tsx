@@ -1028,8 +1028,20 @@ export default function Settings() {
       return await apiRequest("POST", "/api/kliq-koins/equip-border", { borderId });
     },
     onSuccess: async () => {
+      // Clear all relevant caches before reload
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
+      // Clear enterprise cache (IndexedDB) for feed data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+        await enhancedCache.removeByPattern('/api/auth/user');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       
       // Force hard refresh by reloading the page
       window.location.reload();
@@ -1048,8 +1060,20 @@ export default function Settings() {
       return await apiRequest("POST", "/api/kliq-koins/unequip-border", {});
     },
     onSuccess: async () => {
+      // Clear all relevant caches before reload
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      
+      // Clear enterprise cache (IndexedDB) for feed data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+        await enhancedCache.removeByPattern('/api/auth/user');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       
       // Force hard refresh by reloading the page
       window.location.reload();
