@@ -453,6 +453,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
+      // Prevent browser caching to ensure fresh data after border equip/unequip
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+      
       const userId = req.user.claims.sub;
       
       // Check cache first for user profile (10 minute TTL)
