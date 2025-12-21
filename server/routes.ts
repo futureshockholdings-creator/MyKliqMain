@@ -5052,11 +5052,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const cacheKey = `kliq-feed:${userId}:${page}:${limit}`;
       
-      // Check cache FIRST before any DB queries
-      const cachedFeed = await cacheService.get(cacheKey);
-      if (cachedFeed) {
-        return res.json(cachedFeed);
-      }
+      // DISABLED: Server-side feed caching causes stale author border data
+      // Cache invalidation is unreliable with Redis connection issues
+      // TODO: Re-enable with better cache invalidation strategy
+      // const cachedFeed = await cacheService.get(cacheKey);
+      // if (cachedFeed) {
+      //   return res.json(cachedFeed);
+      // }
       
       // Only fetch user and filters if no cache hit
       // Cache user's educational post eligibility separately for 1 hour
@@ -5081,8 +5083,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get feed data
       const feed = await storage.getKliqFeed(userId, filterKeywords, page, limit, includeEducationalPosts);
       
-      // Cache the feed for 3 minutes (shorter TTL for dynamic content)
-      await cacheService.set(cacheKey, feed, 180);
+      // DISABLED: Server-side feed caching (see above)
+      // await cacheService.set(cacheKey, feed, 180);
       
       res.json(feed);
     } catch (error) {
