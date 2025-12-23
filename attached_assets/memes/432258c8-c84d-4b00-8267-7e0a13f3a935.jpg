@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+  <script type="module" src="/@vite/client"></script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+
+  <!-- Primary Meta Tags -->
+  <title>MyKliq - Your Private Social Circle</title>
+  <meta name="title" content="MyKliq - Your Private Social Circle" />
+  <meta name="description"
+    content="MyKliq is a private social media platform for close-knit friend groups (kliqs). Share photos, videos, stories, polls, events, and more with your inner circle. Features include friend rankings, Kliq Koins rewards, AI mood boosts, and customizable themes." />
+  <meta name="keywords"
+    content="private social network, friend groups, kliq, social circle, friend ranking, stories, polls, events, customizable social media, PWA social app, close friends, private sharing" />
+  <meta name="author" content="MyKliq" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://kliqlife.com/" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js")
+          .then(() => console.log("ServiceWorker Registered"))
+          .catch(err => console.log("SW Registration Failed:", err));
+      });
+    }
+  </script>
+
+
+  <!-- Theme Color (Updated to MyKliq Brand Pink) -->
+  <meta name="theme-color" content="#FF1B8D" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FF1B8D" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+
+  <!-- Apple Touch Icon (iOS) -->
+  <link rel="apple-touch-icon" href="/icons/icon-180x180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="MyKliq" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png" />
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23000'/><g fill='%23FF1B8D'><circle cx='8' cy='6' r='2'/><rect x='7' y='8' width='2' height='3'/><rect x='5' y='9' width='6' height='1'/><rect x='7' y='3' width='2' height='1'/><rect x='5' y='4' width='6' height='1'/></g></svg>" />
+
+  <!-- Security Headers -->
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kliqlife.com/" />
+  <meta property="og:site_name" content="MyKliq" />
+  <meta property="og:title" content="MyKliq - Your Private Social Circle" />
+  <meta property="og:description"
+    content="Connect with your closest friends in a private, customizable social environment. Share stories, photos, videos, polls, and events with your kliq." />
+  <meta property="og:image" content="https://kliqlife.com/icons/icon-512x512.png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta property="og:image:alt" content="MyKliq - Private Social Network" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://kliqlife.com/" />
+  <meta name="twitter:title" content="MyKliq - Your Private Social Circle" />
+  <meta name="twitter:description"
+    content="Connect with your closest friends in a private, customizable social environment. Share stories, photos, videos, polls, and events with your kliq." />
+  <meta name="twitter:image" content="https://kliqlife.com/icons/icon-512x512.png" />
+  <meta name="twitter:image:alt" content="MyKliq - Private Social Network" />
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "MyKliq",
+      "alternateName": "MyKliq - Your Private Social Circle",
+      "url": "https://kliqlife.com",
+      "description": "MyKliq is a private social media platform for close-knit friend groups (kliqs). Share photos, videos, stories, polls, events, and more with your inner circle.",
+      "applicationCategory": "SocialNetworkingApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "1250"
+      },
+      "featureList": [
+        "Private friend groups (kliqs)",
+        "Friend ranking system",
+        "Stories and disappearing content",
+        "Photo and video sharing",
+        "Polls and events",
+        "Direct messaging",
+        "Kliq Koins reward system",
+        "AI mood boosts",
+        "Customizable themes",
+        "Push notifications",
+        "Progressive Web App (PWA)"
+      ],
+      "screenshot": "https://kliqlife.com/icons/icon-512x512.png",
+      "author": {
+        "@type": "Organization",
+        "name": "Futureshock Holdings, LLC"
+      }
+    }
+    </script>
+
+  <!-- Google Analytics 4 (GA4) -->
+  <!-- Analytics consent is granted when users accept Terms & Privacy during sign-up -->
+  <!-- This is recorded in the database as termsAcceptedAt -->
+  <script>
+    // Initialize Google Analytics dataLayer
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    window.gtag = gtag;
+    gtag('js', new Date());
+
+    // GA4 will be configured dynamically by the app if VITE_GA4_MEASUREMENT_ID is provided
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx?v=64aRDzmM-6TMpDwESt1Ox"></script>
+
+</body>
+
+</html>
