@@ -276,7 +276,10 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       const fileType = uploadedFile.type || '';
       const mediaType = fileType.startsWith('image/') ? 'image' : 'video';
       
-      const mediaUrl = uploadedFile.uploadURL || uploadedFile.response?.uploadURL || '';
+      // The uploadURL contains the presigned URL with query parameters (signature, etc.)
+      // We need to strip the query parameters to get the actual file URL
+      const presignedUrl = uploadedFile.uploadURL || uploadedFile.response?.uploadURL || '';
+      const mediaUrl = presignedUrl.split('?')[0]; // Remove query parameters
       
       setUploadedMedia({
         url: mediaUrl,

@@ -101,7 +101,9 @@ export default function Profile() {
 
   const handleProfilePictureComplete = (result: any) => {
     if (result.successful && result.successful[0]) {
-      const uploadURL = result.successful[0].uploadURL;
+      // Strip query parameters from presigned URL to get the actual file URL
+      const presignedUrl = result.successful[0].uploadURL || '';
+      const uploadURL = presignedUrl.split('?')[0];
       updateProfilePictureMutation.mutate(uploadURL);
     }
   };
@@ -148,7 +150,9 @@ export default function Profile() {
 
   const handleBackgroundComplete = (result: any) => {
     if (result.successful && result.successful[0]) {
-      const uploadURL = result.successful[0].uploadURL;
+      // Strip query parameters from presigned URL to get the actual file URL
+      const presignedUrl = result.successful[0].uploadURL || '';
+      const uploadURL = presignedUrl.split('?')[0];
       updateBackgroundMutation.mutate(uploadURL);
     }
   };

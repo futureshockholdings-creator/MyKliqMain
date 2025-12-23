@@ -68,7 +68,14 @@ export function MemeUploader({ memes, onRefresh }: MemeUploaderProps) {
     try {
       // Process all uploaded files
       const uploadPromises = result.successful?.map(async (uploadedFile, index) => {
-        const imageUrl = uploadedFile.uploadURL;
+        // The uploadURL contains the presigned URL with query parameters (signature, etc.)
+        // We need to strip the query parameters to get the actual file URL
+        const presignedUrl = uploadedFile.uploadURL || '';
+        const imageUrl = presignedUrl.split('?')[0]; // Remove query parameters
+        
+        console.log(`File ${index + 1}: presigned URL = ${presignedUrl.substring(0, 100)}...`);
+        console.log(`File ${index + 1}: clean URL = ${imageUrl}`);
+        
         const fileName = uploadedFile.name || `Meme ${index + 1}`;
         
         // Use title if provided, otherwise use filename without extension
