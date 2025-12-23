@@ -162,8 +162,12 @@ export default function Calendar() {
       if (!selectedKliqId) throw new Error("No kliq selected");
       return await apiRequest("POST", "/api/calendar/notes", { ...data, kliqId: selectedKliqId });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/notes', selectedKliqId] });
+    onSuccess: async () => {
+      // Force refetch all calendar notes queries to ensure UI updates immediately
+      await queryClient.refetchQueries({ 
+        queryKey: ['/api/calendar/notes'],
+        type: 'active'
+      });
       toast({ title: "Note created successfully!" });
       setIsAddDialogOpen(false);
       setIsSheetOpen(false);
@@ -182,8 +186,12 @@ export default function Calendar() {
     mutationFn: async ({ id, data }: { id: string; data: Partial<NoteFormData> }) => {
       return await apiRequest("PUT", `/api/calendar/notes/${id}`, data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/notes', selectedKliqId] });
+    onSuccess: async () => {
+      // Force refetch all calendar notes queries to ensure UI updates immediately
+      await queryClient.refetchQueries({ 
+        queryKey: ['/api/calendar/notes'],
+        type: 'active'
+      });
       toast({ title: "Note updated successfully!" });
       setEditingNote(null);
       setIsAddDialogOpen(false);
@@ -202,8 +210,12 @@ export default function Calendar() {
     mutationFn: async (id: string) => {
       return await apiRequest("DELETE", `/api/calendar/notes/${id}`, null);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/calendar/notes', selectedKliqId] });
+    onSuccess: async () => {
+      // Force refetch all calendar notes queries to ensure UI updates immediately
+      await queryClient.refetchQueries({ 
+        queryKey: ['/api/calendar/notes'],
+        type: 'active'
+      });
       toast({ title: "Note deleted successfully!" });
     },
     onError: (error: any) => {

@@ -113,9 +113,11 @@ export default function Events() {
     mutationFn: async (eventData: any) => {
       await apiRequest("POST", "/api/events", eventData);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+    onSuccess: async () => {
+      // Force refetch to ensure UI updates immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/calendar/notes"] });
       setShowCreateEvent(false);
       setNewEvent({
         title: "",
@@ -155,8 +157,9 @@ export default function Events() {
     mutationFn: async ({ eventId, eventData }: { eventId: string; eventData: any }) => {
       await apiRequest("PUT", `/api/events/${eventId}`, eventData);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+    onSuccess: async () => {
+      // Force refetch to ensure UI updates immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       setShowEditEvent(false);
       setEditingEvent(null);
       toast({
@@ -189,8 +192,9 @@ export default function Events() {
     mutationFn: async (eventId: string) => {
       await apiRequest("DELETE", `/api/events/${eventId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+    onSuccess: async () => {
+      // Force refetch to ensure UI updates immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       setShowEditEvent(false);
       setEditingEvent(null);
       toast({
@@ -223,8 +227,9 @@ export default function Events() {
     mutationFn: async ({ eventId, status }: { eventId: string; status: string }) => {
       await apiRequest("POST", `/api/events/${eventId}/attendance`, { status });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+    onSuccess: async () => {
+      // Force refetch to ensure UI updates immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Attendance updated!",
