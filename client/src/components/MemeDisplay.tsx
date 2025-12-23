@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ImageIcon } from 'lucide-react';
 import type { Meme } from '@shared/schema';
+import { resolveAssetUrl } from '@/lib/apiConfig';
 
 interface MemeDisplayProps {
   meme: Meme;
@@ -11,9 +12,11 @@ export function MemeDisplay({ meme, className = "" }: MemeDisplayProps) {
   const [imageError, setImageError] = useState(false);
   
   // Convert Google Cloud Storage URLs to local object serving URLs
-  const imageUrl = meme.imageUrl.startsWith('https://storage.googleapis.com/') 
+  // Then resolve to absolute URL for cross-domain (AWS Amplify -> Replit backend)
+  const relativeUrl = meme.imageUrl.startsWith('https://storage.googleapis.com/') 
     ? meme.imageUrl.replace(/^https:\/\/storage\.googleapis\.com\/[^\/]+\/\.private\//, '/objects/')
     : meme.imageUrl;
+  const imageUrl = resolveAssetUrl(relativeUrl) || relativeUrl;
   
   if (imageError) {
     // Fallback display if image fails to load
