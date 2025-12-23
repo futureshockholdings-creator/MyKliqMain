@@ -163,9 +163,21 @@ export default function Calendar() {
       return await apiRequest("POST", "/api/calendar/notes", { ...data, kliqId: selectedKliqId });
     },
     onSuccess: async () => {
+      // Clear enterprise cache first to prevent stale data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/calendar');
+        await enhancedCache.removeByPattern('/api/events');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       // Force refetch all calendar notes queries to ensure UI updates immediately
       await queryClient.refetchQueries({ 
         queryKey: ['/api/calendar/notes'],
+        type: 'active'
+      });
+      await queryClient.refetchQueries({ 
+        queryKey: ['/api/events'],
         type: 'active'
       });
       toast({ title: "Note created successfully!" });
@@ -187,6 +199,14 @@ export default function Calendar() {
       return await apiRequest("PUT", `/api/calendar/notes/${id}`, data);
     },
     onSuccess: async () => {
+      // Clear enterprise cache first to prevent stale data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/calendar');
+        await enhancedCache.removeByPattern('/api/events');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       // Force refetch all calendar notes queries to ensure UI updates immediately
       await queryClient.refetchQueries({ 
         queryKey: ['/api/calendar/notes'],
@@ -211,6 +231,14 @@ export default function Calendar() {
       return await apiRequest("DELETE", `/api/calendar/notes/${id}`, null);
     },
     onSuccess: async () => {
+      // Clear enterprise cache first to prevent stale data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/calendar');
+        await enhancedCache.removeByPattern('/api/events');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       // Force refetch all calendar notes queries to ensure UI updates immediately
       await queryClient.refetchQueries({ 
         queryKey: ['/api/calendar/notes'],

@@ -114,6 +114,14 @@ export default function Events() {
       await apiRequest("POST", "/api/events", eventData);
     },
     onSuccess: async () => {
+      // Clear enterprise cache first to prevent stale data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/events');
+        await enhancedCache.removeByPattern('/api/calendar');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       // Force refetch to ensure UI updates immediately
       await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
@@ -158,6 +166,14 @@ export default function Events() {
       await apiRequest("PUT", `/api/events/${eventId}`, eventData);
     },
     onSuccess: async () => {
+      // Clear enterprise cache first to prevent stale data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/events');
+        await enhancedCache.removeByPattern('/api/calendar');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       // Force refetch to ensure UI updates immediately
       await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       setShowEditEvent(false);
@@ -193,6 +209,14 @@ export default function Events() {
       await apiRequest("DELETE", `/api/events/${eventId}`);
     },
     onSuccess: async () => {
+      // Clear enterprise cache first to prevent stale data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/events');
+        await enhancedCache.removeByPattern('/api/calendar');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       // Force refetch to ensure UI updates immediately
       await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       setShowEditEvent(false);
@@ -228,6 +252,13 @@ export default function Events() {
       await apiRequest("POST", `/api/events/${eventId}/attendance`, { status });
     },
     onSuccess: async () => {
+      // Clear enterprise cache first to prevent stale data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/events');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       // Force refetch to ensure UI updates immediately
       await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
