@@ -120,7 +120,11 @@ app.get('/health', (req, res) => {
   app.use("/demo-screenshots", express.static(path.join(process.cwd(), "public", "demo-screenshots")));
 
   // Serve static assets (memes, borders) in both dev and production
-  app.use("/attached_assets", express.static(path.join(process.cwd(), "attached_assets"), {
+  // In production, assets are copied to dist/attached_assets during build
+  const assetsPath = process.env.NODE_ENV === "production" 
+    ? path.join(process.cwd(), "dist", "attached_assets")
+    : path.join(process.cwd(), "attached_assets");
+  app.use("/attached_assets", express.static(assetsPath, {
     maxAge: "1d",
     etag: true,
   }));
