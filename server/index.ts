@@ -5,6 +5,7 @@ import { startBirthdayService } from "./birthdayService";
 import { startMoodBoostScheduler } from "./services/moodBoostScheduler";
 import { startReferralBonusService } from "./referralBonusService";
 import { seedBorders } from "./seedBorders";
+import { seedMemes } from "./seedMemes";
 import { reconcileAllUsersWithStreaks } from "./borderReconciliation";
 import { setupVite, serveStatic, log } from "./vite";
 import { performanceOptimizer } from "./performanceOptimizer";
@@ -161,6 +162,16 @@ app.get('/health', (req, res) => {
           }
         } catch (error) {
           console.error("Failed to seed/reconcile borders:", error);
+        }
+
+        // Seed memes if they don't exist (ensures production has all memes)
+        try {
+          const memesResult = await seedMemes();
+          if (memesResult.inserted > 0) {
+            log(`Seeded ${memesResult.inserted} memes`);
+          }
+        } catch (error) {
+          console.error("Failed to seed memes:", error);
         }
 
         // Start the birthday service for automatic birthday messages
