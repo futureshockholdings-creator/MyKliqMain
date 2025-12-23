@@ -13,7 +13,7 @@ interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
   maxFileSize?: number;
   allowedFileTypes?: string[];
-  onGetUploadParameters: () => Promise<{
+  onGetUploadParameters: (file: { name: string; type: string; size: number }) => Promise<{
     method: "PUT";
     url: string;
   }>;
@@ -81,7 +81,11 @@ export function ObjectUploader({
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
-        getUploadParameters: onGetUploadParameters,
+        getUploadParameters: (file) => onGetUploadParameters({
+          name: file.name || 'file',
+          type: file.type || 'application/octet-stream',
+          size: file.size || 0,
+        }),
       })
       .on("restriction-failed", (file, error) => {
         console.error("Upload restriction failed:", error);

@@ -29,8 +29,9 @@ export function MemeUploader({ memes, onRefresh }: MemeUploaderProps) {
     meme.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleGetUploadParameters = async () => {
+  const handleGetUploadParameters = async (file: { name: string; type: string; size: number }) => {
     try {
+      console.log(`Requesting upload URL for file: ${file.name}`);
       // Try public upload first for better visibility
       let response;
       try {
@@ -41,6 +42,7 @@ export function MemeUploader({ memes, onRefresh }: MemeUploaderProps) {
         response = await apiRequest("POST", "/api/objects/upload");
       }
       
+      console.log(`Got unique upload URL for: ${file.name}`);
       return {
         method: "PUT" as const,
         url: response.uploadURL,

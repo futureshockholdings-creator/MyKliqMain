@@ -246,7 +246,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
     };
   }, [open]);
 
-  const handleGetUploadParameters = async () => {
+  const handleGetUploadParameters = async (_file: { name: string; type: string; size: number }) => {
     try {
       const response = await apiRequest("POST", "/api/media/upload");
       

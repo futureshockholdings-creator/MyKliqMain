@@ -14,7 +14,7 @@ import {
 } from "@/lib/videoConverter";
 
 interface VideoConversionUploadProps {
-  onGetUploadParameters: () => Promise<{ method: "PUT"; url: string }>;
+  onGetUploadParameters: (file: { name: string; type: string; size: number }) => Promise<{ method: "PUT"; url: string }>;
   onUploadComplete: (result: any) => void;
   maxFileSize?: number;
   className?: string;

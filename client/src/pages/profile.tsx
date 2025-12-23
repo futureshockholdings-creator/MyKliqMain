@@ -60,7 +60,7 @@ export default function Profile() {
   });
 
   // Profile picture upload handlers
-  const handleGetUploadParameters = async () => {
+  const handleGetUploadParameters = async (_file: { name: string; type: string; size: number }) => {
     const response = await apiRequest("POST", "/api/objects/upload", {});
     return {
       method: "PUT" as const,
@@ -107,7 +107,7 @@ export default function Profile() {
   };
 
   // Background image upload handlers
-  const handleBackgroundGetUploadParameters = async () => {
+  const handleBackgroundGetUploadParameters = async (_file: { name: string; type: string; size: number }) => {
     const response = await apiRequest("POST", "/api/objects/upload", {});
     return {
       method: "PUT" as const,

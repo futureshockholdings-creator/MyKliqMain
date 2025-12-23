@@ -15,7 +15,7 @@ import {
 import type { UploadResult } from "./MediaUpload";
 
 interface SmartVideoUploaderProps {
-  onGetUploadParameters: () => Promise<{ method: "PUT"; url: string }>;
+  onGetUploadParameters: (file: { name: string; type: string; size: number }) => Promise<{ method: "PUT"; url: string }>;
   onUploadComplete: (result: UploadResult) => void;
   maxFileSize?: number;
   className?: string;

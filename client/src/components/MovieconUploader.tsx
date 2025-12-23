@@ -32,7 +32,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
     moviecon.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleGetUploadParameters = async () => {
+  const handleGetUploadParameters = async (_file: { name: string; type: string; size: number }) => {
     try {
       const response = await apiRequest("POST", "/api/objects/upload");
       return {
