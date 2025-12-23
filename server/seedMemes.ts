@@ -1,34 +1,3 @@
-// Auto-generated meme seed data
-// 30 memes with cloud storage URLs
-export const seedMemes = [
-  { id: "6b82ca0c-bd35-4ce0-ae6b-6d0a80b34309", title: "Before coffee, after coffee", imageUrl: "/public-objects/memes/eb22d62a-571f-4fbd-b1bb-8ae2720918c5" },
-  { id: "0fca3dce-6735-4f3d-84f1-d031dd32f9be", title: "Better than everyone else", imageUrl: "/public-objects/memes/88873c23-9683-4a64-ab8e-958f5392cf6b" },
-  { id: "37ffed3b-6622-4fb9-8277-d0becabf0166", title: "Do you know what sound cocaine makes", imageUrl: "/public-objects/memes/d2257367-4bdd-47af-962c-eff15a398e14" },
-  { id: "c2339998-7b55-4e8a-8fe4-336b243dca67", title: "Everybody love everybody", imageUrl: "/public-objects/memes/93a388f6-310b-4ad1-b94e-9bca6b2a93de" },
-  { id: "b4d47e57-6602-410f-a001-7f5a6d5a74ea", title: "Everyone was thinking it", imageUrl: "/public-objects/memes/3e9fb87d-768d-41fb-803b-376273d2067d" },
-  { id: "0a7e88c7-0a82-46b1-86b4-1f8d1e350a8c", title: "Fat, but I like pizza", imageUrl: "/public-objects/memes/8ea94dfa-ab78-49c6-8fad-f8cc13d28ab8" },
-  { id: "8707e67a-c4f8-444c-a767-61b797c515c2", title: "Fuck it", imageUrl: "/public-objects/memes/6fc60100-a9d3-4de9-b28e-44a4ee659392" },
-  { id: "cbbdf17a-e539-413b-8f79-02477b20b372", title: "Happy Anniverary", imageUrl: "/public-objects/memes/db68f692-caf7-4119-bb8d-a9ed37ac4f37" },
-  { id: "2e42ca94-7e16-4300-86a4-f6a93b604284", title: "Happy Anniversary1", imageUrl: "/public-objects/memes/decb5d07-20f3-4fe0-8f93-afa1361eec73" },
-  { id: "ba2e973a-6f0f-4635-92aa-764b8484d3a2", title: "Happy Anniversary10", imageUrl: "/public-objects/memes/f5dc78c4-5a38-48b0-94f3-85a6eec16245" },
-  { id: "4afd3509-e894-48eb-aff3-5927b3e9a269", title: "Happy Anniversary11", imageUrl: "/public-objects/memes/0b7cdab5-28c8-4bca-b9ee-12cf17244a63" },
-  { id: "8ea81abb-b156-4333-af05-35d39a6b1ba2", title: "Happy Anniversary12", imageUrl: "/public-objects/memes/6320091b-3d22-4259-8302-3ac70e18dc28" },
-  { id: "9ba29c96-23df-40fd-9ec1-2f5a9615efb4", title: "Happy Anniversary13", imageUrl: "/public-objects/memes/0cc99609-6b91-4132-8b8e-c86fff0a9290" },
-  { id: "88abba29-a479-4786-a7b2-f167121da97a", title: "Happy Anniversary2", imageUrl: "/public-objects/memes/f17b9a97-0625-456a-a3b4-1a206d8d5426" },
-  { id: "8629510d-7eff-4f63-bb46-c485c39de187", title: "Happy Anniversary3", imageUrl: "/public-objects/memes/2015c0a2-0ab7-4564-b6b5-20b5bfc60a07" },
-  { id: "4f655202-4b0a-4f3a-b4d8-5371ef6dee59", title: "Happy Anniversary4", imageUrl: "/public-objects/memes/0963b29f-f877-4a4b-a57e-e8983ec5c1b9" },
-  { id: "ec056649-df44-4ffa-8775-8d6124058a5f", title: "Happy Anniversary5", imageUrl: "/public-objects/memes/7e996226-40c5-42c0-be7a-c85dfeafb5df" },
-  { id: "7119436b-a504-43e0-97e5-886d802554ca", title: "Happy Anniversary6", imageUrl: "/public-objects/memes/7d67ae1b-f0ac-48cf-93c5-8f9d72820399" },
-  { id: "ef4579f3-87b1-4d34-adc6-eb2d581d60d5", title: "Happy Anniversary7", imageUrl: "/public-objects/memes/6665fedc-8062-41e9-88f3-906660ee2e3b" },
-  { id: "af3d008b-25dc-4a51-a77c-f047fe34b6f2", title: "Happy Anniversary8", imageUrl: "/public-objects/memes/e61bdbb1-aa0d-44e0-bb9a-f30d5935503a" },
-  { id: "48864cf5-8901-4afd-aca7-fc82a227bfe4", title: "Happy Anniversary9", imageUrl: "/public-objects/memes/1faf8141-fb3b-4a34-8999-e52108848ff2" },
-  { id: "bf73e98c-c376-42f5-b80b-44f4f1ed7c7b", title: "Happy Marriage", imageUrl: "/public-objects/memes/5c3b8869-c305-443b-8fa4-bb1bb2cd7013" },
-  { id: "21dd4386-b2de-4114-93c8-404b2b5735c6", title: "I eat mud", imageUrl: "/public-objects/memes/b4df6427-91d4-449f-8969-57f43cbf89cd" },
-  { id: "6d19e94c-5e07-461d-98b5-86d1efa18b53", title: "I saw that", imageUrl: "/public-objects/memes/46c719bd-3933-4101-b3b4-b730500af902" },
-  { id: "c2e4811a-64dc-4fe3-9a5b-3ca8205c9881", title: "I will hear about this forever", imageUrl: "/public-objects/memes/b9817dc5-0bc8-4f7e-9c32-f5a9b10a56f5" },
-  { id: "9a5dff29-60d6-47d2-bac8-c20735b54eaf", title: "Im not so sure", imageUrl: "/public-objects/memes/6d353e81-3923-4e83-af16-eca4e9d84497" },
-  { id: "500991fb-fc1b-49e4-bbdb-1681e6a2e92a", title: "No trust of coworkers", imageUrl: "/public-objects/memes/ddec4a66-9d9a-494c-b7b7-dcf2290197e0" },
-  { id: "be866541-495a-4e88-a994-a43937434a73", title: "No, you cant talk to your wife", imageUrl: "/public-objects/memes/65724b9c-b86d-4c2b-bde2-7d0127bde893" },
-  { id: "4b890d36-4a57-425e-8248-487ea3b43784", title: "Ric Flair", imageUrl: "/public-objects/memes/e5d9b228-b72e-431f-bdbe-b8305131982b" },
-  { id: "17c51cf8-6c07-42b4-b07e-f4af6f84b65f", title: "Unpopular but Funny", imageUrl: "/public-objects/memes/36b1f44a-1d37-4be1-9209-c8a1e70172d0" }
-];
+// Meme seed data - empty to allow manual uploads via /meme-manager
+// Memes should be uploaded through the admin meme-manager page
+export const seedMemes: { id: string; title: string; imageUrl: string }[] = [];
