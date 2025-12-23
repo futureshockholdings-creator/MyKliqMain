@@ -8,8 +8,8 @@ packages = ["imagemagick", "ffmpeg"]
 
 [deployment]
 deploymentTarget = "autoscale"
-build = ["sh", "-c", "npm install --legacy-peer-deps && npm run build"]
-run = ["npm", "run", "start"]
+build = ["npm", "run", "build"]
+run = ["bash", "-c", "NODE_ENV=production node dist/index.js"]
 
 [env]
 PORT = "5000"

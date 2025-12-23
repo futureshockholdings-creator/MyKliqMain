@@ -121,9 +121,12 @@ app.get('/health', (req, res) => {
 
   // Serve static assets (memes, borders) in both dev and production
   // In production, assets are copied to dist/attached_assets during build
-  const assetsPath = process.env.NODE_ENV === "production" 
-    ? path.join(process.cwd(), "dist", "attached_assets")
-    : path.join(process.cwd(), "attached_assets");
+  // Use dist path if it exists (production), otherwise use root path (development)
+  const distAssetsPath = path.join(process.cwd(), "dist", "attached_assets");
+  const rootAssetsPath = path.join(process.cwd(), "attached_assets");
+  const fs = await import("fs");
+  const assetsPath = fs.existsSync(distAssetsPath) ? distAssetsPath : rootAssetsPath;
+  log(`Serving static assets from: ${assetsPath}`);
   app.use("/attached_assets", express.static(assetsPath, {
     maxAge: "1d",
     etag: true,
