@@ -81,11 +81,16 @@ export function ObjectUploader({
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
-        getUploadParameters: (file) => onGetUploadParameters({
-          name: file.name || 'file',
-          type: file.type || 'application/octet-stream',
-          size: file.size || 0,
-        }),
+        getUploadParameters: async (file) => {
+          console.log(`[ObjectUploader] Getting upload parameters for file: ${file.name}, id: ${file.id}`);
+          const params = await onGetUploadParameters({
+            name: file.name || 'file',
+            type: file.type || 'application/octet-stream',
+            size: file.size || 0,
+          });
+          console.log(`[ObjectUploader] Got upload URL for ${file.name}: ${params.url.substring(0, 80)}...`);
+          return params;
+        },
       })
       .on("restriction-failed", (file, error) => {
         console.error("Upload restriction failed:", error);
@@ -127,8 +132,14 @@ export function ObjectUploader({
         });
       })
       .on("complete", (result) => {
+        console.log(`[ObjectUploader] Upload complete. Successful files: ${result.successful?.length || 0}`);
+        result.successful?.forEach((file, idx) => {
+          console.log(`[ObjectUploader] File ${idx + 1}: name=${file.name}, uploadURL=${file.uploadURL?.substring(0, 80)}...`);
+        });
         onComplete?.(result);
         setShowModal(false);
+        // Clear all files from Uppy to prevent stale state on next upload
+        uppy.cancelAll();
       })
   );
 

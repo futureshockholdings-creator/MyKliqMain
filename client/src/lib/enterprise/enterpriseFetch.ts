@@ -57,81 +57,85 @@ export async function enterpriseFetch<T = any>(
     console.log('[EnterpriseFetch] Fetch options:', fetchOptions);
   }
 
-  // Define the actual fetch function
-  const fetchFn = async (): Promise<T> => {
-    // Use request scheduler for deduplication
-    return requestScheduler.deduplicatedRequest(
-      cacheKey,
+  // Define the core fetch logic (without deduplication wrapper)
+  const coreFetch = async (): Promise<T> => {
+    // Use circuit breaker for resilience
+    return circuitBreaker.execute(
+      url,
       async () => {
-        // Use circuit breaker for resilience
-        return circuitBreaker.execute(
+        // Use performance monitor for tracking
+        return performanceMonitor.trackApiCall(
           url,
           async () => {
-            // Use performance monitor for tracking
-            return performanceMonitor.trackApiCall(
-              url,
-              async () => {
-                // Include Authorization header if we have a valid token (for cross-domain auth)
-                const token = getAuthToken();
-                const headers = new Headers(fetchOptions.headers as HeadersInit || {});
-                
-                // Only attach token if it's not expired
-                if (token && !isTokenExpired(token) && !headers.has('Authorization')) {
-                  headers.set('Authorization', `Bearer ${token}`);
-                } else if (token && isTokenExpired(token)) {
-                  // Token is expired, clear it
-                  console.log('[EnterpriseFetch] Clearing expired token');
+            // Include Authorization header if we have a valid token (for cross-domain auth)
+            const token = getAuthToken();
+            const headers = new Headers(fetchOptions.headers as HeadersInit || {});
+            
+            // Only attach token if it's not expired
+            if (token && !isTokenExpired(token) && !headers.has('Authorization')) {
+              headers.set('Authorization', `Bearer ${token}`);
+            } else if (token && isTokenExpired(token)) {
+              // Token is expired, clear it
+              console.log('[EnterpriseFetch] Clearing expired token');
+              removeAuthToken();
+            }
+            
+            // Disable browser HTTP cache for feed and user endpoints to ensure fresh data
+            const shouldBypassBrowserCache = url.includes('/api/kliq-feed') || 
+                                              url.includes('/api/posts') ||
+                                              url.includes('/api/notifications') ||
+                                              url.includes('/api/auth/user');
+            
+            const res = await fetch(fullUrl, {
+              ...fetchOptions,
+              headers,
+              credentials: fetchOptions.credentials || 'include',
+              cache: shouldBypassBrowserCache ? 'no-store' : (fetchOptions.cache || 'default'),
+            });
+
+            if (!res.ok) {
+              // Handle 401 by clearing invalid token
+              if (res.status === 401) {
+                const currentToken = getAuthToken();
+                if (currentToken) {
+                  console.log('[EnterpriseFetch] Received 401, clearing invalid token');
                   removeAuthToken();
                 }
-                
-                // Disable browser HTTP cache for feed and user endpoints to ensure fresh data
-                const shouldBypassBrowserCache = url.includes('/api/kliq-feed') || 
-                                                  url.includes('/api/posts') ||
-                                                  url.includes('/api/notifications') ||
-                                                  url.includes('/api/auth/user');
-                
-                const res = await fetch(fullUrl, {
-                  ...fetchOptions,
-                  headers,
-                  credentials: fetchOptions.credentials || 'include',
-                  cache: shouldBypassBrowserCache ? 'no-store' : (fetchOptions.cache || 'default'),
-                });
-
-                if (!res.ok) {
-                  // Handle 401 by clearing invalid token
-                  if (res.status === 401) {
-                    const currentToken = getAuthToken();
-                    if (currentToken) {
-                      console.log('[EnterpriseFetch] Received 401, clearing invalid token');
-                      removeAuthToken();
-                    }
-                  }
-                  const text = (await res.text()) || res.statusText;
-                  throw new Error(`${res.status}: ${text}`);
-                }
-
-                return await res.json();
-              },
-              { expectedDuration: 1000 }
-            );
-          },
-          // Fallback: try to get from cache if circuit is open
-          shouldCache
-            ? async () => {
-                const cached = await enhancedCache.get<T>(cacheKey);
-                // Check for undefined (missing) vs falsy but valid (0, false, [], etc.)
-                if (cached !== undefined) {
-                  console.log(`[EnterpriseFetch] Using cache fallback for ${url}`);
-                  performanceMonitor.trackCacheHit(true);
-                  return cached;
-                }
-                throw new Error('No cache fallback available');
               }
-            : undefined
+              const text = (await res.text()) || res.statusText;
+              throw new Error(`${res.status}: ${text}`);
+            }
+
+            return await res.json();
+          },
+          { expectedDuration: 1000 }
         );
       },
-      priority
+      // Fallback: try to get from cache if circuit is open
+      shouldCache
+        ? async () => {
+            const cached = await enhancedCache.get<T>(cacheKey);
+            // Check for undefined (missing) vs falsy but valid (0, false, [], etc.)
+            if (cached !== undefined) {
+              console.log(`[EnterpriseFetch] Using cache fallback for ${url}`);
+              performanceMonitor.trackCacheHit(true);
+              return cached;
+            }
+            throw new Error('No cache fallback available');
+          }
+        : undefined
     );
+  };
+
+  // Define the actual fetch function with optional deduplication
+  const fetchFn = async (): Promise<T> => {
+    // Only deduplicate GET requests - POST/PUT/DELETE should never be deduplicated
+    // as they create new resources (e.g., upload URLs must be unique per file)
+    if (isGET) {
+      return requestScheduler.deduplicatedRequest(cacheKey, coreFetch, priority);
+    }
+    // For mutations, skip deduplication entirely
+    return coreFetch();
   };
 
   // Use enhanced cache with SWR pattern for GET requests
