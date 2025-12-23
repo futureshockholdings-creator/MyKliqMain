@@ -119,6 +119,12 @@ app.get('/health', (req, res) => {
   // Serve demo screenshots BEFORE Vite catches all requests
   app.use("/demo-screenshots", express.static(path.join(process.cwd(), "public", "demo-screenshots")));
 
+  // Serve static assets (memes, borders) in both dev and production
+  app.use("/attached_assets", express.static(path.join(process.cwd(), "attached_assets"), {
+    maxAge: "1d",
+    etag: true,
+  }));
+
   // Setup Vite in development, serve static files in production
   if (app.get("env") === "development") {
     await setupVite(app, server);
