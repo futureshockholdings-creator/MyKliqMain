@@ -203,20 +203,48 @@ export class ObjectStorageService {
   
     // Extract the path from the URL by removing query parameters and domain
     const url = new URL(rawPath);
-    const rawObjectPath = url.pathname;
+    const rawObjectPath = url.pathname; // e.g., /bucket-name/objects-private/uploads/file.mp4
   
     let objectEntityDir = this.getPrivateObjectDir();
     if (!objectEntityDir.endsWith("/")) {
       objectEntityDir = `${objectEntityDir}/`;
     }
-  
-    if (!rawObjectPath.startsWith(objectEntityDir)) {
-      return rawObjectPath;
+    
+    // The objectEntityDir is like "bucket-name/objects-private/"
+    // The rawObjectPath is like "/bucket-name/objects-private/uploads/file.mp4"
+    // We need to handle both cases:
+    // 1. objectEntityDir starts with bucket (e.g., "bucket-name/objects-private/")
+    // 2. objectEntityDir is just the path (e.g., "objects-private/")
+    
+    // Remove leading slash from rawObjectPath for comparison
+    const normalizedRawPath = rawObjectPath.startsWith('/') ? rawObjectPath.slice(1) : rawObjectPath;
+    
+    // Check if the raw path starts with the object entity dir (with bucket)
+    if (normalizedRawPath.startsWith(objectEntityDir)) {
+      const entityId = normalizedRawPath.slice(objectEntityDir.length);
+      return `/objects/${entityId}`;
+    }
+    
+    // Also check without the bucket prefix in objectEntityDir
+    // e.g., if objectEntityDir is "bucket-name/objects-private/", check for just "objects-private/"
+    const dirParts = objectEntityDir.split('/');
+    if (dirParts.length > 1) {
+      const pathWithoutBucket = dirParts.slice(1).join('/'); // Remove bucket name
+      if (pathWithoutBucket && normalizedRawPath.includes(pathWithoutBucket)) {
+        const idx = normalizedRawPath.indexOf(pathWithoutBucket);
+        const entityId = normalizedRawPath.slice(idx + pathWithoutBucket.length);
+        return `/objects/${entityId}`;
+      }
+    }
+    
+    // Fallback: try to find "uploads/" in the path and extract from there
+    const uploadsIdx = rawObjectPath.indexOf('/uploads/');
+    if (uploadsIdx !== -1) {
+      const entityId = rawObjectPath.slice(uploadsIdx + 1); // Keep "uploads/..."
+      return `/objects/${entityId}`;
     }
   
-    // Extract the entity ID from the path
-    const entityId = rawObjectPath.slice(objectEntityDir.length);
-    return `/objects/${entityId}`;
+    return rawObjectPath;
   }
 }
 

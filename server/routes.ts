@@ -7595,15 +7595,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Generate thumbnail asynchronously (don't block the response)
+      console.log(`[Moviecon] Normalized URL: ${normalizedUrl}`);
       if (normalizedUrl.startsWith('/objects/')) {
+        console.log(`[Moviecon] Starting thumbnail generation for: ${movieconId}`);
         thumbnailService.generateThumbnailFromVideo(normalizedUrl, movieconId)
           .then(async (thumbnailUrl) => {
             if (thumbnailUrl) {
               await storage.updateMoviecon(movieconId, { thumbnailUrl });
-              console.log(`✅ Generated thumbnail for moviecon: ${movieconId}`);
+              console.log(`✅ Generated thumbnail for moviecon: ${movieconId} -> ${thumbnailUrl}`);
+            } else {
+              console.log(`⚠️ Thumbnail generation returned null for: ${movieconId}`);
             }
           })
           .catch((err) => console.error(`Failed to generate thumbnail for ${movieconId}:`, err));
+      } else {
+        console.log(`⚠️ Skipping thumbnail - URL doesn't start with /objects/: ${normalizedUrl.substring(0, 100)}`);
       }
       
       await cacheService.del('static:moviecons:all'); // Invalidate cache
