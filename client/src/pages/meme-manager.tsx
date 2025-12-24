@@ -107,7 +107,8 @@ export function MemeManagerPage() {
 
           <MemeUploader 
             memes={memes} 
-            onRefresh={() => refetch()} 
+            onRefresh={() => refetch()}
+            adminPassword={adminPassword}
           />
         </div>
       </div>

@@ -8,15 +8,17 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Search, Upload, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { buildApiUrl } from "@/lib/apiConfig";
 import type { Meme } from "@shared/schema";
 import type { UploadResult } from "@uppy/core";
 
 interface MemeUploaderProps {
   memes: Meme[];
   onRefresh: () => void;
+  adminPassword?: string;
 }
 
-export function MemeUploader({ memes, onRefresh }: MemeUploaderProps) {
+export function MemeUploader({ memes, onRefresh, adminPassword }: MemeUploaderProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -120,7 +122,25 @@ export function MemeUploader({ memes, onRefresh }: MemeUploaderProps) {
 
   const handleDeleteMeme = async (memeId: string) => {
     try {
-      await apiRequest("DELETE", `/api/memes/${memeId}`);
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (adminPassword) {
+        headers['x-admin-password'] = adminPassword;
+      }
+      
+      const response = await fetch(buildApiUrl(`/api/memes/${memeId}`), {
+        method: 'DELETE',
+        headers,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Delete failed');
+      }
+      
       toast({
         title: "Success",
         description: "Meme deleted successfully",
@@ -130,7 +150,7 @@ export function MemeUploader({ memes, onRefresh }: MemeUploaderProps) {
       console.error("Error deleting meme:", error);
       toast({
         title: "Error",
-        description: "Failed to delete meme",
+        description: error instanceof Error ? error.message : "Failed to delete meme",
         variant: "destructive",
       });
     }

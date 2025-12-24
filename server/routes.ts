@@ -7445,9 +7445,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete Meme (admin only)
-  app.delete('/api/memes/:id', isAuthenticated, async (req, res) => {
+  // Delete Meme (admin only - requires admin password in header)
+  app.delete('/api/memes/:id', async (req, res) => {
     try {
+      const adminPassword = req.headers['x-admin-password'] as string;
+      const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+      
+      if (!ADMIN_PASSWORD) {
+        console.error("ADMIN_PASSWORD environment variable not set");
+        return res.status(500).json({ message: "Server configuration error" });
+      }
+      
+      if (!adminPassword || adminPassword !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+      
       const { id } = req.params;
       await storage.deleteMeme(id);
       await cacheService.del('static:memes:all'); // Invalidate cache
@@ -7617,9 +7629,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete Moviecon (admin only)
-  app.delete('/api/moviecons/:id', isAuthenticated, async (req, res) => {
+  // Delete Moviecon (admin only - requires admin password in header)
+  app.delete('/api/moviecons/:id', async (req, res) => {
     try {
+      const adminPassword = req.headers['x-admin-password'] as string;
+      const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+      
+      if (!ADMIN_PASSWORD) {
+        console.error("ADMIN_PASSWORD environment variable not set");
+        return res.status(500).json({ message: "Server configuration error" });
+      }
+      
+      if (!adminPassword || adminPassword !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin authentication required" });
+      }
+      
       const { id } = req.params;
       await storage.deleteMoviecon(id);
       await cacheService.del('static:moviecons:all'); // Invalidate cache

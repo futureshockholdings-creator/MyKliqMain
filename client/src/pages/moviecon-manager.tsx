@@ -113,7 +113,8 @@ export function MovieconManagerPage() {
 
           <MovieconUploader 
             moviecons={moviecons} 
-            onRefresh={() => refetch()} 
+            onRefresh={() => refetch()}
+            adminPassword={adminPassword}
           />
         </div>
       </div>

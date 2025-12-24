@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { buildApiUrl } from "@/lib/apiConfig";
 import { Trash2, Upload, Search, X } from "lucide-react";
 
 interface Moviecon {
@@ -19,9 +20,10 @@ interface Moviecon {
 interface MovieconUploaderProps {
   moviecons: Moviecon[];
   onRefresh: () => void;
+  adminPassword?: string;
 }
 
-export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps) {
+export function MovieconUploader({ moviecons, onRefresh, adminPassword }: MovieconUploaderProps) {
   const [title, setTitle] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -110,7 +112,24 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
     }
 
     try {
-      await apiRequest("DELETE", `/api/moviecons/${movieconId}`);
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (adminPassword) {
+        headers['x-admin-password'] = adminPassword;
+      }
+      
+      const response = await fetch(buildApiUrl(`/api/moviecons/${movieconId}`), {
+        method: 'DELETE',
+        headers,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Delete failed');
+      }
 
       toast({
         title: "Deleted",
@@ -123,7 +142,7 @@ export function MovieconUploader({ moviecons, onRefresh }: MovieconUploaderProps
       console.error("Error deleting moviecon:", error);
       toast({
         title: "Delete failed",
-        description: "Failed to delete moviecon",
+        description: error instanceof Error ? error.message : "Failed to delete moviecon",
         variant: "destructive",
       });
     }
