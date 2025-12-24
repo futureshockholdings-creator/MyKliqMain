@@ -18,6 +18,7 @@ interface SmartVideoUploaderProps {
   onGetUploadParameters: (file: { name: string; type: string; size: number }) => Promise<{ method: "PUT"; url: string }>;
   onUploadComplete: (result: UploadResult) => void;
   maxFileSize?: number;
+  maxNumberOfFiles?: number;
   className?: string;
   disabled?: boolean;
   children?: React.ReactNode;
@@ -27,6 +28,7 @@ export function SmartVideoUploader({
   onGetUploadParameters,
   onUploadComplete,
   maxFileSize = 250 * 1024 * 1024, // 250MB default
+  maxNumberOfFiles = 1,
   className = "",
   disabled = false,
   children
@@ -145,7 +147,7 @@ export function SmartVideoUploader({
   return (
     <>
       <ObjectUploader
-        maxNumberOfFiles={1}
+        maxNumberOfFiles={maxNumberOfFiles}
         maxFileSize={maxFileSize}
         allowedFileTypes={[
           'video/*',
