@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 import { 
   Activity, 
   Database, 
@@ -22,13 +23,16 @@ import {
   Server,
   Gauge,
   Shield,
-  Lightbulb
+  Lightbulb,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
+import { apiRequest } from "@/lib/queryClient";
 
 interface MaintenanceMetrics {
   database: {
@@ -108,22 +112,46 @@ interface ScalingMetrics {
 export default function MaintenanceDashboard() {
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Note: Admin access is now handled by route-level authentication
+  const authenticateAdmin = useMutation({
+    mutationFn: async (password: string) => {
+      return await apiRequest("POST", "/api/admin/auth", { password });
+    },
+    onSuccess: () => {
+      setIsAuthenticated(true);
+      toast({
+        title: "Admin Access Granted",
+        description: "Welcome to the Maintenance Dashboard.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Access Denied",
+        description: "Invalid admin password.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const { data: metrics, isLoading, refetch } = useQuery<MaintenanceMetrics>({
     queryKey: ["/api/maintenance/metrics"],
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
+    enabled: isAuthenticated,
   });
 
   const { data: healthStatus } = useQuery<HealthStatus>({
     queryKey: ["/api/maintenance/health"],
     refetchInterval: 30000,
+    enabled: isAuthenticated,
   });
 
   const { data: scalingMetrics, refetch: refetchScaling } = useQuery<ScalingMetrics>({
     queryKey: ["/api/admin/scaling-dashboard"],
     refetchInterval: 30000,
+    enabled: isAuthenticated,
   });
 
   const handleRefresh = async () => {
@@ -158,6 +186,59 @@ export default function MaintenanceDashboard() {
     if (!dateString) return 'Never';
     return new Date(dateString).toLocaleString();
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <Shield className="w-6 h-6 text-primary" />
+            </div>
+            <CardTitle>Maintenance Dashboard Access</CardTitle>
+            <CardDescription>
+              Enter the admin password to access the maintenance dashboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                authenticateAdmin.mutate(adminPassword);
+              }}
+              className="space-y-4"
+            >
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter admin password"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={authenticateAdmin.isPending || !adminPassword}
+              >
+                {authenticateAdmin.isPending ? "Authenticating..." : "Access Maintenance Dashboard"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading || !metrics) {
     return (
