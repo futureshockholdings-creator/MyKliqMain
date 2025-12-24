@@ -19,24 +19,35 @@ export class ThumbnailService {
     const videoLocalPath = path.join(tmpDir, `video_${movieconId}_${Date.now()}.mp4`);
     const thumbLocalPath = path.join(tmpDir, `thumb_${movieconId}_${Date.now()}.jpg`);
 
+    console.log(`[ThumbnailService] Starting thumbnail generation for ${movieconId}`);
+    console.log(`[ThumbnailService] Video path: ${videoPath}`);
+    console.log(`[ThumbnailService] Local paths: video=${videoLocalPath}, thumb=${thumbLocalPath}`);
+
     try {
+      console.log(`[ThumbnailService] Downloading video...`);
       await this.downloadVideo(videoPath, videoLocalPath);
+      console.log(`[ThumbnailService] Video downloaded, size: ${fs.statSync(videoLocalPath).size} bytes`);
       
       const cmd = `ffmpeg -i "${videoLocalPath}" -ss 00:00:00.100 -vframes 1 -vf "scale=400:-1" -q:v 2 "${thumbLocalPath}" -y`;
-      await execAsync(cmd);
+      console.log(`[ThumbnailService] Running ffmpeg...`);
+      const { stdout, stderr } = await execAsync(cmd);
+      if (stderr) console.log(`[ThumbnailService] ffmpeg stderr: ${stderr.substring(0, 500)}`);
 
       if (!fs.existsSync(thumbLocalPath)) {
-        console.error("Thumbnail generation failed - file not created");
+        console.error("[ThumbnailService] Thumbnail generation failed - file not created");
         return null;
       }
+      console.log(`[ThumbnailService] Thumbnail created, size: ${fs.statSync(thumbLocalPath).size} bytes`);
 
+      console.log(`[ThumbnailService] Uploading thumbnail...`);
       const thumbnailUrl = await this.uploadThumbnail(thumbLocalPath, movieconId);
+      console.log(`[ThumbnailService] Thumbnail uploaded: ${thumbnailUrl}`);
       
       this.cleanup(videoLocalPath, thumbLocalPath);
       
       return thumbnailUrl;
     } catch (error) {
-      console.error("Error generating thumbnail:", error);
+      console.error("[ThumbnailService] Error generating thumbnail:", error);
       this.cleanup(videoLocalPath, thumbLocalPath);
       return null;
     }
