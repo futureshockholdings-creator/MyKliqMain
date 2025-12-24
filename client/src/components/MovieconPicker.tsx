@@ -29,7 +29,8 @@ function MovieconThumbnail({ moviecon, className }: { moviecon: Moviecon; classN
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   
-  const thumbnailSrc = moviecon.thumbnailUrl || null;
+  // Build full URL for cross-domain thumbnail loading (frontend on mykliq.app, API on api.mykliq.app)
+  const thumbnailSrc = moviecon.thumbnailUrl ? buildApiUrl(moviecon.thumbnailUrl) : null;
   
   if (!thumbnailSrc || imageError) {
     return (

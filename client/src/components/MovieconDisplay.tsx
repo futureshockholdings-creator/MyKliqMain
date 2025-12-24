@@ -3,6 +3,7 @@ import { Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Moviecon } from '@shared/schema';
 import { cn } from '@/lib/utils';
+import { buildApiUrl } from '@/lib/apiConfig';
 
 interface MovieconDisplayProps {
   moviecon: Moviecon;
@@ -35,6 +36,9 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
 
   // Show actual video for uploaded moviecons, fallback to gradient for old ones
   if (moviecon.videoUrl && (moviecon.videoUrl.includes('storage.googleapis.com') || moviecon.videoUrl.startsWith('/objects/'))) {
+    // Build full URL for cross-domain video loading (frontend on mykliq.app, API on api.mykliq.app)
+    const videoSrc = buildApiUrl(moviecon.videoUrl);
+    
     // This is a custom uploaded moviecon - show actual video
     return (
       <div className={cn('relative rounded-lg overflow-hidden min-h-[120px] bg-black border-2 border-primary/50', className)}>
@@ -42,7 +46,7 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
           <>
             <video
               ref={videoRef}
-              src={moviecon.videoUrl}
+              src={videoSrc}
               className="w-full h-full object-cover"
               muted={isMuted}
               onError={() => setVideoError(true)}
