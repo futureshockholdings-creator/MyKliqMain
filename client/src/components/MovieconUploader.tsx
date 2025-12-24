@@ -263,14 +263,14 @@ export function MovieconUploader({ moviecons, onRefresh, adminPassword }: Moviec
                     <Button
                       variant="destructive"
                       size="sm"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 p-0 shadow-lg"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 p-0 shadow-lg z-10 pointer-events-auto"
                       onClick={() => handleDelete(moviecon.id, moviecon.title)}
                       data-testid={`button-delete-${moviecon.id}`}
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
                     {/* Play Icon Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                       <div className="w-8 h-8 bg-white/80 rounded-full flex items-center justify-center">
                         <div className="w-0 h-0 border-l-[6px] border-l-black border-y-[4px] border-y-transparent ml-1"></div>
                       </div>
