@@ -179,7 +179,7 @@ export function MemeUploader({ memes, onRefresh }: MemeUploaderProps) {
           </div>
 
           <ObjectUploader
-            maxNumberOfFiles={50}
+            maxNumberOfFiles={500}
             maxFileSize={250 * 1024 * 1024} // 250MB per file
             allowedFileTypes={[
               'image/*',
