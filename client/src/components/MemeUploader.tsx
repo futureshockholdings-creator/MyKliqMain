@@ -66,44 +66,72 @@ export function MemeUploader({ memes, onRefresh, adminPassword }: MemeUploaderPr
     }
 
     setIsUploading(true);
+    const totalFiles = result.successful?.length || 0;
+    let successCount = 0;
+    let failCount = 0;
 
     try {
-      // Process all uploaded files
-      const uploadPromises = result.successful?.map(async (uploadedFile, index) => {
-        // The uploadURL contains the presigned URL with query parameters (signature, etc.)
-        // We need to strip the query parameters to get the actual file URL
-        const presignedUrl = uploadedFile.uploadURL || '';
-        const imageUrl = presignedUrl.split('?')[0]; // Remove query parameters
+      // Process uploads in batches of 5 to avoid overwhelming the server
+      const BATCH_SIZE = 5;
+      const files = result.successful || [];
+      
+      for (let i = 0; i < files.length; i += BATCH_SIZE) {
+        const batch = files.slice(i, i + BATCH_SIZE);
         
-        console.log(`File ${index + 1}: presigned URL = ${presignedUrl.substring(0, 100)}...`);
-        console.log(`File ${index + 1}: clean URL = ${imageUrl}`);
-        
-        const fileName = uploadedFile.name || `Meme ${index + 1}`;
-        
-        // Use title if provided, otherwise use filename without extension
-        let memeTitle;
-        if (title.trim()) {
-          memeTitle = (result.successful?.length || 0) > 1 ? `${title.trim()} ${index + 1}` : title.trim();
-        } else {
-          memeTitle = fileName.replace(/\.[^/.]+$/, ""); // Remove file extension
-        }
+        const batchPromises = batch.map(async (uploadedFile, batchIndex) => {
+          const index = i + batchIndex;
+          try {
+            const presignedUrl = uploadedFile.uploadURL || '';
+            const imageUrl = presignedUrl.split('?')[0];
+            
+            console.log(`File ${index + 1}/${totalFiles}: processing...`);
+            
+            const fileName = uploadedFile.name || `Meme ${index + 1}`;
+            
+            let memeTitle;
+            if (title.trim()) {
+              memeTitle = totalFiles > 1 ? `${title.trim()} ${index + 1}` : title.trim();
+            } else {
+              memeTitle = fileName.replace(/\.[^/.]+$/, "");
+            }
 
-        // Create the meme record
-        return apiRequest("POST", "/api/memes", {
-          title: memeTitle,
-          description: description.trim() || undefined,
-          imageUrl: imageUrl,
-          category: "general",
-          isAnimated: fileName.toLowerCase().includes('.gif') || fileName.toLowerCase().includes('.webp'),
+            await apiRequest("POST", "/api/memes", {
+              title: memeTitle,
+              description: description.trim() || undefined,
+              imageUrl: imageUrl,
+              category: "general",
+              isAnimated: fileName.toLowerCase().includes('.gif') || fileName.toLowerCase().includes('.webp'),
+            });
+            
+            successCount++;
+            return { success: true };
+          } catch (error) {
+            console.error(`Failed to save meme ${index + 1}:`, error);
+            failCount++;
+            return { success: false, error };
+          }
         });
-      }) || [];
 
-      await Promise.all(uploadPromises);
+        await Promise.all(batchPromises);
+        
+        // Small delay between batches to let the server breathe
+        if (i + BATCH_SIZE < files.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
 
-      toast({
-        title: "Success!",
-        description: `${result.successful?.length || 0} meme${(result.successful?.length || 0) > 1 ? 's' : ''} uploaded successfully`,
-      });
+      if (failCount === 0) {
+        toast({
+          title: "Success!",
+          description: `${successCount} meme${successCount > 1 ? 's' : ''} uploaded successfully`,
+        });
+      } else {
+        toast({
+          title: "Partial Success",
+          description: `${successCount} uploaded, ${failCount} failed. Try uploading failed files again.`,
+          variant: failCount > successCount ? "destructive" : "default",
+        });
+      }
 
       setTitle("");
       setDescription("");
@@ -112,7 +140,7 @@ export function MemeUploader({ memes, onRefresh, adminPassword }: MemeUploaderPr
       console.error("Error creating meme records:", error);
       toast({
         title: "Upload failed",
-        description: "Failed to create meme records",
+        description: `Uploaded ${successCount} of ${totalFiles}. Try again for remaining files.`,
         variant: "destructive",
       });
     } finally {
