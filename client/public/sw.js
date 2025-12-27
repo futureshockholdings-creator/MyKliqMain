@@ -1,8 +1,7 @@
-const CACHE_NAME = 'mykliq-v7';
-const STATIC_CACHE = 'mykliq-static-v7';
-const DYNAMIC_CACHE = 'mykliq-dynamic-v7';
+const CACHE_NAME = 'mykliq-v8';
+const STATIC_CACHE = 'mykliq-static-v8';
+const DYNAMIC_CACHE = 'mykliq-dynamic-v8';
 
-// Assets to cache on install
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -13,9 +12,8 @@ const STATIC_ASSETS = [
   '/offline.html'
 ];
 
-// Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[ServiceWorker] Installing...');
+  console.log('[ServiceWorker] Installing new version...');
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(cache => {
@@ -26,7 +24,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   console.log('[ServiceWorker] Activating...');
   event.waitUntil(
@@ -39,79 +36,85 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      console.log('[ServiceWorker] Claiming clients and notifying update');
+      self.clients.claim();
+      return self.clients.matchAll();
+    }).then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: 'SW_UPDATED', version: CACHE_NAME });
+      });
+    })
   );
 });
 
-// Fetch event - network first, fallback to cache
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   
-  // Skip non-GET requests
   if (request.method !== 'GET') return;
   
-  // API requests: Network first, fallback to cache
   if (request.url.includes('/api/')) {
     event.respondWith(
       fetch(request)
         .then(response => {
-          // Clone the response
           const responseClone = response.clone();
-          
-          // Cache successful API responses
           if (response.ok) {
             caches.open(DYNAMIC_CACHE).then(cache => {
               cache.put(request, responseClone);
             });
           }
-          
           return response;
         })
         .catch(() => {
-          // Network failed, try cache
           return caches.match(request);
         })
     );
     return;
   }
   
-  // Static assets: Cache first, fallback to network
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const responseClone = response.clone();
+          caches.open(STATIC_CACHE).then(cache => {
+            cache.put(request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request) || caches.match('/offline.html');
+        })
+    );
+    return;
+  }
+  
   event.respondWith(
     caches.match(request)
       .then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        
-        // Not in cache, fetch from network
-        return fetch(request)
+        const fetchPromise = fetch(request)
           .then(response => {
-            // Don't cache if not successful
-            if (!response || response.status !== 200 || response.type === 'error') {
-              return response;
+            if (response && response.status === 200) {
+              const responseClone = response.clone();
+              caches.open(DYNAMIC_CACHE).then(cache => {
+                cache.put(request, responseClone);
+              });
             }
-            
-            // Clone and cache the response
-            const responseClone = response.clone();
-            caches.open(DYNAMIC_CACHE).then(cache => {
-              cache.put(request, responseClone);
-            });
-            
             return response;
           })
-          .catch(() => {
-            // Return offline page for navigation requests
-            if (request.mode === 'navigate') {
-              return caches.match('/offline.html');
-            }
-          });
+          .catch(() => null);
+        
+        return cachedResponse || fetchPromise;
       })
   );
 });
 
-// Listen for messages from clients
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'CHECK_VERSION') {
+    event.source.postMessage({ type: 'VERSION_INFO', version: CACHE_NAME });
   }
 });
