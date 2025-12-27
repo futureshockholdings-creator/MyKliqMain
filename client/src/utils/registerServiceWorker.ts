@@ -1,3 +1,5 @@
+import { pwaUpdateManager } from '../lib/pwaUpdateManager';
+
 export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -6,37 +8,11 @@ export function registerServiceWorker() {
         .then(registration => {
           console.log('[PWA] Service Worker registered:', registration.scope);
           
-          // Check for updates periodically
-          setInterval(() => {
-            registration.update();
-          }, 1000 * 60 * 60); // Check every hour
-          
-          // Handle updates
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New service worker available, prompt user to refresh
-                  if (confirm('New version available! Refresh to update?')) {
-                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    window.location.reload();
-                  }
-                }
-              });
-            }
-          });
+          pwaUpdateManager.init();
         })
         .catch(error => {
           console.error('[PWA] Service Worker registration failed:', error);
         });
-      
-      // Listen for controller change
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('[PWA] Controller changed, reloading page');
-        window.location.reload();
-      });
     });
   }
 }
