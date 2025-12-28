@@ -3084,7 +3084,7 @@ export default function Home() {
             className={cn(
               "bg-gradient-to-br from-card to-card/80 border transition-all duration-500",
               item.isHighlighted 
-                ? "border-2 border-transparent bg-gradient-to-r from-yellow-400/20 via-amber-300/20 to-yellow-400/20 shadow-lg shadow-yellow-400/30 ring-2 ring-yellow-400/40 ring-offset-2 ring-offset-background" 
+                ? "fire-border" 
                 : item.author.id === userData?.id 
                   ? "border-primary/50" 
                   : "border-border"
