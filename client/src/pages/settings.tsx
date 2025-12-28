@@ -53,8 +53,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 import { cleanupEnterpriseServices } from "@/lib/enterprise/enterpriseInit";
-import { removeAuthToken, getAuthToken } from "@/lib/tokenStorage";
-import { buildApiUrl } from "@/lib/apiConfig";
+import { removeAuthToken } from "@/lib/tokenStorage";
 
 interface SocialAccount {
   id: string;
@@ -235,44 +234,13 @@ function SportsPreferences() {
         }))
       });
     },
-    onSuccess: async () => {
-      // 1. Clear enhanced cache first to prevent stale-while-revalidate serving old data
-      await enhancedCache.removeByPattern('sports/preferences');
-      
-      // 2. Direct fetch bypassing enterprise cache layer entirely
-      try {
-        const token = getAuthToken();
-        const headers: HeadersInit = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        const response = await fetch(buildApiUrl('/api/sports/preferences'), {
-          method: 'GET',
-          headers,
-          credentials: 'include',
-          cache: 'no-store',  // Force bypass browser cache
-        });
-        if (response.ok) {
-          const freshData = await response.json();
-          queryClient.setQueryData(["/api/sports/preferences"], freshData);
-        }
-      } catch {
-        // Fallback: force refetch if direct fetch fails
-        await queryClient.refetchQueries({ queryKey: ["/api/sports/preferences"] });
-      }
-      
-      // 3. Clear local state
-      setSelectedTeams([]);
-      setSelectedSports([]);
-      
-      // 4. Show success message
+    onSuccess: () => {
       toast({
         title: "Preferences Saved",
         description: "Your sports preferences have been updated.",
       });
-      
-      // 5. Scroll to top so user sees their saved preferences
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Simple page refresh to ensure fresh data
+      setTimeout(() => window.location.reload(), 500);
     },
     onError: () => {
       toast({
@@ -288,35 +256,13 @@ function SportsPreferences() {
     mutationFn: async (preferenceId: string) => {
       return await apiRequest("DELETE", `/api/sports/preferences/${preferenceId}`);
     },
-    onSuccess: async () => {
-      // 1. Clear enhanced cache first
-      await enhancedCache.removeByPattern('sports/preferences');
-      
-      // 2. Direct fetch bypassing enterprise cache layer entirely
-      try {
-        const token = getAuthToken();
-        const headers: HeadersInit = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-        const response = await fetch(buildApiUrl('/api/sports/preferences'), {
-          method: 'GET',
-          headers,
-          credentials: 'include',
-          cache: 'no-store',
-        });
-        if (response.ok) {
-          const freshData = await response.json();
-          queryClient.setQueryData(["/api/sports/preferences"], freshData);
-        }
-      } catch {
-        await queryClient.refetchQueries({ queryKey: ["/api/sports/preferences"] });
-      }
-      
+    onSuccess: () => {
       toast({
         title: "Team Removed",
         description: "Team has been removed from your preferences.",
       });
+      // Simple page refresh to ensure fresh data
+      setTimeout(() => window.location.reload(), 500);
     },
     onError: () => {
       toast({
