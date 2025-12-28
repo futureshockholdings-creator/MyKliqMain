@@ -434,74 +434,74 @@ export default function Events() {
               Create Event
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-card border-border max-w-md">
+          <DialogContent className="bg-white border-border max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-foreground">Create New Event</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-black">Create New Event</DialogTitle>
+              <DialogDescription className="text-gray-600">
                 Create a new event for your kliq. Add details, set date and time, and invite members.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label className="text-muted-foreground">Event Title</Label>
+                <Label className="text-gray-700">Event Title</Label>
                 <Input
                   value={newEvent.title}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="Enter event title"
-                  className="bg-input border-border text-foreground"
+                  className="bg-white border-gray-300 text-black placeholder:text-gray-400"
                   data-testid="input-event-title"
                 />
               </div>
               
               <div>
-                <Label className="text-muted-foreground">Description</Label>
+                <Label className="text-gray-700">Description</Label>
                 <Textarea
                   value={newEvent.description}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="What's this event about?"
-                  className="bg-input border-border text-foreground resize-none"
+                  className="bg-white border-gray-300 text-black placeholder:text-gray-400 resize-none"
                   rows={3}
                   data-testid="input-event-description"
                 />
               </div>
 
               <div>
-                <Label className="text-muted-foreground">Location</Label>
+                <Label className="text-gray-700">Location</Label>
                 <Input
                   value={newEvent.location}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
                   placeholder="Where will this happen?"
-                  className="bg-input border-border text-foreground"
+                  className="bg-white border-gray-300 text-black placeholder:text-gray-400"
                   data-testid="input-event-location"
                 />
               </div>
 
               <div>
-                <Label className="text-muted-foreground">Date & Time</Label>
+                <Label className="text-gray-700">Date & Time</Label>
                 <Input
                   type="datetime-local"
                   value={newEvent.eventDate}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, eventDate: e.target.value }))}
-                  className="bg-input border-border text-foreground"
+                  className="bg-white border-gray-300 text-black"
                   min={new Date().toISOString().slice(0, 16)}
                   data-testid="input-event-datetime"
                 />
               </div>
 
               <div>
-                <Label className="text-muted-foreground">Media</Label>
+                <Label className="text-gray-700">Media</Label>
                 <div className="flex space-x-2">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowMediaUpload(true)}
-                    className="border-border text-muted-foreground hover:bg-muted"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
                   >
                     <ImageIcon className="w-4 h-4 mr-2" />
                     Add Photo/Video
                   </Button>
                   {newEvent.mediaUrl && (
-                    <Badge className="bg-mykliq-green text-foreground">
+                    <Badge className="bg-mykliq-green text-white">
                       Media attached
                     </Badge>
                   )}
@@ -520,7 +520,7 @@ export default function Events() {
                 <Button
                   variant="outline"
                   onClick={() => setShowCreateEvent(false)}
-                  className="border-border text-muted-foreground hover:bg-muted"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
                   Cancel
                 </Button>
@@ -531,74 +531,74 @@ export default function Events() {
 
         {/* Edit Event Modal */}
         <Dialog open={showEditEvent} onOpenChange={setShowEditEvent}>
-          <DialogContent className="bg-card border-border max-w-md">
+          <DialogContent className="bg-white border-border max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-foreground">Edit Event</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-black">Edit Event</DialogTitle>
+              <DialogDescription className="text-gray-600">
                 Update event details, change date and time, or modify the description and location.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label className="text-muted-foreground">Event Title</Label>
+                <Label className="text-gray-700">Event Title</Label>
                 <Input
                   value={editingEvent?.title || ""}
                   onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, title: e.target.value }))}
                   placeholder="Enter event title"
-                  className="bg-input border-border text-foreground"
+                  className="bg-white border-gray-300 text-black placeholder:text-gray-400"
                   data-testid="input-edit-event-title"
                 />
               </div>
               
               <div>
-                <Label className="text-muted-foreground">Description</Label>
+                <Label className="text-gray-700">Description</Label>
                 <Textarea
                   value={editingEvent?.description || ""}
                   onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, description: e.target.value }))}
                   placeholder="What's this event about?"
-                  className="bg-input border-border text-foreground resize-none"
+                  className="bg-white border-gray-300 text-black placeholder:text-gray-400 resize-none"
                   rows={3}
                   data-testid="input-edit-event-description"
                 />
               </div>
 
               <div>
-                <Label className="text-muted-foreground">Location</Label>
+                <Label className="text-gray-700">Location</Label>
                 <Input
                   value={editingEvent?.location || ""}
                   onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, location: e.target.value }))}
                   placeholder="Where will this happen?"
-                  className="bg-input border-border text-foreground"
+                  className="bg-white border-gray-300 text-black placeholder:text-gray-400"
                   data-testid="input-edit-event-location"
                 />
               </div>
 
               <div>
-                <Label className="text-muted-foreground">Date & Time</Label>
+                <Label className="text-gray-700">Date & Time</Label>
                 <Input
                   type="datetime-local"
                   value={editingEvent?.eventDate || ""}
                   onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, eventDate: e.target.value }))}
-                  className="bg-input border-border text-foreground"
+                  className="bg-white border-gray-300 text-black"
                   min={new Date().toISOString().slice(0, 16)}
                   data-testid="input-edit-event-datetime"
                 />
               </div>
 
               <div>
-                <Label className="text-muted-foreground">Media</Label>
+                <Label className="text-gray-700">Media</Label>
                 <div className="flex space-x-2">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowMediaUpload(true)}
-                    className="border-border text-muted-foreground hover:bg-muted"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
                   >
                     <ImageIcon className="w-4 h-4 mr-2" />
                     {editingEvent?.mediaUrl ? "Change Media" : "Add Photo/Video"}
                   </Button>
                   {editingEvent?.mediaUrl && (
-                    <Badge className="bg-mykliq-green text-foreground">
+                    <Badge className="bg-mykliq-green text-white">
                       Media attached
                     </Badge>
                   )}
@@ -626,7 +626,7 @@ export default function Events() {
                 <Button
                   variant="outline"
                   onClick={() => setShowEditEvent(false)}
-                  className="border-border text-muted-foreground hover:bg-muted"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
                   Cancel
                 </Button>
@@ -637,15 +637,15 @@ export default function Events() {
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-          <DialogContent className="bg-card border-border max-w-sm">
+          <DialogContent className="bg-white border-border max-w-sm">
             <DialogHeader>
-              <DialogTitle className="text-foreground">Confirm Delete</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-black">Confirm Delete</DialogTitle>
+              <DialogDescription className="text-gray-600">
                 This action cannot be undone. The event will be permanently removed from your kliq.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <p className="text-muted-foreground">
+              <p className="text-gray-700">
                 Are you sure you want to delete "{editingEvent?.title}"? This action cannot be undone.
               </p>
               <div className="flex space-x-2 pt-4">
@@ -661,7 +661,7 @@ export default function Events() {
                 <Button
                   variant="outline"
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 border-border text-muted-foreground hover:bg-muted"
+                  className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
                   Cancel
                 </Button>
