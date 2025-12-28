@@ -6,15 +6,15 @@ import { cn } from "@/lib/utils";
 interface SportsUpdate {
   id: string;
   sport: string;
-  homeTeam: string;
-  awayTeam: string;
-  homeScore: number;
-  awayScore: number;
+  homeTeamName: string;
+  awayTeamName: string;
+  homeTeamScore: number | null;
+  awayTeamScore: number | null;
   status: string;
   statusDetail: string;
   homeTeamLogo?: string;
   awayTeamLogo?: string;
-  createdAt: string;
+  eventDate?: string;
 }
 
 interface SportsUpdateCardProps {
@@ -52,21 +52,21 @@ export function SportsUpdateCard({ update }: SportsUpdateCardProps) {
             {update.awayTeamLogo && (
               <img 
                 src={update.awayTeamLogo} 
-                alt={update.awayTeam}
+                alt={update.awayTeamName}
                 className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
                 data-testid="img-away-team-logo"
               />
             )}
             <div className="flex-1 min-w-0">
               <div className="font-bold text-gray-900 text-base sm:text-lg truncate" data-testid="text-away-team-name">
-                {update.awayTeam}
+                {update.awayTeamName}
               </div>
             </div>
             <div className={cn(
               "text-2xl sm:text-3xl font-bold flex-shrink-0",
-              update.awayScore > update.homeScore ? "text-emerald-600" : "text-gray-700"
+              (update.awayTeamScore ?? 0) > (update.homeTeamScore ?? 0) ? "text-emerald-600" : "text-gray-700"
             )} data-testid="text-away-team-score">
-              {update.awayScore}
+              {update.awayTeamScore ?? 0}
             </div>
           </div>
 
@@ -80,21 +80,21 @@ export function SportsUpdateCard({ update }: SportsUpdateCardProps) {
             {update.homeTeamLogo && (
               <img 
                 src={update.homeTeamLogo} 
-                alt={update.homeTeam}
+                alt={update.homeTeamName}
                 className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
                 data-testid="img-home-team-logo"
               />
             )}
             <div className="flex-1 text-right min-w-0">
               <div className="font-bold text-gray-900 text-base sm:text-lg truncate" data-testid="text-home-team-name">
-                {update.homeTeam}
+                {update.homeTeamName}
               </div>
             </div>
             <div className={cn(
               "text-2xl sm:text-3xl font-bold flex-shrink-0",
-              update.homeScore > update.awayScore ? "text-emerald-600" : "text-gray-700"
+              (update.homeTeamScore ?? 0) > (update.awayTeamScore ?? 0) ? "text-emerald-600" : "text-gray-700"
             )} data-testid="text-home-team-score">
-              {update.homeScore}
+              {update.homeTeamScore ?? 0}
             </div>
           </div>
         </div>
