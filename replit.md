@@ -76,6 +76,23 @@ WebSocket-based real-time updates broadcast new content, with a polling fallback
 ### Internal Post Sharing
 Users can share posts within their kliq, creating copies in their feed without external sharing or notifications to the original author.
 
+### Sports Preferences System (December 2025)
+Users can select unlimited teams per sport to follow. Live scores for followed teams appear on the headlines feed.
+
+**Technical Implementation:**
+- ESPN API integration for team data and live scores (`server/espnService.ts`)
+- College sports (CFB, CBB) use increased API limit (400 teams) to include all FBS/Division I teams
+- Sports updates query uses `skipCache: true` to bypass enhanced cache for immediate updates
+- Preference changes trigger `refetchQueries` (not just `invalidateQueries`) for instant headline updates
+- Cache invalidation pattern: `enhancedCache.removeByPattern('/api/sports/')` + query invalidation
+
+### Highlighted Posts (December 2025)
+Users can highlight posts with a "fire" effect:
+- Pulsating red-orange border animation (`fire-border` class in `index.css`)
+- Yellow/amber background gradient for visibility
+- CSS keyframes animation cycles through #ff4500 (red) → #ff8c00 (orange) → #ffa500 (amber)
+- 1.5-second animation loop with multi-layered glow effect
+
 ### Profile Border System (December 2025)
 Profile borders are earned through login streaks, referrals, and sports team follows. The system includes:
 
