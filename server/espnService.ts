@@ -247,7 +247,11 @@ class ESPNService {
         throw new Error(`Unsupported sport: ${sport}`);
       }
 
-      const url = `${ESPN_API_BASE}/${sportPath}/teams?limit=100`;
+      // Use higher limit for college sports which have many more teams
+      const isCollegeSport = sport === 'cfb' || sport === 'cbb';
+      const limit = isCollegeSport ? 400 : 100;
+      
+      const url = `${ESPN_API_BASE}/${sportPath}/teams?limit=${limit}`;
       const response = await fetch(url);
       
       if (!response.ok) {
