@@ -235,15 +235,30 @@ function SportsPreferences() {
       });
     },
     onSuccess: async () => {
+      // 1. Clear enhanced cache first to prevent stale-while-revalidate serving old data
       await enhancedCache.removeByPattern('sports/preferences');
-      await queryClient.invalidateQueries({ queryKey: ["/api/sports/preferences"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/sports/preferences"] });
+      
+      // 2. Fetch fresh data directly and set it in query cache to bypass SWR
+      try {
+        const freshData = await apiRequest("GET", "/api/sports/preferences");
+        queryClient.setQueryData(["/api/sports/preferences"], freshData);
+      } catch {
+        // Fallback: force refetch if direct fetch fails
+        await queryClient.refetchQueries({ queryKey: ["/api/sports/preferences"] });
+      }
+      
+      // 3. Clear local state
+      setSelectedTeams([]);
+      setSelectedSports([]);
+      
+      // 4. Show success message
       toast({
         title: "Preferences Saved",
         description: "Your sports preferences have been updated.",
       });
-      setSelectedTeams([]);
-      setSelectedSports([]);
+      
+      // 5. Scroll to top so user sees their saved preferences
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     onError: () => {
       toast({
@@ -260,9 +275,17 @@ function SportsPreferences() {
       return await apiRequest("DELETE", `/api/sports/preferences/${preferenceId}`);
     },
     onSuccess: async () => {
+      // 1. Clear enhanced cache first
       await enhancedCache.removeByPattern('sports/preferences');
-      await queryClient.invalidateQueries({ queryKey: ["/api/sports/preferences"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/sports/preferences"] });
+      
+      // 2. Fetch fresh data and set directly to bypass SWR
+      try {
+        const freshData = await apiRequest("GET", "/api/sports/preferences");
+        queryClient.setQueryData(["/api/sports/preferences"], freshData);
+      } catch {
+        await queryClient.refetchQueries({ queryKey: ["/api/sports/preferences"] });
+      }
+      
       toast({
         title: "Team Removed",
         description: "Team has been removed from your preferences.",
