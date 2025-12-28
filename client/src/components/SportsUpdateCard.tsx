@@ -58,20 +58,20 @@ export function SportsUpdateCard({ update }: SportsUpdateCardProps) {
               />
             )}
             <div className="flex-1 min-w-0">
-              <div className="font-bold text-foreground text-base sm:text-lg truncate" data-testid="text-away-team-name">
+              <div className="font-bold text-gray-900 text-base sm:text-lg truncate" data-testid="text-away-team-name">
                 {update.awayTeam}
               </div>
             </div>
             <div className={cn(
               "text-2xl sm:text-3xl font-bold flex-shrink-0",
-              update.awayScore > update.homeScore ? "text-emerald-500" : "text-muted-foreground"
+              update.awayScore > update.homeScore ? "text-emerald-600" : "text-gray-700"
             )} data-testid="text-away-team-score">
               {update.awayScore}
             </div>
           </div>
 
           {/* VS Divider */}
-          <div className="px-2 sm:px-4 text-muted-foreground font-semibold text-center">
+          <div className="px-2 sm:px-4 text-gray-600 font-semibold text-center">
             @
           </div>
 
@@ -86,13 +86,13 @@ export function SportsUpdateCard({ update }: SportsUpdateCardProps) {
               />
             )}
             <div className="flex-1 text-right min-w-0">
-              <div className="font-bold text-foreground text-base sm:text-lg truncate" data-testid="text-home-team-name">
+              <div className="font-bold text-gray-900 text-base sm:text-lg truncate" data-testid="text-home-team-name">
                 {update.homeTeam}
               </div>
             </div>
             <div className={cn(
               "text-2xl sm:text-3xl font-bold flex-shrink-0",
-              update.homeScore > update.awayScore ? "text-emerald-500" : "text-muted-foreground"
+              update.homeScore > update.awayScore ? "text-emerald-600" : "text-gray-700"
             )} data-testid="text-home-team-score">
               {update.homeScore}
             </div>
@@ -101,7 +101,7 @@ export function SportsUpdateCard({ update }: SportsUpdateCardProps) {
 
         {/* Status Detail */}
         {update.statusDetail && (
-          <div className="mt-3 text-center text-sm text-muted-foreground" data-testid="text-status-detail">
+          <div className="mt-3 text-center text-sm text-gray-600" data-testid="text-status-detail">
             {update.statusDetail}
           </div>
         )}
