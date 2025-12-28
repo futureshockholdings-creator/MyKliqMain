@@ -9623,6 +9623,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const preferences = await storage.getUserSportsPreferences(userId);
+      // Disable HTTP caching to ensure fresh data after mutations
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.set('Pragma', 'no-cache');
       res.json(preferences);
     } catch (error) {
       console.error('Error fetching sports preferences:', error);
