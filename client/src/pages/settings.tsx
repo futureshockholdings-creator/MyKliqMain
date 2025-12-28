@@ -234,13 +234,16 @@ function SportsPreferences() {
         }))
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Preferences Saved",
         description: "Your sports preferences have been updated.",
       });
-      // Simple page refresh to ensure fresh data
-      setTimeout(() => window.location.reload(), 500);
+      // Clear all caches before refresh to ensure fresh data
+      await enhancedCache.removeByPattern('sports');
+      queryClient.removeQueries({ queryKey: ["/api/sports/preferences"] });
+      // Immediate reload
+      window.location.reload();
     },
     onError: () => {
       toast({
@@ -256,13 +259,16 @@ function SportsPreferences() {
     mutationFn: async (preferenceId: string) => {
       return await apiRequest("DELETE", `/api/sports/preferences/${preferenceId}`);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Team Removed",
         description: "Team has been removed from your preferences.",
       });
-      // Simple page refresh to ensure fresh data
-      setTimeout(() => window.location.reload(), 500);
+      // Clear all caches before refresh to ensure fresh data
+      await enhancedCache.removeByPattern('sports');
+      queryClient.removeQueries({ queryKey: ["/api/sports/preferences"] });
+      // Immediate reload
+      window.location.reload();
     },
     onError: () => {
       toast({
