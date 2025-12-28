@@ -24,11 +24,11 @@ const SKIP_DISK_CACHE_ENDPOINTS = [
   '/api/auth/user',  // User profile data must always be fresh after mutations
 ];
 
-export const getQueryFn: <T>(options: {
+export function getQueryFn<T>(options: {
   on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
+}): QueryFunction<T> {
+  const { on401: unauthorizedBehavior } = options;
+  return async ({ queryKey }) => {
     try {
       const url = queryKey.join("/") as string;
       
@@ -45,12 +45,13 @@ export const getQueryFn: <T>(options: {
     } catch (error: any) {
       // Handle 401 unauthorized
       if (unauthorizedBehavior === "returnNull" && error?.message?.includes('401')) {
-        return null;
+        return null as T;
       }
       
       throw error;
     }
   };
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {

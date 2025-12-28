@@ -234,8 +234,10 @@ function SportsPreferences() {
         }))
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/sports/preferences"] });
+    onSuccess: async () => {
+      await enhancedCache.removeByPattern('sports/preferences');
+      await queryClient.invalidateQueries({ queryKey: ["/api/sports/preferences"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/sports/preferences"] });
       toast({
         title: "Preferences Saved",
         description: "Your sports preferences have been updated.",
@@ -257,8 +259,10 @@ function SportsPreferences() {
     mutationFn: async (preferenceId: string) => {
       return await apiRequest("DELETE", `/api/sports/preferences/${preferenceId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/sports/preferences"] });
+    onSuccess: async () => {
+      await enhancedCache.removeByPattern('sports/preferences');
+      await queryClient.invalidateQueries({ queryKey: ["/api/sports/preferences"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/sports/preferences"] });
       toast({
         title: "Team Removed",
         description: "Team has been removed from your preferences.",
