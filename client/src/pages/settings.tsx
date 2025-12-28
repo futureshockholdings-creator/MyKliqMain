@@ -52,6 +52,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
+import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 import { cleanupEnterpriseServices } from "@/lib/enterprise/enterpriseInit";
 import { removeAuthToken } from "@/lib/tokenStorage";
 
@@ -216,9 +217,10 @@ function SportsPreferences() {
     fetchAllTeams();
   }, [selectedSports]);
 
-  // Fetch user's current preferences
+  // Fetch user's current preferences (bypass cache to always get fresh data)
   const { data: userPreferences = [], isLoading: prefsLoading } = useQuery<SportsPreference[]>({
     queryKey: ["/api/sports/preferences"],
+    queryFn: () => enterpriseFetch<SportsPreference[]>("/api/sports/preferences", { skipCache: true }),
   });
 
   // Save preferences mutation
@@ -240,7 +242,7 @@ function SportsPreferences() {
         description: "Your sports preferences have been updated.",
       });
       // Clear all caches before refresh to ensure fresh data
-      await enhancedCache.removeByPattern('sports');
+      await enhancedCache.removeByPattern('/api/sports/');
       queryClient.removeQueries({ queryKey: ["/api/sports/preferences"] });
       // Immediate reload
       window.location.reload();
@@ -265,7 +267,7 @@ function SportsPreferences() {
         description: "Team has been removed from your preferences.",
       });
       // Clear all caches before refresh to ensure fresh data
-      await enhancedCache.removeByPattern('sports');
+      await enhancedCache.removeByPattern('/api/sports/');
       queryClient.removeQueries({ queryKey: ["/api/sports/preferences"] });
       // Immediate reload
       window.location.reload();
