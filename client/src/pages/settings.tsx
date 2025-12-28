@@ -244,6 +244,8 @@ function SportsPreferences() {
       // Clear cache and refetch - no page reload needed
       await enhancedCache.removeByPattern('/api/sports/');
       await queryClient.invalidateQueries({ queryKey: ["/api/sports/preferences"] });
+      // Also invalidate sports updates so headlines page shows new teams immediately
+      await queryClient.invalidateQueries({ queryKey: ["/api/sports/updates"] });
       // Clear selected teams after save
       setSelectedTeams([]);
     },
@@ -269,6 +271,8 @@ function SportsPreferences() {
       // Clear cache and refetch - no page reload needed
       await enhancedCache.removeByPattern('/api/sports/');
       await queryClient.invalidateQueries({ queryKey: ["/api/sports/preferences"] });
+      // Also invalidate sports updates so headlines page reflects removal immediately
+      await queryClient.invalidateQueries({ queryKey: ["/api/sports/updates"] });
     },
     onError: () => {
       toast({
