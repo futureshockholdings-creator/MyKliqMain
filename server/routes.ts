@@ -5860,8 +5860,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filterData = insertContentFilterSchema.parse({ ...req.body, userId });
       const filter = await storage.addContentFilter(filterData);
       
-      // Invalidate user's kliq-feed cache since filters affect what posts are shown
+      // Invalidate user's caches since filters affect what posts are shown
       await cacheService.invalidateUserCache(userId);
+      // Also invalidate the cached filter keywords used by kliq-feed
+      await cacheService.del(`user-filters:${userId}`);
       
       res.json(filter);
     } catch (error) {
@@ -5877,8 +5879,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.removeContentFilter(userId, filterId);
       
-      // Invalidate user's kliq-feed cache since filters affect what posts are shown
+      // Invalidate user's caches since filters affect what posts are shown
       await cacheService.invalidateUserCache(userId);
+      // Also invalidate the cached filter keywords used by kliq-feed
+      await cacheService.del(`user-filters:${userId}`);
       
       res.json({ success: true });
     } catch (error) {
