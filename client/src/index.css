@@ -162,8 +162,7 @@ p .emoji-large, span .emoji-large, div .emoji-large {
 
 .fire-border {
   animation: fire-pulse 1.5s ease-in-out infinite;
-  border: 3px solid #ff4500;
-  background: linear-gradient(135deg, rgba(255, 69, 0, 0.1), rgba(255, 140, 0, 0.1), rgba(255, 69, 0, 0.1));
+  border: 3px solid #ff4500 !important;
 }
 
 /* Hide any browser-generated broken image text or fallbacks */
