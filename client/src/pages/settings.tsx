@@ -53,7 +53,8 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 import { cleanupEnterpriseServices } from "@/lib/enterprise/enterpriseInit";
-import { removeAuthToken } from "@/lib/tokenStorage";
+import { removeAuthToken, getAuthToken } from "@/lib/tokenStorage";
+import { buildApiUrl } from "@/lib/apiConfig";
 
 interface SocialAccount {
   id: string;
@@ -238,10 +239,23 @@ function SportsPreferences() {
       // 1. Clear enhanced cache first to prevent stale-while-revalidate serving old data
       await enhancedCache.removeByPattern('sports/preferences');
       
-      // 2. Fetch fresh data directly and set it in query cache to bypass SWR
+      // 2. Direct fetch bypassing enterprise cache layer entirely
       try {
-        const freshData = await apiRequest("GET", "/api/sports/preferences");
-        queryClient.setQueryData(["/api/sports/preferences"], freshData);
+        const token = getAuthToken();
+        const headers: HeadersInit = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(buildApiUrl('/api/sports/preferences'), {
+          method: 'GET',
+          headers,
+          credentials: 'include',
+          cache: 'no-store',  // Force bypass browser cache
+        });
+        if (response.ok) {
+          const freshData = await response.json();
+          queryClient.setQueryData(["/api/sports/preferences"], freshData);
+        }
       } catch {
         // Fallback: force refetch if direct fetch fails
         await queryClient.refetchQueries({ queryKey: ["/api/sports/preferences"] });
@@ -278,10 +292,23 @@ function SportsPreferences() {
       // 1. Clear enhanced cache first
       await enhancedCache.removeByPattern('sports/preferences');
       
-      // 2. Fetch fresh data and set directly to bypass SWR
+      // 2. Direct fetch bypassing enterprise cache layer entirely
       try {
-        const freshData = await apiRequest("GET", "/api/sports/preferences");
-        queryClient.setQueryData(["/api/sports/preferences"], freshData);
+        const token = getAuthToken();
+        const headers: HeadersInit = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(buildApiUrl('/api/sports/preferences'), {
+          method: 'GET',
+          headers,
+          credentials: 'include',
+          cache: 'no-store',
+        });
+        if (response.ok) {
+          const freshData = await response.json();
+          queryClient.setQueryData(["/api/sports/preferences"], freshData);
+        }
       } catch {
         await queryClient.refetchQueries({ queryKey: ["/api/sports/preferences"] });
       }
