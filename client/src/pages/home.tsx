@@ -1438,9 +1438,19 @@ export default function Home() {
     mutationFn: async (keyword: string) => {
       await apiRequest("POST", "/api/filters", { keyword });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/filters"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    onSuccess: async () => {
+      // Clear enterprise cache for both filters and feed
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/filters');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {
+        console.log('Cache clear (non-critical):', e);
+      }
+      // Refetch filters immediately so they appear in the UI
+      await queryClient.refetchQueries({ queryKey: ["/api/filters"], type: 'all' });
+      // Refetch the feed so filtered posts are hidden immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"], type: 'all' });
       toast({
         title: "Filter added",
         description: "Posts with this keyword will be hidden",
@@ -1471,9 +1481,19 @@ export default function Home() {
     mutationFn: async (filterId: string) => {
       await apiRequest("DELETE", `/api/filters/${filterId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/filters"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+    onSuccess: async () => {
+      // Clear enterprise cache for both filters and feed
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/filters');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {
+        console.log('Cache clear (non-critical):', e);
+      }
+      // Refetch filters immediately so they disappear from the UI
+      await queryClient.refetchQueries({ queryKey: ["/api/filters"], type: 'all' });
+      // Refetch the feed so previously filtered posts appear immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"], type: 'all' });
       toast({
         title: "Filter removed",
         description: "Posts with this keyword will now be visible",
