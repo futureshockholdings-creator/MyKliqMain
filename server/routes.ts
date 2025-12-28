@@ -9701,19 +9701,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           // Try to award Koins only if under the limit
           if (awarded.length < remainingSlots) {
-            try {
+            // Check if already rewarded for this team (to avoid transaction-aborting errors)
+            const existingReward = await client.query(
+              'SELECT id FROM sports_team_rewards WHERE user_id = $1 AND team_id = $2',
+              [userId, team.teamId]
+            );
+            
+            if (existingReward.rows.length > 0) {
+              alreadyRewarded.push(team.teamName);
+            } else {
+              // Insert new reward
               await client.query(
                 'INSERT INTO sports_team_rewards (user_id, sport, team_id, team_name, koins_awarded) VALUES ($1, $2, $3, $4, $5)',
                 [userId, team.sport, team.teamId, team.teamName, TEAM_REWARD_AMOUNT]
               );
               awarded.push(team.teamName);
-            } catch (insertError: any) {
-              // Unique constraint violation means already rewarded
-              if (insertError.message?.includes('duplicate key') || insertError.code?.includes('23505')) {
-                alreadyRewarded.push(team.teamName);
-              } else {
-                throw insertError;
-              }
             }
           } else {
             skippedDueToLimit.push(team.teamName);
