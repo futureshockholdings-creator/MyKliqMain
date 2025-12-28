@@ -244,8 +244,9 @@ function SportsPreferences() {
       // Clear cache and refetch - no page reload needed
       await enhancedCache.removeByPattern('/api/sports/');
       await queryClient.invalidateQueries({ queryKey: ["/api/sports/preferences"] });
-      // Also invalidate sports updates so headlines page shows new teams immediately
-      await queryClient.invalidateQueries({ queryKey: ["/api/sports/updates"] });
+      // Force refetch sports updates (not just invalidate) so headlines shows new teams immediately
+      // This works even when the query is inactive (user on settings page)
+      await queryClient.refetchQueries({ queryKey: ["/api/sports/updates"], type: 'all' });
       // Clear selected teams after save
       setSelectedTeams([]);
     },

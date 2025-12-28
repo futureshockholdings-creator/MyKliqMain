@@ -40,6 +40,7 @@ import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import { PageWrapper } from "@/components/PageWrapper";
 import { usePostTranslation } from "@/lib/translationService";
 import { feedRealtimeService } from "@/lib/feedRealtime";
+import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 
 import type { Meme, Moviecon } from "@shared/schema";
 
@@ -552,11 +553,12 @@ export default function Home() {
     refetchOnWindowFocus: true, // Refetch when user returns to app
   });
 
-  // Fetch sports updates
+  // Fetch sports updates - bypass enhanced cache to always get fresh data after preference changes
   const { data: sportsUpdates = [] } = useQuery({
     queryKey: ["/api/sports/updates"],
-    staleTime: 300000, // Consider data fresh for 5 minutes
-    refetchInterval: 900000, // Refetch every 15 minutes
+    queryFn: () => enterpriseFetch("/api/sports/updates", { skipCache: true }),
+    staleTime: 60000, // Consider data fresh for 1 minute (reduced from 5 mins for faster preference updates)
+    refetchInterval: 300000, // Refetch every 5 minutes
     refetchOnWindowFocus: true, // Refetch when user returns to app
   });
 
