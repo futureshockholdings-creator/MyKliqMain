@@ -126,7 +126,8 @@ export default function Events() {
       // Force refetch to ensure UI updates immediately
       await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       // Refetch kliq-feed so event appears on headlines immediately
-      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"], type: 'all', exact: false });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       queryClient.invalidateQueries({ queryKey: ["/api/calendar/notes"] });
       setShowCreateEvent(false);
@@ -181,7 +182,8 @@ export default function Events() {
       // Force refetch to ensure UI updates immediately
       await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       // Refetch kliq-feed so changes appear on headlines immediately
-      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"], type: 'all', exact: false });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       setShowEditEvent(false);
       setEditingEvent(null);
       toast({
@@ -227,7 +229,8 @@ export default function Events() {
       // Force refetch to ensure UI updates immediately
       await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       // Refetch kliq-feed so deletion reflects on headlines immediately
-      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"], type: 'all', exact: false });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       setShowEditEvent(false);
       setEditingEvent(null);
       toast({
