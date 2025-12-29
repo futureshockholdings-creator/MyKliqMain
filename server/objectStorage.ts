@@ -143,6 +143,32 @@ export class ObjectStorageService {
     });
   }
 
+  // Upload a file buffer directly to object storage
+  async uploadBuffer(buffer: Buffer, fileName: string, contentType: string): Promise<string> {
+    const privateObjectDir = this.getPrivateObjectDir();
+    if (!privateObjectDir) {
+      throw new Error(
+        "PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' " +
+          "tool and set PRIVATE_OBJECT_DIR env var."
+      );
+    }
+
+    const fullPath = `${privateObjectDir}/${fileName}`;
+    const { bucketName, objectName } = parseObjectPath(fullPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+
+    // Upload the buffer
+    await file.save(buffer, {
+      metadata: {
+        contentType,
+      },
+    });
+
+    // Return a URL that can be used to access the file
+    return `/objects/${fileName}`;
+  }
+
   // Public upload URL for memes (they need to be publicly accessible)
   async getPublicMemeUploadURL(): Promise<string> {
     const publicPaths = this.getPublicObjectSearchPaths();

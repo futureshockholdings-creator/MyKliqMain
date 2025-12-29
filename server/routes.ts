@@ -6654,6 +6654,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's saved recordings (max 10) - MUST be before :actionId route
+  app.get('/api/actions/my-recordings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const recordings = await storage.getUserRecordings(userId);
+      res.json(recordings);
+    } catch (error) {
+      console.error("Error fetching user recordings:", error);
+      res.status(500).json({ message: "Failed to fetch recordings" });
+    }
+  });
+
   // Get specific action details
   app.get('/api/actions/:actionId', isAuthenticated, async (req: any, res) => {
     try {
@@ -6758,7 +6770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Upload to object storage
       const objectStorage = new ObjectStorageService();
       const fileName = `recordings/action_${actionId}_${Date.now()}.webm`;
-      const recordingUrl = await objectStorage.uploadFile(req.file.buffer, fileName, req.file.mimetype);
+      const recordingUrl = await objectStorage.uploadBuffer(req.file.buffer, fileName, req.file.mimetype);
       
       // Update action with recording URL
       await storage.updateAction(actionId, { recordingUrl });
@@ -6772,18 +6784,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading action recording:", error);
       res.status(500).json({ message: "Failed to upload recording" });
-    }
-  });
-
-  // Get user's saved recordings (max 10)
-  app.get('/api/actions/my-recordings', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const recordings = await storage.getUserRecordings(userId);
-      res.json(recordings);
-    } catch (error) {
-      console.error("Error fetching user recordings:", error);
-      res.status(500).json({ message: "Failed to fetch recordings" });
     }
   });
 
