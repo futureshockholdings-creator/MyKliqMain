@@ -61,6 +61,32 @@ export function isAwsEnvironment(): boolean {
 }
 
 /**
+ * Build WebSocket URL for cross-domain production
+ * Converts https → wss and http → ws
+ */
+export function buildWebSocketUrl(path: string): string {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+  
+  const baseUrl = getApiBaseUrl();
+  
+  if (!path.startsWith('/')) {
+    path = '/' + path;
+  }
+  
+  // For same-origin (development), use window.location
+  if (!baseUrl) {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}${path}`;
+  }
+  
+  // For cross-domain production, convert https://api.mykliq.app → wss://api.mykliq.app
+  const wsUrl = baseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
+  return wsUrl + path;
+}
+
+/**
  * Resolves asset URLs (images, uploads) to absolute URLs pointing to the backend
  * In production (AWS Amplify), assets are served from Replit backend
  * Relative paths like /objects/uploads/... need to be prefixed with backend URL

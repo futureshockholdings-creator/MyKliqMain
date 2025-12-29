@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { buildApiUrl, buildWebSocketUrl } from "@/lib/apiConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -250,8 +251,8 @@ export default function Actions() {
 
   // Setup WebSocket connection
   const setupWebSocket = (actionId: string) => {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    // Use buildWebSocketUrl for cross-domain production (AWS Amplify → Replit backend)
+    const wsUrl = buildWebSocketUrl('/ws');
     const websocket = new WebSocket(wsUrl);
 
     websocket.onopen = () => {
@@ -392,8 +393,8 @@ export default function Actions() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      // Upload to server with auth header
-      const response = await fetch('/api/actions/upload-recording', {
+      // Upload to server with auth header (use buildApiUrl for cross-domain production)
+      const response = await fetch(buildApiUrl('/api/actions/upload-recording'), {
         method: 'POST',
         body: formData,
         credentials: 'include',

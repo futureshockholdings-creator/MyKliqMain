@@ -311,7 +311,7 @@ export interface IStorage {
 
   // Action (Live Stream) operations
   getActions(): Promise<(Action & { author: User; viewers: ActionViewer[]; viewerCount: number })[]>;
-  getActionById(actionId: string): Promise<Action | undefined>;
+  getActionById(actionId: string): Promise<(Action & { author?: { id: string; firstName: string | null; lastName: string | null; profileImageUrl: string | null; kliqName: string | null } }) | undefined>;
   getUserRecordings(userId: string): Promise<(Action & { author: User })[]>;
   enforceRecordingLimit(userId: string, maxRecordings: number): Promise<void>;
   createAction(action: InsertAction): Promise<Action>;
@@ -2835,9 +2835,30 @@ export class DatabaseStorage implements IStorage {
     return actionsWithViewers;
   }
 
-  async getActionById(actionId: string): Promise<Action | undefined> {
-    const [action] = await db.select().from(actions).where(eq(actions.id, actionId));
-    return action;
+  async getActionById(actionId: string): Promise<(Action & { author?: { id: string; firstName: string | null; lastName: string | null; profileImageUrl: string | null; kliqName: string | null } }) | undefined> {
+    const result = await db
+      .select({
+        action: actions,
+        author: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+          kliqName: users.kliqName,
+        },
+      })
+      .from(actions)
+      .leftJoin(users, eq(actions.userId, users.id))
+      .where(eq(actions.id, actionId))
+      .limit(1);
+    
+    if (result.length === 0) return undefined;
+    
+    const { action, author } = result[0];
+    return {
+      ...action,
+      author: author || undefined,
+    };
   }
 
   async getUserRecordings(userId: string): Promise<(Action & { author: User })[]> {
