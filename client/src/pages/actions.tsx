@@ -77,8 +77,11 @@ export default function Actions() {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -291,7 +294,7 @@ export default function Actions() {
     setWs(websocket);
   };
 
-  // Start camera stream for broadcasting
+  // Start camera stream for broadcasting with recording
   const startStream = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -303,11 +306,31 @@ export default function Actions() {
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
+      
+      // Start recording the stream
+      recordedChunksRef.current = [];
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') 
+        ? 'video/webm;codecs=vp9,opus'
+        : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+          ? 'video/webm;codecs=vp8,opus'
+          : 'video/webm';
+      
+      const mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.start(1000); // Collect data every second
+      mediaRecorderRef.current = mediaRecorder;
+      
       setIsStreaming(true);
       
       toast({
         title: "Camera started",
-        description: "Your camera is now active for streaming",
+        description: "Your camera is now active and recording",
       });
     } catch (error) {
       toast({
@@ -318,8 +341,13 @@ export default function Actions() {
     }
   };
 
-  // Stop camera stream
+  // Stop camera stream and recorder
   const stopStream = () => {
+    // Stop the MediaRecorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
@@ -328,6 +356,55 @@ export default function Actions() {
       }
     }
     setIsStreaming(false);
+  };
+  
+  // Upload recording to server
+  const uploadRecording = async (actionId: string): Promise<string | null> => {
+    if (recordedChunksRef.current.length === 0) {
+      console.log('No recorded chunks to upload');
+      return null;
+    }
+    
+    try {
+      setIsUploading(true);
+      
+      // Create a blob from the recorded chunks
+      const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+      
+      // Create FormData and append the video
+      const formData = new FormData();
+      formData.append('video', blob, `action_${actionId}_${Date.now()}.webm`);
+      formData.append('actionId', actionId);
+      
+      // Upload to server
+      const response = await fetch('/api/actions/upload-recording', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload recording');
+      }
+      
+      const data = await response.json();
+      console.log('Recording uploaded:', data.recordingUrl);
+      
+      // Clear recorded chunks
+      recordedChunksRef.current = [];
+      
+      return data.recordingUrl;
+    } catch (error) {
+      console.error('Error uploading recording:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to save the recording. The stream data may be lost.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // Toggle video
@@ -377,15 +454,27 @@ export default function Actions() {
     createActionMutation.mutate(newAction);
   };
 
-  // Handle end action
-  const handleEndAction = () => {
+  // Handle end action with recording upload
+  const handleEndAction = async () => {
     if (selectedAction) {
+      // Stop the MediaRecorder first to get final data
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        // Wait a moment for the final data to be collected
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      // Upload the recording
+      const recordingUrl = await uploadRecording(selectedAction.id);
+      
       if (ws) {
         ws.send(JSON.stringify({
           type: 'action_ended',
           actionId: selectedAction.id
         }));
       }
+      
+      // Pass the recording URL to the end action mutation if it exists
       endActionMutation.mutate(selectedAction.id);
     }
   };

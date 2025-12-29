@@ -6735,6 +6735,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload action recording
+  app.post('/api/actions/upload-recording', isAuthenticated, upload.single('video'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { actionId } = req.body;
+      
+      if (!req.file) {
+        return res.status(400).json({ message: "No video file provided" });
+      }
+      
+      if (!actionId) {
+        return res.status(400).json({ message: "Action ID is required" });
+      }
+      
+      // Verify user owns this action
+      const action = await storage.getActionById(actionId);
+      if (!action || action.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to upload recording for this action" });
+      }
+      
+      // Upload to object storage
+      const objectStorage = new ObjectStorageService();
+      const fileName = `recordings/action_${actionId}_${Date.now()}.webm`;
+      const recordingUrl = await objectStorage.uploadFile(req.file.buffer, fileName, req.file.mimetype);
+      
+      // Update action with recording URL
+      await storage.updateAction(actionId, { recordingUrl });
+      
+      console.log(`Recording uploaded for action ${actionId}: ${recordingUrl}`);
+      
+      res.json({ success: true, recordingUrl });
+    } catch (error) {
+      console.error("Error uploading action recording:", error);
+      res.status(500).json({ message: "Failed to upload recording" });
+    }
+  });
+
   // End action (stop live stream)
   app.put('/api/actions/:actionId/end', isAuthenticated, async (req: any, res) => {
     try {

@@ -1010,6 +1010,7 @@ export class DatabaseStorage implements IStorage {
           status: actions.status,
           viewerCount: actions.viewerCount,
           thumbnailUrl: actions.thumbnailUrl,
+          recordingUrl: actions.recordingUrl,
           createdAt: actions.createdAt,
           authorId: users.id,
           authorFirstName: users.firstName,
@@ -1094,6 +1095,7 @@ export class DatabaseStorage implements IStorage {
         status: action.status,
         viewerCount: action.viewerCount,
         thumbnailUrl: action.thumbnailUrl,
+        recordingUrl: action.recordingUrl,
         activityDate: action.createdAt,
         createdAt: action.createdAt,
         author: {

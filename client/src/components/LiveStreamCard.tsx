@@ -27,6 +27,7 @@ interface LiveStreamCardProps {
     status: "live" | "ended";
     viewerCount: number;
     thumbnailUrl?: string;
+    recordingUrl?: string;
     chatEnabled?: boolean;
     createdAt: string;
     author: {
@@ -192,10 +193,10 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-3">
             <Badge variant="secondary" className="bg-gray-600 text-gray-300">
-              ENDED
+              {action.recordingUrl ? 'REPLAY' : 'ENDED'}
             </Badge>
           </div>
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 mb-4">
             <Avatar className="w-10 h-10">
               <AvatarImage src={action.author?.profileImageUrl} />
               <AvatarFallback>{authorName[0]}</AvatarFallback>
@@ -211,6 +212,27 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
               </p>
             </div>
           </div>
+          
+          {action.recordingUrl ? (
+            <div className="rounded-lg overflow-hidden bg-black">
+              <video
+                src={action.recordingUrl}
+                controls
+                className="w-full aspect-video"
+                poster={action.thumbnailUrl}
+                preload="metadata"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          ) : (
+            <div className="bg-gray-700/50 rounded-lg aspect-video flex items-center justify-center">
+              <div className="text-center text-gray-400">
+                <Video className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Recording not available</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
