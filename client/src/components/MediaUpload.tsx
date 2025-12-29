@@ -63,6 +63,17 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       }
     }
   }, [open, stream]);
+
+  // Attach stream to video element when stream is available and video is rendered
+  useEffect(() => {
+    if (stream && videoRef.current && cameraMode === "preview") {
+      videoRef.current.srcObject = stream;
+      // Ensure video plays
+      videoRef.current.play().catch(err => {
+        console.error("Error playing video:", err);
+      });
+    }
+  }, [stream, cameraMode]);
   
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
@@ -86,10 +97,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       
       setStream(mediaStream);
       setCameraMode("preview");
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
+      // Note: srcObject is set by the useEffect above after the video element renders
       
       toast({
         title: "Camera ready!",
