@@ -25,6 +25,7 @@ import {
   actions,
   actionViewers,
   actionChatMessages,
+  actionLikes,
   meetups,
   meetupCheckIns,
   birthdayMessages,
@@ -1013,6 +1014,7 @@ export class DatabaseStorage implements IStorage {
           viewerCount: actions.viewerCount,
           thumbnailUrl: actions.thumbnailUrl,
           recordingUrl: actions.recordingUrl,
+          isHighlighted: actions.isHighlighted,
           createdAt: actions.createdAt,
           authorId: users.id,
           authorFirstName: users.firstName,
@@ -1025,6 +1027,24 @@ export class DatabaseStorage implements IStorage {
         .where(inArray(actions.userId, friendIds))
         .orderBy(desc(actions.createdAt))
         .limit(50) : [];
+      
+      // Get likes for all actions
+      const actionIds = actionsData.map(a => a.id);
+      const allActionLikes = actionIds.length > 0 ? await db
+        .select({
+          actionId: actionLikes.actionId,
+          userId: actionLikes.userId,
+        })
+        .from(actionLikes)
+        .where(inArray(actionLikes.actionId, actionIds)) : [];
+      
+      const actionLikesByAction: Record<string, { userId: string }[]> = {};
+      allActionLikes.forEach(like => {
+        if (!actionLikesByAction[like.actionId]) {
+          actionLikesByAction[like.actionId] = [];
+        }
+        actionLikesByAction[like.actionId].push({ userId: like.userId });
+      });
 
       console.log(`Feed: Got ${postsData.length} posts, ${eventsData.length} events, ${pollsData.length} polls, ${actionsData.length} actions`);
       
@@ -1098,6 +1118,8 @@ export class DatabaseStorage implements IStorage {
         viewerCount: action.viewerCount,
         thumbnailUrl: action.thumbnailUrl,
         recordingUrl: action.recordingUrl,
+        isHighlighted: action.isHighlighted || false,
+        likes: actionLikesByAction[action.id] || [],
         activityDate: action.createdAt,
         createdAt: action.createdAt,
         author: {
@@ -3004,6 +3026,42 @@ export class DatabaseStorage implements IStorage {
       ...message,
       user: user!,
     }));
+  }
+
+  async toggleActionLike(actionId: string, userId: string): Promise<void> {
+    const [existingLike] = await db
+      .select()
+      .from(actionLikes)
+      .where(and(eq(actionLikes.actionId, actionId), eq(actionLikes.userId, userId)))
+      .limit(1);
+
+    if (existingLike) {
+      await db.delete(actionLikes).where(eq(actionLikes.id, existingLike.id));
+    } else {
+      await db.insert(actionLikes).values({ actionId, userId });
+    }
+  }
+
+  async getActionLikes(actionId: string): Promise<{ userId: string }[]> {
+    const likes = await db
+      .select({ userId: actionLikes.userId })
+      .from(actionLikes)
+      .where(eq(actionLikes.actionId, actionId));
+    return likes;
+  }
+
+  async highlightAction(actionId: string): Promise<void> {
+    await db
+      .update(actions)
+      .set({ isHighlighted: true })
+      .where(eq(actions.id, actionId));
+  }
+
+  async unhighlightAction(actionId: string): Promise<void> {
+    await db
+      .update(actions)
+      .set({ isHighlighted: false })
+      .where(eq(actions.id, actionId));
   }
 
   // Meetup operations

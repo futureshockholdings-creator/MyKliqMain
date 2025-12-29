@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { 
   Video, 
   Users, 
@@ -15,9 +16,26 @@ import {
   Send,
   X,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Heart,
+  Share2,
+  Trash2,
+  Star,
+  Plus,
+  PlusCircle
 } from "lucide-react";
 import { getApiBaseUrl } from "@/lib/apiConfig";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface LiveStreamCardProps {
   action: {
@@ -30,6 +48,8 @@ interface LiveStreamCardProps {
     recordingUrl?: string;
     chatEnabled?: boolean;
     createdAt: string;
+    likes?: any[];
+    isHighlighted?: boolean;
     author: {
       id: string;
       firstName?: string;
@@ -52,6 +72,18 @@ interface ChatMessage {
   };
 }
 
+function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return 'just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return date.toLocaleDateString();
+}
+
 export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isWatching, setIsWatching] = useState(false);
@@ -59,12 +91,57 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [viewerCount, setViewerCount] = useState(action.viewerCount || 0);
+  const [showComments, setShowComments] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: userData } = useQuery<any>({
     queryKey: ["/api/auth/user"],
+  });
+
+  const likeActionMutation = useMutation({
+    mutationFn: async (actionId: string) => {
+      const response = await apiRequest("POST", `/api/actions/${actionId}/like`);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+    },
+  });
+
+  const deleteActionMutation = useMutation({
+    mutationFn: async (actionId: string) => {
+      const response = await apiRequest("DELETE", `/api/actions/${actionId}`);
+      return response;
+    },
+    onSuccess: () => {
+      toast({ title: "Video deleted", description: "Your recording has been removed" });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
+    },
+  });
+
+  const highlightActionMutation = useMutation({
+    mutationFn: async (actionId: string) => {
+      const response = await apiRequest("POST", `/api/actions/${actionId}/highlight`);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    },
+  });
+
+  const unhighlightActionMutation = useMutation({
+    mutationFn: async (actionId: string) => {
+      const response = await apiRequest("DELETE", `/api/actions/${actionId}/highlight`);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    },
   });
 
   const joinActionMutation = useMutation({
@@ -176,6 +253,20 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
     setChatMessage("");
   };
 
+  const handleLike = () => {
+    likeActionMutation.mutate(action.id);
+  };
+
+  const handleShare = async () => {
+    try {
+      await apiRequest("POST", `/api/actions/${action.id}/share`);
+      toast({ title: "Shared!", description: "Video shared to your feed" });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to share video", variant: "destructive" });
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (ws) {
@@ -186,35 +277,103 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
 
   const isLive = action.status === 'live';
   const authorName = action.author?.firstName || action.author?.username || 'User';
+  const isOwner = currentUserId === action.author.id;
+  const isLiked = Array.isArray(action.likes) && currentUserId && action.likes.some((like: any) => like.userId === currentUserId);
+  const likeCount = Array.isArray(action.likes) ? action.likes.length : 0;
 
   if (!isLive) {
     return (
-      <Card className="mb-4 border border-gray-500 bg-gray-800/50">
+      <Card 
+        className={cn(
+          "mb-4 bg-card border transition-all duration-500",
+          action.isHighlighted 
+            ? "fire-border bg-gradient-to-r from-yellow-400/20 via-amber-300/20 to-yellow-400/20" 
+            : isOwner 
+              ? "border-primary/50" 
+              : "border-border"
+        )}
+      >
         <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Badge variant="secondary" className="bg-gray-600 text-gray-300">
-              {action.recordingUrl ? 'REPLAY' : 'ENDED'}
-            </Badge>
-          </div>
-          <div className="flex items-start gap-3 mb-4">
+          <div className="flex items-center space-x-3 mb-3">
             <Avatar className="w-10 h-10">
               <AvatarImage src={action.author?.profileImageUrl} />
               <AvatarFallback>{authorName[0]}</AvatarFallback>
             </Avatar>
-            <div>
-              <p className="font-semibold text-foreground">{authorName}</p>
-              <h3 className="text-lg font-bold text-foreground">{action.title}</h3>
-              {action.description && (
-                <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
-              )}
-              <p className="text-xs text-muted-foreground mt-2">
-                Stream ended {new Date(action.createdAt).toLocaleDateString()}
+            <div className="flex-1">
+              <p className="font-bold text-primary">{authorName}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatTimeAgo(action.createdAt)}
               </p>
             </div>
+            
+            <Badge variant="secondary" className="bg-gray-200 text-gray-700">
+              {action.recordingUrl ? '📹 Video' : 'ENDED'}
+            </Badge>
+
+            {isOwner && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-8 w-8 p-0 transition-colors",
+                    action.isHighlighted 
+                      ? "text-yellow-500 hover:text-yellow-600" 
+                      : "text-muted-foreground hover:text-yellow-500"
+                  )}
+                  onClick={() => {
+                    if (action.isHighlighted) {
+                      unhighlightActionMutation.mutate(action.id);
+                    } else {
+                      highlightActionMutation.mutate(action.id);
+                    }
+                  }}
+                  disabled={highlightActionMutation.isPending || unhighlightActionMutation.isPending}
+                >
+                  <Star className={cn("h-4 w-4", action.isHighlighted && "fill-current")} />
+                </Button>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Video?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete this video recording. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-red-500 hover:bg-red-600"
+                        onClick={() => deleteActionMutation.mutate(action.id)}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            )}
+          </div>
+          
+          <div className="mb-3">
+            <h3 className="text-lg font-bold text-foreground">{action.title}</h3>
+            {action.description && (
+              <p className="text-sm text-muted-foreground mt-1">{action.description}</p>
+            )}
           </div>
           
           {action.recordingUrl ? (
-            <div className="rounded-lg overflow-hidden bg-black">
+            <div className="rounded-lg overflow-hidden bg-black mb-3">
               <video
                 src={action.recordingUrl}
                 controls
@@ -226,13 +385,54 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
               </video>
             </div>
           ) : (
-            <div className="bg-gray-700/50 rounded-lg aspect-video flex items-center justify-center">
-              <div className="text-center text-gray-400">
+            <div className="bg-muted rounded-lg aspect-video flex items-center justify-center mb-3">
+              <div className="text-center text-muted-foreground">
                 <Video className="w-12 h-12 mx-auto mb-2 opacity-50" />
                 <p>Recording not available</p>
               </div>
             </div>
           )}
+
+          <div className="flex justify-between items-center">
+            <div className="flex space-x-4">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleLike}
+                className={cn(
+                  "p-0 h-auto transition-colors",
+                  isLiked
+                    ? "text-red-500 hover:bg-red-50" 
+                    : "text-primary hover:bg-primary/10"
+                )}
+              >
+                <Heart className={cn("w-4 h-4 mr-1", isLiked && "fill-current")} />
+                {likeCount}
+              </Button>
+              
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowComments(!showComments)}
+                className="p-0 h-auto text-primary hover:bg-primary/10"
+              >
+                <MessageCircle className="w-4 h-4 mr-1" />
+                Comments
+              </Button>
+
+              {!isOwner && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleShare}
+                  className="p-0 h-auto text-primary hover:bg-primary/10"
+                >
+                  <Share2 className="w-4 h-4 mr-1" />
+                  Share
+                </Button>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
     );
