@@ -2057,27 +2057,29 @@ export default function Home() {
 
 
   const handleMediaUploadSuccess = async () => {
-    // Clear enterprise cache for feed
+    // Clear enterprise cache for feed - MUST await to ensure cache is cleared before refetch
     try {
       const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
-      enhancedCache.removeByPattern('/api/kliq-feed');
+      await enhancedCache.removeByPattern('/api/kliq-feed');
+      console.log('[MediaUpload] Cleared feed cache');
     } catch (e) {
       console.log('Cache clear (non-critical):', e);
     }
     // Invalidate and immediately refetch the feed so the new post appears instantly
     // Use predicate to match all feed queries (including ones with page/limit params)
-    queryClient.invalidateQueries({ 
+    await queryClient.invalidateQueries({ 
       predicate: (query) => {
         const key = query.queryKey[0];
         return typeof key === 'string' && key.includes('/api/kliq-feed');
       }
     });
-    queryClient.refetchQueries({ 
+    await queryClient.refetchQueries({ 
       predicate: (query) => {
         const key = query.queryKey[0];
         return typeof key === 'string' && key.includes('/api/kliq-feed');
       }
     });
+    console.log('[MediaUpload] Feed refetched');
   };
 
   const handleStoryUploadSuccess = () => {
