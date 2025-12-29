@@ -30,7 +30,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { getApiBaseUrl } from "@/lib/apiConfig";
+import { getApiBaseUrl, resolveAssetUrl } from "@/lib/apiConfig";
 
 interface LiveStreamCardProps {
   action: {
@@ -392,7 +392,9 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
   }, [ws]);
 
   const isLive = action.status === 'live';
-  const authorName = action.author?.firstName || action.author?.username || 'User';
+  const authorName = action.author?.firstName && action.author?.lastName 
+    ? `${action.author.firstName} ${action.author.lastName}` 
+    : action.author?.firstName || action.author?.username || 'User';
   const isOwner = currentUserId === action.author.id;
 
   if (!isLive) {
@@ -410,7 +412,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-3">
             <Avatar className="w-10 h-10">
-              <AvatarImage src={action.author?.profileImageUrl} />
+              <AvatarImage src={resolveAssetUrl(action.author?.profileImageUrl)} />
               <AvatarFallback>{authorName[0]}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
@@ -666,7 +668,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
         
         <div className="flex items-start gap-3 mb-4">
           <Avatar className="w-10 h-10 border-2 border-red-500">
-            <AvatarImage src={action.author?.profileImageUrl} />
+            <AvatarImage src={resolveAssetUrl(action.author?.profileImageUrl)} />
             <AvatarFallback>{authorName[0]}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
