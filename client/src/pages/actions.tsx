@@ -106,11 +106,21 @@ export default function Actions() {
       return response;
     },
     onSuccess: async (newAction) => {
+      // Clear enterprise cache first to prevent stale data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/actions');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       // Wait for actions list to refresh before showing the new action
       await queryClient.refetchQueries({ queryKey: ["/api/actions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] }); // Refresh posts to show the auto-post
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] }); // Refresh feed
+      // Refetch kliq-feed so action appears on headlines immediately
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       setShowCreateAction(false);
       
       // Find the fully populated action from the refetched list
@@ -139,8 +149,19 @@ export default function Actions() {
     mutationFn: async (actionId: string) => {
       await apiRequest("PUT", `/api/actions/${actionId}/end`);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Clear enterprise cache first to prevent stale data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/actions');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+      // Refetch kliq-feed so action status updates on headlines immediately
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       setSelectedAction(null);
       setIsStreaming(false);
       stopStream();
@@ -160,10 +181,20 @@ export default function Actions() {
     mutationFn: async (actionId: string) => {
       await apiRequest("DELETE", `/api/actions/${actionId}`);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Clear enterprise cache first to prevent stale data
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/actions');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] }); // Remove auto-generated post
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] }); // Remove from feed
+      // Refetch kliq-feed so action is removed from headlines immediately
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       setSelectedAction(null);
       setIsStreaming(false);
       stopStream();
