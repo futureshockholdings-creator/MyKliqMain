@@ -1864,3 +1864,43 @@ export const insertAdvertiserApplicationSchema = createInsertSchema(advertiserAp
 });
 export type InsertAdvertiserApplication = z.infer<typeof insertAdvertiserApplicationSchema>;
 export type AdvertiserApplication = typeof advertiserApplications.$inferSelect;
+
+// Broadcast status enum
+export const broadcastStatusEnum = pgEnum("broadcast_status", ["draft", "scheduled", "sent", "failed"]);
+
+// Broadcast target audience enum
+export const broadcastTargetEnum = pgEnum("broadcast_target", ["all", "active_7d", "active_30d", "streak_users"]);
+
+// Admin Broadcasts - for sending push notifications to users
+export const adminBroadcasts = pgTable("admin_broadcasts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title", { length: 100 }).notNull(),
+  body: text("body").notNull(),
+  targetAudience: broadcastTargetEnum("target_audience").default("all").notNull(),
+  deepLink: varchar("deep_link", { length: 255 }), // Optional: /actions, /profile, etc.
+  status: broadcastStatusEnum("status").default("draft").notNull(),
+  scheduledFor: timestamp("scheduled_for"), // null = send immediately
+  sentAt: timestamp("sent_at"),
+  sentBy: varchar("sent_by").references(() => users.id, { onDelete: "set null" }),
+  recipientCount: integer("recipient_count").default(0),
+  successCount: integer("success_count").default(0),
+  failureCount: integer("failure_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_broadcasts_status").on(table.status),
+  index("idx_broadcasts_sent_at").on(table.sentAt),
+]);
+
+// Admin Broadcasts types
+export const insertAdminBroadcastSchema = createInsertSchema(adminBroadcasts).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  sentAt: true,
+  recipientCount: true,
+  successCount: true,
+  failureCount: true
+});
+export type InsertAdminBroadcast = z.infer<typeof insertAdminBroadcastSchema>;
+export type AdminBroadcast = typeof adminBroadcasts.$inferSelect;
