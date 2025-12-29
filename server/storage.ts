@@ -1023,9 +1023,11 @@ export class DatabaseStorage implements IStorage {
           authorLastName: users.lastName,
           authorProfileImageUrl: users.profileImageUrl,
           authorKliqName: users.kliqName,
+          authorBorder: profileBorders,
         })
         .from(actions)
         .innerJoin(users, eq(actions.userId, users.id))
+        .leftJoin(profileBorders, eq(users.equippedBorderId, profileBorders.id))
         .where(inArray(actions.userId, friendIds))
         .orderBy(desc(actions.createdAt))
         .limit(50) : [];
@@ -1146,6 +1148,10 @@ export class DatabaseStorage implements IStorage {
           profileImageUrl: action.authorProfileImageUrl,
           kliqName: action.authorKliqName,
         },
+        authorBorder: action.authorBorder ? {
+          imageUrl: action.authorBorder.imageUrl,
+          name: action.authorBorder.name,
+        } : undefined,
         type: 'action',
         content: `🔴 ${action.status === 'live' ? 'Started a live stream' : 'Ended a live stream'}: "${action.title}"`,
       })));
@@ -3112,15 +3118,20 @@ export class DatabaseStorage implements IStorage {
       .select({
         comment: actionComments,
         user: users,
+        userBorder: profileBorders,
       })
       .from(actionComments)
       .leftJoin(users, eq(actionComments.userId, users.id))
+      .leftJoin(profileBorders, eq(users.equippedBorderId, profileBorders.id))
       .where(eq(actionComments.actionId, actionId))
       .orderBy(actionComments.createdAt);
 
-    return comments.map(({ comment, user }) => ({
+    return comments.map(({ comment, user, userBorder }) => ({
       ...comment,
-      user: user!,
+      user: {
+        ...user!,
+        equippedBorder: userBorder || undefined,
+      },
     }));
   }
 

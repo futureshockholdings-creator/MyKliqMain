@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BorderedAvatar } from "@/components/BorderedAvatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,10 @@ interface LiveStreamCardProps {
       lastName?: string;
       username?: string;
       profileImageUrl?: string;
+    };
+    authorBorder?: {
+      imageUrl?: string;
+      name?: string;
     };
   };
   currentUserId?: string;
@@ -444,10 +449,13 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       >
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-3">
-            <Avatar className="w-10 h-10">
-              <AvatarImage src={resolveAssetUrl(action.author?.profileImageUrl)} />
-              <AvatarFallback>{authorName[0]}</AvatarFallback>
-            </Avatar>
+            <BorderedAvatar
+              src={action.author?.profileImageUrl}
+              fallback={authorName[0]}
+              borderImageUrl={action.author.id === userData?.id ? (userData as any)?.equippedBorder?.imageUrl : action.authorBorder?.imageUrl}
+              borderName={action.author.id === userData?.id ? (userData as any)?.equippedBorder?.name : action.authorBorder?.name}
+              size="md"
+            />
             <div className="flex-1">
               <p className="font-bold text-primary">{authorName}</p>
               <p className="text-xs text-muted-foreground">
@@ -635,10 +643,13 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                       : comment.user?.firstName || comment.user?.username || 'User';
                     return (
                       <div key={comment.id} className="flex space-x-2">
-                        <Avatar className="w-8 h-8">
-                          <AvatarImage src={resolveAssetUrl(comment.user?.profileImageUrl)} />
-                          <AvatarFallback>{comment.user?.firstName?.[0] || 'U'}</AvatarFallback>
-                        </Avatar>
+                        <BorderedAvatar
+                          src={comment.user?.profileImageUrl}
+                          fallback={comment.user?.firstName?.[0] || 'U'}
+                          borderImageUrl={comment.user?.id === userData?.id ? (userData as any)?.equippedBorder?.imageUrl : comment.user?.equippedBorder?.imageUrl}
+                          borderName={comment.user?.id === userData?.id ? (userData as any)?.equippedBorder?.name : comment.user?.equippedBorder?.name}
+                          size="sm"
+                        />
                         <div className="flex-1">
                           <p className="text-sm">
                             <span className="font-semibold text-foreground">{commentUserName}</span>
@@ -710,10 +721,16 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
         </div>
         
         <div className="flex items-start gap-3 mb-4">
-          <Avatar className="w-10 h-10 border-2 border-red-500">
-            <AvatarImage src={resolveAssetUrl(action.author?.profileImageUrl)} />
-            <AvatarFallback>{authorName[0]}</AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <BorderedAvatar
+              src={action.author?.profileImageUrl}
+              fallback={authorName[0]}
+              borderImageUrl={action.author.id === userData?.id ? (userData as any)?.equippedBorder?.imageUrl : action.authorBorder?.imageUrl}
+              borderName={action.author.id === userData?.id ? (userData as any)?.equippedBorder?.name : action.authorBorder?.name}
+              size="md"
+            />
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+          </div>
           <div className="flex-1">
             <p className="font-semibold text-foreground">{authorName}</p>
             <h3 className="text-lg font-bold text-foreground">{action.title}</h3>
