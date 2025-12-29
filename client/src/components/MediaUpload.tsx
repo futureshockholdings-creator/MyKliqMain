@@ -301,29 +301,37 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       }
       
       const fileName = `camera-${Date.now()}.${extension}`;
-      const file = new File([capturedMedia.blob], fileName, {
-        type: mimeType
-      });
+      
+      console.log(`[CameraUpload] Uploading ${capturedMedia.type}: ${fileName}, size: ${capturedMedia.blob.size}, mimeType: ${mimeType}`);
       
       const uploadParams = await handleGetUploadParameters({
         name: fileName,
-        type: file.type,
+        type: mimeType,
         size: capturedMedia.blob.size
       });
       
+      console.log(`[CameraUpload] Got upload URL: ${uploadParams.url.substring(0, 80)}...`);
+      
+      // Upload using the blob directly (not wrapped in a File) for better compatibility
       const uploadResponse = await fetch(uploadParams.url, {
         method: uploadParams.method,
-        body: file,
+        body: capturedMedia.blob,
         headers: {
-          'Content-Type': file.type,
+          'Content-Type': mimeType,
         },
+        mode: 'cors',
       });
       
+      console.log(`[CameraUpload] Upload response status: ${uploadResponse.status}`);
+      
       if (!uploadResponse.ok) {
-        throw new Error('Upload failed');
+        const errorText = await uploadResponse.text().catch(() => 'No error text');
+        console.error(`[CameraUpload] Upload failed: ${uploadResponse.status} - ${errorText}`);
+        throw new Error(`Upload failed: ${uploadResponse.status}`);
       }
       
       const mediaUrl = uploadParams.url.split('?')[0];
+      console.log(`[CameraUpload] Upload successful, mediaUrl: ${mediaUrl}`);
       
       setUploadedMedia({
         url: mediaUrl,
@@ -339,7 +347,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
         description: "Your captured media has been uploaded successfully."
       });
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("[CameraUpload] Upload error:", error);
       toast({
         title: "Upload failed",
         description: "Failed to upload captured media. Please try again.",
