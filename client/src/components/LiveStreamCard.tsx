@@ -251,10 +251,18 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       const response = await apiRequest("POST", `/api/actions/${actionId}/comments`, { content });
       return response;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setNewComment("");
       refetchComments();
+      // Clear cache and refetch for consistency
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+        await enhancedCache.removeByPattern('/api/notifications');
+      } catch (e) {}
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      // Refetch notifications immediately for instant update
+      queryClient.refetchQueries({ queryKey: ["/api/notifications"] });
     },
   });
 
