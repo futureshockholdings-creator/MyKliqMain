@@ -724,6 +724,15 @@ export const actionLikes = pgTable("action_likes", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Action comments (for video posts)
+export const actionComments = pgTable("action_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  actionId: varchar("action_id").references(() => actions.id, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Action viewers (who's watching the stream)
 export const actionViewers = pgTable("action_viewers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

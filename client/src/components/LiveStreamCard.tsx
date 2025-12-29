@@ -22,8 +22,19 @@ import {
   Trash2,
   Star,
   Plus,
-  PlusCircle
+  PlusCircle,
+  Edit,
+  BookmarkPlus,
+  Bookmark
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { getApiBaseUrl } from "@/lib/apiConfig";
 import {
   AlertDialog,
@@ -92,12 +103,22 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [viewerCount, setViewerCount] = useState(action.viewerCount || 0);
   const [showComments, setShowComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editTitle, setEditTitle] = useState(action.title);
+  const [editDescription, setEditDescription] = useState(action.description || "");
+  const [isSaved, setIsSaved] = useState(false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: userData } = useQuery<any>({
     queryKey: ["/api/auth/user"],
+  });
+
+  const { data: actionComments = [], refetch: refetchComments } = useQuery<any[]>({
+    queryKey: [`/api/actions/${action.id}/comments`],
+    enabled: action.status === 'ended' && showComments,
   });
 
   const likeActionMutation = useMutation({
@@ -162,6 +183,50 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    },
+  });
+
+  const editActionMutation = useMutation({
+    mutationFn: async ({ actionId, title, description }: { actionId: string; title: string; description: string }) => {
+      const response = await apiRequest("PUT", `/api/actions/${actionId}`, { title, description });
+      return response;
+    },
+    onSuccess: () => {
+      toast({ title: "Updated", description: "Your video post has been updated" });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
+      setShowEditDialog(false);
+    },
+  });
+
+  const addCommentMutation = useMutation({
+    mutationFn: async ({ actionId, content }: { actionId: string; content: string }) => {
+      const response = await apiRequest("POST", `/api/actions/${actionId}/comments`, { content });
+      return response;
+    },
+    onSuccess: () => {
+      setNewComment("");
+      refetchComments();
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    },
+  });
+
+  const saveToScrapbookMutation = useMutation({
+    mutationFn: async (actionId: string) => {
+      const response = await apiRequest("POST", `/api/scrapbook/save-action`, { actionId });
+      return response;
+    },
+    onSuccess: () => {
+      toast({ title: "Saved!", description: "Video added to your scrapbook" });
+      setIsSaved(true);
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+    },
+    onError: (error: any) => {
+      if (error.message?.includes('already saved')) {
+        toast({ title: "Already saved", description: "This video is already in your scrapbook" });
+      } else {
+        toast({ title: "Error", description: "Failed to save video", variant: "destructive" });
+      }
     },
   });
 
@@ -312,6 +377,59 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
 
             {isOwner && (
               <>
+                <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-blue-500"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md bg-card border-border">
+                    <DialogHeader>
+                      <DialogTitle className="text-foreground">Edit Video Post</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div>
+                        <label className="text-sm font-medium text-foreground">Title</label>
+                        <Input
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          className="mt-1"
+                          placeholder="Video title"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-foreground">Description</label>
+                        <Textarea
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                          className="mt-1"
+                          placeholder="Video description"
+                          rows={3}
+                        />
+                      </div>
+                      <div className="flex justify-end space-x-2">
+                        <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => editActionMutation.mutate({
+                            actionId: action.id,
+                            title: editTitle,
+                            description: editDescription
+                          })}
+                          disabled={editActionMutation.isPending}
+                        >
+                          {editActionMutation.isPending ? "Saving..." : "Save Changes"}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
                 <Button
                   variant="ghost"
                   size="sm"
@@ -414,25 +532,97 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                 size="sm"
                 variant="ghost"
                 onClick={() => setShowComments(!showComments)}
-                className="p-0 h-auto text-primary hover:bg-primary/10"
+                className={cn(
+                  "p-0 h-auto transition-colors",
+                  showComments ? "text-blue-500" : "text-primary hover:bg-primary/10"
+                )}
               >
-                <MessageCircle className="w-4 h-4 mr-1" />
-                Comments
+                <MessageCircle className={cn("w-4 h-4 mr-1", showComments && "fill-current")} />
+                {actionComments.length > 0 ? actionComments.length : ""}
               </Button>
 
               {!isOwner && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleShare}
-                  className="p-0 h-auto text-primary hover:bg-primary/10"
-                >
-                  <Share2 className="w-4 h-4 mr-1" />
-                  Share
-                </Button>
+                <>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleShare}
+                    className="p-0 h-auto text-primary hover:bg-primary/10"
+                  >
+                    <Share2 className="w-4 h-4 mr-1" />
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => saveToScrapbookMutation.mutate(action.id)}
+                    disabled={isSaved || saveToScrapbookMutation.isPending}
+                    className={cn(
+                      "p-0 h-auto transition-colors",
+                      isSaved ? "text-green-500" : "text-primary hover:bg-primary/10"
+                    )}
+                  >
+                    {isSaved ? (
+                      <Bookmark className="w-4 h-4 mr-1 fill-current" />
+                    ) : (
+                      <BookmarkPlus className="w-4 h-4 mr-1" />
+                    )}
+                  </Button>
+                </>
               )}
             </div>
           </div>
+
+          {showComments && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <div className="space-y-3">
+                {actionComments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-2">No comments yet. Be the first to comment!</p>
+                ) : (
+                  actionComments.map((comment: any) => (
+                    <div key={comment.id} className="flex space-x-2">
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage src={comment.user?.profileImageUrl} />
+                        <AvatarFallback>{comment.user?.firstName?.[0] || 'U'}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="text-sm">
+                          <span className="font-semibold text-foreground">{comment.user?.firstName || 'User'}</span>
+                          <span className="text-muted-foreground ml-2">{comment.content}</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">{formatTimeAgo(comment.createdAt)}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="flex space-x-2 mt-3">
+                <Input
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Write a comment..."
+                  className="flex-1"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && newComment.trim()) {
+                      addCommentMutation.mutate({ actionId: action.id, content: newComment.trim() });
+                    }
+                  }}
+                />
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (newComment.trim()) {
+                      addCommentMutation.mutate({ actionId: action.id, content: newComment.trim() });
+                    }
+                  }}
+                  disabled={!newComment.trim() || addCommentMutation.isPending}
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );

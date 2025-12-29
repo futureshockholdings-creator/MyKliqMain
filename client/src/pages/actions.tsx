@@ -471,28 +471,36 @@ export default function Actions() {
     createActionMutation.mutate(newAction);
   };
 
-  // Handle end action with recording upload
+  // Handle end action with recording upload (non-blocking for instant response)
   const handleEndAction = async () => {
     if (selectedAction) {
-      // Stop the MediaRecorder first to get final data
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-        // Wait a moment for the final data to be collected
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
+      const actionId = selectedAction.id;
       
-      // Upload the recording
-      const recordingUrl = await uploadRecording(selectedAction.id);
-      
+      // Immediately end the stream in UI and API
       if (ws) {
         ws.send(JSON.stringify({
           type: 'action_ended',
-          actionId: selectedAction.id
+          actionId
         }));
       }
       
-      // Pass the recording URL to the end action mutation if it exists
-      endActionMutation.mutate(selectedAction.id);
+      // End the action immediately (don't wait for recording upload)
+      endActionMutation.mutate(actionId);
+      
+      // Stop the MediaRecorder and upload in background (non-blocking)
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        
+        // Upload recording in background after a brief delay for final data collection
+        setTimeout(async () => {
+          await uploadRecording(actionId);
+          // Refresh recordings list after upload completes
+          queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
+          queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+          queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
+        }, 500);
+      }
     }
   };
 

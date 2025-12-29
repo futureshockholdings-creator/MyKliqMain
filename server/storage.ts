@@ -26,6 +26,7 @@ import {
   actionViewers,
   actionChatMessages,
   actionLikes,
+  actionComments,
   meetups,
   meetupCheckIns,
   birthdayMessages,
@@ -3065,6 +3066,52 @@ export class DatabaseStorage implements IStorage {
       .update(actions)
       .set({ isHighlighted: false })
       .where(eq(actions.id, actionId));
+  }
+
+  async getActionComments(actionId: string): Promise<any[]> {
+    const comments = await db
+      .select({
+        comment: actionComments,
+        user: users,
+      })
+      .from(actionComments)
+      .leftJoin(users, eq(actionComments.userId, users.id))
+      .where(eq(actionComments.actionId, actionId))
+      .orderBy(actionComments.createdAt);
+
+    return comments.map(({ comment, user }) => ({
+      ...comment,
+      user: user!,
+    }));
+  }
+
+  async addActionComment(data: { actionId: string; userId: string; content: string }): Promise<any> {
+    const [newComment] = await db.insert(actionComments).values(data).returning();
+    
+    const user = await this.getUser(data.userId);
+    return { ...newComment, user };
+  }
+
+  async saveActionToScrapbook(userId: string, actionId: string): Promise<any> {
+    const [existing] = await db
+      .select()
+      .from(scrapbookSaves)
+      .where(and(
+        eq(scrapbookSaves.userId, userId),
+        sql`note = ${`action:${actionId}`}`
+      ))
+      .limit(1);
+
+    if (existing) {
+      throw new Error('Action already saved to scrapbook');
+    }
+
+    const [saved] = await db.insert(scrapbookSaves).values({
+      userId,
+      note: `action:${actionId}`,
+    }).returning();
+
+    return saved;
   }
 
   // Meetup operations

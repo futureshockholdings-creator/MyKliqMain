@@ -6771,6 +6771,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update action (edit title/description)
+  app.put('/api/actions/:actionId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { actionId } = req.params;
+      const { title, description } = req.body;
+      
+      const action = await storage.getActionById(actionId);
+      if (!action || action.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized to edit this action" });
+      }
+      
+      const updatedAction = await storage.updateAction(actionId, { title, description });
+      
+      const { cacheService } = await import('./cacheService');
+      await cacheService.invalidatePattern('kliq-feed:*');
+      await cacheService.invalidateUserCache(userId);
+      
+      res.json(updatedAction);
+    } catch (error) {
+      console.error("Error updating action:", error);
+      res.status(500).json({ message: "Failed to update action" });
+    }
+  });
+
+  // Get action comments
+  app.get('/api/actions/:actionId/comments', isAuthenticated, async (req: any, res) => {
+    try {
+      const { actionId } = req.params;
+      const comments = await storage.getActionComments(actionId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching action comments:", error);
+      res.status(500).json({ message: "Failed to fetch comments" });
+    }
+  });
+
+  // Add action comment
+  app.post('/api/actions/:actionId/comments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { actionId } = req.params;
+      const { content } = req.body;
+      
+      if (!content?.trim()) {
+        return res.status(400).json({ message: "Comment content is required" });
+      }
+      
+      const comment = await storage.addActionComment({
+        actionId,
+        userId,
+        content: content.trim()
+      });
+      
+      res.json(comment);
+    } catch (error) {
+      console.error("Error adding action comment:", error);
+      res.status(500).json({ message: "Failed to add comment" });
+    }
+  });
+
+  // Save action to scrapbook
+  app.post('/api/scrapbook/save-action', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { actionId } = req.body;
+      
+      if (!actionId) {
+        return res.status(400).json({ message: "Action ID is required" });
+      }
+      
+      const action = await storage.getActionById(actionId);
+      if (!action) {
+        return res.status(404).json({ message: "Action not found" });
+      }
+      
+      const savedAction = await storage.saveActionToScrapbook(userId, actionId);
+      res.json(savedAction);
+    } catch (error: any) {
+      console.error("Error saving action to scrapbook:", error);
+      if (error.message?.includes('already saved')) {
+        return res.status(409).json({ message: "This action is already saved to your scrapbook" });
+      }
+      res.status(500).json({ message: "Failed to save action" });
+    }
+  });
+
   // End action (stop live stream)
   app.put('/api/actions/:actionId/end', isAuthenticated, async (req: any, res) => {
     try {
