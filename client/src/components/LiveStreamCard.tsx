@@ -160,9 +160,29 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       const response = await apiRequest("DELETE", `/api/actions/${actionId}`);
       return response;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({ title: "Video deleted", description: "Your recording has been removed" });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      
+      // Clear enhanced cache first - must await
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+        await enhancedCache.removeByPattern('/api/actions');
+      } catch (e) {}
+      
+      // Invalidate and refetch immediately for instant UI update
+      await queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && key.includes('/api/kliq-feed');
+        }
+      });
+      await queryClient.refetchQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && key.includes('/api/kliq-feed');
+        }
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
     },
