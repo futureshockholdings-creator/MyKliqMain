@@ -161,9 +161,9 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       return response;
     },
     onSuccess: async () => {
-      toast({ title: "Video deleted", description: "Your recording has been removed" });
+      toast({ title: "Video deleted", description: "Your recording has been removed from feed and library" });
       
-      // Clear enhanced cache first - must await
+      // Clear enhanced cache first - must await for all related caches
       try {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/kliq-feed');
@@ -183,8 +183,11 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
           return typeof key === 'string' && key.includes('/api/kliq-feed');
         }
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
+      
+      // Also invalidate and refetch actions/recordings for My Recordings library
+      await queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
     },
   });
 
