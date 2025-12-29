@@ -165,6 +165,9 @@ import {
   contentEngagements,
   socialConnectionRewards,
   sessions,
+  adminBroadcasts,
+  type AdminBroadcast,
+  type InsertAdminBroadcast,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, countDistinct, not, isNull, isNotNull } from "drizzle-orm";
@@ -482,6 +485,15 @@ export interface IStorage {
   getEducationalPosts(limit?: number): Promise<EducationalPost[]>;
   getRandomEducationalPosts(count: number, excludeIds?: string[]): Promise<EducationalPost[]>;
   createEducationalPost(post: InsertEducationalPost): Promise<EducationalPost>;
+
+  // Admin Broadcast operations
+  createBroadcast(broadcast: InsertAdminBroadcast): Promise<AdminBroadcast>;
+  getBroadcasts(limit?: number): Promise<AdminBroadcast[]>;
+  getBroadcastById(broadcastId: string): Promise<AdminBroadcast | undefined>;
+  updateBroadcast(broadcastId: string, updates: Partial<AdminBroadcast>): Promise<AdminBroadcast>;
+  deleteBroadcast(broadcastId: string): Promise<void>;
+  getAllActiveDeviceTokens(): Promise<DeviceToken[]>;
+  getActiveDeviceTokensByAudience(audience: string): Promise<DeviceToken[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5494,6 +5506,113 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return { ...newUserBorder, border };
+  }
+
+  // Admin Broadcast operations
+  async createBroadcast(broadcast: InsertAdminBroadcast): Promise<AdminBroadcast> {
+    const [newBroadcast] = await db
+      .insert(adminBroadcasts)
+      .values(broadcast)
+      .returning();
+    return newBroadcast;
+  }
+
+  async getBroadcasts(limit: number = 50): Promise<AdminBroadcast[]> {
+    return await db
+      .select()
+      .from(adminBroadcasts)
+      .orderBy(desc(adminBroadcasts.createdAt))
+      .limit(limit);
+  }
+
+  async getBroadcastById(broadcastId: string): Promise<AdminBroadcast | undefined> {
+    const [broadcast] = await db
+      .select()
+      .from(adminBroadcasts)
+      .where(eq(adminBroadcasts.id, broadcastId));
+    return broadcast;
+  }
+
+  async updateBroadcast(broadcastId: string, updates: Partial<AdminBroadcast>): Promise<AdminBroadcast> {
+    const [updated] = await db
+      .update(adminBroadcasts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(adminBroadcasts.id, broadcastId))
+      .returning();
+    return updated;
+  }
+
+  async deleteBroadcast(broadcastId: string): Promise<void> {
+    await db.delete(adminBroadcasts).where(eq(adminBroadcasts.id, broadcastId));
+  }
+
+  async getAllActiveDeviceTokens(): Promise<DeviceToken[]> {
+    return await db
+      .select()
+      .from(deviceTokens)
+      .where(eq(deviceTokens.isActive, true));
+  }
+
+  async getActiveDeviceTokensByAudience(audience: string): Promise<DeviceToken[]> {
+    // Base query for active tokens
+    if (audience === 'all') {
+      return this.getAllActiveDeviceTokens();
+    }
+
+    // For targeted audiences, join with users table
+    if (audience === 'active_7d') {
+      // Users active in last 7 days
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const results = await db
+        .select({ token: deviceTokens })
+        .from(deviceTokens)
+        .innerJoin(users, eq(deviceTokens.userId, users.id))
+        .where(
+          and(
+            eq(deviceTokens.isActive, true),
+            gte(users.updatedAt, sevenDaysAgo)
+          )
+        );
+      return results.map(r => r.token);
+    }
+
+    if (audience === 'active_30d') {
+      // Users active in last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const results = await db
+        .select({ token: deviceTokens })
+        .from(deviceTokens)
+        .innerJoin(users, eq(deviceTokens.userId, users.id))
+        .where(
+          and(
+            eq(deviceTokens.isActive, true),
+            gte(users.updatedAt, thirtyDaysAgo)
+          )
+        );
+      return results.map(r => r.token);
+    }
+
+    if (audience === 'streak_users') {
+      // Users with active login streaks (> 0 days)
+      const results = await db
+        .select({ token: deviceTokens })
+        .from(deviceTokens)
+        .innerJoin(loginStreaks, eq(deviceTokens.userId, loginStreaks.userId))
+        .where(
+          and(
+            eq(deviceTokens.isActive, true),
+            gt(loginStreaks.currentStreak, 0)
+          )
+        );
+      return results.map(r => r.token);
+    }
+
+    // Default to all
+    return this.getAllActiveDeviceTokens();
   }
 }
 

@@ -10576,6 +10576,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // =====================================
+  // ADMIN BROADCAST PUSH NOTIFICATIONS
+  // =====================================
+  
+  // Get all broadcasts
+  app.get('/api/admin/broadcasts', async (req, res) => {
+    try {
+      const { password } = req.query;
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+      
+      const broadcasts = await storage.getBroadcasts(100);
+      res.json(broadcasts);
+    } catch (error) {
+      console.error("Error fetching broadcasts:", error);
+      res.status(500).json({ message: "Failed to fetch broadcasts" });
+    }
+  });
+
+  // Create a new broadcast
+  app.post('/api/admin/broadcasts', async (req, res) => {
+    try {
+      const { password } = req.query;
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      const { title, body, targetAudience, deepLink, sendNow } = req.body;
+      
+      if (!title || !body) {
+        return res.status(400).json({ message: "Title and body are required" });
+      }
+
+      const broadcast = await storage.createBroadcast({
+        title,
+        body,
+        targetAudience: targetAudience || 'all',
+        deepLink: deepLink || null,
+        status: sendNow ? 'sent' : 'draft',
+        sentBy: null,
+      });
+
+      // If sendNow is true, send the push notifications immediately
+      if (sendNow) {
+        const { firebaseNotificationService } = await import('./firebase-notifications');
+        const tokens = await storage.getActiveDeviceTokensByAudience(targetAudience || 'all');
+        
+        if (tokens.length > 0) {
+          const result = await firebaseNotificationService.sendToMultipleDevices(
+            tokens.map(t => t.token),
+            {
+              title,
+              body,
+              data: deepLink ? { deepLink } : undefined
+            }
+          );
+          
+          // Update broadcast with send results
+          await storage.updateBroadcast(broadcast.id, {
+            sentAt: new Date(),
+            recipientCount: tokens.length,
+            successCount: result.successCount,
+            failureCount: result.failureCount,
+            status: 'sent'
+          });
+          
+          console.log(`[Broadcast] Sent "${title}" to ${tokens.length} devices. Success: ${result.successCount}, Failed: ${result.failureCount}`);
+        } else {
+          await storage.updateBroadcast(broadcast.id, {
+            sentAt: new Date(),
+            recipientCount: 0,
+            successCount: 0,
+            failureCount: 0,
+            status: 'sent'
+          });
+          console.log(`[Broadcast] No active device tokens found for audience: ${targetAudience}`);
+        }
+      }
+
+      res.json(broadcast);
+    } catch (error) {
+      console.error("Error creating broadcast:", error);
+      res.status(500).json({ message: "Failed to create broadcast" });
+    }
+  });
+
+  // Send an existing draft broadcast
+  app.post('/api/admin/broadcasts/:broadcastId/send', async (req, res) => {
+    try {
+      const { password } = req.query;
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      const { broadcastId } = req.params;
+      const broadcast = await storage.getBroadcastById(broadcastId);
+      
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+      
+      if (broadcast.status === 'sent') {
+        return res.status(400).json({ message: "Broadcast has already been sent" });
+      }
+
+      const { firebaseNotificationService } = await import('./firebase-notifications');
+      const tokens = await storage.getActiveDeviceTokensByAudience(broadcast.targetAudience || 'all');
+      
+      if (tokens.length > 0) {
+        const result = await firebaseNotificationService.sendToMultipleDevices(
+          tokens.map(t => t.token),
+          {
+            title: broadcast.title,
+            body: broadcast.body,
+            data: broadcast.deepLink ? { deepLink: broadcast.deepLink } : undefined
+          }
+        );
+        
+        await storage.updateBroadcast(broadcastId, {
+          sentAt: new Date(),
+          recipientCount: tokens.length,
+          successCount: result.successCount,
+          failureCount: result.failureCount,
+          status: 'sent'
+        });
+        
+        res.json({ 
+          message: "Broadcast sent successfully",
+          recipientCount: tokens.length,
+          successCount: result.successCount,
+          failureCount: result.failureCount
+        });
+      } else {
+        await storage.updateBroadcast(broadcastId, {
+          sentAt: new Date(),
+          recipientCount: 0,
+          successCount: 0,
+          failureCount: 0,
+          status: 'sent'
+        });
+        
+        res.json({ 
+          message: "No active device tokens found",
+          recipientCount: 0,
+          successCount: 0,
+          failureCount: 0
+        });
+      }
+    } catch (error) {
+      console.error("Error sending broadcast:", error);
+      res.status(500).json({ message: "Failed to send broadcast" });
+    }
+  });
+
+  // Delete a broadcast
+  app.delete('/api/admin/broadcasts/:broadcastId', async (req, res) => {
+    try {
+      const { password } = req.query;
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      const { broadcastId } = req.params;
+      await storage.deleteBroadcast(broadcastId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting broadcast:", error);
+      res.status(500).json({ message: "Failed to delete broadcast" });
+    }
+  });
+
+  // Get audience count for targeting preview
+  app.get('/api/admin/broadcasts/audience-count', async (req, res) => {
+    try {
+      const { password, audience } = req.query;
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      const tokens = await storage.getActiveDeviceTokensByAudience(audience as string || 'all');
+      res.json({ count: tokens.length, audience: audience || 'all' });
+    } catch (error) {
+      console.error("Error getting audience count:", error);
+      res.status(500).json({ message: "Failed to get audience count" });
+    }
+  });
+
+  // =====================================
   // SMART FRIEND RANKING INTELLIGENCE API
   // =====================================
 
