@@ -8264,6 +8264,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete action save from scrapbook
+  app.delete('/api/scrapbook/save-action/:actionId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { actionId } = req.params;
+      
+      await storage.unsaveActionFromScrapbook(userId, actionId);
+      res.json({ message: "Video removed from scrapbook" });
+    } catch (error) {
+      console.error("Error removing action from scrapbook:", error);
+      res.status(500).json({ message: "Failed to remove video from scrapbook" });
+    }
+  });
+
   app.patch('/api/scrapbook/save/:saveId/note', isAuthenticated, async (req: any, res) => {
     try {
       const { saveId } = req.params;

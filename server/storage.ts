@@ -3597,6 +3597,15 @@ export class DatabaseStorage implements IStorage {
       ));
   }
 
+  async unsaveActionFromScrapbook(userId: string, actionId: string): Promise<void> {
+    await db
+      .delete(scrapbookSaves)
+      .where(and(
+        eq(scrapbookSaves.userId, userId),
+        sql`note = ${`action:${actionId}`}`
+      ));
+  }
+
   async isCommentSavedByUser(userId: string, commentId: string): Promise<boolean> {
     const result = await db
       .select({ id: scrapbookSaves.id })

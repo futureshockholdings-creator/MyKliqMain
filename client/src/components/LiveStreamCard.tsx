@@ -92,6 +92,10 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
   const [editTitle, setEditTitle] = useState(action.title);
   const [editDescription, setEditDescription] = useState(action.description || "");
   const [isSaved, setIsSaved] = useState(false);
+  const [isLiked, setIsLiked] = useState(
+    Array.isArray(action.likes) && currentUserId && action.likes.some((like: any) => like.userId === currentUserId)
+  );
+  const [likeCount, setLikeCount] = useState(Array.isArray(action.likes) ? action.likes.length : 0);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -363,8 +367,6 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
   const isLive = action.status === 'live';
   const authorName = action.author?.firstName || action.author?.username || 'User';
   const isOwner = currentUserId === action.author.id;
-  const isLiked = Array.isArray(action.likes) && currentUserId && action.likes.some((like: any) => like.userId === currentUserId);
-  const likeCount = Array.isArray(action.likes) ? action.likes.length : 0;
 
   if (!isLive) {
     return (

@@ -968,6 +968,29 @@ export default function Home() {
     },
   });
 
+  const unsaveActionMutation = useMutation({
+    mutationFn: async (actionId: string) => {
+      return await apiRequest("DELETE", `/api/scrapbook/save-action/${actionId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+      setShowUnsaveDialog(false);
+      setPostToUnsave(null);
+      toast({
+        title: "Video Removed",
+        description: "The video has been removed from your scrapbook.",
+        className: "bg-white text-black border-gray-300",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove video from scrapbook",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Highlight post mutation
   const highlightPostMutation = useMutation({
     mutationFn: async (postId: string) => {
@@ -4372,7 +4395,7 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle className="text-black dark:text-black">Remove from Scrapbook?</DialogTitle>
             <DialogDescription className="text-gray-700 dark:text-gray-700">
-              This will remove the post from your scrapbook and delete any notes you've added.
+              This will remove the {postToUnsave?.type === 'action' ? 'video' : 'post'} from your scrapbook and delete any notes you've added.
             </DialogDescription>
           </DialogHeader>
           
@@ -4389,13 +4412,17 @@ export default function Home() {
             </Button>
               <Button
                 onClick={() => {
-                  unsavePostMutation.mutate(postToUnsave?.id);
+                  if (postToUnsave?.type === 'action') {
+                    unsaveActionMutation.mutate(postToUnsave?.id);
+                  } else {
+                    unsavePostMutation.mutate(postToUnsave?.id);
+                  }
                 }}
-                disabled={unsavePostMutation.isPending}
+                disabled={unsavePostMutation.isPending || unsaveActionMutation.isPending}
                 className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700 dark:text-white"
                 data-testid="button-confirm-unsave"
               >
-                {unsavePostMutation.isPending ? "Removing..." : "Remove"}
+                {(unsavePostMutation.isPending || unsaveActionMutation.isPending) ? "Removing..." : "Remove"}
               </Button>
             </div>
           </DialogContent>
