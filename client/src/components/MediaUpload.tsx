@@ -287,56 +287,55 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
     if (!capturedMedia) return;
     
     try {
-      // Determine file extension and MIME type based on captured media type
-      let extension: string;
+      // Determine MIME type based on captured media type
       let mimeType: string;
       
       if (capturedMedia.type === "image") {
-        extension = "jpg";
         mimeType = "image/jpeg";
       } else {
-        // Use the MIME type from recording, or default to webm
         mimeType = capturedMedia.mimeType || "video/webm";
-        extension = mimeType.includes('mp4') ? "mp4" : "webm";
       }
       
-      const fileName = `camera-${Date.now()}.${extension}`;
+      console.log(`[CameraUpload] Uploading ${capturedMedia.type}, size: ${capturedMedia.blob.size}, mimeType: ${mimeType}`);
       
-      console.log(`[CameraUpload] Uploading ${capturedMedia.type}: ${fileName}, size: ${capturedMedia.blob.size}, mimeType: ${mimeType}`);
+      // Use direct fetch for blob upload (bypasses enterpriseApiRequest which JSON.stringifies)
+      const { buildApiUrl } = await import('../lib/apiConfig');
+      const { getAuthToken } = await import('../lib/tokenStorage');
       
-      const uploadParams = await handleGetUploadParameters({
-        name: fileName,
-        type: mimeType,
-        size: capturedMedia.blob.size
-      });
+      const uploadUrl = buildApiUrl('/api/media/upload-direct');
+      const token = getAuthToken();
       
-      console.log(`[CameraUpload] Got upload URL: ${uploadParams.url.substring(0, 80)}...`);
+      const headers: HeadersInit = {
+        'Content-Type': mimeType,
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       
-      // Upload using the blob directly (not wrapped in a File) for better compatibility
-      const uploadResponse = await fetch(uploadParams.url, {
-        method: uploadParams.method,
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers,
         body: capturedMedia.blob,
-        headers: {
-          'Content-Type': mimeType,
-        },
-        mode: 'cors',
+        credentials: 'include',
       });
       
-      console.log(`[CameraUpload] Upload response status: ${uploadResponse.status}`);
-      
-      if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text().catch(() => 'No error text');
-        console.error(`[CameraUpload] Upload failed: ${uploadResponse.status} - ${errorText}`);
-        throw new Error(`Upload failed: ${uploadResponse.status}`);
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Upload failed');
+        console.error(`[CameraUpload] Upload failed: ${response.status} - ${errorText}`);
+        throw new Error(`Upload failed: ${response.status}`);
       }
       
-      const mediaUrl = uploadParams.url.split('?')[0];
-      console.log(`[CameraUpload] Upload successful, mediaUrl: ${mediaUrl}`);
+      const result = await response.json();
+      console.log(`[CameraUpload] Upload response:`, result);
+      
+      if (!result?.mediaUrl) {
+        throw new Error('No media URL returned from server');
+      }
       
       setUploadedMedia({
-        url: mediaUrl,
+        url: result.mediaUrl,
         type: capturedMedia.type,
-        fileName: fileName,
+        fileName: result.fileName || 'camera-capture',
         fileSize: capturedMedia.blob.size
       });
       

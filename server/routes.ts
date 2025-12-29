@@ -5903,6 +5903,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Direct camera media upload - handles camera captures server-side to avoid CORS issues
+  app.post('/api/media/upload-direct', isAuthenticated, async (req: any, res) => {
+    try {
+      const contentType = req.headers['content-type'] || 'application/octet-stream';
+      
+      const chunks: Buffer[] = [];
+      req.on('data', (chunk: Buffer) => chunks.push(chunk));
+      req.on('end', async () => {
+        try {
+          const buffer = Buffer.concat(chunks);
+          
+          if (buffer.length === 0) {
+            return res.status(400).json({ message: "No file data received" });
+          }
+          
+          let extension = 'bin';
+          if (contentType.includes('image/jpeg')) extension = 'jpg';
+          else if (contentType.includes('image/png')) extension = 'png';
+          else if (contentType.includes('video/webm')) extension = 'webm';
+          else if (contentType.includes('video/mp4')) extension = 'mp4';
+          
+          const fileName = `uploads/camera-${Date.now()}.${extension}`;
+          
+          const objectStorage = new ObjectStorageService();
+          const mediaUrl = await objectStorage.uploadBuffer(buffer, fileName, contentType);
+          
+          console.log(`[MediaUpload] Direct upload successful: ${mediaUrl}, size: ${buffer.length}`);
+          res.json({ mediaUrl, fileName, size: buffer.length });
+        } catch (uploadError) {
+          console.error("Error during direct upload:", uploadError);
+          res.status(500).json({ message: "Failed to upload media" });
+        }
+      });
+    } catch (error) {
+      console.error("Error in direct upload endpoint:", error);
+      res.status(500).json({ message: "Failed to process upload" });
+    }
+  });
+
   // Media serving route
   app.get('/objects/:objectPath(*)', async (req: any, res) => {
     try {
