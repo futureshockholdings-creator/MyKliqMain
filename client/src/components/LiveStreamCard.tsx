@@ -90,6 +90,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
   const [viewerCount, setViewerCount] = useState(action.viewerCount || 0);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
+  const [commentCount, setCommentCount] = useState(action.commentCount || 0);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editTitle, setEditTitle] = useState(action.title);
   const [editDescription, setEditDescription] = useState(action.description || "");
@@ -253,6 +254,18 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       const response = await apiRequest("POST", `/api/actions/${actionId}/comments`, { content });
       return response;
     },
+    onMutate: async () => {
+      // Optimistic update - increment comment count immediately
+      const previousCount = commentCount;
+      setCommentCount(prev => prev + 1);
+      return { previousCount };
+    },
+    onError: (err, variables, context: any) => {
+      // Rollback on error
+      if (context?.previousCount !== undefined) {
+        setCommentCount(context.previousCount);
+      }
+    },
     onSuccess: async () => {
       setNewComment("");
       refetchComments();
@@ -267,6 +280,13 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       queryClient.refetchQueries({ queryKey: ["/api/notifications"] });
     },
   });
+
+  // Sync comment count when comments are fetched
+  useEffect(() => {
+    if (actionComments.length > 0) {
+      setCommentCount(actionComments.length);
+    }
+  }, [actionComments]);
 
   const saveToScrapbookMutation = useMutation({
     mutationFn: async (actionId: string) => {
@@ -589,7 +609,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                 className="text-secondary hover:bg-secondary/10 p-0 h-auto"
               >
                 <MessageCircle className="w-4 h-4 mr-1" />
-                {showComments && actionComments.length > 0 ? actionComments.length : (action.commentCount || 0)}
+                {commentCount}
               </Button>
 
               <Button
