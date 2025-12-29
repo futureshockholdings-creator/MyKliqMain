@@ -810,7 +810,34 @@ export default function Home() {
     mutationFn: async (postId: string) => {
       return await apiRequest("DELETE", `/api/scrapbook/save/${postId}`);
     },
-    onSuccess: () => {
+    onMutate: async (postId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: [scrapbookSavesUrl] });
+      // Snapshot previous value
+      const previousSaves = queryClient.getQueryData([scrapbookSavesUrl]);
+      // Optimistically update - remove the item from the list
+      queryClient.setQueryData([scrapbookSavesUrl], (old: any[]) => 
+        old?.filter((save: any) => save.post?.id !== postId) || []
+      );
+      return { previousSaves };
+    },
+    onError: (err, postId, context: any) => {
+      // Rollback on error
+      if (context?.previousSaves) {
+        queryClient.setQueryData([scrapbookSavesUrl], context.previousSaves);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to remove post. Please try again.",
+        variant: "destructive",
+      });
+    },
+    onSuccess: async () => {
+      // Clear enhanced cache and refetch for consistency
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/scrapbook');
+      } catch (e) {}
       queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
       queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saved-map'] });
       setShowUnsaveDialog(false);
@@ -819,13 +846,6 @@ export default function Home() {
         title: "Post Removed",
         description: "The post has been removed from your scrapbook.",
         className: "bg-white text-black border-gray-300",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to remove post. Please try again.",
-        variant: "destructive",
       });
     },
   });
@@ -972,27 +992,41 @@ export default function Home() {
     mutationFn: async (actionId: string) => {
       return await apiRequest("DELETE", `/api/scrapbook/save-action/${actionId}`);
     },
+    onMutate: async (actionId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: [scrapbookSavesUrl] });
+      // Snapshot previous value
+      const previousSaves = queryClient.getQueryData([scrapbookSavesUrl]);
+      // Optimistically update - remove the item from the list
+      queryClient.setQueryData([scrapbookSavesUrl], (old: any[]) => 
+        old?.filter((save: any) => save.action?.id !== actionId) || []
+      );
+      return { previousSaves };
+    },
+    onError: (err, actionId, context: any) => {
+      // Rollback on error
+      if (context?.previousSaves) {
+        queryClient.setQueryData([scrapbookSavesUrl], context.previousSaves);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to remove video from scrapbook",
+        variant: "destructive",
+      });
+    },
     onSuccess: async () => {
-      // Clear enhanced cache before refetching
+      // Clear enhanced cache for consistency
       try {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/scrapbook');
       } catch (e) {}
-      await queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
-      await queryClient.refetchQueries({ queryKey: ['/api/scrapbook/saves'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
       setShowUnsaveDialog(false);
       setPostToUnsave(null);
       toast({
         title: "Video Removed",
         description: "The video has been removed from your scrapbook.",
         className: "bg-white text-black border-gray-300",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to remove video from scrapbook",
-        variant: "destructive",
       });
     },
   });
