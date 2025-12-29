@@ -119,11 +119,14 @@ export default function Events() {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/events');
         await enhancedCache.removeByPattern('/api/calendar');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
       } catch (e) {
         console.log('Cache clear error (non-critical):', e);
       }
       // Force refetch to ensure UI updates immediately
       await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
+      // Refetch kliq-feed so event appears on headlines immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"], type: 'all', exact: false });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       queryClient.invalidateQueries({ queryKey: ["/api/calendar/notes"] });
       setShowCreateEvent(false);
@@ -171,11 +174,14 @@ export default function Events() {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/events');
         await enhancedCache.removeByPattern('/api/calendar');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
       } catch (e) {
         console.log('Cache clear error (non-critical):', e);
       }
       // Force refetch to ensure UI updates immediately
       await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
+      // Refetch kliq-feed so changes appear on headlines immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"], type: 'all', exact: false });
       setShowEditEvent(false);
       setEditingEvent(null);
       toast({
@@ -214,11 +220,14 @@ export default function Events() {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/events');
         await enhancedCache.removeByPattern('/api/calendar');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
       } catch (e) {
         console.log('Cache clear error (non-critical):', e);
       }
       // Force refetch to ensure UI updates immediately
       await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
+      // Refetch kliq-feed so deletion reflects on headlines immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"], type: 'all', exact: false });
       setShowEditEvent(false);
       setEditingEvent(null);
       toast({
