@@ -2056,12 +2056,22 @@ export default function Home() {
 
 
 
-  const handleMediaUploadSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+  const handleMediaUploadSuccess = async () => {
+    // Clear enterprise cache for feed
+    try {
+      const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+      enhancedCache.removeByPattern('/api/kliq-feed');
+    } catch (e) {
+      console.log('Cache clear (non-critical):', e);
+    }
+    // Invalidate and immediately refetch the feed so the new post appears instantly
+    queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
   };
 
   const handleStoryUploadSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+    queryClient.refetchQueries({ queryKey: ["/api/stories"] });
   };
 
   const handleViewStory = async (storyId: string) => {

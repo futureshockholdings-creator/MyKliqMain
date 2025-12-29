@@ -36,7 +36,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [capturedMedia, setCapturedMedia] = useState<{ blob: Blob; type: "image" | "video" } | null>(null);
+  const [capturedMedia, setCapturedMedia] = useState<{ blob: Blob; type: "image" | "video"; mimeType?: string } | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -134,40 +134,113 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
   };
 
   const startVideoRecording = () => {
-    if (!stream) return;
+    if (!stream) {
+      toast({
+        title: "Camera not ready",
+        description: "Please wait for the camera to initialize",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Check if MediaRecorder is available in this browser
+    if (typeof MediaRecorder === 'undefined' || !window.MediaRecorder) {
+      toast({
+        title: "Video recording not supported",
+        description: "Your browser doesn't support video recording. Please use Chrome, Firefox, or Safari on a desktop device.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     recordedChunksRef.current = [];
     
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp8,opus'
-    });
+    // Try different mime types for browser compatibility
+    const mimeTypes = [
+      'video/webm;codecs=vp8,opus',
+      'video/webm;codecs=vp9,opus',
+      'video/webm',
+      'video/mp4'
+    ];
     
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        recordedChunksRef.current.push(event.data);
+    let selectedMimeType = '';
+    
+    // Check if isTypeSupported exists (some older browsers may not have it)
+    if (typeof MediaRecorder.isTypeSupported === 'function') {
+      for (const mimeType of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          selectedMimeType = mimeType;
+          break;
+        }
       }
-    };
+    } else {
+      // Fallback to webm if isTypeSupported is not available
+      selectedMimeType = 'video/webm';
+    }
     
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
-      setCapturedMedia({ blob, type: "video" });
-      setCameraMode("off");
-      stopCamera(true); // Preserve the captured video
-      
+    if (!selectedMimeType) {
       toast({
-        title: "Video recorded!",
-        description: "Review your video and upload when ready"
+        title: "Recording not supported",
+        description: "Your browser doesn't support video recording. Try using Chrome or Safari.",
+        variant: "destructive"
       });
-    };
+      return;
+    }
     
-    mediaRecorder.start();
-    mediaRecorderRef.current = mediaRecorder;
-    setIsRecording(true);
-    setRecordingTime(0);
-    
-    recordingIntervalRef.current = setInterval(() => {
-      setRecordingTime(prev => prev + 1);
-    }, 1000);
+    try {
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: selectedMimeType
+      });
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onerror = (event) => {
+        console.error("MediaRecorder error:", event);
+        toast({
+          title: "Recording failed",
+          description: "An error occurred while recording. Please try again.",
+          variant: "destructive"
+        });
+        setIsRecording(false);
+        if (recordingIntervalRef.current) {
+          clearInterval(recordingIntervalRef.current);
+          recordingIntervalRef.current = null;
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const blobType = selectedMimeType.includes('mp4') ? 'video/mp4' : 'video/webm';
+        const blob = new Blob(recordedChunksRef.current, { type: blobType });
+        setCapturedMedia({ blob, type: "video", mimeType: blobType });
+        setCameraMode("off");
+        stopCamera(true); // Preserve the captured video
+        
+        toast({
+          title: "Video recorded!",
+          description: "Review your video and upload when ready"
+        });
+      };
+      
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+      setRecordingTime(0);
+      
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      toast({
+        title: "Recording failed",
+        description: "Could not start video recording. Please check your camera permissions.",
+        variant: "destructive"
+      });
+    }
   };
 
   const stopVideoRecording = () => {
@@ -186,12 +259,29 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
     if (!capturedMedia) return;
     
     try {
-      const fileName = `camera-${Date.now()}.${capturedMedia.type === "image" ? "jpg" : "webm"}`;
+      // Determine file extension and MIME type based on captured media type
+      let extension: string;
+      let mimeType: string;
+      
+      if (capturedMedia.type === "image") {
+        extension = "jpg";
+        mimeType = "image/jpeg";
+      } else {
+        // Use the MIME type from recording, or default to webm
+        mimeType = capturedMedia.mimeType || "video/webm";
+        extension = mimeType.includes('mp4') ? "mp4" : "webm";
+      }
+      
+      const fileName = `camera-${Date.now()}.${extension}`;
       const file = new File([capturedMedia.blob], fileName, {
-        type: capturedMedia.type === "image" ? "image/jpeg" : "video/webm"
+        type: mimeType
       });
       
-      const uploadParams = await handleGetUploadParameters();
+      const uploadParams = await handleGetUploadParameters({
+        name: fileName,
+        type: file.type,
+        size: capturedMedia.blob.size
+      });
       
       const uploadResponse = await fetch(uploadParams.url, {
         method: uploadParams.method,
