@@ -96,6 +96,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
     Array.isArray(action.likes) && currentUserId && action.likes.some((like: any) => like.userId === currentUserId)
   );
   const [likeCount, setLikeCount] = useState(Array.isArray(action.likes) ? action.likes.length : 0);
+  const [isHighlighted, setIsHighlighted] = useState(action.isHighlighted || false);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -159,7 +160,20 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       const response = await apiRequest("POST", `/api/actions/${actionId}/highlight`);
       return response;
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      setIsHighlighted(true);
+      return { previousHighlighted: false };
+    },
+    onError: (err, actionId, context: any) => {
+      if (context) setIsHighlighted(context.previousHighlighted);
+      toast({ title: "Error", description: "Failed to highlight video", variant: "destructive" });
+    },
+    onSuccess: async () => {
+      toast({ title: "Highlighted!", description: "Your video will stand out for 6 hours" });
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {}
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
     },
   });
@@ -169,7 +183,20 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       const response = await apiRequest("DELETE", `/api/actions/${actionId}/highlight`);
       return response;
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      setIsHighlighted(false);
+      return { previousHighlighted: true };
+    },
+    onError: (err, actionId, context: any) => {
+      if (context) setIsHighlighted(context.previousHighlighted);
+      toast({ title: "Error", description: "Failed to remove highlight", variant: "destructive" });
+    },
+    onSuccess: async () => {
+      toast({ title: "Removed", description: "Video highlight removed" });
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {}
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
     },
   });
@@ -373,7 +400,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       <Card 
         className={cn(
           "mb-4 bg-card border transition-all duration-500",
-          action.isHighlighted 
+          isHighlighted 
             ? "fire-border bg-gradient-to-r from-yellow-400/20 via-amber-300/20 to-yellow-400/20" 
             : isOwner 
               ? "border-primary/50" 
@@ -471,12 +498,12 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                   size="sm"
                   className={cn(
                     "h-8 w-8 p-0 transition-colors",
-                    action.isHighlighted 
+                    isHighlighted 
                       ? "text-yellow-500 hover:text-yellow-600" 
                       : "text-muted-foreground hover:text-yellow-500"
                   )}
                   onClick={() => {
-                    if (action.isHighlighted) {
+                    if (isHighlighted) {
                       unhighlightActionMutation.mutate(action.id);
                     } else {
                       highlightActionMutation.mutate(action.id);
@@ -484,7 +511,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                   }}
                   disabled={highlightActionMutation.isPending || unhighlightActionMutation.isPending}
                 >
-                  <Star className={cn("h-4 w-4", action.isHighlighted && "fill-current")} />
+                  <Star className={cn("h-4 w-4", isHighlighted && "fill-current")} />
                 </Button>
               </>
             )}
