@@ -972,8 +972,14 @@ export default function Home() {
     mutationFn: async (actionId: string) => {
       return await apiRequest("DELETE", `/api/scrapbook/save-action/${actionId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+    onSuccess: async () => {
+      // Clear enhanced cache before refetching
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/scrapbook');
+      } catch (e) {}
+      await queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/scrapbook/saves'] });
       setShowUnsaveDialog(false);
       setPostToUnsave(null);
       toast({
