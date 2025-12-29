@@ -18,14 +18,10 @@ import {
   Maximize2,
   Minimize2,
   Heart,
-  Share2,
   Trash2,
   Star,
   Plus,
-  PlusCircle,
-  Edit,
-  BookmarkPlus,
-  Bookmark
+  Edit
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -532,45 +528,34 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                 size="sm"
                 variant="ghost"
                 onClick={() => setShowComments(!showComments)}
-                className={cn(
-                  "p-0 h-auto transition-colors",
-                  showComments ? "text-blue-500" : "text-primary hover:bg-primary/10"
-                )}
+                className="text-secondary hover:bg-secondary/10 p-0 h-auto"
               >
-                <MessageCircle className={cn("w-4 h-4 mr-1", showComments && "fill-current")} />
-                Comments {actionComments.length > 0 ? `(${actionComments.length})` : ""}
+                <MessageCircle className="w-4 h-4 mr-1" />
+                {actionComments.length || 0}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleShare}
+                className="text-mykliq-orange hover:bg-mykliq-orange/10 p-0 h-auto"
+              >
+                <Send className="w-4 h-4" />
               </Button>
 
               {!isOwner && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleShare}
-                    className="p-0 h-auto text-primary hover:bg-primary/10"
-                  >
-                    <Share2 className="w-4 h-4 mr-1" />
-                    Share
-                  </Button>
-                  
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => saveToScrapbookMutation.mutate(action.id)}
-                    disabled={isSaved || saveToScrapbookMutation.isPending}
-                    className={cn(
-                      "p-0 h-auto transition-colors",
-                      isSaved ? "text-green-500" : "text-primary hover:bg-primary/10"
-                    )}
-                  >
-                    {isSaved ? (
-                      <Bookmark className="w-4 h-4 mr-1 fill-current" />
-                    ) : (
-                      <Plus className="w-4 h-4 mr-1" />
-                    )}
-                    Scrapbook
-                  </Button>
-                </>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => saveToScrapbookMutation.mutate(action.id)}
+                  disabled={isSaved || saveToScrapbookMutation.isPending}
+                  className={cn(
+                    "p-0 h-auto transition-colors",
+                    isSaved ? "text-green-500" : "text-primary hover:bg-primary/10"
+                  )}
+                >
+                  <Plus className={cn("w-4 h-4", isSaved && "fill-current")} />
+                </Button>
               )}
             </div>
           </div>
