@@ -6763,12 +6763,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update action with recording URL
       await storage.updateAction(actionId, { recordingUrl });
       
+      // Enforce 10 recording limit per user (auto-delete oldest)
+      await storage.enforceRecordingLimit(userId, 10);
+      
       console.log(`Recording uploaded for action ${actionId}: ${recordingUrl}`);
       
       res.json({ success: true, recordingUrl });
     } catch (error) {
       console.error("Error uploading action recording:", error);
       res.status(500).json({ message: "Failed to upload recording" });
+    }
+  });
+
+  // Get user's saved recordings (max 10)
+  app.get('/api/actions/my-recordings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const recordings = await storage.getUserRecordings(userId);
+      res.json(recordings);
+    } catch (error) {
+      console.error("Error fetching user recordings:", error);
+      res.status(500).json({ message: "Failed to fetch recordings" });
     }
   });
 

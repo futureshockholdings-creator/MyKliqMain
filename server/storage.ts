@@ -310,6 +310,8 @@ export interface IStorage {
   // Action (Live Stream) operations
   getActions(): Promise<(Action & { author: User; viewers: ActionViewer[]; viewerCount: number })[]>;
   getActionById(actionId: string): Promise<Action | undefined>;
+  getUserRecordings(userId: string): Promise<(Action & { author: User })[]>;
+  enforceRecordingLimit(userId: string, maxRecordings: number): Promise<void>;
   createAction(action: InsertAction): Promise<Action>;
   updateAction(actionId: string, updates: Partial<Action>): Promise<Action>;
   endAction(actionId: string): Promise<Action>;
@@ -2813,6 +2815,56 @@ export class DatabaseStorage implements IStorage {
   async getActionById(actionId: string): Promise<Action | undefined> {
     const [action] = await db.select().from(actions).where(eq(actions.id, actionId));
     return action;
+  }
+
+  async getUserRecordings(userId: string): Promise<(Action & { author: User })[]> {
+    const recordings = await db
+      .select({
+        action: actions,
+        author: users,
+      })
+      .from(actions)
+      .leftJoin(users, eq(actions.userId, users.id))
+      .where(
+        and(
+          eq(actions.userId, userId),
+          eq(actions.status, "ended"),
+          isNotNull(actions.recordingUrl)
+        )
+      )
+      .orderBy(desc(actions.createdAt))
+      .limit(10);
+
+    return recordings.map(({ action, author }) => ({
+      ...action,
+      author: author!,
+    }));
+  }
+
+  async enforceRecordingLimit(userId: string, maxRecordings: number): Promise<void> {
+    // Get all recordings for user ordered by creation date (oldest first)
+    const userRecordings = await db
+      .select()
+      .from(actions)
+      .where(
+        and(
+          eq(actions.userId, userId),
+          eq(actions.status, "ended"),
+          isNotNull(actions.recordingUrl)
+        )
+      )
+      .orderBy(actions.createdAt);
+
+    // If over limit, delete the oldest recordings
+    if (userRecordings.length >= maxRecordings) {
+      const recordingsToDelete = userRecordings.slice(0, userRecordings.length - maxRecordings + 1);
+      
+      for (const recording of recordingsToDelete) {
+        // Delete the recording's related data and the action itself
+        await this.deleteAction(recording.id);
+        console.log(`Auto-deleted old recording: ${recording.id} (${recording.title})`);
+      }
+    }
   }
 
   async createAction(action: InsertAction): Promise<Action> {

@@ -43,6 +43,7 @@ interface Action {
   status: "live" | "ended";
   viewerCount: number;
   thumbnailUrl?: string;
+  recordingUrl?: string;
   streamKey: string;
   chatEnabled: boolean;
   createdAt: string;
@@ -100,6 +101,12 @@ export default function Actions() {
   const { data: actions, isLoading } = useQuery<Action[]>({
     queryKey: ["/api/actions"],
     refetchInterval: 5000, // Refresh every 5 seconds
+  });
+
+  // Get user's saved recordings (max 10)
+  const { data: myRecordings, isLoading: recordingsLoading } = useQuery<Action[]>({
+    queryKey: ["/api/actions/my-recordings"],
+    enabled: !!userData,
   });
 
   // Create action mutation
@@ -194,10 +201,12 @@ export default function Actions() {
         console.log('Cache clear error (non-critical):', e);
       }
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] }); // Refresh recordings list
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] }); // Remove auto-generated post
       // Refetch kliq-feed so action is removed from headlines immediately
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
       setSelectedAction(null);
       setIsStreaming(false);
       stopStream();
@@ -865,6 +874,78 @@ export default function Actions() {
             </CardContent>
           </Card>
         )}
+
+      {/* My Recordings Section */}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold text-white mb-4">My Recordings</h2>
+        <p className="text-gray-400 text-sm mb-4">Your last 10 recorded streams (oldest auto-deleted when limit reached)</p>
+        
+        {recordingsLoading ? (
+          <Card className="bg-gray-800 border-gray-700">
+            <CardContent className="py-8 text-center">
+              <p className="text-gray-400">Loading recordings...</p>
+            </CardContent>
+          </Card>
+        ) : myRecordings && myRecordings.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {myRecordings.map((recording) => (
+              <Card
+                key={recording.id}
+                className="bg-gray-800 border-gray-700 hover:border-purple-500 transition-colors"
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <Badge className="bg-purple-600 text-white">
+                      <Play className="w-3 h-3 mr-1" />
+                      REPLAY
+                    </Badge>
+                    <span className="text-gray-400 text-xs">
+                      {new Date(recording.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <CardTitle className="text-white text-base">{recording.title}</CardTitle>
+                  {recording.description && (
+                    <p className="text-gray-400 text-sm line-clamp-2">{recording.description}</p>
+                  )}
+                </CardHeader>
+                
+                <CardContent className="pt-2">
+                  {recording.recordingUrl && (
+                    <video
+                      src={recording.recordingUrl}
+                      controls
+                      className="w-full rounded-lg aspect-video bg-black"
+                      preload="metadata"
+                    />
+                  )}
+                  
+                  <div className="flex items-center justify-between mt-3">
+                    <p className="text-gray-400 text-xs">
+                      {new Date(recording.createdAt).toLocaleTimeString()}
+                    </p>
+                    <Button
+                      onClick={() => deleteActionMutation.mutate(recording.id)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-gray-800 border-gray-700">
+            <CardContent className="py-8 text-center">
+              <Video className="w-12 h-12 mx-auto mb-3 text-gray-500" />
+              <p className="text-gray-400">No recordings yet</p>
+              <p className="text-gray-500 text-sm mt-1">Your completed streams will appear here</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       </div>
     </PageWrapper>
