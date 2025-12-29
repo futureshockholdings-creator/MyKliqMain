@@ -538,7 +538,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                 )}
               >
                 <MessageCircle className={cn("w-4 h-4 mr-1", showComments && "fill-current")} />
-                {actionComments.length > 0 ? actionComments.length : ""}
+                Comments {actionComments.length > 0 ? `(${actionComments.length})` : ""}
               </Button>
 
               {!isOwner && (
@@ -550,6 +550,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                     className="p-0 h-auto text-primary hover:bg-primary/10"
                   >
                     <Share2 className="w-4 h-4 mr-1" />
+                    Share
                   </Button>
                   
                   <Button
@@ -565,8 +566,9 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                     {isSaved ? (
                       <Bookmark className="w-4 h-4 mr-1 fill-current" />
                     ) : (
-                      <BookmarkPlus className="w-4 h-4 mr-1" />
+                      <Plus className="w-4 h-4 mr-1" />
                     )}
+                    Scrapbook
                   </Button>
                 </>
               )}

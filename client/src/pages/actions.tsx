@@ -476,6 +476,12 @@ export default function Actions() {
     if (selectedAction) {
       const actionId = selectedAction.id;
       
+      // Show immediate toast feedback
+      toast({
+        title: "Stream ended!",
+        description: "Your recording is being saved...",
+      });
+      
       // Immediately end the stream in UI and API
       if (ws) {
         ws.send(JSON.stringify({
@@ -491,15 +497,22 @@ export default function Actions() {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
         
-        // Upload recording in background after a brief delay for final data collection
+        // Upload recording in background after brief delay for final data collection
         setTimeout(async () => {
           await uploadRecording(actionId);
-          // Refresh recordings list after upload completes
+          // Refresh recordings list and headlines after upload completes (faster refresh)
+          try {
+            const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+            await enhancedCache.removeByPattern('/api/actions');
+            await enhancedCache.removeByPattern('/api/kliq-feed');
+          } catch (e) {
+            console.log('Cache clear error (non-critical):', e);
+          }
           queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
-          queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
           queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-          queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
-        }, 500);
+          await queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
+          await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
+        }, 200);
       }
     }
   };
