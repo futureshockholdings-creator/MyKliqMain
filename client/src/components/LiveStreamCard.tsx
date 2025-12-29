@@ -136,9 +136,12 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/kliq-feed');
         await enhancedCache.removeByPattern('/api/actions');
+        await enhancedCache.removeByPattern('/api/notifications');
       } catch (e) {}
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+      // Refetch notifications immediately for instant update
+      queryClient.refetchQueries({ queryKey: ["/api/notifications"] });
     },
   });
 

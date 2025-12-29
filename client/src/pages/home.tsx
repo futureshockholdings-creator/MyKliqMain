@@ -2449,11 +2449,11 @@ export default function Home() {
                                   <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                                     {post.mediaType === 'video' ? (
                                       <video className="w-full h-full object-cover">
-                                        <source src={post.mediaUrl} type="video/mp4" />
+                                        <source src={resolveAssetUrl(post.mediaUrl)} type="video/mp4" />
                                       </video>
                                     ) : (
                                       <img 
-                                        src={post.mediaUrl} 
+                                        src={resolveAssetUrl(post.mediaUrl)} 
                                         alt="Post media" 
                                         className="w-full h-full object-cover"
                                       />
@@ -3369,14 +3369,14 @@ export default function Home() {
                     <div className="mb-3 rounded-lg overflow-hidden bg-black/20">
                       {item.mediaType === 'video' ? (
                         <video 
-                          src={item.mediaUrl} 
+                          src={resolveAssetUrl(item.mediaUrl)} 
                           controls 
                           className="w-full max-h-96 object-cover"
                           preload="metadata"
                         />
                       ) : (
                         <img 
-                          src={item.mediaUrl} 
+                          src={resolveAssetUrl(item.mediaUrl)} 
                           alt="Post media" 
                           className="w-full max-h-96 object-cover"
                         />
