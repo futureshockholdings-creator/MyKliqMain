@@ -1,9 +1,17 @@
 import Redis from 'redis';
 
 let redis: Redis.RedisClientType | null = null;
+let lastErrorLog = 0;
+let initAttempted = false;
 
 // Initialize Redis connection with production optimizations
 export async function initializeRedis() {
+  // Only attempt initialization once
+  if (initAttempted) {
+    return redis;
+  }
+  initAttempted = true;
+  
   try {
     // Skip Redis initialization if REDIS_URL is not configured
     if (!process.env.REDIS_URL) {
@@ -15,19 +23,24 @@ export async function initializeRedis() {
       url: process.env.REDIS_URL || 'redis://localhost:6379',
       socket: {
         connectTimeout: 3000,
-        keepAlive: true,
+        keepAlive: false,
         reconnectStrategy: (retries) => {
-          if (retries > 5) return false; // More resilient reconnection
-          return Math.min(retries * 50, 500); // Faster reconnect attempts
+          // Stop reconnecting after 3 attempts to reduce connection spam
+          if (retries >= 3) return false;
+          return Math.min(retries * 1000, 3000);
         }
       },
-      // High-performance Redis settings  
       commandsQueueMaxLength: 1000,
-      disableOfflineQueue: false
+      disableOfflineQueue: true
     });
 
     redis.on('error', (err) => {
-      console.error('Redis Client Error:', err);
+      // Throttle error logging to once per 60 seconds
+      const now = Date.now();
+      if (now - lastErrorLog > 60000) {
+        console.error('Redis Client Error:', err);
+        lastErrorLog = now;
+      }
     });
 
     redis.on('connect', () => {

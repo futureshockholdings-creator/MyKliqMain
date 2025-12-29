@@ -5,6 +5,9 @@ class CacheService {
   private client: any = null;
   private isRedisAvailable = false;
   private memoryCache = new Map<string, { data: any; expiry: number }>();
+  private lastErrorLog = 0;
+  private connectionAttempts = 0;
+  private maxConnectionAttempts = 3;
   
   // Enhanced memory cache cleanup for better performance
   private cleanupExpiredEntries(): void {
@@ -25,18 +28,36 @@ class CacheService {
   }
 
   private async initializeRedis() {
+    // Skip Redis if we've already tried too many times
+    if (this.connectionAttempts >= this.maxConnectionAttempts) {
+      return;
+    }
+    this.connectionAttempts++;
+    
     try {
       // Try to connect to Redis if available
       if (process.env.REDIS_URL) {
         this.client = Redis.createClient({
           url: process.env.REDIS_URL,
           socket: {
-            connectTimeout: 5000
+            connectTimeout: 3000,
+            reconnectStrategy: (retries) => {
+              // Stop reconnecting after 3 attempts
+              if (retries >= 3) {
+                return false;
+              }
+              return Math.min(retries * 1000, 3000);
+            }
           }
         });
 
         this.client.on('error', (err: any) => {
-          console.log('Redis connection failed, using memory cache fallback');
+          // Throttle error logging to once per 30 seconds
+          const now = Date.now();
+          if (now - this.lastErrorLog > 30000) {
+            console.log('Redis connection failed, using memory cache fallback');
+            this.lastErrorLog = now;
+          }
           this.isRedisAvailable = false;
         });
 
