@@ -6735,7 +6735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/actions/upload-recording', isAuthenticated, upload.single('video'), async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { actionId } = req.body;
+      const { actionId, duration } = req.body;
       
       if (!req.file) {
         return res.status(400).json({ message: "No video file provided" });
@@ -6756,8 +6756,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileName = `recordings/action_${actionId}_${Date.now()}.webm`;
       const recordingUrl = await objectStorage.uploadBuffer(req.file.buffer, fileName, req.file.mimetype);
       
-      // Update action with recording URL
-      await storage.updateAction(actionId, { recordingUrl });
+      // Parse duration from form data
+      const recordingDuration = duration ? parseInt(duration, 10) : null;
+      
+      // Update action with recording URL and duration
+      await storage.updateAction(actionId, { 
+        recordingUrl,
+        ...(recordingDuration ? { recordingDuration } : {})
+      });
       
       // Enforce 10 recording limit per user (auto-delete oldest)
       await storage.enforceRecordingLimit(userId, 10);

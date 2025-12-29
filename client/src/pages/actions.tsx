@@ -45,6 +45,7 @@ interface Action {
   viewerCount: number;
   thumbnailUrl?: string;
   recordingUrl?: string;
+  recordingDuration?: number; // Duration in seconds
   streamKey: string;
   chatEnabled: boolean;
   createdAt: string;
@@ -84,6 +85,7 @@ export default function Actions() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
+  const recordingStartTimeRef = useRef<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -335,6 +337,7 @@ export default function Actions() {
       
       mediaRecorder.start(1000); // Collect data every second
       mediaRecorderRef.current = mediaRecorder;
+      recordingStartTimeRef.current = Date.now(); // Track when recording started
       
       setIsStreaming(true);
       
@@ -381,10 +384,16 @@ export default function Actions() {
       // Create a blob from the recorded chunks
       const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
       
+      // Calculate recording duration
+      const recordingDuration = recordingStartTimeRef.current 
+        ? Math.round((Date.now() - recordingStartTimeRef.current) / 1000) 
+        : 0;
+      
       // Create FormData and append the video
       const formData = new FormData();
       formData.append('video', blob, `action_${actionId}_${Date.now()}.webm`);
       formData.append('actionId', actionId);
+      formData.append('duration', String(recordingDuration));
       
       // Get JWT token for authentication
       const token = localStorage.getItem('jwt_token');
@@ -942,9 +951,18 @@ export default function Actions() {
                   )}
                   
                   <div className="flex items-center justify-between mt-3">
-                    <p className="text-gray-400 text-xs">
-                      {new Date(recording.createdAt).toLocaleTimeString()}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-gray-400 text-xs">
+                        {new Date(recording.createdAt).toLocaleTimeString()}
+                      </p>
+                      {recording.recordingDuration && recording.recordingDuration > 0 && (
+                        <Badge variant="outline" className="text-gray-400 border-gray-600 text-xs">
+                          {recording.recordingDuration >= 60 
+                            ? `${Math.floor(recording.recordingDuration / 60)}m ${recording.recordingDuration % 60}s`
+                            : `${recording.recordingDuration}s`}
+                        </Badge>
+                      )}
+                    </div>
                     <Button
                       onClick={() => deleteActionMutation.mutate(recording.id)}
                       variant="ghost"
