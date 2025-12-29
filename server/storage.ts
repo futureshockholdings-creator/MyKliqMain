@@ -3069,7 +3069,7 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async toggleActionLike(actionId: string, userId: string): Promise<void> {
+  async toggleActionLike(actionId: string, userId: string): Promise<{ liked: boolean }> {
     const [existingLike] = await db
       .select()
       .from(actionLikes)
@@ -3078,8 +3078,10 @@ export class DatabaseStorage implements IStorage {
 
     if (existingLike) {
       await db.delete(actionLikes).where(eq(actionLikes.id, existingLike.id));
+      return { liked: false };
     } else {
       await db.insert(actionLikes).values({ actionId, userId });
+      return { liked: true };
     }
   }
 

@@ -6831,6 +6831,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: content.trim()
       });
       
+      // Create notification for the action author
+      const action = await storage.getActionById(actionId);
+      if (action && action.userId !== userId) {
+        const commenter = await storage.getUser(userId);
+        const commenterName = commenter?.firstName && commenter?.lastName 
+          ? `${commenter.firstName} ${commenter.lastName}` 
+          : commenter?.username || 'Someone';
+        await storage.createNotification({
+          userId: action.userId,
+          type: 'action_comment',
+          message: `${commenterName} commented on your video "${action.title}"`,
+          relatedEntityId: actionId,
+          relatedEntityType: 'action',
+          isRead: false
+        });
+      }
+      
       res.json(comment);
     } catch (error) {
       console.error("Error adding action comment:", error);
@@ -6993,7 +7010,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { actionId } = req.params;
       
-      await storage.toggleActionLike(actionId, userId);
+      const result = await storage.toggleActionLike(actionId, userId);
+      
+      // Create notification for the action author if it's a new like
+      if (result?.liked) {
+        const action = await storage.getActionById(actionId);
+        if (action && action.userId !== userId) {
+          const liker = await storage.getUser(userId);
+          const likerName = liker?.firstName && liker?.lastName 
+            ? `${liker.firstName} ${liker.lastName}` 
+            : liker?.username || 'Someone';
+          await storage.createNotification({
+            userId: action.userId,
+            type: 'action_like',
+            message: `${likerName} liked your video "${action.title}"`,
+            relatedEntityId: actionId,
+            relatedEntityType: 'action',
+            isRead: false
+          });
+        }
+      }
       
       const { invalidateCache } = await import('./cache');
       invalidateCache('kliq-feed');

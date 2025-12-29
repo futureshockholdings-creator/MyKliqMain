@@ -629,21 +629,26 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                 {actionComments.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-2">No comments yet. Be the first to comment!</p>
                 ) : (
-                  actionComments.map((comment: any) => (
-                    <div key={comment.id} className="flex space-x-2">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={comment.user?.profileImageUrl} />
-                        <AvatarFallback>{comment.user?.firstName?.[0] || 'U'}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="text-sm">
-                          <span className="font-semibold text-foreground">{comment.user?.firstName || 'User'}</span>
-                          <span className="text-muted-foreground ml-2">{comment.content}</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground">{formatTimeAgo(comment.createdAt)}</p>
+                  actionComments.map((comment: any) => {
+                    const commentUserName = comment.user?.firstName && comment.user?.lastName 
+                      ? `${comment.user.firstName} ${comment.user.lastName}` 
+                      : comment.user?.firstName || comment.user?.username || 'User';
+                    return (
+                      <div key={comment.id} className="flex space-x-2">
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={resolveAssetUrl(comment.user?.profileImageUrl)} />
+                          <AvatarFallback>{comment.user?.firstName?.[0] || 'U'}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="text-sm">
+                            <span className="font-semibold text-foreground">{commentUserName}</span>
+                            <span className="text-muted-foreground ml-2">{comment.content}</span>
+                          </p>
+                          <p className="text-xs text-muted-foreground">{formatTimeAgo(comment.createdAt)}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
