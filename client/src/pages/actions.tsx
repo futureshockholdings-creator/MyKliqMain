@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { buildApiUrl, buildWebSocketUrl } from "@/lib/apiConfig";
+import { buildApiUrl, buildWebSocketUrl, resolveAssetUrl } from "@/lib/apiConfig";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -866,9 +866,17 @@ export default function Actions() {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                      {action.author.firstName[0]}
-                    </div>
+                    {action.author.profileImageUrl ? (
+                      <img
+                        src={resolveAssetUrl(action.author.profileImageUrl)}
+                        alt={`${action.author.firstName}'s profile`}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                        {action.author.firstName?.[0] || '?'}
+                      </div>
+                    )}
                     <div>
                       <p className="text-white text-sm">
                         {action.author.firstName} {action.author.lastName}
@@ -943,7 +951,7 @@ export default function Actions() {
                 <CardContent className="pt-2">
                   {recording.recordingUrl && (
                     <video
-                      src={recording.recordingUrl}
+                      src={resolveAssetUrl(recording.recordingUrl)}
                       controls
                       className="w-full rounded-lg aspect-video bg-black"
                       preload="metadata"
