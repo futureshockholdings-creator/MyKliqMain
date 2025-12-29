@@ -376,11 +376,19 @@ export default function Actions() {
       formData.append('video', blob, `action_${actionId}_${Date.now()}.webm`);
       formData.append('actionId', actionId);
       
-      // Upload to server
+      // Get JWT token for authentication
+      const token = localStorage.getItem('jwt_token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      // Upload to server with auth header
       const response = await fetch('/api/actions/upload-recording', {
         method: 'POST',
         body: formData,
         credentials: 'include',
+        headers,
       });
       
       if (!response.ok) {

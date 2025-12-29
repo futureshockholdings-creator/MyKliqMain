@@ -37,11 +37,11 @@ import fs from "fs";
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10 MB limit
+    fileSize: 100 * 1024 * 1024, // 100 MB limit for video recordings
   },
   fileFilter: (req, file, cb) => {
-    // Whitelist allowed MIME types
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime'];
+    // Whitelist allowed MIME types (including webm for live stream recordings)
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime', 'video/webm'];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
