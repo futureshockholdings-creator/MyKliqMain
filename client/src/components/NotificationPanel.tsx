@@ -71,19 +71,43 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
         type: type === "all" ? undefined : type,
       });
     },
+    onMutate: async (type?: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/notifications"] });
+      
+      // Get current notifications
+      const previousNotifications = queryClient.getQueryData<Notification[]>(["/api/notifications"]);
+      
+      // Optimistically update all notifications as read
+      queryClient.setQueryData<Notification[]>(["/api/notifications"], (old) => {
+        if (!old) return old;
+        return old.map((n) => {
+          if (type && type !== "all" && n.type !== type) return n;
+          return { ...n, isRead: true };
+        });
+      });
+      
+      return { previousNotifications };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "Success",
         description: "All notifications marked as read",
       });
     },
-    onError: () => {
+    onError: (_, __, context) => {
+      // Rollback on error
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["/api/notifications"], context.previousNotifications);
+      }
       toast({
         title: "Error",
         description: "Failed to mark notifications as read",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
     },
   });
 
@@ -94,19 +118,41 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
         type: type === "all" ? undefined : type,
       });
     },
+    onMutate: async (type?: string) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/notifications"] });
+      
+      // Get current notifications
+      const previousNotifications = queryClient.getQueryData<Notification[]>(["/api/notifications"]);
+      
+      // Optimistically remove notifications
+      queryClient.setQueryData<Notification[]>(["/api/notifications"], (old) => {
+        if (!old) return old;
+        if (!type || type === "all") return [];
+        return old.filter((n) => n.type !== type);
+      });
+      
+      return { previousNotifications };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "Success",
         description: "All notifications deleted",
       });
     },
-    onError: () => {
+    onError: (_, __, context) => {
+      // Rollback on error
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["/api/notifications"], context.previousNotifications);
+      }
       toast({
         title: "Error",
         description: "Failed to delete all notifications",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
     },
   });
 

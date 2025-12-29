@@ -48,19 +48,38 @@ export function useNotifications(type?: string) {
         type: notificationType,
       });
     },
+    onMutate: async (notificationType?: string) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/notifications"] });
+      const previousNotifications = queryClient.getQueryData<Notification[]>(["/api/notifications"]);
+      
+      queryClient.setQueryData<Notification[]>(["/api/notifications"], (old) => {
+        if (!old) return old;
+        return old.map((n) => {
+          if (notificationType && notificationType !== "all" && n.type !== notificationType) return n;
+          return { ...n, isRead: true };
+        });
+      });
+      
+      return { previousNotifications };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "Success",
         description: "All notifications marked as read",
       });
     },
-    onError: () => {
+    onError: (_, __, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(["/api/notifications"], context.previousNotifications);
+      }
       toast({
         title: "Error",
         description: "Failed to mark notifications as read",
         variant: "destructive",
       });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
     },
   });
 
