@@ -856,7 +856,7 @@ export default function Actions() {
             </Card>
           ))}
         </div>
-      ) : (
+      ) : (!myRecordings || myRecordings.length === 0) && (
         <Card className="bg-gray-800 border-gray-700">
           <CardContent className="py-16 text-center">
             <Video className="w-16 h-16 mx-auto mb-4 text-gray-400" />

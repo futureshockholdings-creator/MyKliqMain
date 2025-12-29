@@ -6815,7 +6815,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.deleteAction(actionId);
       
-      // Invalidate all related caches (actions, feeds, posts)
+      // Invalidate all related caches (actions, feeds, posts, recordings)
       const { invalidateCache } = await import('./cache');
       invalidateCache('actions');
       invalidateCache('kliq-feed'); // Feed shows live stream announcements
@@ -6825,6 +6825,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await cacheService.invalidatePattern('actions:*');
       await cacheService.invalidatePattern('kliq-feed:*');
       await cacheService.invalidatePattern('posts:*'); // CacheService post invalidation
+      await cacheService.invalidateUserCache(userId); // Invalidate user's recordings cache
       
       res.json({ success: true });
     } catch (error) {
