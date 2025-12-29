@@ -6752,8 +6752,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Invalidate cache for instant updates
       const { invalidateCache } = await import('./cache');
       invalidateCache('actions');
+      invalidateCache('kliq-feed');
       const { cacheService } = await import('./cacheService');
       await cacheService.invalidatePattern('actions:*');
+      await cacheService.invalidatePattern('kliq-feed:*');
+      await cacheService.invalidateUserCache(userId);
       
       res.json(endedAction);
     } catch (error) {

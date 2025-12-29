@@ -3049,6 +3049,56 @@ export default function Home() {
             );
           }
           
+          if (item.type === 'action') {
+            // Live stream action card
+            return (
+              <Card
+                key={item.id}
+                className="mb-4 border-2 border-red-500 bg-gradient-to-br from-red-500/10 to-pink-500/10 hover:shadow-xl transition-all duration-300 cursor-pointer"
+                onClick={() => window.location.href = '/action'}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge className="bg-red-600 text-white animate-pulse">
+                      <div className="w-2 h-2 bg-white rounded-full mr-2"></div>
+                      {item.status === 'live' ? 'LIVE' : 'ENDED'}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {item.viewerCount || 0} viewers
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <Avatar className="w-10 h-10 border-2 border-red-500">
+                      <AvatarImage src={item.author?.profileImageUrl} />
+                      <AvatarFallback>{item.author?.firstName?.[0] || item.author?.username?.[0] || '?'}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-semibold text-foreground">{item.author?.firstName || item.author?.username || 'User'}</p>
+                      <h3 className="text-lg font-bold text-foreground">{item.title}</h3>
+                      {item.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {item.status === 'live' && (
+                    <div className="mt-4 bg-black/80 rounded-lg aspect-video flex items-center justify-center">
+                      <div className="text-center">
+                        <Video className="w-12 h-12 text-red-500 mx-auto mb-2" />
+                        <p className="text-white font-medium">Tap to watch live stream</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    {new Date(item.createdAt).toLocaleString()}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          }
+          
           if (item.type === 'educational') {
             // Educational posts - special styling with custom accent colors
             return (
