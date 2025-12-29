@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Search, Shield, Users, Database, Activity, AlertTriangle, BarChart3, Download, RefreshCw, Trash2, UserX, Calendar, Ban, Flag, FileWarning } from "lucide-react";
+import { Eye, EyeOff, Search, Shield, Users, Database, Activity, AlertTriangle, BarChart3, Download, RefreshCw, Trash2, UserX, Calendar, Ban, Flag, FileWarning, Bell, Send } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { buildApiUrl } from "@/lib/apiConfig";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
@@ -39,7 +39,11 @@ export default function AdminPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [selectedTab, setSelectedTab] = useState("users"); // users, analytics, system, reports
+  const [selectedTab, setSelectedTab] = useState("users"); // users, analytics, system, reports, broadcasts
+  const [broadcastTitle, setBroadcastTitle] = useState("");
+  const [broadcastBody, setBroadcastBody] = useState("");
+  const [broadcastAudience, setBroadcastAudience] = useState("all");
+  const [broadcastDeepLink, setBroadcastDeepLink] = useState("");
   const [systemStats, setSystemStats] = useState<any>(null);
   const [reportStatusFilter, setReportStatusFilter] = useState<string>("all");
   const [selectedReport, setSelectedReport] = useState<any>(null);
@@ -96,6 +100,109 @@ export default function AdminPage() {
     queryFn: () => fetch(buildApiUrl(`/api/admin/reports${reportStatusFilter !== "all" ? `?status=${reportStatusFilter}` : ""}`)).then(res => res.json()),
     enabled: isAuthenticated && selectedTab === "reports",
     refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Fetch broadcasts
+  const { data: broadcasts = [], isLoading: broadcastsLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/broadcasts"],
+    queryFn: () => fetch(buildApiUrl(`/api/admin/broadcasts?password=${encodeURIComponent("mykliq2025admin!")}`)).then(res => res.json()),
+    enabled: isAuthenticated && selectedTab === "broadcasts",
+    refetchInterval: 30000,
+  });
+
+  // Get audience count
+  const { data: audienceCount } = useQuery<{ count: number; audience: string }>({
+    queryKey: ["/api/admin/broadcasts/audience-count", broadcastAudience],
+    queryFn: () => fetch(buildApiUrl(`/api/admin/broadcasts/audience-count?password=${encodeURIComponent("mykliq2025admin!")}&audience=${broadcastAudience}`)).then(res => res.json()),
+    enabled: isAuthenticated && selectedTab === "broadcasts",
+  });
+
+  // Create broadcast mutation
+  const createBroadcast = useMutation({
+    mutationFn: async ({ title, body, targetAudience, deepLink, sendNow }: {
+      title: string;
+      body: string;
+      targetAudience: string;
+      deepLink?: string;
+      sendNow: boolean;
+    }) => {
+      const response = await fetch(buildApiUrl(`/api/admin/broadcasts?password=${encodeURIComponent("mykliq2025admin!")}`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, body, targetAudience, deepLink, sendNow })
+      });
+      if (!response.ok) throw new Error("Failed to create broadcast");
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/broadcasts"] });
+      setBroadcastTitle("");
+      setBroadcastBody("");
+      setBroadcastDeepLink("");
+      toast({
+        title: variables.sendNow ? "Broadcast Sent!" : "Broadcast Created",
+        description: variables.sendNow 
+          ? `Push notification sent to ${audienceCount?.count || 0} devices.`
+          : "Broadcast saved as draft.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create broadcast.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Send broadcast mutation
+  const sendBroadcast = useMutation({
+    mutationFn: async (broadcastId: string) => {
+      const response = await fetch(buildApiUrl(`/api/admin/broadcasts/${broadcastId}/send?password=${encodeURIComponent("mykliq2025admin!")}`), {
+        method: "POST"
+      });
+      if (!response.ok) throw new Error("Failed to send broadcast");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/broadcasts"] });
+      toast({
+        title: "Broadcast Sent!",
+        description: `Sent to ${data.recipientCount} devices. Success: ${data.successCount}, Failed: ${data.failureCount}`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send broadcast.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete broadcast mutation
+  const deleteBroadcast = useMutation({
+    mutationFn: async (broadcastId: string) => {
+      const response = await fetch(buildApiUrl(`/api/admin/broadcasts/${broadcastId}?password=${encodeURIComponent("mykliq2025admin!")}`), {
+        method: "DELETE"
+      });
+      if (!response.ok) throw new Error("Failed to delete broadcast");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/broadcasts"] });
+      toast({
+        title: "Broadcast Deleted",
+        description: "The broadcast has been removed.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete broadcast.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Update report mutation
@@ -376,6 +483,15 @@ export default function AdminPage() {
           >
             <Flag className="h-4 w-4 mr-2" />
             Rules Reports
+          </Button>
+          <Button
+            variant={selectedTab === "broadcasts" ? "default" : "ghost"}
+            onClick={() => setSelectedTab("broadcasts")}
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary"
+            data-testid="tab-broadcasts"
+          >
+            <Bell className="h-4 w-4 mr-2" />
+            Broadcasts
           </Button>
         </div>
 
@@ -1217,6 +1333,201 @@ export default function AdminPage() {
                                 </div>
                               </DialogContent>
                             </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Broadcasts Tab Content */}
+        {selectedTab === "broadcasts" && (
+          <div className="space-y-6">
+            {/* Create Broadcast Card */}
+            <Card className="bg-card/80 backdrop-blur-sm border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <Send className="h-5 w-5" />
+                  Create Broadcast
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="broadcast-title" className="text-foreground">Title</Label>
+                    <Input
+                      id="broadcast-title"
+                      placeholder="Notification title..."
+                      value={broadcastTitle}
+                      onChange={(e) => setBroadcastTitle(e.target.value)}
+                      className="bg-background border-border text-foreground"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="broadcast-audience" className="text-foreground">Target Audience</Label>
+                    <Select value={broadcastAudience} onValueChange={setBroadcastAudience}>
+                      <SelectTrigger className="bg-background border-border text-foreground">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Users</SelectItem>
+                        <SelectItem value="active_7d">Active (Last 7 Days)</SelectItem>
+                        <SelectItem value="active_30d">Active (Last 30 Days)</SelectItem>
+                        <SelectItem value="streak_users">Users with Login Streaks</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {audienceCount && (
+                      <p className="text-sm text-muted-foreground">
+                        {audienceCount.count} device{audienceCount.count !== 1 ? 's' : ''} will receive this
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="broadcast-body" className="text-foreground">Message</Label>
+                  <textarea
+                    id="broadcast-body"
+                    placeholder="Enter your broadcast message..."
+                    value={broadcastBody}
+                    onChange={(e) => setBroadcastBody(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="broadcast-deeplink" className="text-foreground">Deep Link (Optional)</Label>
+                  <Input
+                    id="broadcast-deeplink"
+                    placeholder="e.g., /profile or /headlines"
+                    value={broadcastDeepLink}
+                    onChange={(e) => setBroadcastDeepLink(e.target.value)}
+                    className="bg-background border-border text-foreground"
+                  />
+                  <p className="text-xs text-muted-foreground">Opens this screen when user taps the notification</p>
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => createBroadcast.mutate({
+                      title: broadcastTitle,
+                      body: broadcastBody,
+                      targetAudience: broadcastAudience,
+                      deepLink: broadcastDeepLink || undefined,
+                      sendNow: true
+                    })}
+                    disabled={!broadcastTitle.trim() || !broadcastBody.trim() || createBroadcast.isPending}
+                    className="flex items-center gap-2"
+                  >
+                    <Send className="h-4 w-4" />
+                    {createBroadcast.isPending ? "Sending..." : "Send Now"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => createBroadcast.mutate({
+                      title: broadcastTitle,
+                      body: broadcastBody,
+                      targetAudience: broadcastAudience,
+                      deepLink: broadcastDeepLink || undefined,
+                      sendNow: false
+                    })}
+                    disabled={!broadcastTitle.trim() || !broadcastBody.trim() || createBroadcast.isPending}
+                  >
+                    Save as Draft
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Broadcast History Card */}
+            <Card className="bg-card/80 backdrop-blur-sm border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <Bell className="h-5 w-5" />
+                  Broadcast History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {broadcastsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : broadcasts.length === 0 ? (
+                  <p className="text-center py-8 text-muted-foreground">No broadcasts yet</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border">
+                        <TableHead className="text-foreground">Title</TableHead>
+                        <TableHead className="text-foreground">Audience</TableHead>
+                        <TableHead className="text-foreground">Status</TableHead>
+                        <TableHead className="text-foreground">Recipients</TableHead>
+                        <TableHead className="text-foreground">Success Rate</TableHead>
+                        <TableHead className="text-foreground">Date</TableHead>
+                        <TableHead className="text-foreground">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {broadcasts.map((broadcast: any) => (
+                        <TableRow key={broadcast.id} className="border-border">
+                          <TableCell className="text-foreground font-medium">{broadcast.title}</TableCell>
+                          <TableCell className="text-muted-foreground capitalize">
+                            {broadcast.targetAudience === 'all' ? 'All Users' : 
+                             broadcast.targetAudience === 'active_7d' ? 'Active 7d' :
+                             broadcast.targetAudience === 'active_30d' ? 'Active 30d' :
+                             broadcast.targetAudience === 'streak_users' ? 'Streak Users' :
+                             broadcast.targetAudience}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              broadcast.status === 'sent' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {broadcast.status === 'sent' ? 'Sent' : 'Draft'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {broadcast.recipientCount || '-'}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {broadcast.status === 'sent' && broadcast.recipientCount > 0
+                              ? `${Math.round((broadcast.successCount / broadcast.recipientCount) * 100)}%`
+                              : '-'}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {broadcast.sentAt 
+                              ? new Date(broadcast.sentAt).toLocaleDateString()
+                              : new Date(broadcast.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {broadcast.status === 'draft' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => sendBroadcast.mutate(broadcast.id)}
+                                  disabled={sendBroadcast.isPending}
+                                >
+                                  <Send className="h-3 w-3 mr-1" />
+                                  Send
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  if (confirm('Delete this broadcast?')) {
+                                    deleteBroadcast.mutate(broadcast.id);
+                                  }
+                                }}
+                                disabled={deleteBroadcast.isPending}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
