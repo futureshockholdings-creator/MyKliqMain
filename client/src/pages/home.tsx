@@ -42,6 +42,7 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { usePostTranslation } from "@/lib/translationService";
 import { feedRealtimeService } from "@/lib/feedRealtime";
 import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
+import { addOptimisticNotification, rollbackOptimisticNotification } from "@/lib/optimisticNotifications";
 
 import type { Meme, Moviecon } from "@shared/schema";
 
@@ -1192,12 +1193,14 @@ export default function Home() {
       try {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/kliq-feed');
+        await enhancedCache.removeByPattern('/api/notifications');
       } catch (e) {
         console.log('Cache clear (non-critical):', e);
       }
       // Invalidate feed to sync with server after optimistic update
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      // Force immediate refetch of notifications for instant updates
+      queryClient.refetchQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
     },
   });
@@ -1301,12 +1304,14 @@ export default function Home() {
       try {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/kliq-feed');
+        await enhancedCache.removeByPattern('/api/notifications');
       } catch (e) {
         console.log('Cache clear (non-critical):', e);
       }
       // Background refresh to get real comment ID (but UI already shows optimistic comment)
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      // Force immediate refetch of notifications for instant updates
+      queryClient.refetchQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
     },
   });
@@ -1387,10 +1392,13 @@ export default function Home() {
       try {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/kliq-feed');
+        await enhancedCache.removeByPattern('/api/notifications');
       } catch (e) {
         console.log('Cache clear (non-critical):', e);
       }
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      // Force immediate refetch of notifications for instant updates
+      queryClient.refetchQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
     },
   });
@@ -1488,11 +1496,14 @@ export default function Home() {
       try {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/kliq-feed');
+        await enhancedCache.removeByPattern('/api/notifications');
       } catch (e) {
         console.log('Cache clear (non-critical):', e);
       }
       // Background refresh to get real reply ID
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      // Force immediate refetch of notifications for instant updates
+      queryClient.refetchQueries({ queryKey: ["/api/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
     },
   });
