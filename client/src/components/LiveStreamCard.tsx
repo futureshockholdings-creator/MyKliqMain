@@ -21,7 +21,8 @@ import {
   Heart,
   Star,
   Plus,
-  Edit
+  Edit,
+  Trash2
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -97,6 +98,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
   const [newComment, setNewComment] = useState("");
   const [commentCount, setCommentCount] = useState(action.commentCount || 0);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editTitle, setEditTitle] = useState(action.title);
   const [editDescription, setEditDescription] = useState(action.description || "");
   const [isSaved, setIsSaved] = useState(false);
@@ -483,7 +485,10 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
 
             {isOwner && (
               <>
-                <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+                <Dialog open={showEditDialog} onOpenChange={(open) => {
+                  setShowEditDialog(open);
+                  if (!open) setShowDeleteConfirm(false);
+                }}>
                   <DialogTrigger asChild>
                     <Button
                       variant="ghost"
@@ -517,20 +522,60 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                           rows={3}
                         />
                       </div>
-                      <div className="flex justify-end space-x-2">
-                        <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={() => editActionMutation.mutate({
-                            actionId: action.id,
-                            title: editTitle,
-                            description: editDescription
-                          })}
-                          disabled={editActionMutation.isPending}
-                        >
-                          {editActionMutation.isPending ? "Saving..." : "Save Changes"}
-                        </Button>
+                      <div className="flex justify-between">
+                        {/* Delete button with confirmation */}
+                        {!showDeleteConfirm ? (
+                          <Button 
+                            variant="destructive" 
+                            onClick={() => setShowDeleteConfirm(true)}
+                            disabled={deleteActionMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </Button>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-destructive font-medium">Delete this video?</span>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => {
+                                deleteActionMutation.mutate(action.id);
+                                setShowEditDialog(false);
+                                setShowDeleteConfirm(false);
+                              }}
+                              disabled={deleteActionMutation.isPending}
+                            >
+                              {deleteActionMutation.isPending ? "Deleting..." : "Yes, Delete"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowDeleteConfirm(false)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {/* Save/Cancel buttons */}
+                        {!showDeleteConfirm && (
+                          <div className="flex space-x-2">
+                            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => editActionMutation.mutate({
+                                actionId: action.id,
+                                title: editTitle,
+                                description: editDescription
+                              })}
+                              disabled={editActionMutation.isPending}
+                            >
+                              {editActionMutation.isPending ? "Saving..." : "Save Changes"}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </DialogContent>
