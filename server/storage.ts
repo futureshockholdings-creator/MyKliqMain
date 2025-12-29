@@ -1015,6 +1015,7 @@ export class DatabaseStorage implements IStorage {
           viewerCount: actions.viewerCount,
           thumbnailUrl: actions.thumbnailUrl,
           recordingUrl: actions.recordingUrl,
+          recordingDuration: actions.recordingDuration,
           isHighlighted: actions.isHighlighted,
           createdAt: actions.createdAt,
           authorId: users.id,
@@ -1045,6 +1046,19 @@ export class DatabaseStorage implements IStorage {
           actionLikesByAction[like.actionId] = [];
         }
         actionLikesByAction[like.actionId].push({ userId: like.userId });
+      });
+      
+      // Get comment counts for all actions
+      const allActionComments = actionIds.length > 0 ? await db
+        .select({
+          actionId: actionComments.actionId,
+        })
+        .from(actionComments)
+        .where(inArray(actionComments.actionId, actionIds)) : [];
+      
+      const actionCommentCounts: Record<string, number> = {};
+      allActionComments.forEach(comment => {
+        actionCommentCounts[comment.actionId] = (actionCommentCounts[comment.actionId] || 0) + 1;
       });
 
       console.log(`Feed: Got ${postsData.length} posts, ${eventsData.length} events, ${pollsData.length} polls, ${actionsData.length} actions`);
@@ -1119,8 +1133,10 @@ export class DatabaseStorage implements IStorage {
         viewerCount: action.viewerCount,
         thumbnailUrl: action.thumbnailUrl,
         recordingUrl: action.recordingUrl,
+        recordingDuration: action.recordingDuration,
         isHighlighted: action.isHighlighted || false,
         likes: actionLikesByAction[action.id] || [],
+        commentCount: actionCommentCounts[action.id] || 0,
         activityDate: action.createdAt,
         createdAt: action.createdAt,
         author: {

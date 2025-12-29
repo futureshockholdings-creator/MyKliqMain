@@ -41,9 +41,11 @@ interface LiveStreamCardProps {
     viewerCount: number;
     thumbnailUrl?: string;
     recordingUrl?: string;
+    recordingDuration?: number;
     chatEnabled?: boolean;
     createdAt: string;
     likes?: any[];
+    commentCount?: number;
     isHighlighted?: boolean;
     author: {
       id: string;
@@ -540,14 +542,19 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
           {action.recordingUrl ? (
             <div className="rounded-lg overflow-hidden bg-black mb-3">
               <video
-                src={action.recordingUrl}
+                src={resolveAssetUrl(action.recordingUrl)}
                 controls
                 className="w-full aspect-video"
-                poster={action.thumbnailUrl}
+                poster={action.thumbnailUrl ? resolveAssetUrl(action.thumbnailUrl) : undefined}
                 preload="metadata"
               >
                 Your browser does not support the video tag.
               </video>
+              {action.recordingDuration && action.recordingDuration > 0 && (
+                <div className="text-xs text-muted-foreground text-center py-1">
+                  Duration: {action.recordingDuration} seconds
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-muted rounded-lg aspect-video flex items-center justify-center mb-3">
@@ -582,7 +589,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                 className="text-secondary hover:bg-secondary/10 p-0 h-auto"
               >
                 <MessageCircle className="w-4 h-4 mr-1" />
-                {actionComments.length || 0}
+                {showComments && actionComments.length > 0 ? actionComments.length : (action.commentCount || 0)}
               </Button>
 
               <Button
