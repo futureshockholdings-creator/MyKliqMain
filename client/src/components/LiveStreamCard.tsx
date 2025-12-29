@@ -110,7 +110,28 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       const response = await apiRequest("POST", `/api/actions/${actionId}/like`);
       return response;
     },
-    onSuccess: () => {
+    onMutate: async (actionId) => {
+      // Optimistic update - toggle like immediately in UI
+      const previousLiked = isLiked;
+      const previousCount = likeCount;
+      setIsLiked(!isLiked);
+      setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+      return { previousLiked, previousCount };
+    },
+    onError: (err, actionId, context: any) => {
+      // Rollback on error
+      if (context) {
+        setIsLiked(context.previousLiked);
+        setLikeCount(context.previousCount);
+      }
+    },
+    onSuccess: async () => {
+      // Clear cache and refetch for consistency
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+        await enhancedCache.removeByPattern('/api/actions');
+      } catch (e) {}
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
     },
@@ -175,11 +196,19 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       const response = await apiRequest("PUT", `/api/actions/${actionId}`, { title, description });
       return response;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({ title: "Updated", description: "Your video post has been updated" });
+      setShowEditDialog(false);
+      // Clear cache and refetch immediately
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+        await enhancedCache.removeByPattern('/api/actions');
+      } catch (e) {}
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
-      setShowEditDialog(false);
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
     },
   });
 
@@ -200,14 +229,21 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
       const response = await apiRequest("POST", `/api/scrapbook/save-action`, { actionId });
       return response;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({ title: "Saved!", description: "Video added to your scrapbook" });
       setIsSaved(true);
+      // Clear cache and refetch scrapbook
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/scrapbook');
+      } catch (e) {}
       queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/scrapbook/saves'] });
     },
     onError: (error: any) => {
       if (error.message?.includes('already saved')) {
         toast({ title: "Already saved", description: "This video is already in your scrapbook" });
+        setIsSaved(true);
       } else {
         toast({ title: "Error", description: "Failed to save video", variant: "destructive" });
       }

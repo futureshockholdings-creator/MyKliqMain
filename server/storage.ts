@@ -3489,13 +3489,14 @@ export class DatabaseStorage implements IStorage {
       ));
   }
 
-  async getUserScrapbookSaves(userId: string, albumId?: string): Promise<(ScrapbookSave & { post: Post & { author: User } })[]> {
+  async getUserScrapbookSaves(userId: string, albumId?: string): Promise<any[]> {
     const conditions = [eq(scrapbookSaves.userId, userId)];
     if (albumId) {
       conditions.push(eq(scrapbookSaves.albumId, albumId));
     }
 
-    const saves = await db
+    // Get post saves
+    const postSaves = await db
       .select({
         save: scrapbookSaves,
         post: posts,
@@ -3507,13 +3508,47 @@ export class DatabaseStorage implements IStorage {
       .where(and(...conditions))
       .orderBy(desc(scrapbookSaves.savedAt));
 
-    return saves.map(({ save, post, author }) => ({
-      ...save,
-      post: {
-        ...post,
-        author,
-      },
-    }));
+    // Get action saves (identified by note starting with 'action:')
+    const actionSavesRaw = await db
+      .select()
+      .from(scrapbookSaves)
+      .where(and(
+        eq(scrapbookSaves.userId, userId),
+        sql`note LIKE 'action:%'`,
+        albumId ? eq(scrapbookSaves.albumId, albumId) : sql`TRUE`
+      ))
+      .orderBy(desc(scrapbookSaves.savedAt));
+
+    // Fetch action details for action saves
+    const actionSaves = await Promise.all(
+      actionSavesRaw.map(async (save) => {
+        const actionId = save.note?.replace('action:', '');
+        if (!actionId) return null;
+        
+        const action = await this.getActionById(actionId);
+        if (!action) return null;
+        
+        return {
+          ...save,
+          action,
+          type: 'action' as const,
+        };
+      })
+    );
+
+    // Combine and sort by savedAt
+    const allSaves = [
+      ...postSaves.map(({ save, post, author }) => ({
+        ...save,
+        post: { ...post, author },
+        type: 'post' as const,
+      })),
+      ...actionSaves.filter(Boolean),
+    ].sort((a, b) => 
+      new Date(b!.savedAt!).getTime() - new Date(a!.savedAt!).getTime()
+    );
+
+    return allSaves;
   }
 
   async updateScrapbookSaveNote(saveId: string, note: string): Promise<ScrapbookSave> {

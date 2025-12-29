@@ -2559,35 +2559,69 @@ export default function Home() {
                         <Card key={save.id} className="relative" data-testid={`save-${save.id}`}>
                           <CardContent className="p-4">
                             <div className="space-y-3">
-                              {/* Post Content */}
-                              {save.post?.mediaUrl && (
-                                <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-                                  {save.post.mediaType === 'video' ? (
-                                    <video className="w-full h-full object-cover">
-                                      <source src={save.post.mediaUrl} type="video/mp4" />
-                                    </video>
-                                  ) : (
-                                    <img 
-                                      src={save.post.mediaUrl} 
-                                      alt="Post media" 
-                                      className="w-full h-full object-cover"
-                                    />
+                              {/* Action (Video) Content */}
+                              {save.type === 'action' && save.action && (
+                                <>
+                                  <div className="aspect-video bg-black rounded-lg overflow-hidden">
+                                    {save.action.recordingUrl ? (
+                                      <video 
+                                        className="w-full h-full object-cover" 
+                                        controls
+                                        src={save.action.recordingUrl}
+                                      />
+                                    ) : (
+                                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                                        <Video className="h-8 w-8" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-foreground font-semibold">{save.action.title}</p>
+                                  {save.action.description && (
+                                    <p className="text-sm text-muted-foreground line-clamp-2">{save.action.description}</p>
                                   )}
-                                </div>
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <Avatar className="h-6 w-6">
+                                      <AvatarImage src={resolveAssetUrl(save.action.author?.profileImageUrl)} />
+                                      <AvatarFallback>{save.action.author?.firstName?.[0] || 'U'}</AvatarFallback>
+                                    </Avatar>
+                                    <span>{save.action.author?.firstName} {save.action.author?.lastName}</span>
+                                  </div>
+                                </>
                               )}
-                              <p className="text-sm text-foreground line-clamp-3">{save.post?.content}</p>
-                              
-                              {/* Author Info */}
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarImage src={resolveAssetUrl(save.post?.author?.profileImageUrl)} />
-                                  <AvatarFallback>{save.post?.author?.firstName?.[0]}</AvatarFallback>
-                                </Avatar>
-                                <span>{save.post?.author?.firstName} {save.post?.author?.lastName}</span>
-                              </div>
 
-                              {/* Note */}
-                              {save.note && (
+                              {/* Post Content */}
+                              {save.type !== 'action' && save.post && (
+                                <>
+                                  {save.post.mediaUrl && (
+                                    <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                                      {save.post.mediaType === 'video' ? (
+                                        <video className="w-full h-full object-cover">
+                                          <source src={save.post.mediaUrl} type="video/mp4" />
+                                        </video>
+                                      ) : (
+                                        <img 
+                                          src={save.post.mediaUrl} 
+                                          alt="Post media" 
+                                          className="w-full h-full object-cover"
+                                        />
+                                      )}
+                                    </div>
+                                  )}
+                                  <p className="text-sm text-foreground line-clamp-3">{save.post.content}</p>
+                                  
+                                  {/* Author Info */}
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <Avatar className="h-6 w-6">
+                                      <AvatarImage src={resolveAssetUrl(save.post.author?.profileImageUrl)} />
+                                      <AvatarFallback>{save.post.author?.firstName?.[0]}</AvatarFallback>
+                                    </Avatar>
+                                    <span>{save.post.author?.firstName} {save.post.author?.lastName}</span>
+                                  </div>
+                                </>
+                              )}
+
+                              {/* Note - only show for post saves, not action saves */}
+                              {save.type !== 'action' && save.note && (
                                 <div className="p-2 bg-muted/50 rounded text-sm">
                                   <div className="flex items-start justify-between gap-2">
                                     <p className="text-xs italic text-foreground">{save.note}</p>
@@ -2611,7 +2645,7 @@ export default function Home() {
                               {/* Actions */}
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  {!save.note && (
+                                  {save.type !== 'action' && !save.note && (
                                     <Button
                                       variant="ghost"
                                       size="sm"
@@ -2633,7 +2667,12 @@ export default function Home() {
                                   size="sm"
                                   className="h-8 text-xs text-destructive hover:text-destructive/80"
                                   onClick={() => {
-                                    setPostToUnsave(save.post);
+                                    if (save.type === 'action') {
+                                      // For action saves, use the action as target
+                                      setPostToUnsave({ id: save.action?.id, type: 'action' });
+                                    } else {
+                                      setPostToUnsave(save.post);
+                                    }
                                     setShowUnsaveDialog(true);
                                   }}
                                   data-testid={`button-remove-${save.id}`}
