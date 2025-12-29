@@ -18,7 +18,6 @@ import {
   Maximize2,
   Minimize2,
   Heart,
-  Trash2,
   Star,
   Plus,
   Edit
@@ -32,17 +31,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { getApiBaseUrl } from "@/lib/apiConfig";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 interface LiveStreamCardProps {
   action: {
@@ -371,6 +359,20 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
               {action.recordingUrl ? '📹 Video' : 'ENDED'}
             </Badge>
 
+            {/* Plus icon for scrapbook - visible to everyone */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => saveToScrapbookMutation.mutate(action.id)}
+              disabled={isSaved || saveToScrapbookMutation.isPending}
+              className={cn(
+                "h-8 w-8 p-0 transition-colors",
+                isSaved ? "text-green-500" : "text-muted-foreground hover:text-green-500"
+              )}
+            >
+              <Plus className={cn("h-4 w-4", isSaved && "fill-current")} />
+            </Button>
+
             {isOwner && (
               <>
                 <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -446,35 +448,6 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                 >
                   <Star className={cn("h-4 w-4", action.isHighlighted && "fill-current")} />
                 </Button>
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Video?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will permanently delete this video recording. This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        className="bg-red-500 hover:bg-red-600"
-                        onClick={() => deleteActionMutation.mutate(action.id)}
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </>
             )}
           </div>
@@ -542,21 +515,6 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
               >
                 <Send className="w-4 h-4" />
               </Button>
-
-              {!isOwner && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => saveToScrapbookMutation.mutate(action.id)}
-                  disabled={isSaved || saveToScrapbookMutation.isPending}
-                  className={cn(
-                    "p-0 h-auto transition-colors",
-                    isSaved ? "text-green-500" : "text-primary hover:bg-primary/10"
-                  )}
-                >
-                  <Plus className={cn("w-4 h-4", isSaved && "fill-current")} />
-                </Button>
-              )}
             </div>
           </div>
 
