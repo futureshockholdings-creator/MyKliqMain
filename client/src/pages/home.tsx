@@ -2065,8 +2065,19 @@ export default function Home() {
       console.log('Cache clear (non-critical):', e);
     }
     // Invalidate and immediately refetch the feed so the new post appears instantly
-    queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-    queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
+    // Use predicate to match all feed queries (including ones with page/limit params)
+    queryClient.invalidateQueries({ 
+      predicate: (query) => {
+        const key = query.queryKey[0];
+        return typeof key === 'string' && key.includes('/api/kliq-feed');
+      }
+    });
+    queryClient.refetchQueries({ 
+      predicate: (query) => {
+        const key = query.queryKey[0];
+        return typeof key === 'string' && key.includes('/api/kliq-feed');
+      }
+    });
   };
 
   const handleStoryUploadSuccess = () => {

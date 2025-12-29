@@ -43,6 +43,26 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Reset camera state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      // Stop camera stream if running
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        setStream(null);
+      }
+      // Reset all camera-related state
+      setCameraMode("off");
+      setIsRecording(false);
+      setRecordingTime(0);
+      setCapturedMedia(null);
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+        recordingIntervalRef.current = null;
+      }
+    }
+  }, [open, stream]);
   
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
@@ -324,17 +344,6 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
     setCapturedMedia(null);
     startCamera();
   };
-
-  // Cleanup on unmount or dialog close
-  useEffect(() => {
-    if (!open) {
-      stopCamera();
-    }
-    
-    return () => {
-      stopCamera();
-    };
-  }, [open]);
 
   const handleGetUploadParameters = async (_file: { name: string; type: string; size: number }) => {
     try {
