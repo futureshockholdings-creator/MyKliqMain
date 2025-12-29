@@ -608,32 +608,32 @@ export default function Actions() {
               Start Action
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-gray-800 border-gray-700 max-w-md">
+          <DialogContent className="bg-white border-border max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-white">Start New Action</DialogTitle>
-              <DialogDescription className="text-gray-400">
+              <DialogTitle className="text-black">Start New Action</DialogTitle>
+              <DialogDescription className="text-gray-600">
                 Start a live stream to share with your kliq
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label className="text-gray-300">Title</Label>
+                <Label className="text-gray-700">Title</Label>
                 <Input
                   value={newAction.title}
                   onChange={(e) => setNewAction(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="What's your action about?"
-                  className="bg-gray-700 border-gray-600 text-white"
+                  className="bg-white border-gray-300 text-black placeholder:text-gray-400"
                   data-testid="input-action-title"
                 />
               </div>
               
               <div>
-                <Label className="text-gray-300">Description</Label>
+                <Label className="text-gray-700">Description</Label>
                 <Textarea
                   value={newAction.description}
                   onChange={(e) => setNewAction(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Tell your kliq what to expect"
-                  className="bg-gray-700 border-gray-600 text-white resize-none"
+                  className="bg-white border-gray-300 text-black placeholder:text-gray-400 resize-none"
                   rows={3}
                   data-testid="input-action-description"
                 />
@@ -645,7 +645,7 @@ export default function Actions() {
                   onCheckedChange={(checked) => setNewAction(prev => ({ ...prev, chatEnabled: checked }))}
                   data-testid="switch-chat-enabled"
                 />
-                <Label className="text-gray-300">Enable live chat</Label>
+                <Label className="text-gray-700">Enable live chat</Label>
               </div>
 
               <div className="flex space-x-2 pt-4">
@@ -660,7 +660,7 @@ export default function Actions() {
                 <Button
                   variant="outline"
                   onClick={() => setShowCreateAction(false)}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
                   Cancel
                 </Button>
