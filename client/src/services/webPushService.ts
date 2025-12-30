@@ -38,62 +38,84 @@ export class WebPushNotificationService {
   }
 
   /**
-   * Get FCM token for this device
+   * Get FCM token for this device with retry logic
    */
   async getToken(): Promise<string | null> {
-    try {
-      console.log('[WebPush] Starting getToken...');
-      
-      // Check if we already have a token
-      if (this.fcmToken) {
-        console.log('[WebPush] Using cached token');
-        return this.fcmToken;
-      }
-
-      // Ensure we have permission
-      if (!this.permissionGranted) {
-        console.log('[WebPush] Permission not granted yet, requesting...');
-        const hasPermission = await this.requestPermission();
-        if (!hasPermission) {
-          console.log('[WebPush] Permission denied by user');
-          return null;
+    const maxRetries = 3;
+    let lastError: any = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[WebPush] getToken attempt ${attempt}/${maxRetries}...`);
+        const token = await this.getTokenInternal();
+        if (token) {
+          return token;
+        }
+      } catch (error: any) {
+        lastError = error;
+        console.warn(`[WebPush] Attempt ${attempt} failed:`, error?.message || error);
+        
+        if (attempt < maxRetries) {
+          // Wait before retry (exponential backoff)
+          const delay = 1000 * attempt;
+          console.log(`[WebPush] Waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
+    }
+    
+    // All retries failed
+    this.lastError = `FCM Token Error: ${lastError?.message || lastError?.code || 'Failed after retries'}`;
+    console.error('[WebPush] All retry attempts failed:', this.lastError);
+    return null;
+  }
 
-      if (!messaging) {
-        console.error('[WebPush] Firebase messaging not initialized - check Firebase config');
-        console.log('[WebPush] VAPID key present:', !!vapidKey);
+  /**
+   * Internal method to get FCM token
+   */
+  private async getTokenInternal(): Promise<string | null> {
+    console.log('[WebPush] Starting getTokenInternal...');
+    
+    // Check if we already have a token
+    if (this.fcmToken) {
+      console.log('[WebPush] Using cached token');
+      return this.fcmToken;
+    }
+
+    // Ensure we have permission
+    if (!this.permissionGranted) {
+      console.log('[WebPush] Permission not granted yet, requesting...');
+      const hasPermission = await this.requestPermission();
+      if (!hasPermission) {
+        console.log('[WebPush] Permission denied by user');
         return null;
       }
+    }
 
-      // Register service worker if not already registered
-      console.log('[WebPush] Registering service worker...');
-      await this.registerServiceWorker();
-      console.log('[WebPush] Service worker registered, waiting for ready...');
+    if (!messaging) {
+      console.error('[WebPush] Firebase messaging not initialized - check Firebase config');
+      console.log('[WebPush] VAPID key present:', !!vapidKey);
+      throw new Error('Firebase messaging not initialized');
+    }
 
-      const swRegistration = await navigator.serviceWorker.ready;
-      console.log('[WebPush] Service worker ready, getting FCM token...');
-      console.log('[WebPush] Using VAPID key:', vapidKey ? vapidKey.slice(0, 20) + '...' : 'MISSING');
+    // Register service worker and wait for it to be fully active
+    console.log('[WebPush] Registering service worker...');
+    const swRegistration = await this.registerAndWaitForServiceWorker();
+    console.log('[WebPush] Service worker active, getting FCM token...');
+    console.log('[WebPush] Using VAPID key:', vapidKey ? vapidKey.slice(0, 20) + '...' : 'MISSING');
 
-      // Get FCM token
-      const token = await getToken(messaging, { 
-        vapidKey: vapidKey,
-        serviceWorkerRegistration: swRegistration
-      });
+    // Get FCM token
+    const token = await getToken(messaging, { 
+      vapidKey: vapidKey,
+      serviceWorkerRegistration: swRegistration
+    });
 
-      if (token) {
-        this.fcmToken = token;
-        console.log('[WebPush] FCM token obtained successfully:', token.slice(0, 20) + '...');
-        return token;
-      } else {
-        console.log('[WebPush] No registration token available from Firebase');
-        return null;
-      }
-    } catch (error: any) {
-      console.error('[WebPush] Error getting FCM token:', error);
-      console.error('[WebPush] Error details:', error?.message || error);
-      console.error('[WebPush] Error code:', error?.code);
-      this.lastError = `FCM Token Error: ${error?.message || error?.code || String(error)}`;
+    if (token) {
+      this.fcmToken = token;
+      console.log('[WebPush] FCM token obtained successfully:', token.slice(0, 20) + '...');
+      return token;
+    } else {
+      console.log('[WebPush] No registration token available from Firebase');
       return null;
     }
   }
@@ -239,20 +261,72 @@ export class WebPushNotificationService {
   }
 
   /**
-   * Register service worker for push notifications
+   * Register service worker and wait for it to be fully active
    */
-  private async registerServiceWorker(): Promise<void> {
+  private async registerAndWaitForServiceWorker(): Promise<ServiceWorkerRegistration> {
     if (!('serviceWorker' in navigator)) {
       throw new Error('Service workers are not supported');
     }
 
     try {
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      console.log('Firebase messaging service worker registered:', registration);
+      // Register the Firebase messaging service worker
+      console.log('[WebPush] Registering firebase-messaging-sw.js...');
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        scope: '/',
+        updateViaCache: 'none'
+      });
+      console.log('[WebPush] Service worker registered:', registration.scope);
+
+      // Wait for the service worker to be ready
+      console.log('[WebPush] Waiting for service worker to be ready...');
+      const readyRegistration = await navigator.serviceWorker.ready;
+      console.log('[WebPush] Service worker ready');
+
+      // If there's an installing or waiting worker, wait for it to activate
+      if (registration.installing) {
+        console.log('[WebPush] Service worker installing, waiting for activation...');
+        await this.waitForServiceWorkerActive(registration.installing);
+      } else if (registration.waiting) {
+        console.log('[WebPush] Service worker waiting, waiting for activation...');
+        await this.waitForServiceWorkerActive(registration.waiting);
+      }
+
+      // Additional delay to ensure the worker is fully active
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('[WebPush] Service worker fully active');
+      return readyRegistration;
     } catch (error) {
-      console.error('Service worker registration failed:', error);
+      console.error('[WebPush] Service worker registration failed:', error);
       throw error;
     }
+  }
+
+  /**
+   * Wait for a service worker to become active
+   */
+  private waitForServiceWorkerActive(worker: ServiceWorker): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (worker.state === 'activated') {
+        resolve();
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        reject(new Error('Service worker activation timeout'));
+      }, 10000);
+
+      worker.addEventListener('statechange', () => {
+        console.log('[WebPush] Service worker state:', worker.state);
+        if (worker.state === 'activated') {
+          clearTimeout(timeout);
+          resolve();
+        } else if (worker.state === 'redundant') {
+          clearTimeout(timeout);
+          reject(new Error('Service worker became redundant'));
+        }
+      });
+    });
   }
 
   /**
