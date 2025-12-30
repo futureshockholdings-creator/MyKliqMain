@@ -16,19 +16,49 @@ frontend:
   cache:
     paths: []
   redirects:
-    # PWA assets must be served as real files
-    - source: /manifest.json
-      target: /manifest.json
+    # Serve all static files with their extensions directly
+    - source: /<*>.js
+      target: /<*>.js
       status: 200
       condition: null
 
-    - source: /sw.js
-      target: /sw.js
+    - source: /<*>.css
+      target: /<*>.css
       status: 200
       condition: null
 
-    - source: /firebase-messaging-sw.js
-      target: /firebase-messaging-sw.js
+    - source: /<*>.json
+      target: /<*>.json
+      status: 200
+      condition: null
+
+    - source: /<*>.png
+      target: /<*>.png
+      status: 200
+      condition: null
+
+    - source: /<*>.jpg
+      target: /<*>.jpg
+      status: 200
+      condition: null
+
+    - source: /<*>.ico
+      target: /<*>.ico
+      status: 200
+      condition: null
+
+    - source: /<*>.svg
+      target: /<*>.svg
+      status: 200
+      condition: null
+
+    - source: /<*>.woff
+      target: /<*>.woff
+      status: 200
+      condition: null
+
+    - source: /<*>.woff2
+      target: /<*>.woff2
       status: 200
       condition: null
 
@@ -42,7 +72,12 @@ frontend:
       status: 200
       condition: null
 
-    # SPA fallback for the rest of your routes
+    - source: /assets/<*>
+      target: /assets/<*>
+      status: 200
+      condition: null
+
+    # SPA fallback for the rest of your routes (non-file paths)
     - source: /<*>
       target: /index.html
       status: 200
