@@ -27,6 +27,11 @@ frontend:
       status: 200
       condition: null
 
+    - source: /firebase-messaging-sw.js
+      target: /firebase-messaging-sw.js
+      status: 200
+      condition: null
+
     - source: /icons/<*>
       target: /icons/<*>
       status: 200
