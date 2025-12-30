@@ -77,6 +77,11 @@ frontend:
       status: 200
       condition: null
 
+    - source: /firebase-sw/<*>
+      target: /firebase-sw/<*>
+      status: 200
+      condition: null
+
     # SPA fallback for the rest of your routes (non-file paths)
     - source: /<*>
       target: /index.html
