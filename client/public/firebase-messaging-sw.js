@@ -8,8 +8,8 @@ let firebaseInitialized = false;
 let messaging = null;
 
 try {
-  importScripts('https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js');
-  importScripts('https://www.gstatic.com/firebasejs/10.12.4/firebase-messaging-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
   // Firebase configuration - all required fields for FCM
   const firebaseConfig = {
