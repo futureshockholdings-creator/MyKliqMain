@@ -3,16 +3,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Bell, BellOff, Check, Smartphone } from "lucide-react";
+import { Bell, BellOff, Check, Smartphone, AlertCircle } from "lucide-react";
 import { webPushService } from "@/services/webPushService";
 import { useToast } from "@/hooks/use-toast";
+import { messaging, vapidKey } from "@/lib/firebase";
 
 export function NotificationSettings() {
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
   const [isEnabled, setIsEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [needsPWA, setNeedsPWA] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Debug: Check Firebase config status
+  const firebaseConfigStatus = {
+    hasMessaging: !!messaging,
+    hasVapidKey: !!vapidKey,
+    vapidKeyPreview: vapidKey ? vapidKey.slice(0, 10) + '...' : 'MISSING',
+  };
 
   useEffect(() => {
     // Check if user needs to install PWA first (iOS Safari requirement)
@@ -26,12 +35,27 @@ export function NotificationSettings() {
 
   const handleEnableNotifications = async () => {
     setIsLoading(true);
+    setLastError(null);
     
     try {
+      // Check Firebase config first
+      if (!messaging) {
+        const errorMsg = `Firebase not initialized. Config: hasVapidKey=${!!vapidKey}`;
+        setLastError(errorMsg);
+        toast({
+          title: "Configuration Error",
+          description: "Firebase messaging is not initialized. Please contact support.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       // Request permission
       const granted = await webPushService.requestPermission();
       
       if (!granted) {
+        setLastError("Permission denied by user");
         toast({
           title: "Permission Denied",
           description: "You need to allow notifications in your browser settings.",
@@ -47,6 +71,7 @@ export function NotificationSettings() {
       if (registered) {
         setPermissionStatus('granted');
         setIsEnabled(true);
+        setLastError(null);
         
         // Setup foreground message listener
         webPushService.setupForegroundListener((payload) => {
@@ -58,14 +83,17 @@ export function NotificationSettings() {
           description: "You'll now receive push notifications from MyKliq!",
         });
       } else {
+        setLastError("Device registration failed - check browser console for details");
         toast({
           title: "Registration Failed",
           description: "Failed to register for push notifications. Please try again.",
           variant: "destructive"
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      const errorMsg = error?.message || String(error);
       console.error('Error enabling notifications:', error);
+      setLastError(errorMsg);
       toast({
         title: "Error",
         description: "An error occurred while enabling notifications.",
@@ -214,6 +242,22 @@ export function NotificationSettings() {
             <p className="text-sm text-red-200">
               You've blocked notifications. To enable them, please allow notifications in your browser settings.
             </p>
+          </div>
+        )}
+
+        {lastError && (
+          <div className="p-3 bg-orange-500/20 border border-orange-500/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-orange-400 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-orange-200">Debug Info</p>
+                <p className="text-xs text-orange-300 mt-1">{lastError}</p>
+                <p className="text-xs text-orange-300 mt-1">
+                  Firebase: {firebaseConfigStatus.hasMessaging ? '✓' : '✗'} | 
+                  VAPID: {firebaseConfigStatus.hasVapidKey ? firebaseConfigStatus.vapidKeyPreview : '✗ MISSING'}
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </CardContent>
