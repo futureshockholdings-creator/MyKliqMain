@@ -16,6 +16,17 @@ frontend:
   cache:
     paths: []
   redirects:
+    # Service workers must be served from root with exact paths
+    - source: /sw-ios.js
+      target: /sw-ios.js
+      status: 200
+      condition: null
+
+    - source: /firebase-messaging-sw.js
+      target: /firebase-messaging-sw.js
+      status: 200
+      condition: null
+
     # Serve all static files with their extensions directly
     - source: /<*>.js
       target: /<*>.js
