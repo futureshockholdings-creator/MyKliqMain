@@ -3,13 +3,14 @@
  * Handles Firebase Cloud Messaging for web push notifications
  */
 
-import { messaging, getToken, onMessage, vapidKey } from '@/lib/firebase';
+import { getMessaging, getToken, onMessage, vapidKey, isMessagingSupported } from '@/lib/firebase';
 import { apiRequest } from '@/lib/queryClient';
 
 export class WebPushNotificationService {
   private fcmToken: string | null = null;
   private permissionGranted: boolean = false;
   private lastError: string | null = null;
+  private registrationInProgress: boolean = false;
 
   /**
    * Request notification permission from the user
@@ -17,7 +18,7 @@ export class WebPushNotificationService {
   async requestPermission(): Promise<boolean> {
     try {
       if (!('Notification' in window)) {
-        console.log('This browser does not support notifications');
+        console.log('[WebPush] This browser does not support notifications');
         return false;
       }
 
@@ -25,14 +26,14 @@ export class WebPushNotificationService {
       this.permissionGranted = permission === 'granted';
       
       if (!this.permissionGranted) {
-        console.log('Notification permission denied');
+        console.log('[WebPush] Notification permission denied');
         return false;
       }
 
-      console.log('Notification permission granted');
+      console.log('[WebPush] Notification permission granted');
       return true;
     } catch (error) {
-      console.error('Error requesting notification permission:', error);
+      console.error('[WebPush] Error requesting notification permission:', error);
       return false;
     }
   }
@@ -56,7 +57,6 @@ export class WebPushNotificationService {
         console.warn(`[WebPush] Attempt ${attempt} failed:`, error?.message || error);
         
         if (attempt < maxRetries) {
-          // Wait before retry (exponential backoff)
           const delay = 1000 * attempt;
           console.log(`[WebPush] Waiting ${delay}ms before retry...`);
           await new Promise(resolve => setTimeout(resolve, delay));
@@ -64,7 +64,6 @@ export class WebPushNotificationService {
       }
     }
     
-    // All retries failed
     this.lastError = `FCM Token Error: ${lastError?.message || lastError?.code || 'Failed after retries'}`;
     console.error('[WebPush] All retry attempts failed:', this.lastError);
     return null;
@@ -76,13 +75,11 @@ export class WebPushNotificationService {
   private async getTokenInternal(): Promise<string | null> {
     console.log('[WebPush] Starting getTokenInternal...');
     
-    // Check if we already have a token
     if (this.fcmToken) {
       console.log('[WebPush] Using cached token');
       return this.fcmToken;
     }
 
-    // Ensure we have permission
     if (!this.permissionGranted) {
       console.log('[WebPush] Permission not granted yet, requesting...');
       const hasPermission = await this.requestPermission();
@@ -92,19 +89,19 @@ export class WebPushNotificationService {
       }
     }
 
+    const messaging = getMessaging();
     if (!messaging) {
-      console.error('[WebPush] Firebase messaging not initialized - check Firebase config');
+      console.error('[WebPush] Firebase messaging not initialized');
       console.log('[WebPush] VAPID key present:', !!vapidKey);
-      throw new Error('Firebase messaging not initialized');
+      console.log('[WebPush] Messaging supported:', isMessagingSupported());
+      throw new Error('Firebase messaging not initialized - ensure you are in a browser with service worker support');
     }
 
-    // Register service worker and wait for it to be fully active
     console.log('[WebPush] Registering service worker...');
     const swRegistration = await this.registerAndWaitForServiceWorker();
     console.log('[WebPush] Service worker active, getting FCM token...');
     console.log('[WebPush] Using VAPID key:', vapidKey ? vapidKey.slice(0, 20) + '...' : 'MISSING');
 
-    // Get FCM token
     const token = await getToken(messaging, { 
       vapidKey: vapidKey,
       serviceWorkerRegistration: swRegistration
@@ -131,6 +128,12 @@ export class WebPushNotificationService {
    * Register device token with backend
    */
   async registerDevice(): Promise<boolean> {
+    if (this.registrationInProgress) {
+      console.log('[WebPush] Registration already in progress, skipping...');
+      return false;
+    }
+    
+    this.registrationInProgress = true;
     this.lastError = null;
     
     try {
@@ -145,20 +148,21 @@ export class WebPushNotificationService {
 
       console.log('[WebPush] Got FCM token, registering with backend...');
       
-      // Register token with backend
-      await apiRequest('POST', '/api/push/register-device', {
+      const response = await apiRequest('POST', '/api/push/register-device', {
         token,
         platform: 'web',
         deviceId: this.getDeviceId()
       });
 
-      console.log('[WebPush] Device registered successfully with backend!');
+      console.log('[WebPush] Device registered successfully with backend!', response);
       return true;
     } catch (error: any) {
       this.lastError = error?.message || String(error);
       console.error('[WebPush] Error registering device:', error);
       console.error('[WebPush] Registration error details:', error?.message || error);
       return false;
+    } finally {
+      this.registrationInProgress = false;
     }
   }
 
@@ -168,7 +172,7 @@ export class WebPushNotificationService {
   async unregisterDevice(): Promise<boolean> {
     try {
       if (!this.fcmToken) {
-        return true; // Already unregistered
+        return true;
       }
 
       await apiRequest('DELETE', '/api/push/unregister-device', {
@@ -176,28 +180,27 @@ export class WebPushNotificationService {
       });
 
       this.fcmToken = null;
-      console.log('Device unregistered from push notifications');
+      console.log('[WebPush] Device unregistered from push notifications');
       return true;
     } catch (error) {
-      console.error('Error unregistering device:', error);
+      console.error('[WebPush] Error unregistering device:', error);
       return false;
     }
   }
 
   /**
    * Setup foreground message listener
-   * Handles notifications when app is in foreground
    */
   setupForegroundListener(onNotification: (payload: any) => void) {
+    const messaging = getMessaging();
     if (!messaging) {
-      console.warn('Firebase messaging not initialized');
+      console.warn('[WebPush] Firebase messaging not initialized for foreground listener');
       return;
     }
 
     onMessage(messaging, (payload) => {
-      console.log('Foreground message received:', payload);
+      console.log('[WebPush] Foreground message received:', payload);
       
-      // Show notification using Notification API
       if (payload.notification) {
         new Notification(payload.notification.title || 'MyKliq', {
           body: payload.notification.body,
@@ -207,7 +210,6 @@ export class WebPushNotificationService {
         });
       }
       
-      // Call custom handler
       onNotification(payload);
     });
   }
@@ -225,17 +227,15 @@ export class WebPushNotificationService {
    */
   isPWAMode(): boolean {
     return window.matchMedia('(display-mode: standalone)').matches ||
-           (window.navigator as any).standalone === true; // iOS specific
+           (window.navigator as any).standalone === true;
   }
 
   /**
    * Check if notifications are supported and enabled
-   * On iOS Safari, notifications only work in PWA standalone mode
    */
   isSupported(): boolean {
-    const hasBasicSupport = 'Notification' in window && 'serviceWorker' in navigator;
+    const hasBasicSupport = isMessagingSupported();
     
-    // On iOS, push notifications only work when installed as PWA
     if (this.isIOS()) {
       return hasBasicSupport && this.isPWAMode();
     }
@@ -261,6 +261,19 @@ export class WebPushNotificationService {
   }
 
   /**
+   * Check if device is registered with backend
+   */
+  async checkBackendRegistration(): Promise<boolean> {
+    try {
+      const response = await apiRequest('GET', '/api/push/status');
+      return response?.registered === true;
+    } catch (error) {
+      console.error('[WebPush] Error checking backend registration:', error);
+      return false;
+    }
+  }
+
+  /**
    * Register service worker and wait for it to be fully active
    */
   private async registerAndWaitForServiceWorker(): Promise<ServiceWorkerRegistration> {
@@ -269,7 +282,6 @@ export class WebPushNotificationService {
     }
 
     try {
-      // Check if Firebase service worker is already registered
       const existingRegistrations = await navigator.serviceWorker.getRegistrations();
       let registration = existingRegistrations.find(
         reg => reg.active?.scriptURL.includes('firebase-messaging-sw.js')
@@ -278,18 +290,15 @@ export class WebPushNotificationService {
       if (registration) {
         console.log('[WebPush] Using existing Firebase service worker registration');
       } else {
-        // Register the Firebase messaging service worker
         console.log('[WebPush] Registering firebase-messaging-sw.js...');
         registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         console.log('[WebPush] Service worker registered:', registration.scope);
       }
 
-      // Wait for the service worker to be ready
       console.log('[WebPush] Waiting for service worker to be ready...');
       const readyRegistration = await navigator.serviceWorker.ready;
       console.log('[WebPush] Service worker ready');
 
-      // If there's an installing or waiting worker, wait for it to activate
       if (registration.installing) {
         console.log('[WebPush] Service worker installing, waiting for activation...');
         await this.waitForServiceWorkerActive(registration.installing);
@@ -298,8 +307,7 @@ export class WebPushNotificationService {
         await this.waitForServiceWorkerActive(registration.waiting);
       }
 
-      // Additional delay to ensure the worker is fully active
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       console.log('[WebPush] Service worker fully active');
       return readyRegistration;
@@ -349,7 +357,13 @@ export class WebPushNotificationService {
     
     return deviceId;
   }
+
+  /**
+   * Get cached FCM token (if available)
+   */
+  getCachedToken(): string | null {
+    return this.fcmToken;
+  }
 }
 
-// Export singleton instance
 export const webPushService = new WebPushNotificationService();
