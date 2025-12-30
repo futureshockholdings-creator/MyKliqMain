@@ -89,6 +89,13 @@ export class WebPushNotificationService {
       }
     }
 
+    // iOS Safari PWA workaround: add delay after permission granted
+    // iOS needs time to sync permission state from the system
+    if (this.isIOS()) {
+      console.log('[WebPush] iOS detected, adding delay for permission sync...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
     const messaging = getMessaging();
     if (!messaging) {
       console.error('[WebPush] Firebase messaging not initialized');
@@ -101,6 +108,14 @@ export class WebPushNotificationService {
     const swRegistration = await this.registerAndWaitForServiceWorker();
     console.log('[WebPush] Service worker active, getting FCM token...');
     console.log('[WebPush] Using VAPID key:', vapidKey ? vapidKey.slice(0, 20) + '...' : 'MISSING');
+
+    // iOS Safari PWA workaround: use navigator.serviceWorker.ready
+    // This ensures the service worker is fully activated before getting token
+    if (this.isIOS()) {
+      console.log('[WebPush] iOS: waiting for serviceWorker.ready...');
+      await navigator.serviceWorker.ready;
+      console.log('[WebPush] iOS: serviceWorker.ready completed');
+    }
 
     const token = await getToken(messaging, { 
       vapidKey: vapidKey,
