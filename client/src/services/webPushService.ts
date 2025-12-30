@@ -41,43 +41,57 @@ export class WebPushNotificationService {
    */
   async getToken(): Promise<string | null> {
     try {
+      console.log('[WebPush] Starting getToken...');
+      
       // Check if we already have a token
       if (this.fcmToken) {
+        console.log('[WebPush] Using cached token');
         return this.fcmToken;
       }
 
       // Ensure we have permission
       if (!this.permissionGranted) {
+        console.log('[WebPush] Permission not granted yet, requesting...');
         const hasPermission = await this.requestPermission();
         if (!hasPermission) {
+          console.log('[WebPush] Permission denied by user');
           return null;
         }
       }
 
       if (!messaging) {
-        console.error('Firebase messaging not initialized');
+        console.error('[WebPush] Firebase messaging not initialized - check Firebase config');
+        console.log('[WebPush] VAPID key present:', !!vapidKey);
         return null;
       }
 
       // Register service worker if not already registered
+      console.log('[WebPush] Registering service worker...');
       await this.registerServiceWorker();
+      console.log('[WebPush] Service worker registered, waiting for ready...');
+
+      const swRegistration = await navigator.serviceWorker.ready;
+      console.log('[WebPush] Service worker ready, getting FCM token...');
+      console.log('[WebPush] Using VAPID key:', vapidKey ? vapidKey.slice(0, 20) + '...' : 'MISSING');
 
       // Get FCM token
       const token = await getToken(messaging, { 
         vapidKey: vapidKey,
-        serviceWorkerRegistration: await navigator.serviceWorker.ready
+        serviceWorkerRegistration: swRegistration
       });
 
       if (token) {
         this.fcmToken = token;
-        console.log('FCM token obtained:', token.slice(0, 20) + '...');
+        console.log('[WebPush] FCM token obtained successfully:', token.slice(0, 20) + '...');
         return token;
       } else {
-        console.log('No registration token available');
+        console.log('[WebPush] No registration token available from Firebase');
         return null;
       }
-    } catch (error) {
-      console.error('Error getting FCM token:', error);
+    } catch (error: any) {
+      console.error('[WebPush] Error getting FCM token:', error);
+      console.error('[WebPush] Error details:', error?.message || error);
+      console.error('[WebPush] Error code:', error?.code);
       return null;
     }
   }
@@ -87,13 +101,16 @@ export class WebPushNotificationService {
    */
   async registerDevice(): Promise<boolean> {
     try {
+      console.log('[WebPush] Starting device registration...');
       const token = await this.getToken();
       
       if (!token) {
-        console.log('No FCM token available, skipping registration');
+        console.log('[WebPush] No FCM token available, skipping registration');
         return false;
       }
 
+      console.log('[WebPush] Got FCM token, registering with backend...');
+      
       // Register token with backend
       await apiRequest('POST', '/api/push/register-device', {
         token,
@@ -101,10 +118,11 @@ export class WebPushNotificationService {
         deviceId: this.getDeviceId()
       });
 
-      console.log('Device registered for push notifications');
+      console.log('[WebPush] Device registered successfully with backend!');
       return true;
-    } catch (error) {
-      console.error('Error registering device:', error);
+    } catch (error: any) {
+      console.error('[WebPush] Error registering device:', error);
+      console.error('[WebPush] Registration error details:', error?.message || error);
       return false;
     }
   }
