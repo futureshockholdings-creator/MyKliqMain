@@ -3,15 +3,16 @@
  * Handles background push notifications
  */
 
-// Import Firebase scripts for service worker
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+// Import Firebase scripts for service worker - using compat version for importScripts
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
 
-// Firebase configuration
-// Note: These are safe to expose in service worker as they're public credentials
+// Firebase configuration - all required fields for FCM
 const firebaseConfig = {
   apiKey: "AIzaSyBSLE2s6Vzyqd05-YjnMFq-SS45ZyvDagw",
+  authDomain: "mykliq-ea8a3.firebaseapp.com",
   projectId: "mykliq-ea8a3",
+  storageBucket: "mykliq-ea8a3.firebasestorage.app",
   messagingSenderId: "728126819544",
   appId: "1:728126819544:web:69edebba0789ee6ea21bad"
 };
