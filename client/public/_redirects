@@ -1,0 +1,17 @@
+/sw-ios.js /sw-ios.js 200
+/firebase-messaging-sw.js /firebase-messaging-sw.js 200
+/firebase-sw/* /firebase-sw/:splat 200
+/icons/* /icons/:splat 200
+/screenshots/* /screenshots/:splat 200
+/assets/* /assets/:splat 200
+/*.js /:splat.js 200
+/*.css /:splat.css 200
+/*.json /:splat.json 200
+/*.png /:splat.png 200
+/*.jpg /:splat.jpg 200
+/*.ico /:splat.ico 200
+/*.svg /:splat.svg 200
+/*.woff /:splat.woff 200
+/*.woff2 /:splat.woff2 200
+/*.webmanifest /:splat.webmanifest 200
+/* /index.html 200
