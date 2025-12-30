@@ -3,8 +3,8 @@
  * Used for web push notifications via Firebase Cloud Messaging
  */
 
-import { initializeApp } from 'firebase/app';
-import { getMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
+import { initializeApp, type FirebaseApp } from 'firebase/app';
+import { getMessaging as getFirebaseMessaging, getToken, onMessage, type Messaging } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,7 +13,6 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Log Firebase config (without exposing full values)
 console.log('[Firebase] Config check:', {
   hasApiKey: !!firebaseConfig.apiKey,
   hasProjectId: !!firebaseConfig.projectId,
@@ -22,25 +21,74 @@ console.log('[Firebase] Config check:', {
   projectId: firebaseConfig.projectId || 'MISSING'
 });
 
-// Initialize Firebase
-let app;
-let messaging: Messaging | null = null;
+let app: FirebaseApp | null = null;
+let messagingInstance: Messaging | null = null;
+let messagingInitAttempted = false;
 
-try {
-  app = initializeApp(firebaseConfig);
-  console.log('[Firebase] App initialized successfully');
+function initializeFirebaseApp(): FirebaseApp | null {
+  if (app) return app;
   
-  // Initialize Firebase Cloud Messaging
-  // Only initialize if in browser environment
-  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-    messaging = getMessaging(app);
-    console.log('[Firebase] Messaging initialized successfully');
-  } else {
-    console.log('[Firebase] Messaging not initialized - not in browser or no service worker support');
+  try {
+    app = initializeApp(firebaseConfig);
+    console.log('[Firebase] App initialized successfully');
+    return app;
+  } catch (error) {
+    console.error('[Firebase] Error initializing Firebase app:', error);
+    return null;
   }
-} catch (error) {
-  console.error('[Firebase] Error initializing Firebase:', error);
 }
 
-export { messaging, getToken, onMessage };
+/**
+ * Lazy getter for Firebase Messaging
+ * Only initializes messaging when explicitly called in browser context
+ */
+export function getMessaging(): Messaging | null {
+  if (messagingInstance) {
+    return messagingInstance;
+  }
+  
+  if (messagingInitAttempted) {
+    return null;
+  }
+  
+  messagingInitAttempted = true;
+  
+  if (typeof window === 'undefined') {
+    console.log('[Firebase] getMessaging called in non-browser context');
+    return null;
+  }
+  
+  if (!('serviceWorker' in navigator)) {
+    console.log('[Firebase] Service workers not supported');
+    return null;
+  }
+  
+  const firebaseApp = initializeFirebaseApp();
+  if (!firebaseApp) {
+    console.error('[Firebase] Cannot initialize messaging - app not initialized');
+    return null;
+  }
+  
+  try {
+    messagingInstance = getFirebaseMessaging(firebaseApp);
+    console.log('[Firebase] Messaging initialized successfully');
+    return messagingInstance;
+  } catch (error) {
+    console.error('[Firebase] Error initializing messaging:', error);
+    return null;
+  }
+}
+
+export function isMessagingSupported(): boolean {
+  return typeof window !== 'undefined' && 
+         'serviceWorker' in navigator && 
+         'PushManager' in window &&
+         'Notification' in window;
+}
+
+initializeFirebaseApp();
+
+export { getToken, onMessage };
 export const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
+
+export const messaging = null;
