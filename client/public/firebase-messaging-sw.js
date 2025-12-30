@@ -8,8 +8,9 @@ let firebaseInitialized = false;
 let messaging = null;
 
 try {
-  importScripts('https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js');
-  importScripts('https://www.gstatic.com/firebasejs/10.7.2/firebase-messaging-compat.js');
+  // Use local copies for iOS Safari PWA compatibility (iOS blocks CDN importScripts)
+  importScripts('/firebase-sw/firebase-app-compat.js');
+  importScripts('/firebase-sw/firebase-messaging-compat.js');
 
   // Firebase configuration - all required fields for FCM
   const firebaseConfig = {
