@@ -1606,6 +1606,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
+   * GET /api/push/status - Check if user has registered device tokens
+   */
+  app.get('/api/push/status', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const tokens = await storage.getDeviceTokensByUser(userId);
+      const webTokens = tokens.filter(t => t.platform === 'web');
+      
+      res.json({ 
+        registered: webTokens.length > 0,
+        tokenCount: webTokens.length,
+        tokens: webTokens.map(t => ({
+          id: t.id,
+          platform: t.platform,
+          deviceId: t.deviceId,
+          isActive: t.isActive,
+          createdAt: t.createdAt
+        }))
+      });
+    } catch (error) {
+      console.error('Push status check error:', error);
+      res.status(500).json({ message: 'Failed to check push status' });
+    }
+  });
+
+  /**
    * GET /api/mobile/notifications/preferences - Get user's notification preferences
    */
   app.get('/api/mobile/notifications/preferences', verifyMobileToken, async (req, res) => {
