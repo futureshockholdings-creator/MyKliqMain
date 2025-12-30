@@ -15,86 +15,16 @@ frontend:
       - '**/*'
   cache:
     paths: []
-  redirects:
-    # Service workers must be served from root with exact paths
-    - source: /sw-ios.js
-      target: /sw-ios.js
-      status: 200
-      condition: null
-
-    - source: /firebase-messaging-sw.js
-      target: /firebase-messaging-sw.js
-      status: 200
-      condition: null
-
-    # Serve all static files with their extensions directly
-    - source: /<*>.js
-      target: /<*>.js
-      status: 200
-      condition: null
-
-    - source: /<*>.css
-      target: /<*>.css
-      status: 200
-      condition: null
-
-    - source: /<*>.json
-      target: /<*>.json
-      status: 200
-      condition: null
-
-    - source: /<*>.png
-      target: /<*>.png
-      status: 200
-      condition: null
-
-    - source: /<*>.jpg
-      target: /<*>.jpg
-      status: 200
-      condition: null
-
-    - source: /<*>.ico
-      target: /<*>.ico
-      status: 200
-      condition: null
-
-    - source: /<*>.svg
-      target: /<*>.svg
-      status: 200
-      condition: null
-
-    - source: /<*>.woff
-      target: /<*>.woff
-      status: 200
-      condition: null
-
-    - source: /<*>.woff2
-      target: /<*>.woff2
-      status: 200
-      condition: null
-
-    - source: /icons/<*>
-      target: /icons/<*>
-      status: 200
-      condition: null
-
-    - source: /screenshots/<*>
-      target: /screenshots/<*>
-      status: 200
-      condition: null
-
-    - source: /assets/<*>
-      target: /assets/<*>
-      status: 200
-      condition: null
-
-    - source: /firebase-sw/<*>
-      target: /firebase-sw/<*>
-      status: 200
-      condition: null
-
-    # SPA fallback for the rest of your routes (non-file paths)
-    - source: /<*>
-      target: /index.html
-      status: 200
-      condition: null
+  customHeaders:
+    - pattern: '/sw-ios.js'
+      headers:
+        - key: 'Service-Worker-Allowed'
+          value: '/'
+        - key: 'Cache-Control'
+          value: 'no-cache'
+    - pattern: '/firebase-messaging-sw.js'
+      headers:
+        - key: 'Service-Worker-Allowed'
+          value: '/'
+        - key: 'Cache-Control'
+          value: 'no-cache'
