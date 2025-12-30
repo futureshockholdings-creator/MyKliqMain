@@ -92,8 +92,14 @@ class PWAUpdateManager {
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (this.isReloading) return;
-      console.log('[PWAUpdate] Controller changed, reloading...');
-      this.safeReload();
+      // Only reload on controller change if we explicitly have an update pending
+      // This prevents unwanted reloads when Firebase service worker is registered
+      if (this.updateAvailable) {
+        console.log('[PWAUpdate] Controller changed with update pending, reloading...');
+        this.safeReload();
+      } else {
+        console.log('[PWAUpdate] Controller changed, but no update pending - skipping reload');
+      }
     });
 
     navigator.serviceWorker.ready.then((registration) => {
