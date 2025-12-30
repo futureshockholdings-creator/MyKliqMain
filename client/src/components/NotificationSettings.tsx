@@ -103,21 +103,25 @@ export function NotificationSettings() {
         });
       } else {
         const serviceError = webPushService.getLastError();
-        setLastError(serviceError || "Device registration failed - check browser console for details");
+        const errorDetail = serviceError || "Device registration failed - check browser console for details";
+        setLastError(errorDetail);
         toast({
           title: "Registration Failed",
-          description: "Failed to register for push notifications. Please try again.",
-          variant: "destructive"
+          description: errorDetail,
+          variant: "destructive",
+          duration: 10000
         });
       }
     } catch (error: any) {
-      const errorMsg = error?.message || String(error);
+      const errorMsg = error?.message || error?.code || String(error);
       console.error('[NotificationSettings] Error enabling notifications:', error);
-      setLastError(errorMsg);
+      console.error('[NotificationSettings] Error stack:', error?.stack);
+      setLastError(`Enable Error: ${errorMsg}`);
       toast({
         title: "Error",
-        description: "An error occurred while enabling notifications.",
-        variant: "destructive"
+        description: errorMsg || "An error occurred while enabling notifications.",
+        variant: "destructive",
+        duration: 10000
       });
     } finally {
       setIsToggling(false);
