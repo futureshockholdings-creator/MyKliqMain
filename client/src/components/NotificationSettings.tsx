@@ -83,7 +83,8 @@ export function NotificationSettings() {
           description: "You'll now receive push notifications from MyKliq!",
         });
       } else {
-        setLastError("Device registration failed - check browser console for details");
+        const serviceError = webPushService.getLastError();
+        setLastError(serviceError || "Device registration failed - check browser console for details");
         toast({
           title: "Registration Failed",
           description: "Failed to register for push notifications. Please try again.",

@@ -9,6 +9,7 @@ import { apiRequest } from '@/lib/queryClient';
 export class WebPushNotificationService {
   private fcmToken: string | null = null;
   private permissionGranted: boolean = false;
+  private lastError: string | null = null;
 
   /**
    * Request notification permission from the user
@@ -92,19 +93,30 @@ export class WebPushNotificationService {
       console.error('[WebPush] Error getting FCM token:', error);
       console.error('[WebPush] Error details:', error?.message || error);
       console.error('[WebPush] Error code:', error?.code);
+      this.lastError = `FCM Token Error: ${error?.message || error?.code || String(error)}`;
       return null;
     }
+  }
+
+  /**
+   * Get the last error that occurred
+   */
+  getLastError(): string | null {
+    return this.lastError;
   }
 
   /**
    * Register device token with backend
    */
   async registerDevice(): Promise<boolean> {
+    this.lastError = null;
+    
     try {
       console.log('[WebPush] Starting device registration...');
       const token = await this.getToken();
       
       if (!token) {
+        this.lastError = this.lastError || 'Failed to get FCM token - check browser console for details';
         console.log('[WebPush] No FCM token available, skipping registration');
         return false;
       }
@@ -121,6 +133,7 @@ export class WebPushNotificationService {
       console.log('[WebPush] Device registered successfully with backend!');
       return true;
     } catch (error: any) {
+      this.lastError = error?.message || String(error);
       console.error('[WebPush] Error registering device:', error);
       console.error('[WebPush] Registration error details:', error?.message || error);
       return false;
