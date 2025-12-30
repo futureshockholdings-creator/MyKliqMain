@@ -287,30 +287,34 @@ export class WebPushNotificationService {
         reg => reg.active?.scriptURL.includes('firebase-messaging-sw.js')
       );
       
-      if (registration) {
-        console.log('[WebPush] Using existing Firebase service worker registration');
-      } else {
+      if (registration && registration.active) {
+        console.log('[WebPush] Using existing active Firebase service worker');
+        return registration;
+      }
+      
+      if (!registration) {
         console.log('[WebPush] Registering firebase-messaging-sw.js...');
         registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         console.log('[WebPush] Service worker registered:', registration.scope);
       }
 
       console.log('[WebPush] Waiting for service worker to be ready...');
-      const readyRegistration = await navigator.serviceWorker.ready;
-      console.log('[WebPush] Service worker ready');
-
-      if (registration.installing) {
-        console.log('[WebPush] Service worker installing, waiting for activation...');
-        await this.waitForServiceWorkerActive(registration.installing);
-      } else if (registration.waiting) {
-        console.log('[WebPush] Service worker waiting, waiting for activation...');
-        await this.waitForServiceWorkerActive(registration.waiting);
+      
+      if (registration.active) {
+        console.log('[WebPush] Service worker already active');
+        return registration;
+      }
+      
+      const workerToWatch = registration.installing || registration.waiting;
+      if (workerToWatch) {
+        console.log('[WebPush] Service worker state:', workerToWatch.state);
+        await this.waitForServiceWorkerActive(workerToWatch);
       }
 
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       console.log('[WebPush] Service worker fully active');
-      return readyRegistration;
+      return registration;
     } catch (error) {
       console.error('[WebPush] Service worker registration failed:', error);
       throw error;
@@ -322,25 +326,37 @@ export class WebPushNotificationService {
    */
   private waitForServiceWorkerActive(worker: ServiceWorker): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (worker.state === 'activated') {
+      console.log('[WebPush] waitForServiceWorkerActive - current state:', worker.state);
+      
+      if (worker.state === 'activated' || worker.state === 'activating') {
+        console.log('[WebPush] Service worker already activated/activating');
         resolve();
         return;
       }
 
       const timeout = setTimeout(() => {
-        reject(new Error('Service worker activation timeout'));
-      }, 10000);
+        console.log('[WebPush] Timeout reached, current state:', worker.state);
+        if (worker.state === 'installed' || worker.state === 'activating' || worker.state === 'activated') {
+          resolve();
+        } else {
+          reject(new Error(`ServiceWorker activation timeout (state: ${worker.state})`));
+        }
+      }, 15000);
 
-      worker.addEventListener('statechange', () => {
-        console.log('[WebPush] Service worker state:', worker.state);
+      const handleStateChange = () => {
+        console.log('[WebPush] Service worker state changed:', worker.state);
         if (worker.state === 'activated') {
           clearTimeout(timeout);
+          worker.removeEventListener('statechange', handleStateChange);
           resolve();
         } else if (worker.state === 'redundant') {
           clearTimeout(timeout);
+          worker.removeEventListener('statechange', handleStateChange);
           reject(new Error('Service worker became redundant'));
         }
-      });
+      };
+
+      worker.addEventListener('statechange', handleStateChange);
     });
   }
 
