@@ -269,13 +269,20 @@ export class WebPushNotificationService {
     }
 
     try {
-      // Register the Firebase messaging service worker
-      console.log('[WebPush] Registering firebase-messaging-sw.js...');
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-        scope: '/',
-        updateViaCache: 'none'
-      });
-      console.log('[WebPush] Service worker registered:', registration.scope);
+      // Check if Firebase service worker is already registered
+      const existingRegistrations = await navigator.serviceWorker.getRegistrations();
+      let registration = existingRegistrations.find(
+        reg => reg.active?.scriptURL.includes('firebase-messaging-sw.js')
+      );
+      
+      if (registration) {
+        console.log('[WebPush] Using existing Firebase service worker registration');
+      } else {
+        // Register the Firebase messaging service worker
+        console.log('[WebPush] Registering firebase-messaging-sw.js...');
+        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        console.log('[WebPush] Service worker registered:', registration.scope);
+      }
 
       // Wait for the service worker to be ready
       console.log('[WebPush] Waiting for service worker to be ready...');
