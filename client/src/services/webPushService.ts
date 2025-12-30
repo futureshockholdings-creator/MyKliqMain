@@ -89,11 +89,11 @@ export class WebPushNotificationService {
       }
     }
 
-    // iOS Safari PWA workaround: add delay after permission granted
-    // iOS needs time to sync permission state from the system
+    // iOS Safari: Use native Web Push API instead of Firebase
+    // Firebase has known compatibility issues with iOS Safari service workers
     if (this.isIOS()) {
-      console.log('[WebPush] iOS detected, adding delay for permission sync...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('[WebPush] iOS detected, using native Web Push API...');
+      return await this.getIOSNativeToken();
     }
 
     const messaging = getMessaging();
@@ -109,14 +109,6 @@ export class WebPushNotificationService {
     console.log('[WebPush] Service worker active, getting FCM token...');
     console.log('[WebPush] Using VAPID key:', vapidKey ? vapidKey.slice(0, 20) + '...' : 'MISSING');
 
-    // iOS Safari PWA workaround: use navigator.serviceWorker.ready
-    // This ensures the service worker is fully activated before getting token
-    if (this.isIOS()) {
-      console.log('[WebPush] iOS: waiting for serviceWorker.ready...');
-      await navigator.serviceWorker.ready;
-      console.log('[WebPush] iOS: serviceWorker.ready completed');
-    }
-
     const token = await getToken(messaging, { 
       vapidKey: vapidKey,
       serviceWorkerRegistration: swRegistration
@@ -130,6 +122,72 @@ export class WebPushNotificationService {
       console.log('[WebPush] No registration token available from Firebase');
       return null;
     }
+  }
+
+  /**
+   * Get native Web Push subscription for iOS Safari
+   * iOS Safari supports standard Web Push API without Firebase
+   */
+  private async getIOSNativeToken(): Promise<string | null> {
+    console.log('[WebPush] iOS: Starting native Web Push subscription...');
+    
+    try {
+      // Wait for iOS to sync permission state
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Register a minimal service worker for iOS (no Firebase dependencies)
+      console.log('[WebPush] iOS: Registering native service worker...');
+      const registration = await navigator.serviceWorker.register('/sw-ios.js');
+      
+      // Wait for service worker to be ready
+      await navigator.serviceWorker.ready;
+      console.log('[WebPush] iOS: Service worker ready');
+      
+      // Check if PushManager is available
+      if (!registration.pushManager) {
+        throw new Error('Push notifications not supported - ensure PWA is installed to home screen');
+      }
+      
+      // Subscribe using native Web Push API with VAPID key
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this.urlBase64ToUint8Array(vapidKey || '')
+      });
+      
+      console.log('[WebPush] iOS: Got native push subscription');
+      
+      // Convert subscription to a token-like string for our backend
+      const subscriptionJson = subscription.toJSON();
+      const token = JSON.stringify({
+        endpoint: subscriptionJson.endpoint,
+        keys: subscriptionJson.keys,
+        platform: 'ios-web-push'
+      });
+      
+      this.fcmToken = token;
+      console.log('[WebPush] iOS: Native token created successfully');
+      return token;
+      
+    } catch (error: any) {
+      console.error('[WebPush] iOS: Native Web Push failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Convert VAPID key from base64 to Uint8Array for Web Push API
+   */
+  private urlBase64ToUint8Array(base64String: string): Uint8Array {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
   }
 
   /**
