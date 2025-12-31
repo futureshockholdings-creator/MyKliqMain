@@ -64,12 +64,8 @@ export function NotificationSettings() {
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       
-      if (isIOS) {
-        // iOS handles permission through pushManager.subscribe() 
-        // Skip separate permission request and Firebase check
-        console.log('[NotificationSettings] iOS detected, using native Web Push flow');
-      } else {
-        // Non-iOS: Check Firebase and request permission separately
+      // Skip Firebase messaging check for iOS - it uses native Web Push API with Firebase VAPID key
+      if (!isIOS) {
         const messaging = getMessaging();
         if (!messaging) {
           const errorMsg = `Firebase not initialized. Supported: ${isMessagingSupported()}, VAPID: ${!!vapidKey}`;
@@ -82,19 +78,19 @@ export function NotificationSettings() {
           setIsToggling(false);
           return;
         }
-        
-        const granted = await webPushService.requestPermission();
-        
-        if (!granted) {
-          setLastError("Permission denied by user");
-          toast({
-            title: "Permission Denied",
-            description: "You need to allow notifications in your browser settings.",
-            variant: "destructive"
-          });
-          setIsToggling(false);
-          return;
-        }
+      }
+      
+      const granted = await webPushService.requestPermission();
+      
+      if (!granted) {
+        setLastError("Permission denied by user");
+        toast({
+          title: "Permission Denied",
+          description: "You need to allow notifications in your browser settings.",
+          variant: "destructive"
+        });
+        setIsToggling(false);
+        return;
       }
 
       const registered = await webPushService.registerDevice();

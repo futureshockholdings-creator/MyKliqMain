@@ -126,89 +126,45 @@ export class WebPushNotificationService {
 
   /**
    * Get native Web Push subscription for iOS Safari
-   * iOS Safari supports standard Web Push API without Firebase
-   * Uses our own VAPID key (not Firebase's) for native Web Push
+   * iOS Safari supports standard Web Push API
+   * Uses Firebase's VAPID key for compatibility with existing backend
    */
   private async getIOSNativeToken(): Promise<string | null> {
     console.log('[WebPush] iOS: Starting native Web Push subscription...');
     
     try {
-      // Check if we're in PWA mode first
-      if (!this.isPWAMode()) {
-        console.error('[WebPush] iOS: Not in PWA mode');
-        throw new Error('Please add MyKliq to your home screen first to enable push notifications');
-      }
+      // Wait for iOS to sync permission state
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Check if service workers are supported
-      if (!('serviceWorker' in navigator)) {
-        console.error('[WebPush] iOS: Service workers not supported');
-        throw new Error('Your browser does not support push notifications');
-      }
-      
-      // Check if PushManager is available
-      if (!('PushManager' in window)) {
-        console.error('[WebPush] iOS: PushManager not available');
-        throw new Error('Push notifications are not supported in this browser');
-      }
-      
-      // Get the VAPID key early to fail fast if missing
-      const iosVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-      if (!iosVapidKey) {
-        console.error('[WebPush] iOS: VITE_VAPID_PUBLIC_KEY not configured');
-        throw new Error('Push notification configuration error - please contact support');
-      }
-      console.log('[WebPush] iOS: VAPID key available:', iosVapidKey.slice(0, 20) + '...');
-      
-      // Register the service worker
+      // Register service worker - use the standard Firebase one
       console.log('[WebPush] iOS: Registering service worker...');
-      let registration: ServiceWorkerRegistration;
-      try {
-        registration = await navigator.serviceWorker.register('/sw-ios.js', { scope: '/' });
-        console.log('[WebPush] iOS: Service worker registered, scope:', registration.scope);
-      } catch (swError: any) {
-        console.error('[WebPush] iOS: Service worker registration failed:', swError);
-        throw new Error(`Service worker error: ${swError.message}`);
-      }
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
       
-      // Wait for the service worker to be ready
-      console.log('[WebPush] iOS: Waiting for service worker ready...');
+      // Wait for service worker to be ready
       await navigator.serviceWorker.ready;
       console.log('[WebPush] iOS: Service worker ready');
       
-      // Small delay for iOS to settle
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Check push manager on the registration
+      // Check if PushManager is available
       if (!registration.pushManager) {
-        console.error('[WebPush] iOS: pushManager not available on registration');
-        throw new Error('Push manager not available - try reinstalling the app');
+        throw new Error('Push notifications not supported - ensure PWA is installed to home screen');
       }
       
-      // Check for existing subscription
-      let subscription = await registration.pushManager.getSubscription();
-      if (subscription) {
-        console.log('[WebPush] iOS: Using existing subscription');
-      } else {
-        // Subscribe - this will trigger the iOS permission prompt
-        console.log('[WebPush] iOS: Subscribing to push notifications...');
-        try {
-          subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: this.urlBase64ToUint8Array(iosVapidKey)
-          });
-          console.log('[WebPush] iOS: Subscription successful');
-        } catch (subError: any) {
-          console.error('[WebPush] iOS: Subscribe failed:', subError);
-          if (subError.name === 'NotAllowedError') {
-            throw new Error('Notification permission was denied. Please enable in Settings > Safari > Websites > Notifications');
-          }
-          throw new Error(`Subscription failed: ${subError.message}`);
-        }
+      // Use Firebase's VAPID key (imported from firebase.ts)
+      const pushVapidKey = vapidKey;
+      if (!pushVapidKey) {
+        console.error('[WebPush] iOS: Firebase VAPID key not available');
+        throw new Error('Push notification configuration error');
       }
       
-      if (!subscription) {
-        throw new Error('Failed to create push subscription');
-      }
+      console.log('[WebPush] iOS: Using VAPID key:', pushVapidKey.slice(0, 20) + '...');
+      
+      // Subscribe using native Web Push API with Firebase VAPID key
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this.urlBase64ToUint8Array(pushVapidKey)
+      });
+      
+      console.log('[WebPush] iOS: Got native push subscription');
       
       // Convert subscription to a token-like string for our backend
       const subscriptionJson = subscription.toJSON();
@@ -219,7 +175,6 @@ export class WebPushNotificationService {
       });
       
       this.fcmToken = token;
-      this.permissionGranted = true;
       console.log('[WebPush] iOS: Native token created successfully');
       return token;
       
