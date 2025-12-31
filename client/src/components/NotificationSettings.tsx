@@ -6,7 +6,8 @@ import { Bell, BellOff, Check, Smartphone, AlertCircle, Loader2 } from "lucide-r
 import { webPushService } from "@/services/webPushService";
 import { useToast } from "@/hooks/use-toast";
 import { getMessaging, vapidKey, isMessagingSupported } from "@/lib/firebase";
-import { apiRequest } from "@/lib/queryClient";
+import { buildApiUrl } from "@/lib/apiConfig";
+import { getAuthToken } from "@/lib/tokenStorage";
 
 export function NotificationSettings() {
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
@@ -35,8 +36,30 @@ export function NotificationSettings() {
         
         if (status === 'granted') {
           try {
-            const response = await apiRequest('GET', '/api/push/status');
-            setIsEnabled(response?.registered === true);
+            // Use direct fetch to bypass cache - status must always be fresh
+            const token = getAuthToken();
+            const headers: Record<string, string> = {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache'
+            };
+            if (token) {
+              headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            const res = await fetch(buildApiUrl('/api/push/status'), {
+              method: 'GET',
+              headers,
+              credentials: 'include'
+            });
+            
+            if (!res.ok) {
+              console.log('[NotificationSettings] Status check failed:', res.status);
+              setIsEnabled(false);
+            } else {
+              const response = await res.json();
+              console.log('[NotificationSettings] Push status response:', response);
+              setIsEnabled(response?.registered === true);
+            }
           } catch (err) {
             console.log('[NotificationSettings] Could not check backend status:', err);
             setIsEnabled(false);
