@@ -1637,19 +1637,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.get('/api/push/status', isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.id;
+      // Use claims.sub like the rest of the codebase (req.user.id is not set in PWA context)
+      const userId = (req.user as any)?.id || req.user?.claims?.sub;
+      
+      console.log('[Push Status] Checking for userId:', userId);
       
       if (!userId) {
+        console.error('[Push Status] No userId found - user object:', JSON.stringify(req.user));
         return res.status(401).json({ message: 'User not authenticated' });
       }
 
       const tokens = await storage.getDeviceTokensByUser(userId);
-      const webTokens = tokens.filter(t => t.platform === 'web');
+      // Include both 'web' and 'ios' platform tokens
+      const pushTokens = tokens.filter(t => t.platform === 'web' || t.platform === 'ios');
+      
+      console.log('[Push Status] Found tokens:', pushTokens.length, 'for user:', userId);
       
       res.json({ 
-        registered: webTokens.length > 0,
-        tokenCount: webTokens.length,
-        tokens: webTokens.map(t => ({
+        registered: pushTokens.length > 0,
+        tokenCount: pushTokens.length,
+        tokens: pushTokens.map(t => ({
           id: t.id,
           platform: t.platform,
           deviceId: t.deviceId,
