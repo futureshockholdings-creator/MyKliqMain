@@ -127,6 +127,7 @@ export class WebPushNotificationService {
   /**
    * Get native Web Push subscription for iOS Safari
    * iOS Safari supports standard Web Push API without Firebase
+   * Uses our own VAPID key (not Firebase's) for native Web Push
    */
   private async getIOSNativeToken(): Promise<string | null> {
     console.log('[WebPush] iOS: Starting native Web Push subscription...');
@@ -148,10 +149,21 @@ export class WebPushNotificationService {
         throw new Error('Push notifications not supported - ensure PWA is installed to home screen');
       }
       
-      // Subscribe using native Web Push API with VAPID key
+      // Use our own VAPID public key for iOS (must match server's VAPID_PUBLIC_KEY)
+      // This is different from Firebase's VAPID key
+      const iosVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+      
+      if (!iosVapidKey) {
+        console.error('[WebPush] iOS: VITE_VAPID_PUBLIC_KEY not configured');
+        throw new Error('VAPID public key not configured for iOS push notifications');
+      }
+      
+      console.log('[WebPush] iOS: Using VAPID key:', iosVapidKey.slice(0, 20) + '...');
+      
+      // Subscribe using native Web Push API with our VAPID key
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(vapidKey || '')
+        applicationServerKey: this.urlBase64ToUint8Array(iosVapidKey)
       });
       
       console.log('[WebPush] iOS: Got native push subscription');
