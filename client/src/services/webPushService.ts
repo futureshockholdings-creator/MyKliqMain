@@ -281,11 +281,6 @@ export class WebPushNotificationService {
       const registerUrl = buildApiUrl('/api/push/register-device');
       console.log('[WebPush] Register URL:', registerUrl);
       
-      // DEBUG: Show what we're about to do
-      if (this.isIOS()) {
-        alert(`DEBUG: About to register device\nURL: ${registerUrl}\nPlatform: ${platform}\nToken: ${token.substring(0, 30)}...`);
-      }
-      
       const authToken = getAuthToken();
       console.log('[WebPush] Auth token present:', !!authToken);
       
@@ -312,9 +307,6 @@ export class WebPushNotificationService {
       } catch (fetchError: any) {
         const fetchErrorMsg = `Fetch failed: ${fetchError?.message || String(fetchError)}`;
         console.error('[WebPush] Fetch error:', fetchErrorMsg);
-        if (this.isIOS()) {
-          alert(`DEBUG: Fetch error!\n${fetchErrorMsg}`);
-        }
         this.lastError = fetchErrorMsg;
         return false;
       }
@@ -322,11 +314,6 @@ export class WebPushNotificationService {
       console.log('[WebPush] Response status:', res.status);
       const responseText = await res.text();
       console.log('[WebPush] Response body:', responseText);
-      
-      // DEBUG: Show response on iOS
-      if (this.isIOS()) {
-        alert(`DEBUG: Response received\nStatus: ${res.status}\nBody: ${responseText.substring(0, 200)}`);
-      }
       
       if (!res.ok) {
         this.lastError = `Server error: ${res.status} - ${responseText}`;
