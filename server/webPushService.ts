@@ -25,6 +25,12 @@ class WebPushService {
     const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
     const vapidEmail = process.env.VAPID_EMAIL || 'mailto:support@mykliq.app';
 
+    console.log('[WebPush] Initializing with VAPID keys:', {
+      hasPublicKey: !!vapidPublicKey,
+      hasPrivateKey: !!vapidPrivateKey,
+      publicKeyPreview: vapidPublicKey?.slice(0, 20) + '...'
+    });
+
     if (!vapidPublicKey || !vapidPrivateKey) {
       console.warn('⚠️  VAPID keys not configured. Set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY env vars for iOS Web Push.');
       return;
