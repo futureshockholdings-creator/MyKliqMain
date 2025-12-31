@@ -87,6 +87,15 @@ class PWAUpdateManager {
     return sw.scriptURL.includes('firebase-messaging-sw.js');
   }
 
+  private isIOSPushServiceWorker(sw: ServiceWorker | null): boolean {
+    if (!sw) return false;
+    return sw.scriptURL.includes('sw-ios.js');
+  }
+
+  private shouldSkipReloadForWorker(sw: ServiceWorker | null): boolean {
+    return this.isFirebaseServiceWorker(sw) || this.isIOSPushServiceWorker(sw);
+  }
+
   private setupServiceWorkerListeners() {
     navigator.serviceWorker.addEventListener('message', (event) => {
       if (event.data?.type === 'SW_UPDATED') {
@@ -99,8 +108,8 @@ class PWAUpdateManager {
       if (this.isReloading) return;
       
       const controller = navigator.serviceWorker.controller;
-      if (this.isFirebaseServiceWorker(controller)) {
-        console.log('[PWAUpdate] Controller changed to Firebase SW - skipping reload');
+      if (this.shouldSkipReloadForWorker(controller)) {
+        console.log('[PWAUpdate] Controller changed to push notification SW - skipping reload');
         return;
       }
       
@@ -117,8 +126,8 @@ class PWAUpdateManager {
         const newWorker = registration.installing;
         if (!newWorker) return;
 
-        if (this.isFirebaseServiceWorker(newWorker)) {
-          console.log('[PWAUpdate] Firebase SW update detected - ignoring');
+        if (this.shouldSkipReloadForWorker(newWorker)) {
+          console.log('[PWAUpdate] Push notification SW update detected - ignoring');
           return;
         }
 

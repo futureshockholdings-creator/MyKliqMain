@@ -176,9 +176,16 @@ export class WebPushNotificationService {
       // Wait for iOS to sync permission state
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Register the iOS service worker
-      console.log('[WebPush] iOS: Registering service worker...');
-      const registration = await navigator.serviceWorker.register('/sw-ios.js');
+      // Try to reuse existing iOS service worker registration
+      console.log('[WebPush] iOS: Checking for existing service worker...');
+      let registration = await navigator.serviceWorker.getRegistration('/sw-ios.js');
+      
+      if (!registration) {
+        console.log('[WebPush] iOS: Registering new service worker...');
+        registration = await navigator.serviceWorker.register('/sw-ios.js', { scope: '/' });
+      } else {
+        console.log('[WebPush] iOS: Reusing existing service worker registration');
+      }
       
       // Wait for service worker to be ready
       await navigator.serviceWorker.ready;
