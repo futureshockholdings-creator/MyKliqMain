@@ -1536,6 +1536,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
+   * GET /api/push/vapid-key - Get VAPID public key for iOS Web Push
+   */
+  app.get('/api/push/vapid-key', (req, res) => {
+    const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
+    if (!vapidPublicKey) {
+      console.error('[Push] VAPID_PUBLIC_KEY not configured');
+      return res.status(500).json({ message: 'Push notification configuration error' });
+    }
+    res.json({ vapidPublicKey });
+  });
+
+  /**
    * POST /api/push/register-device - Register web device token for push notifications
    */
   app.post('/api/push/register-device', isAuthenticated, async (req, res) => {

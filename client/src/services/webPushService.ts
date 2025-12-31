@@ -125,24 +125,53 @@ export class WebPushNotificationService {
   }
 
   /**
+   * Fetch VAPID public key from server for iOS Web Push
+   */
+  private async fetchVapidKey(): Promise<string> {
+    try {
+      // Import dynamically to avoid circular dependencies
+      const { buildApiUrl } = await import('@/lib/apiConfig');
+      const url = buildApiUrl('/api/push/vapid-key');
+      console.log('[WebPush] Fetching VAPID key from:', url);
+      
+      const response = await fetch(url, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch VAPID key: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.vapidPublicKey;
+    } catch (error) {
+      console.error('[WebPush] Failed to fetch VAPID key:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get native Web Push subscription for iOS Safari
    * iOS Safari supports standard Web Push API
-   * Uses custom VAPID key (VITE_VAPID_PUBLIC_KEY) that matches server's VAPID_PUBLIC_KEY
+   * Fetches VAPID key from server to ensure it matches
    */
   private async getIOSNativeToken(): Promise<string | null> {
     console.log('[WebPush] iOS: Starting native Web Push subscription...');
     
     try {
-      // Get custom VAPID key - must match server's VAPID_PUBLIC_KEY
-      const iosVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+      // Fetch VAPID key from server
+      console.log('[WebPush] iOS: Fetching VAPID key from server...');
+      const iosVapidKey = await this.fetchVapidKey();
       
       if (!iosVapidKey) {
-        console.error('[WebPush] iOS: VITE_VAPID_PUBLIC_KEY not configured');
+        console.error('[WebPush] iOS: VAPID key not available from server');
         this.lastError = 'Push notification configuration missing. Please contact support.';
         throw new Error(this.lastError);
       }
       
-      console.log('[WebPush] iOS: VAPID key available:', iosVapidKey.slice(0, 20) + '...');
+      console.log('[WebPush] iOS: VAPID key received:', iosVapidKey.slice(0, 20) + '...');
       
       // Wait for iOS to sync permission state
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -161,7 +190,7 @@ export class WebPushNotificationService {
         throw new Error(this.lastError);
       }
       
-      // Subscribe using native Web Push API with custom VAPID key
+      // Subscribe using native Web Push API with VAPID key from server
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: this.urlBase64ToUint8Array(iosVapidKey)
