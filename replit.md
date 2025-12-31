@@ -39,8 +39,36 @@ An admin dashboard manages user-reported content with a workflow (OPEN → PENDI
 ### Social Media OAuth Integration
 External OAuth connections (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube) use adaptive flows for desktop (popups) and mobile (redirects). Users connect accounts to earn Kliq Koins.
 
-### Push Notifications
-The platform employs platform-specific push notification strategies: native Web Push API for iOS Safari PWAs (iOS 16.4+) and Firebase Cloud Messaging (FCM) for Android/desktop browsers. An admin broadcast system sends notifications to all registered devices.
+### Push Notifications (Updated Dec 2025)
+Platform-specific push notification strategies:
+
+**iOS Safari PWA (iOS 16.4+, installed to home screen):**
+- Uses native Web Push API with custom VAPID keys (not Firebase)
+- Service worker: `sw-ios.js`
+- Client uses `VITE_VAPID_PUBLIC_KEY` for subscription
+- Server uses `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` with `web-push` library
+- Tokens stored as JSON with `platform: 'ios-web-push'`
+
+**Android/Desktop browsers:**
+- Uses Firebase Cloud Messaging (FCM)
+- Service worker: `firebase-messaging-sw.js`
+- Server uses Firebase Admin SDK
+
+**Admin Broadcast System:**
+- Endpoint: `/api/admin/broadcasts/:id/send`
+- Auto-detects token type and routes to appropriate sender
+- `server/webPushService.ts` handles iOS tokens
+- `server/firebase-notifications.ts` handles FCM tokens
+
+**AWS Amplify Rewrite Rules (required):**
+- `/sw-ios.js` → `/sw-ios.js` (200)
+- `/firebase-messaging-sw.js` → `/firebase-messaging-sw.js` (200)
+- `/manifest.json` → `/manifest.json` (200)
+- `/icons/<*>` → `/icons/<*>` (200)
+- `/apple-touch-icon.png` → `/apple-touch-icon.png` (200)
+- `/<*>` → `/index.html` (200) — MUST be last
+
+**Backend Auth Note:** Use `req.user.claims.sub` for userId in PWA context.
 
 ### Internal Post Sharing
 Users can share posts within their kliq, creating copies in their feed without notifying the original author.
