@@ -1540,8 +1540,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.post('/api/push/register-device', isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.id;
+      // Use claims.sub like the rest of the codebase (req.user.id is not set in PWA context)
+      const userId = (req.user as any)?.id || req.user?.claims?.sub;
       const { token, platform, deviceId } = req.body;
+
+      console.log('[Push] Register device request:', { userId, platform, deviceId, tokenLength: token?.length });
+
+      if (!userId) {
+        console.error('[Push] No userId found in request - user object:', JSON.stringify(req.user));
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
 
       if (!token || !platform) {
         return res.status(400).json({ message: 'Token and platform are required' });
@@ -1558,9 +1566,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deviceId
       });
 
+      console.log('[Push] Device registered successfully:', deviceToken.id);
       res.json({ success: true, tokenId: deviceToken.id });
-    } catch (error) {
-      console.error('Web device token registration error:', error);
+    } catch (error: any) {
+      console.error('[Push] Web device token registration error:', error?.message || error);
+      console.error('[Push] Full error:', error);
       res.status(500).json({ message: 'Failed to register device token' });
     }
   });
@@ -1590,8 +1600,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.delete('/api/push/unregister-device', isAuthenticated, async (req, res) => {
     try {
-      const userId = (req.user as any)?.id;
+      // Use claims.sub like the rest of the codebase
+      const userId = (req.user as any)?.id || req.user?.claims?.sub;
       const { token } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
 
       if (!token) {
         return res.status(400).json({ message: 'Token is required' });
