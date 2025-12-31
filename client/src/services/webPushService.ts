@@ -275,19 +275,46 @@ export class WebPushNotificationService {
       const platform = this.isIOS() ? 'ios' : 'web';
       console.log(`[WebPush] Registering as platform: ${platform}`);
       
-      // Use buildApiUrl to get the correct endpoint
+      // Use direct fetch to bypass enterprise layer and see exactly what happens
       const { buildApiUrl } = await import('@/lib/apiConfig');
+      const { getAuthToken } = await import('@/lib/tokenStorage');
       const registerUrl = buildApiUrl('/api/push/register-device');
       console.log('[WebPush] Register URL:', registerUrl);
       
-      const response = await apiRequest('POST', '/api/push/register-device', {
-        token,
-        platform,
-        deviceId: this.getDeviceId()
+      const authToken = getAuthToken();
+      console.log('[WebPush] Auth token present:', !!authToken);
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      const res = await fetch(registerUrl, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          token,
+          platform,
+          deviceId: this.getDeviceId()
+        })
       });
 
-      console.log('[WebPush] Device registered successfully!');
-      console.log('[WebPush] Server response:', JSON.stringify(response));
+      console.log('[WebPush] Response status:', res.status);
+      const responseText = await res.text();
+      console.log('[WebPush] Response body:', responseText);
+      
+      if (!res.ok) {
+        this.lastError = `Server error: ${res.status} - ${responseText}`;
+        console.error('[WebPush] Registration failed:', this.lastError);
+        return false;
+      }
+      
+      const response = JSON.parse(responseText);
+      console.log('[WebPush] Parsed response:', JSON.stringify(response));
       
       if (!response?.success) {
         console.error('[WebPush] Server returned success=false:', response);
@@ -295,6 +322,7 @@ export class WebPushNotificationService {
         return false;
       }
       
+      console.log('[WebPush] Device registered successfully!');
       return true;
     } catch (error: any) {
       this.lastError = error?.message || String(error);
