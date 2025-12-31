@@ -53,12 +53,25 @@ export function NotificationSettings() {
             });
             
             if (!res.ok) {
-              console.log('[NotificationSettings] Status check failed:', res.status, await res.text());
+              const errorText = await res.text();
+              console.log('[NotificationSettings] Status check failed:', res.status, errorText);
+              // DEBUG: Show status check failure on iOS
+              const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+              if (isIOS) {
+                alert(`DEBUG Status Check Failed\nStatus: ${res.status}\nError: ${errorText.substring(0, 100)}`);
+              }
               setIsEnabled(false);
             } else {
               const response = await res.json();
               console.log('[NotificationSettings] Push status response:', JSON.stringify(response));
               console.log('[NotificationSettings] registered=', response?.registered, 'tokenCount=', response?.tokenCount);
+              // DEBUG: Show status response on iOS
+              const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+              if (isIOS) {
+                alert(`DEBUG Status Response\nRegistered: ${response?.registered}\nTokenCount: ${response?.tokenCount}\nUserId: ${response?.userId}`);
+              }
               setIsEnabled(response?.registered === true);
             }
           } catch (err) {
