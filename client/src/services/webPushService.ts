@@ -281,6 +281,11 @@ export class WebPushNotificationService {
       const registerUrl = buildApiUrl('/api/push/register-device');
       console.log('[WebPush] Register URL:', registerUrl);
       
+      // DEBUG: Show what we're about to do
+      if (this.isIOS()) {
+        alert(`DEBUG: About to register device\nURL: ${registerUrl}\nPlatform: ${platform}\nToken: ${token.substring(0, 30)}...`);
+      }
+      
       const authToken = getAuthToken();
       console.log('[WebPush] Auth token present:', !!authToken);
       
@@ -292,20 +297,36 @@ export class WebPushNotificationService {
         headers['Authorization'] = `Bearer ${authToken}`;
       }
       
-      const res = await fetch(registerUrl, {
-        method: 'POST',
-        headers,
-        credentials: 'include',
-        body: JSON.stringify({
-          token,
-          platform,
-          deviceId: this.getDeviceId()
-        })
-      });
+      let res: Response;
+      try {
+        res = await fetch(registerUrl, {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({
+            token,
+            platform,
+            deviceId: this.getDeviceId()
+          })
+        });
+      } catch (fetchError: any) {
+        const fetchErrorMsg = `Fetch failed: ${fetchError?.message || String(fetchError)}`;
+        console.error('[WebPush] Fetch error:', fetchErrorMsg);
+        if (this.isIOS()) {
+          alert(`DEBUG: Fetch error!\n${fetchErrorMsg}`);
+        }
+        this.lastError = fetchErrorMsg;
+        return false;
+      }
 
       console.log('[WebPush] Response status:', res.status);
       const responseText = await res.text();
       console.log('[WebPush] Response body:', responseText);
+      
+      // DEBUG: Show response on iOS
+      if (this.isIOS()) {
+        alert(`DEBUG: Response received\nStatus: ${res.status}\nBody: ${responseText.substring(0, 200)}`);
+      }
       
       if (!res.ok) {
         this.lastError = `Server error: ${res.status} - ${responseText}`;
