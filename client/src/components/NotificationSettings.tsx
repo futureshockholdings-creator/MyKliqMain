@@ -60,17 +60,23 @@ export function NotificationSettings() {
     setLastError(null);
     
     try {
-      const messaging = getMessaging();
-      if (!messaging) {
-        const errorMsg = `Firebase not initialized. Supported: ${isMessagingSupported()}, VAPID: ${!!vapidKey}`;
-        setLastError(errorMsg);
-        toast({
-          title: "Configuration Error",
-          description: "Firebase messaging is not available. Please try again or use a different browser.",
-          variant: "destructive"
-        });
-        setIsToggling(false);
-        return;
+      // iOS uses native Web Push API, not Firebase - skip Firebase check for iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      if (!isIOS) {
+        const messaging = getMessaging();
+        if (!messaging) {
+          const errorMsg = `Firebase not initialized. Supported: ${isMessagingSupported()}, VAPID: ${!!vapidKey}`;
+          setLastError(errorMsg);
+          toast({
+            title: "Configuration Error",
+            description: "Firebase messaging is not available. Please try again or use a different browser.",
+            variant: "destructive"
+          });
+          setIsToggling(false);
+          return;
+        }
       }
       
       const granted = await webPushService.requestPermission();
