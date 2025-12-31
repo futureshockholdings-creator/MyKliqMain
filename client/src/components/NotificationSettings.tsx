@@ -53,11 +53,12 @@ export function NotificationSettings() {
             });
             
             if (!res.ok) {
-              console.log('[NotificationSettings] Status check failed:', res.status);
+              console.log('[NotificationSettings] Status check failed:', res.status, await res.text());
               setIsEnabled(false);
             } else {
               const response = await res.json();
-              console.log('[NotificationSettings] Push status response:', response);
+              console.log('[NotificationSettings] Push status response:', JSON.stringify(response));
+              console.log('[NotificationSettings] registered=', response?.registered, 'tokenCount=', response?.tokenCount);
               setIsEnabled(response?.registered === true);
             }
           } catch (err) {

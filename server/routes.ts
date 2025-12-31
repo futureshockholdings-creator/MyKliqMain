@@ -1656,6 +1656,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         registered: pushTokens.length > 0,
         tokenCount: pushTokens.length,
+        serverTimestamp: new Date().toISOString(),
+        userId: userId,
         tokens: pushTokens.map(t => ({
           id: t.id,
           platform: t.platform,
