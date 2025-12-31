@@ -221,9 +221,13 @@ export class WebPushNotificationService {
 
       console.log('[WebPush] Got FCM token, registering with backend...');
       
+      // Determine platform - iOS Safari uses native Web Push, others use FCM
+      const platform = this.isIOS() ? 'ios' : 'web';
+      console.log(`[WebPush] Registering as platform: ${platform}`);
+      
       const response = await apiRequest('POST', '/api/push/register-device', {
         token,
-        platform: 'web',
+        platform,
         deviceId: this.getDeviceId()
       });
 

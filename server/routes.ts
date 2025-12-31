@@ -10667,28 +10667,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If sendNow is true, send the push notifications immediately
       if (sendNow) {
         const { firebaseNotificationService } = await import('./firebase-notifications');
+        const { webPushService } = await import('./webPushService');
         const tokens = await storage.getActiveDeviceTokensByAudience(targetAudience || 'all');
         
+        console.log(`[Broadcast] Found ${tokens.length} device tokens for audience: ${targetAudience}`);
+        
         if (tokens.length > 0) {
-          const result = await firebaseNotificationService.sendToMultipleDevices(
-            tokens.map(t => t.token),
-            {
-              title,
-              body,
-              data: deepLink ? { deepLink } : undefined
+          const payload = {
+            title,
+            body,
+            data: deepLink ? { deepLink } : undefined
+          };
+          
+          // Separate iOS Web Push tokens from Firebase tokens
+          const iosTokens: string[] = [];
+          const fcmTokens: string[] = [];
+          
+          for (const t of tokens) {
+            if (webPushService.isIOSWebPushToken(t.token)) {
+              iosTokens.push(t.token);
+            } else {
+              fcmTokens.push(t.token);
             }
-          );
+          }
+          
+          console.log(`[Broadcast] Token breakdown: ${iosTokens.length} iOS Web Push, ${fcmTokens.length} FCM`);
+          
+          let totalSuccess = 0;
+          let totalFailure = 0;
+          
+          // Send to iOS Web Push devices
+          if (iosTokens.length > 0) {
+            console.log(`[Broadcast] Sending to ${iosTokens.length} iOS devices via Web Push...`);
+            const iosResult = await webPushService.sendToMultipleDevices(iosTokens, payload);
+            totalSuccess += iosResult.successCount;
+            totalFailure += iosResult.failureCount;
+          }
+          
+          // Send to Firebase (Android/Desktop) devices
+          if (fcmTokens.length > 0) {
+            console.log(`[Broadcast] Sending to ${fcmTokens.length} devices via Firebase...`);
+            const fcmResult = await firebaseNotificationService.sendToMultipleDevices(fcmTokens, payload);
+            totalSuccess += fcmResult.successCount;
+            totalFailure += fcmResult.failureCount;
+          }
           
           // Update broadcast with send results
           await storage.updateBroadcast(broadcast.id, {
             sentAt: new Date(),
             recipientCount: tokens.length,
-            successCount: result.successCount,
-            failureCount: result.failureCount,
+            successCount: totalSuccess,
+            failureCount: totalFailure,
             status: 'sent'
           });
           
-          console.log(`[Broadcast] Sent "${title}" to ${tokens.length} devices. Success: ${result.successCount}, Failed: ${result.failureCount}`);
+          console.log(`[Broadcast] Sent "${title}" to ${tokens.length} devices. Success: ${totalSuccess}, Failed: ${totalFailure}`);
         } else {
           await storage.updateBroadcast(broadcast.id, {
             sentAt: new Date(),
@@ -10728,31 +10761,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { firebaseNotificationService } = await import('./firebase-notifications');
+      const { webPushService } = await import('./webPushService');
       const tokens = await storage.getActiveDeviceTokensByAudience(broadcast.targetAudience || 'all');
       
+      console.log(`[Broadcast] Found ${tokens.length} device tokens for audience: ${broadcast.targetAudience}`);
+      
       if (tokens.length > 0) {
-        const result = await firebaseNotificationService.sendToMultipleDevices(
-          tokens.map(t => t.token),
-          {
-            title: broadcast.title,
-            body: broadcast.body,
-            data: broadcast.deepLink ? { deepLink: broadcast.deepLink } : undefined
+        const payload = {
+          title: broadcast.title,
+          body: broadcast.body,
+          data: broadcast.deepLink ? { deepLink: broadcast.deepLink } : undefined
+        };
+        
+        // Separate iOS Web Push tokens from Firebase tokens
+        const iosTokens: string[] = [];
+        const fcmTokens: string[] = [];
+        
+        for (const t of tokens) {
+          if (webPushService.isIOSWebPushToken(t.token)) {
+            iosTokens.push(t.token);
+          } else {
+            fcmTokens.push(t.token);
           }
-        );
+        }
+        
+        console.log(`[Broadcast] Token breakdown: ${iosTokens.length} iOS Web Push, ${fcmTokens.length} FCM`);
+        
+        let totalSuccess = 0;
+        let totalFailure = 0;
+        
+        // Send to iOS Web Push devices
+        if (iosTokens.length > 0) {
+          console.log(`[Broadcast] Sending to ${iosTokens.length} iOS devices via Web Push...`);
+          const iosResult = await webPushService.sendToMultipleDevices(iosTokens, payload);
+          totalSuccess += iosResult.successCount;
+          totalFailure += iosResult.failureCount;
+          console.log(`[Broadcast] iOS result: ${iosResult.successCount} success, ${iosResult.failureCount} failed`);
+        }
+        
+        // Send to Firebase (Android/Desktop) devices
+        if (fcmTokens.length > 0) {
+          console.log(`[Broadcast] Sending to ${fcmTokens.length} devices via Firebase...`);
+          const fcmResult = await firebaseNotificationService.sendToMultipleDevices(fcmTokens, payload);
+          totalSuccess += fcmResult.successCount;
+          totalFailure += fcmResult.failureCount;
+          console.log(`[Broadcast] FCM result: ${fcmResult.successCount} success, ${fcmResult.failureCount} failed`);
+        }
         
         await storage.updateBroadcast(broadcastId, {
           sentAt: new Date(),
           recipientCount: tokens.length,
-          successCount: result.successCount,
-          failureCount: result.failureCount,
+          successCount: totalSuccess,
+          failureCount: totalFailure,
           status: 'sent'
         });
+        
+        console.log(`[Broadcast] Complete: ${totalSuccess}/${tokens.length} successful`);
         
         res.json({ 
           message: "Broadcast sent successfully",
           recipientCount: tokens.length,
-          successCount: result.successCount,
-          failureCount: result.failureCount
+          successCount: totalSuccess,
+          failureCount: totalFailure
         });
       } else {
         await storage.updateBroadcast(broadcastId, {
