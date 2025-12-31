@@ -1555,8 +1555,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Token and platform are required' });
       }
 
-      if (!['web'].includes(platform)) {
-        return res.status(400).json({ message: 'Platform must be web' });
+      if (!['web', 'ios'].includes(platform)) {
+        return res.status(400).json({ message: 'Platform must be web or ios' });
       }
 
       const deviceToken = await storage.registerDeviceToken({
