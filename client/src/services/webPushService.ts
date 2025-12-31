@@ -127,18 +127,29 @@ export class WebPushNotificationService {
   /**
    * Get native Web Push subscription for iOS Safari
    * iOS Safari supports standard Web Push API
-   * Uses Firebase's VAPID key for compatibility with existing backend
+   * Uses custom VAPID key (VITE_VAPID_PUBLIC_KEY) that matches server's VAPID_PUBLIC_KEY
    */
   private async getIOSNativeToken(): Promise<string | null> {
     console.log('[WebPush] iOS: Starting native Web Push subscription...');
     
     try {
-      // Wait for iOS to sync permission state
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Get custom VAPID key - must match server's VAPID_PUBLIC_KEY
+      const iosVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
       
-      // Register service worker - use the standard Firebase one
+      if (!iosVapidKey) {
+        console.error('[WebPush] iOS: VITE_VAPID_PUBLIC_KEY not configured');
+        this.lastError = 'Push notification configuration missing. Please contact support.';
+        throw new Error(this.lastError);
+      }
+      
+      console.log('[WebPush] iOS: VAPID key available:', iosVapidKey.slice(0, 20) + '...');
+      
+      // Wait for iOS to sync permission state
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Register the iOS service worker
       console.log('[WebPush] iOS: Registering service worker...');
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      const registration = await navigator.serviceWorker.register('/sw-ios.js');
       
       // Wait for service worker to be ready
       await navigator.serviceWorker.ready;
@@ -146,22 +157,14 @@ export class WebPushNotificationService {
       
       // Check if PushManager is available
       if (!registration.pushManager) {
-        throw new Error('Push notifications not supported - ensure PWA is installed to home screen');
+        this.lastError = 'Push notifications not supported - ensure PWA is installed to home screen';
+        throw new Error(this.lastError);
       }
       
-      // Use Firebase's VAPID key (imported from firebase.ts)
-      const pushVapidKey = vapidKey;
-      if (!pushVapidKey) {
-        console.error('[WebPush] iOS: Firebase VAPID key not available');
-        throw new Error('Push notification configuration error');
-      }
-      
-      console.log('[WebPush] iOS: Using VAPID key:', pushVapidKey.slice(0, 20) + '...');
-      
-      // Subscribe using native Web Push API with Firebase VAPID key
+      // Subscribe using native Web Push API with custom VAPID key
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(pushVapidKey)
+        applicationServerKey: this.urlBase64ToUint8Array(iosVapidKey)
       });
       
       console.log('[WebPush] iOS: Got native push subscription');
