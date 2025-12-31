@@ -269,10 +269,16 @@ export class WebPushNotificationService {
       }
 
       console.log('[WebPush] Got FCM token, registering with backend...');
+      console.log('[WebPush] Token preview:', token.substring(0, 50) + '...');
       
       // Determine platform - iOS Safari uses native Web Push, others use FCM
       const platform = this.isIOS() ? 'ios' : 'web';
       console.log(`[WebPush] Registering as platform: ${platform}`);
+      
+      // Use buildApiUrl to get the correct endpoint
+      const { buildApiUrl } = await import('@/lib/apiConfig');
+      const registerUrl = buildApiUrl('/api/push/register-device');
+      console.log('[WebPush] Register URL:', registerUrl);
       
       const response = await apiRequest('POST', '/api/push/register-device', {
         token,
@@ -280,7 +286,15 @@ export class WebPushNotificationService {
         deviceId: this.getDeviceId()
       });
 
-      console.log('[WebPush] Device registered successfully with backend!', response);
+      console.log('[WebPush] Device registered successfully!');
+      console.log('[WebPush] Server response:', JSON.stringify(response));
+      
+      if (!response?.success) {
+        console.error('[WebPush] Server returned success=false:', response);
+        this.lastError = response?.message || 'Server rejected registration';
+        return false;
+      }
+      
       return true;
     } catch (error: any) {
       this.lastError = error?.message || String(error);
