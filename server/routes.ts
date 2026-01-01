@@ -1684,11 +1684,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
    */
   app.get('/api/push/status', isAuthenticated, async (req, res) => {
     try {
-      // Use claims.sub like the rest of the codebase (req.user.id is not set in PWA context)
-      const userId = (req.user as any)?.id || req.user?.claims?.sub;
+      // Support both session auth (req.user) and JWT auth (req.userId)
+      const userId = (req as any).userId || (req.user as any)?.id || req.user?.claims?.sub;
       
       console.log('[Push Status] Checking for userId:', userId);
-      console.log('[Push Status] Full req.user:', JSON.stringify(req.user));
+      console.log('[Push Status] req.userId:', (req as any).userId);
+      console.log('[Push Status] req.user?.id:', (req.user as any)?.id);
+      console.log('[Push Status] req.user?.claims?.sub:', req.user?.claims?.sub);
       
       if (!userId) {
         console.error('[Push Status] No userId found - user object:', JSON.stringify(req.user));
