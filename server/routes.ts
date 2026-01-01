@@ -20,7 +20,7 @@ import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
 import { performanceOptimizer } from "./performanceOptimizer";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens } from "@shared/schema";
 import { generateMobileToken, verifyMobileToken, JWT_CONFIG } from "./mobile-auth";
 import { eq, and, or, desc, sql as sqlOp, isNotNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -1545,6 +1545,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ message: 'Push notification configuration error' });
     }
     res.json({ vapidPublicKey });
+  });
+
+  /**
+   * GET /api/push/debug - Debug endpoint to check all push tokens (admin only)
+   * Usage: /api/push/debug?key=ADMIN_PASSWORD
+   */
+  app.get('/api/push/debug', async (req, res) => {
+    try {
+      const adminKey = req.query.key as string;
+      const adminPassword = process.env.ADMIN_PASSWORD;
+      
+      if (!adminKey || adminKey !== adminPassword) {
+        return res.status(401).json({ message: 'Invalid admin key' });
+      }
+
+      // Get ALL device tokens from the database
+      const allTokens = await db.select({
+        id: deviceTokens.id,
+        userId: deviceTokens.userId,
+        platform: deviceTokens.platform,
+        deviceId: deviceTokens.deviceId,
+        isActive: deviceTokens.isActive,
+        createdAt: deviceTokens.createdAt,
+        tokenPreview: sqlOp<string>`SUBSTRING(${deviceTokens.token}, 1, 50)`
+      }).from(deviceTokens).orderBy(desc(deviceTokens.createdAt)).limit(50);
+
+      res.json({
+        totalTokens: allTokens.length,
+        tokens: allTokens,
+        serverTime: new Date().toISOString()
+      });
+    } catch (error: any) {
+      console.error('[Push Debug] Error:', error);
+      res.status(500).json({ message: 'Debug query failed', error: error?.message });
+    }
   });
 
   /**
