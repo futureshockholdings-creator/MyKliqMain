@@ -1,4 +1,14 @@
 customHeaders:
+  - pattern: '/index.html'
+    headers:
+      - key: 'Cache-Control'
+        value: 'no-cache, no-store, must-revalidate'
+
+  - pattern: '/'
+    headers:
+      - key: 'Cache-Control'
+        value: 'no-cache, no-store, must-revalidate'
+
   - pattern: '/firebase-messaging-sw.js'
     headers:
       - key: 'Content-Type'
