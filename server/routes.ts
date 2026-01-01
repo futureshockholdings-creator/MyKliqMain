@@ -1641,6 +1641,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id || req.user?.claims?.sub;
       
       console.log('[Push Status] Checking for userId:', userId);
+      console.log('[Push Status] Full req.user:', JSON.stringify(req.user));
       
       if (!userId) {
         console.error('[Push Status] No userId found - user object:', JSON.stringify(req.user));
@@ -1648,14 +1649,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const tokens = await storage.getDeviceTokensByUser(userId);
+      console.log('[Push Status] Raw tokens from DB:', tokens.length, 'platforms:', tokens.map(t => t.platform));
+      
       // Include both 'web' and 'ios' platform tokens
       const pushTokens = tokens.filter(t => t.platform === 'web' || t.platform === 'ios');
       
-      console.log('[Push Status] Found tokens:', pushTokens.length, 'for user:', userId);
+      console.log('[Push Status] Filtered push tokens:', pushTokens.length, 'for user:', userId);
       
       res.json({ 
         registered: pushTokens.length > 0,
         tokenCount: pushTokens.length,
+        allTokenCount: tokens.length,
+        allPlatforms: tokens.map(t => t.platform),
         serverTimestamp: new Date().toISOString(),
         userId: userId,
         tokens: pushTokens.map(t => ({
