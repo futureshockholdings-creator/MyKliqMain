@@ -1549,19 +1549,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   /**
    * GET /api/push/debug - Debug endpoint to check all push tokens (admin only)
-   * Usage: /api/push/debug?key=ADMIN_PASSWORD
+   * Usage: /api/push/debug?key=ADMIN_PASSWORD&userId=OPTIONAL_USER_ID
    */
   app.get('/api/push/debug', async (req, res) => {
     try {
       const adminKey = req.query.key as string;
+      const filterUserId = req.query.userId as string;
       const adminPassword = process.env.ADMIN_PASSWORD;
       
       if (!adminKey || adminKey !== adminPassword) {
         return res.status(401).json({ message: 'Invalid admin key' });
       }
 
-      // Get ALL device tokens from the database
-      const allTokens = await db.select({
+      // Get ALL device tokens from the database (or filter by userId)
+      let query = db.select({
         id: deviceTokens.id,
         userId: deviceTokens.userId,
         platform: deviceTokens.platform,
@@ -1569,10 +1570,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: deviceTokens.isActive,
         createdAt: deviceTokens.createdAt,
         tokenPreview: sqlOp<string>`SUBSTRING(${deviceTokens.token}, 1, 50)`
-      }).from(deviceTokens).orderBy(desc(deviceTokens.createdAt)).limit(50);
+      }).from(deviceTokens);
+
+      if (filterUserId) {
+        query = query.where(eq(deviceTokens.userId, filterUserId)) as any;
+      }
+
+      const allTokens = await query.orderBy(desc(deviceTokens.createdAt)).limit(50);
+      
+      // Get unique userIds to help with debugging
+      const uniqueUserIds = [...new Set(allTokens.map(t => t.userId))];
 
       res.json({
         totalTokens: allTokens.length,
+        filterUserId: filterUserId || 'none (showing all)',
+        uniqueUserIds,
         tokens: allTokens,
         serverTime: new Date().toISOString()
       });
