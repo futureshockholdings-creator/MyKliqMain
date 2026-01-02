@@ -1727,6 +1727,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
+   * DELETE /api/push/clear-all - Clear all device tokens for the authenticated user (for debugging)
+   */
+  app.delete('/api/push/clear-all', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).userId || (req.user as any)?.id || req.user?.claims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      // Get count before clearing
+      const tokens = await storage.getDeviceTokensByUser(userId);
+      const count = tokens.length;
+      
+      // Deactivate all tokens for this user
+      await storage.deactivateAllUserDeviceTokens(userId);
+      
+      console.log(`[Push] Cleared ${count} tokens for user ${userId}`);
+      
+      res.json({ 
+        success: true, 
+        message: `Cleared ${count} device tokens`,
+        clearedCount: count 
+      });
+    } catch (error: any) {
+      console.error('Clear tokens error:', error);
+      res.status(500).json({ message: 'Failed to clear tokens', error: error.message });
+    }
+  });
+
+  /**
    * POST /api/push/test - Send a test notification to the authenticated user's iOS devices
    * Returns detailed results including error codes for debugging
    */
