@@ -1727,6 +1727,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
+   * POST /api/push/test - Send a test notification to the authenticated user's iOS devices
+   * Returns detailed results including error codes for debugging
+   */
+  app.post('/api/push/test', isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req as any).userId || (req.user as any)?.id || req.user?.claims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: 'User not authenticated' });
+      }
+
+      const { webPushService } = await import('./webPushService');
+      
+      // Get all tokens for this user
+      const tokens = await storage.getDeviceTokensByUser(userId);
+      const iosTokens = tokens.filter(t => t.platform === 'ios' && t.isActive);
+      
+      if (iosTokens.length === 0) {
+        return res.json({
+          success: false,
+          message: 'No active iOS tokens found for your account',
+          userId,
+          totalTokens: tokens.length,
+          platforms: tokens.map(t => ({ platform: t.platform, isActive: t.isActive }))
+        });
+      }
+
+      // Check if webPushService is initialized
+      if (!webPushService.isInitialized()) {
+        return res.json({
+          success: false,
+          message: 'Web Push service not initialized - VAPID keys may not be configured',
+          vapidConfigured: false
+        });
+      }
+
+      // Send test notification to each iOS token
+      const payload = {
+        title: 'MyKliq Test Notification',
+        body: `Test sent at ${new Date().toLocaleTimeString()}`,
+        data: { test: 'true' }
+      };
+
+      const results = [];
+      for (const tokenRecord of iosTokens) {
+        const result = await webPushService.sendToDevice(tokenRecord.token, payload);
+        results.push({
+          tokenId: tokenRecord.id,
+          createdAt: tokenRecord.createdAt,
+          success: result.success,
+          error: result.error,
+          statusCode: result.statusCode,
+          endpoint: result.endpoint
+        });
+      }
+
+      const successCount = results.filter(r => r.success).length;
+      const failureCount = results.filter(r => !r.success).length;
+
+      res.json({
+        success: successCount > 0,
+        message: `Sent to ${successCount}/${iosTokens.length} iOS devices`,
+        userId,
+        successCount,
+        failureCount,
+        results,
+        vapidConfigured: true
+      });
+    } catch (error: any) {
+      console.error('Push test error:', error);
+      res.status(500).json({ 
+        message: 'Failed to send test notification',
+        error: error.message 
+      });
+    }
+  });
+
+  /**
    * GET /api/mobile/notifications/preferences - Get user's notification preferences
    */
   app.get('/api/mobile/notifications/preferences', verifyMobileToken, async (req, res) => {
