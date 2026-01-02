@@ -39,15 +39,17 @@ An admin dashboard manages user-reported content with a workflow (OPEN → PENDI
 ### Social Media OAuth Integration
 External OAuth connections (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube) use adaptive flows for desktop (popups) and mobile (redirects). Users connect accounts to earn Kliq Koins.
 
-### Push Notifications (Updated Dec 2025)
+### Push Notifications (Updated Jan 2026)
 Platform-specific push notification strategies:
 
 **iOS Safari PWA (iOS 16.4+, installed to home screen):**
 - Uses native Web Push API with custom VAPID keys (not Firebase)
-- Service worker: `sw-ios.js`
+- Service worker: `sw-ios.js` (registered via `registerServiceWorker.ts` which detects iOS Safari)
 - Client uses `VITE_VAPID_PUBLIC_KEY` for subscription
 - Server uses `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` with `web-push` library
 - Tokens stored as JSON with `platform: 'ios-web-push'`
+- **CRITICAL:** Server must use `contentEncoding: 'aes128gcm'` in `sendNotification()` options - Safari silently rejects older `aesgcm` encoding
+- **CRITICAL:** iOS Safari PWA must register `sw-ios.js` (has push handler), not `sw.js` (no push handler) - handled by `registerServiceWorker.ts`
 - **iOS quirk:** `Notification.permission` reports 'default' even after user grants permission; frontend must check backend `/api/push/status` for actual registration state
 - **Service worker note:** Both `sw.js` and `sw-ios.js` must skip API requests (no `respondWith`) to avoid iOS Safari fetch failures
 
