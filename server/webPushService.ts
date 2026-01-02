@@ -78,36 +78,27 @@ class WebPushService {
         keys: parsed.keys
       };
 
+      // Standard Web Push payload format - iOS 16.4+ uses standard Web Push API
       const notificationPayload = JSON.stringify({
         title: payload.title,
         body: payload.body,
         icon: payload.icon || '/icons/icon-192x192.png',
         badge: payload.badge || '/icons/icon-72x72.png',
         data: payload.data || {},
-        // iOS Safari requires APNs-style payload structure
-        aps: {
-          alert: {
-            title: payload.title,
-            body: payload.body
-          },
-          sound: 'default',
-          badge: 1
-        }
+        tag: 'mykliq-notification',
+        requireInteraction: false
       });
 
-      // Check if this is an Apple endpoint and add required APNs headers
-      const isAppleEndpoint = parsed.endpoint?.includes('push.apple.com');
-      const options: webPush.RequestOptions = {};
+      // Options for web-push library
+      const options: webPush.RequestOptions = {
+        TTL: 60 * 60, // 1 hour TTL
+        urgency: 'high' as any
+      };
       
-      if (isAppleEndpoint) {
-        // APNs requires these headers for user-visible notifications
-        // Without them, Apple treats it as a silent/background push
-        options.headers = {
-          'apns-push-type': 'alert',
-          'apns-topic': 'web.mykliq.app'  // Must match your web push identifier
-        };
-        console.log('[WebPush] Sending to Apple with APNs headers:', options.headers);
-      }
+      console.log('[WebPush] Sending notification:', { 
+        endpoint: endpointPreview,
+        payloadLength: notificationPayload.length 
+      });
 
       await webPush.sendNotification(pushSubscription, notificationPayload, options);
       console.log('✅ iOS Web Push sent successfully to:', endpointPreview);
