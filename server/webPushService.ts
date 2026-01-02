@@ -95,7 +95,21 @@ class WebPushService {
         }
       });
 
-      await webPush.sendNotification(pushSubscription, notificationPayload);
+      // Check if this is an Apple endpoint and add required APNs headers
+      const isAppleEndpoint = parsed.endpoint?.includes('push.apple.com');
+      const options: webPush.RequestOptions = {};
+      
+      if (isAppleEndpoint) {
+        // APNs requires these headers for user-visible notifications
+        // Without them, Apple treats it as a silent/background push
+        options.headers = {
+          'apns-push-type': 'alert',
+          'apns-topic': 'web.mykliq.app'  // Must match your web push identifier
+        };
+        console.log('[WebPush] Sending to Apple with APNs headers:', options.headers);
+      }
+
+      await webPush.sendNotification(pushSubscription, notificationPayload, options);
       console.log('✅ iOS Web Push sent successfully to:', endpointPreview);
       return { success: true, endpoint: endpointPreview };
     } catch (error: any) {
