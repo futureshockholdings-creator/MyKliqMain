@@ -1,6 +1,6 @@
-const CACHE_NAME = 'mykliq-v8';
-const STATIC_CACHE = 'mykliq-static-v8';
-const DYNAMIC_CACHE = 'mykliq-dynamic-v8';
+const CACHE_NAME = 'mykliq-v9';
+const STATIC_CACHE = 'mykliq-static-v9';
+const DYNAMIC_CACHE = 'mykliq-dynamic-v9';
 
 const STATIC_ASSETS = [
   '/',
@@ -53,7 +53,8 @@ self.addEventListener('fetch', (event) => {
   
   if (request.method !== 'GET') return;
   
-  if (request.url.includes('/api/')) {
+  // API requests: network-first, with proper fallback to prevent null responses
+  if (request.url.includes('/api/') || request.url.includes('api.')) {
     event.respondWith(
       fetch(request)
         .then(response => {
@@ -66,7 +67,18 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          return caches.match(request);
+          // Try cache first, but ALWAYS return a valid Response (never undefined/null)
+          return caches.match(request).then(cachedResponse => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // Return a proper error response instead of undefined
+            return new Response(JSON.stringify({ error: 'Network unavailable' }), {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: { 'Content-Type': 'application/json' }
+            });
+          });
         })
     );
     return;
