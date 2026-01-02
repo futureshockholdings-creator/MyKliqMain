@@ -7,6 +7,18 @@
 self.addEventListener('push', (event) => {
   console.log('[iOS SW] Push event received');
   
+  // Send debug log to server
+  fetch('https://api.mykliq.app/api/push/debug-log', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      event: 'push_received',
+      data: event.data ? event.data.text() : null,
+      timestamp: Date.now(),
+      userAgent: self.navigator?.userAgent || 'unknown'
+    })
+  }).catch(() => {});
+  
   let data = { title: 'MyKliq', body: 'New notification' };
   
   try {
@@ -14,18 +26,8 @@ self.addEventListener('push', (event) => {
       const rawData = event.data.json();
       console.log('[iOS SW] Raw push data:', JSON.stringify(rawData));
       
-      // iOS Safari may deliver via APNs structure - check for aps.alert first
-      if (rawData.aps && rawData.aps.alert) {
-        data.title = rawData.aps.alert.title || rawData.title || 'MyKliq';
-        data.body = rawData.aps.alert.body || rawData.body || 'New notification';
-        data.icon = rawData.icon;
-        data.data = rawData.data;
-        data.url = rawData.url || rawData.click_action;
-        data.tag = rawData.tag;
-      } else {
-        // Standard Web Push payload
-        data = rawData;
-      }
+      // Standard Web Push payload
+      data = rawData;
     }
   } catch (e) {
     console.log('[iOS SW] Could not parse push data:', e);

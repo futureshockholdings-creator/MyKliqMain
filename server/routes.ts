@@ -1836,6 +1836,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
+   * POST /api/push/debug-log - Log push events from service worker for debugging
+   */
+  app.post('/api/push/debug-log', async (req, res) => {
+    const { event, data, timestamp, userAgent } = req.body;
+    console.log('📱 [SW Debug]', new Date(timestamp).toISOString(), event, JSON.stringify(data), userAgent?.slice(0, 50));
+    res.json({ received: true });
+  });
+
+  /**
    * GET /api/mobile/notifications/preferences - Get user's notification preferences
    */
   app.get('/api/mobile/notifications/preferences', verifyMobileToken, async (req, res) => {
