@@ -83,7 +83,16 @@ class WebPushService {
         body: payload.body,
         icon: payload.icon || '/icons/icon-192x192.png',
         badge: payload.badge || '/icons/icon-72x72.png',
-        data: payload.data || {}
+        data: payload.data || {},
+        // iOS Safari requires APNs-style payload structure
+        aps: {
+          alert: {
+            title: payload.title,
+            body: payload.body
+          },
+          sound: 'default',
+          badge: 1
+        }
       });
 
       await webPush.sendNotification(pushSubscription, notificationPayload);

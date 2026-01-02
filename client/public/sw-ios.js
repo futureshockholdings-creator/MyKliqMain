@@ -11,7 +11,21 @@ self.addEventListener('push', (event) => {
   
   try {
     if (event.data) {
-      data = event.data.json();
+      const rawData = event.data.json();
+      console.log('[iOS SW] Raw push data:', JSON.stringify(rawData));
+      
+      // iOS Safari may deliver via APNs structure - check for aps.alert first
+      if (rawData.aps && rawData.aps.alert) {
+        data.title = rawData.aps.alert.title || rawData.title || 'MyKliq';
+        data.body = rawData.aps.alert.body || rawData.body || 'New notification';
+        data.icon = rawData.icon;
+        data.data = rawData.data;
+        data.url = rawData.url || rawData.click_action;
+        data.tag = rawData.tag;
+      } else {
+        // Standard Web Push payload
+        data = rawData;
+      }
     }
   } catch (e) {
     console.log('[iOS SW] Could not parse push data:', e);
@@ -26,14 +40,19 @@ self.addEventListener('push', (event) => {
     icon: data.icon || '/icons/icon-192x192.png',
     badge: '/icons/icon-180x180.png',
     tag: data.tag || 'mykliq-notification',
+    requireInteraction: false,
     data: {
       url: data.url || data.click_action || '/',
       ...data.data
     }
   };
   
+  console.log('[iOS SW] Showing notification:', title, options);
+  
   event.waitUntil(
     self.registration.showNotification(title, options)
+      .then(() => console.log('[iOS SW] Notification shown successfully'))
+      .catch((err) => console.error('[iOS SW] Failed to show notification:', err))
   );
 });
 
