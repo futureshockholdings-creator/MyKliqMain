@@ -40,8 +40,10 @@ class WebPushService {
 
     try {
       webPush.setVapidDetails(vapidEmail, vapidPublicKey, vapidPrivateKey);
+      // CRITICAL: Safari requires aes128gcm content encoding - older aesgcm is silently rejected
+      (webPush as any).setGCMAPIKey(null); // Disable GCM, use VAPID only
       this.initialized = true;
-      console.log('✅ Web Push (VAPID) initialized successfully for iOS Safari');
+      console.log('✅ Web Push (VAPID) initialized successfully for iOS Safari with aes128gcm encoding');
     } catch (error) {
       console.error('❌ Failed to initialize Web Push:', error);
     }
@@ -90,9 +92,11 @@ class WebPushService {
       });
 
       // Options for web-push library
+      // CRITICAL: Safari requires aes128gcm content encoding
       const options: webPush.RequestOptions = {
         TTL: 60 * 60, // 1 hour TTL
-        urgency: 'high' as any
+        urgency: 'high' as any,
+        contentEncoding: 'aes128gcm' as any
       };
       
       console.log('[WebPush] Sending notification:', { 
