@@ -48,6 +48,8 @@ Platform-specific push notification strategies:
 - Client uses `VITE_VAPID_PUBLIC_KEY` for subscription
 - Server uses `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` with `web-push` library
 - Tokens stored as JSON with `platform: 'ios-web-push'`
+- **iOS quirk:** `Notification.permission` reports 'default' even after user grants permission; frontend must check backend `/api/push/status` for actual registration state
+- **Service worker note:** Both `sw.js` and `sw-ios.js` must skip API requests (no `respondWith`) to avoid iOS Safari fetch failures
 
 **Android/Desktop browsers:**
 - Uses Firebase Cloud Messaging (FCM)
