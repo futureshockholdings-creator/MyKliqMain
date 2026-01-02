@@ -34,16 +34,20 @@ export function NotificationSettings() {
         const status = webPushService.getPermissionStatus();
         setPermissionStatus(status);
         
-        // DEBUG: Show when component loads - appears BEFORE permission check
+        // DEBUG: Show when component loads
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         if (isIOS) {
-          alert(`DEBUG Component Loaded v2\nPermission: ${status}\nNeedsPWA: ${webPushService.needsPWAInstall()}`);
+          alert(`DEBUG Component Loaded v3\nPermission: ${status}\nNeedsPWA: ${webPushService.needsPWAInstall()}`);
         }
         
-        if (status === 'granted') {
+        // iOS PWAs often report 'default' even after permission was granted
+        // Always check backend for existing tokens unless explicitly denied
+        if (status === 'denied') {
+          setIsEnabled(false);
+        } else {
+          // Check backend status for both 'granted' AND 'default' permission states
           try {
-            // Use direct fetch to bypass cache - status must always be fresh
             const token = getAuthToken();
             const headers: Record<string, string> = {
               'Accept': 'application/json',
@@ -62,9 +66,6 @@ export function NotificationSettings() {
             if (!res.ok) {
               const errorText = await res.text();
               console.log('[NotificationSettings] Status check failed:', res.status, errorText);
-              // DEBUG: Show status check failure on iOS
-              const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
               if (isIOS) {
                 alert(`DEBUG Status Check Failed\nStatus: ${res.status}\nError: ${errorText.substring(0, 100)}`);
               }
@@ -73,20 +74,16 @@ export function NotificationSettings() {
               const response = await res.json();
               console.log('[NotificationSettings] Push status response:', JSON.stringify(response));
               console.log('[NotificationSettings] registered=', response?.registered, 'tokenCount=', response?.tokenCount);
-              // DEBUG: Show status response on iOS
-              const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
               if (isIOS) {
-                alert(`DEBUG Status Response\nRegistered: ${response?.registered}\nTokenCount: ${response?.tokenCount}\nUserId: ${response?.userId}`);
+                alert(`DEBUG Status Response v3\nRegistered: ${response?.registered}\nTokenCount: ${response?.tokenCount}\nUserId: ${response?.userId}`);
               }
+              // Use backend registration state as source of truth
               setIsEnabled(response?.registered === true);
             }
           } catch (err) {
             console.log('[NotificationSettings] Could not check backend status:', err);
             setIsEnabled(false);
           }
-        } else {
-          setIsEnabled(false);
         }
       } catch (error) {
         console.error('[NotificationSettings] Error checking status:', error);
