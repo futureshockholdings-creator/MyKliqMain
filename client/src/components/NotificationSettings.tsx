@@ -49,6 +49,13 @@ export function NotificationSettings() {
           // Check backend status for both 'granted' AND 'default' permission states
           try {
             const token = getAuthToken();
+            const apiUrl = buildApiUrl('/api/push/status');
+            
+            // DEBUG: Show before fetch attempt
+            if (isIOS) {
+              alert(`DEBUG Before Fetch v4\nURL: ${apiUrl}\nHas Token: ${!!token}`);
+            }
+            
             const headers: Record<string, string> = {
               'Accept': 'application/json',
               'Cache-Control': 'no-cache'
@@ -57,7 +64,7 @@ export function NotificationSettings() {
               headers['Authorization'] = `Bearer ${token}`;
             }
             
-            const res = await fetch(buildApiUrl('/api/push/status'), {
+            const res = await fetch(apiUrl, {
               method: 'GET',
               headers,
               credentials: 'include'
@@ -75,13 +82,17 @@ export function NotificationSettings() {
               console.log('[NotificationSettings] Push status response:', JSON.stringify(response));
               console.log('[NotificationSettings] registered=', response?.registered, 'tokenCount=', response?.tokenCount);
               if (isIOS) {
-                alert(`DEBUG Status Response v3\nRegistered: ${response?.registered}\nTokenCount: ${response?.tokenCount}\nUserId: ${response?.userId}`);
+                alert(`DEBUG Status Response v4\nRegistered: ${response?.registered}\nTokenCount: ${response?.tokenCount}\nUserId: ${response?.userId}`);
               }
               // Use backend registration state as source of truth
               setIsEnabled(response?.registered === true);
             }
-          } catch (err) {
+          } catch (err: any) {
             console.log('[NotificationSettings] Could not check backend status:', err);
+            // DEBUG: Show fetch error on iOS
+            if (isIOS) {
+              alert(`DEBUG Fetch Error v4\nError: ${err?.message || String(err)}`);
+            }
             setIsEnabled(false);
           }
         }
