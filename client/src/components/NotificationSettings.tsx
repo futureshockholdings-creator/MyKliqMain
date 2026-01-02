@@ -34,6 +34,13 @@ export function NotificationSettings() {
         const status = webPushService.getPermissionStatus();
         setPermissionStatus(status);
         
+        // DEBUG: Show when component loads - appears BEFORE permission check
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS) {
+          alert(`DEBUG Component Loaded v2\nPermission: ${status}\nNeedsPWA: ${webPushService.needsPWAInstall()}`);
+        }
+        
         if (status === 'granted') {
           try {
             // Use direct fetch to bypass cache - status must always be fresh
