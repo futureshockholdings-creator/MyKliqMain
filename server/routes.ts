@@ -10866,12 +10866,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let totalFailure = 0;
         
         // Send to iOS Web Push devices
+        let expiredTokensToCleanup: string[] = [];
+        
         if (iosTokens.length > 0) {
           console.log(`[Broadcast] Sending to ${iosTokens.length} iOS devices via Web Push...`);
           const iosResult = await webPushService.sendToMultipleDevices(iosTokens, payload);
           totalSuccess += iosResult.successCount;
           totalFailure += iosResult.failureCount;
           console.log(`[Broadcast] iOS result: ${iosResult.successCount} success, ${iosResult.failureCount} failed`);
+          
+          if (iosResult.expiredTokens && iosResult.expiredTokens.length > 0) {
+            expiredTokensToCleanup.push(...iosResult.expiredTokens);
+          }
         }
         
         // Send to Firebase (Android/Desktop) devices
@@ -10881,6 +10887,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalSuccess += fcmResult.successCount;
           totalFailure += fcmResult.failureCount;
           console.log(`[Broadcast] FCM result: ${fcmResult.successCount} success, ${fcmResult.failureCount} failed`);
+        }
+        
+        // Clean up expired tokens in background
+        if (expiredTokensToCleanup.length > 0) {
+          console.log(`[Broadcast] Cleaning up ${expiredTokensToCleanup.length} expired tokens...`);
+          for (const expiredToken of expiredTokensToCleanup) {
+            try {
+              await storage.deactivateDeviceToken(expiredToken);
+              console.log(`[Broadcast] Deactivated expired token`);
+            } catch (cleanupError) {
+              console.error(`[Broadcast] Failed to deactivate token:`, cleanupError);
+            }
+          }
         }
         
         await storage.updateBroadcast(broadcastId, {

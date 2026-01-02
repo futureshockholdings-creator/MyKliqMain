@@ -11,6 +11,8 @@ export interface WebPushPayload {
 export interface WebPushResult {
   success: boolean;
   error?: string;
+  statusCode?: number;
+  endpoint?: string;
 }
 
 class WebPushService {
@@ -64,8 +66,12 @@ class WebPushService {
       return { success: false, error: 'Web Push not initialized' };
     }
 
+    let parsed: any;
+    let endpointPreview = 'unknown';
+    
     try {
-      const parsed = JSON.parse(token);
+      parsed = JSON.parse(token);
+      endpointPreview = parsed.endpoint?.slice(0, 80) + '...';
       
       const pushSubscription = {
         endpoint: parsed.endpoint,
@@ -81,38 +87,77 @@ class WebPushService {
       });
 
       await webPush.sendNotification(pushSubscription, notificationPayload);
-      console.log('✅ iOS Web Push sent successfully to:', parsed.endpoint.slice(0, 50) + '...');
-      return { success: true };
+      console.log('✅ iOS Web Push sent successfully to:', endpointPreview);
+      return { success: true, endpoint: endpointPreview };
     } catch (error: any) {
-      console.error('❌ iOS Web Push error:', error.message);
-      return { success: false, error: error.message };
+      const statusCode = error.statusCode || 0;
+      const errorBody = error.body || error.message;
+      
+      console.error('❌ iOS Web Push error:', {
+        statusCode,
+        message: error.message,
+        body: errorBody,
+        endpoint: endpointPreview
+      });
+      
+      if (statusCode === 410) {
+        console.log('🗑️  Subscription expired (410 Gone) - token should be deactivated:', endpointPreview);
+      } else if (statusCode === 404) {
+        console.log('🗑️  Subscription not found (404) - token should be deactivated:', endpointPreview);
+      } else if (statusCode === 401) {
+        console.error('🔑 VAPID authentication failed (401) - check VAPID keys');
+      } else if (statusCode === 403) {
+        console.error('🔑 VAPID authorization failed (403) - VAPID key mismatch with subscription');
+      }
+      
+      return { 
+        success: false, 
+        error: error.message,
+        statusCode,
+        endpoint: endpointPreview
+      };
     }
   }
 
   async sendToMultipleDevices(
     tokens: string[],
     payload: WebPushPayload
-  ): Promise<{ successCount: number; failureCount: number; results: WebPushResult[] }> {
+  ): Promise<{ 
+    successCount: number; 
+    failureCount: number; 
+    results: WebPushResult[];
+    expiredTokens: string[];
+  }> {
     if (tokens.length === 0) {
-      return { successCount: 0, failureCount: 0, results: [] };
+      return { successCount: 0, failureCount: 0, results: [], expiredTokens: [] };
     }
 
     const results: WebPushResult[] = [];
+    const expiredTokens: string[] = [];
     let successCount = 0;
     let failureCount = 0;
 
     for (const token of tokens) {
       const result = await this.sendToDevice(token, payload);
       results.push(result);
+      
       if (result.success) {
         successCount++;
       } else {
         failureCount++;
+        if (result.statusCode === 410 || result.statusCode === 404) {
+          expiredTokens.push(token);
+        }
       }
     }
 
     console.log(`✅ iOS Web Push multicast: ${successCount} succeeded, ${failureCount} failed`);
-    return { successCount, failureCount, results };
+    
+    if (expiredTokens.length > 0) {
+      console.log(`🗑️  ${expiredTokens.length} expired tokens should be cleaned up`);
+    }
+    
+    return { successCount, failureCount, results, expiredTokens };
   }
 }
 
