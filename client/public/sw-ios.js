@@ -71,3 +71,37 @@ self.addEventListener('activate', (event) => {
   console.log('[iOS SW] Service worker activated');
   event.waitUntil(clients.claim());
 });
+
+// Handle fetch events - pass API requests through to network
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // Always pass API requests directly to network (don't cache or intercept)
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('api.')) {
+    event.respondWith(
+      fetch(event.request).catch((error) => {
+        console.log('[iOS SW] Network request failed:', error);
+        return new Response(JSON.stringify({ error: 'Network error' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      })
+    );
+    return;
+  }
+  
+  // For all other requests, use network-first strategy
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        return response;
+      })
+      .catch(() => {
+        // Return a basic offline response for non-API requests
+        return new Response('Offline', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain' }
+        });
+      })
+  );
+});
