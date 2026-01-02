@@ -1835,13 +1835,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // In-memory debug log storage (last 50 entries)
+  const pushDebugLogs: Array<{ event: string; data: any; timestamp: number; userAgent: string; receivedAt: string }> = [];
+  
   /**
    * POST /api/push/debug-log - Log push events from service worker for debugging
    */
   app.post('/api/push/debug-log', async (req, res) => {
     const { event, data, timestamp, userAgent } = req.body;
-    console.log('📱 [SW Debug]', new Date(timestamp).toISOString(), event, JSON.stringify(data), userAgent?.slice(0, 50));
+    const logEntry = {
+      event,
+      data,
+      timestamp,
+      userAgent: userAgent?.slice(0, 100) || 'unknown',
+      receivedAt: new Date().toISOString()
+    };
+    pushDebugLogs.unshift(logEntry);
+    if (pushDebugLogs.length > 50) pushDebugLogs.pop();
+    console.log('📱 [SW Debug]', logEntry.receivedAt, event, JSON.stringify(data));
     res.json({ received: true });
+  });
+
+  /**
+   * GET /api/push/debug-log - Get recent debug logs
+   */
+  app.get('/api/push/debug-log', async (req, res) => {
+    res.json({ logs: pushDebugLogs, count: pushDebugLogs.length });
   });
 
   /**
