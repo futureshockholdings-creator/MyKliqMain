@@ -201,14 +201,28 @@ export const friendships = pgTable("friendships", {
   index("idx_friendships_status").on(table.status), // Filter by friendship status
 ]);
 
-// Used invite codes - tracks which codes have been used once
+// Used invite codes - tracks which codes have been used (for referral tracking, not blocking reuse)
 export const usedInviteCodes = pgTable("used_invite_codes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  inviteCode: varchar("invite_code", { length: 20 }).unique().notNull(),
+  inviteCode: varchar("invite_code", { length: 20 }).notNull(),
   usedBy: varchar("used_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
   ownedBy: varchar("owned_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
   usedAt: timestamp("used_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_used_invite_codes_code").on(table.inviteCode),
+  index("idx_used_invite_codes_used_by").on(table.usedBy),
+]);
+
+// Kliq removals - tracks users who have been removed from a kliq (for pending rejoin approval)
+export const kliqRemovals = pgTable("kliq_removals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  kliqOwnerId: varchar("kliq_owner_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  removedUserId: varchar("removed_user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  removedAt: timestamp("removed_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_kliq_removals_owner").on(table.kliqOwnerId),
+  index("idx_kliq_removals_removed").on(table.removedUserId),
+]);
 
 // Referral bonus status enum
 export const referralBonusStatusEnum = pgEnum("referral_bonus_status", ["pending", "completed", "cancelled"]);

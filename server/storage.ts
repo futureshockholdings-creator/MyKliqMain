@@ -3,6 +3,7 @@ import {
   userThemes,
   friendships,
   usedInviteCodes,
+  kliqRemovals,
   referralBonuses,
   posts,
   stories,
@@ -201,11 +202,18 @@ export interface IStorage {
   // Friend operations
   getFriends(userId: string): Promise<(Friendship & { friend: User })[]>;
   getFollowers(userId: string): Promise<(Friendship & { follower: User })[]>;
+  getPendingJoinRequests(userId: string): Promise<(Friendship & { friend: User })[]>;
   addFriend(friendship: InsertFriendship): Promise<Friendship>;
   updateFriendRank(userId: string, friendId: string, rank: number): Promise<void>;
   acceptFriendship(userId: string, friendId: string): Promise<void>;
+  declineFriendship(userId: string, friendId: string): Promise<void>;
   removeFriend(userId: string, friendId: string): Promise<void>;
   leaveKliq(userId: string): Promise<void>;
+  
+  // Kliq removal tracking (for pending rejoin approval)
+  wasUserRemovedFromKliq(kliqOwnerId: string, userId: string): Promise<boolean>;
+  addKliqRemoval(kliqOwnerId: string, removedUserId: string): Promise<void>;
+  removeKliqRemoval(kliqOwnerId: string, removedUserId: string): Promise<void>;
   
   // Post operations
   getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
@@ -656,6 +664,27 @@ export class DatabaseStorage implements IStorage {
     return followers;
   }
 
+  async getPendingJoinRequests(userId: string): Promise<(Friendship & { friend: User })[]> {
+    // Get pending join requests for this kliq owner (users waiting for approval)
+    const pending = await db
+      .select({
+        id: friendships.id,
+        userId: friendships.userId,
+        friendId: friendships.friendId,
+        rank: friendships.rank,
+        status: friendships.status,
+        createdAt: friendships.createdAt,
+        updatedAt: friendships.updatedAt,
+        friend: users,
+      })
+      .from(friendships)
+      .innerJoin(users, eq(friendships.friendId, users.id))
+      .where(and(eq(friendships.userId, userId), eq(friendships.status, "pending")))
+      .orderBy(desc(friendships.createdAt));
+    
+    return pending;
+  }
+
   async addFriend(friendship: InsertFriendship): Promise<Friendship> {
     const [newFriendship] = await db
       .insert(friendships)
@@ -725,9 +754,21 @@ export class DatabaseStorage implements IStorage {
       .update(friendships)
       .set({ status: "accepted", updatedAt: new Date() })
       .where(and(eq(friendships.userId, userId), eq(friendships.friendId, friendId)));
+    
+    // Remove from kliq removals if they were previously removed (allow clean slate)
+    await this.removeKliqRemoval(userId, friendId);
+  }
+
+  async declineFriendship(userId: string, friendId: string): Promise<void> {
+    await db
+      .delete(friendships)
+      .where(and(eq(friendships.userId, userId), eq(friendships.friendId, friendId)));
   }
 
   async removeFriend(userId: string, friendId: string): Promise<void> {
+    // Track this removal so future rejoins require approval
+    await this.addKliqRemoval(userId, friendId);
+    
     await db
       .delete(friendships)
       .where(and(eq(friendships.userId, userId), eq(friendships.friendId, friendId)));
@@ -738,6 +779,38 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(friendships)
       .where(or(eq(friendships.userId, userId), eq(friendships.friendId, userId)));
+  }
+
+  // Kliq removal tracking
+  async wasUserRemovedFromKliq(kliqOwnerId: string, userId: string): Promise<boolean> {
+    const [removal] = await db
+      .select()
+      .from(kliqRemovals)
+      .where(and(
+        eq(kliqRemovals.kliqOwnerId, kliqOwnerId),
+        eq(kliqRemovals.removedUserId, userId)
+      ));
+    return !!removal;
+  }
+
+  async addKliqRemoval(kliqOwnerId: string, removedUserId: string): Promise<void> {
+    // Check if already exists to avoid duplicates
+    const exists = await this.wasUserRemovedFromKliq(kliqOwnerId, removedUserId);
+    if (!exists) {
+      await db.insert(kliqRemovals).values({
+        kliqOwnerId,
+        removedUserId,
+      });
+    }
+  }
+
+  async removeKliqRemoval(kliqOwnerId: string, removedUserId: string): Promise<void> {
+    await db
+      .delete(kliqRemovals)
+      .where(and(
+        eq(kliqRemovals.kliqOwnerId, kliqOwnerId),
+        eq(kliqRemovals.removedUserId, removedUserId)
+      ));
   }
 
   // Post operations
