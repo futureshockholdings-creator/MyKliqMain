@@ -5250,12 +5250,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isRead: false
         });
         
-        // Broadcast real-time notification to kliq owner to update the alerts badge
-        const broadcastNotification = (req.app as any).broadcastNotification;
-        if (broadcastNotification) {
-          broadcastNotification(inviter.id);
-        }
-        
         return res.status(202).json({ 
           ...friendship, 
           pending: true,
