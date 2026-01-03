@@ -1,4 +1,5 @@
 import { queryClient } from './queryClient';
+import { buildWebSocketUrl } from './apiConfig';
 
 class FeedRealtimeService {
   private ws: WebSocket | null = null;
@@ -19,8 +20,8 @@ class FeedRealtimeService {
     }
 
     this.userId = userId;
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    // Use buildWebSocketUrl to correctly route to backend (api.mykliq.app) in production
+    const wsUrl = buildWebSocketUrl('/ws');
     
     try {
       this.ws = new WebSocket(wsUrl);

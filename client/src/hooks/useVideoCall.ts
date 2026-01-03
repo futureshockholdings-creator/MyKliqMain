@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "./useAuth";
 import { apiRequest } from "@/lib/queryClient";
+import { buildWebSocketUrl } from "@/lib/apiConfig";
 import { type VideoCall, type CallParticipant, type User } from "@shared/schema";
 
 interface VideoCallState {
@@ -25,8 +26,8 @@ export function useVideoCall() {
   useEffect(() => {
     if (!user) return;
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    // Use buildWebSocketUrl to correctly route to backend (api.mykliq.app) in production
+    const wsUrl = buildWebSocketUrl('/ws');
     
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;

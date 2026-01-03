@@ -32,7 +32,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { getApiBaseUrl, resolveAssetUrl } from "@/lib/apiConfig";
+import { getApiBaseUrl, resolveAssetUrl, buildWebSocketUrl } from "@/lib/apiConfig";
 
 interface LiveStreamCardProps {
   action: {
@@ -345,9 +345,8 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
   });
 
   const setupWebSocket = (actionId: string) => {
-    const apiBase = getApiBaseUrl();
-    const wsProtocol = apiBase.startsWith('https') ? 'wss' : 'ws';
-    const wsUrl = `${wsProtocol}://${apiBase.replace(/^https?:\/\//, '')}/ws`;
+    // Use buildWebSocketUrl for cross-domain production (AWS Amplify → Replit backend)
+    const wsUrl = buildWebSocketUrl('/ws');
     
     const websocket = new WebSocket(wsUrl);
 
