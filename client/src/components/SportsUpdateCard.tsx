@@ -25,83 +25,111 @@ export function SportsUpdateCard({ update }: SportsUpdateCardProps) {
   const isLive = update.status.toLowerCase().includes('in progress') || 
                  update.status.toLowerCase().includes('live');
   const isFinal = update.status.toLowerCase().includes('final');
+  const isScheduled = !isLive && !isFinal;
+  
+  const awayWinning = (update.awayTeamScore ?? 0) > (update.homeTeamScore ?? 0);
+  const homeWinning = (update.homeTeamScore ?? 0) > (update.awayTeamScore ?? 0);
   
   return (
-    <Card className="bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-purple-500/10 border-emerald-500/30" data-testid={`card-sports-update-${update.id}`}>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Zap className="w-4 h-4 text-emerald-500" />
-          <span className="text-sm font-semibold text-emerald-500 uppercase tracking-wide" data-testid="text-sport-type">
-            {update.sport} Update
-          </span>
-          {isLive && (
-            <Badge variant="destructive" className="ml-auto animate-pulse" data-testid="badge-status-live">
-              Live
-            </Badge>
-          )}
-          {isFinal && (
-            <Badge variant="secondary" className="ml-auto" data-testid="badge-status-final">
-              Final
-            </Badge>
-          )}
+    <Card className="bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-purple-500/10 border-emerald-500/30 overflow-hidden" data-testid={`card-sports-update-${update.id}`}>
+      <CardContent className="p-3 sm:p-4">
+        {/* Header with sport type and status */}
+        <div className="flex items-center justify-between mb-2 sm:mb-3">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />
+            <span className="text-xs sm:text-sm font-semibold text-emerald-500 uppercase tracking-wide" data-testid="text-sport-type">
+              {update.sport}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {isLive && (
+              <Badge variant="destructive" className="animate-pulse text-xs px-2 py-0.5" data-testid="badge-status-live">
+                LIVE
+              </Badge>
+            )}
+            {isFinal && (
+              <Badge variant="secondary" className="text-xs px-2 py-0.5" data-testid="badge-status-final">
+                Final
+              </Badge>
+            )}
+            {isScheduled && update.statusDetail && (
+              <span className="text-xs text-gray-500">{update.statusDetail}</span>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          {/* Away Team */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-1">
-            {update.awayTeamLogo && (
-              <img 
-                src={update.awayTeamLogo} 
-                alt={update.awayTeamName}
-                className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
-                data-testid="img-away-team-logo"
-              />
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="font-bold text-gray-900 text-base sm:text-lg truncate" data-testid="text-away-team-name">
-                {update.awayTeamName}
+        {/* Scoreboard Layout - consistent on all screen sizes */}
+        <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-2 sm:p-3 space-y-1.5 sm:space-y-2">
+          {/* Away Team Row */}
+          <div className={cn(
+            "flex items-center gap-2 sm:gap-3 py-1.5 sm:py-2 px-2 rounded-md transition-colors",
+            awayWinning && isFinal && "bg-emerald-50 dark:bg-emerald-900/20"
+          )}>
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              {update.awayTeamLogo ? (
+                <img 
+                  src={update.awayTeamLogo} 
+                  alt={update.awayTeamName}
+                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain flex-shrink-0"
+                  data-testid="img-away-team-logo"
+                />
+              ) : (
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full flex-shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className={cn(
+                  "font-semibold text-sm sm:text-base truncate",
+                  awayWinning ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"
+                )} data-testid="text-away-team-name">
+                  {update.awayTeamName}
+                </div>
               </div>
             </div>
             <div className={cn(
-              "text-2xl sm:text-3xl font-bold flex-shrink-0",
-              (update.awayTeamScore ?? 0) > (update.homeTeamScore ?? 0) ? "text-emerald-600" : "text-gray-700"
+              "text-xl sm:text-2xl font-bold tabular-nums min-w-[2.5rem] text-right",
+              awayWinning ? "text-emerald-600 dark:text-emerald-400" : "text-gray-600 dark:text-gray-400"
             )} data-testid="text-away-team-score">
-              {update.awayTeamScore ?? 0}
+              {update.awayTeamScore ?? '-'}
             </div>
           </div>
 
-          {/* VS Divider */}
-          <div className="px-2 sm:px-4 text-gray-600 font-semibold text-center">
-            @
-          </div>
-
-          {/* Home Team */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-1 flex-row-reverse">
-            {update.homeTeamLogo && (
-              <img 
-                src={update.homeTeamLogo} 
-                alt={update.homeTeamName}
-                className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
-                data-testid="img-home-team-logo"
-              />
-            )}
-            <div className="flex-1 text-right min-w-0">
-              <div className="font-bold text-gray-900 text-base sm:text-lg truncate" data-testid="text-home-team-name">
-                {update.homeTeamName}
+          {/* Home Team Row */}
+          <div className={cn(
+            "flex items-center gap-2 sm:gap-3 py-1.5 sm:py-2 px-2 rounded-md transition-colors",
+            homeWinning && isFinal && "bg-emerald-50 dark:bg-emerald-900/20"
+          )}>
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              {update.homeTeamLogo ? (
+                <img 
+                  src={update.homeTeamLogo} 
+                  alt={update.homeTeamName}
+                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain flex-shrink-0"
+                  data-testid="img-home-team-logo"
+                />
+              ) : (
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-full flex-shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className={cn(
+                  "font-semibold text-sm sm:text-base truncate",
+                  homeWinning ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"
+                )} data-testid="text-home-team-name">
+                  {update.homeTeamName}
+                </div>
               </div>
             </div>
             <div className={cn(
-              "text-2xl sm:text-3xl font-bold flex-shrink-0",
-              (update.homeTeamScore ?? 0) > (update.awayTeamScore ?? 0) ? "text-emerald-600" : "text-gray-700"
+              "text-xl sm:text-2xl font-bold tabular-nums min-w-[2.5rem] text-right",
+              homeWinning ? "text-emerald-600 dark:text-emerald-400" : "text-gray-600 dark:text-gray-400"
             )} data-testid="text-home-team-score">
-              {update.homeTeamScore ?? 0}
+              {update.homeTeamScore ?? '-'}
             </div>
           </div>
         </div>
 
-        {/* Status Detail */}
-        {update.statusDetail && (
-          <div className="mt-3 text-center text-sm text-gray-600" data-testid="text-status-detail">
+        {/* Status Detail for live/final games */}
+        {(isLive || isFinal) && update.statusDetail && (
+          <div className="mt-2 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400" data-testid="text-status-detail">
             {update.statusDetail}
           </div>
         )}
