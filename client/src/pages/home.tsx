@@ -36,6 +36,7 @@ import { GoogleSearch } from "@/components/GoogleSearch";
 import { EventCard } from "@/components/EventCard";
 import { MoodBoostCard } from "@/components/MoodBoostCard";
 import { SportsUpdateCard } from "@/components/SportsUpdateCard";
+import { SportsCarousel } from "@/components/SportsCarousel";
 import { LiveStreamCard } from "@/components/LiveStreamCard";
 import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -594,30 +595,8 @@ export default function Home() {
   const combinedFeed = [...mergedFeed];
   const sportsUpdatesArray = Array.isArray(sportsUpdates) ? sportsUpdates : [];
   
-  if (sportsUpdatesArray.length > 0) {
-    let sportsIndex = 0;
-    const insertInterval = 3; // Insert sports update every 3 items
-    
-    // Insert sports updates at positions 2, 5, 8, etc. (after items at indices 1, 4, 7...)
-    for (let i = insertInterval - 1; i < combinedFeed.length && sportsIndex < sportsUpdatesArray.length; i += insertInterval) {
-      combinedFeed.splice(i + sportsIndex, 0, {
-        ...sportsUpdatesArray[sportsIndex],
-        type: 'sports_update',
-        id: `sports-${sportsUpdatesArray[sportsIndex].eventId}`,
-      });
-      sportsIndex++;
-    }
-    
-    // If we have remaining sports updates and feed is short, append them
-    while (sportsIndex < sportsUpdatesArray.length) {
-      combinedFeed.push({
-        ...sportsUpdatesArray[sportsIndex],
-        type: 'sports_update',
-        id: `sports-${sportsUpdatesArray[sportsIndex].eventId}`,
-      });
-      sportsIndex++;
-    }
-  }
+  // Sports updates are now displayed in a separate carousel at the top of the feed
+  // They are no longer mixed into the main feed
 
   // Separate different types of feed items
   console.log('📊 Feed items received:', feedItems.length, feedItems.map((i: any) => i.type));
@@ -3127,6 +3106,11 @@ export default function Home() {
         </Card>
       ) : (
         <>
+          {/* Sports Carousel at top of feed */}
+          {sportsUpdatesArray.length > 0 && (
+            <SportsCarousel updates={sportsUpdatesArray} />
+          )}
+          
           {combinedFeed.map((item: any, index: number) => {
           const regularItemIndex = combinedFeed.slice(0, index).filter((i: any) => i.type !== 'sports_update' && i.type !== 'mood_boost').length;
           
@@ -3155,11 +3139,8 @@ export default function Home() {
           }
           
           if (item.type === 'sports_update') {
-            return (
-              <div key={item.id} className="mb-4">
-                <SportsUpdateCard update={item} />
-              </div>
-            );
+            // Sports updates are now displayed in the carousel at the top
+            return null;
           }
           
           if (item.type === 'poll') {
