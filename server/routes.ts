@@ -5240,14 +5240,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ? `${requester.firstName} ${requester.lastName}` 
           : requester?.username || 'Someone';
         
-        // Broadcast real-time notification to kliq owner
-        const broadcastPendingRequest = (req.app as any).broadcastPendingRequest;
-        if (broadcastPendingRequest) {
-          broadcastPendingRequest(inviter.id, {
-            friendId: userId,
-            friendName: requesterName,
-            friendProfileImage: requester?.profileImageUrl
-          });
+        // Create notification for kliq owner about the pending request
+        await notificationService.createNotification({
+          userId: inviter.id,
+          type: 'friend_request',
+          message: `${requesterName} wants to rejoin your kliq`,
+          relatedEntityId: friendship.id,
+          relatedEntityType: 'friendship',
+          isRead: false
+        });
+        
+        // Broadcast real-time notification to kliq owner to update the alerts badge
+        const broadcastNotification = (req.app as any).broadcastNotification;
+        if (broadcastNotification) {
+          broadcastNotification(inviter.id);
         }
         
         return res.status(202).json({ 

@@ -40,16 +40,6 @@ class FeedRealtimeService {
             queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
           } else if (message.type === 'notification:new') {
             queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
-          } else if (message.type === 'pending-request:new') {
-            // Real-time pending rejoin request notification
-            queryClient.invalidateQueries({ queryKey: ['/api/friends/pending-requests'] });
-            queryClient.refetchQueries({ queryKey: ['/api/friends/pending-requests'], type: 'active' });
-            
-            // Dispatch custom event for the UI to show a toast
-            const friendName = message.data?.friendName || 'Someone';
-            window.dispatchEvent(new CustomEvent('pending-request', { 
-              detail: { friendName } 
-            }));
           }
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
