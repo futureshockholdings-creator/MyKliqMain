@@ -101,6 +101,8 @@ export function Conversation() {
   const { data: conversation, isLoading } = useQuery<ConversationData>({
     queryKey: ["/api/messages/conversation", otherUserId],
     enabled: !!otherUserId,
+    staleTime: 30000, // Keep data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // We'll get user info from the conversation messages instead of separate API call

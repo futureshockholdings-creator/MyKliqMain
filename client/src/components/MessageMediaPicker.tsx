@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Camera, Image, Film, MessageSquare, X } from 'lucide-react';
+import { Camera, Image, Film, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,17 +48,7 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
       <Dialog open={showPicker} onOpenChange={setShowPicker}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>Add Media to Message</span>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowPicker(false)}
-                data-testid="button-close-media-picker"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </DialogTitle>
+            <DialogTitle>Add Media to Message</DialogTitle>
             <DialogDescription className="text-muted-foreground">
               Choose a meme, moviecon, or upload a photo or video to attach to your message
             </DialogDescription>
@@ -86,15 +76,28 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
 
             <div className="mt-6 max-h-[60vh] overflow-y-auto">
               <TabsContent value="meme" className="mt-0">
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Select a MEME to share in your message
+                  </p>
+                </div>
                 <MemePicker onSelectMeme={handleMemeSelect} />
               </TabsContent>
 
               <TabsContent value="moviecon" className="mt-0">
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Select a Moviecon to share in your message
+                  </p>
+                </div>
                 <MovieconPicker onSelectMoviecon={handleMovieconSelect} />
               </TabsContent>
 
               <TabsContent value="photo" className="mt-0">
-                <div className="text-center py-6">
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Choose a photo from your device to share
+                  </p>
                   <Button
                     onClick={() => {
                       const input = document.createElement('input');
@@ -103,7 +106,6 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                       input.onchange = (e) => {
                         const file = (e.target as HTMLInputElement).files?.[0];
                         if (file) {
-                          // For now, create a temporary URL for demo
                           const url = URL.createObjectURL(file);
                           handleMediaUpload(url, "image");
                         }
@@ -114,14 +116,14 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                   >
                     Upload Photo
                   </Button>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-                    Choose a photo from your device to share
-                  </p>
                 </div>
               </TabsContent>
 
               <TabsContent value="video" className="mt-0">
-                <div className="text-center py-6">
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    Choose a video from your device to share
+                  </p>
                   <Button
                     onClick={() => {
                       const input = document.createElement('input');
@@ -130,7 +132,6 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                       input.onchange = (e) => {
                         const file = (e.target as HTMLInputElement).files?.[0];
                         if (file) {
-                          // For now, create a temporary URL for demo
                           const url = URL.createObjectURL(file);
                           handleMediaUpload(url, "video");
                         }
@@ -141,9 +142,6 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                   >
                     Upload Video
                   </Button>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-                    Choose a video from your device to share
-                  </p>
                 </div>
               </TabsContent>
             </div>
