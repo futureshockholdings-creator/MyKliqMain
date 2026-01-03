@@ -82,7 +82,14 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Select a MEME to share in your message
                   </p>
-                  <MemePicker onSelectMeme={handleMemeSelect} />
+                  <MemePicker 
+                    onSelectMeme={handleMemeSelect} 
+                    trigger={
+                      <Button className={standardButtonStyle}>
+                        Select Meme
+                      </Button>
+                    }
+                  />
                 </div>
               </TabsContent>
 
@@ -91,7 +98,14 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Select a Moviecon to share in your message
                   </p>
-                  <MovieconPicker onSelectMoviecon={handleMovieconSelect} />
+                  <MovieconPicker 
+                    onSelectMoviecon={handleMovieconSelect}
+                    trigger={
+                      <Button className={standardButtonStyle}>
+                        Select Moviecon
+                      </Button>
+                    }
+                  />
                 </div>
               </TabsContent>
 
