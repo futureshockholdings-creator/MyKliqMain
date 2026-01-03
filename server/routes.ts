@@ -5244,10 +5244,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await notificationService.createNotification({
           userId: inviter.id,
           type: 'friend_request',
+          title: 'Rejoin Request',
           message: `${requesterName} wants to rejoin your kliq`,
-          relatedEntityId: friendship.id,
-          relatedEntityType: 'friendship',
-          isRead: false
+          actionUrl: '/kliq',
+          relatedId: String(friendship.id),
+          relatedType: 'friendship',
+          isRead: false,
+          priority: 'normal'
         });
         
         return res.status(202).json({ 
