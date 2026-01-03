@@ -29,3 +29,15 @@ frontend:
           value: '/'
         - key: 'Cache-Control'
           value: 'no-cache'
+    - pattern: '/favicon*'
+      headers:
+        - key: 'Cache-Control'
+          value: 'no-cache, no-store, must-revalidate'
+    - pattern: '/apple-touch-icon.png'
+      headers:
+        - key: 'Cache-Control'
+          value: 'no-cache, no-store, must-revalidate'
+    - pattern: '/icons/*'
+      headers:
+        - key: 'Cache-Control'
+          value: 'no-cache, no-store, must-revalidate'
