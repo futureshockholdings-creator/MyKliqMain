@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowLeft, Send, X } from "lucide-react";
+import { ArrowLeft, Send, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -131,6 +131,27 @@ export function Conversation() {
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMessageMutation = useMutation({
+    mutationFn: async (messageId: string) => {
+      return apiRequest("DELETE", `/api/messages/${messageId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/messages/conversation", otherUserId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/messages/conversations"] });
+      toast({
+        title: "Message deleted",
+        description: "The message has been removed",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete message",
         variant: "destructive",
       });
     },
@@ -336,8 +357,20 @@ export function Conversation() {
                           </div>
                         )}
                       </div>
-                      <div className={`text-xs text-muted-foreground mt-1 ${isOwn ? "text-right" : "text-left"}`}>
-                        {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                      <div className={`flex items-center gap-2 mt-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => deleteMessageMutation.mutate(message.id)}
+                          disabled={deleteMessageMutation.isPending}
+                          data-testid={`button-delete-message-${message.id}`}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
                       </div>
                     </div>
                   </div>

@@ -288,6 +288,7 @@ export interface IStorage {
   sendMessage(message: InsertMessage): Promise<Message>;
   markMessageAsRead(messageId: string): Promise<void>;
   markConversationAsRead(conversationId: string, userId: string): Promise<void>;
+  deleteMessage(messageId: string, userId: string): Promise<boolean>;
   deleteExpiredMessages(): Promise<void>;
   deleteOldConversations(): Promise<void>;
   
@@ -2195,6 +2196,34 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return { id: conversation.id };
+  }
+
+  async deleteMessage(messageId: string, userId: string): Promise<boolean> {
+    // Get the message to verify ownership
+    const [message] = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.id, messageId));
+    
+    if (!message) {
+      return false;
+    }
+    
+    // Only allow sender or receiver to delete
+    if (message.senderId !== userId && message.receiverId !== userId) {
+      return false;
+    }
+    
+    // Update conversation if this was the last message
+    await db
+      .update(conversations)
+      .set({ lastMessageId: null })
+      .where(eq(conversations.lastMessageId, messageId));
+    
+    // Delete the message
+    await db.delete(messages).where(eq(messages.id, messageId));
+    
+    return true;
   }
 
   async deleteExpiredMessages(): Promise<void> {
