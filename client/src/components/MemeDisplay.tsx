@@ -4,18 +4,21 @@ import type { Meme } from '@shared/schema';
 import { resolveAssetUrl } from '@/lib/apiConfig';
 
 interface MemeDisplayProps {
-  meme: Meme;
+  meme: Meme | { url: string; title: string; isAnimated?: boolean };
   className?: string;
 }
 
 export function MemeDisplay({ meme, className = "" }: MemeDisplayProps) {
   const [imageError, setImageError] = useState(false);
   
+  // Support both 'imageUrl' (from memes table) and 'url' (from gifs table)
+  const sourceUrl = 'imageUrl' in meme ? meme.imageUrl : meme.url;
+  
   // Convert Google Cloud Storage URLs to local object serving URLs
   // Then resolve to absolute URL for cross-domain (AWS Amplify -> Replit backend)
-  const relativeUrl = meme.imageUrl.startsWith('https://storage.googleapis.com/') 
-    ? meme.imageUrl.replace(/^https:\/\/storage\.googleapis\.com\/[^\/]+\/\.private\//, '/objects/')
-    : meme.imageUrl;
+  const relativeUrl = sourceUrl.startsWith('https://storage.googleapis.com/') 
+    ? sourceUrl.replace(/^https:\/\/storage\.googleapis\.com\/[^\/]+\/\.private\//, '/objects/')
+    : sourceUrl;
   const imageUrl = resolveAssetUrl(relativeUrl) || relativeUrl;
   
   if (imageError) {

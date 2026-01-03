@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Camera, Image, Film, MessageSquare } from 'lucide-react';
+import { Camera, Image, Film, MessageSquare, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MemePicker } from '@/components/MemePicker';
 import { MovieconPicker } from '@/components/MovieconPicker';
-import { MediaUpload } from '@/components/MediaUpload';
+import { buildApiUrl } from '@/lib/apiConfig';
+import { useToast } from '@/hooks/use-toast';
 import type { Meme, Moviecon } from '@shared/schema';
 
 interface MessageMediaPickerProps {
@@ -17,6 +18,8 @@ interface MessageMediaPickerProps {
 export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMedia }: MessageMediaPickerProps) {
   const [showPicker, setShowPicker] = useState(false);
   const [activeTab, setActiveTab] = useState("meme");
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
 
   const handleMediaUpload = (mediaUrl: string, mediaType: "image" | "video") => {
     onSelectMedia(mediaUrl, mediaType);
@@ -31,6 +34,56 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
   const handleMovieconSelect = (moviecon: Moviecon) => {
     onSelectMoviecon(moviecon);
     setShowPicker(false);
+  };
+
+  const uploadFile = async (file: File, mediaType: "image" | "video") => {
+    setIsUploading(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      const arrayBuffer = await file.arrayBuffer();
+      
+      const response = await fetch(buildApiUrl('/api/media/upload-direct'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': file.type,
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: arrayBuffer,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      handleMediaUpload(data.mediaUrl, mediaType);
+      toast({
+        title: "Upload successful",
+        description: `Your ${mediaType} has been uploaded.`,
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Could not upload the file. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileSelect = (accept: string, mediaType: "image" | "video") => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        await uploadFile(file, mediaType);
+      }
+    };
+    input.click();
   };
 
   const standardButtonStyle = "bg-white text-black border-2 border-black hover:bg-gray-100 px-6 py-2";
@@ -115,22 +168,18 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                     Choose a photo from your device to share
                   </p>
                   <Button
-                    onClick={() => {
-                      const input = document.createElement('input');
-                      input.type = 'file';
-                      input.accept = 'image/*';
-                      input.onchange = (e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0];
-                        if (file) {
-                          const url = URL.createObjectURL(file);
-                          handleMediaUpload(url, "image");
-                        }
-                      };
-                      input.click();
-                    }}
+                    onClick={() => handleFileSelect('image/*', 'image')}
                     className={standardButtonStyle}
+                    disabled={isUploading}
                   >
-                    Upload Photo
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      'Upload Photo'
+                    )}
                   </Button>
                 </div>
               </TabsContent>
@@ -141,22 +190,18 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                     Choose a video from your device to share
                   </p>
                   <Button
-                    onClick={() => {
-                      const input = document.createElement('input');
-                      input.type = 'file';
-                      input.accept = 'video/*';
-                      input.onchange = (e) => {
-                        const file = (e.target as HTMLInputElement).files?.[0];
-                        if (file) {
-                          const url = URL.createObjectURL(file);
-                          handleMediaUpload(url, "video");
-                        }
-                      };
-                      input.click();
-                    }}
+                    onClick={() => handleFileSelect('video/*', 'video')}
                     className={standardButtonStyle}
+                    disabled={isUploading}
                   >
-                    Upload Video
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      'Upload Video'
+                    )}
                   </Button>
                 </div>
               </TabsContent>

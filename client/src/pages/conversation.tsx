@@ -41,7 +41,7 @@ interface MessageData {
     lastName?: string;
     profileImageUrl?: string;
   };
-  meme?: {
+  gif?: {
     id: string;
     createdAt: Date | null;
     updatedAt: Date | null;
@@ -125,6 +125,7 @@ export function Conversation() {
       setSelectedMedia(null);
       queryClient.invalidateQueries({ queryKey: ["/api/messages/conversation", otherUserId] });
       queryClient.invalidateQueries({ queryKey: ["/api/messages/conversations"] });
+      queryClient.refetchQueries({ queryKey: ["/api/messages/conversation", otherUserId] });
       scrollToBottom();
     },
     onError: (error) => {
@@ -158,7 +159,8 @@ export function Conversation() {
       if (selectedMedia) {
         switch (selectedMedia.type) {
           case "meme":
-            messageData.memeId = selectedMedia.data.id;
+            // Backend expects gifId, not memeId
+            messageData.gifId = selectedMedia.data.id;
             break;
           case "moviecon":
             messageData.movieconId = selectedMedia.data.id;
@@ -322,10 +324,10 @@ export function Conversation() {
                           </div>
                         )}
                         
-                        {/* MEME content */}
-                        {message.meme && (
+                        {/* MEME/GIF content */}
+                        {message.gif && (
                           <div className="rounded-lg overflow-hidden">
-                            <MemeDisplay meme={message.meme} className="max-w-xs" />
+                            <MemeDisplay meme={message.gif} className="max-w-xs" />
                           </div>
                         )}
                         
