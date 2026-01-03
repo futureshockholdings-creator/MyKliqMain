@@ -17,6 +17,8 @@ interface MessageMediaPickerProps {
 export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMedia }: MessageMediaPickerProps) {
   const [showPicker, setShowPicker] = useState(false);
   const [activeTab, setActiveTab] = useState("meme");
+  const [showMemePicker, setShowMemePicker] = useState(false);
+  const [showMovieconPicker, setShowMovieconPicker] = useState(false);
 
   const handleMediaUpload = (mediaUrl: string, mediaType: "image" | "video") => {
     onSelectMedia(mediaUrl, mediaType);
@@ -25,24 +27,28 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
 
   const handleMemeSelect = (meme: Meme) => {
     onSelectMeme(meme);
+    setShowMemePicker(false);
     setShowPicker(false);
   };
 
   const handleMovieconSelect = (moviecon: Moviecon) => {
     onSelectMoviecon(moviecon);
+    setShowMovieconPicker(false);
     setShowPicker(false);
   };
+
+  const standardButtonStyle = "bg-white text-black border-2 border-black hover:bg-gray-100 px-6 py-2";
 
   return (
     <>
       <Button
-        variant="ghost"
+        variant="outline"
         size="sm"
         onClick={() => setShowPicker(true)}
-        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        className="bg-white border border-black hover:bg-gray-50"
         data-testid="button-media-picker"
       >
-        <Image className="w-5 h-5" />
+        <Image className="w-5 h-5 text-green-600" />
       </Button>
 
       <Dialog open={showPicker} onOpenChange={setShowPicker}>
@@ -80,7 +86,16 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Select a MEME to share in your message
                   </p>
-                  <MemePicker onSelectMeme={handleMemeSelect} />
+                  {!showMemePicker ? (
+                    <Button
+                      onClick={() => setShowMemePicker(true)}
+                      className={standardButtonStyle}
+                    >
+                      Browse MEMEs
+                    </Button>
+                  ) : (
+                    <MemePicker onSelectMeme={handleMemeSelect} />
+                  )}
                 </div>
               </TabsContent>
 
@@ -89,7 +104,16 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Select a Moviecon to share in your message
                   </p>
-                  <MovieconPicker onSelectMoviecon={handleMovieconSelect} />
+                  {!showMovieconPicker ? (
+                    <Button
+                      onClick={() => setShowMovieconPicker(true)}
+                      className={standardButtonStyle}
+                    >
+                      Browse Moviecons
+                    </Button>
+                  ) : (
+                    <MovieconPicker onSelectMoviecon={handleMovieconSelect} />
+                  )}
                 </div>
               </TabsContent>
 
@@ -112,7 +136,7 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                       };
                       input.click();
                     }}
-                    className="mx-auto"
+                    className={standardButtonStyle}
                   >
                     Upload Photo
                   </Button>
@@ -138,7 +162,7 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                       };
                       input.click();
                     }}
-                    className="mx-auto"
+                    className={standardButtonStyle}
                   >
                     Upload Video
                   </Button>
