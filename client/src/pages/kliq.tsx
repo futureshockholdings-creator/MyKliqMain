@@ -78,6 +78,87 @@ export default function Kliq() {
     queryKey: ["/api/friends"],
   });
 
+  // Fetch pending join requests (for kliq owner)
+  const { data: pendingRequests = [] } = useQuery<{ 
+    id: string; 
+    friendId: string;
+    friend: { 
+      id: string; 
+      firstName?: string; 
+      lastName?: string; 
+      profileImageUrl?: string; 
+    };
+    createdAt: string;
+  }[]>({
+    queryKey: ["/api/friends/pending-requests"],
+  });
+
+  // Approve pending request mutation
+  const approvePendingMutation = useMutation({
+    mutationFn: async (friendId: string) => {
+      await apiRequest("POST", `/api/friends/pending-requests/${friendId}/approve`);
+    },
+    onSuccess: () => {
+      enhancedCache.removeByPattern('/api/friends');
+      queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/friends/pending-requests"] });
+      toast({
+        title: "Request approved!",
+        description: "They have been added to your kliq",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to approve request",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Decline pending request mutation
+  const declinePendingMutation = useMutation({
+    mutationFn: async (friendId: string) => {
+      await apiRequest("POST", `/api/friends/pending-requests/${friendId}/decline`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/friends/pending-requests"] });
+      toast({
+        title: "Request declined",
+        description: "The join request has been declined",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to decline request",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Fetch polls
   const { data: polls = [], isLoading: pollsLoading } = useQuery<any[]>({
     queryKey: ["/api/polls"],
@@ -151,17 +232,26 @@ export default function Kliq() {
   // Join kliq
   const joinKliqMutation = useMutation({
     mutationFn: async (code: string) => {
-      await apiRequest("POST", "/api/friends/invite", { inviteCode: code });
+      const response = await apiRequest("POST", "/api/friends/invite", { inviteCode: code });
+      return response;
     },
-    onSuccess: async () => {
-      await enhancedCache.removeByPattern('/api/friends');
-      queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+    onSuccess: async (data: { pending?: boolean; message?: string }) => {
       setInviteCode("");
       setIsInviteDialogOpen(false);
-      toast({
-        title: "Joined kliq!",
-        description: "You've successfully joined a new kliq",
-      });
+      
+      if (data?.pending) {
+        toast({
+          title: "Request sent!",
+          description: data.message || "Your request to rejoin has been sent for approval",
+        });
+      } else {
+        await enhancedCache.removeByPattern('/api/friends');
+        queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+        toast({
+          title: "Joined kliq!",
+          description: "You've successfully joined a new kliq",
+        });
+      }
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -720,6 +810,59 @@ export default function Kliq() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Pending Join Requests */}
+          {pendingRequests.length > 0 && (
+            <Card className="bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-amber-800 dark:text-amber-200 text-sm flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Pending Join Requests ({pendingRequests.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {pendingRequests.map((request) => (
+                  <div 
+                    key={request.id} 
+                    className="flex items-center justify-between bg-white dark:bg-background rounded-lg p-3 border border-amber-200 dark:border-amber-800"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center text-amber-700 dark:text-amber-300 font-medium">
+                        {request.friend.firstName?.[0]}{request.friend.lastName?.[0]}
+                      </div>
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {request.friend.firstName} {request.friend.lastName}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Wants to rejoin your kliq
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 border-red-300 hover:bg-red-50"
+                        onClick={() => declinePendingMutation.mutate(request.friendId)}
+                        disabled={declinePendingMutation.isPending}
+                      >
+                        Decline
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => approvePendingMutation.mutate(request.friendId)}
+                        disabled={approvePendingMutation.isPending}
+                      >
+                        Approve
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Pyramid Chart with Group Chat Button */}
           <div className="relative">
