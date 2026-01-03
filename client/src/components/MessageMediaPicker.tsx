@@ -80,8 +80,8 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Select a MEME to share in your message
                   </p>
+                  <MemePicker onSelectMeme={handleMemeSelect} />
                 </div>
-                <MemePicker onSelectMeme={handleMemeSelect} />
               </TabsContent>
 
               <TabsContent value="moviecon" className="mt-0">
@@ -89,8 +89,8 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Select a Moviecon to share in your message
                   </p>
+                  <MovieconPicker onSelectMoviecon={handleMovieconSelect} />
                 </div>
-                <MovieconPicker onSelectMoviecon={handleMovieconSelect} />
               </TabsContent>
 
               <TabsContent value="photo" className="mt-0">

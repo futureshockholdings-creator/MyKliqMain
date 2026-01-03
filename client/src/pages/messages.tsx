@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
-import { MessageCircle, ArrowLeft } from "lucide-react";
+import { MessageCircle, ArrowLeft, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +29,31 @@ interface ConversationData {
 }
 
 export function Messages() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
   const { data: conversations = [], isLoading } = useQuery<ConversationData[]>({
     queryKey: ["/api/messages/conversations"],
+  });
+
+  const deleteConversationMutation = useMutation({
+    mutationFn: async (otherUserId: string) => {
+      return apiRequest("DELETE", `/api/messages/conversation/${otherUserId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/messages/conversations"] });
+      toast({
+        title: "Conversation deleted",
+        description: "The entire conversation has been removed",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete conversation",
+        variant: "destructive",
+      });
+    },
   });
 
   const getDisplayName = (user: ConversationData["otherUser"]) => {
@@ -102,44 +127,63 @@ export function Messages() {
         ) : (
           <div className="space-y-2">
             {conversations.map((conversation) => (
-              <Link
+              <div 
                 key={conversation.id}
-                to={`/messages/${conversation.otherUser.id}`}
-                data-testid={`link-conversation-${conversation.otherUser.id}`}
+                className="flex items-center gap-2"
               >
-                <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-white text-black hover:bg-gray-50 transition-colors cursor-pointer">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={resolveAssetUrl(conversation.otherUser.profileImageUrl)} />
-                    <AvatarFallback className="bg-blue-100 text-blue-600">
-                      {getInitials(conversation.otherUser)}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-black truncate" data-testid={`text-username-${conversation.otherUser.id}`}>
-                        {getDisplayName(conversation.otherUser)}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        {conversation.unreadCount > 0 && (
-                          <Badge variant="destructive" className="text-xs" data-testid={`badge-unread-${conversation.otherUser.id}`}>
-                            {conversation.unreadCount}
-                          </Badge>
-                        )}
-                        <span className="text-xs text-gray-500" data-testid={`text-time-${conversation.otherUser.id}`}>
-                          {formatDistanceToNow(new Date(conversation.lastActivity), { addSuffix: true })}
-                        </span>
-                      </div>
-                    </div>
+                <Link
+                  to={`/messages/${conversation.otherUser.id}`}
+                  className="flex-1"
+                  data-testid={`link-conversation-${conversation.otherUser.id}`}
+                >
+                  <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-white text-black hover:bg-gray-50 transition-colors cursor-pointer">
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage src={resolveAssetUrl(conversation.otherUser.profileImageUrl)} />
+                      <AvatarFallback className="bg-blue-100 text-blue-600">
+                        {getInitials(conversation.otherUser)}
+                      </AvatarFallback>
+                    </Avatar>
                     
-                    {conversation.lastMessage && (
-                      <p className="text-sm text-gray-600 truncate mt-1" data-testid={`text-last-message-${conversation.otherUser.id}`}>
-                        {conversation.lastMessage.content}
-                      </p>
-                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-black truncate" data-testid={`text-username-${conversation.otherUser.id}`}>
+                          {getDisplayName(conversation.otherUser)}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          {conversation.unreadCount > 0 && (
+                            <Badge variant="destructive" className="text-xs" data-testid={`badge-unread-${conversation.otherUser.id}`}>
+                              {conversation.unreadCount}
+                            </Badge>
+                          )}
+                          <span className="text-xs text-gray-500" data-testid={`text-time-${conversation.otherUser.id}`}>
+                            {formatDistanceToNow(new Date(conversation.lastActivity), { addSuffix: true })}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {conversation.lastMessage && (
+                        <p className="text-sm text-gray-600 truncate mt-1" data-testid={`text-last-message-${conversation.otherUser.id}`}>
+                          {conversation.lastMessage.content}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    deleteConversationMutation.mutate(conversation.otherUser.id);
+                  }}
+                  disabled={deleteConversationMutation.isPending}
+                  data-testid={`button-delete-conversation-${conversation.otherUser.id}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             ))}
           </div>
         )}

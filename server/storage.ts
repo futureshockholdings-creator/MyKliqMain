@@ -291,6 +291,7 @@ export interface IStorage {
   deleteMessage(messageId: string, userId: string): Promise<boolean>;
   deleteExpiredMessages(): Promise<void>;
   deleteOldConversations(): Promise<void>;
+  deleteConversation(userId: string, otherUserId: string): Promise<void>;
   
   // Group chat operations
   createGroupConversation(data: { name?: string; creatorId: string; participantIds: string[] }): Promise<GroupConversation>;
@@ -2303,6 +2304,49 @@ export class DatabaseStorage implements IStorage {
       .where(lt(conversations.lastActivity, sevenDaysAgo));
     
     console.log(`Cleaned up ${oldConversations.length} old conversations and ${messagesDeletedCount} messages at ${now.toISOString()}`);
+  }
+
+  async deleteConversation(userId: string, otherUserId: string): Promise<void> {
+    // Find the conversation between these two users
+    const conversation = await db
+      .select({ id: conversations.id })
+      .from(conversations)
+      .where(
+        or(
+          and(eq(conversations.user1Id, userId), eq(conversations.user2Id, otherUserId)),
+          and(eq(conversations.user1Id, otherUserId), eq(conversations.user2Id, userId))
+        )
+      )
+      .limit(1);
+    
+    if (conversation.length === 0) {
+      return;
+    }
+    
+    const conversationId = conversation[0].id;
+    
+    // Clear lastMessageId reference first
+    await db
+      .update(conversations)
+      .set({ lastMessageId: null })
+      .where(eq(conversations.id, conversationId));
+    
+    // Delete all messages between these users
+    await db
+      .delete(messages)
+      .where(
+        or(
+          and(eq(messages.senderId, userId), eq(messages.receiverId, otherUserId)),
+          and(eq(messages.senderId, otherUserId), eq(messages.receiverId, userId))
+        )
+      );
+    
+    // Delete the conversation
+    await db
+      .delete(conversations)
+      .where(eq(conversations.id, conversationId));
+    
+    console.log(`Deleted conversation between ${userId} and ${otherUserId}`);
   }
 
   // Group chat operations

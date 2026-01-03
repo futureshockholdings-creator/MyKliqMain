@@ -6522,22 +6522,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete a message
-  app.delete('/api/messages/:messageId', isAuthenticated, async (req: any, res) => {
+  // Delete an entire conversation with another user
+  app.delete('/api/messages/conversation/:otherUserId', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { messageId } = req.params;
+      const { otherUserId } = req.params;
       
-      const deleted = await storage.deleteMessage(messageId, userId);
-      
-      if (!deleted) {
-        return res.status(404).json({ message: "Message not found or you don't have permission to delete it" });
-      }
+      await storage.deleteConversation(userId, otherUserId);
       
       res.json({ success: true });
     } catch (error) {
-      console.error("Error deleting message:", error);
-      res.status(500).json({ message: "Failed to delete message" });
+      console.error("Error deleting conversation:", error);
+      res.status(500).json({ message: "Failed to delete conversation" });
     }
   });
 
