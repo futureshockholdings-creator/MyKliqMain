@@ -5190,12 +5190,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { inviteCode } = req.body;
       
-      // Check if invite code has already been used
-      const isCodeUsed = await storage.isInviteCodeUsed(inviteCode);
-      if (isCodeUsed) {
-        return res.status(400).json({ message: "This invite code has already been used" });
-      }
-      
       const inviter = await storage.getUserByInviteCode(inviteCode);
       if (!inviter) {
         return res.status(404).json({ message: "Invalid invite code" });
@@ -5212,15 +5206,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Already friends with this user" });
       }
 
+      // Check for pending request
+      const pendingRequests = await storage.getPendingJoinRequests(inviter.id);
+      if (pendingRequests.find(p => p.friendId === userId)) {
+        return res.status(400).json({ message: "Your join request is pending approval" });
+      }
+
       // Check friend limit
       if (existingFriends.length >= 28) {
         return res.status(400).json({ message: "User has reached maximum friend limit" });
       }
 
-      // Mark the invite code as used before creating the friendship
+      // Check if user was previously removed from this kliq
+      const wasRemoved = await storage.wasUserRemovedFromKliq(inviter.id, userId);
+      
+      // Record the invite code usage (allow multiple uses)
       await storage.markInviteCodeAsUsed(inviteCode, userId, inviter.id);
 
       const rank = existingFriends.length + 1;
+      
+      if (wasRemoved) {
+        // Previously removed user needs owner approval
+        const friendship = await storage.addFriend({
+          userId: inviter.id,
+          friendId: userId,
+          rank,
+          status: "pending"
+        });
+        
+        return res.status(202).json({ 
+          ...friendship, 
+          pending: true,
+          message: "Your request to rejoin has been sent for approval" 
+        });
+      }
+
+      // First-time join - auto-accept
       const friendship = await storage.addFriend({
         userId: inviter.id,
         friendId: userId,
@@ -5276,6 +5297,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error leaving kliq:", error);
       res.status(500).json({ message: "Failed to leave kliq" });
+    }
+  });
+
+  // Get pending join requests for the kliq owner
+  app.get('/api/friends/pending-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const pendingRequests = await storage.getPendingJoinRequests(userId);
+      res.json(pendingRequests);
+    } catch (error) {
+      console.error("Error fetching pending requests:", error);
+      res.status(500).json({ message: "Failed to fetch pending requests" });
+    }
+  });
+
+  // Approve a pending join request
+  app.post('/api/friends/pending-requests/:friendId/approve', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { friendId } = req.params;
+      
+      await storage.acceptFriendship(userId, friendId);
+      res.json({ success: true, message: "Join request approved" });
+    } catch (error) {
+      console.error("Error approving join request:", error);
+      res.status(500).json({ message: "Failed to approve join request" });
+    }
+  });
+
+  // Decline a pending join request
+  app.post('/api/friends/pending-requests/:friendId/decline', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { friendId } = req.params;
+      
+      await storage.declineFriendship(userId, friendId);
+      res.json({ success: true, message: "Join request declined" });
+    } catch (error) {
+      console.error("Error declining join request:", error);
+      res.status(500).json({ message: "Failed to decline join request" });
     }
   });
 
@@ -7445,15 +7506,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ 
           success: false, 
           message: "Invalid invite code" 
-        });
-      }
-
-      // Check if invite code has been used
-      const isUsed = await storage.isInviteCodeUsed(inviteCode.trim());
-      if (isUsed) {
-        return res.status(409).json({ 
-          success: false, 
-          message: "This invite code has already been used" 
         });
       }
 
