@@ -86,6 +86,13 @@ Users can highlight posts with a "fire" effect, characterized by a pulsating red
 ### Profile Border System
 Profile borders are earned through login streaks (8 tiers), referrals (5 tiers), following sports teams, and marketplace purchases (Kliq Koins). A self-healing award system ensures missed borders are retroactively applied.
 
+### Invite Code System (Updated Jan 2026)
+Invite codes can be used unlimited times (no one-time restriction). The system tracks member removals in the `kliq_removals` table:
+- **First-time join**: Auto-accepted into the kliq
+- **Rejoining after removal**: Creates a "pending" friendship requiring owner approval
+- **Owner approval workflow**: Pending requests appear in the Kliq page under "Pending Join Requests" with approve/decline buttons
+- **Clean slate on approve**: When approved, the removal record is cleared so future rejoins won't require approval again
+
 ## System Design Choices
 Mobile optimizations prioritize bandwidth (paginated responses), battery efficiency (polling vs. persistent connections), and memory management. Cross-platform compatibility is a core consideration. Push notification infrastructure supports both Firebase Cloud Messaging and Apple Push Notifications.
 
