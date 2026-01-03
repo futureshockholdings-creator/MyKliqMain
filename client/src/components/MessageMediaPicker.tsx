@@ -17,8 +17,6 @@ interface MessageMediaPickerProps {
 export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMedia }: MessageMediaPickerProps) {
   const [showPicker, setShowPicker] = useState(false);
   const [activeTab, setActiveTab] = useState("meme");
-  const [showMemePicker, setShowMemePicker] = useState(false);
-  const [showMovieconPicker, setShowMovieconPicker] = useState(false);
 
   const handleMediaUpload = (mediaUrl: string, mediaType: "image" | "video") => {
     onSelectMedia(mediaUrl, mediaType);
@@ -27,13 +25,11 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
 
   const handleMemeSelect = (meme: Meme) => {
     onSelectMeme(meme);
-    setShowMemePicker(false);
     setShowPicker(false);
   };
 
   const handleMovieconSelect = (moviecon: Moviecon) => {
     onSelectMoviecon(moviecon);
-    setShowMovieconPicker(false);
     setShowPicker(false);
   };
 
@@ -86,16 +82,7 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Select a MEME to share in your message
                   </p>
-                  {!showMemePicker ? (
-                    <Button
-                      onClick={() => setShowMemePicker(true)}
-                      className={standardButtonStyle}
-                    >
-                      Browse MEMEs
-                    </Button>
-                  ) : (
-                    <MemePicker onSelectMeme={handleMemeSelect} />
-                  )}
+                  <MemePicker onSelectMeme={handleMemeSelect} />
                 </div>
               </TabsContent>
 
@@ -104,16 +91,7 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     Select a Moviecon to share in your message
                   </p>
-                  {!showMovieconPicker ? (
-                    <Button
-                      onClick={() => setShowMovieconPicker(true)}
-                      className={standardButtonStyle}
-                    >
-                      Browse Moviecons
-                    </Button>
-                  ) : (
-                    <MovieconPicker onSelectMoviecon={handleMovieconSelect} />
-                  )}
+                  <MovieconPicker onSelectMoviecon={handleMovieconSelect} />
                 </div>
               </TabsContent>
 
