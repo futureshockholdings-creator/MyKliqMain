@@ -5234,6 +5234,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: "pending"
         });
         
+        // Get requester's info for the notification
+        const requester = await storage.getUser(userId);
+        const requesterName = requester?.firstName && requester?.lastName 
+          ? `${requester.firstName} ${requester.lastName}` 
+          : requester?.username || 'Someone';
+        
+        // Broadcast real-time notification to kliq owner
+        const broadcastPendingRequest = (req.app as any).broadcastPendingRequest;
+        if (broadcastPendingRequest) {
+          broadcastPendingRequest(inviter.id, {
+            friendId: userId,
+            friendName: requesterName,
+            friendProfileImage: requester?.profileImageUrl
+          });
+        }
+        
         return res.status(202).json({ 
           ...friendship, 
           pending: true,
@@ -9831,9 +9847,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
+  // Global function to broadcast pending join request to kliq owner
+  const broadcastPendingRequest = (ownerId: string, requestData: { friendId: string; friendName: string; friendProfileImage?: string }) => {
+    const message = JSON.stringify({
+      type: 'pending-request:new',
+      timestamp: new Date().toISOString(),
+      data: requestData
+    });
+
+    let sent = false;
+    wss.clients.forEach((client: ExtendedWebSocket) => {
+      if (client.readyState === WebSocket.OPEN && client.user_id === ownerId) {
+        client.send(message);
+        sent = true;
+      }
+    });
+
+    if (sent) {
+      console.log(`📨 Broadcasted pending request notification to kliq owner ${ownerId}`);
+    }
+  };
+
   // Store broadcast function references for use in routes
   (app as any).broadcastFeedUpdate = broadcastFeedUpdate;
   (app as any).broadcastNotification = broadcastNotification;
+  (app as any).broadcastPendingRequest = broadcastPendingRequest;
 
   // Maintenance dashboard routes
   app.get('/api/maintenance/metrics', async (req: any, res) => {
