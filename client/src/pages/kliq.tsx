@@ -79,7 +79,7 @@ export default function Kliq() {
   });
 
   // Fetch pending join requests (for kliq owner)
-  const { data: pendingRequests = [] } = useQuery<{ 
+  const { data: pendingRequests } = useQuery<{ 
     id: string; 
     friendId: string;
     friend: { 
@@ -91,17 +91,23 @@ export default function Kliq() {
     createdAt: string;
   }[]>({
     queryKey: ["/api/friends/pending-requests"],
+    retry: false,
+    staleTime: 5000,
   });
+  
+  const safePendingRequests = pendingRequests ?? [];
 
   // Approve pending request mutation
   const approvePendingMutation = useMutation({
     mutationFn: async (friendId: string) => {
       await apiRequest("POST", `/api/friends/pending-requests/${friendId}/approve`);
     },
-    onSuccess: () => {
-      enhancedCache.removeByPattern('/api/friends');
-      queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/friends/pending-requests"] });
+    onSuccess: async () => {
+      await enhancedCache.removeByPattern('/api/friends');
+      await queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/friends/pending-requests"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/friends"], type: 'active' });
+      await queryClient.refetchQueries({ queryKey: ["/api/friends/pending-requests"], type: 'active' });
       toast({
         title: "Request approved!",
         description: "They have been added to your kliq",
@@ -132,8 +138,10 @@ export default function Kliq() {
     mutationFn: async (friendId: string) => {
       await apiRequest("POST", `/api/friends/pending-requests/${friendId}/decline`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/friends/pending-requests"] });
+    onSuccess: async () => {
+      await enhancedCache.removeByPattern('/api/friends/pending-requests');
+      await queryClient.invalidateQueries({ queryKey: ["/api/friends/pending-requests"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/friends/pending-requests"], type: 'active' });
       toast({
         title: "Request declined",
         description: "The join request has been declined",
@@ -240,13 +248,17 @@ export default function Kliq() {
       setIsInviteDialogOpen(false);
       
       if (data?.pending) {
+        await enhancedCache.removeByPattern('/api/friends/pending-requests');
+        await queryClient.invalidateQueries({ queryKey: ["/api/friends/pending-requests"] });
+        await queryClient.refetchQueries({ queryKey: ["/api/friends/pending-requests"], type: 'active' });
         toast({
           title: "Request sent!",
           description: data.message || "Your request to rejoin has been sent for approval",
         });
       } else {
         await enhancedCache.removeByPattern('/api/friends');
-        queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+        await queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+        await queryClient.refetchQueries({ queryKey: ["/api/friends"], type: 'active' });
         toast({
           title: "Joined kliq!",
           description: "You've successfully joined a new kliq",
@@ -463,8 +475,10 @@ export default function Kliq() {
     mutationFn: async (friendId: string) => {
       await apiRequest("DELETE", `/api/friends/${friendId}`);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+    onSuccess: async () => {
+      await enhancedCache.removeByPattern('/api/friends');
+      await queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/friends"], type: 'active' });
       setFriendToRemove(null);
       toast({
         title: "Friend removed",
@@ -812,16 +826,16 @@ export default function Kliq() {
           </div>
 
           {/* Pending Join Requests */}
-          {pendingRequests.length > 0 && (
+          {safePendingRequests.length > 0 && (
             <Card className="bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
               <CardHeader className="pb-2">
                 <CardTitle className="text-amber-800 dark:text-amber-200 text-sm flex items-center gap-2">
                   <Users className="w-4 h-4" />
-                  Pending Join Requests ({pendingRequests.length})
+                  Pending Join Requests ({safePendingRequests.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {pendingRequests.map((request) => (
+                {safePendingRequests.map((request) => (
                   <div 
                     key={request.id} 
                     className="flex items-center justify-between bg-white dark:bg-background rounded-lg p-3 border border-amber-200 dark:border-amber-800"
