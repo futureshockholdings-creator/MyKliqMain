@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
 import { PageWrapper } from "@/components/PageWrapper";
+import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 
 export default function Kliq() {
   const [kliqName, setKliqName] = useState("");
@@ -152,7 +153,8 @@ export default function Kliq() {
     mutationFn: async (code: string) => {
       await apiRequest("POST", "/api/friends/invite", { inviteCode: code });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await enhancedCache.removeByPattern('/api/friends');
       queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
       setInviteCode("");
       setIsInviteDialogOpen(false);
