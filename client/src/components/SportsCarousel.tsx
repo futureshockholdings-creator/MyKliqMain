@@ -36,18 +36,12 @@ function getGamePriority(status: string): number {
 
 function sortSportsUpdates(updates: SportsUpdate[]): SportsUpdate[] {
   return [...updates].sort((a, b) => {
-    const priorityA = getGamePriority(a.status);
-    const priorityB = getGamePriority(b.status);
-    
-    if (priorityA !== priorityB) {
-      return priorityA - priorityB;
-    }
-    
-    // Within same priority, sort by event date
+    // Sort by event date only (most recent first)
     if (a.eventDate && b.eventDate) {
-      return new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime();
+      return new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime();
     }
-    
+    if (a.eventDate) return -1;
+    if (b.eventDate) return 1;
     return 0;
   });
 }

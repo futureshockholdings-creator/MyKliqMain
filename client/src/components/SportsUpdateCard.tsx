@@ -127,10 +127,19 @@ export function SportsUpdateCard({ update }: SportsUpdateCardProps) {
           </div>
         </div>
 
-        {/* Status Detail for live/final games */}
-        {(isLive || isFinal) && update.statusDetail && (
+        {/* Status Detail for live games, date for final games */}
+        {isLive && update.statusDetail && (
           <div className="mt-2 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400" data-testid="text-status-detail">
             {update.statusDetail}
+          </div>
+        )}
+        {isFinal && update.eventDate && (
+          <div className="mt-2 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400" data-testid="text-game-date">
+            {new Date(update.eventDate).toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric' 
+            })}
           </div>
         )}
       </CardContent>
