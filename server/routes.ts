@@ -6431,12 +6431,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/messages/send', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { receiverId, content, mediaUrl, mediaType, gifId, movieconId } = req.body;
+      const { receiverId, content, mediaUrl, mediaType, gifId, memeId, movieconId } = req.body;
 
       // Validate that we have at least one type of content
-      if (!receiverId || (!content?.trim() && !mediaUrl && !gifId && !movieconId)) {
-        console.log("Validation failed:", { receiverId, content: content?.trim(), mediaUrl, gifId, movieconId });
-        return res.status(400).json({ message: "receiverId and at least one content type (text, media, gif, or moviecon) are required" });
+      if (!receiverId || (!content?.trim() && !mediaUrl && !gifId && !memeId && !movieconId)) {
+        console.log("Validation failed:", { receiverId, content: content?.trim(), mediaUrl, gifId, memeId, movieconId });
+        return res.status(400).json({ message: "receiverId and at least one content type (text, media, gif, meme, or moviecon) are required" });
       }
 
       // Validate that both sender and receiver exist in the database
@@ -6462,6 +6462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         mediaUrl: mediaUrl || null,
         mediaType: mediaType || null,
         gifId: gifId || null,
+        memeId: memeId || null,
         movieconId: movieconId || null,
       };
 
@@ -6476,6 +6477,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             messagePreview = content.trim().slice(0, 30) + (content.trim().length > 30 ? "..." : "");
           } else if (mediaUrl) {
             messagePreview = mediaType === "image" ? "📷 Photo" : "🎥 Video";
+          } else if (memeId) {
+            messagePreview = "😂 MEME";
           } else if (gifId) {
             messagePreview = "🎭 GIF";
           } else if (movieconId) {

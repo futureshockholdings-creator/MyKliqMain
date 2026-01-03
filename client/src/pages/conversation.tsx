@@ -58,6 +58,24 @@ interface MessageData {
     featured: boolean | null;
     uploadedBy: string | null;
   };
+  meme?: {
+    id: string;
+    createdAt: Date | null;
+    updatedAt: Date | null;
+    title: string;
+    height: number | null;
+    width: number | null;
+    description: string | null;
+    imageUrl: string;
+    thumbnailUrl: string | null;
+    tags: string[] | null;
+    category: string;
+    fileSize: number | null;
+    isAnimated: boolean | null;
+    trending: boolean | null;
+    featured: boolean | null;
+    uploadedBy: string | null;
+  };
   moviecon?: {
     id: string;
     createdAt: Date | null;
@@ -159,8 +177,8 @@ export function Conversation() {
       if (selectedMedia) {
         switch (selectedMedia.type) {
           case "meme":
-            // Backend expects gifId, not memeId
-            messageData.gifId = selectedMedia.data.id;
+            // MEMEs come from the memes table, so use memeId
+            messageData.memeId = selectedMedia.data.id;
             break;
           case "moviecon":
             messageData.movieconId = selectedMedia.data.id;
@@ -325,9 +343,9 @@ export function Conversation() {
                         )}
                         
                         {/* MEME/GIF content */}
-                        {message.gif && (
+                        {(message.meme || message.gif) && (
                           <div className="rounded-lg overflow-hidden">
-                            <MemeDisplay meme={message.gif} className="max-w-xs" />
+                            <MemeDisplay meme={message.meme || message.gif} className="max-w-xs" />
                           </div>
                         )}
                         
