@@ -1031,9 +1031,11 @@ export class DatabaseStorage implements IStorage {
             authorLastName: users.lastName,
             authorProfileImageUrl: users.profileImageUrl,
             authorKliqName: users.kliqName,
+            authorBorder: profileBorders,
           })
           .from(polls)
           .innerJoin(users, eq(polls.userId, users.id))
+          .leftJoin(profileBorders, eq(users.equippedBorderId, profileBorders.id))
           .where(inArray(polls.userId, friendIds))
           .orderBy(desc(polls.createdAt))
           .limit(limit * 2) : [], // Get more to account for filtering
@@ -1183,6 +1185,7 @@ export class DatabaseStorage implements IStorage {
           profileImageUrl: poll.authorProfileImageUrl,
           kliqName: poll.authorKliqName,
         },
+        authorBorder: poll.authorBorder,
         type: 'poll',
         activityDate: poll.createdAt,
         content: `🗳️ Created a poll: "${poll.title}"`,

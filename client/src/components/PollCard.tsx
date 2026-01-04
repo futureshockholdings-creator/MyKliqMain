@@ -11,6 +11,7 @@ import { Clock, Users, Check, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { usePostTranslation } from "@/lib/translationService";
 import { EditPollDialog } from "@/components/EditPollDialog";
+import { BorderedAvatar } from "@/components/BorderedAvatar";
 
 interface PollOption {
   option: string;
@@ -32,6 +33,10 @@ interface Poll {
     firstName?: string;
     lastName?: string;
     profileImageUrl?: string;
+  };
+  authorBorder?: {
+    imageUrl?: string;
+    name?: string;
   };
   votes: any[];
   totalVotes: number;
@@ -191,27 +196,33 @@ export function PollCard({ poll }: PollCardProps) {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-          <div className="flex items-center gap-1">
-            <img
-              src={poll.author.profileImageUrl || "/default-avatar.png"}
-              alt={`${poll.author.firstName} ${poll.author.lastName}`}
-              className="w-4 h-4 rounded-full"
-            />
-            <span>{poll.author.firstName} {poll.author.lastName}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            <span>
-              {isExpired 
-                ? `Expired ${formatDistanceToNow(new Date(poll.expiresAt))} ago`
-                : `Expires ${formatDistanceToNow(new Date(poll.expiresAt))}`
-              }
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            <span>{totalVotes} votes</span>
+        <div className="flex items-center space-x-3 mb-2">
+          <BorderedAvatar
+            src={poll.author.profileImageUrl}
+            fallback={poll.author.firstName?.[0] || "U"}
+            borderImageUrl={poll.authorBorder?.imageUrl}
+            borderName={poll.authorBorder?.name}
+            size="md"
+          />
+          <div className="flex-1">
+            <p className="font-bold text-primary">
+              {poll.author.firstName} {poll.author.lastName}
+            </p>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span>
+                  {isExpired 
+                    ? `Expired ${formatDistanceToNow(new Date(poll.expiresAt))} ago`
+                    : `Expires ${formatDistanceToNow(new Date(poll.expiresAt))}`
+                  }
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Users className="w-3 h-3" />
+                <span>{totalVotes} votes</span>
+              </div>
+            </div>
           </div>
         </div>
       </CardHeader>

@@ -48,10 +48,10 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
     mutationFn: async (pollData: any) => {
       await apiRequest("PATCH", `/api/polls/${poll.id}`, pollData);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/polls", "mine"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/polls", "mine"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"], type: 'active' });
       toast({
         title: "Poll updated!",
         description: "Your poll has been updated",
