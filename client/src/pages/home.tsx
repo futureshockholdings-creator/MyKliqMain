@@ -510,10 +510,11 @@ export default function Home() {
       return lastPage.hasMore ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
-    staleTime: 60000,
+    staleTime: 10000, // Consider data stale after 10 seconds
     gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchInterval: 120000,
+    refetchOnWindowFocus: true, // Refresh immediately when user returns to app
+    refetchInterval: 15000, // Poll every 15 seconds for new posts
+    refetchIntervalInBackground: false, // Don't poll when tab is hidden (saves battery/bandwidth)
   });
   
   // Extract and flatten feed items from all pages (with null safety)
