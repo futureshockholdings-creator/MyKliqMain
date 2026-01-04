@@ -61,6 +61,7 @@ export function PollCard({ poll }: PollCardProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/polls", "mine"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Poll deleted",

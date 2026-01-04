@@ -4079,10 +4079,9 @@ export class DatabaseStorage implements IStorage {
 
   // Poll operations
   async getPolls(userId: string, authorId?: string): Promise<(Poll & { author: User; votes: PollVote[]; totalVotes: number; userVote?: PollVote })[]> {
-    const conditions = [eq(polls.isActive, true)];
-    if (authorId) {
-      conditions.push(eq(polls.userId, authorId));
-    }
+    const whereClause = authorId 
+      ? and(eq(polls.isActive, true), eq(polls.userId, authorId))
+      : eq(polls.isActive, true);
     
     const userPolls = await db
       .select({
@@ -4091,7 +4090,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(polls)
       .innerJoin(users, eq(polls.userId, users.id))
-      .where(and(...conditions))
+      .where(whereClause)
       .orderBy(desc(polls.createdAt));
 
     // Optimize N+1: batch fetch all poll votes

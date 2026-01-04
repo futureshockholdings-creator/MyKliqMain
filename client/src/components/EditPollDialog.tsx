@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, Plus, X } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 interface Poll {
   id: string;
@@ -28,6 +30,7 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
   const [title, setTitle] = useState(poll.title);
   const [description, setDescription] = useState(poll.description || "");
   const [options, setOptions] = useState<string[]>(poll.options);
+  const [extendDuration, setExtendDuration] = useState(false);
   const [duration, setDuration] = useState("24");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -37,6 +40,7 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
       setTitle(poll.title);
       setDescription(poll.description || "");
       setOptions([...poll.options]);
+      setExtendDuration(false);
     }
   }, [open, poll]);
 
@@ -46,6 +50,7 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/polls", "mine"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Poll updated!",
@@ -102,15 +107,19 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
       return;
     }
 
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + parseInt(duration));
-
-    updatePollMutation.mutate({
+    const updateData: any = {
       title: title.trim(),
       description: description.trim() || null,
       options: validOptions,
-      expiresAt: expiresAt.toISOString(),
-    });
+    };
+
+    if (extendDuration) {
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + parseInt(duration));
+      updateData.expiresAt = expiresAt.toISOString();
+    }
+
+    updatePollMutation.mutate(updateData);
   };
 
   return (
@@ -202,24 +211,39 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="duration" className="!text-black">Extend Duration</Label>
-            <Select value={duration} onValueChange={setDuration}>
-              <SelectTrigger className="!bg-white !text-black border-gray-300" data-testid="select-edit-poll-duration">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="!bg-white border-gray-300">
-                <SelectItem value="1" className="!text-black">1 hour</SelectItem>
-                <SelectItem value="6" className="!text-black">6 hours</SelectItem>
-                <SelectItem value="12" className="!text-black">12 hours</SelectItem>
-                <SelectItem value="24" className="!text-black">24 hours</SelectItem>
-                <SelectItem value="48" className="!text-black">2 days</SelectItem>
-                <SelectItem value="168" className="!text-black">1 week</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-gray-500 mt-1">
-              Sets a new expiration time from now
-            </p>
+          <div className="space-y-3">
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">Current expiry:</span>{" "}
+              {new Date(poll.expiresAt) > new Date() 
+                ? `Expires in ${formatDistanceToNow(new Date(poll.expiresAt))}`
+                : "Expired"
+              }
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={extendDuration}
+                onCheckedChange={setExtendDuration}
+                id="extend-duration"
+              />
+              <Label htmlFor="extend-duration" className="!text-black cursor-pointer">
+                Extend duration
+              </Label>
+            </div>
+            {extendDuration && (
+              <Select value={duration} onValueChange={setDuration}>
+                <SelectTrigger className="!bg-white !text-black border-gray-300" data-testid="select-edit-poll-duration">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="!bg-white border-gray-300">
+                  <SelectItem value="1" className="!text-black">1 hour from now</SelectItem>
+                  <SelectItem value="6" className="!text-black">6 hours from now</SelectItem>
+                  <SelectItem value="12" className="!text-black">12 hours from now</SelectItem>
+                  <SelectItem value="24" className="!text-black">24 hours from now</SelectItem>
+                  <SelectItem value="48" className="!text-black">2 days from now</SelectItem>
+                  <SelectItem value="168" className="!text-black">1 week from now</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
