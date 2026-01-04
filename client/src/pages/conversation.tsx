@@ -328,13 +328,13 @@ export function Conversation() {
                           <div className="rounded-lg overflow-hidden">
                             {message.mediaType === "image" ? (
                               <img 
-                                src={message.mediaUrl} 
+                                src={resolveAssetUrl(message.mediaUrl)} 
                                 alt="Shared image" 
                                 className="max-w-xs max-h-64 object-cover rounded-lg"
                               />
                             ) : (
                               <video 
-                                src={message.mediaUrl} 
+                                src={resolveAssetUrl(message.mediaUrl)} 
                                 controls 
                                 className="max-w-xs max-h-64 rounded-lg"
                               />
