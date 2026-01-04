@@ -579,6 +579,7 @@ export const messages = pgTable("messages", {
   mediaUrl: varchar("media_url"),
   mediaType: mediaTypeEnum("media_type"),
   gifId: varchar("gif_id").references(() => gifs.id),
+  memeId: varchar("meme_id").references(() => memes.id),
   movieconId: varchar("moviecon_id").references(() => moviecons.id),
   isRead: boolean("is_read").default(false),
   readAt: timestamp("read_at"),
