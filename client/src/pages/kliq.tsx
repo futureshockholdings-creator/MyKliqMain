@@ -167,9 +167,10 @@ export default function Kliq() {
     },
   });
 
-  // Fetch polls
+  // Fetch user's own polls for the kliq poll tab
   const { data: polls = [], isLoading: pollsLoading } = useQuery<any[]>({
-    queryKey: ["/api/polls"],
+    queryKey: ["/api/polls", "mine"],
+    queryFn: () => apiRequest("GET", "/api/polls?scope=mine"),
   });
 
   // Update kliq name and emojis

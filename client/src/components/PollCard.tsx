@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Clock, Users, Check, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { usePostTranslation } from "@/lib/translationService";
+import { EditPollDialog } from "@/components/EditPollDialog";
 
 interface PollOption {
   option: string;
@@ -165,16 +166,27 @@ export function PollCard({ poll }: PollCardProps) {
               {isExpired ? "Expired" : "Active"}
             </Badge>
             {isAuthor && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => deletePollMutation.mutate()}
-                disabled={deletePollMutation.isPending}
-                className="h-8 w-8 p-0 text-gray-500 hover:text-red-500 hover:bg-red-50"
-                data-testid={`button-delete-poll-${poll.id}`}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <>
+                <EditPollDialog 
+                  poll={{
+                    id: poll.id,
+                    title: poll.title,
+                    description: poll.description,
+                    options: poll.options,
+                    expiresAt: poll.expiresAt,
+                  }}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deletePollMutation.mutate()}
+                  disabled={deletePollMutation.isPending}
+                  className="h-8 w-8 p-0 text-gray-500 hover:text-red-500 hover:bg-red-50"
+                  data-testid={`button-delete-poll-${poll.id}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </>
             )}
           </div>
         </div>
