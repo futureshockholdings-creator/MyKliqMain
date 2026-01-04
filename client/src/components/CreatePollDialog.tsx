@@ -29,6 +29,7 @@ export function CreatePollDialog({ trigger }: CreatePollDialogProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Poll created!",
         description: "Your poll has been shared with your kliq on the Headlines",
