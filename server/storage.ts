@@ -431,6 +431,7 @@ export interface IStorage {
   votePoll(vote: InsertPollVote): Promise<PollVote>;
   getUserPollVote(pollId: string, userId: string): Promise<PollVote | undefined>;
   getPollResults(pollId: string): Promise<{ option: string; index: number; votes: number; percentage: number }[]>;
+  deletePoll(pollId: string): Promise<void>;
 
   // Sponsored Ads operations
   getTargetedAds(userId: string): Promise<SponsoredAd[]>;
@@ -4184,6 +4185,13 @@ export class DatabaseStorage implements IStorage {
       };
     });
     return results;
+  }
+
+  async deletePoll(pollId: string): Promise<void> {
+    // Delete poll votes first (foreign key constraint)
+    await db.delete(pollVotes).where(eq(pollVotes.pollId, pollId));
+    // Delete the poll
+    await db.delete(polls).where(eq(polls.id, pollId));
   }
 
   // Sponsored Ads operations

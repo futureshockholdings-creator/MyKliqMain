@@ -6,7 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Users, Check } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Clock, Users, Check, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { usePostTranslation } from "@/lib/translationService";
 
@@ -49,6 +50,31 @@ export function PollCard({ poll }: PollCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { translatePost } = usePostTranslation();
+  const { user } = useAuth();
+  const currentUserId = (user as any)?.id;
+  const isAuthor = currentUserId === poll.author.id;
+
+  const deletePollMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/polls/${poll.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      toast({
+        title: "Poll deleted",
+        description: "Your poll has been removed",
+      });
+    },
+    onError: (error) => {
+      console.error("Error deleting poll:", error);
+      toast({
+        title: "Failed to delete poll",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    },
+  });
 
   const { data: results = [], refetch: refetchResults } = useQuery<PollOption[]>({
     queryKey: ["/api/polls", poll.id, "results"],
@@ -138,6 +164,18 @@ export function PollCard({ poll }: PollCardProps) {
             >
               {isExpired ? "Expired" : "Active"}
             </Badge>
+            {isAuthor && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => deletePollMutation.mutate()}
+                disabled={deletePollMutation.isPending}
+                className="h-8 w-8 p-0 text-gray-500 hover:text-red-500 hover:bg-red-50"
+                data-testid={`button-delete-poll-${poll.id}`}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">

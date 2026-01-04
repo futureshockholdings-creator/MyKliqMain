@@ -8431,6 +8431,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete a poll (only by the poll author)
+  app.delete('/api/polls/:pollId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { pollId } = req.params;
+      const userId = req.user?.id || req.user?.claims?.sub;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Get the poll to verify ownership
+      const poll = await storage.getPollById(pollId);
+      if (!poll) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
+      
+      if (poll.authorId !== userId) {
+        return res.status(403).json({ message: "You can only delete your own polls" });
+      }
+      
+      // Delete the poll
+      await storage.deletePoll(pollId);
+      
+      // Invalidate feed cache
+      await cacheService.invalidatePattern('kliq-feed');
+      invalidateCache('kliq-feed');
+      
+      res.json({ message: "Poll deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting poll:", error);
+      res.status(500).json({ message: "Failed to delete poll" });
+    }
+  });
+
   // Video call routes
   app.post('/api/video-calls', isAuthenticated, async (req: any, res) => {
     try {
