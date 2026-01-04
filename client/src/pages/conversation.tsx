@@ -119,8 +119,9 @@ export function Conversation() {
   const { data: conversation, isLoading } = useQuery<ConversationData>({
     queryKey: ["/api/messages/conversation", otherUserId],
     enabled: !!otherUserId,
-    staleTime: 30000, // Keep data fresh for 30 seconds
+    staleTime: 5000, // Consider data stale after 5 seconds
     gcTime: 5 * 60 * 1000, // Cache for 5 minutes
+    refetchInterval: 3000, // Poll every 3 seconds for new messages
   });
 
   // We'll get user info from the conversation messages instead of separate API call
@@ -282,6 +283,71 @@ export function Conversation() {
           </div>
         </div>
 
+        {/* Message Input - at top */}
+        <div className="border-b border-border p-4 bg-background">
+          <div className="max-w-2xl mx-auto">
+            {/* Selected media preview */}
+            {selectedMedia && (
+              <div className="mb-3 p-3 bg-white text-black rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {selectedMedia.type === "meme" && (
+                      <>
+                        <span className="text-sm font-medium">😂 MEME selected:</span>
+                        <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
+                      </>
+                    )}
+                    {selectedMedia.type === "moviecon" && (
+                      <>
+                        <span className="text-sm font-medium">🎬 Moviecon selected:</span>
+                        <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
+                      </>
+                    )}
+                    {(selectedMedia.type === "image" || selectedMedia.type === "video") && (
+                      <>
+                        <span className="text-sm font-medium">
+                          {selectedMedia.type === "image" ? "📷 Photo" : "🎥 Video"} selected
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSelectedMedia}
+                    data-testid="button-clear-media"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            <form onSubmit={handleSendMessage} className="flex gap-2">
+              <MessageMediaPicker
+                onSelectMeme={handleMemeSelect}
+                onSelectMoviecon={handleMovieconSelect}
+                onSelectMedia={handleMediaSelect}
+              />
+              <Input
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1"
+                disabled={sendMessageMutation.isPending}
+                data-testid="input-message"
+              />
+              <Button
+                type="submit"
+                disabled={(!messageText.trim() && !selectedMedia) || sendMessageMutation.isPending}
+                data-testid="button-send-message"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </form>
+          </div>
+        </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 bg-background">
         <div className="max-w-2xl mx-auto space-y-4">
@@ -366,71 +432,6 @@ export function Conversation() {
             })
           )}
           <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      {/* Message Input */}
-      <div className="border-t border-border p-4 bg-background">
-        <div className="max-w-2xl mx-auto">
-          {/* Selected media preview */}
-          {selectedMedia && (
-            <div className="mb-3 p-3 bg-white text-black rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {selectedMedia.type === "meme" && (
-                    <>
-                      <span className="text-sm font-medium">😂 MEME selected:</span>
-                      <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
-                    </>
-                  )}
-                  {selectedMedia.type === "moviecon" && (
-                    <>
-                      <span className="text-sm font-medium">🎬 Moviecon selected:</span>
-                      <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
-                    </>
-                  )}
-                  {(selectedMedia.type === "image" || selectedMedia.type === "video") && (
-                    <>
-                      <span className="text-sm font-medium">
-                        {selectedMedia.type === "image" ? "📷 Photo" : "🎥 Video"} selected
-                      </span>
-                    </>
-                  )}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearSelectedMedia}
-                  data-testid="button-clear-media"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-          
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <MessageMediaPicker
-              onSelectMeme={handleMemeSelect}
-              onSelectMoviecon={handleMovieconSelect}
-              onSelectMedia={handleMediaSelect}
-            />
-            <Input
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1"
-              disabled={sendMessageMutation.isPending}
-              data-testid="input-message"
-            />
-            <Button
-              type="submit"
-              disabled={(!messageText.trim() && !selectedMedia) || sendMessageMutation.isPending}
-              data-testid="button-send-message"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </form>
         </div>
       </div>
       </div>
