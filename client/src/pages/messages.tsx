@@ -1,24 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
-import { MessageCircle, ArrowLeft, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { MessageCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PageWrapper } from "@/components/PageWrapper";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { resolveAssetUrl } from "@/lib/apiConfig";
 
 interface ConversationData {
@@ -40,31 +27,8 @@ interface ConversationData {
 }
 
 export function Messages() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  
   const { data: conversations = [], isLoading } = useQuery<ConversationData[]>({
     queryKey: ["/api/messages/conversations"],
-  });
-
-  const deleteConversationMutation = useMutation({
-    mutationFn: async (otherUserId: string) => {
-      return apiRequest("DELETE", `/api/messages/conversation/${otherUserId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/messages/conversations"] });
-      toast({
-        title: "Conversation deleted",
-        description: "The entire conversation has been removed",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete conversation",
-        variant: "destructive",
-      });
-    },
   });
 
   const getDisplayName = (user: ConversationData["otherUser"]) => {
@@ -180,36 +144,6 @@ export function Messages() {
                     </div>
                   </div>
                 </Link>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      disabled={deleteConversationMutation.isPending}
-                      data-testid={`button-delete-conversation-${conversation.otherUser.id}`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Conversation</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete your entire conversation with {getDisplayName(conversation.otherUser)}? This will permanently remove all messages and cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => deleteConversationMutation.mutate(conversation.otherUser.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
             ))}
           </div>
