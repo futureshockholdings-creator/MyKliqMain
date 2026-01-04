@@ -4078,7 +4078,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Poll operations
-  async getPolls(userId: string): Promise<(Poll & { author: User; votes: PollVote[]; totalVotes: number; userVote?: PollVote })[]> {
+  async getPolls(userId: string, authorId?: string): Promise<(Poll & { author: User; votes: PollVote[]; totalVotes: number; userVote?: PollVote })[]> {
+    const conditions = [eq(polls.isActive, true)];
+    if (authorId) {
+      conditions.push(eq(polls.userId, authorId));
+    }
+    
     const userPolls = await db
       .select({
         poll: polls,
@@ -4086,7 +4091,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(polls)
       .innerJoin(users, eq(polls.userId, users.id))
-      .where(eq(polls.isActive, true))
+      .where(and(...conditions))
       .orderBy(desc(polls.createdAt));
 
     // Optimize N+1: batch fetch all poll votes
@@ -4185,6 +4190,15 @@ export class DatabaseStorage implements IStorage {
       };
     });
     return results;
+  }
+
+  async updatePoll(pollId: string, updates: Partial<Pick<Poll, 'title' | 'description' | 'options' | 'expiresAt'>>): Promise<Poll> {
+    const [updatedPoll] = await db
+      .update(polls)
+      .set(updates)
+      .where(eq(polls.id, pollId))
+      .returning();
+    return updatedPoll;
   }
 
   async deletePoll(pollId: string): Promise<void> {

@@ -8338,11 +8338,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/polls', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const polls = await storage.getPolls(userId);
+      const scope = req.query.scope as string | undefined;
+      
+      // If scope=mine, only return user's own polls
+      const authorId = scope === 'mine' ? userId : undefined;
+      const polls = await storage.getPolls(userId, authorId);
       res.json(polls);
     } catch (error) {
       console.error("Error fetching polls:", error);
       res.status(500).json({ message: "Failed to fetch polls" });
+    }
+  });
+
+  // Update poll (author only)
+  app.patch('/api/polls/:pollId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { pollId } = req.params;
+      const { title, description, options, expiresAt } = req.body;
+
+      const poll = await storage.getPollById(pollId);
+      if (!poll) {
+        return res.status(404).json({ message: "Poll not found" });
+      }
+
+      if (poll.userId !== userId) {
+        return res.status(403).json({ message: "You can only edit your own polls" });
+      }
+
+      const updates: any = {};
+      if (title !== undefined) updates.title = title;
+      if (description !== undefined) updates.description = description;
+      if (options !== undefined) updates.options = options;
+      if (expiresAt !== undefined) updates.expiresAt = new Date(expiresAt);
+
+      const updatedPoll = await storage.updatePoll(pollId, updates);
+      res.json(updatedPoll);
+    } catch (error) {
+      console.error("Error updating poll:", error);
+      res.status(500).json({ message: "Failed to update poll" });
     }
   });
 
