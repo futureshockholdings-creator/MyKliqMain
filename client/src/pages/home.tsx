@@ -1999,8 +1999,8 @@ export default function Home() {
       
       setShowShareDialog(false);
       
-      // Refresh the feed to show the shared post
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      // Immediately refresh the feed to show the shared post
+      queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
     } catch (error: any) {
       if (isUnauthorizedError(error)) {
         toast({
