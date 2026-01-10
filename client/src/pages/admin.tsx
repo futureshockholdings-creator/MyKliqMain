@@ -47,6 +47,10 @@ export default function AdminPage() {
   const [systemStats, setSystemStats] = useState<any>(null);
   const [reportStatusFilter, setReportStatusFilter] = useState<string>("all");
   const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [securityAnswer1, setSecurityAnswer1] = useState("");
+  const [securityAnswer2, setSecurityAnswer2] = useState("");
+  const [securityAnswer3, setSecurityAnswer3] = useState("");
+  const [securityVerificationResult, setSecurityVerificationResult] = useState<any>(null);
   const queryClient = useQueryClient();
 
   // Admin authentication
@@ -243,6 +247,11 @@ export default function AdminPage() {
     },
     onSuccess: (data) => {
       setSelectedUser(data);
+      // Reset security verification form when viewing a new user
+      setSecurityAnswer1("");
+      setSecurityAnswer2("");
+      setSecurityAnswer3("");
+      setSecurityVerificationResult(null);
     },
     onError: () => {
       toast({
@@ -301,6 +310,40 @@ export default function AdminPage() {
       toast({
         title: "Error",
         description: "Failed to suspend user.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Verify security answers mutation
+  const verifySecurityAnswers = useMutation({
+    mutationFn: async ({ userId, answer1, answer2, answer3 }: { userId: string; answer1: string; answer2: string; answer3: string }) => {
+      return await apiRequest("POST", `/api/admin/users/${userId}/verify-security`, { 
+        password: "mykliq2025admin!", 
+        answer1,
+        answer2,
+        answer3
+      });
+    },
+    onSuccess: (data: any) => {
+      setSecurityVerificationResult(data);
+      if (data.allValid) {
+        toast({
+          title: "Identity Verified",
+          description: "All security answers match - user identity confirmed.",
+        });
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: data.message || "One or more answers did not match.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to verify security answers.",
         variant: "destructive",
       });
     },
@@ -684,39 +727,102 @@ export default function AdminPage() {
                                   </div>
                                 </div>
 
-                                {/* Security Information */}
+                                {/* Security Information & Verification */}
                                 <div className="border-t pt-4">
-                                  <h3 className="font-semibold text-foreground mb-3">Security Information</h3>
+                                  <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                                    <Shield className="h-4 w-4" />
+                                    Identity Verification
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground mb-4">
+                                    Ask the user to provide their security answers verbally, then enter them below to verify their identity.
+                                  </p>
+                                  
                                   <div className="space-y-3">
-                                    <div>
-                                      <Label className="text-foreground">Password</Label>
-                                      <p className="text-muted-foreground font-mono bg-muted p-2 rounded">
-                                        {selectedUser.password || "No password set"}
-                                      </p>
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <span className="text-muted-foreground">Password Set:</span>
+                                      <span className={selectedUser.password ? "text-green-600" : "text-red-600"}>
+                                        {selectedUser.password ? "Yes" : "No"}
+                                      </span>
+                                      <span className="text-muted-foreground ml-4">PIN Set:</span>
+                                      <span className={selectedUser.securityPin ? "text-green-600" : "text-red-600"}>
+                                        {selectedUser.securityPin ? "Yes" : "No"}
+                                      </span>
                                     </div>
-                                    <div>
-                                      <Label className="text-foreground">Security PIN</Label>
-                                      <p className="text-muted-foreground font-mono bg-muted p-2 rounded">
-                                        {selectedUser.securityPin || "No PIN set"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-foreground">Security Answer 1 (First car)</Label>
-                                      <p className="text-muted-foreground font-mono bg-muted p-2 rounded">
-                                        {selectedUser.securityAnswer1 || "Not answered"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-foreground">Security Answer 2 (Mother's maiden name)</Label>
-                                      <p className="text-muted-foreground font-mono bg-muted p-2 rounded">
-                                        {selectedUser.securityAnswer2 || "Not answered"}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <Label className="text-foreground">Security Answer 3 (Favorite teacher's last name)</Label>
-                                      <p className="text-muted-foreground font-mono bg-muted p-2 rounded">
-                                        {selectedUser.securityAnswer3 || "Not answered"}
-                                      </p>
+
+                                    <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                                      <div>
+                                        <Label className="text-foreground text-sm">Question 1: What was your first car?</Label>
+                                        <div className="flex gap-2 mt-1">
+                                          <Input
+                                            placeholder="Enter user's answer..."
+                                            value={securityAnswer1}
+                                            onChange={(e) => setSecurityAnswer1(e.target.value)}
+                                            className="bg-background"
+                                          />
+                                          {securityVerificationResult && (
+                                            <span className={`flex items-center px-2 ${securityVerificationResult.answer1Valid ? 'text-green-600' : 'text-red-600'}`}>
+                                              {securityVerificationResult.answer1Valid ? '✓' : '✗'}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <Label className="text-foreground text-sm">Question 2: What is your mother's maiden name?</Label>
+                                        <div className="flex gap-2 mt-1">
+                                          <Input
+                                            placeholder="Enter user's answer..."
+                                            value={securityAnswer2}
+                                            onChange={(e) => setSecurityAnswer2(e.target.value)}
+                                            className="bg-background"
+                                          />
+                                          {securityVerificationResult && (
+                                            <span className={`flex items-center px-2 ${securityVerificationResult.answer2Valid ? 'text-green-600' : 'text-red-600'}`}>
+                                              {securityVerificationResult.answer2Valid ? '✓' : '✗'}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <Label className="text-foreground text-sm">Question 3: What is your favorite teacher's last name?</Label>
+                                        <div className="flex gap-2 mt-1">
+                                          <Input
+                                            placeholder="Enter user's answer..."
+                                            value={securityAnswer3}
+                                            onChange={(e) => setSecurityAnswer3(e.target.value)}
+                                            className="bg-background"
+                                          />
+                                          {securityVerificationResult && (
+                                            <span className={`flex items-center px-2 ${securityVerificationResult.answer3Valid ? 'text-green-600' : 'text-red-600'}`}>
+                                              {securityVerificationResult.answer3Valid ? '✓' : '✗'}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      
+                                      <Button
+                                        onClick={() => {
+                                          setSecurityVerificationResult(null);
+                                          verifySecurityAnswers.mutate({
+                                            userId: selectedUser.id,
+                                            answer1: securityAnswer1,
+                                            answer2: securityAnswer2,
+                                            answer3: securityAnswer3
+                                          });
+                                        }}
+                                        disabled={verifySecurityAnswers.isPending || (!securityAnswer1 && !securityAnswer2 && !securityAnswer3)}
+                                        className="w-full mt-2"
+                                        data-testid="button-verify-security"
+                                      >
+                                        {verifySecurityAnswers.isPending ? "Verifying..." : "Verify Security Answers"}
+                                      </Button>
+                                      
+                                      {securityVerificationResult && (
+                                        <div className={`p-3 rounded-lg ${securityVerificationResult.allValid ? 'bg-green-100 dark:bg-green-900/30 border border-green-300' : 'bg-red-100 dark:bg-red-900/30 border border-red-300'}`}>
+                                          <p className={`text-sm font-medium ${securityVerificationResult.allValid ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
+                                            {securityVerificationResult.allValid ? '✓ Identity Verified - All answers match' : '✗ Verification Failed - One or more answers incorrect'}
+                                          </p>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>

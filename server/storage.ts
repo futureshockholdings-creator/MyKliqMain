@@ -4786,80 +4786,25 @@ export class DatabaseStorage implements IStorage {
     return allUsers;
   }
 
-  async getUserDetailsForAdmin(userId: string): Promise<User | undefined> {
+  async getUserDetailsForAdmin(userId: string): Promise<any> {
     const [user] = await db.select().from(users).where(eq(users.id, userId));
     if (!user) return undefined;
     
-    // Decrypt sensitive data for admin view
-    const { decryptFromStorage } = await import('./cryptoService');
-    
-    // Decrypt password if it exists and isn't an old bcrypt hash
-    if (user.password && !user.password.startsWith('$2b$')) {
-      try {
-        user.password = decryptFromStorage(user.password);
-      } catch (error) {
-        console.error("Error decrypting password for user", userId, error);
-        user.password = "[Cannot decrypt - legacy data]";
-      }
-    } else if (user.password && user.password.startsWith('$2b$')) {
-      user.password = "[Legacy hashed password - cannot view]";
-    }
-    
-    // Decrypt security PIN if it exists
-    if (user.securityPin) {
-      try {
-        if (user.securityPin.startsWith('$2b$')) {
-          user.securityPin = "[Legacy hashed PIN - cannot view]";
-        } else {
-          user.securityPin = decryptFromStorage(user.securityPin);
-        }
-      } catch (error) {
-        console.error("Error decrypting security PIN for user", userId, error);
-        user.securityPin = "[Cannot decrypt - legacy data]";
-      }
-    }
-    
-    // Decrypt security answers if they exist
-    if (user.securityAnswer1) {
-      try {
-        if (user.securityAnswer1.startsWith('$2b$')) {
-          user.securityAnswer1 = "[Legacy hashed answer - user must re-enter]";
-        } else {
-          user.securityAnswer1 = decryptFromStorage(user.securityAnswer1);
-        }
-      } catch (error) {
-        console.error("Error decrypting security answer 1 for user", userId, error);
-        user.securityAnswer1 = "[Cannot decrypt - legacy data]";
-      }
-    }
-    
-    if (user.securityAnswer2) {
-      try {
-        if (user.securityAnswer2.startsWith('$2b$')) {
-          user.securityAnswer2 = "[Legacy hashed answer - user must re-enter]";
-        } else {
-          user.securityAnswer2 = decryptFromStorage(user.securityAnswer2);
-        }
-      } catch (error) {
-        console.error("Error decrypting security answer 2 for user", userId, error);
-        user.securityAnswer2 = "[Cannot decrypt - legacy data]";
-      }
-    }
-    
-    if (user.securityAnswer3) {
-      try {
-        if (user.securityAnswer3.startsWith('$2b$')) {
-          user.securityAnswer3 = "[Legacy hashed answer - user must re-enter]";
-        } else {
-          user.securityAnswer3 = decryptFromStorage(user.securityAnswer3);
-        }
-      } catch (error) {
-        console.error("Error decrypting security answer 3 for user", userId, error);
-        user.securityAnswer3 = "[Cannot decrypt - legacy data]";
-      }
-    }
-    
-    return user;
+    // Return user data with sensitive fields replaced by status flags only
+    // This prevents exposing passwords, PINs, or security answers to admin panel
+    return {
+      ...user,
+      // Replace sensitive fields with boolean status flags
+      password: !!user.password,         // true if password is set, false if not
+      securityPin: !!user.securityPin,   // true if PIN is set, false if not
+      securityAnswer1: !!user.securityAnswer1,  // true if set
+      securityAnswer2: !!user.securityAnswer2,  // true if set
+      securityAnswer3: !!user.securityAnswer3,  // true if set
+      // Add explicit status flags for clarity
+      hasPassword: !!user.password,
+      hasSecurityPin: !!user.securityPin,
+      hasSecurityAnswers: !!(user.securityAnswer1 && user.securityAnswer2 && user.securityAnswer3)
+    };
   }
 
   // Admin-specific methods
