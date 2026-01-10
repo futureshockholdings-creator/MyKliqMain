@@ -211,7 +211,7 @@ export default function AdminPage() {
     },
   });
 
-  // Update report mutation
+  // Update report mutation - uses POST for cross-domain compatibility
   const updateReport = useMutation({
     mutationFn: async ({ reportId, status, adminNotes, actionTaken }: { 
       reportId: string; 
@@ -219,7 +219,7 @@ export default function AdminPage() {
       adminNotes?: string; 
       actionTaken?: string 
     }) => {
-      return await apiRequest("PATCH", `/api/admin/reports/${reportId}`, { 
+      return await apiRequest("POST", `/api/admin/reports/${reportId}/update`, { 
         password: adminPassword,
         status, 
         adminNotes, 
