@@ -5958,19 +5958,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Report a post
   app.post('/api/reports', isAuthenticated, async (req: any, res) => {
     try {
+      console.log('[REPORT] Received report request:', JSON.stringify(req.body));
       const userId = req.user.claims.sub;
+      console.log('[REPORT] User ID:', userId);
       
       // Validate report data
       const reportData = insertReportSchema.parse({
         ...req.body,
         reportedBy: userId
       });
+      console.log('[REPORT] Validated report data:', JSON.stringify(reportData));
       
       // Get the post to find the author
       const post = await storage.getPostById(reportData.postId);
       if (!post) {
+        console.log('[REPORT] Post not found:', reportData.postId);
         return res.status(404).json({ message: "Post not found" });
       }
+      console.log('[REPORT] Found post, author:', post.userId);
       
       // Add post author ID to the report
       const completeReportData = {
@@ -5979,11 +5984,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const report = await storage.createReport(completeReportData);
+      console.log('[REPORT] Created report:', report.id);
       
       res.json({ success: true, reportId: report.id });
-    } catch (error) {
-      console.error("Error creating report:", error);
-      res.status(500).json({ message: "Failed to create report" });
+    } catch (error: any) {
+      console.error("[REPORT] Error creating report:", error?.message || error);
+      console.error("[REPORT] Error stack:", error?.stack);
+      res.status(500).json({ message: "Failed to create report", error: error?.message });
     }
   });
 
