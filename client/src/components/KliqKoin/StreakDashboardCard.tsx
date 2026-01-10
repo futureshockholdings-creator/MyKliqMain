@@ -1,14 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Flame, Snowflake, Trophy } from "lucide-react";
+import { Flame, RotateCcw, Trophy } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface StreakDashboardCardProps {
   streakData: any;
   isLoading: boolean;
-  onBuyFreeze: () => void;
-  isBuyingFreeze: boolean;
+  onRestoreStreak: () => void;
+  isRestoring: boolean;
 }
 
 const STREAK_TIERS = [
@@ -22,7 +22,7 @@ const STREAK_TIERS = [
   { tier: 1000, name: "Legend", icon: "👑", color: "text-purple-500" },
 ];
 
-export function StreakDashboardCard({ streakData, isLoading, onBuyFreeze, isBuyingFreeze }: StreakDashboardCardProps) {
+export function StreakDashboardCard({ streakData, isLoading, onRestoreStreak, isRestoring }: StreakDashboardCardProps) {
   if (isLoading) {
     return (
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
@@ -41,7 +41,7 @@ export function StreakDashboardCard({ streakData, isLoading, onBuyFreeze, isBuyi
 
   const currentStreak = streakData?.currentStreak || 0;
   const longestStreak = streakData?.longestStreak || 0;
-  const streakFreezes = streakData?.streakFreezes || 0;
+  const previousStreak = streakData?.previousStreak || 0;
 
   const nextTier = STREAK_TIERS.find(t => t.tier > currentStreak);
   const progressToNext = nextTier 
@@ -81,27 +81,29 @@ export function StreakDashboardCard({ streakData, isLoading, onBuyFreeze, isBuyi
           </div>
         )}
 
-        <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
-          <div className="flex items-center gap-2">
-            <Snowflake className="w-5 h-5 text-blue-400" />
-            <div>
-              <div className="text-white font-medium">Streak Freezes</div>
-              <div className="text-purple-300 text-sm">Protect your streak for 1 day</div>
+        {previousStreak > 0 && (
+          <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg border border-orange-400/50">
+            <div className="flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-orange-400" />
+              <div>
+                <div className="text-white font-medium">Restore Your Streak</div>
+                <div className="text-purple-300 text-sm">Get back your {previousStreak} day streak</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="bg-orange-500/20 text-orange-300">{previousStreak} days</Badge>
+              <Button
+                size="sm"
+                onClick={onRestoreStreak}
+                disabled={isRestoring}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+                data-testid="button-restore-streak"
+              >
+                {isRestoring ? "Restoring..." : "Restore (10 Koins)"}
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary">{streakFreezes} available</Badge>
-            <Button
-              size="sm"
-              onClick={onBuyFreeze}
-              disabled={isBuyingFreeze}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-              data-testid="button-use-freeze"
-            >
-              {isBuyingFreeze ? "Using..." : "Use (10 Koins)"}
-            </Button>
-          </div>
-        </div>
+        )}
 
         <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2">
           {STREAK_TIERS.map((tier) => (

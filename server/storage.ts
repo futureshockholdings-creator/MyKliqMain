@@ -479,7 +479,7 @@ export interface IStorage {
   getUserStreak(userId: string): Promise<LoginStreak | undefined>;
   initializeUserStreak(userId: string): Promise<LoginStreak>;
   processLogin(userId: string): Promise<{ streak: LoginStreak; koinsAwarded: number; tierUnlocked?: ProfileBorder }>;
-  buyStreakFreeze(userId: string): Promise<LoginStreak>;
+  restoreStreak(userId: string): Promise<LoginStreak>;
   
   // Profile Border operations
   getAllBorders(): Promise<ProfileBorder[]>;
@@ -5386,10 +5386,15 @@ export class DatabaseStorage implements IStorage {
 
       let newStreak = userStreak.currentStreak;
       let tierUnlocked: ProfileBorder | undefined;
+      let previousStreakValue = userStreak.previousStreak;
 
       if (lastLogin === yesterdayStr) {
         newStreak += 1;
       } else {
+        // Streak broken - save the current streak before resetting (only if > 0)
+        if (userStreak.currentStreak > 0) {
+          previousStreakValue = userStreak.currentStreak;
+        }
         newStreak = 1;
       }
 
@@ -5400,6 +5405,7 @@ export class DatabaseStorage implements IStorage {
         .set({
           currentStreak: newStreak,
           longestStreak: newLongestStreak,
+          previousStreak: previousStreakValue,
           lastLoginDate: loginDayStr as any,
           updatedAt: new Date(),
         })
@@ -5431,14 +5437,27 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async buyStreakFreeze(userId: string): Promise<LoginStreak> {
+  async restoreStreak(userId: string): Promise<LoginStreak> {
     return await db.transaction(async (tx) => {
-      await this.spendKoins(userId, 10, 'streak_freeze');
+      // Get current streak data
+      const [currentStreak] = await tx
+        .select()
+        .from(loginStreaks)
+        .where(eq(loginStreaks.userId, userId));
 
+      if (!currentStreak || currentStreak.previousStreak === 0) {
+        throw new Error('No streak available to restore');
+      }
+
+      // Spend 10 koins for streak restoration
+      await this.spendKoins(userId, 10, 'streak_restore');
+
+      // Restore the streak and clear previousStreak
       const [updatedStreak] = await tx
         .update(loginStreaks)
         .set({ 
-          streakFreezes: sql`${loginStreaks.streakFreezes} + 1`,
+          currentStreak: currentStreak.previousStreak,
+          previousStreak: 0, // Clear so they can't restore again
           updatedAt: new Date() 
         })
         .where(eq(loginStreaks.userId, userId))

@@ -1116,22 +1116,22 @@ export default function Settings() {
     },
   });
 
-  const buyStreakFreeze = useMutation({
+  const restoreStreak = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/kliq-koins/streak-freeze", {});
+      return await apiRequest("POST", "/api/kliq-koins/restore-streak", {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/streak"] });
       toast({
-        title: "Streak Freeze Purchased! ❄️",
-        description: "You can now protect your streak for one day.",
+        title: "Streak Restored! 🔥",
+        description: "Your streak has been restored successfully.",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Purchase Failed",
-        description: error.message || "Failed to purchase streak freeze.",
+        title: "Restore Failed",
+        description: error.message || "Failed to restore streak.",
         variant: "destructive",
       });
     },
@@ -1385,8 +1385,8 @@ export default function Settings() {
             <StreakDashboardCard 
               streakData={streakData}
               isLoading={streakLoading}
-              onBuyFreeze={() => buyStreakFreeze.mutate()}
-              isBuyingFreeze={buyStreakFreeze.isPending}
+              onRestoreStreak={() => restoreStreak.mutate()}
+              isRestoring={restoreStreak.isPending}
             />
 
             <KoinWalletCard 

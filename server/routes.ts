@@ -11476,19 +11476,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Buy a streak freeze (costs 10 Koins)
-  app.post('/api/kliq-koins/streak-freeze', isAuthenticated, async (req: any, res) => {
+  // Restore streak (costs 10 Koins) - restores previous streak after losing it
+  app.post('/api/kliq-koins/restore-streak', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const updatedStreak = await storage.buyStreakFreeze(userId);
+      const updatedStreak = await storage.restoreStreak(userId);
       
       res.json({ 
         success: true, 
         streak: updatedStreak,
-        message: "Streak freeze purchased successfully!" 
+        message: "Streak restored successfully!" 
       });
     } catch (error: any) {
-      res.status(400).json({ message: error.message || "Failed to buy streak freeze" });
+      res.status(400).json({ message: error.message || "Failed to restore streak" });
     }
   });
 

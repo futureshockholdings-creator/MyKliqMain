@@ -163,8 +163,9 @@ export const loginStreaks = pgTable("login_streaks", {
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull().unique(),
   currentStreak: integer("current_streak").notNull().default(0), // Current consecutive days
   longestStreak: integer("longest_streak").notNull().default(0), // Best streak ever
+  previousStreak: integer("previous_streak").notNull().default(0), // Streak before last reset (for restore feature)
   lastLoginDate: date("last_login_date"), // Last login date (not timestamp)
-  streakFreezes: integer("streak_freezes").notNull().default(0), // Available freeze count
+  streakFreezes: integer("streak_freezes").notNull().default(0), // Deprecated - kept for migration compatibility
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
