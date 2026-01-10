@@ -51,6 +51,8 @@ export default function AdminPage() {
   const [securityAnswer2, setSecurityAnswer2] = useState("");
   const [securityAnswer3, setSecurityAnswer3] = useState("");
   const [securityVerificationResult, setSecurityVerificationResult] = useState<any>(null);
+  const [revealedPassword, setRevealedPassword] = useState<string | null>(null);
+  const [isRevealingPassword, setIsRevealingPassword] = useState(false);
   const queryClient = useQueryClient();
 
   // Admin authentication
@@ -252,6 +254,7 @@ export default function AdminPage() {
       setSecurityAnswer2("");
       setSecurityAnswer3("");
       setSecurityVerificationResult(null);
+      setRevealedPassword(null);
     },
     onError: () => {
       toast({
@@ -348,6 +351,46 @@ export default function AdminPage() {
       });
     },
   });
+
+  // Reveal password after verification
+  const revealPassword = async (userId: string) => {
+    setIsRevealingPassword(true);
+    try {
+      const response = await apiRequest("POST", `/api/admin/users/${userId}/reveal-password`, {
+        password: "mykliq2025admin!",
+        answer1: securityAnswer1,
+        answer2: securityAnswer2,
+        answer3: securityAnswer3
+      });
+      if (response.success && response.password) {
+        setRevealedPassword(response.password);
+        toast({
+          title: "Password Retrieved",
+          description: "User's password is now visible. Please share it securely.",
+        });
+      } else if (response.success && !response.password) {
+        toast({
+          title: "Password Unavailable",
+          description: response.message || "Cannot retrieve password for this user.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: response.message || "Security answers did not match.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to reveal password.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRevealingPassword(false);
+    }
+  };
 
   // Export data mutation
   const exportData = useMutation({
@@ -756,7 +799,7 @@ export default function AdminPage() {
                                           <Input
                                             placeholder="Enter user's answer..."
                                             value={securityAnswer1}
-                                            onChange={(e) => setSecurityAnswer1(e.target.value)}
+                                            onChange={(e) => { setSecurityAnswer1(e.target.value); setSecurityVerificationResult(null); setRevealedPassword(null); }}
                                             className="bg-background"
                                           />
                                           {securityVerificationResult && (
@@ -772,7 +815,7 @@ export default function AdminPage() {
                                           <Input
                                             placeholder="Enter user's answer..."
                                             value={securityAnswer2}
-                                            onChange={(e) => setSecurityAnswer2(e.target.value)}
+                                            onChange={(e) => { setSecurityAnswer2(e.target.value); setSecurityVerificationResult(null); setRevealedPassword(null); }}
                                             className="bg-background"
                                           />
                                           {securityVerificationResult && (
@@ -788,7 +831,7 @@ export default function AdminPage() {
                                           <Input
                                             placeholder="Enter user's answer..."
                                             value={securityAnswer3}
-                                            onChange={(e) => setSecurityAnswer3(e.target.value)}
+                                            onChange={(e) => { setSecurityAnswer3(e.target.value); setSecurityVerificationResult(null); setRevealedPassword(null); }}
                                             className="bg-background"
                                           />
                                           {securityVerificationResult && (
@@ -821,6 +864,51 @@ export default function AdminPage() {
                                           <p className={`text-sm font-medium ${securityVerificationResult.allValid ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
                                             {securityVerificationResult.allValid ? '✓ Identity Verified - All answers match' : '✗ Verification Failed - One or more answers incorrect'}
                                           </p>
+                                        </div>
+                                      )}
+                                      
+                                      {securityVerificationResult?.allValid && (
+                                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
+                                          <p className="text-sm text-blue-800 dark:text-blue-200 mb-2 font-medium">
+                                            Identity verified. You can now reveal the user's password to share with them.
+                                          </p>
+                                          {!revealedPassword ? (
+                                            <Button
+                                              onClick={() => revealPassword(selectedUser.id)}
+                                              disabled={isRevealingPassword}
+                                              className="w-full bg-blue-600 hover:bg-blue-700"
+                                              data-testid="button-reveal-password"
+                                            >
+                                              {isRevealingPassword ? "Revealing..." : "Reveal Password"}
+                                            </Button>
+                                          ) : (
+                                            <div className="space-y-2">
+                                              <Label className="text-blue-800 dark:text-blue-200">User's Password:</Label>
+                                              <div className="flex gap-2">
+                                                <Input
+                                                  value={revealedPassword}
+                                                  readOnly
+                                                  className="bg-white dark:bg-gray-800 font-mono"
+                                                />
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={() => {
+                                                    navigator.clipboard.writeText(revealedPassword);
+                                                    toast({
+                                                      title: "Copied",
+                                                      description: "Password copied to clipboard.",
+                                                    });
+                                                  }}
+                                                >
+                                                  Copy
+                                                </Button>
+                                              </div>
+                                              <p className="text-xs text-muted-foreground">
+                                                Share this password securely with the verified user.
+                                              </p>
+                                            </div>
+                                          )}
                                         </div>
                                       )}
                                     </div>

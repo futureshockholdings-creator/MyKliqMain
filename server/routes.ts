@@ -10871,6 +10871,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reveal password after security verification - requires all 3 correct answers
+  app.post('/api/admin/users/:userId/reveal-password', async (req, res) => {
+    try {
+      const { password, answer1, answer2, answer3 } = req.body;
+      const { userId } = req.params;
+      
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // User must have security answers set up
+      if (!user.securityAnswer1 || !user.securityAnswer2 || !user.securityAnswer3) {
+        return res.status(400).json({ 
+          success: false,
+          message: "User has not set up security questions - cannot verify identity" 
+        });
+      }
+
+      // All 3 answers must be provided
+      if (!answer1 || !answer2 || !answer3) {
+        return res.status(400).json({ 
+          success: false,
+          message: "All three security answers are required to reveal password" 
+        });
+      }
+
+      // Verify all security answers
+      const answer1Valid = await bcrypt.compare(answer1.toLowerCase().trim(), user.securityAnswer1);
+      const answer2Valid = await bcrypt.compare(answer2.toLowerCase().trim(), user.securityAnswer2);
+      const answer3Valid = await bcrypt.compare(answer3.toLowerCase().trim(), user.securityAnswer3);
+
+      if (!answer1Valid || !answer2Valid || !answer3Valid) {
+        return res.status(403).json({ 
+          success: false,
+          message: "Security verification failed - cannot reveal password",
+          answer1Valid,
+          answer2Valid,
+          answer3Valid
+        });
+      }
+
+      // All answers verified - now decrypt and return the password
+      if (!user.password) {
+        return res.json({ 
+          success: true,
+          hasPassword: false,
+          message: "User has not set a password" 
+        });
+      }
+
+      // Check if password is a bcrypt hash (legacy) or encrypted
+      if (user.password.startsWith('$2b$')) {
+        return res.json({ 
+          success: true,
+          hasPassword: true,
+          password: null,
+          message: "Legacy hashed password - cannot be retrieved. User must reset password." 
+        });
+      }
+
+      // Decrypt the password
+      const { decryptFromStorage } = await import('./cryptoService');
+      try {
+        const decryptedPassword = decryptFromStorage(user.password);
+        console.log(`[ADMIN] Password revealed for user ${userId} after security verification`);
+        return res.json({ 
+          success: true,
+          hasPassword: true,
+          password: decryptedPassword,
+          message: "Identity verified - password retrieved successfully" 
+        });
+      } catch (decryptError) {
+        console.error("Error decrypting password:", decryptError);
+        return res.json({ 
+          success: true,
+          hasPassword: true,
+          password: null,
+          message: "Cannot decrypt password - user must reset password" 
+        });
+      }
+    } catch (error) {
+      console.error("Error revealing password:", error);
+      res.status(500).json({ message: "Failed to reveal password" });
+    }
+  });
+
   // Suspend user endpoint for admin
   app.post('/api/admin/users/:userId/suspend', async (req, res) => {
     try {
