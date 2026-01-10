@@ -6024,10 +6024,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { reportId } = req.params;
       const { password, status, adminNotes, actionTaken } = req.body;
       
+      console.log('📝 PATCH /api/admin/reports/:reportId - Request received');
+      console.log('📝 Report ID:', reportId);
+      console.log('📝 Request body:', { status, adminNotes, actionTaken, hasPassword: !!password });
+      
       // Check admin password
       if (password !== ADMIN_PASSWORD) {
+        console.log('❌ Admin password mismatch');
         return res.status(401).json({ message: "Admin access required" });
       }
+      
+      console.log('✅ Admin password verified');
       
       const updatedReport = await storage.updateReport(reportId, {
         status,
@@ -6037,9 +6044,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         reviewedAt: new Date()
       });
       
+      console.log('📝 Updated report result:', updatedReport);
+      
+      if (!updatedReport) {
+        console.log('❌ No report found with ID:', reportId);
+        return res.status(404).json({ message: "Report not found" });
+      }
+      
       res.json(updatedReport);
     } catch (error) {
-      console.error("Error updating report:", error);
+      console.error("❌ Error updating report:", error);
       res.status(500).json({ message: "Failed to update report" });
     }
   });
