@@ -6040,7 +6040,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status,
         adminNotes,
         actionTaken,
-        reviewedBy: "admin",
         reviewedAt: new Date()
       });
       
@@ -6080,7 +6079,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status,
         adminNotes,
         actionTaken,
-        reviewedBy: "admin",
         reviewedAt: new Date()
       });
       
