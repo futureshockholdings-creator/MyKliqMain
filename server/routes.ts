@@ -6036,6 +6036,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('✅ Admin password verified');
       
+      // First, get the current report to access post and author info
+      const existingReport = await storage.getReportById(reportId);
+      
       const updatedReport = await storage.updateReport(reportId, {
         status,
         adminNotes,
@@ -6048,6 +6051,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updatedReport) {
         console.log('❌ No report found with ID:', reportId);
         return res.status(404).json({ message: "Report not found" });
+      }
+      
+      // If action is post_removed, delete the post
+      if (actionTaken === 'post_removed' && existingReport?.postId) {
+        try {
+          console.log('🗑️ Deleting post:', existingReport.postId);
+          await storage.deletePost(existingReport.postId);
+          console.log('✅ Post deleted successfully');
+        } catch (deleteError) {
+          console.error('⚠️ Error deleting post (may already be deleted):', deleteError);
+        }
+      }
+      
+      // Send notification to the post author about the moderation decision
+      if (existingReport?.postAuthorId && actionTaken) {
+        try {
+          console.log('📧 Sending moderation notification to author:', existingReport.postAuthorId);
+          await notificationService.notifyPostRemoved(
+            existingReport.postAuthorId,
+            existingReport.reason || 'community guidelines violation',
+            actionTaken,
+            adminNotes
+          );
+          console.log('✅ Notification sent to author');
+        } catch (notifyError) {
+          console.error('⚠️ Error sending notification:', notifyError);
+        }
       }
       
       res.json(updatedReport);
@@ -6075,6 +6105,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('✅ Admin password verified');
       
+      // First, get the current report to access post and author info
+      const existingReport = await storage.getReportById(reportId);
+      
       const updatedReport = await storage.updateReport(reportId, {
         status,
         adminNotes,
@@ -6087,6 +6120,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!updatedReport) {
         console.log('❌ No report found with ID:', reportId);
         return res.status(404).json({ message: "Report not found" });
+      }
+      
+      // If action is post_removed, delete the post
+      if (actionTaken === 'post_removed' && existingReport?.postId) {
+        try {
+          console.log('🗑️ Deleting post:', existingReport.postId);
+          await storage.deletePost(existingReport.postId);
+          console.log('✅ Post deleted successfully');
+        } catch (deleteError) {
+          console.error('⚠️ Error deleting post (may already be deleted):', deleteError);
+        }
+      }
+      
+      // Send notification to the post author about the moderation decision
+      if (existingReport?.postAuthorId && actionTaken) {
+        try {
+          console.log('📧 Sending moderation notification to author:', existingReport.postAuthorId);
+          await notificationService.notifyPostRemoved(
+            existingReport.postAuthorId,
+            existingReport.reason || 'community guidelines violation',
+            actionTaken,
+            adminNotes
+          );
+          console.log('✅ Notification sent to author');
+        } catch (notifyError) {
+          console.error('⚠️ Error sending notification:', notifyError);
+        }
       }
       
       res.json(updatedReport);

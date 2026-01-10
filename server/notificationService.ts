@@ -284,6 +284,30 @@ export class NotificationService {
       priority: "normal",
     });
   }
+
+  async notifyPostRemoved(userId: string, reason: string, actionTaken: string, adminNotes?: string) {
+    const actionDescriptions: Record<string, string> = {
+      "post_removed": "Your post has been removed for violating community guidelines.",
+      "warning": "You have received a warning for content that may violate community guidelines.",
+      "none": "Your reported post has been reviewed and no action was taken.",
+    };
+
+    const description = actionDescriptions[actionTaken] || "Your post has been reviewed by our moderation team.";
+    
+    let message = `${description} Reason reported: ${reason}.`;
+    if (actionTaken === "post_removed" || actionTaken === "warning") {
+      message += " Repeated violations may result in account suspension. Please review our community guidelines.";
+    }
+
+    return this.createNotification({
+      userId,
+      type: "system",
+      title: "Content Moderation Notice",
+      message,
+      actionUrl: "/community-guidelines",
+      priority: "high",
+    });
+  }
 }
 
 export const notificationService = new NotificationService();

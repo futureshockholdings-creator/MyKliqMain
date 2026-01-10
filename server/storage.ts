@@ -5147,6 +5147,14 @@ export class DatabaseStorage implements IStorage {
     return enrichedResults;
   }
 
+  async getReportById(reportId: string): Promise<Report | null> {
+    const [report] = await db
+      .select()
+      .from(rulesReports)
+      .where(eq(rulesReports.id, reportId));
+    return report || null;
+  }
+
   async updateReport(reportId: string, updates: Partial<Report>): Promise<Report> {
     const [updatedReport] = await db
       .update(rulesReports)
