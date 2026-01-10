@@ -5268,6 +5268,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "accepted"
       });
 
+      // Create pending referral bonus for the inviter (only if no existing bonus for this invitee)
+      try {
+        const existingBonuses = await storage.getReferralBonusesByInvitee(userId);
+        const alreadyReferred = existingBonuses.some(b => b.inviterId === inviter.id);
+        
+        if (!alreadyReferred) {
+          await storage.createReferralBonus({
+            inviterId: inviter.id,
+            inviteeId: userId,
+            signupAt: new Date(),
+            koinsAwarded: 10,
+            status: 'pending'
+          });
+          console.log(`Created referral bonus for ${inviter.id} when ${userId} joined via invite code`);
+        } else {
+          console.log(`Skipping duplicate referral bonus - ${userId} was already referred by ${inviter.id}`);
+        }
+      } catch (referralError) {
+        console.error("Error creating referral bonus:", referralError);
+        // Don't fail the join if referral bonus creation fails
+      }
+
       res.json(friendship);
     } catch (error) {
       console.error("Error joining kliq:", error);
