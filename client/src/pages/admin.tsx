@@ -79,7 +79,7 @@ export default function AdminPage() {
   // Fetch all users for admin
   const { data: users = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/users"],
-    queryFn: () => fetch(buildApiUrl(`/api/admin/users?password=${encodeURIComponent("mykliq2025admin!")}`)).then(res => res.json()),
+    queryFn: () => fetch(buildApiUrl(`/api/admin/users?password=${encodeURIComponent(adminPassword)}`)).then(res => res.json()),
     enabled: isAuthenticated,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
@@ -87,7 +87,7 @@ export default function AdminPage() {
   // Fetch system analytics
   const { data: analytics } = useQuery<any>({
     queryKey: ["/api/admin/analytics"],
-    queryFn: () => fetch(buildApiUrl(`/api/admin/analytics?password=${encodeURIComponent("mykliq2025admin!")}`)).then(res => res.json()),
+    queryFn: () => fetch(buildApiUrl(`/api/admin/analytics?password=${encodeURIComponent(adminPassword)}`)).then(res => res.json()),
     enabled: isAuthenticated && selectedTab === "analytics",
     refetchInterval: 60000, // Refresh every minute
   });
@@ -95,7 +95,7 @@ export default function AdminPage() {
   // Fetch system health
   const { data: systemHealth } = useQuery<any>({
     queryKey: ["/api/admin/system-health"],
-    queryFn: () => fetch(buildApiUrl(`/api/admin/system-health?password=${encodeURIComponent("mykliq2025admin!")}`)).then(res => res.json()),
+    queryFn: () => fetch(buildApiUrl(`/api/admin/system-health?password=${encodeURIComponent(adminPassword)}`)).then(res => res.json()),
     enabled: isAuthenticated && selectedTab === "system",
     refetchInterval: 10000, // Refresh every 10 seconds
   });
@@ -111,7 +111,7 @@ export default function AdminPage() {
   // Fetch broadcasts
   const { data: broadcasts = [], isLoading: broadcastsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/broadcasts"],
-    queryFn: () => fetch(buildApiUrl(`/api/admin/broadcasts?password=${encodeURIComponent("mykliq2025admin!")}`)).then(res => res.json()),
+    queryFn: () => fetch(buildApiUrl(`/api/admin/broadcasts?password=${encodeURIComponent(adminPassword)}`)).then(res => res.json()),
     enabled: isAuthenticated && selectedTab === "broadcasts",
     refetchInterval: 30000,
   });
@@ -119,7 +119,7 @@ export default function AdminPage() {
   // Get audience count
   const { data: audienceCount } = useQuery<{ count: number; audience: string }>({
     queryKey: ["/api/admin/broadcasts/audience-count", broadcastAudience],
-    queryFn: () => fetch(buildApiUrl(`/api/admin/broadcasts/audience-count?password=${encodeURIComponent("mykliq2025admin!")}&audience=${broadcastAudience}`)).then(res => res.json()),
+    queryFn: () => fetch(buildApiUrl(`/api/admin/broadcasts/audience-count?password=${encodeURIComponent(adminPassword)}&audience=${broadcastAudience}`)).then(res => res.json()),
     enabled: isAuthenticated && selectedTab === "broadcasts",
   });
 
@@ -132,7 +132,7 @@ export default function AdminPage() {
       deepLink?: string;
       sendNow: boolean;
     }) => {
-      const response = await fetch(buildApiUrl(`/api/admin/broadcasts?password=${encodeURIComponent("mykliq2025admin!")}`), {
+      const response = await fetch(buildApiUrl(`/api/admin/broadcasts?password=${encodeURIComponent(adminPassword)}`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, body, targetAudience, deepLink, sendNow })
@@ -164,7 +164,7 @@ export default function AdminPage() {
   // Send broadcast mutation
   const sendBroadcast = useMutation({
     mutationFn: async (broadcastId: string) => {
-      const response = await fetch(buildApiUrl(`/api/admin/broadcasts/${broadcastId}/send?password=${encodeURIComponent("mykliq2025admin!")}`), {
+      const response = await fetch(buildApiUrl(`/api/admin/broadcasts/${broadcastId}/send?password=${encodeURIComponent(adminPassword)}`), {
         method: "POST"
       });
       if (!response.ok) throw new Error("Failed to send broadcast");
@@ -189,7 +189,7 @@ export default function AdminPage() {
   // Delete broadcast mutation
   const deleteBroadcast = useMutation({
     mutationFn: async (broadcastId: string) => {
-      const response = await fetch(buildApiUrl(`/api/admin/broadcasts/${broadcastId}?password=${encodeURIComponent("mykliq2025admin!")}`), {
+      const response = await fetch(buildApiUrl(`/api/admin/broadcasts/${broadcastId}?password=${encodeURIComponent(adminPassword)}`), {
         method: "DELETE"
       });
       if (!response.ok) throw new Error("Failed to delete broadcast");
@@ -245,7 +245,7 @@ export default function AdminPage() {
   // Fetch user details
   const fetchUserDetails = useMutation({
     mutationFn: async (userId: string) => {
-      return await fetch(buildApiUrl(`/api/admin/users/${userId}?password=${encodeURIComponent("mykliq2025admin!")}`)).then(res => res.json());
+      return await fetch(buildApiUrl(`/api/admin/users/${userId}?password=${encodeURIComponent(adminPassword)}`)).then(res => res.json());
     },
     onSuccess: (data) => {
       setSelectedUser(data);
@@ -268,7 +268,7 @@ export default function AdminPage() {
   // Delete user mutation
   const deleteUser = useMutation({
     mutationFn: async (userId: string) => {
-      return await apiRequest("DELETE", `/api/admin/users/${userId}`, { password: "mykliq2025admin!" });
+      return await apiRequest("DELETE", `/api/admin/users/${userId}`, { password: adminPassword });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
@@ -290,7 +290,7 @@ export default function AdminPage() {
   const suspendUser = useMutation({
     mutationFn: async ({ userId, suspensionType }: { userId: string; suspensionType: string }) => {
       return await apiRequest("POST", `/api/admin/users/${userId}/suspend`, { 
-        password: "mykliq2025admin!", 
+        password: adminPassword, 
         suspensionType 
       });
     },
@@ -322,7 +322,7 @@ export default function AdminPage() {
   const verifySecurityAnswers = useMutation({
     mutationFn: async ({ userId, answer1, answer2, answer3 }: { userId: string; answer1: string; answer2: string; answer3: string }) => {
       return await apiRequest("POST", `/api/admin/users/${userId}/verify-security`, { 
-        password: "mykliq2025admin!", 
+        password: adminPassword, 
         answer1,
         answer2,
         answer3
@@ -357,7 +357,7 @@ export default function AdminPage() {
     setIsRevealingPassword(true);
     try {
       const response = await apiRequest("POST", `/api/admin/users/${userId}/reveal-password`, {
-        password: "mykliq2025admin!",
+        password: adminPassword,
         answer1: securityAnswer1,
         answer2: securityAnswer2,
         answer3: securityAnswer3
@@ -395,7 +395,7 @@ export default function AdminPage() {
   // Export data mutation
   const exportData = useMutation({
     mutationFn: async (type: string) => {
-      const response = await fetch(buildApiUrl(`/api/admin/export/${type}?password=${encodeURIComponent("mykliq2025admin!")}`));
+      const response = await fetch(buildApiUrl(`/api/admin/export/${type}?password=${encodeURIComponent(adminPassword)}`));
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
