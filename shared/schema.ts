@@ -1783,7 +1783,13 @@ export type PasswordResetAttempt = typeof passwordResetAttempts.$inferSelect;
 export const insertReportSchema = createInsertSchema(rulesReports).omit({ 
   id: true, 
   createdAt: true, 
-  updatedAt: true 
+  updatedAt: true,
+  postAuthorId: true,
+  status: true,
+  reviewedBy: true,
+  reviewedAt: true,
+  adminNotes: true,
+  actionTaken: true
 });
 export type InsertReport = z.infer<typeof insertReportSchema>;
 export type Report = typeof rulesReports.$inferSelect;
