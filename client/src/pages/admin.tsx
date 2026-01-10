@@ -103,7 +103,7 @@ export default function AdminPage() {
   // Fetch rules reports
   const { data: reports = [], isLoading: reportsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/reports", reportStatusFilter],
-    queryFn: () => fetch(buildApiUrl(`/api/admin/reports${reportStatusFilter !== "all" ? `?status=${reportStatusFilter}` : ""}`)).then(res => res.json()),
+    queryFn: () => fetch(buildApiUrl(`/api/admin/reports?password=${encodeURIComponent(adminPassword)}${reportStatusFilter !== "all" ? `&status=${reportStatusFilter}` : ""}`)).then(res => res.json()),
     enabled: isAuthenticated && selectedTab === "reports",
     refetchInterval: 30000, // Refresh every 30 seconds
   });
@@ -220,6 +220,7 @@ export default function AdminPage() {
       actionTaken?: string 
     }) => {
       return await apiRequest("PATCH", `/api/admin/reports/${reportId}`, { 
+        password: adminPassword,
         status, 
         adminNotes, 
         actionTaken 

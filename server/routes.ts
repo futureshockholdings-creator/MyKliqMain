@@ -5988,14 +5988,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all reports (admin only)
-  app.get('/api/admin/reports', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/reports', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const { password } = req.query;
       
-      // Check if user is admin
-      const user = await storage.getUser(userId);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      // Check admin password
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
       }
       
       const { status, page = 1, limit = 20 } = req.query;
@@ -6013,24 +6012,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update report status (admin only)
-  app.patch('/api/admin/reports/:reportId', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/reports/:reportId', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
       const { reportId } = req.params;
+      const { password, status, adminNotes, actionTaken } = req.body;
       
-      // Check if user is admin
-      const user = await storage.getUser(userId);
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      // Check admin password
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
       }
-      
-      const { status, adminNotes, actionTaken } = req.body;
       
       const updatedReport = await storage.updateReport(reportId, {
         status,
         adminNotes,
         actionTaken,
-        reviewedBy: userId,
+        reviewedBy: "admin",
         reviewedAt: new Date()
       });
       
@@ -6042,18 +6038,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Suspend/ban user (admin only)
-  app.patch('/api/admin/users/:userId/suspend', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/users/:userId/suspend', async (req: any, res) => {
     try {
-      const adminUserId = req.user.claims.sub;
       const { userId } = req.params;
+      const { password, suspensionType, reason } = req.body;
       
-      // Check if user is admin
-      const adminUser = await storage.getUser(adminUserId);
-      if (!adminUser?.isAdmin) {
-        return res.status(403).json({ message: "Access denied. Admin privileges required." });
+      // Check admin password
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
       }
-      
-      const { suspensionType, reason } = req.body;
       
       // Calculate suspension end date
       let suspensionExpiresAt = null;
