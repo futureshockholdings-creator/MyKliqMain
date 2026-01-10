@@ -10815,6 +10815,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Verify security answers for admin identity validation
+  app.post('/api/admin/users/:userId/verify-security', async (req, res) => {
+    try {
+      const { password, answer1, answer2, answer3 } = req.body;
+      const { userId } = req.params;
+      
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Verify each answer against stored hashes (answers are stored hashed with bcrypt)
+      const results = {
+        answer1Valid: false,
+        answer2Valid: false,
+        answer3Valid: false,
+        allValid: false,
+        hasSecurityAnswers: !!(user.securityAnswer1 && user.securityAnswer2 && user.securityAnswer3)
+      };
+
+      if (!results.hasSecurityAnswers) {
+        return res.json({
+          ...results,
+          message: "User has not set up security questions"
+        });
+      }
+
+      // Compare provided answers against stored hashes
+      if (answer1 && user.securityAnswer1) {
+        results.answer1Valid = await bcrypt.compare(answer1.toLowerCase().trim(), user.securityAnswer1);
+      }
+      if (answer2 && user.securityAnswer2) {
+        results.answer2Valid = await bcrypt.compare(answer2.toLowerCase().trim(), user.securityAnswer2);
+      }
+      if (answer3 && user.securityAnswer3) {
+        results.answer3Valid = await bcrypt.compare(answer3.toLowerCase().trim(), user.securityAnswer3);
+      }
+
+      results.allValid = results.answer1Valid && results.answer2Valid && results.answer3Valid;
+
+      res.json({
+        ...results,
+        message: results.allValid 
+          ? "All security answers verified successfully - identity confirmed" 
+          : "One or more answers did not match"
+      });
+    } catch (error) {
+      console.error("Error verifying security answers:", error);
+      res.status(500).json({ message: "Failed to verify security answers" });
+    }
+  });
+
   // Suspend user endpoint for admin
   app.post('/api/admin/users/:userId/suspend', async (req, res) => {
     try {
