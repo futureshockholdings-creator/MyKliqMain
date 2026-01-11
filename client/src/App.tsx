@@ -13,6 +13,7 @@ import { initializeEnterpriseServices, cleanupEnterpriseServices } from "@/lib/e
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
 import { IncomingCallOverlay } from "@/components/IncomingCallOverlay";
 import { VideoCallScreen } from "@/components/VideoCallScreen";
+import { initAudioManager } from "@/lib/audioManager";
 
 // Pages
 import Landing from "@/pages/landing";
@@ -341,6 +342,9 @@ function App() {
     // Initialize enterprise optimizations for web
     // (Mobile analytics handled separately in mobile/src/App.tsx)
     initializeEnterpriseServices();
+    
+    // Initialize audio manager for call ringtones (unlocks on first user interaction)
+    initAudioManager();
 
     // Cleanup on unmount
     return () => {

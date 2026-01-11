@@ -1,128 +1,34 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Phone, PhoneOff, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useVideoCall } from '@/contexts/VideoCallContext';
 import { cn } from '@/lib/utils';
 import { resolveAssetUrl } from '@/lib/apiConfig';
-
-// Generate a pleasant ringtone using Web Audio API
-function createRingtone(audioContext: AudioContext): { start: () => void; stop: () => void } {
-  let oscillator1: OscillatorNode | null = null;
-  let oscillator2: OscillatorNode | null = null;
-  let gainNode: GainNode | null = null;
-  let intervalId: number | null = null;
-  let isPlaying = false;
-
-  const playTone = () => {
-    if (!audioContext || audioContext.state === 'closed') return;
-    
-    // Create oscillators for a dual-tone ringtone (similar to phone ring)
-    oscillator1 = audioContext.createOscillator();
-    oscillator2 = audioContext.createOscillator();
-    gainNode = audioContext.createGain();
-
-    // Use frequencies that create a pleasant ring sound
-    oscillator1.frequency.setValueAtTime(440, audioContext.currentTime); // A4
-    oscillator2.frequency.setValueAtTime(480, audioContext.currentTime); // B4
-    oscillator1.type = 'sine';
-    oscillator2.type = 'sine';
-
-    // Connect to gain for volume control
-    oscillator1.connect(gainNode);
-    oscillator2.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    // Set volume (not too loud)
-    gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-
-    // Start and stop after 1 second (ring pattern: 1s on, 2s off)
-    oscillator1.start();
-    oscillator2.start();
-
-    setTimeout(() => {
-      if (oscillator1 && oscillator2 && gainNode) {
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
-        setTimeout(() => {
-          oscillator1?.stop();
-          oscillator2?.stop();
-        }, 100);
-      }
-    }, 800);
-  };
-
-  return {
-    start: () => {
-      if (isPlaying) return;
-      isPlaying = true;
-      
-      // Resume audio context if suspended (required for autoplay policies)
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
-      
-      // Play immediately, then repeat every 3 seconds
-      playTone();
-      intervalId = window.setInterval(playTone, 3000);
-    },
-    stop: () => {
-      isPlaying = false;
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-      }
-      if (oscillator1) {
-        try { oscillator1.stop(); } catch (e) {}
-        oscillator1 = null;
-      }
-      if (oscillator2) {
-        try { oscillator2.stop(); } catch (e) {}
-        oscillator2 = null;
-      }
-    }
-  };
-}
+import { playRingtone } from '@/lib/audioManager';
 
 export function IncomingCallOverlay() {
   const { callState, currentCallInfo, acceptCall, declineCall } = useVideoCall();
   const [isVisible, setIsVisible] = useState(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const ringtoneRef = useRef<{ start: () => void; stop: () => void } | null>(null);
-
-  // Initialize audio context and ringtone
-  const initAudio = useCallback(() => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      ringtoneRef.current = createRingtone(audioContextRef.current);
-    }
-  }, []);
+  const ringtoneRef = useRef<{ stop: () => void } | null>(null);
 
   // Handle ringing sound
   useEffect(() => {
     if (callState === 'ringing') {
       setIsVisible(true);
-      initAudio();
-      ringtoneRef.current?.start();
+      ringtoneRef.current = playRingtone();
     } else {
       ringtoneRef.current?.stop();
+      ringtoneRef.current = null;
       const timer = setTimeout(() => setIsVisible(false), 300);
       return () => clearTimeout(timer);
     }
     
     return () => {
       ringtoneRef.current?.stop();
+      ringtoneRef.current = null;
     };
-  }, [callState, initAudio]);
-
-  // Cleanup audio context on unmount
-  useEffect(() => {
-    return () => {
-      ringtoneRef.current?.stop();
-      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-        audioContextRef.current.close();
-      }
-    };
-  }, []);
+  }, [callState]);
 
   if (!isVisible || callState !== 'ringing' || !currentCallInfo) {
     return null;
