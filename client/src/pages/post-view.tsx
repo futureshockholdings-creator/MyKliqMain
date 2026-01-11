@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRoute } from "wouter";
+import { useRoute, useSearch } from "wouter";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, AlertTriangle } from "lucide-react";
@@ -9,17 +9,18 @@ import { MemeDisplay } from "@/components/MemeDisplay";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 
-const ADMIN_PASSWORD = localStorage.getItem("adminPassword") || "";
-
 export default function PostView() {
   const [, params] = useRoute("/post/:postId");
   const postId = params?.postId;
+  const searchString = useSearch();
+  const urlParams = new URLSearchParams(searchString);
+  const password = urlParams.get("p") || "";
 
   const { data: post, isLoading, error } = useQuery({
-    queryKey: ["/api/posts", postId],
+    queryKey: ["/api/posts", postId, password],
     queryFn: async () => {
       const response = await fetch(
-        buildApiUrl(`/api/posts/${postId}?password=${encodeURIComponent(ADMIN_PASSWORD)}`)
+        buildApiUrl(`/api/posts/${postId}?password=${encodeURIComponent(password)}`)
       );
       if (!response.ok) {
         const data = await response.json();
@@ -27,7 +28,7 @@ export default function PostView() {
       }
       return response.json();
     },
-    enabled: !!postId,
+    enabled: !!postId && !!password,
   });
 
   if (isLoading) {

@@ -1462,7 +1462,7 @@ export default function AdminPage() {
                                       </p>
                                     )}
                                     <a 
-                                      href={`/post/${report.postId}`}
+                                      href={`/post/${report.postId}?p=${encodeURIComponent(adminPassword)}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="text-sm text-blue-600 hover:underline font-medium"
