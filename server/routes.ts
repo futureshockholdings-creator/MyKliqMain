@@ -9909,24 +9909,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
           case 'video-call-invite':
             // Send call invite to specific users
-            const { callId, invitedUsers } = data;
+            const { callId: inviteCallId, invitedUsers, callerName, callerAvatar } = data;
+            console.log('📞 Processing video call invite:', { inviteCallId, invitedUsers, from: data.userId });
             wss.clients.forEach((client: ExtendedWebSocket) => {
               if (client.readyState === WebSocket.OPEN && 
                   invitedUsers.includes(client.user_id)) {
+                console.log('📞 Sending call-invite to user:', client.user_id);
                 client.send(JSON.stringify({
                   type: 'call-invite',
-                  callId: callId,
-                  from: data.userId
+                  callId: inviteCallId,
+                  from: data.userId,
+                  callerName: callerName,
+                  callerAvatar: callerAvatar
                 }));
               }
             });
             break;
             
           case 'video-call-response':
-            // Handle call response (accept/decline)
+            // Handle call response (accept/decline) - send to the caller (targetUserId)
+            console.log('📞 Processing video call response:', data);
             wss.clients.forEach((client: ExtendedWebSocket) => {
               if (client.readyState === WebSocket.OPEN && 
-                  client.call_id === data.callId) {
+                  client.user_id === data.targetUserId) {
+                console.log('📞 Sending call-response to user:', client.user_id);
                 client.send(JSON.stringify({
                   type: 'call-response',
                   callId: data.callId,
@@ -9937,11 +9943,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
             break;
             
+          case 'call-ended':
+            // Forward call-ended to the other party
+            console.log('📞 Processing call-ended:', data);
+            wss.clients.forEach((client: ExtendedWebSocket) => {
+              if (client.readyState === WebSocket.OPEN && 
+                  client.user_id === data.targetUserId) {
+                console.log('📞 Sending call-ended to user:', client.user_id);
+                client.send(JSON.stringify({
+                  type: 'call-ended',
+                  callId: data.callId,
+                  userId: data.userId
+                }));
+              }
+            });
+            break;
+            
           case 'webrtc-signal':
             // Forward WebRTC signaling messages
             wss.clients.forEach((client: ExtendedWebSocket) => {
               if (client.readyState === WebSocket.OPEN && 
-                  client.call_id === data.callId &&
                   client.user_id === data.targetUserId) {
                 client.send(JSON.stringify({
                   type: 'webrtc-signal',
