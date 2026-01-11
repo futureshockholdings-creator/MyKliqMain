@@ -93,6 +93,16 @@ Invite codes can be used unlimited times (no one-time restriction). The system t
 - **Owner approval workflow**: Pending requests appear in the Kliq page under "Pending Join Requests" with approve/decline buttons
 - **Clean slate on approve**: When approved, the removal record is cleared so future rejoins won't require approval again
 
+### Peer-to-Peer Video Calling (Added Jan 2026)
+Friend-to-friend video calling using PeerJS for WebRTC connections and WebSocket for call signaling:
+- **Client Components**: `VideoCallService` (PeerJS management), `VideoCallProvider` (React context), `VideoCallScreen` (full-screen UI), `IncomingCallOverlay` (incoming call modal), `VideoCallButton` (initiate calls)
+- **Signaling Flow**: WebSocket messages route call-initiate/accept/decline/end between users
+- **ICE Servers**: STUN (Google) + TURN (OpenRelay Metered.ca) for NAT traversal behind firewalls
+- **Call UI**: Minimizable video screen with mute toggle, camera flip (mobile), and end call button
+- **Access Points**: Video call button in conversation header and user profile page
+- **Requirements**: Both users must be online; no push notification fallback for offline users
+- **Camera Permissions**: Requested on call initiation/acceptance with graceful error handling
+
 ## System Design Choices
 Mobile optimizations prioritize bandwidth (paginated responses), battery efficiency (polling vs. persistent connections), and memory management. Cross-platform compatibility is a core consideration. Push notification infrastructure supports both Firebase Cloud Messaging and Apple Push Notifications.
 
