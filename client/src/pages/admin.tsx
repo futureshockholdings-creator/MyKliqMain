@@ -115,9 +115,16 @@ export default function AdminPage() {
   });
 
   // Fetch full post for viewing
-  const { data: viewingPost, isLoading: postLoading } = useQuery<any>({
+  const { data: viewingPost, isLoading: postLoading, error: postError } = useQuery<any>({
     queryKey: ["/api/posts", viewingPostId],
-    queryFn: () => fetch(buildApiUrl(`/api/posts/${viewingPostId}?password=${encodeURIComponent(adminPassword)}`)).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch(buildApiUrl(`/api/posts/${viewingPostId}?password=${encodeURIComponent(adminPassword)}`));
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to fetch post");
+      }
+      return data;
+    },
     enabled: !!viewingPostId && isAuthenticated,
   });
 
@@ -1820,7 +1827,12 @@ export default function AdminPage() {
             <div className="flex items-center justify-center p-8">
               <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
             </div>
-          ) : viewingPost ? (
+          ) : postError ? (
+            <div className="text-center p-8">
+              <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+              <p className="text-red-600">{(postError as Error).message}</p>
+            </div>
+          ) : viewingPost && viewingPost.id ? (
             <div className="space-y-4">
               {/* Author Info */}
               <div className="flex items-center space-x-3 pb-3 border-b">
@@ -1833,10 +1845,10 @@ export default function AdminPage() {
                 </Avatar>
                 <div>
                   <p className="font-semibold">
-                    {viewingPost.author?.firstName} {viewingPost.author?.lastName}
+                    {viewingPost.author?.firstName || "Unknown"} {viewingPost.author?.lastName || "User"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(viewingPost.createdAt).toLocaleString()}
+                    {viewingPost.createdAt ? new Date(viewingPost.createdAt).toLocaleString() : "Date unknown"}
                   </p>
                 </div>
               </div>
