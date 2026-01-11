@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useVideoCall } from '@/contexts/VideoCallContext';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { resolveAssetUrl } from '@/lib/apiConfig';
 
 export function VideoCallScreen() {
   const {
@@ -41,9 +42,10 @@ export function VideoCallScreen() {
   const [callDuration, setCallDuration] = useState(0);
 
   const isCurrentUserCaller = currentCallInfo?.callerId === user?.id;
-  const remoteUserAvatar = isCurrentUserCaller 
+  const rawRemoteUserAvatar = isCurrentUserCaller 
     ? currentCallInfo?.recipientAvatar 
     : currentCallInfo?.callerAvatar;
+  const remoteUserAvatar = resolveAssetUrl(rawRemoteUserAvatar);
 
   useEffect(() => {
     if (localVideoRef.current && localStream) {

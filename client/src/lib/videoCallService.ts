@@ -203,6 +203,7 @@ class VideoCallService {
   }
 
   private handleIncomingCall(message: any) {
+    console.log('📞 handleIncomingCall - raw message:', message);
     const callInfo: CallInfo = {
       callId: message.callId,
       callerId: message.from,

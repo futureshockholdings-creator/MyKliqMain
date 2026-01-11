@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useVideoCall } from '@/contexts/VideoCallContext';
 import { cn } from '@/lib/utils';
+import { resolveAssetUrl } from '@/lib/apiConfig';
 
 export function IncomingCallOverlay() {
   const { callState, currentCallInfo, acceptCall, declineCall } = useVideoCall();
@@ -33,7 +34,7 @@ export function IncomingCallOverlay() {
             <div className="w-28 h-28 rounded-full bg-green-500/30 animate-pulse" />
           </div>
           <Avatar className="relative w-24 h-24 mx-auto border-4 border-green-500 shadow-lg">
-            <AvatarImage src={currentCallInfo.callerAvatar} alt={currentCallInfo.callerName} />
+            <AvatarImage src={resolveAssetUrl(currentCallInfo.callerAvatar)} alt={currentCallInfo.callerName} />
             <AvatarFallback className="text-3xl bg-primary text-primary-foreground">
               {currentCallInfo.callerName?.[0]?.toUpperCase() || <User className="w-10 h-10" />}
             </AvatarFallback>

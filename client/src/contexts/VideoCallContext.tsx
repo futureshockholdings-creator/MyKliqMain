@@ -92,6 +92,7 @@ export function VideoCallProvider({ children }: { children: ReactNode }) {
       setError(null);
       const callerName = (user as any).firstName || (user as any).username || 'User';
       const callerAvatar = (user as any).profileImageUrl;
+      console.log('📞 Initiating call - callerAvatar:', callerAvatar, 'recipientAvatar:', recipientAvatar, 'user:', user);
       await videoCallService.initiateCall(recipientId, recipientName, callerName, callerAvatar, recipientAvatar);
       setCurrentCallInfo(videoCallService.getCurrentCallInfo());
     } catch (err: any) {
