@@ -353,71 +353,30 @@ export default function AdminReports() {
                 {/* Reported Content */}
                 {report.post && (
                   <div className="mb-4 border rounded-lg p-4 bg-red-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-medium">Reported content:</p>
-                      <a 
-                        href={`/post/${report.postId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:underline"
-                      >
-                        View Original Post
-                      </a>
-                    </div>
+                    <p className="text-sm font-medium mb-2">Reported content:</p>
                     <div className="space-y-2">
                       {report.post.content && (
                         <p className="text-sm">{report.post.content}</p>
                       )}
-                      {report.post.mediaUrl && report.post.mediaType === 'video' && (
-                        <video 
-                          src={resolveAssetUrl(report.post.mediaUrl)} 
-                          controls
-                          className="max-w-xs rounded"
-                        />
+                      {/* Show what attachments the post has */}
+                      {(report.post.mediaUrl || report.post.memeId || report.post.movieconId || report.post.gifId) && (
+                        <p className="text-xs text-gray-600">
+                          Attachments: 
+                          {report.post.mediaUrl && ` ${report.post.mediaType || 'media'}`}
+                          {report.post.memeId && ' meme'}
+                          {report.post.movieconId && ' moviecon'}
+                          {report.post.gifId && ' gif'}
+                        </p>
                       )}
-                      {report.post.mediaUrl && report.post.mediaType !== 'video' && (
-                        <img 
-                          src={resolveAssetUrl(report.post.mediaUrl)} 
-                          alt="Reported content" 
-                          className="max-w-xs rounded"
-                        />
-                      )}
-                      {/* Display meme image */}
-                      {report.memeData && (
-                        <div className="space-y-1">
-                          <p className="text-xs text-gray-500">Meme: {report.memeData.title}</p>
-                          <img 
-                            src={resolveAssetUrl(report.memeData.imageUrl)} 
-                            alt={report.memeData.title}
-                            className="max-w-xs rounded border"
-                          />
-                        </div>
-                      )}
-                      {/* Display moviecon video */}
-                      {report.movieconData && (
-                        <div className="space-y-1">
-                          <p className="text-xs text-gray-500">Moviecon: {report.movieconData.title}</p>
-                          <video 
-                            src={resolveAssetUrl(report.movieconData.videoUrl)} 
-                            controls
-                            className="max-w-xs rounded border"
-                            poster={report.movieconData.thumbnailUrl ? resolveAssetUrl(report.movieconData.thumbnailUrl) : undefined}
-                          />
-                        </div>
-                      )}
-                      {/* Fallback for meme/moviecon/gif IDs without loaded data */}
-                      {report.post.memeId && !report.memeData && (
-                        <p className="text-xs text-gray-500 italic">Post contains a meme attachment (ID: {report.post.memeId})</p>
-                      )}
-                      {report.post.movieconId && !report.movieconData && (
-                        <p className="text-xs text-gray-500 italic">Post contains a Moviecon attachment (ID: {report.post.movieconId})</p>
-                      )}
-                      {report.post.gifId && (
-                        <p className="text-xs text-gray-500 italic">Post contains a GIF attachment (ID: {report.post.gifId})</p>
-                      )}
-                      {!report.post.content && !report.post.mediaUrl && !report.post.memeId && !report.post.movieconId && !report.post.gifId && (
-                        <p className="text-xs text-gray-500 italic">No visible content (post may have been deleted)</p>
-                      )}
+                      {/* Link to view the actual post */}
+                      <a 
+                        href={`/post/${report.postId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-sm text-blue-600 hover:underline font-medium"
+                      >
+                        View Full Post →
+                      </a>
                     </div>
                     {report.postAuthor && (
                       <div className="flex items-center justify-between mt-3 pt-3 border-t">
