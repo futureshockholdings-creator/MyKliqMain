@@ -7,7 +7,6 @@ import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
 import { CalendarDays, Music, User as UserIcon, MessageCircle } from "lucide-react";
 import { type User } from "@shared/schema";
 import { usePostTranslation } from "@/lib/translationService";
-import { VideoCallButton } from "@/components/VideoCallButton";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
@@ -96,13 +95,6 @@ export default function UserProfile() {
                       Message
                     </Button>
                   </Link>
-                  <VideoCallButton 
-                    recipientId={profileUser.id}
-                    recipientName={displayName}
-                    variant="outline"
-                    size="sm"
-                    showLabel
-                  />
                 </div>
               </div>
             </div>

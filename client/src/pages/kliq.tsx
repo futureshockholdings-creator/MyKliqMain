@@ -7,11 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PyramidChart } from "@/components/pyramid-chart";
-import { VideoCallComponent } from "@/components/video-call";
 import { PollCard } from "@/components/PollCard";
 import { CreatePollDialog } from "@/components/CreatePollDialog";
 import { RankingSuggestions } from "@/components/ranking-suggestions";
-import { useVideoCall } from "@/hooks/useVideoCall";
+import { useVideoCall } from "@/contexts/VideoCallContext";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut, Calendar, MessagesSquare } from "lucide-react";
@@ -54,15 +53,7 @@ export default function Kliq() {
   const [, navigate] = useLocation();
   
   // Video call functionality
-  const { 
-    currentCall, 
-    isInCall, 
-    isConnecting, 
-    startCall, 
-    endCall, 
-    toggleAudio, 
-    toggleVideo 
-  } = useVideoCall();
+  const { initiateCall } = useVideoCall();
 
   // Fetch friends
   const { data: friends = [], isLoading: friendsLoading } = useQuery<{ 
@@ -541,16 +532,27 @@ export default function Kliq() {
 
   // Video call handlers
   const handleVideoCall = async (participantIds: string[]) => {
-    try {
-      await startCall(participantIds);
-      toast({
-        title: "Video Call",
-        description: "Starting video call...",
-      });
-    } catch (error) {
+    const friendId = participantIds[0];
+    const friend = friends.find(f => f.friend.id === friendId);
+    if (!friend) {
       toast({
         title: "Error",
-        description: "Failed to start video call",
+        description: "Friend not found",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const friendName = friend.friend.firstName && friend.friend.lastName 
+      ? `${friend.friend.firstName} ${friend.friend.lastName}`
+      : friend.friend.firstName || "Friend";
+    
+    try {
+      await initiateCall(friendId, friendName);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start video call",
         variant: "destructive",
       });
     }
@@ -689,20 +691,6 @@ export default function Kliq() {
       participantIds: selectedParticipants,
     });
   };
-
-  // Show video call interface if in a call
-  if (isInCall && currentCall) {
-    return (
-      <div className="h-screen bg-black">
-        <VideoCallComponent
-          call={currentCall}
-          onEndCall={endCall}
-          onToggleAudio={toggleAudio}
-          onToggleVideo={toggleVideo}
-        />
-      </div>
-    );
-  }
 
   return (
     <PageWrapper>
