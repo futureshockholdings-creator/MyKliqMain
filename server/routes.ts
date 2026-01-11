@@ -20,7 +20,7 @@ import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
 import { performanceOptimizer } from "./performanceOptimizer";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons } from "@shared/schema";
 import { generateMobileToken, verifyMobileToken, JWT_CONFIG } from "./mobile-auth";
 import { eq, and, or, desc, sql as sqlOp, isNotNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
