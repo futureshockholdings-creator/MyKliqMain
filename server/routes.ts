@@ -6038,6 +6038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // First, get the current report to access post and author info
       const existingReport = await storage.getReportById(reportId);
+      console.log('📋 [POST] Existing report:', JSON.stringify(existingReport, null, 2));
       
       const updatedReport = await storage.updateReport(reportId, {
         status,
@@ -6054,29 +6055,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Send notification to the post author about the moderation decision BEFORE deleting the post
+      console.log('🔍 [POST] Notification check - postAuthorId:', existingReport?.postAuthorId, 'actionTaken:', actionTaken);
       if (existingReport?.postAuthorId && actionTaken) {
         try {
-          console.log('📧 Sending moderation notification to author:', existingReport.postAuthorId);
-          await notificationService.notifyPostRemoved(
+          console.log('📧 [POST] Sending moderation notification to author:', existingReport.postAuthorId);
+          const notificationResult = await notificationService.notifyPostRemoved(
             existingReport.postAuthorId,
             existingReport.reason || 'community guidelines violation',
             actionTaken,
             adminNotes
           );
-          console.log('✅ Notification sent to author');
+          console.log('✅ [POST] Notification created:', JSON.stringify(notificationResult, null, 2));
         } catch (notifyError) {
-          console.error('⚠️ Error sending notification:', notifyError);
+          console.error('⚠️ [POST] Error sending notification:', notifyError);
         }
+      } else {
+        console.log('⚠️ [POST] Skipping notification - missing postAuthorId or actionTaken');
       }
       
       // If action is post_removed, delete the post AFTER sending notification
       if (actionTaken === 'post_removed' && existingReport?.postId) {
         try {
-          console.log('🗑️ Deleting post:', existingReport.postId);
+          console.log('🗑️ [POST] Deleting post:', existingReport.postId);
           await storage.deletePost(existingReport.postId);
-          console.log('✅ Post deleted successfully');
+          console.log('✅ [POST] Post deleted successfully');
         } catch (deleteError) {
-          console.error('⚠️ Error deleting post (may already be deleted):', deleteError);
+          console.error('⚠️ [POST] Error deleting post (may already be deleted):', deleteError);
         }
       }
       
