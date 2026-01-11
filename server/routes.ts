@@ -9836,6 +9836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('message', async (message: string) => {
       try {
         const data = JSON.parse(message);
+        console.log('📨 WebSocket message received:', data.type, data.userId ? `from user ${data.userId}` : '');
         
         switch (data.type) {
           case 'join_action':
@@ -9905,6 +9906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           case 'join-call-signaling':
             // Join user to call signaling
             ws.user_id = data.userId;
+            console.log('📞 User joined call signaling:', data.userId);
             break;
             
           case 'video-call-invite':

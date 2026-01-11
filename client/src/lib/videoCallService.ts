@@ -250,6 +250,17 @@ class VideoCallService {
       throw new Error('Already in a call');
     }
 
+    // Check WebSocket is connected
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.error('📞 WebSocket not connected, attempting reconnect...');
+      this.setupWebSocket();
+      // Wait a bit for connection
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        throw new Error('Unable to connect. Please try again.');
+      }
+    }
+
     const callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     this.currentCallInfo = {
@@ -270,7 +281,8 @@ class VideoCallService {
       throw error;
     }
 
-    this.ws?.send(JSON.stringify({
+    console.log('📞 Sending video-call-invite to:', recipientId);
+    this.ws.send(JSON.stringify({
       type: 'video-call-invite',
       callId,
       userId: this.userId,
