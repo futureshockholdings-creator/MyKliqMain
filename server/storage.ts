@@ -5129,10 +5129,13 @@ export class DatabaseStorage implements IStorage {
       .limit(limit)
       .offset(offset);
     
-    // Fetch post authors for the results
+    // Fetch post authors and media attachments for the results
     const enrichedResults = await Promise.all(
       results.map(async (report) => {
         let postAuthor = null;
+        let memeData = null;
+        let movieconData = null;
+        
         if (report.postAuthorId) {
           const [author] = await db
             .select()
@@ -5140,7 +5143,26 @@ export class DatabaseStorage implements IStorage {
             .where(eq(users.id, report.postAuthorId));
           postAuthor = author;
         }
-        return { ...report, postAuthor };
+        
+        // Fetch meme data if the post has a meme attachment
+        if (report.post?.memeId) {
+          const [meme] = await db
+            .select()
+            .from(memes)
+            .where(eq(memes.id, report.post.memeId));
+          memeData = meme;
+        }
+        
+        // Fetch moviecon data if the post has a moviecon attachment
+        if (report.post?.movieconId) {
+          const [moviecon] = await db
+            .select()
+            .from(moviecons)
+            .where(eq(moviecons.id, report.post.movieconId));
+          movieconData = moviecon;
+        }
+        
+        return { ...report, postAuthor, memeData, movieconData };
       })
     );
     

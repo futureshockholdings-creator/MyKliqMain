@@ -53,6 +53,18 @@ interface Report {
     email: string;
     profileImageUrl?: string;
   };
+  memeData?: {
+    id: string;
+    title: string;
+    imageUrl: string;
+    thumbnailUrl?: string;
+  };
+  movieconData?: {
+    id: string;
+    title: string;
+    videoUrl: string;
+    thumbnailUrl?: string;
+  };
 }
 
 // Helper to normalize error objects from apiRequest/TanStack Query
@@ -370,10 +382,34 @@ export default function AdminReports() {
                           className="max-w-xs rounded"
                         />
                       )}
-                      {report.post.memeId && (
+                      {/* Display meme image */}
+                      {report.memeData && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-500">Meme: {report.memeData.title}</p>
+                          <img 
+                            src={resolveAssetUrl(report.memeData.imageUrl)} 
+                            alt={report.memeData.title}
+                            className="max-w-xs rounded border"
+                          />
+                        </div>
+                      )}
+                      {/* Display moviecon video */}
+                      {report.movieconData && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-500">Moviecon: {report.movieconData.title}</p>
+                          <video 
+                            src={resolveAssetUrl(report.movieconData.videoUrl)} 
+                            controls
+                            className="max-w-xs rounded border"
+                            poster={report.movieconData.thumbnailUrl ? resolveAssetUrl(report.movieconData.thumbnailUrl) : undefined}
+                          />
+                        </div>
+                      )}
+                      {/* Fallback for meme/moviecon/gif IDs without loaded data */}
+                      {report.post.memeId && !report.memeData && (
                         <p className="text-xs text-gray-500 italic">Post contains a meme attachment (ID: {report.post.memeId})</p>
                       )}
-                      {report.post.movieconId && (
+                      {report.post.movieconId && !report.movieconData && (
                         <p className="text-xs text-gray-500 italic">Post contains a Moviecon attachment (ID: {report.post.movieconId})</p>
                       )}
                       {report.post.gifId && (
