@@ -36,7 +36,7 @@ export function VideoCallProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user?.id && !isInitialized.current) {
       const userName = (user as any).firstName || (user as any).username || 'User';
-      const userAvatar = (user as any).profilePicture;
+      const userAvatar = (user as any).profileImageUrl;
 
       videoCallService.initialize(user.id, {
         onCallStateChange: (state) => {
@@ -91,7 +91,7 @@ export function VideoCallProvider({ children }: { children: ReactNode }) {
     try {
       setError(null);
       const callerName = (user as any).firstName || (user as any).username || 'User';
-      const callerAvatar = (user as any).profilePicture;
+      const callerAvatar = (user as any).profileImageUrl;
       await videoCallService.initiateCall(recipientId, recipientName, callerName, callerAvatar);
       setCurrentCallInfo(videoCallService.getCurrentCallInfo());
     } catch (err: any) {

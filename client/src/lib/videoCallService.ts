@@ -60,6 +60,7 @@ class VideoCallService {
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
           { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun.cloudflare.com:3478' },
           {
             urls: 'turn:openrelay.metered.ca:80',
             username: 'openrelayproject',
@@ -74,6 +75,11 @@ class VideoCallService {
             urls: 'turn:openrelay.metered.ca:443?transport=tcp',
             username: 'openrelayproject',
             credential: 'openrelayproject'
+          },
+          {
+            urls: 'turn:freestun.net:3478',
+            username: 'free',
+            credential: 'free'
           }
         ],
         iceCandidatePoolSize: 10
@@ -104,6 +110,12 @@ class VideoCallService {
         this.handlers.onCallFailed?.(error.message);
         this.endCall();
       });
+
+      // If we already accepted (call state is 'connected'), answer immediately
+      if (this.callState === 'connected' && this.localStream) {
+        console.log('📞 Auto-answering PeerJS call (already accepted via signaling)');
+        call.answer(this.localStream);
+      }
     });
 
     this.peer.on('error', (error) => {
