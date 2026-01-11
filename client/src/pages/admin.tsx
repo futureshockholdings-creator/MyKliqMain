@@ -260,6 +260,31 @@ export default function AdminPage() {
     },
   });
 
+  // Delete report mutation
+  const deleteReport = useMutation({
+    mutationFn: async (reportId: string) => {
+      const response = await fetch(buildApiUrl(`/api/admin/reports/${reportId}?password=${encodeURIComponent(adminPassword)}`), {
+        method: "DELETE"
+      });
+      if (!response.ok) throw new Error("Failed to delete report");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reports"] });
+      toast({
+        title: "Report Deleted",
+        description: "The report has been removed.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete report.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Update report mutation - uses POST for cross-domain compatibility
   const updateReport = useMutation({
     mutationFn: async ({ reportId, status, adminNotes, actionTaken }: { 
@@ -1420,6 +1445,7 @@ export default function AdminPage() {
                             {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : "N/A"}
                           </TableCell>
                           <TableCell>
+                            <div className="flex items-center gap-2">
                             <Dialog>
                               <DialogTrigger asChild>
                                 <Button 
@@ -1608,6 +1634,35 @@ export default function AdminPage() {
                                 </div>
                               </DialogContent>
                             </Dialog>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Report</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete this report? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteReport.mutate(report.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
