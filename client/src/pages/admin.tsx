@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,6 +46,7 @@ export default function AdminPage() {
   const [broadcastDeepLink, setBroadcastDeepLink] = useState("");
   const [systemStats, setSystemStats] = useState<any>(null);
   const [reportStatusFilter, setReportStatusFilter] = useState<string>("all");
+  const [reportedUserFilter, setReportedUserFilter] = useState<string>("all");
   const [selectedReport, setSelectedReport] = useState<any>(null);
   const [securityAnswer1, setSecurityAnswer1] = useState("");
   const [securityAnswer2, setSecurityAnswer2] = useState("");
@@ -107,6 +108,35 @@ export default function AdminPage() {
     enabled: isAuthenticated && selectedTab === "reports",
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  // Compute unique reported users with report counts (for repeat offender filter)
+  const reportedUsersWithCounts = useMemo(() => {
+    const userMap = new Map<string, { id: string; name: string; email?: string; count: number }>();
+    reports.forEach((report: any) => {
+      const userId = report.postAuthorId;
+      if (userId) {
+        const existing = userMap.get(userId);
+        if (existing) {
+          existing.count++;
+        } else {
+          userMap.set(userId, {
+            id: userId,
+            name: report.postAuthor?.firstName || userId.substring(0, 8),
+            email: report.postAuthor?.email,
+            count: 1
+          });
+        }
+      }
+    });
+    // Sort by count descending (repeat offenders first)
+    return Array.from(userMap.values()).sort((a, b) => b.count - a.count);
+  }, [reports]);
+
+  // Filter reports by reported user
+  const filteredReports = useMemo(() => {
+    if (reportedUserFilter === "all") return reports;
+    return reports.filter((report: any) => report.postAuthorId === reportedUserFilter);
+  }, [reports, reportedUserFilter]);
 
   // Fetch broadcasts
   const { data: broadcasts = [], isLoading: broadcastsLoading } = useQuery<any[]>({
@@ -1287,26 +1317,41 @@ export default function AdminPage() {
                     <Flag className="h-5 w-5" />
                     Content Reports
                   </div>
-                  <Select value={reportStatusFilter} onValueChange={setReportStatusFilter}>
-                    <SelectTrigger className="w-[180px]" data-testid="select-report-status-filter">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Reports</SelectItem>
-                      <SelectItem value="pending">OPEN (Not Reviewed)</SelectItem>
-                      <SelectItem value="reviewed">PENDING (Under Review)</SelectItem>
-                      <SelectItem value="resolved">CLOSED (Resolved)</SelectItem>
-                      <SelectItem value="dismissed">CLOSED (Dismissed)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <Select value={reportStatusFilter} onValueChange={setReportStatusFilter}>
+                      <SelectTrigger className="w-[180px]" data-testid="select-report-status-filter">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Reports</SelectItem>
+                        <SelectItem value="pending">OPEN (Not Reviewed)</SelectItem>
+                        <SelectItem value="reviewed">PENDING (Under Review)</SelectItem>
+                        <SelectItem value="resolved">CLOSED (Resolved)</SelectItem>
+                        <SelectItem value="dismissed">CLOSED (Dismissed)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={reportedUserFilter} onValueChange={setReportedUserFilter}>
+                      <SelectTrigger className="w-[200px]" data-testid="select-reported-user-filter">
+                        <SelectValue placeholder="Filter by user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Users</SelectItem>
+                        {reportedUsersWithCounts.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name} ({user.count} {user.count === 1 ? 'report' : 'reports'})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {reportsLoading ? (
                   <div className="text-center py-8 text-muted-foreground">Loading reports...</div>
-                ) : reports.length === 0 ? (
+                ) : filteredReports.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    No reports found. All clear!
+                    {reports.length === 0 ? "No reports found. All clear!" : "No reports match the current filters."}
                   </div>
                 ) : (
                   <Table>
@@ -1321,7 +1366,7 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {reports.map((report: any) => (
+                      {filteredReports.map((report: any) => (
                         <TableRow key={report.id}>
                           <TableCell>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
