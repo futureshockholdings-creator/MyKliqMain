@@ -63,6 +63,7 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       setIsAuthenticated(true);
+      sessionStorage.setItem("adminPassword", adminPassword);
       toast({
         title: "Admin Access Granted",
         description: "Welcome to the admin dashboard.",
@@ -1462,7 +1463,7 @@ export default function AdminPage() {
                                       </p>
                                     )}
                                     <a 
-                                      href={`/post/${report.postId}?p=${encodeURIComponent(adminPassword)}`}
+                                      href={`/post/${report.postId}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="text-sm text-blue-600 hover:underline font-medium"

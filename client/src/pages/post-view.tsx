@@ -12,13 +12,7 @@ import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 export default function PostView() {
   const [, params] = useRoute("/post/:postId");
   const postId = params?.postId;
-  const urlParams = new URLSearchParams(window.location.search);
-  const password = urlParams.get("p") || "";
-  
-  console.log("[PostView] URL:", window.location.href);
-  console.log("[PostView] Search:", window.location.search);
-  console.log("[PostView] PostId:", postId);
-  console.log("[PostView] Password present:", !!password);
+  const password = sessionStorage.getItem("adminPassword") || "";
 
   const { data: post, isLoading, error } = useQuery({
     queryKey: ["/api/posts", postId, password],
@@ -43,7 +37,7 @@ export default function PostView() {
           <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
           <p className="text-gray-600">Admin credentials required to view this post.</p>
           <p className="text-sm text-gray-500 mt-4">
-            Please access this page through the admin reports panel.
+            Please log in to the admin panel first, then click "View Full Post" from there.
           </p>
         </div>
       </ForcedLightSurface>
