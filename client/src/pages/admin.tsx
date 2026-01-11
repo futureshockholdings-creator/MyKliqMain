@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Search, Shield, Users, Database, Activity, AlertTriangle, BarChart3, Download, RefreshCw, Trash2, UserX, Calendar, Ban, Flag, FileWarning, Bell, Send } from "lucide-react";
+import { Eye, EyeOff, Search, Shield, Users, Database, Activity, AlertTriangle, BarChart3, Download, RefreshCw, Trash2, UserX, Calendar, Ban, Flag, FileWarning, Bell, Send, Loader2, X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { buildApiUrl } from "@/lib/apiConfig";
+import { buildApiUrl, resolveAssetUrl } from "@/lib/apiConfig";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
+import { MemeDisplay } from "@/components/MemeDisplay";
+import { MovieconDisplay } from "@/components/MovieconDisplay";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -54,6 +57,7 @@ export default function AdminPage() {
   const [securityVerificationResult, setSecurityVerificationResult] = useState<any>(null);
   const [revealedPassword, setRevealedPassword] = useState<string | null>(null);
   const [isRevealingPassword, setIsRevealingPassword] = useState(false);
+  const [viewingPostId, setViewingPostId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   // Admin authentication
@@ -108,6 +112,13 @@ export default function AdminPage() {
     queryFn: () => fetch(buildApiUrl(`/api/admin/reports?password=${encodeURIComponent(adminPassword)}${reportStatusFilter !== "all" ? `&status=${reportStatusFilter}` : ""}`)).then(res => res.json()),
     enabled: isAuthenticated && selectedTab === "reports",
     refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  // Fetch full post for viewing
+  const { data: viewingPost, isLoading: postLoading } = useQuery<any>({
+    queryKey: ["/api/posts", viewingPostId],
+    queryFn: () => fetch(buildApiUrl(`/api/posts/${viewingPostId}?password=${encodeURIComponent(adminPassword)}`)).then(res => res.json()),
+    enabled: !!viewingPostId && isAuthenticated,
   });
 
   // Compute unique reported users with report counts (for repeat offender filter)
@@ -1462,14 +1473,13 @@ export default function AdminPage() {
                                         {report.post?.gifId && ' gif'}
                                       </p>
                                     )}
-                                    <a 
-                                      href={`/post/${report.postId}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm text-blue-600 hover:underline font-medium"
+                                    <Button
+                                      variant="link"
+                                      className="p-0 h-auto text-blue-600 font-medium"
+                                      onClick={() => setViewingPostId(report.postId)}
                                     >
                                       View Full Post →
-                                    </a>
+                                    </Button>
                                   </div>
                                   <div className="border-t pt-4">
                                     <Label className="mb-2 block">Take Action</Label>
@@ -1797,6 +1807,99 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {/* Full Post View Dialog */}
+      <Dialog open={!!viewingPostId} onOpenChange={(open) => !open && setViewingPostId(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Post Review</DialogTitle>
+            <DialogDescription>Post ID: {viewingPostId}</DialogDescription>
+          </DialogHeader>
+          
+          {postLoading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+            </div>
+          ) : viewingPost ? (
+            <div className="space-y-4">
+              {/* Author Info */}
+              <div className="flex items-center space-x-3 pb-3 border-b">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage src={resolveAssetUrl(viewingPost.author?.profileImageUrl)} />
+                  <AvatarFallback>
+                    {viewingPost.author?.firstName?.[0] || "?"}
+                    {viewingPost.author?.lastName?.[0] || ""}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-semibold">
+                    {viewingPost.author?.firstName} {viewingPost.author?.lastName}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(viewingPost.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Post Content */}
+              {viewingPost.content && (
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="whitespace-pre-wrap">{viewingPost.content}</p>
+                </div>
+              )}
+
+              {/* Media */}
+              {viewingPost.mediaUrl && (
+                <div className="rounded-lg overflow-hidden">
+                  {viewingPost.mediaType === 'video' ? (
+                    <video 
+                      src={resolveAssetUrl(viewingPost.mediaUrl)} 
+                      controls 
+                      className="w-full max-h-[400px] object-contain bg-black"
+                    />
+                  ) : (
+                    <img 
+                      src={resolveAssetUrl(viewingPost.mediaUrl)} 
+                      alt="Post media"
+                      className="w-full max-h-[400px] object-contain"
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Meme */}
+              {viewingPost.meme && (
+                <div className="rounded-lg overflow-hidden">
+                  <MemeDisplay meme={viewingPost.meme} />
+                </div>
+              )}
+
+              {/* Moviecon */}
+              {viewingPost.moviecon && (
+                <div className="rounded-lg overflow-hidden">
+                  <MovieconDisplay moviecon={viewingPost.moviecon} />
+                </div>
+              )}
+
+              {/* GIF */}
+              {viewingPost.gifUrl && (
+                <div className="rounded-lg overflow-hidden">
+                  <img 
+                    src={viewingPost.gifUrl} 
+                    alt="GIF"
+                    className="w-full max-h-[400px] object-contain"
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center p-8">
+              <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+              <p>Post not found or could not be loaded.</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </ForcedLightSurface>
   );
 }
