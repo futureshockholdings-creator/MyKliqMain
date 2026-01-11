@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRoute, useSearch } from "wouter";
+import { useRoute } from "wouter";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, AlertTriangle } from "lucide-react";
@@ -12,9 +12,13 @@ import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 export default function PostView() {
   const [, params] = useRoute("/post/:postId");
   const postId = params?.postId;
-  const searchString = useSearch();
-  const urlParams = new URLSearchParams(searchString);
+  const urlParams = new URLSearchParams(window.location.search);
   const password = urlParams.get("p") || "";
+  
+  console.log("[PostView] URL:", window.location.href);
+  console.log("[PostView] Search:", window.location.search);
+  console.log("[PostView] PostId:", postId);
+  console.log("[PostView] Password present:", !!password);
 
   const { data: post, isLoading, error } = useQuery({
     queryKey: ["/api/posts", postId, password],
@@ -30,6 +34,21 @@ export default function PostView() {
     },
     enabled: !!postId && !!password,
   });
+
+  if (!password) {
+    return (
+      <ForcedLightSurface className="min-h-screen flex items-center justify-center">
+        <div className="text-center p-8">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+          <p className="text-gray-600">Admin credentials required to view this post.</p>
+          <p className="text-sm text-gray-500 mt-4">
+            Please access this page through the admin reports panel.
+          </p>
+        </div>
+      </ForcedLightSurface>
+    );
+  }
 
   if (isLoading) {
     return (
