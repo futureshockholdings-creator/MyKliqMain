@@ -546,9 +546,10 @@ export default function Kliq() {
     const friendName = friend.friend.firstName && friend.friend.lastName 
       ? `${friend.friend.firstName} ${friend.friend.lastName}`
       : friend.friend.firstName || "Friend";
+    const friendAvatar = friend.friend.profileImageUrl;
     
     try {
-      await initiateCall(friendId, friendName);
+      await initiateCall(friendId, friendName, friendAvatar);
     } catch (error: any) {
       toast({
         title: "Error",

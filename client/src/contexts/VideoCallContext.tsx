@@ -9,7 +9,7 @@ interface VideoCallContextType {
   remoteStream: MediaStream | null;
   isAudioEnabled: boolean;
   isVideoEnabled: boolean;
-  initiateCall: (recipientId: string, recipientName: string) => Promise<void>;
+  initiateCall: (recipientId: string, recipientName: string, recipientAvatar?: string) => Promise<void>;
   acceptCall: () => Promise<void>;
   declineCall: () => void;
   endCall: () => void;
@@ -82,7 +82,7 @@ export function VideoCallProvider({ children }: { children: ReactNode }) {
     };
   }, [user?.id]);
 
-  const initiateCall = useCallback(async (recipientId: string, recipientName: string) => {
+  const initiateCall = useCallback(async (recipientId: string, recipientName: string, recipientAvatar?: string) => {
     if (!user) {
       setError('You must be logged in to make calls');
       return;
@@ -92,7 +92,7 @@ export function VideoCallProvider({ children }: { children: ReactNode }) {
       setError(null);
       const callerName = (user as any).firstName || (user as any).username || 'User';
       const callerAvatar = (user as any).profileImageUrl;
-      await videoCallService.initiateCall(recipientId, recipientName, callerName, callerAvatar);
+      await videoCallService.initiateCall(recipientId, recipientName, callerName, callerAvatar, recipientAvatar);
       setCurrentCallInfo(videoCallService.getCurrentCallInfo());
     } catch (err: any) {
       setError(err.message);

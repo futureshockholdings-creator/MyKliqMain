@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { 
   Phone, 
   PhoneOff, 
@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useVideoCall } from '@/contexts/VideoCallContext';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 export function VideoCallScreen() {
@@ -32,11 +33,17 @@ export function VideoCallScreen() {
     error,
     clearError,
   } = useVideoCall();
+  const { user } = useAuth();
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [isMinimized, setIsMinimized] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
+
+  const isCurrentUserCaller = currentCallInfo?.callerId === user?.id;
+  const remoteUserAvatar = isCurrentUserCaller 
+    ? currentCallInfo?.recipientAvatar 
+    : currentCallInfo?.callerAvatar;
 
   useEffect(() => {
     if (localVideoRef.current && localStream) {
@@ -97,7 +104,7 @@ export function VideoCallScreen() {
         ) : (
           <div className="w-full h-full bg-muted flex items-center justify-center">
             <Avatar className="w-12 h-12">
-              <AvatarImage src={currentCallInfo?.callerAvatar} />
+              <AvatarImage src={remoteUserAvatar} />
               <AvatarFallback>{remoteName?.[0]?.toUpperCase()}</AvatarFallback>
             </Avatar>
           </div>
@@ -142,7 +149,7 @@ export function VideoCallScreen() {
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 to-black">
             <Avatar className="w-32 h-32 mb-6 border-4 border-primary">
-              <AvatarImage src={currentCallInfo?.callerAvatar} />
+              <AvatarImage src={remoteUserAvatar} />
               <AvatarFallback className="text-4xl bg-primary text-primary-foreground">
                 {remoteName?.[0]?.toUpperCase() || <User className="w-16 h-16" />}
               </AvatarFallback>

@@ -10,6 +10,7 @@ export interface CallInfo {
   callerAvatar?: string;
   recipientId: string;
   recipientName?: string;
+  recipientAvatar?: string;
   startTime?: Date;
 }
 
@@ -257,7 +258,7 @@ class VideoCallService {
     }
   }
 
-  async initiateCall(recipientId: string, recipientName: string, callerName: string, callerAvatar?: string): Promise<void> {
+  async initiateCall(recipientId: string, recipientName: string, callerName: string, callerAvatar?: string, recipientAvatar?: string): Promise<void> {
     if (this.callState !== 'idle') {
       throw new Error('Already in a call');
     }
@@ -282,6 +283,7 @@ class VideoCallService {
       callerAvatar,
       recipientId,
       recipientName,
+      recipientAvatar,
     };
 
     this.setCallState('calling');
