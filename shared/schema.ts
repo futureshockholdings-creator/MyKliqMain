@@ -1690,7 +1690,7 @@ export const reportStatusEnum = pgEnum("report_status", ["pending", "reviewed", 
 export const rulesReports = pgTable("rules_reports", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   reportedBy: varchar("reported_by").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }),
+  postId: varchar("post_id").references(() => posts.id, { onDelete: "set null" }),
   postAuthorId: varchar("post_author_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   reason: varchar("reason").notNull(), // "hate", "discrimination", "offensive", "pornographic", "spam", "other"
   description: text("description"), // Optional additional details

@@ -6053,18 +6053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Report not found" });
       }
       
-      // If action is post_removed, delete the post
-      if (actionTaken === 'post_removed' && existingReport?.postId) {
-        try {
-          console.log('🗑️ Deleting post:', existingReport.postId);
-          await storage.deletePost(existingReport.postId);
-          console.log('✅ Post deleted successfully');
-        } catch (deleteError) {
-          console.error('⚠️ Error deleting post (may already be deleted):', deleteError);
-        }
-      }
-      
-      // Send notification to the post author about the moderation decision
+      // Send notification to the post author about the moderation decision BEFORE deleting the post
       if (existingReport?.postAuthorId && actionTaken) {
         try {
           console.log('📧 Sending moderation notification to author:', existingReport.postAuthorId);
@@ -6077,6 +6066,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('✅ Notification sent to author');
         } catch (notifyError) {
           console.error('⚠️ Error sending notification:', notifyError);
+        }
+      }
+      
+      // If action is post_removed, delete the post AFTER sending notification
+      if (actionTaken === 'post_removed' && existingReport?.postId) {
+        try {
+          console.log('🗑️ Deleting post:', existingReport.postId);
+          await storage.deletePost(existingReport.postId);
+          console.log('✅ Post deleted successfully');
+        } catch (deleteError) {
+          console.error('⚠️ Error deleting post (may already be deleted):', deleteError);
         }
       }
       
@@ -6122,18 +6122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Report not found" });
       }
       
-      // If action is post_removed, delete the post
-      if (actionTaken === 'post_removed' && existingReport?.postId) {
-        try {
-          console.log('🗑️ Deleting post:', existingReport.postId);
-          await storage.deletePost(existingReport.postId);
-          console.log('✅ Post deleted successfully');
-        } catch (deleteError) {
-          console.error('⚠️ Error deleting post (may already be deleted):', deleteError);
-        }
-      }
-      
-      // Send notification to the post author about the moderation decision
+      // Send notification to the post author about the moderation decision BEFORE deleting the post
       if (existingReport?.postAuthorId && actionTaken) {
         try {
           console.log('📧 Sending moderation notification to author:', existingReport.postAuthorId);
@@ -6146,6 +6135,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log('✅ Notification sent to author');
         } catch (notifyError) {
           console.error('⚠️ Error sending notification:', notifyError);
+        }
+      }
+      
+      // If action is post_removed, delete the post AFTER sending notification
+      if (actionTaken === 'post_removed' && existingReport?.postId) {
+        try {
+          console.log('🗑️ Deleting post:', existingReport.postId);
+          await storage.deletePost(existingReport.postId);
+          console.log('✅ Post deleted successfully');
+        } catch (deleteError) {
+          console.error('⚠️ Error deleting post (may already be deleted):', deleteError);
         }
       }
       
