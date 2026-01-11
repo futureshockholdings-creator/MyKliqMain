@@ -40,6 +40,10 @@ interface Report {
     id: string;
     content: string;
     mediaUrl?: string;
+    mediaType?: 'image' | 'video' | 'gif';
+    memeId?: string;
+    movieconId?: string;
+    gifId?: string;
     createdAt: string;
   };
   postAuthor?: {
@@ -337,17 +341,46 @@ export default function AdminReports() {
                 {/* Reported Content */}
                 {report.post && (
                   <div className="mb-4 border rounded-lg p-4 bg-red-50">
-                    <p className="text-sm font-medium mb-2">Reported content:</p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium">Reported content:</p>
+                      <a 
+                        href={`/post/${report.postId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        View Original Post
+                      </a>
+                    </div>
                     <div className="space-y-2">
                       {report.post.content && (
                         <p className="text-sm">{report.post.content}</p>
                       )}
-                      {report.post.mediaUrl && (
+                      {report.post.mediaUrl && report.post.mediaType === 'video' && (
+                        <video 
+                          src={resolveAssetUrl(report.post.mediaUrl)} 
+                          controls
+                          className="max-w-xs rounded"
+                        />
+                      )}
+                      {report.post.mediaUrl && report.post.mediaType !== 'video' && (
                         <img 
-                          src={report.post.mediaUrl} 
+                          src={resolveAssetUrl(report.post.mediaUrl)} 
                           alt="Reported content" 
                           className="max-w-xs rounded"
                         />
+                      )}
+                      {report.post.memeId && (
+                        <p className="text-xs text-gray-500 italic">Post contains a meme attachment (ID: {report.post.memeId})</p>
+                      )}
+                      {report.post.movieconId && (
+                        <p className="text-xs text-gray-500 italic">Post contains a Moviecon attachment (ID: {report.post.movieconId})</p>
+                      )}
+                      {report.post.gifId && (
+                        <p className="text-xs text-gray-500 italic">Post contains a GIF attachment (ID: {report.post.gifId})</p>
+                      )}
+                      {!report.post.content && !report.post.mediaUrl && !report.post.memeId && !report.post.movieconId && !report.post.gifId && (
+                        <p className="text-xs text-gray-500 italic">No visible content (post may have been deleted)</p>
                       )}
                     </div>
                     {report.postAuthor && (
@@ -375,6 +408,17 @@ export default function AdminReports() {
                         </Button>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Fallback when post doesn't exist */}
+                {!report.post && (
+                  <div className="mb-4 border rounded-lg p-4 bg-yellow-50">
+                    <p className="text-sm font-medium mb-2">Reported content:</p>
+                    <p className="text-sm text-yellow-700">
+                      The reported post is no longer available (may have been deleted by the user or removed by moderation).
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">Post ID: {report.postId}</p>
                   </div>
                 )}
 
