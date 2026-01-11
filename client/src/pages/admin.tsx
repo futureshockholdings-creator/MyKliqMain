@@ -1447,12 +1447,29 @@ export default function AdminPage() {
                                       <p>{report.description}</p>
                                     </div>
                                   )}
-                                  {report.post?.content && (
-                                    <div>
-                                      <Label className="text-muted-foreground">Post Content</Label>
-                                      <p className="p-3 bg-muted rounded-md">{report.post.content}</p>
-                                    </div>
-                                  )}
+                                  <div>
+                                    <Label className="text-muted-foreground">Post Content</Label>
+                                    {report.post?.content && (
+                                      <p className="p-3 bg-muted rounded-md mb-2">{report.post.content}</p>
+                                    )}
+                                    {(report.post?.mediaUrl || report.post?.memeId || report.post?.movieconId || report.post?.gifId) && (
+                                      <p className="text-xs text-muted-foreground mb-2">
+                                        Attachments: 
+                                        {report.post?.mediaUrl && ` ${report.post?.mediaType || 'media'}`}
+                                        {report.post?.memeId && ' meme'}
+                                        {report.post?.movieconId && ' moviecon'}
+                                        {report.post?.gifId && ' gif'}
+                                      </p>
+                                    )}
+                                    <a 
+                                      href={`/post/${report.postId}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm text-blue-600 hover:underline font-medium"
+                                    >
+                                      View Full Post →
+                                    </a>
+                                  </div>
                                   <div className="border-t pt-4">
                                     <Label className="mb-2 block">Take Action</Label>
                                     <div className="grid grid-cols-2 gap-2">
