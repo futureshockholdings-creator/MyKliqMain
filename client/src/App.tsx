@@ -44,6 +44,7 @@ import Login from "@/pages/login";
 import ForgotPassword from "@/pages/forgot-password";
 import AdminPage from "@/pages/admin";
 import AdminReports from "@/pages/admin-reports";
+import PostView from "@/pages/post-view";
 import AdvertiserRequirements from "@/pages/advertiser-requirements";
 import AdvertiserOnboarding from "@/pages/advertiser-onboarding";
 
@@ -226,6 +227,7 @@ function Router() {
       {/* Admin routes - accessible without authentication for emergency access */}
       <Route path="/support-admin" component={AdminPage} />
       <Route path="/rules-reports" component={AdminReports} />
+      <Route path="/post/:postId" component={PostView} />
       <Route path="/ads-manager" component={AdsManager} />
       <Route path="/moviecon-manager" component={MovieconManagerPage} />
       <Route path="/meme-manager" component={MemeManagerPage} />

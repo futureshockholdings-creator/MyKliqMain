@@ -5724,6 +5724,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get a single post by ID (for admin review)
+  app.get('/api/posts/:postId', async (req: any, res) => {
+    try {
+      const { postId } = req.params;
+      const { password } = req.query;
+      
+      // Require admin password for viewing posts directly
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+      
+      const post = await storage.getPostById(postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      // Get the author info
+      const author = await storage.getUser(post.userId);
+      
+      // Get meme data if the post has a meme
+      let meme = null;
+      if (post.memeId) {
+        const [memeData] = await db
+          .select()
+          .from(memes)
+          .where(eq(memes.id, post.memeId));
+        meme = memeData;
+      }
+      
+      // Get moviecon data if the post has a moviecon
+      let moviecon = null;
+      if (post.movieconId) {
+        const [movieconData] = await db
+          .select()
+          .from(moviecons)
+          .where(eq(moviecons.id, post.movieconId));
+        moviecon = movieconData;
+      }
+      
+      res.json({
+        ...post,
+        author: author ? {
+          id: author.id,
+          firstName: author.firstName,
+          lastName: author.lastName,
+          profileImageUrl: author.profileImageUrl
+        } : null,
+        meme,
+        moviecon
+      });
+    } catch (error) {
+      console.error("Error fetching post:", error);
+      res.status(500).json({ message: "Failed to fetch post" });
+    }
+  });
+
   // Get comments for a post
   app.get('/api/posts/:postId/comments', isAuthenticated, async (req: any, res) => {
     try {
