@@ -10,6 +10,9 @@ import { useDailyCheckIn } from "@/hooks/useDailyCheckIn";
 import { useTranslation } from "react-i18next";
 import "./i18n/config"; // Initialize i18n
 import { initializeEnterpriseServices, cleanupEnterpriseServices } from "@/lib/enterprise/enterpriseInit";
+import { VideoCallProvider } from "@/contexts/VideoCallContext";
+import { IncomingCallOverlay } from "@/components/IncomingCallOverlay";
+import { VideoCallScreen } from "@/components/VideoCallScreen";
 
 // Pages
 import Landing from "@/pages/landing";
@@ -347,7 +350,11 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <VideoCallProvider>
+        <AppContent />
+        <IncomingCallOverlay />
+        <VideoCallScreen />
+      </VideoCallProvider>
     </QueryClientProvider>
   );
 }

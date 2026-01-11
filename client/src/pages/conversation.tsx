@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowLeft, Send, X } from "lucide-react";
+import { ArrowLeft, Send, X, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,6 +15,7 @@ import { MessageMediaPicker } from "@/components/MessageMediaPicker";
 import { MemeDisplay } from "@/components/MemeDisplay";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { PageWrapper } from "@/components/PageWrapper";
+import { VideoCallButton } from "@/components/VideoCallButton";
 
 interface MessageData {
   id: string;
@@ -263,16 +264,22 @@ export function Conversation() {
                 </Button>
               </Link>
               {displayUser && (
-                <div className="flex items-center gap-3">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={resolveAssetUrl(displayUser.profileImageUrl)} />
-                    <AvatarFallback className="bg-blue-100 text-blue-600">
-                      {getInitials(displayUser)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <h1 className="text-lg font-semibold text-foreground" data-testid="text-conversation-title">
-                    {getDisplayName(displayUser)}
-                  </h1>
+                <div className="flex items-center justify-between flex-1">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={resolveAssetUrl(displayUser.profileImageUrl)} />
+                      <AvatarFallback className="bg-blue-100 text-blue-600">
+                        {getInitials(displayUser)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <h1 className="text-lg font-semibold text-foreground" data-testid="text-conversation-title">
+                      {getDisplayName(displayUser)}
+                    </h1>
+                  </div>
+                  <VideoCallButton 
+                    recipientId={displayUser.id}
+                    recipientName={getDisplayName(displayUser)}
+                  />
                 </div>
               )}
             </div>

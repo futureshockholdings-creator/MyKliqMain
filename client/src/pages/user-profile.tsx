@@ -4,9 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
-import { CalendarDays, Music, User as UserIcon } from "lucide-react";
+import { CalendarDays, Music, User as UserIcon, MessageCircle } from "lucide-react";
 import { type User } from "@shared/schema";
 import { usePostTranslation } from "@/lib/translationService";
+import { VideoCallButton } from "@/components/VideoCallButton";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 export default function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
@@ -84,6 +87,23 @@ export default function UserProfile() {
                     Birthday: {new Date(profileUser.birthdate).toLocaleDateString()}
                   </div>
                 )}
+                
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 pt-2">
+                  <Link to={`/messages/${profileUser.id}`}>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <MessageCircle className="w-4 h-4" />
+                      Message
+                    </Button>
+                  </Link>
+                  <VideoCallButton 
+                    recipientId={profileUser.id}
+                    recipientName={displayName}
+                    variant="outline"
+                    size="sm"
+                    showLabel
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
