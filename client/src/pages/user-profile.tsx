@@ -63,7 +63,15 @@ export default function UserProfile() {
 
   const { data: userPosts = [] } = useQuery<Post[]>({
     queryKey: ["/api/posts/user", userId],
-    queryFn: () => apiRequest("GET", `/api/posts/user/${userId}`),
+    queryFn: async () => {
+      try {
+        const result = await apiRequest("GET", `/api/posts/user/${userId}`);
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        console.error("Failed to fetch user posts:", error);
+        return [];
+      }
+    },
     enabled: !!userId,
   });
 
@@ -211,8 +219,8 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        {profileUser.profileMusicUrls && profileUser.profileMusicUrls.length > 0 && 
-         profileUser.profileMusicTitles && profileUser.profileMusicTitles.length > 0 && (
+        {profileUser.profileMusicUrls && Array.isArray(profileUser.profileMusicUrls) && profileUser.profileMusicUrls.length > 0 && 
+         profileUser.profileMusicTitles && Array.isArray(profileUser.profileMusicTitles) && profileUser.profileMusicTitles.length > 0 && (
           <Card className="border" style={{ borderColor: `${primaryColor}40` }}>
             <CardHeader>
               <div className="flex items-center space-x-2">
@@ -256,7 +264,7 @@ export default function UserProfile() {
           </CardContent>
         </Card>
 
-        {userPosts.length > 0 && (
+        {Array.isArray(userPosts) && userPosts.length > 0 && (
           <Card className="border" style={{ borderColor: `${primaryColor}40` }}>
             <CardHeader>
               <CardTitle style={{ color: primaryColor }}>Recent Posts</CardTitle>
