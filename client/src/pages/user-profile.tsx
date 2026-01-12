@@ -55,11 +55,20 @@ export default function UserProfile() {
   const { initiateCall } = useVideoCall();
   const { user: currentUser } = useAuth();
 
-  const { data: profileUser, isLoading } = useQuery<ProfileUser>({
+  const { data: profileUser, isLoading, error } = useQuery<ProfileUser>({
     queryKey: ["/api/user/profile", userId],
-    queryFn: () => apiRequest("GET", `/api/user/profile/${userId}`),
+    queryFn: async () => {
+      console.log("[UserProfile] Fetching profile for userId:", userId);
+      const result = await apiRequest("GET", `/api/user/profile/${userId}`);
+      console.log("[UserProfile] Profile data received:", result);
+      return result;
+    },
     enabled: !!userId,
   });
+
+  if (error) {
+    console.error("[UserProfile] Error fetching profile:", error);
+  }
 
   const { data: userPosts = [] } = useQuery<Post[]>({
     queryKey: ["/api/posts/user", userId],
