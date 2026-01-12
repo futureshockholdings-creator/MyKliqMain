@@ -4724,6 +4724,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
+      // Fetch user's theme for their profile styling
+      const userTheme = await storage.getUserTheme(userId);
+      
       // Return public profile info (excluding sensitive data)
       const publicProfile = {
         id: user.id,
@@ -4737,6 +4740,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         profileMusicUrls: user.profileMusicUrls,
         profileMusicTitles: user.profileMusicTitles,
         createdAt: user.createdAt,
+        equippedBorderId: user.equippedBorderId,
+        // Include theme for profile styling
+        theme: userTheme ? {
+          primaryColor: userTheme.primaryColor,
+          secondaryColor: userTheme.secondaryColor,
+          fontFamily: userTheme.fontFamily,
+          backgroundType: userTheme.backgroundType,
+          backgroundColor: userTheme.backgroundColor,
+          backgroundGradientStart: userTheme.backgroundGradientStart,
+          backgroundGradientEnd: userTheme.backgroundGradientEnd,
+          backgroundPattern: userTheme.backgroundPattern,
+        } : null,
       };
       
       res.json(publicProfile);
@@ -5721,6 +5736,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error unliking post:", error);
       res.status(500).json({ message: "Failed to unlike post" });
+    }
+  });
+
+  // Get posts by a specific user (for viewing their profile)
+  app.get('/api/posts/user/:userId', async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // Get the user's public posts (limited to recent ones)
+      const userPosts = await db
+        .select({
+          id: posts.id,
+          content: posts.content,
+          mediaUrl: posts.mediaUrl,
+          mediaType: posts.mediaType,
+          createdAt: posts.createdAt,
+        })
+        .from(posts)
+        .where(eq(posts.userId, userId))
+        .orderBy(desc(posts.createdAt))
+        .limit(10);
+      
+      // Get likes and comments count for each post
+      const postsWithCounts = await Promise.all(
+        userPosts.map(async (post) => {
+          const [likesResult, commentsResult] = await Promise.all([
+            db.select({ count: sqlOp<number>`count(*)` }).from(postLikes).where(eq(postLikes.postId, post.id)),
+            db.select({ count: sqlOp<number>`count(*)` }).from(comments).where(eq(comments.postId, post.id)),
+          ]);
+          
+          return {
+            ...post,
+            likesCount: Number(likesResult[0]?.count) || 0,
+            commentsCount: Number(commentsResult[0]?.count) || 0,
+          };
+        })
+      );
+      
+      res.json(postsWithCounts);
+    } catch (error) {
+      console.error("Error fetching user posts:", error);
+      res.status(500).json({ message: "Failed to fetch user posts" });
     }
   });
 
