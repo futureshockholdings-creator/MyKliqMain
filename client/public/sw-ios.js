@@ -2,7 +2,23 @@
  * iOS Safari PWA Service Worker
  * Native Web Push API - No Firebase dependencies
  * This bypasses Firebase FCM compatibility issues on iOS Safari
+ * 
+ * Also handles offline caching for iOS PWA users
  */
+
+const CACHE_NAME = 'mykliq-ios-v1';
+const STATIC_CACHE = 'mykliq-ios-static-v1';
+const DYNAMIC_CACHE = 'mykliq-ios-dynamic-v1';
+
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/offline.html',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
+  '/icons/icon-180x180.png',
+  '/manifest.json'
+];
 
 self.addEventListener('push', (event) => {
   console.log('[iOS SW] Push event received');
@@ -84,40 +100,102 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 self.addEventListener('install', (event) => {
-  console.log('[iOS SW] Service worker installed');
-  self.skipWaiting();
+  console.log('[iOS SW] Service worker installing...');
+  event.waitUntil(
+    caches.open(STATIC_CACHE)
+      .then(cache => {
+        console.log('[iOS SW] Caching static assets for offline use');
+        return cache.addAll(STATIC_ASSETS);
+      })
+      .then(() => {
+        console.log('[iOS SW] Static assets cached successfully');
+        return self.skipWaiting();
+      })
+      .catch(err => {
+        console.error('[iOS SW] Failed to cache static assets:', err);
+        return self.skipWaiting();
+      })
+  );
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('[iOS SW] Service worker activated');
-  event.waitUntil(clients.claim());
+  console.log('[iOS SW] Service worker activating...');
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE && cacheName.startsWith('mykliq-ios')) {
+            console.log('[iOS SW] Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => {
+      console.log('[iOS SW] Claiming clients');
+      return self.clients.claim();
+    })
+  );
 });
 
 // Handle fetch events - skip API requests entirely to avoid iOS Safari issues
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const { request } = event;
+  const url = new URL(request.url);
   
-  // Skip API requests entirely - let browser handle them directly
+  // Skip non-GET requests
+  if (request.method !== 'GET') {
+    return;
+  }
+  
+  // Skip API requests entirely - let browser handle them directly (critical for iOS)
   if (url.pathname.startsWith('/api/') || url.hostname.includes('api.')) {
     return; // Don't call respondWith - let the request pass through
   }
   
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
+  // Handle navigation requests (page loads)
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          // Cache successful navigation responses
+          const responseClone = response.clone();
+          caches.open(STATIC_CACHE).then(cache => {
+            cache.put(request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => {
+          // Try to serve from cache first, then offline page
+          return caches.match(request)
+            .then(cachedResponse => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              // Serve offline page as fallback
+              return caches.match('/offline.html');
+            });
+        })
+    );
     return;
   }
   
-  // For navigation and other requests, use network-first strategy
+  // For other static assets, use stale-while-revalidate strategy
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        return response;
-      })
-      .catch(() => {
-        return new Response('Offline', {
-          status: 503,
-          headers: { 'Content-Type': 'text/plain' }
-        });
+    caches.match(request)
+      .then(cachedResponse => {
+        const fetchPromise = fetch(request)
+          .then(response => {
+            if (response && response.status === 200) {
+              const responseClone = response.clone();
+              caches.open(DYNAMIC_CACHE).then(cache => {
+                cache.put(request, responseClone);
+              });
+            }
+            return response;
+          })
+          .catch(() => null);
+        
+        return cachedResponse || fetchPromise;
       })
   );
 });
