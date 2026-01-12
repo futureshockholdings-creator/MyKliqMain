@@ -4,7 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
-import { CalendarDays, Music, User as UserIcon, MessageCircle, ArrowLeft, Video, Heart, MessageSquare } from "lucide-react";
+import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
+import { 
+  CalendarDays, Music, User as UserIcon, MessageCircle, ArrowLeft, Video, 
+  Heart, MessageSquare, Users, Flame, FileText 
+} from "lucide-react";
 import { usePostTranslation } from "@/lib/translationService";
 import { Button } from "@/components/ui/button";
 import { useVideoCall } from "@/contexts/VideoCallContext";
@@ -37,6 +41,19 @@ interface ProfileUser {
   profileMusicTitles?: string[];
   createdAt?: string;
   equippedBorderId?: string;
+  loginStreak?: number;
+  friendCount?: number;
+  postCount?: number;
+  interests?: string[];
+  hobbies?: string[];
+  favoriteLocations?: string[];
+  favoriteFoods?: string[];
+  musicGenres?: string[];
+  favoriteMovies?: string[];
+  favoriteBooks?: string[];
+  relationshipStatus?: string;
+  petPreferences?: string;
+  lifestyle?: string;
   theme?: ProfileTheme | null;
 }
 
@@ -100,11 +117,11 @@ export default function UserProfile() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-4 max-w-2xl">
+      <div className="container mx-auto p-4 max-w-4xl">
         <div className="animate-pulse space-y-4">
+          <div className="h-48 bg-gray-200 rounded-lg"></div>
           <div className="h-32 bg-gray-200 rounded-lg"></div>
-          <div className="h-20 bg-gray-200 rounded-lg"></div>
-          <div className="h-20 bg-gray-200 rounded-lg"></div>
+          <div className="h-24 bg-gray-200 rounded-lg"></div>
         </div>
       </div>
     );
@@ -112,12 +129,18 @@ export default function UserProfile() {
 
   if (!profileUser) {
     return (
-      <div className="container mx-auto p-4 max-w-2xl">
+      <div className="container mx-auto p-4 max-w-4xl">
         <Card>
           <CardContent className="p-8 text-center">
             <UserIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <h2 className="text-xl font-bold text-gray-600 mb-2">User not found</h2>
             <p className="text-gray-500">The profile you're looking for doesn't exist.</p>
+            <Link to="/kliq">
+              <Button variant="outline" className="mt-4">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Kliq
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -131,8 +154,20 @@ export default function UserProfile() {
   const theme = profileUser.theme;
   const primaryColor = theme?.primaryColor || "#FF1493";
   const secondaryColor = theme?.secondaryColor || "#00BFFF";
+  
+  const resolvedBackgroundUrl = resolveAssetUrl(profileUser.backgroundImageUrl);
+  const resolvedProfileUrl = resolveAssetUrl(profileUser.profileImageUrl);
 
   const getBackgroundStyle = () => {
+    if (resolvedBackgroundUrl) {
+      return {
+        backgroundImage: `url("${resolvedBackgroundUrl}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      };
+    }
+    
     if (!theme) {
       return { background: `linear-gradient(135deg, ${primaryColor}40, ${secondaryColor}40)` };
     }
@@ -140,10 +175,10 @@ export default function UserProfile() {
     switch (theme.backgroundType) {
       case 'gradient':
         return { 
-          background: `linear-gradient(135deg, ${theme.backgroundGradientStart || primaryColor}40, ${theme.backgroundGradientEnd || secondaryColor}40)` 
+          background: `linear-gradient(135deg, ${theme.backgroundGradientStart || primaryColor}, ${theme.backgroundGradientEnd || secondaryColor})` 
         };
       case 'solid':
-        return { backgroundColor: `${theme.backgroundColor || '#000000'}40` };
+        return { backgroundColor: theme.backgroundColor || '#000000' };
       default:
         return { background: `linear-gradient(135deg, ${primaryColor}40, ${secondaryColor}40)` };
     }
@@ -155,126 +190,185 @@ export default function UserProfile() {
     ? 'font-serif' 
     : 'font-sans';
 
+  const joinYear = profileUser.createdAt ? new Date(profileUser.createdAt).getFullYear() : null;
+
   return (
-    <div className={`container mx-auto p-4 max-w-2xl pb-24 ${fontFamilyClass}`}>
-      <div className="space-y-6">
+    <div className={`w-full max-w-4xl mx-auto p-4 md:p-6 pb-24 ${fontFamilyClass}`}>
+      <div className="space-y-4 md:space-y-6">
         <Link to="/kliq">
-          <Button variant="ghost" size="sm" className="gap-2 mb-4">
+          <Button variant="ghost" size="sm" className="gap-2 mb-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Kliq
           </Button>
         </Link>
 
-        <Card style={getBackgroundStyle()} className="border-2" 
-          {...(primaryColor && { style: { ...getBackgroundStyle(), borderColor: primaryColor } })}>
-          <CardContent className="p-6">
-            <div className="flex items-start space-x-4">
-              <div className="relative">
-                <Avatar className="w-24 h-24 border-4" style={{ borderColor: primaryColor }}>
-                  <AvatarImage 
-                    src={profileUser.profileImageUrl ? resolveAssetUrl(profileUser.profileImageUrl) : undefined} 
-                    alt={`${displayName}'s avatar`} 
-                  />
-                  <AvatarFallback className="text-3xl" style={{ backgroundColor: primaryColor, color: 'white' }}>
-                    {displayName.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-              
-              <div className="flex-1 space-y-2">
-                <div>
-                  <h1 className="text-2xl font-bold" style={{ color: primaryColor }}>{displayName}</h1>
-                  {profileUser.kliqName && (
-                    <Badge className="mt-1 text-white" style={{ backgroundColor: primaryColor }}>
-                      {profileUser.kliqName}
-                    </Badge>
-                  )}
-                </div>
-                
-                {profileUser.bio && (
-                  <p className="text-foreground/80">{translatePost(profileUser.bio)}</p>
-                )}
-                
-                {profileUser.birthdate && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <CalendarDays className="w-4 h-4 mr-1" />
-                    Birthday: {new Date(profileUser.birthdate).toLocaleDateString()}
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-2 pt-3">
-                  <Link to={`/messages/${profileUser.id}`}>
-                    <Button variant="outline" size="sm" className="gap-2" 
-                      style={{ borderColor: primaryColor, color: primaryColor }}>
-                      <MessageCircle className="w-4 h-4" />
-                      Message
-                    </Button>
-                  </Link>
-                  {currentUser && currentUser.id !== profileUser.id && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="gap-2"
-                      style={{ borderColor: secondaryColor, color: secondaryColor }}
-                      onClick={handleVideoCall}
-                    >
-                      <Video className="w-4 h-4" />
-                      Video Call
-                    </Button>
-                  )}
-                </div>
-              </div>
+        {/* Hero Section with Background Image */}
+        <Card className="overflow-hidden">
+          <div 
+            className="relative h-48 md:h-56"
+            style={getBackgroundStyle()}
+          >
+            <div className="absolute inset-0 bg-black/20"></div>
+            
+            {/* Profile Avatar */}
+            <div className="absolute bottom-4 left-4">
+              <Avatar 
+                className="w-24 h-24 md:w-28 md:h-28 border-4 shadow-lg"
+                style={{ borderColor: primaryColor }}
+              >
+                <AvatarImage 
+                  src={resolvedProfileUrl} 
+                  alt={`${displayName}'s avatar`}
+                  className="object-cover"
+                />
+                <AvatarFallback 
+                  className="text-3xl text-white"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {displayName.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
             </div>
-          </CardContent>
+            
+            {/* Name and Kliq Badge */}
+            <div className="absolute bottom-4 left-36 md:left-40">
+              <h1 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">
+                {displayName}
+              </h1>
+              {profileUser.kliqName && (
+                <Badge 
+                  className="mt-1 text-white"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {profileUser.kliqName}
+                </Badge>
+              )}
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="absolute top-4 right-4 flex gap-2">
+              <Link to={`/messages/${profileUser.id}`}>
+                <Button 
+                  size="sm" 
+                  className="gap-2 text-white"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Message
+                </Button>
+              </Link>
+              {currentUser && currentUser.id !== profileUser.id && (
+                <Button 
+                  size="sm" 
+                  className="gap-2 text-white"
+                  style={{ backgroundColor: secondaryColor }}
+                  onClick={handleVideoCall}
+                >
+                  <Video className="w-4 h-4" />
+                  Call
+                </Button>
+              )}
+            </div>
+          </div>
+          
+          {/* Bio Section */}
+          {profileUser.bio && (
+            <CardContent className="pt-4">
+              <p className="text-foreground">{translatePost(profileUser.bio)}</p>
+            </CardContent>
+          )}
         </Card>
 
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="text-center p-4" style={{ borderColor: `${primaryColor}40` }}>
+            <Users className="w-6 h-6 mx-auto mb-2" style={{ color: primaryColor }} />
+            <div className="text-2xl font-bold" style={{ color: primaryColor }}>
+              {profileUser.friendCount || 0}
+            </div>
+            <div className="text-sm text-muted-foreground">Friends</div>
+          </Card>
+          
+          <Card className="text-center p-4" style={{ borderColor: `${secondaryColor}40` }}>
+            <FileText className="w-6 h-6 mx-auto mb-2" style={{ color: secondaryColor }} />
+            <div className="text-2xl font-bold" style={{ color: secondaryColor }}>
+              {profileUser.postCount || 0}
+            </div>
+            <div className="text-sm text-muted-foreground">Posts</div>
+          </Card>
+          
+          <Card className="text-center p-4" style={{ borderColor: `${primaryColor}40` }}>
+            <Flame className="w-6 h-6 mx-auto mb-2" style={{ color: primaryColor }} />
+            <div className="text-2xl font-bold" style={{ color: primaryColor }}>
+              {profileUser.loginStreak || 0}
+            </div>
+            <div className="text-sm text-muted-foreground">Day Streak</div>
+          </Card>
+          
+          <Card className="text-center p-4" style={{ borderColor: `${secondaryColor}40` }}>
+            <CalendarDays className="w-6 h-6 mx-auto mb-2" style={{ color: secondaryColor }} />
+            <div className="text-2xl font-bold" style={{ color: secondaryColor }}>
+              {joinYear || "N/A"}
+            </div>
+            <div className="text-sm text-muted-foreground">Joined</div>
+          </Card>
+        </div>
+
+        {/* Profile Music */}
         {profileUser.profileMusicUrls && Array.isArray(profileUser.profileMusicUrls) && profileUser.profileMusicUrls.length > 0 && 
          profileUser.profileMusicTitles && Array.isArray(profileUser.profileMusicTitles) && profileUser.profileMusicTitles.length > 0 && (
-          <Card className="border" style={{ borderColor: `${primaryColor}40` }}>
+          <Card style={{ borderColor: `${primaryColor}40` }}>
             <CardHeader>
               <div className="flex items-center space-x-2">
                 <Music className="w-5 h-5" style={{ color: primaryColor }} />
                 <CardTitle className="text-card-foreground">Profile Music</CardTitle>
               </div>
-              <CardDescription>
-                {displayName}'s profile music
-              </CardDescription>
+              <CardDescription>{displayName}'s vibe</CardDescription>
             </CardHeader>
             <CardContent>
               <ProfileMusicPlayer
-                musicUrl={profileUser.profileMusicUrls[0]}
-                musicTitle={profileUser.profileMusicTitles[0]}
+                musicUrls={profileUser.profileMusicUrls}
+                musicTitles={profileUser.profileMusicTitles}
                 autoPlay={true}
               />
             </CardContent>
           </Card>
         )}
 
-        <Card className="border" style={{ borderColor: `${primaryColor}40` }}>
+        {/* Profile Details (Interests, Hobbies, etc.) */}
+        <Card style={{ borderColor: `${primaryColor}40` }}>
           <CardHeader>
             <CardTitle style={{ color: primaryColor }}>About {displayName}</CardTitle>
+            <CardDescription>Interests, hobbies, and favorites</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 rounded-lg" style={{ backgroundColor: `${primaryColor}15` }}>
-                <div className="text-2xl font-bold" style={{ color: primaryColor }}>
-                  {profileUser.kliqName || "My Kliq"}
-                </div>
-                <div className="text-sm text-muted-foreground">Kliq Name</div>
-              </div>
-              
-              <div className="text-center p-4 rounded-lg" style={{ backgroundColor: `${secondaryColor}15` }}>
-                <div className="text-2xl font-bold" style={{ color: secondaryColor }}>
-                  {profileUser.createdAt ? new Date(profileUser.createdAt).getFullYear() : "N/A"}
-                </div>
-                <div className="text-sm text-muted-foreground">Joined MyKliq</div>
-              </div>
-            </div>
+          <CardContent>
+            <ProfileDetailsDisplay user={profileUser} />
           </CardContent>
         </Card>
 
+        {/* Birthday */}
+        {profileUser.birthdate && (
+          <Card style={{ borderColor: `${secondaryColor}40` }}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <CalendarDays className="w-5 h-5" style={{ color: secondaryColor }} />
+                <div>
+                  <div className="font-medium">Birthday</div>
+                  <div className="text-sm text-muted-foreground">
+                    {new Date(profileUser.birthdate).toLocaleDateString('en-US', { 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Recent Posts */}
         {Array.isArray(userPosts) && userPosts.length > 0 && (
-          <Card className="border" style={{ borderColor: `${primaryColor}40` }}>
+          <Card style={{ borderColor: `${primaryColor}40` }}>
             <CardHeader>
               <CardTitle style={{ color: primaryColor }}>Recent Posts</CardTitle>
               <CardDescription>{displayName}'s latest activity</CardDescription>

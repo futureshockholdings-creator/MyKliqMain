@@ -20,7 +20,7 @@ import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
 import { performanceOptimizer } from "./performanceOptimizer";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts } from "@shared/schema";
 import { generateMobileToken, verifyMobileToken, JWT_CONFIG } from "./mobile-auth";
 import { eq, and, or, desc, sql as sqlOp, isNotNull } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -4727,7 +4727,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch user's theme for their profile styling
       const userTheme = await storage.getUserTheme(userId);
       
-      // Return public profile info (excluding sensitive data)
+      // Get friend count
+      const friends = await storage.getFriends(userId);
+      const friendCount = friends.length;
+      
+      // Get post count
+      const userPosts = await db.select({ count: sqlOp<number>`count(*)` })
+        .from(posts)
+        .where(eq(posts.userId, userId));
+      const postCount = Number(userPosts[0]?.count) || 0;
+      
+      // Return full public profile info (excluding only sensitive data like email, phone)
       const publicProfile = {
         id: user.id,
         firstName: user.firstName,
@@ -4741,6 +4751,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         profileMusicTitles: user.profileMusicTitles,
         createdAt: user.createdAt,
         equippedBorderId: user.equippedBorderId,
+        loginStreak: user.loginStreak || 0,
+        friendCount,
+        postCount,
+        // Profile details for ProfileDetailsDisplay
+        interests: user.interests,
+        hobbies: user.hobbies,
+        favoriteLocations: user.favoriteLocations,
+        favoriteFoods: user.favoriteFoods,
+        musicGenres: user.musicGenres,
+        favoriteMovies: user.favoriteMovies,
+        favoriteBooks: user.favoriteBooks,
+        relationshipStatus: user.relationshipStatus,
+        petPreferences: user.petPreferences,
+        lifestyle: user.lifestyle,
         // Include theme for profile styling
         theme: userTheme ? {
           primaryColor: userTheme.primaryColor,
