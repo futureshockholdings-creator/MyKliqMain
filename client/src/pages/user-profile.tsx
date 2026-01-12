@@ -57,6 +57,7 @@ export default function UserProfile() {
 
   const { data: profileUser, isLoading } = useQuery<ProfileUser>({
     queryKey: ["/api/user/profile", userId],
+    queryFn: () => apiRequest("GET", `/api/user/profile/${userId}`),
     enabled: !!userId,
   });
 
