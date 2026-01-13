@@ -7,7 +7,7 @@ import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
 import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
 import { 
   CalendarDays, Music, User as UserIcon, MessageCircle, ArrowLeft, Video, 
-  Heart, MessageSquare, Users, Flame, FileText 
+  Heart, MessageSquare 
 } from "lucide-react";
 import { usePostTranslation } from "@/lib/translationService";
 import { Button } from "@/components/ui/button";
@@ -279,74 +279,7 @@ export default function UserProfile() {
           )}
         </Card>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card className="text-center p-4" style={{ borderColor: `${primaryColor}40` }}>
-            <Users className="w-6 h-6 mx-auto mb-2" style={{ color: primaryColor }} />
-            <div className="text-2xl font-bold" style={{ color: primaryColor }}>
-              {profileUser.friendCount || 0}
-            </div>
-            <div className="text-sm text-muted-foreground">Friends</div>
-          </Card>
-          
-          <Card className="text-center p-4" style={{ borderColor: `${secondaryColor}40` }}>
-            <FileText className="w-6 h-6 mx-auto mb-2" style={{ color: secondaryColor }} />
-            <div className="text-2xl font-bold" style={{ color: secondaryColor }}>
-              {profileUser.postCount || 0}
-            </div>
-            <div className="text-sm text-muted-foreground">Posts</div>
-          </Card>
-          
-          <Card className="text-center p-4" style={{ borderColor: `${primaryColor}40` }}>
-            <Flame className="w-6 h-6 mx-auto mb-2" style={{ color: primaryColor }} />
-            <div className="text-2xl font-bold" style={{ color: primaryColor }}>
-              {profileUser.loginStreak || 0}
-            </div>
-            <div className="text-sm text-muted-foreground">Day Streak</div>
-          </Card>
-          
-          <Card className="text-center p-4" style={{ borderColor: `${secondaryColor}40` }}>
-            <CalendarDays className="w-6 h-6 mx-auto mb-2" style={{ color: secondaryColor }} />
-            <div className="text-2xl font-bold" style={{ color: secondaryColor }}>
-              {joinYear || "N/A"}
-            </div>
-            <div className="text-sm text-muted-foreground">Joined</div>
-          </Card>
-        </div>
-
-        {/* Profile Music */}
-        {profileUser.profileMusicUrls && Array.isArray(profileUser.profileMusicUrls) && profileUser.profileMusicUrls.length > 0 && 
-         profileUser.profileMusicTitles && Array.isArray(profileUser.profileMusicTitles) && profileUser.profileMusicTitles.length > 0 && (
-          <Card style={{ borderColor: `${primaryColor}40` }}>
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <Music className="w-5 h-5" style={{ color: primaryColor }} />
-                <CardTitle className="text-card-foreground">Profile Music</CardTitle>
-              </div>
-              <CardDescription>{displayName}'s vibe</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProfileMusicPlayer
-                musicUrls={profileUser.profileMusicUrls}
-                musicTitles={profileUser.profileMusicTitles}
-                autoPlay={true}
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Profile Details (Interests, Hobbies, etc.) */}
-        <Card style={{ borderColor: `${primaryColor}40` }}>
-          <CardHeader>
-            <CardTitle style={{ color: primaryColor }}>About {displayName}</CardTitle>
-            <CardDescription>Interests, hobbies, and favorites</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ProfileDetailsDisplay user={profileUser} />
-          </CardContent>
-        </Card>
-
-        {/* Birthday */}
+        {/* Birthday - Right below background */}
         {profileUser.birthdate && (
           <Card style={{ borderColor: `${secondaryColor}40` }}>
             <CardContent className="p-4">
@@ -365,6 +298,17 @@ export default function UserProfile() {
             </CardContent>
           </Card>
         )}
+
+        {/* Profile Details (Interests, Hobbies, etc.) */}
+        <Card style={{ borderColor: `${primaryColor}40` }}>
+          <CardHeader>
+            <CardTitle style={{ color: primaryColor }}>About {displayName}</CardTitle>
+            <CardDescription>Interests, hobbies, and favorites</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProfileDetailsDisplay user={profileUser} />
+          </CardContent>
+        </Card>
 
         {/* Recent Posts */}
         {Array.isArray(userPosts) && userPosts.length > 0 && (
@@ -401,6 +345,27 @@ export default function UserProfile() {
                   </div>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Profile Music - At the bottom */}
+        {profileUser.profileMusicUrls && Array.isArray(profileUser.profileMusicUrls) && profileUser.profileMusicUrls.length > 0 && 
+         profileUser.profileMusicTitles && Array.isArray(profileUser.profileMusicTitles) && profileUser.profileMusicTitles.length > 0 && (
+          <Card style={{ borderColor: `${primaryColor}40` }}>
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <Music className="w-5 h-5" style={{ color: primaryColor }} />
+                <CardTitle className="text-card-foreground">Profile Music</CardTitle>
+              </div>
+              <CardDescription>{displayName}'s vibe</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ProfileMusicPlayer
+                musicUrls={profileUser.profileMusicUrls}
+                musicTitles={profileUser.profileMusicTitles}
+                autoPlay={true}
+              />
             </CardContent>
           </Card>
         )}
