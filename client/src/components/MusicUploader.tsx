@@ -92,12 +92,15 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
         musicTitles,
       });
     },
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
       toast({
         title: "Profile music updated",
         description: "Your music playlist has been saved successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Directly update the cache with the returned user data for immediate UI update
+      if (updatedUser && updatedUser.id) {
+        queryClient.setQueryData(["/api/auth/user"], updatedUser);
+      }
       setIsOpen(false);
     },
     onError: (error: any) => {
@@ -113,12 +116,15 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
     mutationFn: async () => {
       return await apiRequest("DELETE", "/api/user/profile-music", {});
     },
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
       toast({
         title: "Profile music removed",
         description: "All music has been removed from your profile.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Directly update the cache with the returned user data for immediate UI update
+      if (updatedUser && updatedUser.id) {
+        queryClient.setQueryData(["/api/auth/user"], updatedUser);
+      }
       setTracks([{ url: "", title: "" }]);
       setIsOpen(false);
     },
