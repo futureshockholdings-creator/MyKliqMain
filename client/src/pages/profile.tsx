@@ -203,7 +203,7 @@ export default function Profile() {
                 <div className="relative">
                   <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
                     <AvatarImage 
-                      src={resolvedProfileUrl} 
+                      src={resolvedProfileUrl ? `${resolvedProfileUrl}${resolvedProfileUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : undefined} 
                       alt="Profile picture" 
                       className="object-cover"
                     />
