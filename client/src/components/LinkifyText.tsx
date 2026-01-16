@@ -5,18 +5,17 @@ interface LinkifyTextProps {
   className?: string;
 }
 
-const urlRegex = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)/gi;
-
 export function LinkifyText({ text, className = '' }: LinkifyTextProps) {
   if (!text) return null;
 
-  const parts = text.split(urlRegex);
+  const urlPattern = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)/gi;
+  const parts = text.split(urlPattern);
 
   return (
     <span className={className}>
       {parts.map((part, index) => {
-        if (urlRegex.test(part)) {
-          urlRegex.lastIndex = 0;
+        const isUrl = /^https?:\/\//i.test(part);
+        if (isUrl) {
           return (
             <a
               key={index}
