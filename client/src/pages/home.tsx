@@ -45,6 +45,7 @@ import { usePostTranslation } from "@/lib/translationService";
 import { feedRealtimeService } from "@/lib/feedRealtime";
 import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 import { addOptimisticNotification, rollbackOptimisticNotification } from "@/lib/optimisticNotifications";
+import { LinkifyText } from "@/components/LinkifyText";
 
 import type { Meme, Moviecon } from "@shared/schema";
 
@@ -3383,7 +3384,9 @@ export default function Home() {
                             <p className="text-xs text-muted-foreground italic">Click to view event details and manage attendance</p>
                           </Link>
                         ) : (
-                          <p className="text-foreground mb-3">{translatePost(cleanText)}</p>
+                          <p className="text-foreground mb-3 whitespace-pre-wrap">
+                            <LinkifyText text={translatePost(cleanText)} />
+                          </p>
                         )
                       )}
                       {youtubeUrls.length > 0 && (
@@ -3868,7 +3871,9 @@ export default function Home() {
                   
                   {/* Content */}
                   {item.content && (
-                    <p className="text-foreground mb-3 whitespace-pre-wrap">{item.content}</p>
+                    <p className="text-foreground mb-3 whitespace-pre-wrap">
+                      <LinkifyText text={item.content} />
+                    </p>
                   )}
                   
                   {/* Media Thumbnail */}
