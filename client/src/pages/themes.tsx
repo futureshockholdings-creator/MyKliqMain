@@ -102,7 +102,7 @@ export default function Themes() {
     const secondaryColor = getRandomColor();
     
     // Random background type
-    const backgroundTypes = ['solid', 'gradient', 'pattern'];
+    const backgroundTypes = ['solid', 'gradient'];
     const backgroundType = backgroundTypes[Math.floor(Math.random() * backgroundTypes.length)];
     
     let backgroundColor = "#000000";

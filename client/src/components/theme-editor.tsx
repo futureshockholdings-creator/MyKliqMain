@@ -147,7 +147,6 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
               <SelectContent className="bg-card border-border">
                 <SelectItem value="solid">Solid Color</SelectItem>
                 <SelectItem value="gradient">Gradient</SelectItem>
-                <SelectItem value="pattern">Pattern</SelectItem>
               </SelectContent>
             </Select>
           </div>
