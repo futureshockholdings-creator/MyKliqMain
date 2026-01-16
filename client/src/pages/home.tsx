@@ -9,7 +9,7 @@ import { BorderedAvatar } from "@/components/BorderedAvatar";
 import { Badge } from "@/components/ui/badge";
 import { FilterManager } from "@/components/filter-manager";
 import { Heart, MessageCircle, Send, Image as ImageIcon, Smile, Camera, Clapperboard, Plus, MapPin, Loader2, Edit, Calendar, Clock, Check, HelpCircle, X, Zap, ExternalLink, Video, AlertTriangle, PlusCircle, Trash2, Star } from "lucide-react";
-import { SiX, SiFacebook, SiInstagram, SiTiktok, SiYoutube, SiTwitch, SiDiscord, SiReddit } from "react-icons/si";
+import { SiX, SiFacebook, SiInstagram, SiTiktok, SiYoutube, SiTwitch, SiDiscord, SiReddit, SiPinterest } from "react-icons/si";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -3823,6 +3823,7 @@ export default function Home() {
               twitch: SiTwitch,
               discord: SiDiscord,
               reddit: SiReddit,
+              pinterest: SiPinterest,
             };
             
             const platformColors: Record<string, string> = {
@@ -3832,6 +3833,7 @@ export default function Home() {
               twitch: 'from-purple-600 to-purple-500',
               discord: 'from-indigo-600 to-blue-500',
               reddit: 'from-orange-600 to-orange-500',
+              pinterest: 'from-red-700 to-red-600',
             };
             
             const PlatformIcon = platformIcons[item.platform] || ExternalLink;

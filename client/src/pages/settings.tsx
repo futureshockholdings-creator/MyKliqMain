@@ -980,17 +980,40 @@ export default function Settings() {
     mutationFn: async (platform: string) => {
       return await apiRequest("POST", `/api/social/sync/${platform}`);
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
-        title: "Sync Started",
-        description: "Content sync has been initiated.",
+        title: "Sync Complete",
+        description: data?.message || "Content has been synced to your Headlines feed.",
       });
     },
     onError: () => {
       toast({
         title: "Sync Failed",
         description: "Failed to sync content. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Sync all platforms mutation
+  const syncAllPlatforms = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/social/sync-all");
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      toast({
+        title: "All Platforms Synced",
+        description: data?.message || "Content from all platforms has been synced to your Headlines feed.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Sync Failed",
+        description: "Failed to sync platforms. Please try again.",
         variant: "destructive",
       });
     },
@@ -1264,7 +1287,22 @@ export default function Settings() {
                 {/* Connected Accounts */}
                 {(socialAccounts as SocialAccount[]).length > 0 && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-white">Connected Accounts</h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-white">Connected Accounts</h3>
+                      <Button
+                        size="sm"
+                        onClick={() => syncAllPlatforms.mutate()}
+                        disabled={syncAllPlatforms.isPending}
+                        className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+                        data-testid="button-sync-all-platforms"
+                      >
+                        <RefreshCw className={`w-4 h-4 mr-2 ${syncAllPlatforms.isPending ? 'animate-spin' : ''}`} />
+                        {syncAllPlatforms.isPending ? 'Syncing...' : 'Sync All'}
+                      </Button>
+                    </div>
+                    <p className="text-purple-200 text-sm">
+                      Content from your connected platforms will appear in your Headlines feed. Syncs automatically every 15 minutes.
+                    </p>
                     <div className="grid gap-4">
                       {(socialAccounts as SocialAccount[]).map((account: SocialAccount) => {
                         const platform = platformInfo[account.platform as keyof typeof platformInfo];
