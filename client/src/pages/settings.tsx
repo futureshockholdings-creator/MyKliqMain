@@ -934,19 +934,39 @@ export default function Settings() {
     },
   });
 
-  // Remove social account mutation
+  // Remove social account mutation with optimistic updates for immediate UI feedback
   const removeAccount = useMutation({
     mutationFn: async (accountId: string) => {
       return await apiRequest("DELETE", `/api/social/accounts/${accountId}`);
     },
+    onMutate: async (accountId: string) => {
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: ["/api/social/accounts"] });
+      
+      // Snapshot the previous value
+      const previousAccounts = queryClient.getQueryData(["/api/social/accounts"]);
+      
+      // Optimistically remove the account from the list immediately
+      queryClient.setQueryData(["/api/social/accounts"], (old: SocialAccount[] | undefined) => {
+        return old ? old.filter(account => account.id !== accountId) : [];
+      });
+      
+      // Return context with the previous value
+      return { previousAccounts };
+    },
     onSuccess: () => {
+      // Refetch to ensure server state is in sync
       queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
       toast({
         title: "Account Removed",
         description: "Social media account has been disconnected.",
       });
     },
-    onError: () => {
+    onError: (_error, _accountId, context) => {
+      // Rollback to the previous value on error
+      if (context?.previousAccounts) {
+        queryClient.setQueryData(["/api/social/accounts"], context.previousAccounts);
+      }
       toast({
         title: "Error",
         description: "Failed to remove account. Please try again.",

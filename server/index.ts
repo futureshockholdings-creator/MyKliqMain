@@ -196,6 +196,15 @@ app.get('/health', (req, res) => {
         // Start the referral bonus service to award referral bonuses
         startReferralBonusService();
         
+        // Start the social content auto-sync service (syncs every 15 minutes)
+        try {
+          const { startAutoSync } = await import('./socialSyncService');
+          startAutoSync(15); // Sync every 15 minutes
+          log("Social content auto-sync service started (15 min interval)");
+        } catch (error) {
+          console.error("Failed to start social sync service:", error);
+        }
+        
         log("Background services started");
       }, 10000); // 10 second delay to let connections stabilize
 

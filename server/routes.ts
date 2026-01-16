@@ -10940,62 +10940,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // END SPORTS API ROUTES
   // ============================================================================
 
-  // Sync posts from a specific platform
+  // Sync posts from a specific platform (with duplicate prevention)
   app.post('/api/social/sync/:platform', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { platform } = req.params;
       
-      const credential = await storage.getSocialCredential(userId, platform);
-      if (!credential || !credential.isActive) {
-        return res.status(404).json({ message: "Platform not connected" });
+      const { socialSyncService } = await import('./socialSyncService');
+      const result = await socialSyncService.syncUserPlatform(userId, platform);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: result.error || 'Sync failed',
+          success: false,
+        });
       }
-      
-      // Decrypt access token
-      const accessToken = decryptFromStorage(credential.encryptedAccessToken);
-      
-      // Get platform implementation
-      const platformImpl = oauthService.getPlatform(platform);
-      if (!platformImpl) {
-        return res.status(400).json({ message: "Platform not supported" });
-      }
-      
-      // Fetch posts from the platform
-      const posts = await platformImpl.fetchUserPosts(accessToken, credential.platformUserId);
-      
-      // Convert to external posts format
-      const externalPostsToInsert = posts.map(post => ({
-        socialCredentialId: credential.id,
-        platform: post.platform,
-        platformPostId: post.platformPostId,
-        platformUserId: credential.platformUserId,
-        platformUsername: credential.platformUsername,
-        content: post.content,
-        mediaUrls: post.mediaUrl ? [post.mediaUrl] : [],
-        thumbnailUrl: post.mediaUrl || null,
-        postUrl: post.originalUrl,
-        platformCreatedAt: post.createdAt,
-        engagementStats: post.metadata || {},
-      }));
-      
-      // Store posts in database
-      if (externalPostsToInsert.length > 0) {
-        await storage.createExternalPosts(externalPostsToInsert);
-      }
-      
-      // Update last sync timestamp
-      await storage.updateSocialCredential(credential.id, {
-        lastSyncAt: new Date(),
-      });
       
       res.json({ 
-        message: `Successfully synced ${posts.length} posts from ${platform}`, 
+        message: `Successfully synced ${result.newPosts} new posts from ${platform}`, 
         success: true,
-        postsCount: posts.length 
+        newPosts: result.newPosts,
+        totalFetched: result.totalFetched,
       });
     } catch (error) {
       console.error(`Error syncing ${req.params.platform}:`, error);
       res.status(500).json({ message: "Failed to sync platform" });
+    }
+  });
+
+  // Sync all connected platforms at once
+  app.post('/api/social/sync-all', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const { socialSyncService } = await import('./socialSyncService');
+      const results = await socialSyncService.syncAllUserPlatforms(userId);
+      
+      const totalNewPosts = results.reduce((sum, r) => sum + r.newPosts, 0);
+      const successfulPlatforms = results.filter(r => r.success).map(r => r.platform);
+      const failedPlatforms = results.filter(r => !r.success).map(r => r.platform);
+      
+      res.json({
+        success: true,
+        message: `Synced ${totalNewPosts} new posts across ${successfulPlatforms.length} platforms`,
+        results,
+        summary: {
+          totalNewPosts,
+          successfulPlatforms,
+          failedPlatforms,
+        },
+      });
+    } catch (error) {
+      console.error('Error syncing all platforms:', error);
+      res.status(500).json({ message: "Failed to sync platforms" });
     }
   });
 
