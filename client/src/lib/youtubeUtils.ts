@@ -82,13 +82,8 @@ export function extractYouTubeUrlsFromText(text: string): { cleanText: string; y
     cleanText = cleanText.replace(new RegExp(escapedUrl, 'g'), '');
   });
   
-  // Additional cleanup for any remaining URL fragments
-  // Remove common URL patterns that might be left behind
+  // Cleanup whitespace only - preserve non-YouTube URLs for LinkifyText to handle
   cleanText = cleanText
-    .replace(/https?:\/\/[^\s]*/g, '')  // Remove any remaining URLs
-    .replace(/www\.[^\s]*/g, '')  // Remove www fragments
-    .replace(/youtube\.com[^\s]*/g, '')  // Remove youtube.com fragments
-    .replace(/youtu\.be[^\s]*/g, '')  // Remove youtu.be fragments
     .replace(/\s+/g, ' ')  // Replace multiple spaces with single space
     .replace(/^\s+|\s+$/g, '')  // Trim leading/trailing spaces
     .replace(/\n\s*\n/g, '\n')  // Remove empty lines
