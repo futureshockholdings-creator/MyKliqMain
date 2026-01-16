@@ -40,6 +40,7 @@ import { SportsCarousel } from "@/components/SportsCarousel";
 import { LiveStreamCard } from "@/components/LiveStreamCard";
 import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import { PageWrapper } from "@/components/PageWrapper";
+import { PullToRefresh } from "@/components/PullToRefresh";
 import { usePostTranslation } from "@/lib/translationService";
 import { feedRealtimeService } from "@/lib/feedRealtime";
 import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
@@ -2076,8 +2077,28 @@ export default function Home() {
     }
   };
 
+  const handlePullToRefresh = async () => {
+    try {
+      await Promise.all([
+        refetchFeed(),
+        queryClient.refetchQueries({ queryKey: ["/api/mood-boost/posts"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/stories"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/sports/updates"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/ads/targeted"] }),
+      ]);
+      toast({
+        title: "Feed refreshed",
+        description: "Your feed is now up to date.",
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error("Error refreshing feed:", error);
+    }
+  };
+
   return (
     <PageWrapper>
+      <PullToRefresh onRefresh={handlePullToRefresh}>
       <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Post Creation */}
         <Card className="bg-gradient-to-r from-mykliq-purple/20 to-secondary/20 border-mykliq-purple/30">
@@ -4485,6 +4506,7 @@ export default function Home() {
         </Dialog>
 
       </div>
+      </PullToRefresh>
     </PageWrapper>
   );
 }
