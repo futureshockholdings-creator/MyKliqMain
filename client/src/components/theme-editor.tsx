@@ -3,10 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Palette, Type, Navigation, Sparkles, Image } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Palette, Type, Navigation, Image } from "lucide-react";
 import type { UserTheme } from "@shared/schema";
 
 interface ThemeEditorProps {
@@ -26,13 +24,10 @@ const defaultTheme = {
   fontColor: "#FFFFFF",
   navBgColor: "#1F2937",
   navActiveColor: "#FF1493",
-  borderStyle: "modern",
-  enableSparkles: true,
   backgroundType: "solid",
   backgroundColor: "#000000",
   backgroundGradientStart: "#FF1493",
   backgroundGradientEnd: "#00BFFF",
-  backgroundPattern: "dots",
 };
 
 export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = false, isFetching = false, isError = false }: ThemeEditorProps) {
@@ -317,42 +312,6 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
         </CardContent>
       </Card>
 
-      {/* Borders & Effects */}
-      <Card className="bg-gray-800 border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-orange-400 flex items-center gap-2">
-            <Sparkles className="w-5 h-5" />
-            Borders & Effects
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label className="text-white">Border Style</Label>
-            <Select value={currentTheme.borderStyle || "retro"} onValueChange={(value) => updateTheme('borderStyle', value)}>
-              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="retro">Retro Shadow (Default)</SelectItem>
-                <SelectItem value="neon">Neon Glow</SelectItem>
-                <SelectItem value="simple">Simple Border</SelectItem>
-                <SelectItem value="gradient">Gradient Border</SelectItem>
-                <SelectItem value="none">No Border</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <Label className="text-white">Enable Sparkle Effects ✨</Label>
-            <Switch
-              checked={currentTheme.enableSparkles ?? true}
-              onCheckedChange={(value) => updateTheme('enableSparkles', value)}
-              className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-400"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Preview */}
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
@@ -360,12 +319,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
         </CardHeader>
         <CardContent>
           <div 
-            className={cn(
-              "rounded-lg p-4 shadow-lg",
-              currentTheme.borderStyle === "retro" && "shadow-[4px_4px_0px_#FF4500,8px_8px_0px_#8A2BE2]",
-              currentTheme.borderStyle === "neon" && "shadow-[0_0_10px_#00FFFF,0_0_20px_#00FFFF,0_0_30px_#00FFFF]",
-              currentTheme.borderStyle === "gradient" && "border-2 border-gradient-to-r from-pink-500 to-blue-500"
-            )}
+            className="rounded-lg p-4 shadow-lg"
             style={{
               background: `linear-gradient(45deg, ${currentTheme.primaryColor || "#FF1493"}, ${currentTheme.secondaryColor || "#00BFFF"})`,
               color: currentTheme.fontColor || "#FFFFFF",
@@ -377,11 +331,6 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
           >
             <p className="font-bold mb-2">Your theme preview</p>
             <p className="text-sm opacity-80">This is how your posts will look</p>
-            {currentTheme.enableSparkles && (
-              <div className="text-right">
-                <span className="animate-pulse">✨</span>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
