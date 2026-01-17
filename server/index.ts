@@ -187,6 +187,17 @@ app.get('/health', (req, res) => {
           console.error("Failed to seed memes:", error);
         }
 
+        // Seed educational posts if they don't exist (for new user onboarding)
+        try {
+          const { seedEducationalPosts } = await import('./seedEducationalPosts');
+          const eduResult = await seedEducationalPosts();
+          if (eduResult > 0) {
+            log(`Seeded ${eduResult} educational posts`);
+          }
+        } catch (error) {
+          console.error("Failed to seed educational posts:", error);
+        }
+
         // Start the birthday service for automatic birthday messages
         startBirthdayService();
 

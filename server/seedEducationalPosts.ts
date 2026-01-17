@@ -1,12 +1,21 @@
 import { db } from './db';
 import { educationalPosts } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 /**
  * Seed database with educational posts for new users
  * These posts appear in feeds for users < 7 days old
+ * Safe to call on every server startup - checks for existing posts to prevent duplicates
  */
 export async function seedEducationalPosts() {
-  console.log('Seeding educational posts...');
+  // Check if posts already exist
+  const existingPosts = await db.select().from(educationalPosts).limit(1);
+  if (existingPosts.length > 0) {
+    console.log('[Educational Posts] Already seeded, skipping...');
+    return 0;
+  }
+
+  console.log('[Educational Posts] Seeding educational posts for new users...');
 
   const posts = [
     {
@@ -240,24 +249,12 @@ export async function seedEducationalPosts() {
     // Insert all educational posts
     for (const post of posts) {
       await db.insert(educationalPosts).values(post);
-      console.log(`✓ Added: ${post.title}`);
     }
 
-    console.log(`\n✅ Successfully seeded ${posts.length} educational posts!`);
+    console.log(`[Educational Posts] Successfully seeded ${posts.length} educational posts!`);
     return posts.length;
   } catch (error) {
-    console.error('❌ Error seeding educational posts:', error);
-    throw error;
+    console.error('[Educational Posts] Error seeding:', error);
+    return 0;
   }
 }
-
-// Run the seeding function
-seedEducationalPosts()
-  .then((count) => {
-    console.log(`\nDone! Seeded ${count} educational posts.`);
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('Failed to seed:', error);
-    process.exit(1);
-  });
