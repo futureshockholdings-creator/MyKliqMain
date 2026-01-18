@@ -169,7 +169,11 @@ export default function Kliq() {
     mutationFn: async (data: { kliqName: string; kliqLeftEmoji: string; kliqRightEmoji: string }) => {
       await apiRequest("PUT", "/api/user/profile", data);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Clear enterprise cache first to prevent stale data from repopulating
+      await enhancedCache.removeByPattern('/api/auth/user');
+      await enhancedCache.removeByPattern('/api/user');
+      // Then refetch to ensure server state is in sync
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setEditingName(false);
       toast({
