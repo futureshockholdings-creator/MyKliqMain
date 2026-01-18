@@ -40,13 +40,12 @@ import {
 } from "lucide-react";
 import { 
   SiPinterest, 
-  SiTiktok, 
   SiTwitch, 
   SiDiscord, 
   SiYoutube, 
   SiReddit,
   SiBluesky,
-  SiSubstack
+  SiMedium
 } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useTranslation } from "react-i18next";
@@ -65,27 +64,14 @@ interface SocialAccount {
   createdAt: string;
 }
 
-// Custom text icons for platforms without official icons
-const BRIcon = () => (
-  <div className="w-5 h-5 flex items-center justify-center font-bold text-white text-xs">
-    BR
-  </div>
-);
-
-const LIcon = () => (
+// Custom text icon for Tumblr
+const TumblrIcon = () => (
   <div className="w-5 h-5 flex items-center justify-center font-bold text-white text-sm">
-    L
+    t
   </div>
 );
 
 const platformInfo = {
-  tiktok: {
-    name: "TikTok",
-    icon: SiTiktok,
-    color: "bg-black",
-    description: "Short-form video content",
-    requiresBusiness: false
-  },
   twitch: {
     name: "Twitch",
     icon: SiTwitch,
@@ -121,20 +107,6 @@ const platformInfo = {
     description: "Visual inspiration and ideas",
     requiresBusiness: false
   },
-  bereal: {
-    name: "BeReal",
-    icon: BRIcon,
-    color: "bg-black",
-    description: "Authentic moments with friends",
-    requiresBusiness: false
-  },
-  locket: {
-    name: "Locket",
-    icon: LIcon,
-    color: "bg-yellow-500",
-    description: "Photo widget for close friends",
-    requiresBusiness: false
-  },
   bluesky: {
     name: "Bluesky",
     icon: SiBluesky,
@@ -142,11 +114,18 @@ const platformInfo = {
     description: "Decentralized social network",
     requiresBusiness: false
   },
-  substack: {
-    name: "Substack",
-    icon: SiSubstack,
-    color: "bg-orange-500",
-    description: "Newsletter and publishing platform",
+  medium: {
+    name: "Medium",
+    icon: SiMedium,
+    color: "bg-black",
+    description: "Articles and stories",
+    requiresBusiness: false
+  },
+  tumblr: {
+    name: "Tumblr",
+    icon: TumblrIcon,
+    color: "bg-indigo-900",
+    description: "Creative blogging platform",
     requiresBusiness: false
   }
 };
@@ -1398,14 +1377,14 @@ export default function Settings() {
                                 console.log(`[Social Connect] Button clicked for platform: ${platformKey}`);
                                 connectAccount.mutate(platformKey);
                               }}
-                              disabled={(platformKey !== 'tiktok' && platformKey !== 'twitch' && platformKey !== 'discord' && platformKey !== 'reddit' && platformKey !== 'pinterest' && platformKey !== 'youtube') || connectAccount.isPending}
-                              className={(platformKey === 'tiktok' || platformKey === 'twitch' || platformKey === 'discord' || platformKey === 'reddit' || platformKey === 'pinterest' || platformKey === 'youtube')
+                              disabled={!['twitch', 'discord', 'reddit', 'pinterest', 'youtube', 'bluesky'].includes(platformKey) || connectAccount.isPending}
+                              className={['twitch', 'discord', 'reddit', 'pinterest', 'youtube', 'bluesky'].includes(platformKey)
                                 ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-sm sm:text-base" 
                                 : "w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed text-sm sm:text-base"}
                               data-testid={`button-connect-${platformKey}`}
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
-                              {platformKey === 'tiktok' ? 'Connect TikTok' : platformKey === 'twitch' ? 'Connect Twitch' : platformKey === 'discord' ? 'Connect Discord' : platformKey === 'reddit' ? 'Connect Reddit' : platformKey === 'pinterest' ? 'Connect Pinterest' : platformKey === 'youtube' ? 'Connect YouTube' : 'Coming Soon'}
+                              {['twitch', 'discord', 'reddit', 'pinterest', 'youtube', 'bluesky'].includes(platformKey) ? `Connect ${platform?.name}` : 'Coming Soon'}
                             </Button>
                           </div>
                         );
