@@ -954,8 +954,10 @@ export default function Settings() {
       // Return context with the previous value
       return { previousAccounts };
     },
-    onSuccess: () => {
-      // Refetch to ensure server state is in sync
+    onSuccess: async () => {
+      // Clear enterprise cache first to prevent stale data from repopulating
+      await enhancedCache.removeByPattern('/api/social/accounts');
+      // Then refetch to ensure server state is in sync
       queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
       toast({
         title: "Account Removed",
