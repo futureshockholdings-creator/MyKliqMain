@@ -1,4 +1,5 @@
 import { OAuthPlatform, OAuthTokens, SocialPost } from '../oauthService';
+import { createHash } from 'crypto';
 
 export class DiscordOAuth implements OAuthPlatform {
   private clientId: string;
@@ -116,18 +117,30 @@ export class DiscordOAuth implements OAuthPlatform {
       const posts: SocialPost[] = [];
 
       if (guilds.length > 0) {
+        // Generate a stable hash from guild data to detect actual changes
+        // This prevents duplicate posts when nothing has changed
+        const sortedGuildIds = guilds.map((g: any) => g.id).sort().join(',');
+        const guildNames = guilds.map((g: any) => g.name).sort().join(',');
+        const snapshotData = `${sortedGuildIds}|${guildNames}|${guilds.length}`;
+        const snapshotHash = createHash('md5').update(snapshotData).digest('hex').substring(0, 16);
+        
+        // Use the hash as the platformPostId - this way, if nothing changes,
+        // the same ID will be generated and duplicate detection will skip it
+        const stablePostId = `discord-servers-${snapshotHash}`;
+        
         // Create a summary post about Discord activity
         posts.push({
-          id: `discord-activity-${Date.now()}`,
+          id: stablePostId,
           platform: 'discord',
-          content: `Active in ${guilds.length} Discord servers including: ${guilds.slice(0, 3).map((g: any) => g.name).join(', ')}${guilds.length > 3 ? '...' : ''}`,
+          content: `Active in ${guilds.length} Discord server${guilds.length !== 1 ? 's' : ''}: ${guilds.slice(0, 3).map((g: any) => g.name).join(', ')}${guilds.length > 3 ? ` and ${guilds.length - 3} more` : ''}`,
           mediaUrl: undefined,
-          platformPostId: `activity-${Date.now()}`,
+          platformPostId: stablePostId,
           originalUrl: 'https://discord.com/channels/@me',
           createdAt: new Date(),
           metadata: {
             type: 'activity_summary',
             guildCount: guilds.length,
+            snapshotHash,
             topGuilds: guilds.slice(0, 5).map((g: any) => ({
               id: g.id,
               name: g.name,
