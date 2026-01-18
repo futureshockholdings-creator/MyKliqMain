@@ -3,12 +3,12 @@ import { storage } from './storage';
 import { TwitchOAuth } from './platforms/twitch';
 import { DiscordOAuth } from './platforms/discord';
 import { InstagramOAuth } from './platforms/instagram';
-import { TikTokOAuth } from './platforms/tiktok';
 import { YouTubeOAuth } from './platforms/youtube';
 import { RedditOAuth } from './platforms/reddit';
 import { PinterestOAuth } from './platforms/pinterest';
 import { FacebookOAuth } from './platforms/facebook';
 import { ESPNOAuth } from './platforms/espn';
+import { BlueskyOAuth } from './platforms/bluesky';
 import type { SocialCredential } from '@shared/schema';
 
 export interface OAuthTokens {
@@ -45,12 +45,12 @@ export class OAuthService {
     this.platforms.set('twitch', new TwitchOAuth());
     this.platforms.set('discord', new DiscordOAuth());
     this.platforms.set('instagram', new InstagramOAuth());
-    this.platforms.set('tiktok', new TikTokOAuth());
     this.platforms.set('youtube', new YouTubeOAuth());
     this.platforms.set('reddit', new RedditOAuth());
     this.platforms.set('pinterest', new PinterestOAuth());
     this.platforms.set('facebook', new FacebookOAuth());
     this.platforms.set('espn', new ESPNOAuth());
+    this.platforms.set('bluesky', new BlueskyOAuth());
   }
 
   getSupportedPlatforms(): string[] {

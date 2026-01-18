@@ -36,8 +36,18 @@ WebSocket-based real-time updates broadcast new content, with a polling fallback
 ### Content Moderation (Rules Reports)
 An admin dashboard manages user-reported content with a workflow (OPEN → PENDING → CLOSED), statistics, filterable reports, and a review modal. Admin actions include marking as pending, dismissing, issuing warnings, removing posts, and user suspension (24 hours, 7 days, Permanent Ban).
 
-### Social Media OAuth Integration
-External OAuth connections (TikTok, Discord, Reddit, Pinterest, Twitch, YouTube) use adaptive flows for desktop (popups) and mobile (redirects). Users connect accounts to earn Kliq Koins.
+### Social Media OAuth Integration (Updated Jan 2026)
+External OAuth connections use adaptive flows for desktop (popups) and mobile (redirects). Users connect accounts to earn Kliq Koins (1,000 per platform).
+
+**Active Platforms:**
+- Discord, YouTube, Reddit, Pinterest, Twitch - Standard OAuth 2.0
+- Bluesky - Uses app password authentication (not OAuth) via `/api/social/bluesky/connect`
+
+**Coming Soon:**
+- Medium, Tumblr
+
+**Removed:**
+- TikTok (complex approval process), BeReal, Locket, Substack (no public APIs)
 
 ### Push Notifications (Updated Jan 2026)
 Platform-specific push notification strategies:

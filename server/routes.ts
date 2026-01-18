@@ -10335,6 +10335,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bluesky app password authentication (Bluesky uses app passwords instead of OAuth)
+  app.post('/api/social/bluesky/connect', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      let { handle, appPassword } = req.body;
+
+      // Validate and normalize inputs
+      if (!handle || !appPassword) {
+        return res.status(400).json({ message: 'Handle and app password are required' });
+      }
+      
+      // Trim whitespace and normalize handle
+      handle = handle.trim();
+      appPassword = appPassword.trim();
+      
+      // Remove leading @ if present
+      if (handle.startsWith('@')) {
+        handle = handle.substring(1);
+      }
+      
+      // Validate handle format (basic check)
+      if (!handle || handle.length < 3) {
+        return res.status(400).json({ message: 'Invalid Bluesky handle format' });
+      }
+      
+      if (!appPassword || appPassword.length < 10) {
+        return res.status(400).json({ message: 'Invalid app password format' });
+      }
+
+      const { BlueskyOAuth } = await import('./platforms/bluesky');
+      const blueskyAuth = new BlueskyOAuth();
+
+      const { tokens, userInfo } = await blueskyAuth.authenticateWithAppPassword(handle, appPassword);
+
+      const { encryptForStorage } = await import('./cryptoService');
+      const encryptedAccessToken = encryptForStorage(tokens.accessToken);
+      const encryptedRefreshToken = tokens.refreshToken ? encryptForStorage(tokens.refreshToken) : null;
+
+      await storage.createSocialCredential({
+        userId,
+        platform: 'bluesky',
+        encryptedAccessToken,
+        encryptedRefreshToken,
+        tokenExpiresAt: null,
+        platformUserId: userInfo.did,
+        platformUsername: userInfo.handle,
+        isActive: true,
+      });
+
+      const SOCIAL_CONNECTION_REWARD = 1000;
+      try {
+        const client = await pool.connect();
+        try {
+          await client.query('BEGIN');
+          await client.query(
+            'INSERT INTO social_connection_rewards (user_id, platform, koins_awarded) VALUES ($1, $2, $3)',
+            [userId, 'bluesky', SOCIAL_CONNECTION_REWARD]
+          );
+          const walletCheck = await client.query('SELECT id FROM kliq_koins WHERE user_id = $1', [userId]);
+          if (walletCheck.rows.length === 0) {
+            await client.query(
+              'INSERT INTO kliq_koins (user_id, balance, lifetime_earned) VALUES ($1, $2, $2)',
+              [userId, SOCIAL_CONNECTION_REWARD]
+            );
+          } else {
+            await client.query(
+              'UPDATE kliq_koins SET balance = balance + $1, lifetime_earned = lifetime_earned + $1 WHERE user_id = $2',
+              [SOCIAL_CONNECTION_REWARD, userId]
+            );
+          }
+          await client.query('COMMIT');
+          console.log(`[Bluesky Connect] Awarded ${SOCIAL_CONNECTION_REWARD} Kliq Koins to user ${userId}`);
+        } catch (rewardError: any) {
+          await client.query('ROLLBACK');
+          if (rewardError.code !== '23505') {
+            console.error('Error awarding Bluesky connection reward:', rewardError);
+          }
+        } finally {
+          client.release();
+        }
+      } catch (poolError) {
+        console.error('Error connecting to pool for Bluesky reward:', poolError);
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'Bluesky account connected successfully',
+        username: userInfo.handle 
+      });
+    } catch (error: any) {
+      console.error('Error connecting Bluesky account:', error);
+      res.status(400).json({ 
+        message: error.message || 'Failed to connect Bluesky account. Please check your handle and app password.' 
+      });
+    }
+  });
+
   // Start OAuth flow for a platform
   app.get('/api/oauth/authorize/:platform', isAuthenticated, async (req: any, res) => {
     // Prevent caching - OAuth state must be fresh every time
@@ -10352,15 +10449,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store state in session for verification
       req.session.oauthState = state;
       
-      // Generate PKCE parameters for TikTok (required by TikTok API)
-      let codeChallenge: string | undefined;
-      if (platform === 'tiktok') {
-        const codeVerifier = generateCodeVerifier();
-        codeChallenge = generateCodeChallenge(codeVerifier);
-        // Store code_verifier in session for later use during token exchange
-        req.session.pkceCodeVerifier = codeVerifier;
-      }
-      
       console.log('OAuth Authorize Debug:', {
         platform,
         state,
@@ -10374,10 +10462,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         instagram: { 
           clientId: process.env.INSTAGRAM_CLIENT_ID || '', 
           clientSecret: process.env.INSTAGRAM_CLIENT_SECRET || '' 
-        },
-        tiktok: { 
-          clientId: process.env.TIKTOK_CLIENT_ID || '', 
-          clientSecret: process.env.TIKTOK_CLIENT_SECRET || '' 
         },
         youtube: { 
           clientId: process.env.YOUTUBE_CLIENT_ID || '', 

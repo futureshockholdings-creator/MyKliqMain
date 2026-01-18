@@ -281,14 +281,6 @@ interface PlatformConfig {
  */
 function getPlatformConfig(platform: string): PlatformConfig | null {
   const configs: Record<string, PlatformConfig> = {
-    tiktok: {
-      authEndpoint: 'https://www.tiktok.com/v2/auth/authorize/',
-      tokenEndpoint: 'https://open.tiktokapis.com/v2/oauth/token/',
-      scope: 'user.info.basic,video.list',
-      clientId: process.env.TIKTOK_CLIENT_ID || '',
-      clientSecret: process.env.TIKTOK_CLIENT_SECRET,
-      requiresPKCE: true,
-    },
     youtube: {
       authEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
       tokenEndpoint: 'https://oauth2.googleapis.com/token',
@@ -329,7 +321,7 @@ export async function initPlatformOAuth(req: Request, res: Response): Promise<vo
     if (!config) {
       res.status(400).json({ 
         success: false,
-        message: `Unsupported platform: ${platform}. Supported: tiktok, youtube, discord` 
+        message: `Unsupported platform: ${platform}. Supported: youtube, discord, bluesky` 
       });
       return;
     }

@@ -795,6 +795,11 @@ export default function Settings() {
   const [pin, setPin] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
+  // Bluesky connection state
+  const [showBlueskyDialog, setShowBlueskyDialog] = useState(false);
+  const [blueskyHandle, setBlueskyHandle] = useState('');
+  const [blueskyAppPassword, setBlueskyAppPassword] = useState('');
+
   const handleLogout = async () => {
     try {
       // 1. Clear JWT token first (for cross-domain auth with AWS Amplify)
@@ -951,6 +956,32 @@ export default function Settings() {
       toast({
         title: "Error",
         description: "Failed to remove account. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Bluesky connection mutation (uses app password instead of OAuth)
+  const connectBluesky = useMutation({
+    mutationFn: async ({ handle, appPassword }: { handle: string; appPassword: string }) => {
+      return await apiRequest("POST", "/api/social/bluesky/connect", { handle, appPassword });
+    },
+    onSuccess: async (data) => {
+      await enhancedCache.removeByPattern('/api/social/accounts');
+      queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
+      setShowBlueskyDialog(false);
+      setBlueskyHandle('');
+      setBlueskyAppPassword('');
+      toast({
+        title: "Bluesky Connected!",
+        description: `Successfully connected @${data.username}. You earned 1,000 Kliq Koins!`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Connection Failed",
+        description: error.message || "Failed to connect Bluesky. Please check your handle and app password.",
         variant: "destructive",
       });
     },
@@ -1375,9 +1406,13 @@ export default function Settings() {
                             <Button
                               onClick={() => {
                                 console.log(`[Social Connect] Button clicked for platform: ${platformKey}`);
-                                connectAccount.mutate(platformKey);
+                                if (platformKey === 'bluesky') {
+                                  setShowBlueskyDialog(true);
+                                } else {
+                                  connectAccount.mutate(platformKey);
+                                }
                               }}
-                              disabled={!['twitch', 'discord', 'reddit', 'pinterest', 'youtube', 'bluesky'].includes(platformKey) || connectAccount.isPending}
+                              disabled={!['twitch', 'discord', 'reddit', 'pinterest', 'youtube', 'bluesky'].includes(platformKey) || connectAccount.isPending || connectBluesky.isPending}
                               className={['twitch', 'discord', 'reddit', 'pinterest', 'youtube', 'bluesky'].includes(platformKey)
                                 ? "w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-sm sm:text-base" 
                                 : "w-full bg-white/10 text-white/50 border-white/20 cursor-not-allowed text-sm sm:text-base"}
@@ -1623,6 +1658,76 @@ export default function Settings() {
             </Card>
         </div>
       </div>
+
+      {/* Bluesky Connection Dialog */}
+      <Dialog open={showBlueskyDialog} onOpenChange={(open) => {
+        setShowBlueskyDialog(open);
+        if (!open) {
+          setBlueskyHandle('');
+          setBlueskyAppPassword('');
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sky-500 flex items-center gap-2">
+              <SiBluesky className="w-5 h-5" />
+              Connect Bluesky
+            </DialogTitle>
+            <DialogDescription>
+              Bluesky uses app passwords for secure third-party access. Create an app password in your Bluesky settings, then enter it below.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="bluesky-handle">Bluesky Handle</Label>
+              <Input
+                id="bluesky-handle"
+                type="text"
+                value={blueskyHandle}
+                onChange={(e) => setBlueskyHandle(e.target.value)}
+                placeholder="yourname.bsky.social"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="bluesky-password">App Password</Label>
+              <Input
+                id="bluesky-password"
+                type="password"
+                value={blueskyAppPassword}
+                onChange={(e) => setBlueskyAppPassword(e.target.value)}
+                placeholder="xxxx-xxxx-xxxx-xxxx"
+                className="mt-1"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Create an app password at: Settings → Privacy and Security → App Passwords
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowBlueskyDialog(false);
+                setBlueskyHandle('');
+                setBlueskyAppPassword('');
+              }}
+              disabled={connectBluesky.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => connectBluesky.mutate({ handle: blueskyHandle.trim(), appPassword: blueskyAppPassword.trim() })}
+              disabled={!blueskyHandle.trim() || !blueskyAppPassword.trim() || blueskyHandle.trim().length < 3 || blueskyAppPassword.trim().length < 10 || connectBluesky.isPending}
+              className="bg-sky-500 hover:bg-sky-600"
+            >
+              {connectBluesky.isPending ? "Connecting..." : "Connect Bluesky"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Account Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={handleDialogClose}>

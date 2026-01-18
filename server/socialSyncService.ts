@@ -175,10 +175,10 @@ class SocialSyncService {
     // Delete posts older than 24 hours from all other platforms (TOS compliance)
     // Using 1 day as the keepDays parameter which equals 24 hours
     await storage.deleteOldExternalPosts('youtube', 1);
-    await storage.deleteOldExternalPosts('tiktok', 1);
     await storage.deleteOldExternalPosts('reddit', 1);
     await storage.deleteOldExternalPosts('pinterest', 1);
     await storage.deleteOldExternalPosts('discord', 1);
+    await storage.deleteOldExternalPosts('bluesky', 1);
 
     console.log(`[SocialSync] Cleaned up old posts (24hr limit for TOS compliance): ${totalDeleted} Twitch posts removed`);
 
