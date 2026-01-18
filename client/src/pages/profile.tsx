@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { resolveAssetUrl } from "@/lib/apiConfig";
+import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 
 import { ProfileSettings } from "@/components/ProfileSettings";
 import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
@@ -75,6 +76,10 @@ export default function Profile() {
     },
     onSuccess: async (updatedUser) => {
       console.log('[ProfilePicture] Server response:', updatedUser);
+      
+      // Clear enterprise cache first to prevent stale data from repopulating
+      await enhancedCache.removeByPattern('/api/auth/user');
+      await enhancedCache.removeByPattern('/api/user');
       
       // Directly update TanStack Query cache with the response data
       if (updatedUser && updatedUser.id) {
