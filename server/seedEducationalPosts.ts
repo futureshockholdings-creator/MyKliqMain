@@ -19,15 +19,6 @@ export async function seedEducationalPosts() {
 
   const posts = [
     {
-      title: '📖 Discover Stories - Share Your Moments!',
-      content: 'Stories disappear after 24 hours, perfect for sharing quick updates, photos, or videos with your kliq! Swipe through stories from your closest friends and see what they\'re up to right now.',
-      featureName: 'Stories',
-      icon: '📖',
-      accentColor: '#8b5cf6', // Purple
-      priority: 10,
-      isActive: true,
-    },
-    {
       title: '💰 Earn Kliq Koins Every Day!',
       content: 'Log in daily to build your streak and earn Kliq Koins! Use them to unlock exclusive profile borders and customizations. The longer your streak, the more Koins you earn.',
       featureName: 'Kliq Koins',
