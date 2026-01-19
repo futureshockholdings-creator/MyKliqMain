@@ -208,7 +208,7 @@ function SportsPreferences() {
       return await apiRequest("POST", "/api/sports/preferences", {
         teams: teams.map(team => ({
           sport: team.sport,
-          teamId: team.id,
+          teamId: String(team.id), // Ensure consistent string type
           teamName: team.name,
           teamLogo: team.logo,
           teamAbbr: team.abbreviation,
@@ -275,9 +275,10 @@ function SportsPreferences() {
 
   const handleTeamToggle = (team: Team) => {
     setSelectedTeams(prev => {
-      const exists = prev.find(t => t.id === team.id);
+      const teamIdStr = String(team.id);
+      const exists = prev.find(t => String(t.id) === teamIdStr);
       if (exists) {
-        return prev.filter(t => t.id !== team.id);
+        return prev.filter(t => String(t.id) !== teamIdStr);
       } else {
         return [...prev, team];
       }
@@ -710,8 +711,9 @@ function SportsPreferences() {
                       ) : (
                         <div className="grid gap-2 max-h-64 overflow-y-auto">
                           {allTeams.map((team) => {
-                            const isSelected = selectedTeams.some(t => t.id === team.id);
-                            const isAlreadyFollowing = userPreferences.some(p => p.teamId === team.id);
+                            const teamIdStr = String(team.id);
+                            const isSelected = selectedTeams.some(t => String(t.id) === teamIdStr);
+                            const isAlreadyFollowing = userPreferences.some(p => String(p.teamId) === teamIdStr);
                             
                             return (
                               <button
