@@ -10986,19 +10986,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const preferences = await storage.getUserSportsPreferences(userId);
 
       if (preferences.length === 0) {
-        return res.json([]);
+        return res.json({ teamGames: [], individualSports: [] });
       }
 
-      // Group preferences by sport
-      const teamsBySport = preferences.reduce((acc, pref) => {
-        if (!acc[pref.sport]) {
-          acc[pref.sport] = [];
-        }
-        acc[pref.sport].push(pref.teamId);
-        return acc;
-      }, {} as Record<string, string[]>);
+      // Separate individual sports from team sports
+      const individualSports: string[] = [];
+      const teamsBySport: Record<string, string[]> = {};
 
-      // Fetch games for each sport independently (one failure won't break others)
+      for (const pref of preferences) {
+        if (espnService.isIndividualSport(pref.sport as any)) {
+          if (!individualSports.includes(pref.sport)) {
+            individualSports.push(pref.sport);
+          }
+        } else {
+          if (!teamsBySport[pref.sport]) {
+            teamsBySport[pref.sport] = [];
+          }
+          teamsBySport[pref.sport].push(pref.teamId);
+        }
+      }
+
+      // Fetch team games for team sports
       const allGames = [];
       for (const [sport, teamIds] of Object.entries(teamsBySport)) {
         try {
@@ -11006,14 +11014,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           allGames.push(...games);
         } catch (sportError) {
           console.error(`Failed to fetch ${sport} updates:`, sportError);
-          // Continue with other sports even if one fails
         }
       }
 
-      // Sort by date (most recent first)
+      // Fetch leaderboards for individual sports
+      const individualSportsUpdates = await espnService.getIndividualSportsUpdates(individualSports as any[]);
+
+      // Sort team games by date (most recent first)
       allGames.sort((a, b) => b.eventDate.getTime() - a.eventDate.getTime());
 
-      res.json(allGames);
+      res.json({ 
+        teamGames: allGames, 
+        individualSports: individualSportsUpdates 
+      });
     } catch (error) {
       console.error('Error fetching sports updates:', error);
       res.status(500).json({ message: 'Failed to fetch updates' });

@@ -73,6 +73,25 @@ export interface GameUpdate {
   venue: string | null;
 }
 
+export interface LeaderboardEntry {
+  position: number;
+  name: string;
+  score?: string;
+}
+
+export interface IndividualSportUpdate {
+  eventId: string;
+  sport: string;
+  sportName: string;
+  sportIcon: string;
+  eventName: string;
+  eventDate: Date;
+  status: 'scheduled' | 'in_progress' | 'final';
+  statusDetail: string;
+  venue: string | null;
+  topFive: LeaderboardEntry[];
+}
+
 const ESPN_API_BASE = 'https://site.api.espn.com/apis/site/v2/sports';
 
 // Supported sports configurations
@@ -80,157 +99,188 @@ const SPORTS_CONFIG = {
   nfl: {
     path: 'football/nfl',
     name: 'NFL',
-    icon: '🏈'
+    icon: '🏈',
+    isIndividualSport: false
   },
   cfb: {
     path: 'football/college-football',
     name: 'College Football',
-    icon: '🏈'
+    icon: '🏈',
+    isIndividualSport: false
   },
   nba: {
     path: 'basketball/nba',
     name: 'NBA',
-    icon: '🏀'
+    icon: '🏀',
+    isIndividualSport: false
   },
   cbb: {
     path: 'basketball/mens-college-basketball',
     name: 'College Basketball',
-    icon: '🏀'
+    icon: '🏀',
+    isIndividualSport: false
   },
   mlb: {
     path: 'baseball/mlb',
     name: 'MLB',
-    icon: '⚾'
+    icon: '⚾',
+    isIndividualSport: false
   },
   nhl: {
     path: 'hockey/nhl',
     name: 'NHL',
-    icon: '🏒'
+    icon: '🏒',
+    isIndividualSport: false
   },
   soccer: {
-    path: 'soccer/usa.1', // MLS
+    path: 'soccer/usa.1',
     name: 'MLS',
-    icon: '⚽'
+    icon: '⚽',
+    isIndividualSport: false
   },
   nascar: {
     path: 'racing/nascar-premier',
     name: 'NASCAR Cup Series',
-    icon: '🏎️'
+    icon: '🏎️',
+    isIndividualSport: true
   },
   xfinity: {
     path: 'racing/nascar-secondary',
     name: 'NASCAR Xfinity',
-    icon: '🏎️'
+    icon: '🏎️',
+    isIndividualSport: true
   },
   truck: {
     path: 'racing/nascar-truck',
     name: 'NASCAR Truck Series',
-    icon: '🏁'
+    icon: '🏁',
+    isIndividualSport: true
   },
   f1: {
     path: 'racing/f1',
     name: 'Formula 1',
-    icon: '🏎️'
+    icon: '🏎️',
+    isIndividualSport: true
   },
   indycar: {
     path: 'racing/irl',
     name: 'IndyCar',
-    icon: '🏎️'
+    icon: '🏎️',
+    isIndividualSport: true
   },
   nhra: {
     path: 'racing/nhra',
     name: 'NHRA Drag Racing',
-    icon: '🏁'
+    icon: '🏁',
+    isIndividualSport: true
   },
   wnba: {
     path: 'basketball/wnba',
     name: 'WNBA',
-    icon: '🏀'
+    icon: '🏀',
+    isIndividualSport: false
   },
   wcbb: {
     path: 'basketball/womens-college-basketball',
     name: "Women's College Basketball",
-    icon: '🏀'
+    icon: '🏀',
+    isIndividualSport: false
   },
   lpga: {
     path: 'golf/lpga',
     name: 'LPGA',
-    icon: '⛳'
+    icon: '⛳',
+    isIndividualSport: true
   },
   wta: {
     path: 'tennis/wta',
     name: 'WTA Tennis',
-    icon: '🎾'
+    icon: '🎾',
+    isIndividualSport: true
   },
   ufc: {
     path: 'mma/ufc',
     name: 'UFC/MMA',
-    icon: '🥊'
+    icon: '🥊',
+    isIndividualSport: true
   },
   boxing: {
     path: 'boxing/boxing',
     name: 'Boxing',
-    icon: '🥊'
+    icon: '🥊',
+    isIndividualSport: true
   },
   premierleague: {
     path: 'soccer/eng.1',
     name: 'Premier League',
-    icon: '⚽'
+    icon: '⚽',
+    isIndividualSport: false
   },
   laliga: {
     path: 'soccer/esp.1',
     name: 'La Liga',
-    icon: '⚽'
+    icon: '⚽',
+    isIndividualSport: false
   },
   seriea: {
     path: 'soccer/ita.1',
     name: 'Serie A',
-    icon: '⚽'
+    icon: '⚽',
+    isIndividualSport: false
   },
   bundesliga: {
     path: 'soccer/ger.1',
     name: 'Bundesliga',
-    icon: '⚽'
+    icon: '⚽',
+    isIndividualSport: false
   },
   championsleague: {
     path: 'soccer/uefa.champions',
     name: 'Champions League',
-    icon: '⚽'
+    icon: '⚽',
+    isIndividualSport: false
   },
   collegebb: {
     path: 'baseball/college-baseball',
     name: 'College Baseball',
-    icon: '⚾'
+    icon: '⚾',
+    isIndividualSport: false
   },
   mcollegehockey: {
     path: 'hockey/mens-college-hockey',
     name: "Men's College Hockey",
-    icon: '🏒'
+    icon: '🏒',
+    isIndividualSport: false
   },
   wcollegehockey: {
     path: 'hockey/womens-college-hockey',
     name: "Women's College Hockey",
-    icon: '🏒'
+    icon: '🏒',
+    isIndividualSport: false
   },
   pga: {
     path: 'golf/pga',
     name: 'PGA Tour',
-    icon: '⛳'
+    icon: '⛳',
+    isIndividualSport: true
   },
   atp: {
     path: 'tennis/atp',
     name: 'ATP Tennis',
-    icon: '🎾'
+    icon: '🎾',
+    isIndividualSport: true
   },
   rugby: {
     path: 'rugby/rugby',
     name: 'Rugby',
-    icon: '🏉'
+    icon: '🏉',
+    isIndividualSport: false
   },
   cricket: {
     path: 'cricket/cricket',
     name: 'Cricket',
-    icon: '🏏'
+    icon: '🏏',
+    isIndividualSport: false
   }
 } as const;
 
@@ -390,8 +440,126 @@ class ESPNService {
     return Object.entries(SPORTS_CONFIG).map(([key, config]) => ({
       id: key as Sport,
       name: config.name,
-      icon: config.icon
+      icon: config.icon,
+      isIndividualSport: config.isIndividualSport
     }));
+  }
+
+  /**
+   * Check if a sport is an individual sport (no teams)
+   */
+  isIndividualSport(sport: Sport): boolean {
+    return SPORTS_CONFIG[sport]?.isIndividualSport ?? false;
+  }
+
+  /**
+   * Get leaderboard for individual sports (golf, racing, tennis, combat)
+   * Returns the current/most recent event with top 5 competitors
+   */
+  async getIndividualSportLeaderboard(sport: Sport): Promise<IndividualSportUpdate | null> {
+    try {
+      const sportConfig = SPORTS_CONFIG[sport];
+      if (!sportConfig || !sportConfig.isIndividualSport) {
+        return null;
+      }
+
+      const sportPath = sportConfig.path;
+      const url = `${ESPN_API_BASE}/${sportPath}/scoreboard`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`ESPN API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.events || data.events.length === 0) {
+        return null;
+      }
+
+      const event = data.events[0];
+      const competition = event.competitions?.[0];
+      
+      let status: 'scheduled' | 'in_progress' | 'final' = 'scheduled';
+      let statusDetail = '';
+      let topFive: LeaderboardEntry[] = [];
+
+      if (competition) {
+        const stateType = competition.status?.type?.state?.toLowerCase();
+        if (stateType === 'in') {
+          status = 'in_progress';
+        } else if (stateType === 'post') {
+          status = 'final';
+        }
+        statusDetail = competition.status?.type?.shortDetail || competition.status?.type?.detail || '';
+
+        if (competition.competitors && Array.isArray(competition.competitors)) {
+          const sortedCompetitors = [...competition.competitors]
+            .filter((c: any) => c.order !== undefined || c.statistics)
+            .sort((a: any, b: any) => {
+              const orderA = a.order ?? (a.statistics?.find((s: any) => s.name === 'position')?.displayValue || 999);
+              const orderB = b.order ?? (b.statistics?.find((s: any) => s.name === 'position')?.displayValue || 999);
+              return Number(orderA) - Number(orderB);
+            })
+            .slice(0, 5);
+
+          topFive = sortedCompetitors.map((c: any, index: number) => {
+            const athleteName = c.athlete?.displayName || c.team?.displayName || c.displayName || 'Unknown';
+            const lineScores = c.linescores?.map((l: any) => l.value);
+            const score = c.score ?? (lineScores ? lineScores.join(' / ') : '');
+            return {
+              position: c.order || index + 1,
+              name: athleteName,
+              score: score.toString()
+            };
+          });
+        }
+      }
+
+      if (topFive.length === 0 && event.competitors) {
+        const sortedCompetitors = [...event.competitors]
+          .sort((a: any, b: any) => (a.order || 999) - (b.order || 999))
+          .slice(0, 5);
+
+        topFive = sortedCompetitors.map((c: any, index: number) => ({
+          position: c.order || index + 1,
+          name: c.athlete?.displayName || c.displayName || 'Unknown',
+          score: c.score?.toString() || ''
+        }));
+      }
+
+      return {
+        eventId: event.id,
+        sport: sport,
+        sportName: sportConfig.name,
+        sportIcon: sportConfig.icon,
+        eventName: event.name || event.shortName || 'Event',
+        eventDate: new Date(event.date || competition?.date || new Date()),
+        status,
+        statusDetail,
+        venue: competition?.venue?.fullName || null,
+        topFive
+      };
+    } catch (error) {
+      console.error(`Error fetching ${sport} leaderboard:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Get leaderboards for all individual sports the user has selected
+   */
+  async getIndividualSportsUpdates(sports: Sport[]): Promise<IndividualSportUpdate[]> {
+    const individualSports = sports.filter(sport => this.isIndividualSport(sport));
+    
+    if (individualSports.length === 0) {
+      return [];
+    }
+
+    const leaderboardPromises = individualSports.map(sport => this.getIndividualSportLeaderboard(sport));
+    const leaderboards = await Promise.all(leaderboardPromises);
+    
+    return leaderboards.filter((lb): lb is IndividualSportUpdate => lb !== null);
   }
 }
 

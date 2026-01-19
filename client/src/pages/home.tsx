@@ -37,6 +37,7 @@ import { EventCard } from "@/components/EventCard";
 import { MoodBoostCard } from "@/components/MoodBoostCard";
 import { SportsUpdateCard } from "@/components/SportsUpdateCard";
 import { SportsCarousel } from "@/components/SportsCarousel";
+import { IndividualSportCard } from "@/components/IndividualSportCard";
 import { LiveStreamCard } from "@/components/LiveStreamCard";
 import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -596,10 +597,18 @@ export default function Home() {
   });
   
   const combinedFeed = [...mergedFeed];
-  const sportsUpdatesArray = Array.isArray(sportsUpdates) ? sportsUpdates : [];
+  
+  // Handle the new sports API response format with teamGames and individualSports
+  const sportsData = sportsUpdates as { teamGames?: any[]; individualSports?: any[] } | any[];
+  const sportsUpdatesArray = Array.isArray(sportsData) 
+    ? sportsData 
+    : (sportsData?.teamGames ?? []);
+  const individualSportsArray = Array.isArray(sportsData) 
+    ? [] 
+    : (sportsData?.individualSports ?? []);
   
   // Sports updates are now displayed in a separate carousel at the top of the feed
-  // They are no longer mixed into the main feed
+  // Individual sports leaderboards are displayed alongside team games
 
   // Separate different types of feed items
   console.log('📊 Feed items received:', feedItems.length, feedItems.map((i: any) => i.type));
@@ -3132,6 +3141,23 @@ export default function Home() {
           {/* Sports Carousel at top of feed */}
           {sportsUpdatesArray.length > 0 && (
             <SportsCarousel updates={sportsUpdatesArray} />
+          )}
+          
+          {/* Individual Sports Leaderboards */}
+          {individualSportsArray.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <span className="text-lg">🏆</span>
+                <span className="font-semibold text-sm text-gray-900 dark:text-white">
+                  Tournaments & Races
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {individualSportsArray.map((update: any) => (
+                  <IndividualSportCard key={update.eventId} update={update} />
+                ))}
+              </div>
+            </div>
           )}
           
           {combinedFeed.map((item: any, index: number) => {
