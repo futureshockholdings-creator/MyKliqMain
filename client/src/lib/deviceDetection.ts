@@ -40,7 +40,7 @@ export const detectDevice = (): DeviceInfo => {
   
   // All devices link to the main website
   appStoreUrl = 'https://mykliq.app';
-  downloadText = 'join MyKliq at mykliq.app';
+  downloadText = 'join MyKliq at https://mykliq.app';
   
   return {
     isApple,
