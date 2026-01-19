@@ -87,8 +87,21 @@ Platform-specific push notification strategies:
 ### Internal Post Sharing
 Users can share posts within their kliq, creating copies in their feed without notifying the original author.
 
-### Sports Preferences System
+### Sports Preferences System (Updated Jan 2026)
 Users can select unlimited teams per sport for live score updates on the headlines feed, integrating with the ESPN API.
+
+**Team Sports** (NFL, NBA, MLB, NHL, Soccer, etc.):
+- Users select specific teams to follow
+- Headlines feed shows games involving those teams with scores and status
+
+**Individual Sports** (PGA Golf, NASCAR, F1, Tennis, UFC, Boxing, etc.):
+- No team selection needed - just select the sport
+- Headlines feed shows tournament/race leaderboards with:
+  - Event name and date
+  - Status (Round 2 of 4, Lap 150/200, etc.)
+  - Top 5 competitors with positions and scores
+- Uses `isIndividualSport` flag in SPORTS_CONFIG to differentiate
+- API returns `{ teamGames: [], individualSports: [] }` format
 
 ### Highlighted Posts
 Users can highlight posts with a "fire" effect, characterized by a pulsating red-orange border animation and a yellow/amber background gradient.
