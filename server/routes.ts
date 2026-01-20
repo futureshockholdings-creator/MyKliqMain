@@ -7823,25 +7823,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/validate-invite-code', async (req, res) => {
     try {
       const { inviteCode } = req.body;
+      const trimmedCode = inviteCode?.trim();
       
-      if (!inviteCode || !inviteCode.trim()) {
+      console.log(`[InviteCode] Validating code: "${trimmedCode}" (original input: "${inviteCode}")`);
+      
+      if (!inviteCode || !trimmedCode) {
+        console.log('[InviteCode] Validation failed: empty code');
         return res.status(400).json({ 
           success: false, 
           message: "Invite code is required" 
         });
       }
 
-      // Check if invite code exists and get the owner
-      const inviteCodeOwner = await storage.getUserByInviteCode(inviteCode.trim());
+      // Check if invite code exists and get the owner (case-insensitive lookup)
+      const inviteCodeOwner = await storage.getUserByInviteCode(trimmedCode);
       if (!inviteCodeOwner) {
+        console.log(`[InviteCode] No user found with code: "${trimmedCode}"`);
         return res.status(404).json({ 
           success: false, 
           message: "Invalid invite code" 
         });
       }
+      
+      console.log(`[InviteCode] Found owner: userId=${inviteCodeOwner.id}, kliqName=${inviteCodeOwner.kliqName}`);
 
       // Check if the kliq is closed
       if (inviteCodeOwner.kliqClosed) {
+        console.log(`[InviteCode] Kliq is closed for userId=${inviteCodeOwner.id}`);
         return res.status(403).json({ 
           success: false, 
           message: "This kliq is no longer accepting new members" 
@@ -7851,12 +7859,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check friend limit (28 max)
       const friends = await storage.getFriends(inviteCodeOwner.id);
       if (friends.length >= 28) {
+        console.log(`[InviteCode] Kliq full: ${friends.length}/28 for userId=${inviteCodeOwner.id}`);
         return res.status(403).json({ 
           success: false, 
           message: "This kliq has reached the maximum number of members (28)" 
         });
       }
 
+      console.log(`[InviteCode] Success: code="${trimmedCode}", owner=${inviteCodeOwner.firstName} ${inviteCodeOwner.lastName}`);
+      
       // If we get here, the invite code is valid
       res.json({ 
         success: true, 
@@ -7869,7 +7880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
     } catch (error) {
-      console.error("Error validating invite code:", error);
+      console.error("[InviteCode] Error validating invite code:", error);
       res.status(500).json({ 
         success: false, 
         message: "Failed to validate invite code" 

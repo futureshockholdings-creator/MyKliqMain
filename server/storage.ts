@@ -1632,7 +1632,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByInviteCode(inviteCode: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.inviteCode, inviteCode));
+    // Case-insensitive lookup to handle user input variations
+    const [user] = await db.select().from(users).where(
+      sql`LOWER(${users.inviteCode}) = LOWER(${inviteCode})`
+    );
     return user;
   }
 
