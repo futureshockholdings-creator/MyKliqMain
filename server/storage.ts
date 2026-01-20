@@ -5413,6 +5413,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async restoreStreak(userId: string): Promise<LoginStreak> {
+    const RESTORE_COST = 10;
+    
     return await db.transaction(async (tx) => {
       // Get current streak data
       const [currentStreak] = await tx
@@ -5424,8 +5426,32 @@ export class DatabaseStorage implements IStorage {
         throw new Error('No streak available to restore');
       }
 
-      // Spend 10 koins for streak restoration
-      await this.spendKoins(userId, 10, 'streak_restore');
+      // Get user's koin balance within the same transaction
+      const [userKoins] = await tx
+        .select()
+        .from(kliqKoins)
+        .where(eq(kliqKoins.userId, userId));
+
+      if (!userKoins || parseFloat(userKoins.balance as any) < RESTORE_COST) {
+        throw new Error('Insufficient Kliq Koins');
+      }
+
+      const newBalance = parseFloat(userKoins.balance as any) - RESTORE_COST;
+
+      // Deduct koins within the same transaction
+      await tx
+        .update(kliqKoins)
+        .set({ balance: newBalance, updatedAt: new Date() })
+        .where(eq(kliqKoins.userId, userId));
+
+      // Record the transaction within the same transaction
+      await tx.insert(kliqKoinTransactions).values({
+        userId,
+        amount: -RESTORE_COST,
+        type: 'spent',
+        source: 'streak_restore',
+        balanceAfter: newBalance,
+      });
 
       // Restore the streak and clear previousStreak
       const [updatedStreak] = await tx
@@ -5433,6 +5459,7 @@ export class DatabaseStorage implements IStorage {
         .set({ 
           currentStreak: currentStreak.previousStreak,
           previousStreak: 0, // Clear so they can't restore again
+          lastLoginDate: new Date().toISOString().split('T')[0] as any, // Update last login to today
           updatedAt: new Date() 
         })
         .where(eq(loginStreaks.userId, userId))
