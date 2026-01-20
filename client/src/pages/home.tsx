@@ -35,9 +35,7 @@ import { SponsoredAd } from "@/components/SponsoredAd";
 import { GoogleSearch } from "@/components/GoogleSearch";
 import { EventCard } from "@/components/EventCard";
 import { MoodBoostCard } from "@/components/MoodBoostCard";
-import { SportsUpdateCard } from "@/components/SportsUpdateCard";
 import { SportsCarousel } from "@/components/SportsCarousel";
-import { IndividualSportCard } from "@/components/IndividualSportCard";
 import { LiveStreamCard } from "@/components/LiveStreamCard";
 import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -599,16 +597,38 @@ export default function Home() {
   const combinedFeed = [...mergedFeed];
   
   // Handle the new sports API response format with teamGames and individualSports
+  // Merge both into a single unified array for the carousel
   const sportsData = sportsUpdates as { teamGames?: any[]; individualSports?: any[] } | any[];
-  const sportsUpdatesArray = Array.isArray(sportsData) 
-    ? sportsData 
-    : (sportsData?.teamGames ?? []);
-  const individualSportsArray = Array.isArray(sportsData) 
-    ? [] 
-    : (sportsData?.individualSports ?? []);
   
-  // Sports updates are now displayed in a separate carousel at the top of the feed
-  // Individual sports leaderboards are displayed alongside team games
+  // Transform team games to unified format with type discriminator
+  // Note: Spread first, then explicitly override type to ensure it's set correctly
+  const teamGamesArray = (Array.isArray(sportsData) 
+    ? sportsData 
+    : (sportsData?.teamGames ?? [])
+  ).map((game: any) => {
+    const { type: _originalType, ...rest } = game; // Remove any existing type field
+    return {
+      ...rest,
+      type: 'team' as const,
+      id: game.eventId || game.id,
+    };
+  });
+  
+  // Transform individual sports to unified format with type discriminator  
+  const individualSportsArray = (Array.isArray(sportsData) 
+    ? [] 
+    : (sportsData?.individualSports ?? [])
+  ).map((sport: any) => {
+    const { type: _originalType, ...rest } = sport; // Remove any existing type field
+    return {
+      ...rest,
+      type: 'individual' as const,
+      id: sport.eventId,
+    };
+  });
+  
+  // Merge all sports updates into single array for unified carousel
+  const allSportsUpdates = [...teamGamesArray, ...individualSportsArray];
 
   // Separate different types of feed items
   console.log('📊 Feed items received:', feedItems.length, feedItems.map((i: any) => i.type));
@@ -3138,26 +3158,9 @@ export default function Home() {
         </Card>
       ) : (
         <>
-          {/* Sports Carousel at top of feed */}
-          {sportsUpdatesArray.length > 0 && (
-            <SportsCarousel updates={sportsUpdatesArray} />
-          )}
-          
-          {/* Individual Sports Leaderboards */}
-          {individualSportsArray.length > 0 && (
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-2 px-1">
-                <span className="text-lg">🏆</span>
-                <span className="font-semibold text-sm text-gray-900 dark:text-white">
-                  Tournaments & Races
-                </span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {individualSportsArray.map((update: any) => (
-                  <IndividualSportCard key={update.eventId} update={update} />
-                ))}
-              </div>
-            </div>
+          {/* Unified Sports Carousel - team games and individual sports together */}
+          {allSportsUpdates.length > 0 && (
+            <SportsCarousel updates={allSportsUpdates} />
           )}
           
           {combinedFeed.map((item: any, index: number) => {

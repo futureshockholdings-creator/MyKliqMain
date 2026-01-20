@@ -455,6 +455,7 @@ class ESPNService {
   /**
    * Get leaderboard for individual sports (golf, racing, tennis, combat)
    * Returns the current/most recent event with top 5 competitors
+   * Filters to events within yesterday-to-tomorrow window (same as team sports)
    */
   async getIndividualSportLeaderboard(sport: Sport): Promise<IndividualSportUpdate | null> {
     try {
@@ -477,7 +478,26 @@ class ESPNService {
         return null;
       }
 
-      const event = data.events[0];
+      // Filter events within yesterday-to-tomorrow window (same as team sports)
+      const now = new Date();
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+      
+      const dayAfterTomorrow = new Date(now);
+      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+      dayAfterTomorrow.setHours(0, 0, 0, 0);
+
+      const filteredEvents = data.events.filter((e: any) => {
+        const eventDate = new Date(e.date || e.competitions?.[0]?.date);
+        return eventDate >= yesterday && eventDate < dayAfterTomorrow;
+      });
+
+      if (filteredEvents.length === 0) {
+        return null;
+      }
+
+      const event = filteredEvents[0];
       const competition = event.competitions?.[0];
       
       let status: 'scheduled' | 'in_progress' | 'final' = 'scheduled';
