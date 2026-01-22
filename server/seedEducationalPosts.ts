@@ -172,8 +172,8 @@ export async function seedEducationalPosts() {
       isActive: true,
     },
     {
-      title: '👥 Create Group Chats for Your Crews',
-      content: 'Bring your whole friend group together! Create group chats for different crews - study groups, sports teams, or just your closest friends. Keep everyone connected in one place.',
+      title: '👥 Create Group Chats for Your Kliqs',
+      content: 'Bring your whole friend group together! Create group chats for different kliqs - study groups, sports teams, or just your closest friends. Keep everyone connected in one place.',
       featureName: 'Group Chats',
       icon: '👥',
       accentColor: '#22d3ee', // Cyan

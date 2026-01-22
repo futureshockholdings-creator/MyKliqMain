@@ -3260,18 +3260,9 @@ export default function Home() {
                     <h3 className="text-lg font-bold text-foreground mb-2">
                       {item.title}
                     </h3>
-                    <p className="text-foreground/90 mb-3">
+                    <p className="text-foreground/90">
                       {item.content}
                     </p>
-                    <div 
-                      className="text-xs font-medium px-3 py-1 rounded inline-block"
-                      style={{
-                        backgroundColor: `${item.accentColor}30`,
-                        color: item.accentColor
-                      }}
-                    >
-                      Learn about: {item.featureName}
-                    </div>
                   </div>
                 </CardContent>
               </Card>
