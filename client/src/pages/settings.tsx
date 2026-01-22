@@ -1225,15 +1225,45 @@ export default function Settings() {
     mutationFn: async () => {
       return await apiRequest("DELETE", "/api/user/account");
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({
         title: "Account Deleted",
         description: "Your account has been permanently deleted.",
       });
-      // Redirect to login page after deletion
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 2000);
+      
+      // Clean up auth state properly (same as logout flow)
+      try {
+        // 1. Clear JWT token first
+        console.log('[Delete Account] Clearing JWT token...');
+        removeAuthToken();
+        
+        // 2. Mark that we're logging out to prevent auto-redirect
+        sessionStorage.setItem('forceLogout', 'true');
+        
+        // 3. Clear ALL enterprise caches
+        console.log('[Delete Account] Cleaning up enterprise services...');
+        await cleanupEnterpriseServices();
+        
+        // 4. Remove all user-specific queries from TanStack Query
+        console.log('[Delete Account] Removing TanStack Query cache...');
+        queryClient.removeQueries({
+          predicate: (query) => {
+            const firstKey = query.queryKey[0];
+            return typeof firstKey === 'string' && firstKey.startsWith('/api/');
+          }
+        });
+        
+        // 5. Clear the query client cache entirely
+        queryClient.clear();
+        
+        console.log('[Delete Account] All caches cleared, redirecting...');
+      } catch (error) {
+        console.error('[Delete Account] Failed to clear caches:', error);
+        // Continue with redirect even if cache clearing fails
+      }
+      
+      // Redirect to landing page immediately
+      window.location.href = '/landing';
     },
     onError: () => {
       toast({
