@@ -15,7 +15,7 @@ export function PhoneInput({ label, error, className, ...props }: PhoneInputProp
         type="tel"
         placeholder="+1 (555) 123-4567"
         className={cn(
-          "bg-input border-border text-foreground placeholder-muted-foreground",
+          "bg-white text-gray-900 border-gray-300 placeholder:text-gray-500",
           error && "border-destructive",
           className
         )}

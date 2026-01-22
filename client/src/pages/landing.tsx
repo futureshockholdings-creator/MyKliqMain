@@ -235,7 +235,7 @@ export default function Landing() {
                       value={inviteCode}
                       onChange={(e) => setInviteCode(e.target.value)}
                       placeholder="KLIQ-XXXX-XXXX"
-                      className="mt-1"
+                      className="mt-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       disabled={isValidating}
                       data-testid="input-invite-code"
                     />

@@ -325,7 +325,7 @@ export default function Login() {
                               {...field}
                               type={showPassword ? "text" : "password"}
                               placeholder="Enter your password"
-                              className="bg-background border-border text-foreground pr-10"
+                              className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 pr-10"
                               disabled={isLoading}
                               data-testid="input-password"
                             />

@@ -44,7 +44,7 @@ const TagInput = ({
         value={newItem}
         onChange={(e) => setNewItem(e.target.value)}
         placeholder={placeholder}
-        className="bg-input border-border text-foreground flex-1"
+        className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 flex-1"
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
@@ -380,7 +380,7 @@ export default function Signup() {
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       placeholder="Your first name"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-first-name"
                     />
                   </div>
@@ -394,7 +394,7 @@ export default function Signup() {
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder="Your last name"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-last-name"
                     />
                   </div>
@@ -409,7 +409,7 @@ export default function Signup() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your.email@example.com"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-email"
                     />
                   </div>
@@ -424,7 +424,7 @@ export default function Signup() {
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       placeholder="(555) 123-4567"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-phone"
                     />
                   </div>
@@ -438,7 +438,7 @@ export default function Signup() {
                       type="date"
                       value={birthdate}
                       onChange={(e) => setBirthdate(e.target.value)}
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-birthdate"
                     />
                   </div>
@@ -449,7 +449,7 @@ export default function Signup() {
                       value={kliqName}
                       onChange={(e) => setKliqName(e.target.value)}
                       placeholder="My Kliq"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-kliq-name"
                     />
                   </div>
@@ -460,7 +460,7 @@ export default function Signup() {
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="Tell us about yourself..."
-                      className="bg-input border-border text-foreground resize-none"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 resize-none"
                       rows={3}
                       data-testid="input-bio"
                     />
@@ -480,7 +480,7 @@ export default function Signup() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter secure password"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-password"
                     />
                     <p className="text-xs text-muted-foreground">
@@ -495,7 +495,7 @@ export default function Signup() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Confirm your password"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-confirm-password"
                     />
                   </div>
@@ -511,7 +511,7 @@ export default function Signup() {
                       value={securityAnswer1}
                       onChange={(e) => setSecurityAnswer1(e.target.value)}
                       placeholder="Your answer"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-1"
                     />
                   </div>
@@ -522,7 +522,7 @@ export default function Signup() {
                       value={securityAnswer2}
                       onChange={(e) => setSecurityAnswer2(e.target.value)}
                       placeholder="Your answer"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-2"
                     />
                   </div>
@@ -533,7 +533,7 @@ export default function Signup() {
                       value={securityAnswer3}
                       onChange={(e) => setSecurityAnswer3(e.target.value)}
                       placeholder="Your answer"
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-3"
                     />
                   </div>
@@ -546,7 +546,7 @@ export default function Signup() {
                       onChange={(e) => setSecurityPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                       placeholder="1234"
                       maxLength={4}
-                      className="bg-input border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-pin"
                     />
                     <p className="text-xs text-muted-foreground">

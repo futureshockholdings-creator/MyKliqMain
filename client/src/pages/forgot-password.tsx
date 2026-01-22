@@ -236,6 +236,7 @@ export default function ForgotPassword() {
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       placeholder="Enter your first name"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-first-name"
                     />
                   </div>
@@ -247,6 +248,7 @@ export default function ForgotPassword() {
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder="Enter your last name"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-last-name"
                     />
                   </div>
@@ -299,6 +301,7 @@ export default function ForgotPassword() {
                       value={securityAnswers.answer1}
                       onChange={(e) => setSecurityAnswers({...securityAnswers, answer1: e.target.value})}
                       placeholder="Enter your answer"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-1"
                     />
                   </div>
@@ -310,6 +313,7 @@ export default function ForgotPassword() {
                       value={securityAnswers.answer2}
                       onChange={(e) => setSecurityAnswers({...securityAnswers, answer2: e.target.value})}
                       placeholder="Enter your answer"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-2"
                     />
                   </div>
@@ -321,6 +325,7 @@ export default function ForgotPassword() {
                       value={securityAnswers.answer3}
                       onChange={(e) => setSecurityAnswers({...securityAnswers, answer3: e.target.value})}
                       placeholder="Enter your answer"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-3"
                     />
                   </div>
@@ -351,7 +356,7 @@ export default function ForgotPassword() {
                     setPin(value);
                   }}
                   placeholder="Enter your 4-digit PIN"
-                  className="text-center text-xl tracking-widest"
+                  className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 text-center text-xl tracking-widest"
                   data-testid="input-security-pin"
                 />
                 <Button
@@ -380,6 +385,7 @@ export default function ForgotPassword() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Enter new password"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-new-password"
                     />
                   </div>
@@ -392,6 +398,7 @@ export default function ForgotPassword() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Confirm new password"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-confirm-password"
                     />
                   </div>
