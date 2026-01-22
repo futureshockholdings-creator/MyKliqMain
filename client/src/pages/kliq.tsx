@@ -727,7 +727,7 @@ export default function Kliq() {
                   <Input
                     value={kliqName}
                     onChange={(e) => setKliqName(e.target.value)}
-                    className="bg-input border-border text-foreground text-center"
+                    className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 text-center"
                     placeholder={userData?.kliqName || "My Kliq"}
                     data-testid="input-kliq-name"
                   />
@@ -903,7 +903,7 @@ export default function Kliq() {
                       placeholder="e.g., Weekend Squad"
                       value={groupChatName}
                       onChange={(e) => setGroupChatName(e.target.value)}
-                      className="bg-background border-border"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-group-name"
                     />
                   </div>
@@ -1259,7 +1259,7 @@ export default function Kliq() {
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                 placeholder="KLIQ-XXXX-XXXX"
-                className="mt-1"
+                className="mt-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                 disabled={joinKliqMutation.isPending}
                 data-testid="input-join-invite-code"
               />

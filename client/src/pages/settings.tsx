@@ -1719,7 +1719,7 @@ export default function Settings() {
                 value={blueskyHandle}
                 onChange={(e) => setBlueskyHandle(e.target.value)}
                 placeholder="yourname.bsky.social"
-                className="mt-1"
+                className="mt-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
               />
             </div>
             <div>
@@ -1730,7 +1730,7 @@ export default function Settings() {
                 value={blueskyAppPassword}
                 onChange={(e) => setBlueskyAppPassword(e.target.value)}
                 placeholder="xxxx-xxxx-xxxx-xxxx"
-                className="mt-1"
+                className="mt-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
               />
               <p className="text-xs text-gray-500 mt-1">
                 Create an app password at: Settings → Privacy and Security → App Passwords
@@ -1793,7 +1793,7 @@ export default function Settings() {
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                 placeholder="Enter 4-digit PIN"
-                className="text-center text-lg tracking-widest"
+                className="text-center text-lg tracking-widest bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                 data-testid="input-delete-pin"
               />
             </div>

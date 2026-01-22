@@ -105,7 +105,7 @@ export function PinVerificationModal({
                 value={pin}
                 onChange={handlePinChange}
                 placeholder="••••"
-                className="text-center text-2xl tracking-widest font-mono"
+                className="text-center text-2xl tracking-widest font-mono bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                 autoComplete="off"
                 autoFocus
                 disabled={isVerifying}
