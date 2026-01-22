@@ -168,7 +168,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
           placeholder={placeholder}
-          className="bg-input border-border text-foreground flex-1"
+          className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 flex-1"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -431,7 +431,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
                                 {...field}
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Enter your password"
-                                className="bg-input border-border text-foreground pr-10"
+                                className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 pr-10"
                                 data-testid="input-password"
                               />
                               <Button
@@ -470,7 +470,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
                                 {...field}
                                 type={showConfirmPassword ? "text" : "password"}
                                 placeholder="Confirm your password"
-                                className="bg-input border-border text-foreground pr-10"
+                                className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 pr-10"
                                 data-testid="input-confirm-password"
                               />
                               <Button

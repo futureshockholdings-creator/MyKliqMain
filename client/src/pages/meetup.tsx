@@ -310,6 +310,7 @@ export default function MeetupPage() {
                       placeholder="e.g., Starbucks, Central Park, Home"
                       value={locationName}
                       onChange={(e) => setLocationName(e.target.value)}
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                     />
                   </div>
                   
@@ -321,6 +322,7 @@ export default function MeetupPage() {
                       placeholder="e.g., 123 Main St, New York, NY"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                     />
                   </div>
                   

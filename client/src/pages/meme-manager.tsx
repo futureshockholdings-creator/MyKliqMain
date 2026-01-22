@@ -66,7 +66,7 @@ export function MemeManagerPage() {
                   placeholder="Enter admin password"
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  className="pr-10"
+                  className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 pr-10"
                 />
                 <Button
                   type="button"

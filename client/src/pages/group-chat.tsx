@@ -245,7 +245,7 @@ export function GroupChat() {
               placeholder="Type a message..."
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
-              className="flex-1 bg-background border-border"
+              className="flex-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
               disabled={sendMessageMutation.isPending}
               data-testid="input-message"
             />

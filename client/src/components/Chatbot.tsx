@@ -528,7 +528,7 @@ export function Chatbot() {
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Ask about MyKliq features..."
-                  className="flex-1"
+                  className="flex-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                   data-testid="input-chatbot-message"
                 />
                 <Button

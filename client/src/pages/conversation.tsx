@@ -336,7 +336,7 @@ export function Conversation() {
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
                 placeholder="Type your message..."
-                className="flex-1"
+                className="flex-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                 disabled={sendMessageMutation.isPending}
                 data-testid="input-message"
               />

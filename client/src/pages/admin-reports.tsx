@@ -429,6 +429,7 @@ export default function AdminReports() {
                           value={adminNotes}
                           onChange={(e) => setAdminNotes(e.target.value)}
                           rows={2}
+                          className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                         />
                       </div>
                       <div>
@@ -439,6 +440,7 @@ export default function AdminReports() {
                           value={actionTaken}
                           onChange={(e) => setActionTaken(e.target.value)}
                           rows={2}
+                          className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                         />
                       </div>
                     </div>

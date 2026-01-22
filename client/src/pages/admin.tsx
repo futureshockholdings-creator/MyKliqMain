@@ -549,7 +549,7 @@ export default function AdminPage() {
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   placeholder="Enter admin password"
-                  className="border-gray-300 pr-10"
+                  className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 pr-10"
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                   data-testid="input-admin-password"
                 />
@@ -734,7 +734,7 @@ export default function AdminPage() {
                 placeholder="Search users by name, email, or phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-md bg-input border-border text-foreground"
+                className="max-w-md bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                 data-testid="input-user-search"
               />
             </div>
@@ -886,7 +886,7 @@ export default function AdminPage() {
                                             placeholder="Enter user's answer..."
                                             value={securityAnswer1}
                                             onChange={(e) => { setSecurityAnswer1(e.target.value); setSecurityVerificationResult(null); setRevealedPassword(null); }}
-                                            className="bg-background"
+                                            className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                                           />
                                           {securityVerificationResult && (
                                             <span className={`flex items-center px-2 ${securityVerificationResult.answer1Valid ? 'text-green-600' : 'text-red-600'}`}>
@@ -902,7 +902,7 @@ export default function AdminPage() {
                                             placeholder="Enter user's answer..."
                                             value={securityAnswer2}
                                             onChange={(e) => { setSecurityAnswer2(e.target.value); setSecurityVerificationResult(null); setRevealedPassword(null); }}
-                                            className="bg-background"
+                                            className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                                           />
                                           {securityVerificationResult && (
                                             <span className={`flex items-center px-2 ${securityVerificationResult.answer2Valid ? 'text-green-600' : 'text-red-600'}`}>
@@ -918,7 +918,7 @@ export default function AdminPage() {
                                             placeholder="Enter user's answer..."
                                             value={securityAnswer3}
                                             onChange={(e) => { setSecurityAnswer3(e.target.value); setSecurityVerificationResult(null); setRevealedPassword(null); }}
-                                            className="bg-background"
+                                            className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                                           />
                                           {securityVerificationResult && (
                                             <span className={`flex items-center px-2 ${securityVerificationResult.answer3Valid ? 'text-green-600' : 'text-red-600'}`}>
@@ -1705,7 +1705,7 @@ export default function AdminPage() {
                       placeholder="Notification title..."
                       value={broadcastTitle}
                       onChange={(e) => setBroadcastTitle(e.target.value)}
-                      className="bg-background border-border text-foreground"
+                      className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1736,7 +1736,7 @@ export default function AdminPage() {
                     value={broadcastBody}
                     onChange={(e) => setBroadcastBody(e.target.value)}
                     rows={3}
-                    className="w-full px-3 py-2 bg-background border border-border rounded-md text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md placeholder:text-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                 </div>
                 <div className="space-y-2">
@@ -1746,7 +1746,7 @@ export default function AdminPage() {
                     placeholder="e.g., /profile or /headlines"
                     value={broadcastDeepLink}
                     onChange={(e) => setBroadcastDeepLink(e.target.value)}
-                    className="bg-background border-border text-foreground"
+                    className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                   />
                   <p className="text-xs text-muted-foreground">Opens this screen when user taps the notification</p>
                 </div>

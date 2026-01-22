@@ -129,7 +129,7 @@ function EditPostForm({ post, onUpdate, onOptimisticDelete }: { post: any; onUpd
         value={editContent}
         onChange={(e) => setEditContent(e.target.value)}
         placeholder="What's on your mind?"
-        className="min-h-[120px] bg-background border-border text-foreground"
+        className="min-h-[120px] bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
         data-testid="textarea-edit-post"
       />
       <div className="flex gap-2 justify-between">
@@ -280,7 +280,7 @@ function EditCommentForm({ comment, onUpdate }: { comment: any; onUpdate: () => 
         value={editContent}
         onChange={(e) => setEditContent(e.target.value)}
         placeholder="Edit your comment..."
-        className="min-h-[100px] bg-background border-border text-foreground"
+        className="min-h-[100px] bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
         data-testid="textarea-edit-comment"
       />
       <div className="flex gap-2 justify-between">
@@ -3668,7 +3668,7 @@ export default function Home() {
                                   <div className="flex-1 flex space-x-2">
                                     <Textarea
                                       placeholder="Write a reply..."
-                                      className="resize-none bg-muted border-border text-sm"
+                                      className="resize-none bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 text-sm"
                                       rows={2}
                                       value={replyInputs[comment.id] || ""}
                                       onChange={(e) => setReplyInputs(prev => ({ ...prev, [comment.id]: e.target.value }))}
@@ -4066,6 +4066,7 @@ export default function Home() {
                 value={reportDescription}
                 onChange={(e) => setReportDescription(e.target.value)}
                 rows={3}
+                className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
               />
             </div>
             
