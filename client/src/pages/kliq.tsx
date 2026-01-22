@@ -67,6 +67,9 @@ export default function Kliq() {
     }; 
   }[]>({
     queryKey: ["/api/friends"],
+    refetchInterval: 15000, // Poll every 15 seconds for new connections
+    refetchOnMount: 'always', // Always refresh when navigating to this page
+    refetchOnWindowFocus: true,
   });
 
   // Fetch pending join requests (for kliq owner)
@@ -84,6 +87,9 @@ export default function Kliq() {
     queryKey: ["/api/friends/pending-requests"],
     retry: false,
     staleTime: 5000,
+    refetchInterval: 15000, // Poll every 15 seconds for pending requests
+    refetchOnMount: 'always', // Always refresh when navigating to this page
+    refetchOnWindowFocus: true,
   });
   
   const safePendingRequests = pendingRequests ?? [];
