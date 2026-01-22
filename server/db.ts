@@ -12,13 +12,13 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Connection pooling optimized for Neon serverless (autoscale cold starts)
+// Connection pooling optimized for scaling to thousands of users
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
   ssl: true,
   connectionTimeoutMillis: 15000,   // Higher timeout for heavy load
   idleTimeoutMillis: 30000,         // Shorter idle time for serverless
-  max: 5,                           // Neon serverless recommendation: keep very small
+  max: 25,                          // Increased for high concurrency scaling
   min: 0,                           // Zero minimum to avoid cold start connection bursts
   maxUses: 10000,                   // Higher connection reuse for efficiency
   allowExitOnIdle: true,            // Allow pool to shrink when idle
@@ -39,18 +39,18 @@ pool.on('error', (err) => {
   }
 });
 
-// Monitoring with scaling alerts (optimized for Neon serverless)
+// Monitoring with scaling alerts (optimized for high concurrency)
 setInterval(() => {
   const memoryMB = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
-  const poolUsage = (pool.totalCount / 5) * 100; // Match max pool size of 5
+  const poolUsage = (pool.totalCount / 25) * 100; // Match max pool size of 25
   
   if (memoryMB > 800 || poolUsage > 80) {
-    console.warn(`🔥 HIGH LOAD: Pool: ${pool.totalCount}/5 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
+    console.warn(`🔥 HIGH LOAD: Pool: ${pool.totalCount}/25 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
   }
   
   // Critical alerts
   if (memoryMB > 1200 || poolUsage > 95) {
-    console.error(`🚨 CRITICAL: Pool: ${pool.totalCount}/5 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
+    console.error(`🚨 CRITICAL: Pool: ${pool.totalCount}/25 (${poolUsage.toFixed(1)}%), Memory: ${memoryMB}MB`);
   }
 }, 30000); // Check every 30 seconds
 
