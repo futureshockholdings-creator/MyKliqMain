@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
-import { resolveAssetUrl } from "@/lib/apiConfig";
+import { resolveAssetUrl, resolveProfileImageUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -2135,7 +2135,7 @@ export default function Home() {
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-3">
             <Avatar className="w-10 h-10 border-2 border-mykliq-orange">
-              <AvatarImage src={resolveAssetUrl(userData?.profileImageUrl)} />
+              <AvatarImage src={resolveProfileImageUrl(userData?.profileImageUrl, userData?.updatedAt)} />
               <AvatarFallback className="bg-muted text-foreground">
                 {userData?.firstName?.[0] || "U"}
               </AvatarFallback>
@@ -3660,7 +3660,7 @@ export default function Home() {
                               <div className="mt-3 pl-4 border-l-2 border-muted">
                                 <div className="flex space-x-2">
                                   <Avatar className="w-6 h-6 border border-border">
-                                    <AvatarImage src={resolveAssetUrl(userData?.profileImageUrl)} />
+                                    <AvatarImage src={resolveProfileImageUrl(userData?.profileImageUrl, userData?.updatedAt)} />
                                     <AvatarFallback className="bg-muted text-foreground text-xs">
                                       {userData?.firstName?.[0] || "U"}
                                     </AvatarFallback>
@@ -3710,7 +3710,7 @@ export default function Home() {
                   {/* Add Comment Input */}
                   <div className="flex space-x-3">
                     <Avatar className="w-8 h-8 border border-border">
-                      <AvatarImage src={resolveAssetUrl(userData?.profileImageUrl)} />
+                      <AvatarImage src={resolveProfileImageUrl(userData?.profileImageUrl, userData?.updatedAt)} />
                       <AvatarFallback className="bg-muted text-foreground text-xs">
                         {userData?.firstName?.[0] || "U"}
                       </AvatarFallback>

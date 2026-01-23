@@ -109,3 +109,25 @@ export function resolveAssetUrl(url: string | null | undefined): string | undefi
   // Return as-is for other cases
   return url;
 }
+
+/**
+ * Resolves profile image URL with cache-busting to prevent browser caching issues
+ * Uses the user's updatedAt timestamp if available, otherwise uses a session-based key
+ * @param url - The profile image URL
+ * @param updatedAt - The user's updatedAt timestamp (from user object)
+ */
+export function resolveProfileImageUrl(url: string | null | undefined, updatedAt?: string | Date | null): string | undefined {
+  const baseUrl = resolveAssetUrl(url);
+  if (!baseUrl) {
+    return undefined;
+  }
+  
+  // Use updatedAt timestamp for cache-busting, or fall back to a session-based key
+  const cacheBuster = updatedAt 
+    ? new Date(updatedAt).getTime() 
+    : (window as any).__profileCacheKey || ((window as any).__profileCacheKey = Date.now());
+  
+  // Add cache-busting query parameter
+  const separator = baseUrl.includes('?') ? '&' : '?';
+  return `${baseUrl}${separator}v=${cacheBuster}`;
+}

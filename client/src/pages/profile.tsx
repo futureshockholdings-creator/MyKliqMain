@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
-import { resolveAssetUrl } from "@/lib/apiConfig";
+import { resolveAssetUrl, resolveProfileImageUrl } from "@/lib/apiConfig";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 
 import { ProfileSettings } from "@/components/ProfileSettings";
@@ -80,6 +80,9 @@ export default function Profile() {
       // Clear enterprise cache first to prevent stale data from repopulating
       await enhancedCache.removeByPattern('/api/auth/user');
       await enhancedCache.removeByPattern('/api/user');
+      
+      // Force browser to refetch images by updating the global cache key
+      (window as any).__profileCacheKey = Date.now();
       
       // Directly update TanStack Query cache with the response data
       if (updatedUser && updatedUser.id) {
@@ -208,7 +211,7 @@ export default function Profile() {
                 <div className="relative">
                   <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
                     <AvatarImage 
-                      src={resolvedProfileUrl ? `${resolvedProfileUrl}${resolvedProfileUrl.includes('?') ? '&' : '?'}t=${Date.now()}` : undefined} 
+                      src={resolveProfileImageUrl(typedUser.profileImageUrl, typedUser.updatedAt)} 
                       alt="Profile picture" 
                       className="object-cover"
                     />

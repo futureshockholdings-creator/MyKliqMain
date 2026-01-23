@@ -29,6 +29,8 @@ interface ConversationData {
 export function Messages() {
   const { data: conversations = [], isLoading } = useQuery<ConversationData[]>({
     queryKey: ["/api/messages/conversations"],
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   const getDisplayName = (user: ConversationData["otherUser"]) => {
