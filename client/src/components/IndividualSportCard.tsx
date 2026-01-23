@@ -41,19 +41,19 @@ export function IndividualSportCard({ update }: IndividualSportCardProps) {
     if (position === 1) return 'bg-amber-500 text-white';
     if (position === 2) return 'bg-gray-400 text-white';
     if (position === 3) return 'bg-amber-700 text-white';
-    return 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
+    return 'bg-gray-200 text-gray-600';
   };
 
   return (
     <div className={cn(
-      "bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-3",
+      "bg-white rounded-xl shadow-sm border p-3",
       isLive && "ring-2 ring-red-500 ring-opacity-50",
       isFinal && "opacity-90"
     )}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="text-lg">{update.sportIcon}</span>
-          <span className="font-semibold text-sm text-gray-900 dark:text-white truncate">
+          <span className="font-semibold text-sm text-gray-900 truncate">
             {update.sportName}
           </span>
         </div>
@@ -68,11 +68,11 @@ export function IndividualSportCard({ update }: IndividualSportCardProps) {
         </div>
       </div>
 
-      <h3 className="font-medium text-gray-800 dark:text-gray-100 text-sm mb-2 line-clamp-2">
+      <h3 className="font-medium text-gray-800 text-sm mb-2 line-clamp-2">
         {update.eventName}
       </h3>
 
-      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
+      <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
         <div className="flex items-center gap-1">
           <Calendar className="w-3 h-3" />
           <span>{formatDate(update.eventDate)}</span>
@@ -89,7 +89,7 @@ export function IndividualSportCard({ update }: IndividualSportCardProps) {
         <div className="space-y-1.5">
           <div className="flex items-center gap-1.5 mb-1.5">
             <Trophy className="w-3.5 h-3.5 text-amber-500" />
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+            <span className="text-xs font-medium text-gray-600">
               Top 5
             </span>
           </div>
@@ -105,11 +105,11 @@ export function IndividualSportCard({ update }: IndividualSportCardProps) {
               )}>
                 {entry.position}
               </span>
-              <span className="text-xs text-gray-700 dark:text-gray-200 flex-1 truncate">
+              <span className="text-xs text-gray-700 flex-1 truncate">
                 {entry.name}
               </span>
               {entry.score && (
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                <span className="text-xs text-gray-500 font-medium">
                   {entry.score}
                 </span>
               )}
@@ -119,7 +119,7 @@ export function IndividualSportCard({ update }: IndividualSportCardProps) {
       )}
       
       {update.topFive.length === 0 && (
-        <div className="text-xs text-gray-400 dark:text-gray-500 italic">
+        <div className="text-xs text-gray-400 italic">
           Leaderboard not yet available
         </div>
       )}
