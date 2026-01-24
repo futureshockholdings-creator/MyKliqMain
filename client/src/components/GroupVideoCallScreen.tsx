@@ -88,7 +88,7 @@ export function GroupVideoCallScreen() {
 
   const totalParticipants = activeParticipants.length + 1;
 
-  if (callState === 'idle') {
+  if (callState === 'idle' || callState === 'ringing') {
     return null;
   }
 
