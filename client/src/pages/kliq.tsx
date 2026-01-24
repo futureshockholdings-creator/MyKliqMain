@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut, Calendar, MessagesSquare } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { getInviteMessage, getAppStoreUrl, getDownloadText } from "@/lib/deviceDetection";
 import { useAuth } from "@/hooks/useAuth";
@@ -1079,7 +1080,7 @@ export default function Kliq() {
                             <div className="flex items-center gap-2 flex-1">
                               {f.friend.profileImageUrl ? (
                                 <img
-                                  src={f.friend.profileImageUrl}
+                                  src={resolveAssetUrl(f.friend.profileImageUrl)}
                                   alt={`${f.friend.firstName} ${f.friend.lastName}`}
                                   className="w-10 h-10 rounded-full object-cover"
                                 />
