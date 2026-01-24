@@ -895,16 +895,12 @@ export default function Kliq() {
                 <div className="text-sm text-card-foreground">Friends</div>
               </CardContent>
             </Card>
-            <Card 
-              className="bg-card border-border cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => setIsJoinKliqDialogOpen(true)}
-            >
+            <Card className="bg-card border-border">
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-card-foreground" data-testid="text-open-spots">
                   {28 - friends.length}
                 </div>
                 <div className="text-sm text-card-foreground">Open Spots</div>
-                <div className="text-xs text-muted-foreground mt-1">Tap to join a kliq</div>
               </CardContent>
             </Card>
           </div>
@@ -1165,6 +1161,7 @@ export default function Kliq() {
               kliqClosed={userData?.kliqClosed}
               onCloseKliq={handleCloseKliq}
               isClosingKliq={false}
+              onJoinKliq={() => setIsJoinKliqDialogOpen(true)}
             />
             )}
           </div>

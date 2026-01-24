@@ -28,9 +28,10 @@ interface PyramidChartProps {
   kliqClosed?: boolean;
   onCloseKliq?: () => void;
   isClosingKliq?: boolean;
+  onJoinKliq?: () => void;
 }
 
-export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 28, kliqName, kliqLeftEmoji = '🏆', kliqRightEmoji = '🏆', kliqClosed, onCloseKliq, isClosingKliq }: PyramidChartProps) {
+export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 28, kliqName, kliqLeftEmoji = '🏆', kliqRightEmoji = '🏆', kliqClosed, onCloseKliq, isClosingKliq, onJoinKliq }: PyramidChartProps) {
   const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
   const [showRemoveButton, setShowRemoveButton] = useState<string | null>(null);
   const [isHolding, setIsHolding] = useState<string | null>(null);
@@ -308,32 +309,49 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
         {/* Spacer when no invite button */}
         {friends.length >= maxFriends && <div />}
         
-        {/* Open/Close Kliq Button - right side (only show if user has friends) */}
-        {friends.length > 0 && onCloseKliq && (
-          <Button 
-            variant={kliqClosed ? "default" : "outline"} 
-            size="sm"
-            onClick={onCloseKliq}
-            disabled={isClosingKliq}
-            className={kliqClosed 
-              ? "bg-green-600 hover:bg-green-700 text-white" 
-              : "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
-            }
-            data-testid="button-open-close-kliq"
-          >
-            {kliqClosed ? (
-              <>
-                <Users className="w-4 h-4 mr-2" />
-                {isClosingKliq ? "Opening..." : "Open Kliq"}
-              </>
-            ) : (
-              <>
-                <X className="w-4 h-4 mr-2" />
-                {isClosingKliq ? "Closing..." : "Close Kliq"}
-              </>
-            )}
-          </Button>
-        )}
+        {/* Right side buttons */}
+        <div className="flex gap-2">
+          {/* Join Kliq Button */}
+          {onJoinKliq && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={onJoinKliq}
+              className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+              data-testid="button-join-kliq"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Join Kliq
+            </Button>
+          )}
+          
+          {/* Open/Close Kliq Button (only show if user has friends) */}
+          {friends.length > 0 && onCloseKliq && (
+            <Button 
+              variant={kliqClosed ? "default" : "outline"} 
+              size="sm"
+              onClick={onCloseKliq}
+              disabled={isClosingKliq}
+              className={kliqClosed 
+                ? "bg-green-600 hover:bg-green-700 text-white" 
+                : "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
+              }
+              data-testid="button-open-close-kliq"
+            >
+              {kliqClosed ? (
+                <>
+                  <Users className="w-4 h-4 mr-2" />
+                  {isClosingKliq ? "Opening..." : "Open Kliq"}
+                </>
+              ) : (
+                <>
+                  <X className="w-4 h-4 mr-2" />
+                  {isClosingKliq ? "Closing..." : "Close Kliq"}
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
