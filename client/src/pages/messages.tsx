@@ -1,22 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
-import { MessageCircle, ArrowLeft } from "lucide-react";
+import { MessageCircle, ArrowLeft, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PageWrapper } from "@/components/PageWrapper";
 import { resolveAssetUrl } from "@/lib/apiConfig";
 
-interface ConversationData {
+interface UserData {
   id: string;
-  otherUser: {
-    id: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-    profileImageUrl?: string;
-  };
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  profileImageUrl?: string;
+}
+
+interface IndividualConversation {
+  id: string;
+  type: 'individual';
+  otherUser: UserData;
   lastMessage?: {
     id: string;
     content: string;
@@ -26,6 +29,22 @@ interface ConversationData {
   lastActivity: string;
 }
 
+interface GroupConversation {
+  id: string;
+  type: 'group';
+  groupName: string;
+  participants: UserData[];
+  lastMessage?: {
+    id: string;
+    content: string;
+    createdAt: string;
+  };
+  unreadCount: number;
+  lastActivity: string;
+}
+
+type ConversationData = IndividualConversation | GroupConversation;
+
 export function Messages() {
   const { data: conversations = [], isLoading } = useQuery<ConversationData[]>({
     queryKey: ["/api/messages/conversations"],
@@ -33,7 +52,7 @@ export function Messages() {
     staleTime: 0,
   });
 
-  const getDisplayName = (user: ConversationData["otherUser"]) => {
+  const getDisplayName = (user: UserData) => {
     if (user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`;
     }
@@ -41,12 +60,20 @@ export function Messages() {
     return user.email?.split("@")[0] || "Unknown User";
   };
 
-  const getInitials = (user: ConversationData["otherUser"]) => {
+  const getInitials = (user: UserData) => {
     if (user.firstName && user.lastName) {
       return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
     }
     if (user.firstName) return user.firstName[0].toUpperCase();
     return user.email?.[0]?.toUpperCase() || "U";
+  };
+
+  const getGroupInitials = (groupName: string) => {
+    const words = groupName.split(' ').filter(w => w.length > 0);
+    if (words.length >= 2) {
+      return `${words[0][0]}${words[1][0]}`.toUpperCase();
+    }
+    return groupName.slice(0, 2).toUpperCase();
   };
 
   if (isLoading) {
@@ -103,51 +130,82 @@ export function Messages() {
           </div>
         ) : (
           <div className="space-y-2">
-            {conversations.map((conversation) => (
-              <div 
-                key={conversation.id}
-                className="flex items-center gap-2"
-              >
-                <Link
-                  to={`/messages/${conversation.otherUser.id}`}
-                  className="flex-1"
-                  data-testid={`link-conversation-${conversation.otherUser.id}`}
+            {conversations.map((conversation) => {
+              const isGroup = conversation.type === 'group';
+              const linkTo = isGroup 
+                ? `/group-chat/${conversation.id}`
+                : `/messages/${(conversation as IndividualConversation).otherUser.id}`;
+              const testId = isGroup 
+                ? `link-group-${conversation.id}`
+                : `link-conversation-${(conversation as IndividualConversation).otherUser.id}`;
+              
+              return (
+                <div 
+                  key={conversation.id}
+                  className="flex items-center gap-2"
                 >
-                  <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-white text-black hover:bg-gray-50 transition-colors cursor-pointer">
-                    <Avatar className="w-12 h-12">
-                      <AvatarImage src={resolveAssetUrl(conversation.otherUser.profileImageUrl)} />
-                      <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {getInitials(conversation.otherUser)}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-black truncate" data-testid={`text-username-${conversation.otherUser.id}`}>
-                          {getDisplayName(conversation.otherUser)}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          {conversation.unreadCount > 0 && (
-                            <Badge variant="destructive" className="text-xs" data-testid={`badge-unread-${conversation.otherUser.id}`}>
-                              {conversation.unreadCount}
-                            </Badge>
-                          )}
-                          <span className="text-xs text-gray-500" data-testid={`text-time-${conversation.otherUser.id}`}>
-                            {formatDistanceToNow(new Date(conversation.lastActivity), { addSuffix: true })}
-                          </span>
+                  <Link
+                    to={linkTo}
+                    className="flex-1"
+                    data-testid={testId}
+                  >
+                    <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-white text-black hover:bg-gray-50 transition-colors cursor-pointer">
+                      {isGroup ? (
+                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                          <Users className="w-6 h-6 text-purple-600" />
                         </div>
-                      </div>
-                      
-                      {conversation.lastMessage && (
-                        <p className="text-sm text-gray-600 truncate mt-1" data-testid={`text-last-message-${conversation.otherUser.id}`}>
-                          {conversation.lastMessage.content}
-                        </p>
+                      ) : (
+                        <Avatar className="w-12 h-12">
+                          <AvatarImage src={resolveAssetUrl((conversation as IndividualConversation).otherUser.profileImageUrl)} />
+                          <AvatarFallback className="bg-blue-100 text-blue-600">
+                            {getInitials((conversation as IndividualConversation).otherUser)}
+                          </AvatarFallback>
+                        </Avatar>
                       )}
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-black truncate" data-testid={isGroup ? `text-groupname-${conversation.id}` : `text-username-${(conversation as IndividualConversation).otherUser.id}`}>
+                              {isGroup 
+                                ? (conversation as GroupConversation).groupName 
+                                : getDisplayName((conversation as IndividualConversation).otherUser)}
+                            </h3>
+                            {isGroup && (
+                              <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                                Group
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {conversation.unreadCount > 0 && (
+                              <Badge variant="destructive" className="text-xs" data-testid={`badge-unread-${conversation.id}`}>
+                                {conversation.unreadCount}
+                              </Badge>
+                            )}
+                            <span className="text-xs text-gray-500" data-testid={`text-time-${conversation.id}`}>
+                              {formatDistanceToNow(new Date(conversation.lastActivity), { addSuffix: true })}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {conversation.lastMessage && (
+                          <p className="text-sm text-gray-600 truncate mt-1" data-testid={`text-last-message-${conversation.id}`}>
+                            {conversation.lastMessage.content}
+                          </p>
+                        )}
+                        
+                        {isGroup && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {(conversation as GroupConversation).participants.length} members
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

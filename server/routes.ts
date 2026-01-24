@@ -6665,8 +6665,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/messages/conversations', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const conversations = await storage.getConversations(userId);
-      res.json(conversations);
+      
+      // Fetch both individual and group conversations
+      const [individualConversations, groupConversations] = await Promise.all([
+        storage.getConversations(userId),
+        storage.getGroupConversations(userId)
+      ]);
+      
+      // Transform individual conversations to unified format
+      const individualItems = individualConversations.map(conv => ({
+        id: conv.id,
+        type: 'individual' as const,
+        otherUser: conv.otherUser,
+        lastMessage: conv.lastMessage,
+        unreadCount: conv.unreadCount,
+        lastActivity: conv.lastActivity,
+      }));
+      
+      // Transform group conversations to unified format
+      const groupItems = groupConversations.map(group => ({
+        id: group.id,
+        type: 'group' as const,
+        groupName: group.name,
+        participants: group.participants,
+        lastMessage: group.lastMessage,
+        unreadCount: group.unreadCount,
+        lastActivity: group.lastActivity,
+      }));
+      
+      // Combine and sort by lastActivity (most recent first)
+      const allConversations = [...individualItems, ...groupItems].sort((a, b) => {
+        const dateA = new Date(a.lastActivity || 0).getTime();
+        const dateB = new Date(b.lastActivity || 0).getTime();
+        return dateB - dateA;
+      });
+      
+      res.json(allConversations);
     } catch (error) {
       console.error("Error fetching conversations:", error);
       res.status(500).json({ message: "Failed to fetch conversations" });
