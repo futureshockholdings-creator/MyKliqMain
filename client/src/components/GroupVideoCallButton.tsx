@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Video, Loader2, ChevronDown } from 'lucide-react';
+import { Video, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
