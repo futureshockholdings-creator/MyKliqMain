@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { PageWrapper } from "@/components/PageWrapper";
+import { GroupVideoCallButton } from "@/components/GroupVideoCallButton";
 
 interface MessageData {
   id: string;
@@ -178,6 +179,14 @@ export function GroupChat() {
               </p>
             </div>
           </div>
+          
+          {user && (
+            <GroupVideoCallButton
+              participants={groupChat.participants}
+              currentUserId={user.id}
+              groupName={getGroupDisplayName()}
+            />
+          )}
         </div>
 
         {/* Messages */}
