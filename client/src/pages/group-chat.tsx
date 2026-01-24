@@ -212,21 +212,17 @@ export function GroupChat() {
                   className={`flex gap-3 ${isCurrentUser ? "flex-row-reverse" : "flex-row"}`}
                   data-testid={`message-${message.id}`}
                 >
-                  {!isCurrentUser && (
-                    <Avatar className="w-8 h-8 flex-shrink-0">
-                      <AvatarImage src={resolveAssetUrl(message.sender.profileImageUrl)} />
-                      <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
-                        {getInitials(message.sender)}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
+                  <Avatar className="w-8 h-8 flex-shrink-0">
+                    <AvatarImage src={resolveAssetUrl(message.sender.profileImageUrl)} />
+                    <AvatarFallback className={`text-xs ${isCurrentUser ? "bg-mykliq-green/20 text-mykliq-green" : "bg-blue-100 text-blue-600"}`}>
+                      {getInitials(message.sender)}
+                    </AvatarFallback>
+                  </Avatar>
                   
                   <div className={`flex flex-col ${isCurrentUser ? "items-end" : "items-start"} max-w-[70%]`}>
-                    {!isCurrentUser && (
-                      <span className="text-xs text-muted-foreground mb-1">
-                        {getDisplayName(message.sender)}
-                      </span>
-                    )}
+                    <span className={`text-xs mb-1 ${isCurrentUser ? "text-mykliq-green" : "text-muted-foreground"}`}>
+                      {isCurrentUser ? "You" : getDisplayName(message.sender)}
+                    </span>
                     <div
                       className={`rounded-lg px-4 py-2 ${
                         isCurrentUser
