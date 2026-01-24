@@ -478,26 +478,54 @@ class ESPNService {
         return null;
       }
 
-      // Filter events within yesterday-to-tomorrow window (same as team sports)
+      // For individual sports (golf, racing, etc.), prioritize events that are:
+      // 1. Currently in progress (multi-day tournaments like PGA)
+      // 2. Recently completed (within last 24 hours)
+      // 3. Scheduled to start soon (within next 2 days)
       const now = new Date();
       const yesterday = new Date(now);
       yesterday.setDate(yesterday.getDate() - 1);
       yesterday.setHours(0, 0, 0, 0);
       
-      const dayAfterTomorrow = new Date(now);
-      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
-      dayAfterTomorrow.setHours(0, 0, 0, 0);
+      const twoDaysFromNow = new Date(now);
+      twoDaysFromNow.setDate(twoDaysFromNow.getDate() + 2);
+      twoDaysFromNow.setHours(23, 59, 59, 999);
 
-      const filteredEvents = data.events.filter((e: any) => {
-        const eventDate = new Date(e.date || e.competitions?.[0]?.date);
-        return eventDate >= yesterday && eventDate < dayAfterTomorrow;
+      // First, find any event that is currently IN PROGRESS - this handles multi-day tournaments
+      const inProgressEvent = data.events.find((e: any) => {
+        const competition = e.competitions?.[0];
+        const stateType = competition?.status?.type?.state?.toLowerCase();
+        return stateType === 'in';
       });
 
-      if (filteredEvents.length === 0) {
-        return null;
-      }
+      if (inProgressEvent) {
+        // Use the in-progress event (handles multi-day tournaments like PGA)
+        var event = inProgressEvent;
+      } else {
+        // No in-progress event, fall back to date-based filtering
+        // Look for recently completed or upcoming events
+        const filteredEvents = data.events.filter((e: any) => {
+          const competition = e.competitions?.[0];
+          const stateType = competition?.status?.type?.state?.toLowerCase();
+          const eventDate = new Date(e.date || competition?.date);
+          
+          // Include if completed within the last day
+          if (stateType === 'post') {
+            const oneDayAgo = new Date(now);
+            oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+            return eventDate >= oneDayAgo;
+          }
+          
+          // Include if scheduled within the next 2 days
+          return eventDate >= yesterday && eventDate <= twoDaysFromNow;
+        });
 
-      const event = filteredEvents[0];
+        if (filteredEvents.length === 0) {
+          return null;
+        }
+
+        var event = filteredEvents[0];
+      }
       const competition = event.competitions?.[0];
       
       let status: 'scheduled' | 'in_progress' | 'final' = 'scheduled';
