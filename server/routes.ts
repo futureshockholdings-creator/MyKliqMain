@@ -10031,6 +10031,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup WebSocket server for real-time Action features
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
+  const activeGroupCalls = new Map<string, Set<string>>();
+  
   wss.on('connection', (ws: ExtendedWebSocket, req) => {
     console.log('New WebSocket connection');
     
@@ -10160,6 +10162,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }));
               }
             });
+            break;
+          
+          case 'join-group-call-signaling':
+            console.log('📞 [Group] User joined group call signaling:', data.userId);
+            ws.user_id = data.userId;
+            break;
+          
+          case 'group-video-call-invite':
+            console.log('📞 [Group] Processing group call invite:', { 
+              callId: data.callId, 
+              invitedUsers: data.invitedUsers,
+              from: data.userId 
+            });
+            {
+              const callParticipants = new Set<string>([data.userId, ...data.invitedUsers]);
+              activeGroupCalls.set(data.callId, callParticipants);
+            }
+            wss.clients.forEach((client: ExtendedWebSocket) => {
+              if (client.readyState === WebSocket.OPEN && 
+                  data.invitedUsers.includes(client.user_id)) {
+                console.log('📞 [Group] Sending group-call-invite to user:', client.user_id);
+                client.send(JSON.stringify({
+                  type: 'group-call-invite',
+                  callId: data.callId,
+                  from: data.userId,
+                  groupId: data.groupId,
+                  groupName: data.groupName,
+                  participants: data.participants,
+                  initiatorName: data.initiatorName,
+                  initiatorAvatar: data.initiatorAvatar
+                }));
+              }
+            });
+            break;
+          
+          case 'group-video-call-response':
+            console.log('📞 [Group] Processing group call response:', data);
+            {
+              const callParticipants = activeGroupCalls.get(data.callId);
+              if (!callParticipants) {
+                console.log('📞 [Group] Call not found:', data.callId);
+                break;
+              }
+              
+              wss.clients.forEach((client: ExtendedWebSocket) => {
+                if (client.readyState === WebSocket.OPEN && 
+                    callParticipants.has(client.user_id) &&
+                    client.user_id !== data.userId) {
+                  if (data.response === 'accept') {
+                    client.send(JSON.stringify({
+                      type: 'group-call-participant-joined',
+                      callId: data.callId,
+                      userId: data.userId,
+                      userName: data.userName,
+                      groupId: data.groupId
+                    }));
+                  } else if (data.response === 'decline') {
+                    client.send(JSON.stringify({
+                      type: 'group-call-response',
+                      callId: data.callId,
+                      userId: data.userId,
+                      response: 'decline',
+                      groupId: data.groupId
+                    }));
+                  }
+                }
+              });
+            }
+            break;
+          
+          case 'group-call-leave':
+            console.log('📞 [Group] User leaving group call:', data.userId);
+            {
+              const callParticipants = activeGroupCalls.get(data.callId);
+              if (callParticipants) {
+                callParticipants.delete(data.userId);
+                
+                if (callParticipants.size === 0) {
+                  activeGroupCalls.delete(data.callId);
+                  console.log('📞 [Group] Call ended, no participants left:', data.callId);
+                }
+                
+                wss.clients.forEach((client: ExtendedWebSocket) => {
+                  if (client.readyState === WebSocket.OPEN && 
+                      callParticipants.has(client.user_id)) {
+                    client.send(JSON.stringify({
+                      type: 'group-call-participant-left',
+                      callId: data.callId,
+                      userId: data.userId,
+                      groupId: data.groupId
+                    }));
+                  }
+                });
+              }
+            }
             break;
             
           case 'webrtc-signal':

@@ -13,6 +13,9 @@ import { initializeEnterpriseServices, cleanupEnterpriseServices } from "@/lib/e
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
 import { IncomingCallOverlay } from "@/components/IncomingCallOverlay";
 import { VideoCallScreen } from "@/components/VideoCallScreen";
+import { GroupVideoCallProvider } from "@/contexts/GroupVideoCallContext";
+import { IncomingGroupCallOverlay } from "@/components/IncomingGroupCallOverlay";
+import { GroupVideoCallScreen } from "@/components/GroupVideoCallScreen";
 import { initAudioManager } from "@/lib/audioManager";
 
 // Pages
@@ -357,9 +360,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <VideoCallProvider>
-        <AppContent />
-        <IncomingCallOverlay />
-        <VideoCallScreen />
+        <GroupVideoCallProvider>
+          <AppContent />
+          <IncomingCallOverlay />
+          <VideoCallScreen />
+          <IncomingGroupCallOverlay />
+          <GroupVideoCallScreen />
+        </GroupVideoCallProvider>
       </VideoCallProvider>
     </QueryClientProvider>
   );

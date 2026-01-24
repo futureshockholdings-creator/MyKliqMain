@@ -180,11 +180,12 @@ export function GroupChat() {
             </div>
           </div>
           
-          {user && (
+          {user && groupChatId && (
             <GroupVideoCallButton
               participants={groupChat.participants}
               currentUserId={user.id}
               groupName={getGroupDisplayName()}
+              groupId={groupChatId}
             />
           )}
         </div>
