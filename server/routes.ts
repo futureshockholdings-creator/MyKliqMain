@@ -10176,12 +10176,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               from: data.userId 
             });
             {
-              const callParticipants = new Set<string>([data.userId, ...data.invitedUsers]);
+              const callParticipants = new Set<string>([String(data.userId), ...data.invitedUsers.map((id: any) => String(id))]);
               activeGroupCalls.set(data.callId, callParticipants);
             }
             wss.clients.forEach((client: ExtendedWebSocket) => {
+              const clientUserId = String(client.user_id);
+              const invitedUserIds = data.invitedUsers.map((id: any) => String(id));
               if (client.readyState === WebSocket.OPEN && 
-                  data.invitedUsers.includes(client.user_id)) {
+                  invitedUserIds.includes(clientUserId)) {
                 console.log('📞 [Group] Sending group-call-invite to user:', client.user_id);
                 client.send(JSON.stringify({
                   type: 'group-call-invite',
@@ -10207,9 +10209,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
               
               wss.clients.forEach((client: ExtendedWebSocket) => {
+                const clientUserId = String(client.user_id);
+                const responderId = String(data.userId);
                 if (client.readyState === WebSocket.OPEN && 
-                    callParticipants.has(client.user_id) &&
-                    client.user_id !== data.userId) {
+                    callParticipants.has(clientUserId) &&
+                    clientUserId !== responderId) {
                   if (data.response === 'accept') {
                     client.send(JSON.stringify({
                       type: 'group-call-participant-joined',
@@ -10236,8 +10240,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log('📞 [Group] User leaving group call:', data.userId);
             {
               const callParticipants = activeGroupCalls.get(data.callId);
+              const leavingUserId = String(data.userId);
               if (callParticipants) {
-                callParticipants.delete(data.userId);
+                callParticipants.delete(leavingUserId);
                 
                 if (callParticipants.size === 0) {
                   activeGroupCalls.delete(data.callId);
@@ -10245,8 +10250,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }
                 
                 wss.clients.forEach((client: ExtendedWebSocket) => {
+                  const clientUserId = String(client.user_id);
                   if (client.readyState === WebSocket.OPEN && 
-                      callParticipants.has(client.user_id)) {
+                      callParticipants.has(clientUserId)) {
                     client.send(JSON.stringify({
                       type: 'group-call-participant-left',
                       callId: data.callId,
