@@ -37,6 +37,9 @@ export default function Kliq() {
   const [isGroupChatDialogOpen, setIsGroupChatDialogOpen] = useState(false);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const [groupChatName, setGroupChatName] = useState("");
+  const [isJoinKliqDialogOpen, setIsJoinKliqDialogOpen] = useState(false);
+  const [joinInviteCode, setJoinInviteCode] = useState("");
+  const [isJoiningKliq, setIsJoiningKliq] = useState(false);
   const { user } = useAuth();
   const userData = user as { 
     id?: string; 
@@ -169,6 +172,89 @@ export default function Kliq() {
     queryKey: ["/api/polls", "mine"],
     queryFn: () => apiRequest("GET", "/api/polls?scope=mine"),
   });
+
+  // Join another kliq using invite code
+  const handleJoinKliq = async () => {
+    if (!joinInviteCode.trim()) {
+      toast({
+        title: "Enter invite code",
+        description: "Please enter a valid invite code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsJoiningKliq(true);
+    try {
+      // First validate the invite code
+      const validationResponse = await apiRequest("POST", "/api/auth/validate-invite-code", {
+        inviteCode: joinInviteCode.trim()
+      });
+
+      if (!validationResponse.success) {
+        toast({
+          title: "Invalid invite code",
+          description: validationResponse.message || "This invite code is not valid",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Use the invite code to join the kliq
+      const response = await apiRequest("POST", "/api/friends/invite", {
+        inviteCode: joinInviteCode.trim()
+      });
+
+      // Clear all relevant caches
+      await enhancedCache.removeByPattern('/api/friends');
+      await enhancedCache.removeByPattern('/api/kliq-feed');
+      await enhancedCache.removeByPattern('/api/notifications');
+      
+      // Invalidate and refetch queries
+      await queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/friends"], type: 'active' });
+
+      // Check if this is a pending request or immediate acceptance
+      if (response.pending) {
+        toast({
+          title: "Request sent!",
+          description: response.message || "Your request to join has been sent to the kliq owner for approval",
+        });
+      } else {
+        toast({
+          title: "Joined kliq!",
+          description: `You've successfully joined ${validationResponse.kliqOwner?.firstName}'s kliq!`,
+        });
+      }
+
+      // Close dialog and reset form
+      setIsJoinKliqDialogOpen(false);
+      setJoinInviteCode("");
+    } catch (error: any) {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      
+      const errorMessage = error?.message || "Failed to join kliq";
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsJoiningKliq(false);
+    }
+  };
 
   // Update kliq name and emojis
   const updateNameMutation = useMutation({
@@ -815,15 +901,67 @@ export default function Kliq() {
                 <div className="text-sm text-card-foreground">Friends</div>
               </CardContent>
             </Card>
-            <Card className="bg-card border-border">
+            <Card 
+              className="bg-card border-border cursor-pointer hover:bg-accent/50 transition-colors"
+              onClick={() => setIsJoinKliqDialogOpen(true)}
+            >
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-card-foreground" data-testid="text-open-spots">
                   {28 - friends.length}
                 </div>
                 <div className="text-sm text-card-foreground">Open Spots</div>
+                <div className="text-xs text-muted-foreground mt-1">Tap to join a kliq</div>
               </CardContent>
             </Card>
           </div>
+
+          {/* Join Kliq Dialog */}
+          <Dialog open={isJoinKliqDialogOpen} onOpenChange={setIsJoinKliqDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Join Another Kliq</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Enter Invite Code
+                  </label>
+                  <Input
+                    value={joinInviteCode}
+                    onChange={(e) => setJoinInviteCode(e.target.value.toUpperCase())}
+                    placeholder="e.g., ABC123XY"
+                    className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 uppercase"
+                    disabled={isJoiningKliq}
+                    maxLength={12}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the invitation code you received from a friend to join their kliq
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsJoinKliqDialogOpen(false);
+                      setJoinInviteCode("");
+                    }}
+                    disabled={isJoiningKliq}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleJoinKliq}
+                    disabled={!joinInviteCode.trim() || isJoiningKliq}
+                    className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80"
+                  >
+                    {isJoiningKliq ? "Joining..." : "Join Kliq"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Pending Join Requests */}
           {safePendingRequests.length > 0 && (
