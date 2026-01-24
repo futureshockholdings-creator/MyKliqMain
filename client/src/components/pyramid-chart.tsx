@@ -296,18 +296,8 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
 
       {/* Bottom section with invite and close kliq buttons */}
       <div className="flex justify-between items-center mt-6">
-        {/* Invite Friend Display - left side or center if no friends */}
-        {friends.length < maxFriends && (
-          <div className="relative bg-gradient-to-r from-primary to-secondary text-white font-bold px-4 py-2 rounded-md flex items-center overflow-hidden">
-            {/* Semi-transparent overlay to ensure WCAG AA contrast (≥4.5:1) for white text */}
-            <div className="absolute inset-0 bg-black/60 rounded-md"></div>
-            <Users className="w-4 h-4 mr-2 relative z-10" />
-            <span className="relative z-10">Invite Friend ({maxFriends - friends.length} spots left)</span>
-          </div>
-        )}
-        
-        {/* Spacer when no invite button */}
-        {friends.length >= maxFriends && <div />}
+        {/* Spacer for layout */}
+        <div />
         
         {/* Right side buttons */}
         <div className="flex gap-2">
