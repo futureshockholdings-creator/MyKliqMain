@@ -922,7 +922,7 @@ export default function Kliq() {
                     placeholder="e.g., ABC123XY"
                     className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 uppercase"
                     disabled={isJoiningKliq}
-                    maxLength={12}
+                    maxLength={14}
                   />
                   <p className="text-xs text-muted-foreground">
                     Enter the invitation code you received from a friend to join their kliq
