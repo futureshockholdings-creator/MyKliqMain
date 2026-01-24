@@ -607,12 +607,6 @@ export default function Kliq() {
     updateRankMutation.mutate({ friendId, rank: newRank });
   };
 
-  const handleJoinKliq = () => {
-    if (inviteCode.trim()) {
-      joinKliqMutation.mutate(inviteCode.trim());
-    }
-  };
-
   const handleSendInvites = () => {
     if (phoneNumbers.trim()) {
       const numbers = phoneNumbers
