@@ -49,7 +49,7 @@ export const users = pgTable("users", {
   kliqLeftEmoji: varchar("kliq_left_emoji").default("🏆"),
   kliqRightEmoji: varchar("kliq_right_emoji").default("🏆"),
   kliqClosed: boolean("kliq_closed").default(false),
-  birthdate: date("birthdate"),
+  birthdate: varchar("birthdate", { length: 10 }), // Stored as YYYY-MM-DD string to avoid timezone issues
   profileMusicUrls: text("profile_music_urls").array(),
   profileMusicTitles: text("profile_music_titles").array(),
   // Extended profile details

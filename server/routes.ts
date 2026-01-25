@@ -76,11 +76,12 @@ function generateCodeChallenge(verifier: string): string {
   return crypto.createHash('sha256').update(verifier).digest('base64url');
 }
 
-// Zodiac sign calculation helper
+// Zodiac sign calculation helper - parses YYYY-MM-DD string directly to avoid timezone issues
 function getZodiacSign(birthdate: string): string {
-  const date = new Date(birthdate);
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
+  // Parse the date string directly (format: YYYY-MM-DD) to avoid timezone conversion issues
+  const parts = birthdate.split('-');
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
 
   if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return "Aries";
   if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return "Taurus";

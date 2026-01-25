@@ -3515,10 +3515,11 @@ export class DatabaseStorage implements IStorage {
     const today = new Date();
     const monthDay = `${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
     
+    // birthdate is stored as YYYY-MM-DD string, extract MM-DD portion (chars 6-10)
     return await db
       .select()
       .from(users)
-      .where(sql`to_char(${users.birthdate}, 'MM-DD') = ${monthDay}`);
+      .where(sql`substring(${users.birthdate}, 6, 5) = ${monthDay}`);
   }
 
   async createBirthdayMessage(message: InsertBirthdayMessage): Promise<BirthdayMessage> {
