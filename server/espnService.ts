@@ -399,13 +399,14 @@ class ESPNService {
   }
 
   /**
-   * Get games for specific teams (checks yesterday, today, and tomorrow)
+   * Get games for specific teams (checks past 2 days, today, and tomorrow)
+   * This ensures completed games remain visible for 24+ hours after completion
    */
   async getTeamGames(sport: Sport, teamIds: string[]): Promise<GameUpdate[]> {
     try {
-      // Check yesterday, today, and tomorrow to avoid overwhelming the feed
+      // Check past 2 days, today, and tomorrow to ensure 24hr visibility for completed games
       const dates = [];
-      for (let i = -1; i <= 1; i++) {
+      for (let i = -2; i <= 1; i++) {
         const date = new Date();
         date.setDate(date.getDate() + i);
         dates.push(date);
@@ -426,7 +427,21 @@ class ESPNService {
         new Map(teamGames.map(game => [game.eventId, game])).values()
       );
 
-      return uniqueGames;
+      // Filter: show completed games only if finished within last 24 hours
+      // Show scheduled/in-progress games always
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      
+      const filteredGames = uniqueGames.filter(game => {
+        if (game.status === 'final') {
+          // For completed games, show if event date is within last 24 hours
+          return game.eventDate >= twentyFourHoursAgo;
+        }
+        // Always show scheduled and in-progress games
+        return true;
+      });
+
+      return filteredGames;
     } catch (error) {
       console.error(`Error fetching team games:`, error);
       return [];
@@ -480,12 +495,10 @@ class ESPNService {
 
       // For individual sports (golf, racing, etc.), prioritize events that are:
       // 1. Currently in progress (multi-day tournaments like PGA)
-      // 2. Recently completed (within last 24 hours)
+      // 2. Recently completed (within last 24 hours) - keep visible for 24hrs after completion
       // 3. Scheduled to start soon (within next 2 days)
       const now = new Date();
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(0, 0, 0, 0);
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       
       const twoDaysFromNow = new Date(now);
       twoDaysFromNow.setDate(twoDaysFromNow.getDate() + 2);
@@ -504,27 +517,40 @@ class ESPNService {
       } else {
         // No in-progress event, fall back to date-based filtering
         // Look for recently completed or upcoming events
+        // For completed events, check all events and include if recently completed
         const filteredEvents = data.events.filter((e: any) => {
           const competition = e.competitions?.[0];
           const stateType = competition?.status?.type?.state?.toLowerCase();
           const eventDate = new Date(e.date || competition?.date);
           
-          // Include if completed within the last day
+          // Include completed events - they will show for 24 hours after completion
+          // Since we don't have exact completion time, we include all recently completed
+          // and rely on ESPN API returning them in the scoreboard
           if (stateType === 'post') {
-            const oneDayAgo = new Date(now);
-            oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-            return eventDate >= oneDayAgo;
+            // For tournaments, the event date is the start date
+            // If it's completed and still in the scoreboard, show it
+            return true;
           }
           
           // Include if scheduled within the next 2 days
-          return eventDate >= yesterday && eventDate <= twoDaysFromNow;
+          return eventDate >= twentyFourHoursAgo && eventDate <= twoDaysFromNow;
         });
 
-        if (filteredEvents.length === 0) {
+        // Sort: prefer most recently completed or upcoming
+        const sortedEvents = filteredEvents.sort((a: any, b: any) => {
+          const stateA = a.competitions?.[0]?.status?.type?.state?.toLowerCase();
+          const stateB = b.competitions?.[0]?.status?.type?.state?.toLowerCase();
+          // Completed events first (more recent results), then scheduled
+          if (stateA === 'post' && stateB !== 'post') return -1;
+          if (stateB === 'post' && stateA !== 'post') return 1;
+          return 0;
+        });
+
+        if (sortedEvents.length === 0) {
           return null;
         }
 
-        var event = filteredEvents[0];
+        var event = sortedEvents[0];
       }
       const competition = event.competitions?.[0];
       

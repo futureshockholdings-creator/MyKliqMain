@@ -51,6 +51,8 @@ export function GroupChat() {
   const queryClient = useQueryClient();
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const hasScrolledToTop = useRef(false);
 
   const { data: groupChat, isLoading } = useQuery<GroupConversationData>({
     queryKey: ["/api/group-chats", groupChatId],
@@ -79,9 +81,23 @@ export function GroupChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Scroll to top on initial page load
   useEffect(() => {
-    scrollToBottom();
-  }, [groupChat?.messages]);
+    if (groupChat && !hasScrolledToTop.current) {
+      // Scroll the messages container to the top
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = 0;
+      }
+      // Also scroll the window to top
+      window.scrollTo(0, 0);
+      hasScrolledToTop.current = true;
+    }
+  }, [groupChat]);
+
+  // Reset scroll flag when navigating to a different chat
+  useEffect(() => {
+    hasScrolledToTop.current = false;
+  }, [groupChatId]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,7 +207,7 @@ export function GroupChat() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {groupChat.messages.length === 0 ? (
             <div className="text-center py-12">
               <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
