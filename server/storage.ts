@@ -4258,11 +4258,12 @@ export class DatabaseStorage implements IStorage {
     // Calculate user age if birthdate is available
     let userAge: number | undefined;
     if (user.birthdate) {
+      // Parse YYYY-MM-DD string without timezone conversion
+      const [birthYear, birthMonth, birthDay] = user.birthdate.split('-').map(Number);
       const today = new Date();
-      const birthDate = new Date(user.birthdate);
-      userAge = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      userAge = today.getFullYear() - birthYear;
+      const monthDiff = (today.getMonth() + 1) - birthMonth; // today.getMonth() is 0-indexed
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDay)) {
         userAge--;
       }
     }

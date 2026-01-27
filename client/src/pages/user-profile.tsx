@@ -288,10 +288,13 @@ export default function UserProfile() {
                 <div>
                   <div className="font-medium">Birthday</div>
                   <div className="text-sm text-muted-foreground">
-                    {new Date(profileUser.birthdate).toLocaleDateString('en-US', { 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
+                    {(() => {
+                      // Parse YYYY-MM-DD string without timezone conversion
+                      const [year, month, day] = profileUser.birthdate!.split('-').map(Number);
+                      const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                                      'July', 'August', 'September', 'October', 'November', 'December'];
+                      return `${months[month - 1]} ${day}`;
+                    })()}
                   </div>
                 </div>
               </div>
