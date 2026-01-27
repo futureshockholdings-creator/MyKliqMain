@@ -403,18 +403,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             const inviteCodeOwner = await storage.getUserByInviteCode(receivedInviteCode.trim());
             if (inviteCodeOwner) {
-              // Create friendship between new user and invite code owner
-              await storage.addFriend({
-                userId: userId,
-                friendId: inviteCodeOwner.id,
-                status: "accepted",
-                rank: 1
-              });
+              // Add new user to invite code owner's kliq (one-way only)
+              // The new user joins the owner's kliq, NOT the other way around
+              const existingFriends = await storage.getFriends(inviteCodeOwner.id);
+              const rank = existingFriends.length + 1;
+              
               await storage.addFriend({
                 userId: inviteCodeOwner.id,
                 friendId: userId,
                 status: "accepted",
-                rank: 1
+                rank
               });
               
               // Mark invite code as used
