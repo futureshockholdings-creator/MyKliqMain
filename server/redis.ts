@@ -18,18 +18,26 @@ export async function initializeRedis(): Promise<UpstashRedis | null> {
       return null;
     }
     
-    if (redisUrl.startsWith('https://')) {
+    const restUrl = process.env.UPSTASH_REDIS_REST_URL;
+    const restToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+    
+    if (restUrl && restToken) {
+      redis = new UpstashRedis({
+        url: restUrl,
+        token: restToken,
+      });
+    } else if (redisUrl.startsWith('https://')) {
       redis = new UpstashRedis({
         url: redisUrl,
         token: process.env.REDIS_TOKEN || '',
       });
     } else if (redisUrl.startsWith('rediss://') || redisUrl.startsWith('redis://')) {
       const url = new URL(redisUrl);
-      const restUrl = `https://${url.hostname}`;
+      const derivedRestUrl = `https://${url.hostname}`;
       const token = url.password;
       
       redis = new UpstashRedis({
-        url: restUrl,
+        url: derivedRestUrl,
         token: token,
       });
     } else {
