@@ -93,13 +93,13 @@ export function GroupChat() {
         });
       }
       
-      setTimeout(() => scrollToBottom(), 50);
+      setTimeout(() => scrollToTop(), 50);
       
       return { previousData };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/group-chats", groupChatId] });
-      scrollToBottom();
+      scrollToTop();
     },
     onError: (error, _, context) => {
       if (context?.previousData) {
@@ -113,18 +113,16 @@ export function GroupChat() {
     },
   });
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToTop = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = 0;
+    }
   };
 
-  // Scroll to top on initial page load
+  // Scroll to top on initial page load (newest messages are at top)
   useEffect(() => {
     if (groupChat && !hasScrolledToTop.current) {
-      // Scroll the messages container to the top
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTop = 0;
-      }
-      // Also scroll the window to top
+      scrollToTop();
       window.scrollTo(0, 0);
       hasScrolledToTop.current = true;
     }
@@ -255,7 +253,7 @@ export function GroupChat() {
               </p>
             </div>
           ) : (
-            groupChat.messages.map((message) => {
+            [...groupChat.messages].reverse().map((message) => {
               const isCurrentUser = message.senderId === user?.id;
               
               return (
@@ -275,13 +273,7 @@ export function GroupChat() {
                     <span className={`text-xs mb-1 ${isCurrentUser ? "text-mykliq-green" : "text-muted-foreground"}`}>
                       {isCurrentUser ? "You" : getDisplayName(message.sender)}
                     </span>
-                    <div
-                      className={`rounded-lg px-4 py-2 ${
-                        isCurrentUser
-                          ? "bg-mykliq-green text-white"
-                          : "bg-muted text-foreground"
-                      }`}
-                    >
+                    <div className="rounded-lg px-4 py-2 bg-white text-black">
                       <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                     </div>
                     <span className="text-xs text-muted-foreground mt-1">
