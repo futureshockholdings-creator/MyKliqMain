@@ -259,28 +259,26 @@ export function GroupChat() {
               return (
                 <div
                   key={message.id}
-                  className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
+                  className={`flex gap-3 ${isCurrentUser ? "flex-row-reverse" : "flex-row"}`}
                   data-testid={`message-${message.id}`}
                 >
-                  <div className={`flex gap-3 w-64 sm:w-72 lg:w-80 ${isCurrentUser ? "flex-row-reverse" : "flex-row"}`}>
-                    <Avatar className="w-8 h-8 flex-shrink-0">
-                      <AvatarImage src={resolveAssetUrl(message.sender.profileImageUrl)} />
-                      <AvatarFallback className={`text-xs ${isCurrentUser ? "bg-mykliq-green/20 text-mykliq-green" : "bg-blue-100 text-blue-600"}`}>
-                        {getInitials(message.sender)}
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div className={`flex-1 min-w-0 flex flex-col ${isCurrentUser ? "items-end" : "items-start"}`}>
-                      <span className={`text-xs mb-1 ${isCurrentUser ? "text-mykliq-green" : "text-muted-foreground"}`}>
-                        {isCurrentUser ? "You" : getDisplayName(message.sender)}
-                      </span>
-                      <div className="rounded-lg px-4 py-2 bg-white text-black w-full">
-                        <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-                      </div>
-                      <span className="text-xs text-muted-foreground mt-1">
-                        {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
-                      </span>
+                  <Avatar className="w-8 h-8 flex-shrink-0">
+                    <AvatarImage src={resolveAssetUrl(message.sender.profileImageUrl)} />
+                    <AvatarFallback className={`text-xs ${isCurrentUser ? "bg-mykliq-green/20 text-mykliq-green" : "bg-blue-100 text-blue-600"}`}>
+                      {getInitials(message.sender)}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className={`flex flex-col ${isCurrentUser ? "items-end" : "items-start"} max-w-[70%]`}>
+                    <span className={`text-xs mb-1 ${isCurrentUser ? "text-mykliq-green" : "text-muted-foreground"}`}>
+                      {isCurrentUser ? "You" : getDisplayName(message.sender)}
+                    </span>
+                    <div className="rounded-lg px-4 py-2 bg-white text-black">
+                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                     </div>
+                    <span className="text-xs text-muted-foreground mt-1">
+                      {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                    </span>
                   </div>
                 </div>
               );
