@@ -6965,24 +6965,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const message = await storage.sendGroupMessage(messageData);
-      
-      // Get sender info for the broadcast
-      const sender = await storage.getUser(userId);
-      
-      // Broadcast new message to all group participants via WebSocket
-      if ((app as any).broadcastGroupMessage) {
-        (app as any).broadcastGroupMessage(groupId, {
-          ...message,
-          sender: sender ? {
-            id: String(sender.id),
-            email: sender.email,
-            firstName: sender.firstName,
-            lastName: sender.lastName,
-            profileImageUrl: sender.profileImageUrl,
-          } : null,
-        });
-      }
-      
       res.json(message);
     } catch (error) {
       console.error("Error sending group message:", error);
@@ -10439,45 +10421,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   };
 
-  // Global function to broadcast group chat messages to all participants
-  const broadcastGroupMessage = async (groupId: string, messageData: any) => {
-    try {
-      // Get group participants from the database
-      const groupConversation = await storage.getGroupConversation(groupId, messageData.senderId);
-      if (!groupConversation) return;
-      
-      const participantIds = groupConversation.participants.map(p => String(p.id));
-      
-      const message = JSON.stringify({
-        type: 'group-message:new',
-        groupId,
-        timestamp: new Date().toISOString(),
-        message: messageData
-      });
-
-      let sentCount = 0;
-      wss.clients.forEach((client: ExtendedWebSocket) => {
-        if (client.readyState === WebSocket.OPEN && 
-            client.user_id && 
-            participantIds.includes(String(client.user_id))) {
-          client.send(message);
-          sentCount++;
-        }
-      });
-
-      if (sentCount > 0) {
-        console.log(`📨 Broadcasted group message to ${sentCount} participants in group ${groupId}`);
-      }
-    } catch (error) {
-      console.error('Error broadcasting group message:', error);
-    }
-  };
-
   // Store broadcast function references for use in routes
   (app as any).broadcastFeedUpdate = broadcastFeedUpdate;
   (app as any).broadcastNotification = broadcastNotification;
   (app as any).broadcastPendingRequest = broadcastPendingRequest;
-  (app as any).broadcastGroupMessage = broadcastGroupMessage;
 
   // Maintenance dashboard routes
   app.get('/api/maintenance/metrics', async (req: any, res) => {
