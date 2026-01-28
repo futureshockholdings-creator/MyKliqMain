@@ -91,9 +91,9 @@ export function Messages() {
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="flex items-center gap-3 p-4 rounded-lg border bg-white text-black">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-                  <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-3 p-4 rounded-lg border bg-white text-black h-20 w-full">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0"></div>
+                  <div className="flex-1 space-y-2 min-w-0">
                     <div className="h-4 bg-gray-200 rounded w-32"></div>
                     <div className="h-3 bg-gray-200 rounded w-48"></div>
                   </div>
@@ -149,13 +149,13 @@ export function Messages() {
                     className="flex-1"
                     data-testid={testId}
                   >
-                    <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-white text-black hover:bg-gray-50 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-white text-black hover:bg-gray-50 transition-colors cursor-pointer h-20 w-full">
                       {isGroup ? (
-                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
                           <Users className="w-6 h-6 text-purple-600" />
                         </div>
                       ) : (
-                        <Avatar className="w-12 h-12">
+                        <Avatar className="w-12 h-12 flex-shrink-0">
                           <AvatarImage src={resolveAssetUrl((conversation as IndividualConversation).otherUser.profileImageUrl)} />
                           <AvatarFallback className="bg-blue-100 text-blue-600">
                             {getInitials((conversation as IndividualConversation).otherUser)}
@@ -163,27 +163,27 @@ export function Messages() {
                         </Avatar>
                       )}
                       
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 overflow-hidden">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-black truncate" data-testid={isGroup ? `text-groupname-${conversation.id}` : `text-username-${(conversation as IndividualConversation).otherUser.id}`}>
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <h3 className="font-semibold text-black truncate max-w-[120px] sm:max-w-[180px]" data-testid={isGroup ? `text-groupname-${conversation.id}` : `text-username-${(conversation as IndividualConversation).otherUser.id}`}>
                               {isGroup 
                                 ? (conversation as GroupConversation).groupName 
                                 : getDisplayName((conversation as IndividualConversation).otherUser)}
                             </h3>
                             {isGroup && (
-                              <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                              <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 flex-shrink-0">
                                 Group
                               </Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             {conversation.unreadCount > 0 && (
                               <Badge variant="destructive" className="text-xs" data-testid={`badge-unread-${conversation.id}`}>
                                 {conversation.unreadCount}
                               </Badge>
                             )}
-                            <span className="text-xs text-gray-500" data-testid={`text-time-${conversation.id}`}>
+                            <span className="text-xs text-gray-500 whitespace-nowrap" data-testid={`text-time-${conversation.id}`}>
                               {formatDistanceToNow(new Date(conversation.lastActivity), { addSuffix: true })}
                             </span>
                           </div>
@@ -196,7 +196,7 @@ export function Messages() {
                         )}
                         
                         {isGroup && (
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-gray-500 mt-1 truncate">
                             {(conversation as GroupConversation).participants.length} members
                           </p>
                         )}

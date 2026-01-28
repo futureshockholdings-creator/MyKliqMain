@@ -254,7 +254,7 @@ export function GroupChat() {
             </div>
           ) : (
             [...groupChat.messages].reverse().map((message) => {
-              const isCurrentUser = message.senderId === user?.id;
+              const isCurrentUser = String(message.senderId) === String(user?.id);
               
               return (
                 <div
