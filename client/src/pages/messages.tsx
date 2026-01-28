@@ -91,7 +91,7 @@ export function Messages() {
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="flex items-center gap-3 p-4 rounded-lg border bg-white text-black h-20 w-full">
+                <div className="flex items-center gap-3 p-4 rounded-lg border bg-white text-black h-20 w-80">
                   <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0"></div>
                   <div className="flex-1 space-y-2 min-w-0">
                     <div className="h-4 bg-gray-200 rounded w-32"></div>
@@ -149,7 +149,7 @@ export function Messages() {
                     className="flex-1"
                     data-testid={testId}
                   >
-                    <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-white text-black hover:bg-gray-50 transition-colors cursor-pointer h-20 w-full">
+                    <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-white text-black hover:bg-gray-50 transition-colors cursor-pointer h-20 w-80">
                       {isGroup ? (
                         <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
                           <Users className="w-6 h-6 text-purple-600" />
