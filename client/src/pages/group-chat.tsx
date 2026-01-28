@@ -63,12 +63,48 @@ export function GroupChat() {
     mutationFn: async (messageData: { content: string }) => {
       return apiRequest("POST", `/api/group-chats/${groupChatId}/messages`, messageData);
     },
-    onSuccess: () => {
+    onMutate: async (newMessage) => {
       setMessageText("");
+      
+      await queryClient.cancelQueries({ queryKey: ["/api/group-chats", groupChatId] });
+      
+      const previousData = queryClient.getQueryData<GroupConversationData>(["/api/group-chats", groupChatId]);
+      
+      if (previousData && user) {
+        const optimisticMessage: MessageData = {
+          id: `temp-${Date.now()}`,
+          content: newMessage.content,
+          senderId: String(user.id),
+          groupConversationId: groupChatId!,
+          isRead: true,
+          createdAt: new Date().toISOString(),
+          sender: {
+            id: String(user.id),
+            email: user.email || "",
+            firstName: user.firstName || undefined,
+            lastName: user.lastName || undefined,
+            profileImageUrl: user.profileImageUrl || undefined,
+          },
+        };
+        
+        queryClient.setQueryData<GroupConversationData>(["/api/group-chats", groupChatId], {
+          ...previousData,
+          messages: [...previousData.messages, optimisticMessage],
+        });
+      }
+      
+      setTimeout(() => scrollToBottom(), 50);
+      
+      return { previousData };
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/group-chats", groupChatId] });
       scrollToBottom();
     },
-    onError: (error) => {
+    onError: (error, _, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(["/api/group-chats", groupChatId], context.previousData);
+      }
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",
