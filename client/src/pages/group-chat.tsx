@@ -85,10 +85,11 @@ export function GroupChat() {
       await queryClient.cancelQueries({ queryKey: ["/api/group-chats", groupChatId] });
       
       const previousData = queryClient.getQueryData<GroupConversationData>(["/api/group-chats", groupChatId]);
+      const tempId = `temp-${Date.now()}`;
       
       if (previousData && user) {
         const optimisticMessage: MessageData = {
-          id: `temp-${Date.now()}`,
+          id: tempId,
           content: newMessage.content,
           senderId: String(user.id),
           groupConversationId: groupChatId!,
@@ -111,10 +112,35 @@ export function GroupChat() {
       
       setTimeout(() => scrollToTop(), 50);
       
-      return { previousData };
+      return { previousData, tempId };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/group-chats", groupChatId] });
+    onSuccess: (serverMessage: any, _, context) => {
+      const currentData = queryClient.getQueryData<GroupConversationData>(["/api/group-chats", groupChatId]);
+      
+      if (currentData && context?.tempId && serverMessage) {
+        const realMessage: MessageData = {
+          id: String(serverMessage.id),
+          content: serverMessage.content || "",
+          senderId: String(serverMessage.senderId),
+          groupConversationId: groupChatId!,
+          isRead: true,
+          createdAt: serverMessage.createdAt || new Date().toISOString(),
+          sender: serverMessage.sender || (user ? {
+            id: String(user.id),
+            email: user.email || "",
+            firstName: user.firstName || undefined,
+            lastName: user.lastName || undefined,
+            profileImageUrl: user.profileImageUrl || undefined,
+          } : undefined),
+        };
+        
+        queryClient.setQueryData<GroupConversationData>(["/api/group-chats", groupChatId], {
+          ...currentData,
+          messages: currentData.messages.map(msg => 
+            msg.id === context.tempId ? realMessage : msg
+          ),
+        });
+      }
       scrollToTop();
     },
     onError: (error, _, context) => {
