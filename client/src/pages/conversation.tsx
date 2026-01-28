@@ -16,7 +16,6 @@ import { MemeDisplay } from "@/components/MemeDisplay";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { PageWrapper } from "@/components/PageWrapper";
 import { VideoCallButton } from "@/components/VideoCallButton";
-import { useNotifications } from "@/hooks/useNotifications";
 
 interface MessageData {
   id: string;

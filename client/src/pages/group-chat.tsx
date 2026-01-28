@@ -13,7 +13,6 @@ import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { PageWrapper } from "@/components/PageWrapper";
 import { GroupVideoCallButton } from "@/components/GroupVideoCallButton";
-import { useNotifications } from "@/hooks/useNotifications";
 
 interface MessageData {
   id: string;
