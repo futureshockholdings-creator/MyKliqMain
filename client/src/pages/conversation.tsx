@@ -362,27 +362,22 @@ export function Conversation() {
             </div>
           ) : (
             conversation.messages.map((message) => {
-              const isOwn = user && message.senderId === user.id;
+              const isOwn = user && String(message.senderId) === String(user.id);
               return (
                 <div
                   key={message.id}
                   className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                   data-testid={`message-${message.id}`}
                 >
-                  <div className={`flex gap-3 max-w-xs lg:max-w-md ${isOwn ? "flex-row-reverse" : ""}`}>
-                    <Avatar className="w-8 h-8">
+                  <div className={`flex gap-3 w-64 sm:w-72 lg:w-80 ${isOwn ? "flex-row-reverse" : ""}`}>
+                    <Avatar className="w-8 h-8 flex-shrink-0">
                       <AvatarImage src={resolveAssetUrl(message.sender.profileImageUrl)} />
                       <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
                         {getInitials(message.sender)}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <div
-                        className={`rounded-lg ${
-                          isOwn
-                            ? "bg-white text-black"
-                            : "bg-white text-black"
-                        }`}
+                    <div className="flex-1 min-w-0">
+                      <div className="rounded-lg bg-white text-black"
                         data-testid={`text-message-content-${message.id}`}
                       >
                         {/* Text content */}
