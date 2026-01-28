@@ -38,8 +38,8 @@ export function NotificationBadge({
 
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
-    refetchInterval: 30000, // Changed from 2000ms to 30000ms (30 seconds)
-    staleTime: 15000, // Changed from 1000ms to 15000ms (15 seconds)
+    refetchInterval: 15000, // Poll every 15 seconds for new notifications
+    staleTime: 10000, // Consider data stale after 10 seconds
   });
 
   // Map badge types to actual notification types
@@ -64,8 +64,8 @@ export function NotificationBadge({
   
   const unreadCount = filteredNotifications.length;
   
-  // Force yellow for messages badge ALWAYS when there are notifications
-  const hasIncognitoMessages = (type === "messages");
+  // Check if any of the filtered notifications are incognito messages (yellow bubble)
+  const hasIncognitoMessages = filteredNotifications.some((n: Notification) => n.type === "incognito_message");
   const hasNotifications = unreadCount > 0;
   
 
