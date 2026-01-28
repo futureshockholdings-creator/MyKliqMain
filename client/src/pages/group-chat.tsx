@@ -13,6 +13,7 @@ import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { PageWrapper } from "@/components/PageWrapper";
 import { GroupVideoCallButton } from "@/components/GroupVideoCallButton";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface MessageData {
   id: string;
@@ -58,6 +59,21 @@ export function GroupChat() {
     queryKey: ["/api/group-chats", groupChatId],
     enabled: !!groupChatId,
   });
+
+  // Mark group chat notifications as read when opening the conversation
+  useEffect(() => {
+    if (groupChatId) {
+      // Mark notifications related to this group chat as read
+      apiRequest("PATCH", `/api/notifications/mark-read-by-related/${groupChatId}`, {
+        types: ["message", "incognito_message"]
+      }).then(() => {
+        // Invalidate notifications cache to update badge counts
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      }).catch((err) => {
+        console.error("Failed to mark group notifications as read:", err);
+      });
+    }
+  }, [groupChatId, queryClient]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: { content: string }) => {

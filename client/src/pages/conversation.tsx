@@ -16,6 +16,7 @@ import { MemeDisplay } from "@/components/MemeDisplay";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { PageWrapper } from "@/components/PageWrapper";
 import { VideoCallButton } from "@/components/VideoCallButton";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface MessageData {
   id: string;
@@ -124,6 +125,21 @@ export function Conversation() {
     gcTime: 5 * 60 * 1000, // Cache for 5 minutes
     refetchInterval: 3000, // Poll every 3 seconds for new messages
   });
+
+  // Mark message notifications as read when opening the conversation
+  useEffect(() => {
+    if (otherUserId) {
+      // Mark notifications from this sender as read
+      apiRequest("PATCH", `/api/notifications/mark-read-by-related/${otherUserId}`, {
+        types: ["message", "incognito_message"]
+      }).then(() => {
+        // Invalidate notifications cache to update badge counts
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      }).catch((err) => {
+        console.error("Failed to mark notifications as read:", err);
+      });
+    }
+  }, [otherUserId, queryClient]);
 
   // We'll get user info from the conversation messages instead of separate API call
 

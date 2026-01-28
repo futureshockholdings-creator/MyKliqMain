@@ -22,7 +22,7 @@ import { performanceOptimizer } from "./performanceOptimizer";
 
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts } from "@shared/schema";
 import { generateMobileToken, verifyMobileToken, JWT_CONFIG } from "./mobile-auth";
-import { eq, and, or, desc, sql as sqlOp, isNotNull } from "drizzle-orm";
+import { eq, and, or, desc, sql as sqlOp, isNotNull, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
@@ -9419,6 +9419,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(notifications);
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark notifications as read" });
+    }
+  });
+
+  // Mark notifications as read by relatedId (e.g., mark message notifications from specific sender as read)
+  app.patch('/api/notifications/mark-read-by-related/:relatedId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { relatedId } = req.params;
+      const { types } = req.body; // Array of notification types to mark as read
+      
+      // Mark notifications matching the criteria as read
+      const result = await db
+        .update(notifications)
+        .set({ isRead: true, readAt: new Date() })
+        .where(
+          and(
+            eq(notifications.userId, userId),
+            eq(notifications.relatedId, relatedId),
+            eq(notifications.isRead, false),
+            types && types.length > 0 ? inArray(notifications.type, types) : undefined
+          )
+        )
+        .returning();
+      
+      res.json({ success: true, count: result.length });
+    } catch (error) {
+      console.error("Error marking notifications as read by relatedId:", error);
       res.status(500).json({ message: "Failed to mark notifications as read" });
     }
   });
