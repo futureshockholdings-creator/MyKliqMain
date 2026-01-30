@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { notifications, type InsertNotification } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
+import { deleteCache } from "./redis";
 
 export class NotificationService {
   // Create a new notification
@@ -9,6 +10,15 @@ export class NotificationService {
       .insert(notifications)
       .values(data)
       .returning();
+    
+    // Invalidate the notification cache for this user so they see the new alert immediately
+    try {
+      await deleteCache(`notifications:${data.userId}:all`);
+      await deleteCache(`notifications:${data.userId}:${data.type}`);
+    } catch (e) {
+      console.error('[NotificationService] Cache invalidation failed:', e);
+    }
+    
     return notification;
   }
 

@@ -9418,7 +9418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const notifications = await getCachedOrFetch(
         cacheKey,
         () => notificationService.getUserNotifications(userId, type),
-        60 // Cache notifications for 60 seconds
+        10 // Cache notifications for 10 seconds (fast refresh for alerts)
       );
       res.json(notifications);
     } catch (error) {
