@@ -162,7 +162,7 @@ export class NotificationService {
     });
   }
 
-  // Create dual notifications for incognito messages (both alert and message notifications)
+  // Create single incognito message notification (yellow bubble alert only)
   async notifyIncognitoMessage(receiverId: string, senderId: string, senderName: string, messagePreview: string, groupId?: string) {
     // For group chats, use groupId as relatedId with type "group_chat"
     // For individual chats, use senderId as relatedId with type "user"
@@ -174,8 +174,9 @@ export class NotificationService {
       ? `🔒 Group message from ${senderName}` 
       : `🔒 Incognito message from ${senderName}`;
     
-    // Create the alert notification (yellow bubble)
-    const alertNotification = await this.createNotification({
+    // Create only the incognito_message notification (yellow bubble)
+    // Opening the conversation will mark this as read and clear the bubble
+    const notification = await this.createNotification({
       userId: receiverId,
       type: "incognito_message",
       title,
@@ -186,19 +187,7 @@ export class NotificationService {
       priority: "high",
     });
 
-    // Create the regular message notification (for messages tab)
-    const messageNotification = await this.createNotification({
-      userId: receiverId,
-      type: "message",
-      title: isGroupMessage ? `New group message from ${senderName}` : `New message from ${senderName}`,
-      message: messagePreview,
-      actionUrl,
-      relatedId,
-      relatedType,
-      priority: "normal",
-    });
-
-    return { alertNotification, messageNotification };
+    return { alert: notification };
   }
 
   async notifyFriendRequest(userId: string, fromUserId: string, fromUserName: string) {
