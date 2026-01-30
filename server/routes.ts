@@ -6985,7 +6985,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Send notifications to all other participants in the group
       try {
-        const group = await storage.getGroupConversation(groupId);
+        const group = await storage.getGroupConversation(groupId, userId);
+        console.log(`[GROUP-INCOGNITO-DEBUG] Group fetched for notifications: groupId=${groupId}, participants=${group?.participants?.length || 0}`);
         if (group && group.participants) {
           const sender = await storage.getUser(userId);
           const senderName = sender?.firstName || "Someone";
