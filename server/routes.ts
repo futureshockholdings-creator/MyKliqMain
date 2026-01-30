@@ -7002,17 +7002,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             messagePreview = "🎬 Moviecon";
           }
           
-          // Notify all participants except the sender
+          // Notify all participants except the sender - using EXACT same pattern as working 1-on-1 messages
           for (const participant of group.participants) {
             if (String(participant.id) !== String(userId)) {
-              console.log(`[GROUP-INCOGNITO-DEBUG] Creating notification for participant ${participant.id} in group ${groupId}`);
-              await notificationService.notifyIncognitoMessage(
-                String(participant.id),
-                userId,
-                senderName,
-                messagePreview,
-                groupId // Pass groupId as relatedId for group messages
-              );
+              console.log(`[GROUP-INCOGNITO-DEBUG] Creating notification for participant ${participant.id} (sender: ${userId}, senderName: ${senderName}, preview: ${messagePreview})`);
+              
+              // Use EXACT same try/catch pattern as working 1-on-1 incognito messages
+              try {
+                const result = await notificationService.notifyIncognitoMessage(
+                  String(participant.id),
+                  userId,
+                  senderName,
+                  messagePreview,
+                  groupId // Pass groupId as relatedId for group messages
+                );
+                console.log(`[GROUP-INCOGNITO-DEBUG] Notification created successfully for ${participant.id}:`, JSON.stringify(result, null, 2));
+              } catch (notifError) {
+                console.error(`[GROUP-INCOGNITO-DEBUG] ERROR creating notification for ${participant.id}:`, notifError);
+              }
             }
           }
         }
