@@ -6796,8 +6796,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const message = await storage.sendMessage(messageData);
       
       // Send incognito message notifications to the receiver (creates both alert and message notifications)
+      console.log(`[INCOGNITO-DEBUG] Message sent - senderId: ${userId}, receiverId: ${receiverId}`);
+      console.log(`[INCOGNITO-DEBUG] Check: receiverId !== userId? ${receiverId} !== ${userId} = ${receiverId !== userId}`);
+      
       if (receiverId !== userId) {
+        console.log(`[INCOGNITO-DEBUG] Condition passed, fetching sender info...`);
         const sender = await storage.getUser(userId);
+        console.log(`[INCOGNITO-DEBUG] Sender found: ${sender ? `${sender.firstName} (id: ${sender.id})` : 'NULL'}`);
+        
         if (sender) {
           let messagePreview = "";
           if (content?.trim()) {
@@ -6812,14 +6818,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             messagePreview = "🎬 Moviecon";
           }
           
+          console.log(`[INCOGNITO-DEBUG] Creating notification - receiverId: ${receiverId}, senderId: ${userId}, senderName: ${sender.firstName || "Someone"}, preview: ${messagePreview}`);
+          
           // Since all messages in this system are incognito (auto-delete), create dual notifications
-          await notificationService.notifyIncognitoMessage(
-            receiverId,
-            userId,
-            sender.firstName || "Someone",
-            messagePreview
-          );
+          try {
+            const result = await notificationService.notifyIncognitoMessage(
+              receiverId,
+              userId,
+              sender.firstName || "Someone",
+              messagePreview
+            );
+            console.log(`[INCOGNITO-DEBUG] Notification created successfully:`, JSON.stringify(result, null, 2));
+          } catch (notifError) {
+            console.error(`[INCOGNITO-DEBUG] ERROR creating notification:`, notifError);
+          }
+        } else {
+          console.log(`[INCOGNITO-DEBUG] Sender not found, skipping notification`);
         }
+      } else {
+        console.log(`[INCOGNITO-DEBUG] Skipped - sending to self`);
       }
       
       res.json(message);
