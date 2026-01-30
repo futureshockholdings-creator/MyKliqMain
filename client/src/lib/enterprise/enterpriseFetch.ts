@@ -140,8 +140,8 @@ export async function enterpriseFetch<T = any>(
 
   // Use enhanced cache with SWR pattern for GET requests
   if (shouldCache) {
-    // Notifications need real-time updates, skip memory cache (5 min TTL too long)
-    // This ensures alerts show within 15-25 seconds instead of up to 5 minutes
+    // Notifications need real-time updates - skip ALL client-side caching
+    // This ensures alerts show within 15-25 seconds (server-side 10s cache + polling interval)
     const isNotificationEndpoint = url.includes('/api/notifications');
     
     return enhancedCache.swr(
@@ -149,7 +149,7 @@ export async function enterpriseFetch<T = any>(
       fetchFn,
       {
         diskTTL: cacheTTL,
-        skipDisk: skipDisk,
+        skipDisk: skipDisk || isNotificationEndpoint, // Skip disk cache for notifications
         skipMemory: isNotificationEndpoint, // Skip 5-minute memory cache for notifications
       }
     );
