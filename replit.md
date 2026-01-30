@@ -132,6 +132,15 @@ Invite codes can be used unlimited times (no one-time restriction). The system t
 - **Owner approval workflow**: Pending requests appear in the Kliq page under "Pending Join Requests" with approve/decline buttons
 - **Clean slate on approve**: When approved, the removal record is cleared so future rejoins won't require approval again
 
+### PWA App Icon Badging (Added Jan 2026)
+The PWA displays unread notification count on the app icon when installed to the home screen:
+- Uses the Badging API (`navigator.setAppBadge`/`clearAppBadge`)
+- Badge updates whenever notification data changes (15-second polling with 10-second stale time)
+- Gated behind authentication - only polls when user is logged in
+- Badge clears on logout or when all notifications are read
+- Hook: `useAppBadge` in `client/src/hooks/useAppBadge.ts`
+- Note: Badge appearance (red circle with white text) is controlled by the OS, not customizable
+
 ### Peer-to-Peer Video Calling (Added Jan 2026)
 Friend-to-friend video calling using PeerJS for WebRTC connections and WebSocket for call signaling:
 - **Client Components**: `VideoCallService` (PeerJS management), `VideoCallProvider` (React context), `VideoCallScreen` (full-screen UI), `IncomingCallOverlay` (incoming call modal), `VideoCallButton` (initiate calls)
