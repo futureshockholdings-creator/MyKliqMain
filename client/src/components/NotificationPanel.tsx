@@ -106,9 +106,8 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
         variant: "destructive",
       });
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-    },
+    // Skip invalidateQueries to prevent refetch from overwriting optimistic update
+    // The optimistic update already reflects the correct state
   });
 
 
@@ -151,9 +150,8 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
         variant: "destructive",
       });
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-    },
+    // Skip invalidateQueries to prevent refetch from overwriting optimistic update
+    // The optimistic update already reflects the correct state
   });
 
 
@@ -197,6 +195,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => markAllAsReadMutation.mutate(selectedTab)}
+                  disabled={markAllAsReadMutation.isPending}
                   data-testid="mark-all-read-button"
                 >
                   <Check className="h-4 w-4" />
@@ -207,6 +206,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => deleteAllNotificationsMutation.mutate(selectedTab)}
+                  disabled={deleteAllNotificationsMutation.isPending}
                   data-testid="delete-all-notifications-button"
                 >
                   <Trash2 className="h-4 w-4" />
