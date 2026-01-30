@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { useDailyCheckIn } from "@/hooks/useDailyCheckIn";
+import { useAppBadge } from "@/hooks/useAppBadge";
 import { useTranslation } from "react-i18next";
 import "./i18n/config"; // Initialize i18n
 import { initializeEnterpriseServices, cleanupEnterpriseServices } from "@/lib/enterprise/enterpriseInit";
@@ -273,6 +274,9 @@ function AppContent() {
   
   // Perform daily check-in for authenticated users
   useDailyCheckIn();
+  
+  // Update PWA app icon badge with unread notification count
+  useAppBadge();
   
   // Initialize Google Analytics ONLY if user has granted consent (GDPR compliance)
   // Users grant consent during sign-up (default true) but can revoke in Settings
