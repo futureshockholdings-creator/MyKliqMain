@@ -283,6 +283,32 @@ export function GroupChat() {
           )}
         </div>
 
+        {/* Message Input - at top (matching individual conversation layout) */}
+        <form onSubmit={handleSendMessage} className="p-4 border-b border-border bg-background">
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Type a message..."
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              className="flex-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
+              disabled={sendMessageMutation.isPending}
+              data-testid="input-message"
+            />
+            <Button
+              type="submit"
+              disabled={!messageText.trim() || sendMessageMutation.isPending}
+              className="bg-mykliq-green hover:bg-mykliq-green/90 text-white"
+              data-testid="button-send"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Messages auto-delete after 7 days
+          </p>
+        </form>
+
         {/* Messages */}
         <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {groupChat.messages.length === 0 ? (
@@ -329,32 +355,6 @@ export function GroupChat() {
           )}
           <div ref={messagesEndRef} />
         </div>
-
-        {/* Message Input */}
-        <form onSubmit={handleSendMessage} className="p-4 border-t border-border bg-card">
-          <div className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="Type a message..."
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              className="flex-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
-              disabled={sendMessageMutation.isPending}
-              data-testid="input-message"
-            />
-            <Button
-              type="submit"
-              disabled={!messageText.trim() || sendMessageMutation.isPending}
-              className="bg-mykliq-green hover:bg-mykliq-green/90 text-white"
-              data-testid="button-send"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Messages auto-delete after 7 days
-          </p>
-        </form>
       </div>
     </PageWrapper>
   );
