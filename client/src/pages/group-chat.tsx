@@ -57,6 +57,8 @@ export function GroupChat() {
   const { data: groupChat, isLoading } = useQuery<GroupConversationData>({
     queryKey: ["/api/group-chats", groupChatId],
     enabled: !!groupChatId,
+    staleTime: 5000, // Consider data stale after 5 seconds
+    refetchInterval: 3000, // Poll every 3 seconds for new messages (same as individual conversations)
   });
 
   // Mark group chat notifications as read when opening the conversation

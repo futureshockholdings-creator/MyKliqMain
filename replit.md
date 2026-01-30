@@ -30,6 +30,22 @@ Features include a hierarchical feed filtered by friend rankings, kliq-wide cont
 ### Caching Architecture
 A dual-cache system (SimpleCache and CacheService) with Redis support, in-memory fallback, pattern-based invalidation, and LRU eviction optimizes performance. The web client uses a two-tier `EnhancedCache` (memory and IndexedDB). Server-side caching includes specific TTLs for static content, user profiles, Kliq-feed, content filters, and educational posts. Client-side cache keys include the userId for all user-specific API endpoints to ensure cross-user isolation. Logout properly clears all caches.
 
+**Notification Cache Optimization (Updated Jan 2026):**
+- Server-side notification cache: 10 seconds (reduced from 60s for faster alerts)
+- Client-side notification polling: 15 seconds with 10-second stale time
+- Cache invalidation on notification creation: When a notification is created, both "all" and type-specific caches are immediately invalidated for the recipient
+- Expected alert delay: ~10-25 seconds (vs. ~90 seconds previously)
+
+### Messaging & Notifications
+**Individual Conversations:**
+- Client polls every 3 seconds for new messages (staleTime: 5s)
+- Notifications created on message send with cache invalidation
+
+**Group Chats:**
+- Client polls every 3 seconds for new messages (added Jan 2026 - previously no polling)
+- Group messages now create notifications for ALL participants (not just the sender)
+- Notifications use groupId as relatedId with type "group_chat" for proper mark-as-read behavior
+
 ### Real-time Feed Updates
 WebSocket-based real-time updates broadcast new content, with a polling fallback and cache invalidation.
 

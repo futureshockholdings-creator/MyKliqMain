@@ -6982,6 +6982,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const message = await storage.sendGroupMessage(messageData);
+      
+      // Send notifications to all other participants in the group
+      try {
+        const group = await storage.getGroupConversation(groupId);
+        if (group && group.participants) {
+          const sender = await storage.getUser(userId);
+          const senderName = sender?.firstName || "Someone";
+          
+          let messagePreview = "";
+          if (content?.trim()) {
+            messagePreview = content.trim().slice(0, 30) + (content.trim().length > 30 ? "..." : "");
+          } else if (mediaUrl) {
+            messagePreview = mediaType === "image" ? "📷 Photo" : "🎥 Video";
+          } else if (gifId) {
+            messagePreview = "🎭 GIF";
+          } else if (movieconId) {
+            messagePreview = "🎬 Moviecon";
+          }
+          
+          // Notify all participants except the sender
+          for (const participant of group.participants) {
+            if (String(participant.id) !== String(userId)) {
+              console.log(`[GROUP-INCOGNITO-DEBUG] Creating notification for participant ${participant.id} in group ${groupId}`);
+              await notificationService.notifyIncognitoMessage(
+                String(participant.id),
+                userId,
+                senderName,
+                messagePreview,
+                groupId // Pass groupId as relatedId for group messages
+              );
+            }
+          }
+        }
+      } catch (notifError) {
+        console.error("[GROUP-INCOGNITO-DEBUG] Error creating group message notifications:", notifError);
+      }
+      
       res.json(message);
     } catch (error) {
       console.error("Error sending group message:", error);

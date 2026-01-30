@@ -163,16 +163,26 @@ export class NotificationService {
   }
 
   // Create dual notifications for incognito messages (both alert and message notifications)
-  async notifyIncognitoMessage(receiverId: string, senderId: string, senderName: string, messagePreview: string) {
+  async notifyIncognitoMessage(receiverId: string, senderId: string, senderName: string, messagePreview: string, groupId?: string) {
+    // For group chats, use groupId as relatedId with type "group_chat"
+    // For individual chats, use senderId as relatedId with type "user"
+    const isGroupMessage = !!groupId;
+    const relatedId = isGroupMessage ? groupId : senderId;
+    const relatedType = isGroupMessage ? "group_chat" : "user";
+    const actionUrl = isGroupMessage ? `/group-chat/${groupId}` : "/messages";
+    const title = isGroupMessage 
+      ? `🔒 Group message from ${senderName}` 
+      : `🔒 Incognito message from ${senderName}`;
+    
     // Create the alert notification (yellow bubble)
     const alertNotification = await this.createNotification({
       userId: receiverId,
       type: "incognito_message",
-      title: `🔒 Incognito message from ${senderName}`,
+      title,
       message: messagePreview,
-      actionUrl: "/messages",
-      relatedId: senderId,
-      relatedType: "user",
+      actionUrl,
+      relatedId,
+      relatedType,
       priority: "high",
     });
 
@@ -180,11 +190,11 @@ export class NotificationService {
     const messageNotification = await this.createNotification({
       userId: receiverId,
       type: "message",
-      title: `New message from ${senderName}`,
+      title: isGroupMessage ? `New group message from ${senderName}` : `New message from ${senderName}`,
       message: messagePreview,
-      actionUrl: "/messages",
-      relatedId: senderId,
-      relatedType: "user",
+      actionUrl,
+      relatedId,
+      relatedType,
       priority: "normal",
     });
 
