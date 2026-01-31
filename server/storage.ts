@@ -297,6 +297,7 @@ export interface IStorage {
   createGroupConversation(data: { name?: string; creatorId: string; participantIds: string[] }): Promise<GroupConversation>;
   getGroupConversations(userId: string): Promise<(GroupConversation & { participants: User[]; lastMessage?: Message; unreadCount: number })[]>;
   getGroupConversation(groupId: string, userId: string): Promise<(GroupConversation & { participants: User[]; messages: (Message & { sender: User })[] }) | undefined>;
+  getAllGroupParticipantIds(groupId: string): Promise<string[]>;
   addParticipantToGroup(groupId: string, userId: string): Promise<void>;
   removeParticipantFromGroup(groupId: string, userId: string): Promise<void>;
   sendGroupMessage(message: InsertMessage): Promise<Message>;
@@ -2491,6 +2492,20 @@ export class DatabaseStorage implements IStorage {
       participants,
       messages: groupMessages,
     };
+  }
+
+  async getAllGroupParticipantIds(groupId: string): Promise<string[]> {
+    console.log(`[GROUP-PARTICIPANTS-DEBUG] Fetching ALL participants for groupId=${groupId}`);
+    
+    const participantsData = await db
+      .select({ userId: conversationParticipants.userId })
+      .from(conversationParticipants)
+      .where(eq(conversationParticipants.groupConversationId, groupId));
+    
+    const participantIds = participantsData.map(p => p.userId);
+    console.log(`[GROUP-PARTICIPANTS-DEBUG] Found ${participantIds.length} participants: ${JSON.stringify(participantIds)}`);
+    
+    return participantIds;
   }
 
   async addParticipantToGroup(groupId: string, userId: string): Promise<void> {

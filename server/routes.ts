@@ -6983,11 +6983,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const message = await storage.sendGroupMessage(messageData);
       
-      // Send notifications to all other participants in the group
+      // Send notifications to ALL other participants in the group
+      // Using dedicated function to ensure we get all participants directly from the database
       try {
-        const group = await storage.getGroupConversation(groupId, userId);
-        console.log(`[GROUP-INCOGNITO-DEBUG] Group fetched for notifications: groupId=${groupId}, participants=${group?.participants?.length || 0}`);
-        if (group && group.participants) {
+        const rawParticipantIds = await storage.getAllGroupParticipantIds(groupId);
+        // Deduplicate participant IDs to prevent duplicate notifications
+        const allParticipantIds = [...new Set(rawParticipantIds)];
+        console.log(`[GROUP-INCOGNITO-DEBUG] Fetched ALL participant IDs for groupId=${groupId}: count=${allParticipantIds.length}, sender=${userId}`);
+        
+        if (allParticipantIds.length > 0) {
           const sender = await storage.getUser(userId);
           const senderName = sender?.firstName || "Someone";
           
@@ -7002,26 +7006,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
             messagePreview = "🎬 Moviecon";
           }
           
-          // Notify all participants except the sender
+          // Track how many notifications we send
+          let notificationsSent = 0;
+          let notificationsFailed = 0;
+          
+          // Notify ALL participants except the sender
           // Pass groupId so mark-as-read works when opening the group chat
-          for (const participant of group.participants) {
-            if (String(participant.id) !== String(userId)) {
-              console.log(`[GROUP-INCOGNITO-DEBUG] Creating notification for participant ${participant.id} (sender: ${userId}, senderName: ${senderName}, preview: ${messagePreview}, groupId: ${groupId})`);
+          for (const participantId of allParticipantIds) {
+            if (String(participantId) !== String(userId)) {
+              console.log(`[GROUP-INCOGNITO-DEBUG] Creating notification for participant ${participantId} (sender: ${userId}, senderName: ${senderName}, preview: ${messagePreview}, groupId: ${groupId})`);
               
               try {
                 const result = await notificationService.notifyIncognitoMessage(
-                  String(participant.id),
+                  String(participantId),
                   userId,
                   senderName,
                   messagePreview,
                   groupId // Include groupId for mark-as-read functionality
                 );
-                console.log(`[GROUP-INCOGNITO-DEBUG] Notification created successfully for ${participant.id}:`, JSON.stringify(result, null, 2));
+                notificationsSent++;
+                console.log(`[GROUP-INCOGNITO-DEBUG] Notification created successfully for ${participantId}:`, JSON.stringify(result, null, 2));
               } catch (notifError) {
-                console.error(`[GROUP-INCOGNITO-DEBUG] ERROR creating notification for ${participant.id}:`, notifError);
+                notificationsFailed++;
+                console.error(`[GROUP-INCOGNITO-DEBUG] ERROR creating notification for ${participantId}:`, notifError);
               }
             }
           }
+          
+          console.log(`[GROUP-INCOGNITO-DEBUG] Notification summary: sent=${notificationsSent}, failed=${notificationsFailed}, total_participants=${allParticipantIds.length}`);
         }
       } catch (notifError) {
         console.error("[GROUP-INCOGNITO-DEBUG] Error creating group message notifications:", notifError);
