@@ -8,6 +8,7 @@ import { resolveAssetUrl } from "@/lib/apiConfig";
 import { MemeDisplay } from "@/components/MemeDisplay";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
+import { ImageGallery } from "@/components/ImageGallery";
 
 export default function PostView() {
   const [, params] = useRoute("/post/:postId");
@@ -110,21 +111,15 @@ export default function PostView() {
               <p className="text-lg">{post.content}</p>
             )}
 
-            {post.mediaUrl && (
+            {(post.mediaUrl || (post.media && post.media.length > 0)) && (
               <div className="rounded-lg overflow-hidden">
-                {post.mediaType === "video" ? (
-                  <video
-                    src={resolveAssetUrl(post.mediaUrl)}
-                    controls
-                    className="w-full max-h-96 object-contain bg-black"
-                  />
-                ) : (
-                  <img
-                    src={resolveAssetUrl(post.mediaUrl)}
-                    alt="Post media"
-                    className="w-full max-h-96 object-contain"
-                  />
-                )}
+                <ImageGallery 
+                  media={post.media || []}
+                  fallbackUrl={post.mediaUrl}
+                  fallbackType={post.mediaType}
+                  resolveUrl={resolveAssetUrl}
+                  className="max-h-96"
+                />
               </div>
             )}
 

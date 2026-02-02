@@ -5495,8 +5495,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       
+      // Extract mediaItems array for multi-image support
+      const { mediaItems, ...restBody } = req.body;
+      
       // Convert numeric coordinates to strings if present and handle address
-      const processedBody = { ...req.body, userId };
+      const processedBody = { ...restBody, userId };
       if (processedBody.latitude !== undefined && typeof processedBody.latitude === 'number') {
         processedBody.latitude = processedBody.latitude.toString();
       }
@@ -5510,13 +5513,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let postData = insertPostSchema.parse(processedBody);
       
-      // Normalize media URL if provided
+      // Normalize media URL if provided (for backward compatibility with single media)
       if (postData.mediaUrl) {
         const objectStorage = new ObjectStorageService();
         postData.mediaUrl = objectStorage.normalizeObjectEntityPath(postData.mediaUrl);
       }
       
-      const post = await storage.createPost(postData);
+      // Handle multi-image posts
+      let post;
+      let postMediaItems: { url: string; type: "image" | "video" }[] = [];
+      
+      if (mediaItems && Array.isArray(mediaItems) && mediaItems.length > 0) {
+        const objectStorage = new ObjectStorageService();
+        postMediaItems = mediaItems.map((item: { url: string; type: "image" | "video" }) => ({
+          url: objectStorage.normalizeObjectEntityPath(item.url),
+          type: item.type,
+        }));
+        
+        // Set the first image as the main mediaUrl for backward compatibility
+        if (!postData.mediaUrl && postMediaItems.length > 0) {
+          postData.mediaUrl = postMediaItems[0].url;
+          postData.mediaType = postMediaItems[0].type;
+        }
+        
+        post = await storage.createPostWithMedia(postData, postMediaItems);
+      } else {
+        post = await storage.createPost(postData);
+      }
       
       // Award 0.50 Kliq Koins for creating a post
       try {

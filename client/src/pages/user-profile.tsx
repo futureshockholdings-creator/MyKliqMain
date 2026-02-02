@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { resolveAssetUrl } from "@/lib/apiConfig";
+import { ImageGallery } from "@/components/ImageGallery";
 
 interface ProfileTheme {
   primaryColor: string;
@@ -328,12 +329,16 @@ export default function UserProfile() {
                   style={{ borderColor: `${primaryColor}30` }}
                 >
                   <p className="text-foreground mb-2">{translatePost(post.content)}</p>
-                  {post.mediaUrl && (
-                    <img 
-                      src={resolveAssetUrl(post.mediaUrl)} 
-                      alt="Post media" 
-                      className="rounded-lg max-h-48 object-cover mb-2"
-                    />
+                  {(post.mediaUrl || (post.media && post.media.length > 0)) && (
+                    <div className="rounded-lg overflow-hidden mb-2">
+                      <ImageGallery 
+                        media={post.media || []}
+                        fallbackUrl={post.mediaUrl}
+                        fallbackType={post.mediaType}
+                        resolveUrl={resolveAssetUrl}
+                        className="max-h-48"
+                      />
+                    </div>
                   )}
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>

@@ -464,6 +464,19 @@ export const posts = pgTable("posts", {
   index("idx_posts_shared_from").on(table.sharedFromPostId), // Shared post tracking
 ]);
 
+// Post media - supports multiple images/videos per post
+export const postMedia = pgTable("post_media", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  postId: varchar("post_id").references(() => posts.id, { onDelete: "cascade" }).notNull(),
+  mediaUrl: varchar("media_url").notNull(),
+  mediaType: mediaTypeEnum("media_type").notNull(),
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_post_media_post").on(table.postId),
+  index("idx_post_media_post_order").on(table.postId, table.displayOrder),
+]);
+
 // Stories (disappear after 24 hours)
 export const stories = pgTable("stories", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1462,6 +1475,11 @@ export type Friendship = typeof friendships.$inferSelect;
 export type InsertFriendship = z.infer<typeof insertFriendshipSchema>;
 export type Post = typeof posts.$inferSelect;
 export type InsertPost = z.infer<typeof insertPostSchema>;
+
+// Post media types for multi-image posts
+export const insertPostMediaSchema = createInsertSchema(postMedia).omit({ id: true, createdAt: true });
+export type PostMedia = typeof postMedia.$inferSelect;
+export type InsertPostMedia = z.infer<typeof insertPostMediaSchema>;
 export type Story = typeof stories.$inferSelect;
 export type InsertStory = z.infer<typeof insertStorySchema>;
 export type StoryView = typeof storyViews.$inferSelect;

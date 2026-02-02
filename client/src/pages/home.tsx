@@ -45,6 +45,7 @@ import { feedRealtimeService } from "@/lib/feedRealtime";
 import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 import { addOptimisticNotification, rollbackOptimisticNotification } from "@/lib/optimisticNotifications";
 import { LinkifyText } from "@/components/LinkifyText";
+import { ImageGallery } from "@/components/ImageGallery";
 
 import type { Meme, Moviecon } from "@shared/schema";
 
@@ -3419,28 +3420,21 @@ export default function Home() {
                 })()
               )}
               
-              {/* Media Content */}
-              {item.mediaUrl && (
+              {/* Media Content - supports multi-image posts */}
+              {(item.mediaUrl || (item.media && item.media.length > 0)) && (
                 (() => {
                   const { cleanText } = extractYouTubeUrlsFromText(item.content || '');
                   const isEventPost = cleanText?.includes('📅 New event:') || cleanText?.includes('✏️ Updated event:');
                   
                   const mediaElement = (
                     <div className="mb-3 rounded-lg overflow-hidden bg-black/20">
-                      {item.mediaType === 'video' ? (
-                        <video 
-                          src={resolveAssetUrl(item.mediaUrl)} 
-                          controls 
-                          className="w-full max-h-96 object-cover"
-                          preload="metadata"
-                        />
-                      ) : (
-                        <img 
-                          src={resolveAssetUrl(item.mediaUrl)} 
-                          alt="Post media" 
-                          className="w-full max-h-96 object-cover"
-                        />
-                      )}
+                      <ImageGallery 
+                        media={item.media || []}
+                        fallbackUrl={item.mediaUrl}
+                        fallbackType={item.mediaType}
+                        resolveUrl={resolveAssetUrl}
+                        className="max-h-96"
+                      />
                     </div>
                   );
                   

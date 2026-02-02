@@ -27,9 +27,13 @@ interface MediaUploadProps {
 
 export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: MediaUploadProps) {
   const [content, setContent] = useState("");
-  const [uploadedMedia, setUploadedMedia] = useState<{ url: string; type: "image" | "video"; fileName?: string; fileSize?: number } | null>(null);
+  // Support multiple media items for posts
+  const [uploadedMediaItems, setUploadedMediaItems] = useState<{ url: string; type: "image" | "video"; fileName?: string; fileSize?: number }[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  
+  // Legacy single media getter for backward compatibility
+  const uploadedMedia = uploadedMediaItems.length > 0 ? uploadedMediaItems[0] : null;
   
   // Camera state
   const [cameraMode, setCameraMode] = useState<"off" | "preview" | "photo" | "video">("off");
@@ -332,12 +336,18 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
         throw new Error('No media URL returned from server');
       }
       
-      setUploadedMedia({
+      // Add camera capture to media items array
+      const newMediaItem = {
         url: result.mediaUrl,
         type: capturedMedia.type,
         fileName: result.fileName || 'camera-capture',
         fileSize: capturedMedia.blob.size
-      });
+      };
+      if (type === "post") {
+        setUploadedMediaItems(prev => [...prev, newMediaItem].slice(0, 10));
+      } else {
+        setUploadedMediaItems([newMediaItem]);
+      }
       
       setCapturedMedia(null);
       
@@ -386,29 +396,39 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
 
   const handleUploadComplete = async (result: UploadResult) => {
     if (result.successful && result.successful.length > 0) {
-      const uploadedFile = result.successful[0];
-      const fileType = uploadedFile.type || '';
-      const mediaType = fileType.startsWith('image/') ? 'image' : 'video';
-      
-      // The uploadURL contains the presigned URL with query parameters (signature, etc.)
-      // We need to strip the query parameters to get the actual file URL
-      const presignedUrl = uploadedFile.uploadURL || uploadedFile.response?.uploadURL || '';
-      const mediaUrl = presignedUrl.split('?')[0]; // Remove query parameters
-      
-      setUploadedMedia({
-        url: mediaUrl,
-        type: mediaType,
-        fileName: uploadedFile.name || 'uploaded-file',
-        fileSize: uploadedFile.size || 0
+      // Handle multiple files
+      const newMediaItems = result.successful.map((uploadedFile: any) => {
+        const fileType = uploadedFile.type || '';
+        const mediaType = fileType.startsWith('image/') ? 'image' : 'video';
+        
+        // The uploadURL contains the presigned URL with query parameters (signature, etc.)
+        // We need to strip the query parameters to get the actual file URL
+        const presignedUrl = uploadedFile.uploadURL || uploadedFile.response?.uploadURL || '';
+        const mediaUrl = presignedUrl.split('?')[0]; // Remove query parameters
+        
+        return {
+          url: mediaUrl,
+          type: mediaType as "image" | "video",
+          fileName: uploadedFile.name || 'uploaded-file',
+          fileSize: uploadedFile.size || 0
+        };
       });
+      
+      // Add new items to existing array (for posts) or replace (for stories/events)
+      if (type === "post") {
+        setUploadedMediaItems(prev => [...prev, ...newMediaItems].slice(0, 10)); // Max 10 items
+      } else {
+        setUploadedMediaItems(newMediaItems.slice(0, 1)); // Single item for stories/events
+      }
 
-      const sizeWarning = (uploadedFile.size || 0) > 200 * 1024 * 1024;
+      const totalSize = result.successful.reduce((acc: number, f: any) => acc + (f.size || 0), 0);
+      const sizeWarning = totalSize > 200 * 1024 * 1024;
       
       toast({
-        title: "Media uploaded!",
+        title: result.successful.length > 1 ? "Media files uploaded!" : "Media uploaded!",
         description: sizeWarning 
-          ? `File uploaded successfully (${formatFileSize(uploadedFile.size)}). Note: This is a large file.`
-          : "Your media file has been uploaded successfully."
+          ? `${result.successful.length} file(s) uploaded (${formatFileSize(totalSize)}). Note: Large files.`
+          : `${result.successful.length} file(s) uploaded successfully.`
       });
     } else if (result.failed && result.failed.length > 0) {
       console.error("Upload failed:", result.failed);
@@ -440,11 +460,11 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       onSuccess(uploadedObject);
       onOpenChange(false);
       setContent("");
-      setUploadedMedia(null);
+      setUploadedMediaItems([]);
       return;
     }
 
-    if (!uploadedMedia && !content.trim()) {
+    if (uploadedMediaItems.length === 0 && !content.trim()) {
       toast({
         title: "Error",
         description: "Please add some content or media to your " + type,
@@ -460,13 +480,22 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
         content: string | null;
         mediaUrl: string | null;
         mediaType: "image" | "video" | null;
+        mediaItems?: { url: string; type: "image" | "video" }[];
         expiresAt?: string;
       } = {
         userId,
         content: content.trim() || null,
-        mediaUrl: uploadedMedia?.url || null,
-        mediaType: uploadedMedia?.type || null,
+        mediaUrl: uploadedMediaItems.length > 0 ? uploadedMediaItems[0].url : null,
+        mediaType: uploadedMediaItems.length > 0 ? uploadedMediaItems[0].type : null,
       };
+
+      // For posts, include all media items if there are multiple
+      if (type === "post" && uploadedMediaItems.length > 0) {
+        payload.mediaItems = uploadedMediaItems.map(item => ({
+          url: item.url,
+          type: item.type,
+        }));
+      }
 
       if (type === "story") {
         // Stories expire after 24 hours
@@ -485,7 +514,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       onSuccess();
       onOpenChange(false);
       setContent("");
-      setUploadedMedia(null);
+      setUploadedMediaItems([]);
     } catch (error) {
       toast({
         title: "Error",
@@ -497,8 +526,14 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
     }
   };
 
-  const removeMedia = () => {
-    setUploadedMedia(null);
+  const removeMedia = (index?: number) => {
+    if (index !== undefined) {
+      // Remove specific item by index
+      setUploadedMediaItems(prev => prev.filter((_, i) => i !== index));
+    } else {
+      // Remove all items (for backward compatibility)
+      setUploadedMediaItems([]);
+    }
   };
 
   return (
@@ -526,47 +561,99 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
             />
           )}
 
-          {uploadedMedia && (
+          {uploadedMediaItems.length > 0 && (
             <>
-              <Card className="relative bg-muted border-border">
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      {uploadedMedia.type === "image" ? (
-                        <ImageIcon className="w-8 h-8 text-green-400" />
-                      ) : (
-                        <Video className="w-8 h-8 text-blue-400" />
-                      )}
-                      <div>
-                        <p className="text-sm text-foreground font-medium">
-                          {uploadedMedia.type === "image" ? "Image" : "Video"} uploaded
-                        </p>
-                        {uploadedMedia.fileName && (
-                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                            {uploadedMedia.fileName}
-                          </p>
-                        )}
-                        {uploadedMedia.fileSize && (
-                          <p className="text-xs text-muted-foreground">
-                            {formatFileSize(uploadedMedia.fileSize)}
-                            {uploadedMedia.fileSize > 200 * 1024 * 1024 && " ⚠️ Large file"}
-                          </p>
-                        )}
-                      </div>
+              {/* Multi-image thumbnail grid for posts */}
+              {type === "post" && uploadedMediaItems.length > 1 ? (
+                <Card className="relative bg-muted border-border">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm text-foreground font-medium">
+                        {uploadedMediaItems.length} file{uploadedMediaItems.length > 1 ? 's' : ''} uploaded
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeMedia()}
+                        className="text-destructive hover:bg-destructive/10"
+                      >
+                        Clear All
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={removeMedia}
-                      className="text-destructive hover:bg-destructive/10"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                    <div className="grid grid-cols-5 gap-2">
+                      {uploadedMediaItems.map((media, index) => (
+                        <div key={index} className="relative group aspect-square">
+                          {media.type === "image" ? (
+                            <img
+                              src={media.url}
+                              alt={`Upload ${index + 1}`}
+                              className="w-full h-full object-cover rounded-md"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-800 rounded-md flex items-center justify-center">
+                              <Video className="w-6 h-6 text-blue-400" />
+                            </div>
+                          )}
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            onClick={() => removeMedia(index)}
+                            className="absolute -top-1 -right-1 w-5 h-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    {uploadedMediaItems.length < 10 && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        You can add up to {10 - uploadedMediaItems.length} more file{10 - uploadedMediaItems.length !== 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                /* Single file preview for stories/events or single post image */
+                <Card className="relative bg-muted border-border">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        {uploadedMedia?.type === "image" ? (
+                          <ImageIcon className="w-8 h-8 text-green-400" />
+                        ) : (
+                          <Video className="w-8 h-8 text-blue-400" />
+                        )}
+                        <div>
+                          <p className="text-sm text-foreground font-medium">
+                            {uploadedMedia?.type === "image" ? "Image" : "Video"} uploaded
+                          </p>
+                          {uploadedMedia?.fileName && (
+                            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                              {uploadedMedia.fileName}
+                            </p>
+                          )}
+                          {uploadedMedia?.fileSize && (
+                            <p className="text-xs text-muted-foreground">
+                              {formatFileSize(uploadedMedia.fileSize)}
+                              {uploadedMedia.fileSize > 200 * 1024 * 1024 && " ⚠️ Large file"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeMedia()}
+                        className="text-destructive hover:bg-destructive/10"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               
-              {uploadedMedia.fileSize && uploadedMedia.fileSize > 200 * 1024 * 1024 && uploadedMedia.type === "video" && (
+              {uploadedMedia?.fileSize && uploadedMedia.fileSize > 200 * 1024 * 1024 && uploadedMedia.type === "video" && (
                 <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
                   <CardContent className="p-3">
                     <p className="text-xs text-amber-800 dark:text-amber-200">
@@ -699,7 +786,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
           <div className="flex flex-col gap-3">
             <div className="flex flex-col sm:flex-row gap-2">
               <ObjectUploader
-                maxNumberOfFiles={1}
+                maxNumberOfFiles={type === "post" ? 10 : 1}
                 maxFileSize={262144000} // 250MB
                 allowedFileTypes={[
                   // Image formats

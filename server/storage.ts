@@ -169,6 +169,9 @@ import {
   adminBroadcasts,
   type AdminBroadcast,
   type InsertAdminBroadcast,
+  postMedia,
+  type PostMedia,
+  type InsertPostMedia,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, countDistinct, not, isNull, isNotNull } from "drizzle-orm";
@@ -219,6 +222,9 @@ export interface IStorage {
   getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
   getPostById(postId: string): Promise<Post | undefined>;
   createPost(post: InsertPost): Promise<Post>;
+  createPostWithMedia(post: InsertPost, mediaItems: { url: string; type: "image" | "video" }[]): Promise<Post & { media: PostMedia[] }>;
+  getPostMedia(postId: string): Promise<PostMedia[]>;
+  addPostMedia(postId: string, mediaItems: { url: string; type: "image" | "video" }[]): Promise<PostMedia[]>;
   updatePost(postId: string, updates: Partial<Pick<Post, 'content'>>): Promise<Post>;
   deletePost(postId: string): Promise<void>;
   likePost(postId: string, userId: string): Promise<void>;
@@ -879,7 +885,7 @@ export class DatabaseStorage implements IStorage {
     // Optimize N+1 queries: batch fetch likes and comments
     const postIds = postsData.map(p => p.id);
     
-    const [allLikes, allComments] = await Promise.all([
+    const [allLikes, allComments, allMedia] = await Promise.all([
       // Batch fetch all likes
       postIds.length > 0 ? db.select().from(postLikes).where(inArray(postLikes.postId, postIds)) : [] as any[],
       // Batch fetch all comments with joins and like counts
@@ -909,10 +915,16 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(commentLikes, eq(comments.id, commentLikes.commentId))
         .where(inArray(comments.postId, postIds))
         .groupBy(comments.id, users.id, profileBorders.id, gifs.id, memes.id, moviecons.id)
-        .orderBy(comments.createdAt) : [] as any[]
+        .orderBy(comments.createdAt) : [] as any[],
+      // Batch fetch all post media for multi-image posts
+      postIds.length > 0 ? db
+        .select()
+        .from(postMedia)
+        .where(inArray(postMedia.postId, postIds))
+        .orderBy(asc(postMedia.displayOrder)) : [] as any[]
     ]);
 
-    // Group likes and comments by postId for O(1) lookup
+    // Group likes, comments, and media by postId for O(1) lookup
     const likesByPost = allLikes.reduce((acc, like) => {
       if (!acc[like.postId]) acc[like.postId] = [];
       acc[like.postId].push(like);
@@ -922,6 +934,12 @@ export class DatabaseStorage implements IStorage {
     const commentsByPost = allComments.reduce((acc, comment: any) => {
       if (!acc[comment.postId]) acc[comment.postId] = [];
       acc[comment.postId].push(comment);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    const mediaByPost = allMedia.reduce((acc, media: any) => {
+      if (!acc[media.postId]) acc[media.postId] = [];
+      acc[media.postId].push(media);
       return acc;
     }, {} as Record<string, any[]>);
 
@@ -951,6 +969,7 @@ export class DatabaseStorage implements IStorage {
       author: post.author,
       authorBorder: post.authorBorder,
       comments: commentsByPost[post.id] || [],
+      media: mediaByPost[post.id] || [],
     }));
 
     return postsWithDetails;
@@ -1320,6 +1339,38 @@ export class DatabaseStorage implements IStorage {
     return newPost;
   }
 
+  async createPostWithMedia(post: InsertPost, mediaItems: { url: string; type: "image" | "video" }[]): Promise<Post & { media: PostMedia[] }> {
+    const [newPost] = await db.insert(posts).values(post).returning();
+    
+    let media: PostMedia[] = [];
+    if (mediaItems.length > 0) {
+      media = await this.addPostMedia(newPost.id, mediaItems);
+    }
+    
+    return { ...newPost, media };
+  }
+
+  async getPostMedia(postId: string): Promise<PostMedia[]> {
+    return await db
+      .select()
+      .from(postMedia)
+      .where(eq(postMedia.postId, postId))
+      .orderBy(asc(postMedia.displayOrder));
+  }
+
+  async addPostMedia(postId: string, mediaItems: { url: string; type: "image" | "video" }[]): Promise<PostMedia[]> {
+    if (mediaItems.length === 0) return [];
+    
+    const mediaToInsert = mediaItems.map((item, index) => ({
+      postId,
+      mediaUrl: item.url,
+      mediaType: item.type as "image" | "video",
+      displayOrder: index,
+    }));
+    
+    return await db.insert(postMedia).values(mediaToInsert).returning();
+  }
+
   async updatePost(postId: string, updates: Partial<Pick<Post, 'content'>>): Promise<Post> {
     const [updatedPost] = await db
       .update(posts)
@@ -1330,12 +1381,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deletePost(postId: string): Promise<void> {
-    // Delete associated data first (comments, likes)
+    // Delete associated data first (comments, likes, media)
     await db.delete(commentLikes).where(
       sql`${commentLikes.commentId} IN (SELECT ${comments.id} FROM ${comments} WHERE ${comments.postId} = ${postId})`
     );
     await db.delete(comments).where(eq(comments.postId, postId));
     await db.delete(postLikes).where(eq(postLikes.postId, postId));
+    await db.delete(postMedia).where(eq(postMedia.postId, postId));
     
     // Finally delete the post
     await db.delete(posts).where(eq(posts.id, postId));
