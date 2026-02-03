@@ -5837,6 +5837,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Post reflection endpoint - analyze user's most popular posts from last 30 days
+  // IMPORTANT: This must be defined BEFORE /api/posts/:postId to avoid route conflict
+  app.get('/api/posts/reflect', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const reflection = await storage.getUserReflection(userId);
+      res.json(reflection);
+    } catch (error) {
+      console.error("Error generating reflection:", error);
+      res.status(500).json({ message: "Failed to generate reflection" });
+    }
+  });
+
   // Get a single post by ID (for admin review)
   app.get('/api/posts/:postId', async (req: any, res) => {
     try {
@@ -6420,18 +6433,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error removing post:", error);
       res.status(500).json({ message: "Failed to remove post" });
-    }
-  });
-
-  // Post reflection endpoint - analyze user's most popular posts from last 30 days
-  app.get('/api/posts/reflect', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const reflection = await storage.getUserReflection(userId);
-      res.json(reflection);
-    } catch (error) {
-      console.error("Error generating reflection:", error);
-      res.status(500).json({ message: "Failed to generate reflection" });
     }
   });
 
