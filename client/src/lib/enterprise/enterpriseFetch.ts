@@ -71,6 +71,12 @@ export async function enterpriseFetch<T = any>(
             const token = getAuthToken();
             const headers = new Headers(fetchOptions.headers as HeadersInit || {});
             
+            // Debug logging for reflect endpoint
+            if (url.includes('/api/posts/reflect')) {
+              console.log('[EnterpriseFetch] Reflect request - token:', token ? `${token.substring(0, 30)}...` : 'NONE');
+              console.log('[EnterpriseFetch] Reflect request - isExpired:', token ? isTokenExpired(token) : 'N/A');
+            }
+            
             // Only attach token if it's not expired
             if (token && !isTokenExpired(token) && !headers.has('Authorization')) {
               headers.set('Authorization', `Bearer ${token}`);
@@ -104,6 +110,15 @@ export async function enterpriseFetch<T = any>(
               }
               const text = (await res.text()) || res.statusText;
               throw new Error(`${res.status}: ${text}`);
+            }
+
+            // Check for X-Auth-Token header and store it (for session-to-JWT token sync)
+            // This ensures users authenticated via session/cookies also have a JWT for future requests
+            const authToken = res.headers.get('X-Auth-Token');
+            if (authToken && url.includes('/api/auth/user')) {
+              const { setAuthToken } = await import('../tokenStorage');
+              setAuthToken(authToken);
+              console.log('[EnterpriseFetch] Stored auth token from X-Auth-Token header');
             }
 
             return await res.json();

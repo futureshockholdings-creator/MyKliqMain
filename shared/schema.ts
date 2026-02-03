@@ -546,6 +546,7 @@ export const scrapbookSaves = pgTable("scrapbook_saves", {
   commentId: varchar("comment_id").references(() => comments.id, { onDelete: "cascade" }),
   albumId: varchar("album_id").references(() => scrapbookAlbums.id, { onDelete: "cascade" }),
   note: text("note"),
+  selectedMediaUrl: text("selected_media_url"),
   savedAt: timestamp("saved_at").defaultNow(),
 }, (table) => [
   index("idx_scrapbook_saves_user").on(table.userId),

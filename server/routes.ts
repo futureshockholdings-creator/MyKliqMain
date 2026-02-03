@@ -495,6 +495,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add security setup status to response
       const securitySetupComplete = !!(userResponse.password && userResponse.securityAnswer1 && userResponse.securityAnswer2 && userResponse.securityAnswer3 && userResponse.securityPin);
       
+      // Generate a fresh JWT token for cross-domain auth (AWS Amplify → Replit backend)
+      // This ensures users authenticated via session/cookies also have a token for API calls
+      try {
+        const { generateMobileToken } = await import('./mobile-auth');
+        const token = generateMobileToken(userId, userResponse.phoneNumber || '');
+        res.set('X-Auth-Token', token);
+      } catch (tokenError) {
+        console.error("Error generating auth token:", tokenError);
+      }
+      
       res.json({
         ...userResponse,
         securitySetupComplete,
@@ -9150,7 +9160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/scrapbook/save', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { postId, albumId, note } = req.body;
+      const { postId, albumId, note, selectedMediaUrl } = req.body;
       
       if (!postId) {
         return res.status(400).json({ message: "Post ID is required" });
@@ -9173,6 +9183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         postId,
         albumId: albumId || null,
         note: note || null,
+        selectedMediaUrl: selectedMediaUrl || null,
       });
       
       res.json(save);

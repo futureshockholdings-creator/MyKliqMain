@@ -398,6 +398,7 @@ export default function Home() {
   // Scrapbook state
   const [showSavePostDialog, setShowSavePostDialog] = useState(false);
   const [selectedPostToSave, setSelectedPostToSave] = useState<any>(null);
+  const [selectedMediaUrlToSave, setSelectedMediaUrlToSave] = useState<string | null>(null);
   const [showSaveCommentDialog, setShowSaveCommentDialog] = useState(false);
   const [selectedCommentToSave, setSelectedCommentToSave] = useState<any>(null);
   const [saveAlbumId, setSaveAlbumId] = useState<string>("none");
@@ -795,7 +796,7 @@ export default function Home() {
 
   // Scrapbook mutations
   const savePostMutation = useMutation({
-    mutationFn: async (data: { postId: string; albumId?: string; note?: string }) => {
+    mutationFn: async (data: { postId: string; albumId?: string; note?: string; selectedMediaUrl?: string }) => {
       return await apiRequest("POST", "/api/scrapbook/save", data);
     },
     onSuccess: () => {
@@ -804,6 +805,7 @@ export default function Home() {
       setShowSavePostDialog(false);
       setSaveAlbumId("none");
       setSaveNote("");
+      setSelectedMediaUrlToSave(null);
       toast({
         title: "Post Added!",
         description: "The post has been added to your scrapbook.",
@@ -2325,7 +2327,7 @@ export default function Home() {
               </Button>
               <Button
                 onClick={handleReflect}
-                disabled={reflectMutation.isPending}
+                disabled={reflectMutation.isPending || !isAuthenticated}
                 variant="outline"
                 size="sm"
                 data-testid="button-lets-reflect"
@@ -4089,8 +4091,15 @@ export default function Home() {
       </Dialog>
 
       {/* Save Post Dialog */}
-      <Dialog open={showSavePostDialog} onOpenChange={setShowSavePostDialog}>
-        <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
+      <Dialog open={showSavePostDialog} onOpenChange={(open) => {
+        setShowSavePostDialog(open);
+        if (!open) {
+          setSaveAlbumId("none");
+          setSaveNote("");
+          setSelectedMediaUrlToSave(null);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-black dark:text-black">Add to Scrapbook</DialogTitle>
             <DialogDescription className="text-gray-700 dark:text-gray-700">
@@ -4102,6 +4111,46 @@ export default function Home() {
             <div className="text-sm text-gray-600 dark:text-gray-600">
               {(scrapbookSaves as any[]).length}/1000 added
             </div>
+            
+            {/* Multi-image selector - show when post has multiple images */}
+            {selectedPostToSave?.media && selectedPostToSave.media.length > 1 && (
+              <div>
+                <Label className="text-black dark:text-black mb-2 block">Select image to save</Label>
+                <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1">
+                  {selectedPostToSave.media.map((media: any, index: number) => (
+                    <button
+                      key={media.id || index}
+                      type="button"
+                      onClick={() => setSelectedMediaUrlToSave(media.mediaUrl)}
+                      className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                        selectedMediaUrlToSave === media.mediaUrl 
+                          ? 'border-blue-500 ring-2 ring-blue-500/50' 
+                          : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      <img 
+                        src={resolveAssetUrl(media.mediaUrl)} 
+                        alt={`Image ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      {selectedMediaUrlToSave === media.mediaUrl && (
+                        <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                          <div className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                            ✓
+                          </div>
+                        </div>
+                      )}
+                      <div className="absolute bottom-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+                        {index + 1}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {!selectedMediaUrlToSave && (
+                  <p className="text-sm text-orange-600 mt-2">Please select an image to save</p>
+                )}
+              </div>
+            )}
             
             <div>
               <Label htmlFor="album-select" className="text-black dark:text-black">Album (optional)</Label>
@@ -4155,6 +4204,7 @@ export default function Home() {
                   setShowSavePostDialog(false);
                   setSaveAlbumId("none");
                   setSaveNote("");
+                  setSelectedMediaUrlToSave(null);
                 }}
                 className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
               >
@@ -4170,10 +4220,20 @@ export default function Home() {
                     });
                     return;
                   }
+                  // Require image selection for multi-image posts
+                  if (selectedPostToSave?.media && selectedPostToSave.media.length > 1 && !selectedMediaUrlToSave) {
+                    toast({
+                      title: "Select an Image",
+                      description: "Please select which image you want to save from this post.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
                   savePostMutation.mutate({
                     postId: selectedPostToSave?.id,
                     albumId: saveAlbumId === "none" ? undefined : saveAlbumId,
                     note: saveNote || undefined,
+                    selectedMediaUrl: selectedMediaUrlToSave || selectedPostToSave?.mediaUrl || undefined,
                   });
                 }}
                 disabled={savePostMutation.isPending}
