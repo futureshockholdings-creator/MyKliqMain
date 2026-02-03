@@ -2734,11 +2734,11 @@ export default function Home() {
                                     <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                                       {save.post.mediaType === 'video' ? (
                                         <video className="w-full h-full object-cover">
-                                          <source src={save.selectedMediaUrl || save.post.mediaUrl} type="video/mp4" />
+                                          <source src={resolveAssetUrl(save.selectedMediaUrl || save.post.mediaUrl)} type="video/mp4" />
                                         </video>
                                       ) : (
                                         <img 
-                                          src={save.selectedMediaUrl || save.post.mediaUrl} 
+                                          src={resolveAssetUrl(save.selectedMediaUrl || save.post.mediaUrl)} 
                                           alt="Post media" 
                                           className="w-full h-full object-cover"
                                         />
