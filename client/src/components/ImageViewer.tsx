@@ -50,20 +50,22 @@ export function ImageViewer({
     }
   }, [isOpen, initialIndex]);
 
+  const scrollPositionRef = useRef(0);
+  
   useEffect(() => {
     if (!isOpen) return;
 
     previousActiveElement.current = document.activeElement;
     
-    const scrollY = window.scrollY;
+    scrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     
     document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
+    document.body.style.top = `-${scrollPositionRef.current}px`;
     document.body.style.left = "0";
     document.body.style.right = "0";
+    document.body.style.width = "100%";
     document.body.style.paddingRight = `${scrollbarWidth}px`;
-    document.body.style.overflow = "hidden";
     
     setTimeout(() => {
       closeButtonRef.current?.focus();
@@ -82,15 +84,20 @@ export function ImageViewer({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      const savedPosition = scrollPositionRef.current;
+      
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.left = "";
       document.body.style.right = "";
+      document.body.style.width = "";
       document.body.style.paddingRight = "";
-      document.body.style.overflow = "";
+      
       window.removeEventListener("keydown", handleKeyDown);
       
-      window.scrollTo(0, scrollY);
+      requestAnimationFrame(() => {
+        window.scrollTo(0, savedPosition);
+      });
       
       if (previousActiveElement.current instanceof HTMLElement) {
         previousActiveElement.current.focus();
