@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -27,8 +27,22 @@ export function ImageViewer({
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousActiveElement = useRef<Element | null>(null);
 
   const totalItems = media.length;
+
+  const goToNext = useCallback(() => {
+    if (totalItems > 1) {
+      setCurrentIndex((prev) => (prev + 1) % totalItems);
+    }
+  }, [totalItems]);
+
+  const goToPrev = useCallback(() => {
+    if (totalItems > 1) {
+      setCurrentIndex((prev) => (prev - 1 + totalItems) % totalItems);
+    }
+  }, [totalItems]);
 
   useEffect(() => {
     if (isOpen) {
@@ -38,6 +52,12 @@ export function ImageViewer({
 
   useEffect(() => {
     if (!isOpen) return;
+
+    previousActiveElement.current = document.activeElement;
+    
+    setTimeout(() => {
+      closeButtonRef.current?.focus();
+    }, 0);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -55,20 +75,11 @@ export function ImageViewer({
     return () => {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
+      if (previousActiveElement.current instanceof HTMLElement) {
+        previousActiveElement.current.focus();
+      }
     };
-  }, [isOpen, onClose]);
-
-  const goToNext = useCallback(() => {
-    if (totalItems > 1) {
-      setCurrentIndex((prev) => (prev + 1) % totalItems);
-    }
-  }, [totalItems]);
-
-  const goToPrev = useCallback(() => {
-    if (totalItems > 1) {
-      setCurrentIndex((prev) => (prev - 1 + totalItems) % totalItems);
-    }
-  }, [totalItems]);
+  }, [isOpen, onClose, goToNext, goToPrev]);
 
   const minSwipeDistance = 50;
 
@@ -107,6 +118,9 @@ export function ImageViewer({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Image viewer, showing image ${currentIndex + 1} of ${totalItems}`}
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95"
       onClick={handleBackdropClick}
       onTouchStart={onTouchStart}
@@ -114,9 +128,11 @@ export function ImageViewer({
       onTouchEnd={onTouchEnd}
     >
       <Button
+        ref={closeButtonRef}
         size="icon"
         variant="ghost"
         onClick={onClose}
+        aria-label="Close image viewer"
         className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white"
       >
         <X className="w-6 h-6" />
@@ -158,6 +174,7 @@ export function ImageViewer({
               e.stopPropagation();
               goToPrev();
             }}
+            aria-label="Previous image"
             className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/50 hover:bg-black/70 text-white"
           >
             <ChevronLeft className="w-8 h-8" />
@@ -169,15 +186,19 @@ export function ImageViewer({
               e.stopPropagation();
               goToNext();
             }}
+            aria-label="Next image"
             className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/50 hover:bg-black/70 text-white"
           >
             <ChevronRight className="w-8 h-8" />
           </Button>
 
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2" role="tablist" aria-label="Image navigation">
             {media.map((_, index) => (
               <button
                 key={index}
+                role="tab"
+                aria-selected={index === currentIndex}
+                aria-label={`View image ${index + 1} of ${totalItems}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setCurrentIndex(index);
