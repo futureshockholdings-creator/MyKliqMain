@@ -15,6 +15,7 @@ interface ImageGalleryProps {
   fallbackType?: "image" | "video" | null;
   className?: string;
   resolveUrl?: (url: string) => string;
+  onImageClick?: (index: number, allMedia: MediaItem[]) => void;
 }
 
 export function ImageGallery({ 
@@ -22,7 +23,8 @@ export function ImageGallery({
   fallbackUrl, 
   fallbackType,
   className = "",
-  resolveUrl = (url) => url 
+  resolveUrl = (url) => url,
+  onImageClick
 }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -100,8 +102,9 @@ export function ImageGallery({
         <img 
           src={resolveUrl(currentMedia.mediaUrl)} 
           alt={`Media ${currentIndex + 1} of ${totalItems}`}
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover ${onImageClick ? 'cursor-pointer' : ''}`}
           loading="lazy"
+          onClick={() => onImageClick?.(currentIndex, allMedia)}
         />
       )}
 

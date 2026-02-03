@@ -46,6 +46,7 @@ import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 import { addOptimisticNotification, rollbackOptimisticNotification } from "@/lib/optimisticNotifications";
 import { LinkifyText } from "@/components/LinkifyText";
 import { ImageGallery } from "@/components/ImageGallery";
+import { ImageViewer } from "@/components/ImageViewer";
 
 import type { Meme, Moviecon } from "@shared/schema";
 
@@ -417,6 +418,11 @@ export default function Home() {
   const [showUnsaveDialog, setShowUnsaveDialog] = useState(false);
   const [postToUnsave, setPostToUnsave] = useState<any>(null);
   const [reflectTab, setReflectTab] = useState("reflection");
+  
+  // Full-screen image viewer state
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [imageViewerMedia, setImageViewerMedia] = useState<Array<{ id?: string; mediaUrl: string; mediaType: "image" | "video"; displayOrder?: number }>>([]);
+  const [imageViewerIndex, setImageViewerIndex] = useState(0);
 
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const userData = user as any;
@@ -1908,6 +1914,12 @@ export default function Home() {
 
   const handleLikePost = (postId: string) => {
     likePostMutation.mutate(postId);
+  };
+
+  const handleOpenImageViewer = (index: number, media: Array<{ id?: string; mediaUrl: string; mediaType: "image" | "video"; displayOrder?: number }>) => {
+    setImageViewerMedia(media);
+    setImageViewerIndex(index);
+    setImageViewerOpen(true);
   };
 
   const handleReportPost = (post: any) => {
@@ -3443,6 +3455,7 @@ export default function Home() {
                         fallbackType={item.mediaType}
                         resolveUrl={resolveAssetUrl}
                         className="max-h-96"
+                        onImageClick={handleOpenImageViewer}
                       />
                     </div>
                   );
@@ -4593,6 +4606,15 @@ export default function Home() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Full-screen Image Viewer */}
+        <ImageViewer
+          media={imageViewerMedia}
+          initialIndex={imageViewerIndex}
+          isOpen={imageViewerOpen}
+          onClose={() => setImageViewerOpen(false)}
+          resolveUrl={resolveAssetUrl}
+        />
 
       </div>
       </PullToRefresh>
