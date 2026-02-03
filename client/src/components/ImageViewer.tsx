@@ -206,7 +206,7 @@ export function ImageViewer({
               ))}
             </div>
 
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 px-2 py-1 rounded-full bg-black/60 text-white text-xs">
+            <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-black/60 text-white text-xs">
               {currentIndex + 1} / {totalItems}
             </div>
           </>
