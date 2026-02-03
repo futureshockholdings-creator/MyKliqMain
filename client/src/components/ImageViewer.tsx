@@ -118,40 +118,36 @@ export function ImageViewer({
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Image viewer, showing image ${currentIndex + 1} of ${totalItems}`}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70"
       onClick={handleBackdropClick}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
     >
-      <Button
-        ref={closeButtonRef}
-        size="icon"
-        variant="ghost"
-        onClick={onClose}
-        aria-label="Close image viewer"
-        className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 text-white"
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Image viewer, showing image ${currentIndex + 1} of ${totalItems}`}
+        className="relative bg-black rounded-lg shadow-2xl max-w-[90vw] max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
-        <X className="w-6 h-6" />
-      </Button>
+        <Button
+          ref={closeButtonRef}
+          size="icon"
+          variant="ghost"
+          onClick={onClose}
+          aria-label="Close image viewer"
+          className="absolute -top-3 -right-3 z-10 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-white shadow-lg"
+        >
+          <X className="w-5 h-5" />
+        </Button>
 
-      {totalItems > 1 && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1.5 rounded-full bg-black/50 text-white text-sm font-medium">
-          {currentIndex + 1} / {totalItems}
-        </div>
-      )}
-
-      <div className="relative w-full flex items-center justify-center px-2 py-12">
         {currentMedia.mediaType === "video" ? (
           <video
-            className="max-w-full max-h-[75vh] object-contain"
+            className="max-w-[90vw] max-h-[85vh] rounded-lg"
             controls
             autoPlay
             playsInline
-            onClick={(e) => e.stopPropagation()}
           >
             <source src={resolveUrl(currentMedia.mediaUrl)} type="video/mp4" />
           </video>
@@ -159,60 +155,63 @@ export function ImageViewer({
           <img
             src={resolveUrl(currentMedia.mediaUrl)}
             alt={`Image ${currentIndex + 1} of ${totalItems}`}
-            className="max-w-full max-h-[75vh] object-contain"
-            onClick={(e) => e.stopPropagation()}
+            className="max-w-[90vw] max-h-[85vh] rounded-lg"
           />
         )}
+
+        {totalItems > 1 && (
+          <>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToPrev();
+              }}
+              aria-label="Previous image"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-white"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToNext();
+              }}
+              aria-label="Next image"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-white"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </Button>
+
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 px-3 py-1.5 rounded-full bg-black/60" role="tablist" aria-label="Image navigation">
+              {media.map((_, index) => (
+                <button
+                  key={index}
+                  role="tab"
+                  aria-selected={index === currentIndex}
+                  aria-label={`View image ${index + 1} of ${totalItems}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentIndex(index);
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    index === currentIndex
+                      ? "bg-white scale-125"
+                      : "bg-white/50 hover:bg-white/75"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 px-2 py-1 rounded-full bg-black/60 text-white text-xs">
+              {currentIndex + 1} / {totalItems}
+            </div>
+          </>
+        )}
       </div>
-
-      {totalItems > 1 && (
-        <>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              goToPrev();
-            }}
-            aria-label="Previous image"
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/50 hover:bg-black/70 text-white"
-          >
-            <ChevronLeft className="w-8 h-8" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={(e) => {
-              e.stopPropagation();
-              goToNext();
-            }}
-            aria-label="Next image"
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/50 hover:bg-black/70 text-white"
-          >
-            <ChevronRight className="w-8 h-8" />
-          </Button>
-
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2" role="tablist" aria-label="Image navigation">
-            {media.map((_, index) => (
-              <button
-                key={index}
-                role="tab"
-                aria-selected={index === currentIndex}
-                aria-label={`View image ${index + 1} of ${totalItems}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentIndex(index);
-                }}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  index === currentIndex
-                    ? "bg-white scale-125"
-                    : "bg-white/50 hover:bg-white/75"
-                }`}
-              />
-            ))}
-          </div>
-        </>
-      )}
     </div>
   );
 }
