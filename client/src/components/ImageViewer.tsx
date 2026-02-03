@@ -144,10 +144,10 @@ export function ImageViewer({
         </div>
       )}
 
-      <div className="relative w-full h-full flex items-center justify-center p-4">
+      <div className="relative w-full flex items-center justify-center px-2 py-12">
         {currentMedia.mediaType === "video" ? (
           <video
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-[calc(100vh-6rem)] object-contain"
             controls
             autoPlay
             playsInline
@@ -159,7 +159,7 @@ export function ImageViewer({
           <img
             src={resolveUrl(currentMedia.mediaUrl)}
             alt={`Image ${currentIndex + 1} of ${totalItems}`}
-            className="max-w-full max-h-full object-contain"
+            className="max-w-full max-h-[calc(100vh-6rem)] object-contain"
             onClick={(e) => e.stopPropagation()}
           />
         )}
