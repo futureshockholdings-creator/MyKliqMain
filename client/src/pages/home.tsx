@@ -799,9 +799,16 @@ export default function Home() {
     mutationFn: async (data: { postId: string; albumId?: string; note?: string; selectedMediaUrl?: string }) => {
       return await apiRequest("POST", "/api/scrapbook/save", data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saved-map'] });
+    onSuccess: async () => {
+      // Clear enhanced cache first for immediate update
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/scrapbook');
+      } catch (e) {}
+      // Then invalidate React Query cache
+      await queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saves'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/scrapbook/saved-map'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/scrapbook/saves'] });
       setShowSavePostDialog(false);
       setSaveAlbumId("none");
       setSaveNote("");
@@ -2723,15 +2730,15 @@ export default function Home() {
                               {/* Post Content */}
                               {save.type !== 'action' && save.post && (
                                 <>
-                                  {save.post.mediaUrl && (
+                                  {(save.selectedMediaUrl || save.post.mediaUrl) && (
                                     <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                                       {save.post.mediaType === 'video' ? (
                                         <video className="w-full h-full object-cover">
-                                          <source src={save.post.mediaUrl} type="video/mp4" />
+                                          <source src={save.selectedMediaUrl || save.post.mediaUrl} type="video/mp4" />
                                         </video>
                                       ) : (
                                         <img 
-                                          src={save.post.mediaUrl} 
+                                          src={save.selectedMediaUrl || save.post.mediaUrl} 
                                           alt="Post media" 
                                           className="w-full h-full object-cover"
                                         />
