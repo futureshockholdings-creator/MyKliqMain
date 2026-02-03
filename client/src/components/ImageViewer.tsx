@@ -137,7 +137,7 @@ export function ImageViewer({
           variant="ghost"
           onClick={onClose}
           aria-label="Close image viewer"
-          className="absolute -top-3 -right-3 z-10 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-white shadow-lg"
+          className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-white shadow-lg"
         >
           <X className="w-5 h-5" />
         </Button>
