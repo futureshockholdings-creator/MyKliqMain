@@ -57,15 +57,37 @@ export function ImageViewer({
 
     previousActiveElement.current = document.activeElement;
     
-    scrollPositionRef.current = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    // Capture scroll position IMMEDIATELY before any DOM changes
+    scrollPositionRef.current = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
     
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollPositionRef.current}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    document.body.style.width = "100%";
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    // iOS Safari compatible scroll lock - use overflow hidden instead of position fixed
+    // This prevents the jump that occurs with position:fixed on iOS
+    const scrollY = scrollPositionRef.current;
+    
+    // Store original styles
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlHeight = document.documentElement.style.height;
+    const originalBodyHeight = document.body.style.height;
+    const originalTouchAction = document.body.style.touchAction;
+    
+    // Apply scroll lock - iOS Safari needs overflow on both html and body
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.height = '100%';
+    document.body.style.height = '100%';
+    document.body.style.touchAction = 'none';
+    
+    // Prevent touchmove on body to stop iOS momentum scrolling
+    const preventTouchMove = (e: TouchEvent) => {
+      // Allow scrolling within the modal itself but prevent body scroll
+      const target = e.target as HTMLElement;
+      if (!target.closest('[role="dialog"]')) {
+        e.preventDefault();
+      }
+    };
+    
+    document.body.addEventListener('touchmove', preventTouchMove, { passive: false });
     
     setTimeout(() => {
       closeButtonRef.current?.focus();
@@ -84,20 +106,19 @@ export function ImageViewer({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      const savedPosition = scrollPositionRef.current;
-      
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.width = "";
-      document.body.style.paddingRight = "";
-      
+      // Remove event listeners first
       window.removeEventListener("keydown", handleKeyDown);
+      document.body.removeEventListener('touchmove', preventTouchMove);
       
-      requestAnimationFrame(() => {
-        window.scrollTo(0, savedPosition);
-      });
+      // Restore original styles
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.height = originalHtmlHeight;
+      document.body.style.height = originalBodyHeight;
+      document.body.style.touchAction = originalTouchAction;
+      
+      // Restore scroll position SYNCHRONOUSLY - critical for iOS Safari
+      window.scrollTo(0, scrollY);
       
       if (previousActiveElement.current instanceof HTMLElement) {
         previousActiveElement.current.focus();
