@@ -50,49 +50,18 @@ export function ImageViewer({
     }
   }, [isOpen, initialIndex]);
 
-  const scrollPositionRef = useRef(0);
-  
   useEffect(() => {
     if (!isOpen) return;
 
+    // Store currently focused element for restoration on close
     previousActiveElement.current = document.activeElement;
-    
-    // Capture scroll position IMMEDIATELY before any DOM changes
-    scrollPositionRef.current = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-    
-    // iOS Safari compatible scroll lock - use overflow hidden instead of position fixed
-    // This prevents the jump that occurs with position:fixed on iOS
-    const scrollY = scrollPositionRef.current;
-    
-    // Store original styles
-    const originalHtmlOverflow = document.documentElement.style.overflow;
-    const originalBodyOverflow = document.body.style.overflow;
-    const originalHtmlHeight = document.documentElement.style.height;
-    const originalBodyHeight = document.body.style.height;
-    const originalTouchAction = document.body.style.touchAction;
-    
-    // Apply scroll lock - iOS Safari needs overflow on both html and body
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.height = '100%';
-    document.body.style.height = '100%';
-    document.body.style.touchAction = 'none';
-    
-    // Prevent touchmove on body to stop iOS momentum scrolling
-    const preventTouchMove = (e: TouchEvent) => {
-      // Allow scrolling within the modal itself but prevent body scroll
-      const target = e.target as HTMLElement;
-      if (!target.closest('[role="dialog"]')) {
-        e.preventDefault();
-      }
-    };
-    
-    document.body.addEventListener('touchmove', preventTouchMove, { passive: false });
-    
+
+    // Focus the close button for accessibility
     setTimeout(() => {
       closeButtonRef.current?.focus();
-    }, 0);
+    }, 100);
 
+    // Handle keyboard navigation
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
@@ -104,27 +73,22 @@ export function ImageViewer({
     };
 
     window.addEventListener("keydown", handleKeyDown);
-
+    
     return () => {
-      // Remove event listeners first
       window.removeEventListener("keydown", handleKeyDown);
-      document.body.removeEventListener('touchmove', preventTouchMove);
-      
-      // Restore original styles
-      document.documentElement.style.overflow = originalHtmlOverflow;
-      document.body.style.overflow = originalBodyOverflow;
-      document.documentElement.style.height = originalHtmlHeight;
-      document.body.style.height = originalBodyHeight;
-      document.body.style.touchAction = originalTouchAction;
-      
-      // Restore scroll position SYNCHRONOUSLY - critical for iOS Safari
-      window.scrollTo(0, scrollY);
-      
+      // Restore focus to previous element
       if (previousActiveElement.current instanceof HTMLElement) {
         previousActiveElement.current.focus();
       }
     };
   }, [isOpen, onClose, goToNext, goToPrev]);
+
+  // Handle backdrop click - only close if clicking directly on the backdrop
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   const minSwipeDistance = 50;
 
@@ -151,45 +115,57 @@ export function ImageViewer({
     }
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   if (!isOpen || totalItems === 0) return null;
 
   const currentMedia = media[currentIndex];
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Image viewer, showing image ${currentIndex + 1} of ${totalItems}`}
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.95)',
+        height: '100dvh',
+        width: '100dvw',
+      }}
       onClick={handleBackdropClick}
     >
+      {/* Close button - top center */}
+      <Button
+        ref={closeButtonRef}
+        size="icon"
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        aria-label="Close image viewer"
+        className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 text-white"
+      >
+        <X className="w-6 h-6" />
+      </Button>
+
+      {/* Image counter - top right */}
+      {totalItems > 1 && (
+        <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-black/60 text-white text-sm font-medium z-10">
+          {currentIndex + 1} / {totalItems}
+        </div>
+      )}
+
+      {/* Main content area */}
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Image viewer, showing image ${currentIndex + 1} of ${totalItems}`}
-        className="relative bg-black rounded-lg shadow-2xl max-w-[90vw] max-h-[90vh]"
+        className="relative flex items-center justify-center w-full h-full p-4"
         onClick={(e) => e.stopPropagation()}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <Button
-          ref={closeButtonRef}
-          size="icon"
-          variant="ghost"
-          onClick={onClose}
-          aria-label="Close image viewer"
-          className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-white shadow-lg"
-        >
-          <X className="w-5 h-5" />
-        </Button>
-
         {currentMedia.mediaType === "video" ? (
           <video
-            className="max-w-[90vw] max-h-[85vh] rounded-lg"
+            className="max-w-full max-h-full object-contain"
+            style={{ maxHeight: 'calc(100dvh - 120px)' }}
             controls
             autoPlay
             playsInline
@@ -200,10 +176,12 @@ export function ImageViewer({
           <img
             src={resolveUrl(currentMedia.mediaUrl)}
             alt={`Image ${currentIndex + 1} of ${totalItems}`}
-            className="max-w-[90vw] max-h-[85vh] rounded-lg"
+            className="max-w-full max-h-full object-contain"
+            style={{ maxHeight: 'calc(100dvh - 120px)' }}
           />
         )}
 
+        {/* Navigation arrows - inside content area */}
         {totalItems > 1 && (
           <>
             <Button
@@ -214,9 +192,9 @@ export function ImageViewer({
                 goToPrev();
               }}
               aria-label="Previous image"
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-white"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white"
             >
-              <ChevronLeft className="w-6 h-6" />
+              <ChevronLeft className="w-8 h-8" />
             </Button>
             <Button
               size="icon"
@@ -226,37 +204,38 @@ export function ImageViewer({
                 goToNext();
               }}
               aria-label="Next image"
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 text-white"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white"
             >
-              <ChevronRight className="w-6 h-6" />
+              <ChevronRight className="w-8 h-8" />
             </Button>
-
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 px-3 py-1.5 rounded-full bg-black/60" role="tablist" aria-label="Image navigation">
-              {media.map((_, index) => (
-                <button
-                  key={index}
-                  role="tab"
-                  aria-selected={index === currentIndex}
-                  aria-label={`View image ${index + 1} of ${totalItems}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentIndex(index);
-                  }}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    index === currentIndex
-                      ? "bg-white scale-125"
-                      : "bg-white/50 hover:bg-white/75"
-                  }`}
-                />
-              ))}
-            </div>
-
-            <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-black/60 text-white text-xs">
-              {currentIndex + 1} / {totalItems}
-            </div>
           </>
         )}
       </div>
+
+      {/* Dots navigation - bottom center */}
+      {totalItems > 1 && (
+        <div 
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 px-4 py-2 rounded-full bg-black/60 z-10" 
+          role="tablist" 
+          aria-label="Image navigation"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {media.map((_, index) => (
+            <button
+              key={index}
+              role="tab"
+              aria-selected={index === currentIndex}
+              aria-label={`View image ${index + 1} of ${totalItems}`}
+              onClick={() => setCurrentIndex(index)}
+              className={`w-2.5 h-2.5 rounded-full transition-all ${
+                index === currentIndex
+                  ? "bg-white scale-125"
+                  : "bg-white/50 hover:bg-white/75"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
