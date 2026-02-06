@@ -399,7 +399,7 @@ export default function Actions() {
       const detectedType = recordingMimeTypeRef.current || 'video/webm';
       console.log(`[RecUpload] Using MIME type from MediaRecorder: ${detectedType}`);
       
-      const blob = new Blob(chunks, { type: detectedType });
+      let blob = new Blob(chunks, { type: detectedType });
       const blobSizeMB = (blob.size / 1024 / 1024).toFixed(2);
       console.log(`[RecUpload] Blob created: ${blobSizeMB}MB, type: ${detectedType}`);
       
@@ -408,9 +408,21 @@ export default function Actions() {
         return null;
       }
       
-      const recordingDuration = recordingStartTimeRef.current 
-        ? Math.round((Date.now() - recordingStartTimeRef.current) / 1000) 
+      const recordingDurationMs = recordingStartTimeRef.current 
+        ? (Date.now() - recordingStartTimeRef.current) 
         : 0;
+      const recordingDuration = Math.round(recordingDurationMs / 1000);
+      
+      if (detectedType.includes('webm') && recordingDurationMs > 0) {
+        try {
+          const fixWebmDuration = (await import('fix-webm-duration')).default;
+          console.log(`[RecUpload] Fixing WebM duration metadata: ${recordingDurationMs}ms`);
+          blob = await fixWebmDuration(blob, recordingDurationMs, { logger: false });
+          console.log(`[RecUpload] WebM duration fixed, new size: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+        } catch (e) {
+          console.warn('[RecUpload] fix-webm-duration failed, using original blob:', e);
+        }
+      }
       
       const { getAuthToken } = await import('@/lib/tokenStorage');
       const token = getAuthToken();
@@ -590,17 +602,20 @@ export default function Actions() {
         
         await new Promise<void>((resolve) => {
           const timeout = setTimeout(() => {
-            console.warn('[EndAction] MediaRecorder onstop timeout after 3s');
+            console.warn('[EndAction] MediaRecorder onstop timeout after 5s');
             resolve();
-          }, 3000);
+          }, 5000);
           
           recorder.onstop = () => {
-            console.log(`[EndAction] MediaRecorder stopped, chunks: ${recordedChunksRef.current.length}`);
+            console.log(`[EndAction] MediaRecorder stopped, chunks: ${recordedChunksRef.current.length}, total size: ${recordedChunksRef.current.reduce((s, c) => s + c.size, 0)} bytes`);
             clearTimeout(timeout);
             resolve();
           };
           
           try {
+            if (recorder.state === 'recording') {
+              recorder.requestData();
+            }
             recorder.stop();
           } catch (e) {
             console.warn('[EndAction] MediaRecorder.stop() error:', e);
