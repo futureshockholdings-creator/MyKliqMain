@@ -7581,9 +7581,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized to upload recording for this action" });
       }
       
-      // Upload to object storage
       const objectStorage = new ObjectStorageService();
-      const fileName = `recordings/action_${actionId}_${Date.now()}.webm`;
+      const ext = req.file.mimetype === 'video/mp4' ? 'mp4' : 'webm';
+      const fileName = `recordings/action_${actionId}_${Date.now()}.${ext}`;
       const recordingUrl = await objectStorage.uploadBuffer(req.file.buffer, fileName, req.file.mimetype);
       
       // Parse duration from form data

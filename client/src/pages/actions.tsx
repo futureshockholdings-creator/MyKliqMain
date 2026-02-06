@@ -157,13 +157,11 @@ export default function Actions() {
     },
   });
 
-  // End action mutation
   const endActionMutation = useMutation({
     mutationFn: async (actionId: string) => {
       await apiRequest("PUT", `/api/actions/${actionId}/end`);
     },
     onSuccess: async () => {
-      // Clear enterprise cache first to prevent stale data
       try {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/actions');
@@ -172,20 +170,8 @@ export default function Actions() {
         console.log('Cache clear error (non-critical):', e);
       }
       queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
-      // Refetch kliq-feed so action status updates on headlines immediately
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
-      setSelectedAction(null);
-      setIsStreaming(false);
-      stopStream();
-      if (ws) {
-        ws.close();
-        setWs(null);
-      }
-      toast({
-        title: "Action ended",
-        description: "Your live stream has been stopped",
-      });
     },
   });
 
@@ -319,14 +305,28 @@ export default function Actions() {
         videoRef.current.srcObject = mediaStream;
       }
       
-      // Start recording the stream
       recordedChunksRef.current = [];
       const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') 
         ? 'video/webm;codecs=vp9,opus'
         : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
           ? 'video/webm;codecs=vp8,opus'
-          : 'video/webm';
+          : MediaRecorder.isTypeSupported('video/webm')
+            ? 'video/webm'
+            : MediaRecorder.isTypeSupported('video/mp4')
+              ? 'video/mp4'
+              : '';
       
+      if (!mimeType) {
+        toast({
+          title: "Recording not supported",
+          description: "Your browser doesn't support video recording. The stream will work but won't be saved.",
+          variant: "destructive",
+        });
+        setIsStreaming(true);
+        return;
+      }
+      
+      console.log('MediaRecorder using mimeType:', mimeType);
       const mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
       
       mediaRecorder.ondataavailable = (event) => {
@@ -371,7 +371,6 @@ export default function Actions() {
     setIsStreaming(false);
   };
   
-  // Upload recording to server
   const uploadRecording = async (actionId: string): Promise<string | null> => {
     if (recordedChunksRef.current.length === 0) {
       console.log('No recorded chunks to upload');
@@ -381,28 +380,34 @@ export default function Actions() {
     try {
       setIsUploading(true);
       
-      // Create a blob from the recorded chunks
-      const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+      const firstChunk = recordedChunksRef.current[0];
+      const detectedType = firstChunk.type || 'video/webm';
+      const isMP4 = detectedType.includes('mp4');
+      const extension = isMP4 ? 'mp4' : 'webm';
       
-      // Calculate recording duration
+      const blob = new Blob(recordedChunksRef.current, { type: detectedType });
+      console.log(`Recording: ${recordedChunksRef.current.length} chunks, ${(blob.size / 1024 / 1024).toFixed(2)}MB, type: ${detectedType}`);
+      
+      if (blob.size === 0) {
+        console.warn('Recording blob is empty');
+        return null;
+      }
+      
       const recordingDuration = recordingStartTimeRef.current 
         ? Math.round((Date.now() - recordingStartTimeRef.current) / 1000) 
         : 0;
       
-      // Create FormData and append the video
       const formData = new FormData();
-      formData.append('video', blob, `action_${actionId}_${Date.now()}.webm`);
+      formData.append('video', blob, `action_${actionId}_${Date.now()}.${extension}`);
       formData.append('actionId', actionId);
       formData.append('duration', String(recordingDuration));
       
-      // Get JWT token for authentication
       const token = localStorage.getItem('jwt_token');
       const headers: Record<string, string> = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      // Upload to server with auth header (use buildApiUrl for cross-domain production)
       const response = await fetch(buildApiUrl('/api/actions/upload-recording'), {
         method: 'POST',
         body: formData,
@@ -411,21 +416,31 @@ export default function Actions() {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to upload recording');
+        let errorMsg = 'Failed to upload recording';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch {}
+        console.error(`Upload failed (${response.status}): ${errorMsg}`);
+        throw new Error(errorMsg);
       }
       
       const data = await response.json();
       console.log('Recording uploaded:', data.recordingUrl);
       
-      // Clear recorded chunks
       recordedChunksRef.current = [];
       
+      toast({
+        title: "Recording saved!",
+        description: "Your stream recording has been saved successfully.",
+      });
+      
       return data.recordingUrl;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading recording:', error);
       toast({
         title: "Upload failed",
-        description: "Failed to save the recording. The stream data may be lost.",
+        description: error?.message || "Failed to save the recording. The stream data may be lost.",
         variant: "destructive",
       });
       return null;
@@ -481,18 +496,15 @@ export default function Actions() {
     createActionMutation.mutate(newAction);
   };
 
-  // Handle end action with recording upload (non-blocking for instant response)
   const handleEndAction = async () => {
     if (selectedAction) {
       const actionId = selectedAction.id;
       
-      // Show immediate toast feedback
       toast({
         title: "Stream ended!",
         description: "Your recording is being saved...",
       });
       
-      // Immediately end the stream in UI and API
       if (ws) {
         ws.send(JSON.stringify({
           type: 'action_ended',
@@ -500,29 +512,68 @@ export default function Actions() {
         }));
       }
       
-      // End the action immediately (don't wait for recording upload)
-      endActionMutation.mutate(actionId);
+      const recorder = mediaRecorderRef.current;
+      const hasRecording = recorder && recorder.state !== 'inactive';
       
-      // Stop the MediaRecorder and upload in background (non-blocking)
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-        
-        // Upload recording in background after brief delay for final data collection
-        setTimeout(async () => {
-          await uploadRecording(actionId);
-          // Refresh recordings list and headlines after upload completes (faster refresh)
+      if (hasRecording) {
+        // Wait for MediaRecorder to flush final data with timeout safety
+        await new Promise<void>((resolve) => {
+          const timeout = setTimeout(() => {
+            console.warn('MediaRecorder onstop timeout - proceeding with available data');
+            resolve();
+          }, 3000);
+          
+          recorder.onstop = () => {
+            clearTimeout(timeout);
+            resolve();
+          };
+          
           try {
-            const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
-            await enhancedCache.removeByPattern('/api/actions');
-            await enhancedCache.removeByPattern('/api/kliq-feed');
+            recorder.stop();
           } catch (e) {
-            console.log('Cache clear error (non-critical):', e);
+            console.warn('MediaRecorder.stop() error:', e);
+            clearTimeout(timeout);
+            resolve();
           }
-          queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-          await queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
-          await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
-        }, 200);
+        });
+        
+        // Mark recorder as handled so stopStream won't try to stop it again
+        mediaRecorderRef.current = null;
+        
+        // End the action in API after recording data is captured
+        try {
+          await apiRequest("PUT", `/api/actions/${actionId}/end`);
+        } catch (e) {
+          console.error('Error ending action:', e);
+        }
+        
+        // Upload the recording
+        await uploadRecording(actionId);
+        
+        // Refresh data
+        try {
+          const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+          await enhancedCache.removeByPattern('/api/actions');
+          await enhancedCache.removeByPattern('/api/kliq-feed');
+        } catch (e) {
+          console.log('Cache clear error (non-critical):', e);
+        }
+        queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+        await queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
+        await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
+      } else {
+        endActionMutation.mutate(actionId);
+      }
+      
+      // Stop camera tracks and clean up UI (recorder already nulled above if it had recording)
+      stopStream();
+      setSelectedAction(null);
+      setIsStreaming(false);
+      if (ws) {
+        ws.close();
+        setWs(null);
       }
     }
   };
