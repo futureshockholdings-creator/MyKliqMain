@@ -1066,6 +1066,8 @@ export default function Actions() {
                     <video
                       src={resolveAssetUrl(recording.recordingUrl)}
                       controls
+                      playsInline
+                      webkit-playsinline="true"
                       className="w-full rounded-lg aspect-video bg-black"
                       preload="metadata"
                     />

@@ -5058,7 +5058,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const objectFile = await objectStorageService.getObjectEntityFile(
         req.path,
       );
-      objectStorageService.downloadObject(objectFile, res);
+      objectStorageService.downloadObject(objectFile, res, 3600, req);
     } catch (error) {
       console.error("Error serving object:", error);
       if (error instanceof ObjectNotFoundError) {
@@ -5076,7 +5076,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!file) {
         return res.status(404).json({ error: "File not found" });
       }
-      objectStorageService.downloadObject(file, res);
+      objectStorageService.downloadObject(file, res, 3600, req);
     } catch (error) {
       console.error("Error searching for public object:", error);
       return res.status(500).json({ error: "Internal server error" });
@@ -6612,7 +6612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const objectStorage = new ObjectStorageService();
       const objectFile = await objectStorage.getObjectEntityFile(req.path);
-      objectStorage.downloadObject(objectFile, res);
+      objectStorage.downloadObject(objectFile, res, 3600, req);
     } catch (error) {
       console.error("Error serving media:", error);
       res.status(404).json({ message: "Media not found" });
