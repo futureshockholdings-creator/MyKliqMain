@@ -7561,7 +7561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload action recording
+  // Upload action recording (legacy multipart - kept as fallback)
   app.post('/api/actions/upload-recording', isAuthenticated, (req: any, res: any, next: any) => {
     upload.single('video')(req, res, (err: any) => {
       if (err) {
@@ -7614,6 +7614,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("[UPLOAD] FAILED with error:", error?.message || error, error?.stack?.substring(0, 500));
       res.status(500).json({ message: "Failed to upload recording" });
+    }
+  });
+
+  // Chunked upload: Initialize upload session
+  const chunkedUploads = new Map<string, { chunks: Buffer[], mimeType: string, actionId: string, userId: string, totalChunks: number, received: number, createdAt: number }>();
+
+  // Clean up stale chunked uploads every 5 minutes
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, upload] of chunkedUploads.entries()) {
+      if (now - upload.createdAt > 10 * 60 * 1000) {
+        chunkedUploads.delete(key);
+        console.log(`[CHUNK-UPLOAD] Cleaned up stale upload: ${key}`);
+      }
+    }
+  }, 5 * 60 * 1000);
+
+  app.post('/api/actions/upload-recording/init', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { actionId, totalChunks, mimeType, duration } = req.body;
+      
+      console.log(`[CHUNK-UPLOAD] Init - userId: ${userId}, actionId: ${actionId}, totalChunks: ${totalChunks}, mimeType: ${mimeType}`);
+      
+      if (!actionId || !totalChunks || !mimeType) {
+        return res.status(400).json({ message: "Missing required fields: actionId, totalChunks, mimeType" });
+      }
+
+      const action = await storage.getActionById(actionId);
+      if (!action || action.userId !== userId) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      const uploadId = `${userId}_${actionId}_${Date.now()}`;
+      chunkedUploads.set(uploadId, {
+        chunks: new Array(totalChunks).fill(null),
+        mimeType,
+        actionId,
+        userId,
+        totalChunks,
+        received: 0,
+        createdAt: Date.now(),
+      });
+
+      console.log(`[CHUNK-UPLOAD] Session created: ${uploadId}`);
+      res.json({ uploadId });
+    } catch (error: any) {
+      console.error("[CHUNK-UPLOAD] Init error:", error?.message);
+      res.status(500).json({ message: "Failed to initialize upload" });
+    }
+  });
+
+  // Chunked upload: Receive a chunk
+  app.post('/api/actions/upload-recording/chunk', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { uploadId, chunkIndex, data } = req.body;
+      
+      if (!uploadId || chunkIndex === undefined || !data) {
+        return res.status(400).json({ message: "Missing: uploadId, chunkIndex, data" });
+      }
+
+      const session = chunkedUploads.get(uploadId);
+      if (!session || session.userId !== userId) {
+        return res.status(404).json({ message: "Upload session not found" });
+      }
+
+      if (chunkIndex < 0 || chunkIndex >= session.totalChunks) {
+        return res.status(400).json({ message: "Invalid chunk index" });
+      }
+
+      const buffer = Buffer.from(data, 'base64');
+      if (!session.chunks[chunkIndex]) {
+        session.received++;
+      }
+      session.chunks[chunkIndex] = buffer;
+      
+      console.log(`[CHUNK-UPLOAD] Chunk ${chunkIndex + 1}/${session.totalChunks} received for ${uploadId} (${(buffer.length / 1024).toFixed(1)}KB)`);
+      
+      res.json({ received: session.received, total: session.totalChunks });
+    } catch (error: any) {
+      console.error("[CHUNK-UPLOAD] Chunk error:", error?.message);
+      res.status(500).json({ message: "Failed to receive chunk" });
+    }
+  });
+
+  // Chunked upload: Finalize and save
+  app.post('/api/actions/upload-recording/complete', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { uploadId, duration } = req.body;
+      
+      if (!uploadId) {
+        return res.status(400).json({ message: "Missing uploadId" });
+      }
+
+      const session = chunkedUploads.get(uploadId);
+      if (!session || session.userId !== userId) {
+        return res.status(404).json({ message: "Upload session not found" });
+      }
+
+      if (session.received < session.totalChunks) {
+        return res.status(400).json({ message: `Only ${session.received}/${session.totalChunks} chunks received` });
+      }
+
+      const completeBuffer = Buffer.concat(session.chunks);
+      console.log(`[CHUNK-UPLOAD] Assembled ${(completeBuffer.length / 1024 / 1024).toFixed(2)}MB, uploading to storage...`);
+
+      const objectStorage = new ObjectStorageService();
+      const ext = session.mimeType.includes('mp4') ? 'mp4' : 'webm';
+      const fileName = `recordings/action_${session.actionId}_${Date.now()}.${ext}`;
+      const recordingUrl = await objectStorage.uploadBuffer(completeBuffer, fileName, session.mimeType);
+
+      const recordingDuration = duration ? parseInt(duration, 10) : null;
+      await storage.updateAction(session.actionId, {
+        recordingUrl,
+        ...(recordingDuration ? { recordingDuration } : {})
+      });
+
+      await storage.enforceRecordingLimit(userId, 10);
+      chunkedUploads.delete(uploadId);
+
+      console.log(`[CHUNK-UPLOAD] SUCCESS: ${recordingUrl}`);
+      res.json({ success: true, recordingUrl });
+    } catch (error: any) {
+      console.error("[CHUNK-UPLOAD] Complete error:", error?.message, error?.stack?.substring(0, 300));
+      res.status(500).json({ message: "Failed to finalize upload" });
     }
   });
 

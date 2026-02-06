@@ -396,11 +396,10 @@ export default function Actions() {
       
       const firstChunk = chunks[0];
       const detectedType = firstChunk.type || 'video/webm';
-      const isMP4 = detectedType.includes('mp4');
-      const extension = isMP4 ? 'mp4' : 'webm';
       
       const blob = new Blob(chunks, { type: detectedType });
-      console.log(`[RecUpload] Blob created: ${(blob.size / 1024 / 1024).toFixed(2)}MB, type: ${detectedType}`);
+      const blobSizeMB = (blob.size / 1024 / 1024).toFixed(2);
+      console.log(`[RecUpload] Blob created: ${blobSizeMB}MB, type: ${detectedType}`);
       
       if (blob.size === 0) {
         console.warn('[RecUpload] Blob is empty, skipping upload');
@@ -411,40 +410,89 @@ export default function Actions() {
         ? Math.round((Date.now() - recordingStartTimeRef.current) / 1000) 
         : 0;
       
-      const formData = new FormData();
-      formData.append('video', blob, `action_${actionId}_${Date.now()}.${extension}`);
-      formData.append('actionId', actionId);
-      formData.append('duration', String(recordingDuration));
-      
       const { getAuthToken } = await import('@/lib/tokenStorage');
       const token = getAuthToken();
       console.log(`[RecUpload] Auth token present: ${!!token}, length: ${token?.length || 0}`);
       
-      const uploadUrl = buildApiUrl('/api/actions/upload-recording');
-      console.log(`[RecUpload] Uploading to: ${uploadUrl}`);
-      
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      if (!token) {
+        throw new Error('No auth token available');
       }
       
-      const response = await fetch(uploadUrl, {
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+      
+      const CHUNK_SIZE = 384 * 1024; // 384KB raw = ~512KB base64 per chunk
+      const arrayBuffer = await blob.arrayBuffer();
+      const uint8 = new Uint8Array(arrayBuffer);
+      const totalChunks = Math.ceil(uint8.length / CHUNK_SIZE);
+      
+      console.log(`[RecUpload] Using chunked upload: ${totalChunks} chunks of ~${(CHUNK_SIZE / 1024).toFixed(0)}KB`);
+      
+      // Step 1: Initialize upload session
+      const initUrl = buildApiUrl('/api/actions/upload-recording/init');
+      console.log(`[RecUpload] Init: ${initUrl}`);
+      const initRes = await fetch(initUrl, {
         method: 'POST',
-        body: formData,
-        credentials: 'include',
         headers,
+        credentials: 'include',
+        body: JSON.stringify({ actionId, totalChunks, mimeType: detectedType, duration: recordingDuration }),
       });
       
-      console.log(`[RecUpload] Response status: ${response.status}`);
-      
-      if (!response.ok) {
-        let errorBody = '';
-        try { errorBody = await response.text(); } catch {}
-        console.error(`[RecUpload] Server error ${response.status}: ${errorBody}`);
-        throw new Error(`Upload failed with status ${response.status}: ${errorBody}`);
+      if (!initRes.ok) {
+        const errText = await initRes.text().catch(() => '');
+        throw new Error(`Init failed (${initRes.status}): ${errText}`);
       }
       
-      const data = await response.json();
+      const { uploadId } = await initRes.json();
+      console.log(`[RecUpload] Upload session: ${uploadId}`);
+      
+      // Step 2: Send chunks sequentially
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, uint8.length);
+        const chunkData = uint8.slice(start, end);
+        
+        // Convert to base64
+        let binary = '';
+        const chunkArray = new Uint8Array(chunkData);
+        for (let j = 0; j < chunkArray.length; j++) {
+          binary += String.fromCharCode(chunkArray[j]);
+        }
+        const base64 = btoa(binary);
+        
+        const chunkUrl = buildApiUrl('/api/actions/upload-recording/chunk');
+        const chunkRes = await fetch(chunkUrl, {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({ uploadId, chunkIndex: i, data: base64 }),
+        });
+        
+        if (!chunkRes.ok) {
+          const errText = await chunkRes.text().catch(() => '');
+          throw new Error(`Chunk ${i + 1}/${totalChunks} failed (${chunkRes.status}): ${errText}`);
+        }
+        
+        console.log(`[RecUpload] Chunk ${i + 1}/${totalChunks} sent`);
+      }
+      
+      // Step 3: Complete upload
+      const completeUrl = buildApiUrl('/api/actions/upload-recording/complete');
+      const completeRes = await fetch(completeUrl, {
+        method: 'POST',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({ uploadId, duration: recordingDuration }),
+      });
+      
+      if (!completeRes.ok) {
+        const errText = await completeRes.text().catch(() => '');
+        throw new Error(`Complete failed (${completeRes.status}): ${errText}`);
+      }
+      
+      const data = await completeRes.json();
       console.log('[RecUpload] SUCCESS:', data.recordingUrl);
       
       recordedChunksRef.current = [];
@@ -456,10 +504,11 @@ export default function Actions() {
       
       return data.recordingUrl;
     } catch (error: any) {
-      console.error('[RecUpload] FAILED:', error?.message || error, error?.name, error?.stack?.substring(0, 300));
+      const errMsg = error?.message || String(error);
+      console.error('[RecUpload] FAILED:', errMsg, error?.name, error?.stack?.substring(0, 300));
       toast({
         title: "Upload failed",
-        description: "Failed to save the recording. The stream data may be lost.",
+        description: `Recording upload error: ${errMsg.substring(0, 100)}`,
         variant: "destructive",
       });
       return null;
