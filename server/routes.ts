@@ -7704,7 +7704,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/actions/upload-recording/complete', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { uploadId, duration } = req.body;
+      const { uploadId, duration, expectedSize } = req.body;
       
       if (!uploadId) {
         return res.status(400).json({ message: "Missing uploadId" });
@@ -7720,12 +7720,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const completeBuffer = Buffer.concat(session.chunks);
-      console.log(`[CHUNK-UPLOAD] Assembled ${(completeBuffer.length / 1024 / 1024).toFixed(2)}MB, uploading to storage...`);
+      if (expectedSize && completeBuffer.length !== expectedSize) {
+        console.warn(`[CHUNK-UPLOAD] SIZE MISMATCH: expected ${expectedSize}, got ${completeBuffer.length}`);
+      } else {
+        console.log(`[CHUNK-UPLOAD] Size verified: ${completeBuffer.length} bytes`);
+      }
+      const headerHex = completeBuffer.slice(0, 12).toString('hex');
+      const isMP4 = headerHex.includes('66747970') || headerHex.includes('6d6f6f76');
+      const isWebM = headerHex.startsWith('1a45dfa3');
+      const detectedFormat = isMP4 ? 'mp4' : isWebM ? 'webm' : 'unknown';
+      console.log(`[CHUNK-UPLOAD] Assembled ${(completeBuffer.length / 1024 / 1024).toFixed(2)}MB, header: ${headerHex}, detected: ${detectedFormat}, declared: ${session.mimeType}`);
+
+      const actualMimeType = isMP4 ? 'video/mp4' : isWebM ? 'video/webm' : session.mimeType;
+      const ext = actualMimeType.includes('mp4') ? 'mp4' : 'webm';
 
       const objectStorage = new ObjectStorageService();
-      const ext = session.mimeType.includes('mp4') ? 'mp4' : 'webm';
       const fileName = `recordings/action_${session.actionId}_${Date.now()}.${ext}`;
-      const recordingUrl = await objectStorage.uploadBuffer(completeBuffer, fileName, session.mimeType);
+      const recordingUrl = await objectStorage.uploadBuffer(completeBuffer, fileName, actualMimeType);
 
       const recordingDuration = duration ? parseInt(duration, 10) : null;
       await storage.updateAction(session.actionId, {

@@ -86,6 +86,7 @@ export default function Actions() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const recordingStartTimeRef = useRef<number | null>(null);
+  const recordingMimeTypeRef = useRef<string>('video/webm');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -338,6 +339,7 @@ export default function Actions() {
       }
       
       console.log('MediaRecorder using mimeType:', mimeType);
+      recordingMimeTypeRef.current = mimeType;
       const mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
       
       mediaRecorder.ondataavailable = (event) => {
@@ -346,9 +348,9 @@ export default function Actions() {
         }
       };
       
-      mediaRecorder.start(1000); // Collect data every second
+      mediaRecorder.start(1000);
       mediaRecorderRef.current = mediaRecorder;
-      recordingStartTimeRef.current = Date.now(); // Track when recording started
+      recordingStartTimeRef.current = Date.now();
       
       setIsStreaming(true);
       
@@ -394,8 +396,8 @@ export default function Actions() {
     try {
       setIsUploading(true);
       
-      const firstChunk = chunks[0];
-      const detectedType = firstChunk.type || 'video/webm';
+      const detectedType = recordingMimeTypeRef.current || 'video/webm';
+      console.log(`[RecUpload] Using MIME type from MediaRecorder: ${detectedType}`);
       
       const blob = new Blob(chunks, { type: detectedType });
       const blobSizeMB = (blob.size / 1024 / 1024).toFixed(2);
@@ -484,7 +486,7 @@ export default function Actions() {
         method: 'POST',
         headers,
         credentials: 'include',
-        body: JSON.stringify({ uploadId, duration: recordingDuration }),
+        body: JSON.stringify({ uploadId, duration: recordingDuration, expectedSize: uint8.length }),
       });
       
       if (!completeRes.ok) {
@@ -1064,13 +1066,17 @@ export default function Actions() {
                 <CardContent className="pt-2">
                   {recording.recordingUrl && (
                     <video
-                      src={resolveAssetUrl(recording.recordingUrl)}
                       controls
                       playsInline
                       webkit-playsinline="true"
                       className="w-full rounded-lg aspect-video bg-black"
-                      preload="metadata"
-                    />
+                      preload="auto"
+                    >
+                      <source 
+                        src={resolveAssetUrl(recording.recordingUrl)} 
+                        type={recording.recordingUrl.endsWith('.mp4') ? 'video/mp4' : 'video/webm'} 
+                      />
+                    </video>
                   )}
                   
                   <div className="flex items-center justify-between mt-3">
