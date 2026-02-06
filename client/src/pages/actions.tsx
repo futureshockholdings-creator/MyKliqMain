@@ -383,20 +383,29 @@ export default function Actions() {
   };
   
   const uploadRecording = async (actionId: string): Promise<string | null> => {
-    if (recordedChunksRef.current.length === 0) {
-      console.log('No recorded chunks to upload');
+    const chunks = recordedChunksRef.current;
+    console.log(`[RecUpload] Starting upload for action ${actionId}, chunks: ${chunks.length}`);
+    
+    if (chunks.length === 0) {
+      console.log('[RecUpload] No recorded chunks to upload');
       return null;
     }
     
     try {
       setIsUploading(true);
       
-      const firstChunk = recordedChunksRef.current[0];
+      const firstChunk = chunks[0];
       const detectedType = firstChunk.type || 'video/webm';
       const isMP4 = detectedType.includes('mp4');
       const extension = isMP4 ? 'mp4' : 'webm';
       
-      const blob = new Blob(recordedChunksRef.current, { type: detectedType });
+      const blob = new Blob(chunks, { type: detectedType });
+      console.log(`[RecUpload] Blob created: ${(blob.size / 1024 / 1024).toFixed(2)}MB, type: ${detectedType}`);
+      
+      if (blob.size === 0) {
+        console.warn('[RecUpload] Blob is empty, skipping upload');
+        return null;
+      }
       
       const recordingDuration = recordingStartTimeRef.current 
         ? Math.round((Date.now() - recordingStartTimeRef.current) / 1000) 
@@ -409,30 +418,45 @@ export default function Actions() {
       
       const { getAuthToken } = await import('@/lib/tokenStorage');
       const token = getAuthToken();
+      console.log(`[RecUpload] Auth token present: ${!!token}, length: ${token?.length || 0}`);
+      
+      const uploadUrl = buildApiUrl('/api/actions/upload-recording');
+      console.log(`[RecUpload] Uploading to: ${uploadUrl}`);
+      
       const headers: Record<string, string> = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await fetch(buildApiUrl('/api/actions/upload-recording'), {
+      const response = await fetch(uploadUrl, {
         method: 'POST',
         body: formData,
         credentials: 'include',
         headers,
       });
       
+      console.log(`[RecUpload] Response status: ${response.status}`);
+      
       if (!response.ok) {
-        throw new Error('Failed to upload recording');
+        let errorBody = '';
+        try { errorBody = await response.text(); } catch {}
+        console.error(`[RecUpload] Server error ${response.status}: ${errorBody}`);
+        throw new Error(`Upload failed with status ${response.status}: ${errorBody}`);
       }
       
       const data = await response.json();
-      console.log('Recording uploaded:', data.recordingUrl);
+      console.log('[RecUpload] SUCCESS:', data.recordingUrl);
       
       recordedChunksRef.current = [];
       
+      toast({
+        title: "Recording saved!",
+        description: "Your stream recording has been saved.",
+      });
+      
       return data.recordingUrl;
-    } catch (error) {
-      console.error('Error uploading recording:', error);
+    } catch (error: any) {
+      console.error('[RecUpload] FAILED:', error?.message || error, error?.name, error?.stack?.substring(0, 300));
       toast({
         title: "Upload failed",
         description: "Failed to save the recording. The stream data may be lost.",
@@ -494,10 +518,12 @@ export default function Actions() {
   const handleEndAction = async () => {
     if (selectedAction) {
       const actionId = selectedAction.id;
+      const recorder = mediaRecorderRef.current;
+      const hasRecording = recorder && recorder.state !== 'inactive';
       
       toast({
         title: "Stream ended!",
-        description: "Your recording is being saved...",
+        description: hasRecording ? "Your recording is being saved..." : "Your live stream has ended.",
       });
       
       if (ws) {
@@ -507,25 +533,60 @@ export default function Actions() {
         }));
       }
       
-      endActionMutation.mutate(actionId);
-      
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
+      if (hasRecording) {
+        console.log('[EndAction] Has recording, waiting for MediaRecorder to stop...');
+        mediaRecorderRef.current = null;
         
-        setTimeout(async () => {
-          await uploadRecording(actionId);
+        await new Promise<void>((resolve) => {
+          const timeout = setTimeout(() => {
+            console.warn('[EndAction] MediaRecorder onstop timeout after 3s');
+            resolve();
+          }, 3000);
+          
+          recorder.onstop = () => {
+            console.log(`[EndAction] MediaRecorder stopped, chunks: ${recordedChunksRef.current.length}`);
+            clearTimeout(timeout);
+            resolve();
+          };
+          
           try {
-            const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
-            await enhancedCache.removeByPattern('/api/actions');
-            await enhancedCache.removeByPattern('/api/kliq-feed');
+            recorder.stop();
           } catch (e) {
-            console.log('Cache clear error (non-critical):', e);
+            console.warn('[EndAction] MediaRecorder.stop() error:', e);
+            clearTimeout(timeout);
+            resolve();
           }
-          queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-          await queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
-          await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
-        }, 200);
+        });
+        
+        try {
+          await apiRequest("PUT", `/api/actions/${actionId}/end`);
+          console.log('[EndAction] Action ended via API');
+        } catch (e) {
+          console.error('[EndAction] Error ending action:', e);
+        }
+        
+        await uploadRecording(actionId);
+        
+        try {
+          const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+          await enhancedCache.removeByPattern('/api/actions');
+          await enhancedCache.removeByPattern('/api/kliq-feed');
+        } catch (e) {}
+        queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+        await queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
+        await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
+        
+        stopStream();
+        setSelectedAction(null);
+        setIsStreaming(false);
+        if (ws) {
+          ws.close();
+          setWs(null);
+        }
+      } else {
+        endActionMutation.mutate(actionId);
       }
     }
   };
