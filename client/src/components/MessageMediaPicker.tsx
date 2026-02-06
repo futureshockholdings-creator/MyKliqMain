@@ -39,7 +39,8 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
   const uploadFile = async (file: File, mediaType: "image" | "video") => {
     setIsUploading(true);
     try {
-      const token = localStorage.getItem('auth_token');
+      const { getAuthToken } = await import('@/lib/tokenStorage');
+      const token = getAuthToken();
       const arrayBuffer = await file.arrayBuffer();
       
       const response = await fetch(buildApiUrl('/api/media/upload-direct'), {

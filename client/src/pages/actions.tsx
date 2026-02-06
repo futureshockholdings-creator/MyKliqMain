@@ -402,7 +402,8 @@ export default function Actions() {
       formData.append('actionId', actionId);
       formData.append('duration', String(recordingDuration));
       
-      const token = localStorage.getItem('jwt_token');
+      const { getAuthToken } = await import('@/lib/tokenStorage');
+      const token = getAuthToken();
       const headers: Record<string, string> = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
