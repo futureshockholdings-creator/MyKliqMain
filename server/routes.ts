@@ -7562,47 +7562,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload action recording
-  app.post('/api/actions/upload-recording', isAuthenticated, upload.single('video'), async (req: any, res) => {
+  app.post('/api/actions/upload-recording', isAuthenticated, (req: any, res: any, next: any) => {
+    upload.single('video')(req, res, (err: any) => {
+      if (err) {
+        console.error('[UPLOAD] Multer error:', err.message, err.code);
+        return res.status(400).json({ message: `Upload error: ${err.message}` });
+      }
+      next();
+    });
+  }, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const { actionId, duration } = req.body;
       
+      console.log(`[UPLOAD] Recording upload started - userId: ${userId}, actionId: ${actionId}, hasFile: ${!!req.file}, fileSize: ${req.file?.size || 0}, mimeType: ${req.file?.mimetype || 'none'}`);
+      
       if (!req.file) {
+        console.log('[UPLOAD] FAILED: No video file in request');
         return res.status(400).json({ message: "No video file provided" });
       }
       
       if (!actionId) {
+        console.log('[UPLOAD] FAILED: No actionId provided');
         return res.status(400).json({ message: "Action ID is required" });
       }
       
-      // Verify user owns this action
       const action = await storage.getActionById(actionId);
       if (!action || action.userId !== userId) {
+        console.log(`[UPLOAD] FAILED: Action not found or wrong owner. actionFound: ${!!action}, actionUserId: ${action?.userId}, requestUserId: ${userId}`);
         return res.status(403).json({ message: "Not authorized to upload recording for this action" });
       }
       
+      console.log(`[UPLOAD] Uploading ${(req.file.size / 1024 / 1024).toFixed(2)}MB to object storage...`);
       const objectStorage = new ObjectStorageService();
       const ext = req.file.mimetype === 'video/mp4' ? 'mp4' : 'webm';
       const fileName = `recordings/action_${actionId}_${Date.now()}.${ext}`;
       const recordingUrl = await objectStorage.uploadBuffer(req.file.buffer, fileName, req.file.mimetype);
       
-      // Parse duration from form data
       const recordingDuration = duration ? parseInt(duration, 10) : null;
       
-      // Update action with recording URL and duration
       await storage.updateAction(actionId, { 
         recordingUrl,
         ...(recordingDuration ? { recordingDuration } : {})
       });
       
-      // Enforce 10 recording limit per user (auto-delete oldest)
       await storage.enforceRecordingLimit(userId, 10);
       
-      console.log(`Recording uploaded for action ${actionId}: ${recordingUrl}`);
+      console.log(`[UPLOAD] SUCCESS: Recording uploaded for action ${actionId}: ${recordingUrl} (${(req.file.size / 1024 / 1024).toFixed(2)}MB)`);
       
       res.json({ success: true, recordingUrl });
-    } catch (error) {
-      console.error("Error uploading action recording:", error);
+    } catch (error: any) {
+      console.error("[UPLOAD] FAILED with error:", error?.message || error, error?.stack?.substring(0, 500));
       res.status(500).json({ message: "Failed to upload recording" });
     }
   });
