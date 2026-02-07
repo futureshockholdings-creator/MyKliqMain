@@ -642,6 +642,17 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                 className="w-full aspect-video"
                 poster={action.thumbnailUrl ? resolveAssetUrl(action.thumbnailUrl) : undefined}
                 preload="metadata"
+                onLoadedMetadata={(e) => {
+                  const video = e.currentTarget;
+                  if (video.duration === Infinity || isNaN(video.duration) || video.duration === 0) {
+                    video.currentTime = 1e101;
+                    const onTimeUpdate = () => {
+                      video.removeEventListener('timeupdate', onTimeUpdate);
+                      video.currentTime = 0;
+                    };
+                    video.addEventListener('timeupdate', onTimeUpdate);
+                  }
+                }}
               >
                 Your browser does not support the video tag.
               </video>

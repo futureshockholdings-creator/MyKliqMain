@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { buildApiUrl, buildWebSocketUrl, resolveAssetUrl } from "@/lib/apiConfig";
+import fixWebmDuration from "fix-webm-duration";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -415,10 +416,14 @@ export default function Actions() {
       
       if (detectedType.includes('webm') && recordingDurationMs > 0) {
         try {
-          const fixWebmDuration = (await import('fix-webm-duration')).default;
-          console.log(`[RecUpload] Fixing WebM duration metadata: ${recordingDurationMs}ms`);
-          blob = await fixWebmDuration(blob, recordingDurationMs, { logger: false });
-          console.log(`[RecUpload] WebM duration fixed, new size: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+          console.log(`[RecUpload] Fixing WebM duration metadata: ${recordingDurationMs}ms, original size: ${blob.size}`);
+          const fixedBlob = await fixWebmDuration(blob, recordingDurationMs, { logger: false });
+          if (fixedBlob && fixedBlob.size > 0) {
+            blob = fixedBlob;
+            console.log(`[RecUpload] WebM duration fixed successfully, new size: ${blob.size}`);
+          } else {
+            console.warn('[RecUpload] fix-webm-duration returned empty blob, using original');
+          }
         } catch (e) {
           console.warn('[RecUpload] fix-webm-duration failed, using original blob:', e);
         }
@@ -1085,7 +1090,18 @@ export default function Actions() {
                       playsInline
                       webkit-playsinline="true"
                       className="w-full rounded-lg aspect-video bg-black"
-                      preload="auto"
+                      preload="metadata"
+                      onLoadedMetadata={(e) => {
+                        const video = e.currentTarget;
+                        if (video.duration === Infinity || isNaN(video.duration) || video.duration === 0) {
+                          video.currentTime = 1e101;
+                          const onTimeUpdate = () => {
+                            video.removeEventListener('timeupdate', onTimeUpdate);
+                            video.currentTime = 0;
+                          };
+                          video.addEventListener('timeupdate', onTimeUpdate);
+                        }
+                      }}
                     >
                       <source 
                         src={resolveAssetUrl(recording.recordingUrl)} 
