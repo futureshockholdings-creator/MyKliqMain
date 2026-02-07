@@ -106,6 +106,13 @@ class GroupVideoCallService {
       console.log('📞 [Group] Incoming PeerJS call from:', call.peer);
       const callerId = call.peer.replace('group_', '');
       
+      const existingConnection = this.peerConnections.get(callerId);
+      if (existingConnection) {
+        console.log('📞 [Group] Already have connection to', callerId, '- closing duplicate incoming call');
+        call.close();
+        return;
+      }
+      
       this.peerConnections.set(callerId, call);
       
       call.on('stream', (remoteStream) => {
@@ -128,12 +135,12 @@ class GroupVideoCallService {
 
       call.on('error', (error) => {
         console.error('📞 [Group] Call error from', callerId, ':', error);
-        this.handleParticipantLeft(callerId);
       });
 
-      if (this.callState === 'connected' && this.localStream) {
-        console.log('📞 [Group] Auto-answering PeerJS call from:', callerId);
-        call.answer(this.localStream);
+      const isInActiveCall = (this.callState === 'connected' || this.callState === 'calling') && this.localStream;
+      if (isInActiveCall) {
+        console.log('📞 [Group] Auto-answering PeerJS call from:', callerId, '(state:', this.callState, ')');
+        call.answer(this.localStream!);
       }
     });
 
@@ -264,6 +271,13 @@ class GroupVideoCallService {
     
     this.currentCallInfo.participants.set(message.userId, participant);
     
+    if (this.callState === 'calling') {
+      console.log('📞 [Group] First participant joined, transitioning to connected');
+      this.setCallState('connected');
+      this.currentCallInfo.startTime = new Date();
+      this.clearCallTimeout();
+    }
+    
     if (this.localStream && this.peer) {
       this.callParticipant(message.userId);
     }
@@ -275,6 +289,14 @@ class GroupVideoCallService {
     const participant = this.currentCallInfo.participants.get(message.userId);
     if (participant) {
       participant.status = 'connected';
+      
+      if (this.callState === 'calling') {
+        console.log('📞 [Group] Participant accepted, transitioning to connected');
+        this.setCallState('connected');
+        this.currentCallInfo.startTime = new Date();
+        this.clearCallTimeout();
+      }
+      
       this.callParticipant(message.userId);
     }
   }
@@ -289,11 +311,12 @@ class GroupVideoCallService {
   }
 
   private handleParticipantLeft(participantId: string) {
+    console.log('📞 [Group] Handling participant left:', participantId);
     this.remoteStreams.delete(participantId);
     
     const connection = this.peerConnections.get(participantId);
     if (connection) {
-      connection.close();
+      try { connection.close(); } catch (e) {}
       this.peerConnections.delete(participantId);
     }
     
@@ -303,11 +326,15 @@ class GroupVideoCallService {
     
     this.handlers.onParticipantLeft?.(participantId);
     
-    const activeParticipants = Array.from(this.currentCallInfo?.participants.values() || [])
-      .filter(p => p.status === 'connected');
-    
-    if (activeParticipants.length === 0 && this.callState === 'connected') {
-      this.endCall();
+    if (this.callState === 'connected' && this.currentCallInfo?.startTime) {
+      const activeParticipants = Array.from(this.currentCallInfo?.participants.values() || [])
+        .filter(p => p.status === 'connected');
+      
+      const callDuration = Date.now() - this.currentCallInfo.startTime.getTime();
+      if (activeParticipants.length === 0 && callDuration > 3000) {
+        console.log('📞 [Group] No active participants remaining, ending call');
+        this.endCall();
+      }
     }
   }
 
@@ -430,6 +457,13 @@ class GroupVideoCallService {
 
   private async callParticipant(participantId: string): Promise<void> {
     if (!this.peer || !this.localStream) {
+      console.log('📞 [Group] Cannot call participant - no peer or stream');
+      return;
+    }
+
+    const existingConnection = this.peerConnections.get(participantId);
+    if (existingConnection) {
+      console.log('📞 [Group] Already have connection to', participantId, '- skipping duplicate call');
       return;
     }
 
@@ -474,6 +508,14 @@ class GroupVideoCallService {
     try {
       const stream = await this.getLocalStream();
       
+      this.setCallState('connected');
+      this.currentCallInfo.startTime = new Date();
+      
+      this.peerConnections.forEach((call, participantId) => {
+        console.log('📞 [Group] Answering existing PeerJS call from:', participantId);
+        call.answer(stream);
+      });
+
       this.ws?.send(JSON.stringify({
         type: 'group-video-call-response',
         callId: this.currentCallInfo.callId,
@@ -483,16 +525,6 @@ class GroupVideoCallService {
         groupId: this.currentCallInfo.groupId
       }));
 
-      this.peerConnections.forEach((call, participantId) => {
-        call.answer(stream);
-      });
-
-      this.setCallState('connected');
-      this.currentCallInfo.startTime = new Date();
-      
-      if (this.currentCallInfo.initiatorId !== this.userId) {
-        this.callParticipant(this.currentCallInfo.initiatorId);
-      }
     } catch (error: any) {
       this.handlers.onCallFailed?.(error.message);
       this.endCall();
