@@ -27,10 +27,18 @@ export function CreatePollDialog({ trigger }: CreatePollDialogProps) {
     mutationFn: async (pollData: any) => {
       await apiRequest("POST", "/api/polls", pollData);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/polls');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {}
       queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
       queryClient.invalidateQueries({ queryKey: ["/api/polls", "mine"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/polls"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/polls", "mine"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Poll created!",
         description: "Your poll has been shared with your kliq on the Headlines",

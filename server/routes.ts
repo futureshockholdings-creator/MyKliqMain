@@ -9039,6 +9039,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const poll = await storage.createPoll(pollData);
+
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed');
+      invalidateCache('posts');
+      invalidateCache('polls');
+      const { cacheService } = await import('./cacheService');
+      await cacheService.invalidatePattern('kliq-feed:');
+      await cacheService.invalidatePattern('polls:');
+
+      if ((app as any).broadcast) {
+        (app as any).broadcast({ type: 'poll', data: poll });
+      }
+
       res.json(poll);
     } catch (error) {
       console.error("Error creating poll:", error);
