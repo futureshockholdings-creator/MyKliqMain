@@ -1,12 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
+import { type MouseEvent } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
-import { MessageCircle, ArrowLeft, Users } from "lucide-react";
+import { MessageCircle, ArrowLeft, Users, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PageWrapper } from "@/components/PageWrapper";
 import { resolveAssetUrl } from "@/lib/apiConfig";
+import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
+import { useToast } from "@/hooks/use-toast";
+import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 
 interface UserData {
   id: string;
@@ -46,11 +50,50 @@ interface GroupConversation {
 type ConversationData = IndividualConversation | GroupConversation;
 
 export function Messages() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
   const { data: conversations = [], isLoading } = useQuery<ConversationData[]>({
     queryKey: ["/api/messages/conversations"],
     refetchOnMount: 'always',
     staleTime: 0,
   });
+
+  const deleteConversationMutation = useMutation({
+    mutationFn: async ({ conversation }: { conversation: ConversationData }) => {
+      if (conversation.type === 'group') {
+        return enterpriseFetch(`/api/group-chats/${conversation.id}`, { method: 'DELETE' });
+      } else {
+        const otherUserId = (conversation as IndividualConversation).otherUser.id;
+        return enterpriseFetch(`/api/messages/conversation/${otherUserId}`, { method: 'DELETE' });
+      }
+    },
+    onMutate: async ({ conversation }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/messages/conversations"] });
+      const previousConversations = queryClient.getQueryData<ConversationData[]>(["/api/messages/conversations"]);
+      queryClient.setQueryData<ConversationData[]>(["/api/messages/conversations"], (old) =>
+        (old || []).filter(c => c.id !== conversation.id)
+      );
+      return { previousConversations };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousConversations) {
+        queryClient.setQueryData(["/api/messages/conversations"], context.previousConversations);
+      }
+      toast({ title: "Failed to delete conversation", variant: "destructive" });
+    },
+    onSuccess: () => {
+      enhancedCache.removeByPattern('/api/messages');
+      queryClient.invalidateQueries({ queryKey: ["/api/messages/conversations"] });
+      toast({ title: "Conversation deleted" });
+    },
+  });
+
+  const handleDelete = (e: MouseEvent<HTMLButtonElement>, conversation: ConversationData) => {
+    e.preventDefault();
+    e.stopPropagation();
+    deleteConversationMutation.mutate({ conversation });
+  };
 
   const getDisplayName = (user: UserData) => {
     if (user.firstName && user.lastName) {
@@ -198,6 +241,16 @@ export function Messages() {
                       </div>
                     </div>
                   </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50 p-2"
+                    onClick={(e) => handleDelete(e, conversation)}
+                    disabled={deleteConversationMutation.isPending}
+                    data-testid={`btn-delete-${conversation.id}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               );
             })}

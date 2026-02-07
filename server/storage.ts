@@ -2182,8 +2182,15 @@ export class DatabaseStorage implements IStorage {
       conversationId = newConversation.id;
     }
 
-    // Insert the message
-    const [newMessage] = await db.insert(messages).values(message).returning();
+    // Set 3-day expiration for all incognito messages
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 3);
+
+    const [newMessage] = await db.insert(messages).values({
+      ...message,
+      isIncognito: true,
+      expiresAt,
+    }).returning();
 
     // Update conversation with last message and activity
     await db
@@ -2320,9 +2327,9 @@ export class DatabaseStorage implements IStorage {
 
   async deleteOldConversations(): Promise<void> {
     const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+    const threeDaysAgo = new Date(now.getTime() - (3 * 24 * 60 * 60 * 1000));
     
-    // Find conversations older than 7 days based on lastActivity
+    // Find conversations older than 3 days based on lastActivity
     const oldConversations = await db
       .select({ 
         id: conversations.id, 
@@ -2330,7 +2337,7 @@ export class DatabaseStorage implements IStorage {
         user2Id: conversations.user2Id 
       })
       .from(conversations)
-      .where(lt(conversations.lastActivity, sevenDaysAgo));
+      .where(lt(conversations.lastActivity, threeDaysAgo));
     
     if (oldConversations.length === 0) {
       console.log(`No old conversations to clean up at ${now.toISOString()}`);
@@ -2364,7 +2371,7 @@ export class DatabaseStorage implements IStorage {
     // Delete the conversations
     const conversationsResult = await db
       .delete(conversations)
-      .where(lt(conversations.lastActivity, sevenDaysAgo));
+      .where(lt(conversations.lastActivity, threeDaysAgo));
     
     console.log(`Cleaned up ${oldConversations.length} old conversations and ${messagesDeletedCount} messages at ${now.toISOString()}`);
   }

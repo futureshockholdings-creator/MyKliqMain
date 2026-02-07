@@ -47,7 +47,7 @@ export async function seedEducationalPosts() {
     },
     {
       title: '🎭 Send Messages That Auto-Delete',
-      content: 'Incognito messages automatically delete after 7 days - perfect for temporary chats, jokes, or just keeping your conversations private and clutter-free!',
+      content: 'Incognito messages automatically delete after 3 days - perfect for temporary chats, jokes, or just keeping your conversations private and clutter-free!',
       featureName: 'Incognito Messaging',
       icon: '🎭',
       accentColor: '#ef4444', // Red

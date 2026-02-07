@@ -1151,7 +1151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========================================================================
 
   /**
-   * Send incognito message (7-day auto-deletion)
+   * Send incognito message (3-day auto-deletion)
    * POST /api/mobile/messages/incognito
    */
   app.post('/api/mobile/messages/incognito', verifyMobileToken, async (req, res) => {
@@ -1193,9 +1193,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         conversationId = newConversation.id;
       }
 
-      // Create incognito message with 7-day expiration
+      // Create incognito message with 3-day expiration
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
+      expiresAt.setDate(expiresAt.getDate() + 3);
 
       const { messages: messagesTable } = await import('@shared/schema');
       const [message] = await db.insert(messagesTable)
@@ -6684,7 +6684,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(performanceMonitor.getPerformanceReport());
   });
 
-  // Auto-cleanup old conversations (7+ days) every hour
+  // Auto-cleanup old conversations (3+ days) every hour
   setInterval(async () => {
     try {
       await storage.deleteOldConversations();
