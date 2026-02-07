@@ -6,10 +6,13 @@ import {
   friendRankingSuggestions,
   contentEngagements,
   postLikes,
+  posts,
   commentLikes,
   comments,
   messages,
+  stories,
   storyViews,
+  actions,
   actionViewers,
   meetupCheckIns,
   eventAttendees,
@@ -176,12 +179,10 @@ export class FriendRankingIntelligence {
       const overallScore = parseFloat(friendship.analytics.overallScore || '0');
       const currentRank = friendship.currentRank;
       
-      // Calculate suggested rank based on score relative to other friends
       const suggestedRank = this.calculateSuggestedRank(overallScore, userFriendships);
       
-      // Only suggest changes if there's a significant difference
       const rankDifference = Math.abs(suggestedRank - currentRank);
-      if (rankDifference >= 2) { // Minimum threshold for suggestions
+      if (rankDifference >= 1) {
         
         const suggestion = await this.buildRankingSuggestion(
           userId,
@@ -338,52 +339,253 @@ export class FriendRankingIntelligence {
   // These would implement the specific queries for messages, likes, comments, etc.
   
   private async getMessageInteractions(userId: string, friendId: string, since: Date) {
-    // Implementation for message interaction analysis
-    return { sent: 0, received: 0, avgResponseTime: 0 };
+    try {
+      const [sentResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(messages)
+        .where(and(
+          eq(messages.senderId, userId),
+          eq(messages.receiverId, friendId),
+          gte(messages.createdAt, since)
+        ));
+      const [receivedResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(messages)
+        .where(and(
+          eq(messages.senderId, friendId),
+          eq(messages.receiverId, userId),
+          gte(messages.createdAt, since)
+        ));
+      return {
+        sent: sentResult?.count || 0,
+        received: receivedResult?.count || 0,
+        avgResponseTime: 0,
+      };
+    } catch (e) {
+      console.error("Error getting message interactions:", e);
+      return { sent: 0, received: 0, avgResponseTime: 0 };
+    }
   }
 
   private async getPostLikeInteractions(userId: string, friendId: string, since: Date) {
-    // Implementation for post like analysis
-    return { given: 0, received: 0 };
+    try {
+      const [givenResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(postLikes)
+        .innerJoin(posts, eq(posts.id, postLikes.postId))
+        .where(and(
+          eq(postLikes.userId, userId),
+          eq(posts.userId, friendId),
+          gte(postLikes.createdAt, since)
+        ));
+      const [receivedResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(postLikes)
+        .innerJoin(posts, eq(posts.id, postLikes.postId))
+        .where(and(
+          eq(postLikes.userId, friendId),
+          eq(posts.userId, userId),
+          gte(postLikes.createdAt, since)
+        ));
+      return {
+        given: givenResult?.count || 0,
+        received: receivedResult?.count || 0,
+      };
+    } catch (e) {
+      console.error("Error getting post like interactions:", e);
+      return { given: 0, received: 0 };
+    }
   }
 
   private async getCommentInteractions(userId: string, friendId: string, since: Date) {
-    // Implementation for comment analysis
-    return { given: 0, received: 0 };
+    try {
+      const [givenResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(comments)
+        .innerJoin(posts, eq(posts.id, comments.postId))
+        .where(and(
+          eq(comments.userId, userId),
+          eq(posts.userId, friendId),
+          gte(comments.createdAt, since)
+        ));
+      const [receivedResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(comments)
+        .innerJoin(posts, eq(posts.id, comments.postId))
+        .where(and(
+          eq(comments.userId, friendId),
+          eq(posts.userId, userId),
+          gte(comments.createdAt, since)
+        ));
+      return {
+        given: givenResult?.count || 0,
+        received: receivedResult?.count || 0,
+      };
+    } catch (e) {
+      console.error("Error getting comment interactions:", e);
+      return { given: 0, received: 0 };
+    }
   }
 
   private async getCommentLikeInteractions(userId: string, friendId: string, since: Date) {
-    // Implementation for comment like analysis
-    return { given: 0, received: 0 };
+    try {
+      const [givenResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(commentLikes)
+        .innerJoin(comments, eq(comments.id, commentLikes.commentId))
+        .where(and(
+          eq(commentLikes.userId, userId),
+          eq(comments.userId, friendId),
+          gte(commentLikes.createdAt, since)
+        ));
+      const [receivedResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(commentLikes)
+        .innerJoin(comments, eq(comments.id, commentLikes.commentId))
+        .where(and(
+          eq(commentLikes.userId, friendId),
+          eq(comments.userId, userId),
+          gte(commentLikes.createdAt, since)
+        ));
+      return {
+        given: givenResult?.count || 0,
+        received: receivedResult?.count || 0,
+      };
+    } catch (e) {
+      console.error("Error getting comment like interactions:", e);
+      return { given: 0, received: 0 };
+    }
   }
 
   private async getStoryViewInteractions(userId: string, friendId: string, since: Date) {
-    // Implementation for story view analysis
-    return { given: 0, received: 0 };
+    try {
+      const [givenResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(storyViews)
+        .innerJoin(stories, eq(stories.id, storyViews.storyId))
+        .where(and(
+          eq(storyViews.userId, userId),
+          eq(stories.userId, friendId),
+          gte(storyViews.viewedAt, since)
+        ));
+      const [receivedResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(storyViews)
+        .innerJoin(stories, eq(stories.id, storyViews.storyId))
+        .where(and(
+          eq(storyViews.userId, friendId),
+          eq(stories.userId, userId),
+          gte(storyViews.viewedAt, since)
+        ));
+      return {
+        given: givenResult?.count || 0,
+        received: receivedResult?.count || 0,
+      };
+    } catch (e) {
+      console.error("Error getting story view interactions:", e);
+      return { given: 0, received: 0 };
+    }
   }
 
   private async getLiveStreamInteractions(userId: string, friendId: string, since: Date) {
-    // Implementation for live stream view analysis
-    return { views: 0 };
+    try {
+      const [result] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(actionViewers)
+        .innerJoin(actions, eq(actions.id, actionViewers.actionId))
+        .where(and(
+          eq(actionViewers.userId, userId),
+          eq(actions.userId, friendId),
+          gte(actionViewers.joinedAt, since)
+        ));
+      return { views: result?.count || 0 };
+    } catch (e) {
+      console.error("Error getting live stream interactions:", e);
+      return { views: 0 };
+    }
   }
 
   private async getMeetupInteractions(userId: string, friendId: string, since: Date) {
-    // Implementation for meetup attendance analysis
-    return { together: 0 };
+    try {
+      const [result] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(meetupCheckIns)
+        .where(and(
+          eq(meetupCheckIns.userId, userId),
+          gte(meetupCheckIns.checkInTime, since),
+          sql`${meetupCheckIns.meetupId} IN (
+            SELECT ${meetupCheckIns.meetupId} FROM ${meetupCheckIns} 
+            WHERE ${meetupCheckIns.userId} = ${friendId}
+          )`
+        ));
+      return { together: result?.count || 0 };
+    } catch (e) {
+      console.error("Error getting meetup interactions:", e);
+      return { together: 0 };
+    }
   }
 
   private async getEventInteractions(userId: string, friendId: string, since: Date) {
-    // Implementation for event attendance analysis
-    return { together: 0 };
+    try {
+      const [result] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(eventAttendees)
+        .where(and(
+          eq(eventAttendees.userId, userId),
+          gte(eventAttendees.createdAt, since),
+          sql`${eventAttendees.eventId} IN (
+            SELECT ${eventAttendees.eventId} FROM ${eventAttendees}
+            WHERE ${eventAttendees.userId} = ${friendId}
+          )`
+        ));
+      return { together: result?.count || 0 };
+    } catch (e) {
+      console.error("Error getting event interactions:", e);
+      return { together: 0 };
+    }
   }
 
   private async getContentEngagementData(userId: string, friendId: string, since: Date) {
-    // Implementation for content engagement analysis
-    return { 
-      totalTime: 0, 
-      interactions: 0, 
-      lastInteraction: null as Date | null 
-    };
+    try {
+      const [result] = await db
+        .select({
+          totalTime: sql<number>`COALESCE(SUM(${contentEngagements.viewDuration})::int, 0)`,
+          interactions: sql<number>`count(*)::int`,
+          lastInteraction: sql<Date | null>`MAX(${contentEngagements.createdAt})`,
+        })
+        .from(contentEngagements)
+        .where(and(
+          eq(contentEngagements.userId, userId),
+          eq(contentEngagements.contentOwnerId, friendId),
+          gte(contentEngagements.createdAt, since)
+        ));
+
+      const lastMsgDate = await db
+        .select({ latest: sql<Date | null>`MAX(${messages.createdAt})` })
+        .from(messages)
+        .where(and(
+          sql`(${messages.senderId} = ${userId} AND ${messages.receiverId} = ${friendId}) OR (${messages.senderId} = ${friendId} AND ${messages.receiverId} = ${userId})`,
+          gte(messages.createdAt, since)
+        ));
+
+      const engagementLast = result?.lastInteraction;
+      const msgLast = lastMsgDate[0]?.latest;
+      let lastInteraction: Date | null = null;
+      if (engagementLast && msgLast) {
+        lastInteraction = engagementLast > msgLast ? engagementLast : msgLast;
+      } else {
+        lastInteraction = engagementLast || msgLast || null;
+      }
+
+      return {
+        totalTime: result?.totalTime || 0,
+        interactions: result?.interactions || 0,
+        lastInteraction,
+      };
+    } catch (e) {
+      console.error("Error getting content engagement data:", e);
+      return { totalTime: 0, interactions: 0, lastInteraction: null as Date | null };
+    }
   }
 
   private async getCurrentFriendshipRank(userId: string, friendId: string) {
@@ -422,13 +624,19 @@ export class FriendRankingIntelligence {
     let primaryReason = 'general_activity';
     let justificationMessage = '';
     
-    if (analytics.messagesSent + analytics.messagesReceived > 20) {
+    const totalMessages = (analytics.messagesSent || 0) + (analytics.messagesReceived || 0);
+    const totalLikesComments = (analytics.postLikesGiven || 0) + (analytics.postLikesReceived || 0) + (analytics.commentsGiven || 0) + (analytics.commentsReceived || 0);
+    
+    if (totalMessages > 0) {
       primaryReason = 'frequent_communication';
-      justificationMessage = `You and this friend have exchanged ${analytics.messagesSent + analytics.messagesReceived} messages recently, indicating a close relationship.`;
-    } else if (analytics.totalInteractionTime > 1800) { // 30 minutes
+      justificationMessage = `You and this friend have exchanged ${totalMessages} message${totalMessages !== 1 ? 's' : ''} recently, indicating an active connection.`;
+    } else if (totalLikesComments > 0) {
       primaryReason = 'high_engagement';
-      justificationMessage = `You spend significant time viewing this friend's content (${Math.round(analytics.totalInteractionTime / 60)} minutes), suggesting strong interest.`;
-    } else if (analytics.meetupAttendanceTogether > 0) {
+      justificationMessage = `This friend has ${totalLikesComments} interaction${totalLikesComments !== 1 ? 's' : ''} (likes/comments) with your content recently.`;
+    } else if ((analytics.totalInteractionTime || 0) > 0) {
+      primaryReason = 'high_engagement';
+      justificationMessage = `You spend time viewing this friend's content (${Math.round((analytics.totalInteractionTime || 0) / 60)} minutes), suggesting interest.`;
+    } else if ((analytics.meetupAttendanceTogether || 0) > 0) {
       primaryReason = 'in_person_connection';
       justificationMessage = `You've attended ${analytics.meetupAttendanceTogether} meetup(s) together, showing real-world friendship.`;
     } else if (isMovingUp) {
