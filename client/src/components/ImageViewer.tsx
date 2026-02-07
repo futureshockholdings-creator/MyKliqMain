@@ -169,9 +169,9 @@ export function ImageViewer({
             controls
             autoPlay
             playsInline
-          >
-            <source src={resolveUrl(currentMedia.mediaUrl)} type="video/mp4" />
-          </video>
+            preload="metadata"
+            src={resolveUrl(currentMedia.mediaUrl)}
+          />
         ) : (
           <img
             src={resolveUrl(currentMedia.mediaUrl)}

@@ -199,6 +199,8 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
                 {event.mediaType === 'video' ? (
                   <video
                     controls
+                    playsInline
+                    preload="metadata"
                     className="w-full max-h-96 object-cover"
                     src={event.mediaUrl}
                     data-testid={`video-event-${event.id}`}

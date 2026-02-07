@@ -642,7 +642,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                 playsInline
                 className="w-full aspect-video"
                 poster={action.thumbnailUrl ? resolveAssetUrl(action.thumbnailUrl) : undefined}
-                preload="auto"
+                preload="metadata"
               >
                 Your browser does not support the video tag.
               </video>

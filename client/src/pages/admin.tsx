@@ -1932,7 +1932,9 @@ export default function AdminPage() {
                   {viewingPost.mediaType === 'video' ? (
                     <video 
                       src={resolveAssetUrl(viewingPost.mediaUrl)} 
-                      controls 
+                      controls
+                      playsInline
+                      preload="metadata"
                       className="w-full max-h-[400px] object-contain bg-black"
                     />
                   ) : (

@@ -419,7 +419,9 @@ export function Conversation() {
                             ) : (
                               <video 
                                 src={resolveAssetUrl(message.mediaUrl)} 
-                                controls 
+                                controls
+                                playsInline
+                                preload="metadata"
                                 className="max-w-xs max-h-64 rounded-lg"
                               />
                             )}

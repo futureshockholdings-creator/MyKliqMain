@@ -95,9 +95,9 @@ export function ImageGallery({
           className="w-full h-full object-cover" 
           controls
           playsInline
-        >
-          <source src={resolveUrl(currentMedia.mediaUrl)} type="video/mp4" />
-        </video>
+          preload="metadata"
+          src={resolveUrl(currentMedia.mediaUrl)}
+        />
       ) : (
         <img 
           src={resolveUrl(currentMedia.mediaUrl)} 

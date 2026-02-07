@@ -1092,7 +1092,8 @@ export default function Actions() {
                       playsInline
                       webkit-playsinline="true"
                       className="w-full rounded-lg aspect-video bg-black"
-                      preload="auto"
+                      preload="metadata"
+                      poster={recording.thumbnailUrl ? resolveAssetUrl(recording.thumbnailUrl) : undefined}
                       src={resolveAssetUrl(recording.recordingUrl)}
                     >
                       Your browser does not support video playback.

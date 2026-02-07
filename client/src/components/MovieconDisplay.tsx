@@ -48,6 +48,9 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
               ref={videoRef}
               src={videoSrc}
               className="w-full h-full object-cover"
+              poster={moviecon.thumbnailUrl ? buildApiUrl(moviecon.thumbnailUrl) : undefined}
+              preload="metadata"
+              playsInline
               muted={isMuted}
               onError={() => setVideoError(true)}
               onPlay={() => setIsPlaying(true)}

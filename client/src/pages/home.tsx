@@ -2535,9 +2535,13 @@ export default function Home() {
                                 {post.mediaUrl && (
                                   <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                                     {post.mediaType === 'video' ? (
-                                      <video className="w-full h-full object-cover">
-                                        <source src={resolveAssetUrl(post.mediaUrl)} type="video/mp4" />
-                                      </video>
+                                      <video 
+                                        className="w-full h-full object-cover"
+                                        controls
+                                        playsInline
+                                        preload="metadata"
+                                        src={resolveAssetUrl(post.mediaUrl)}
+                                      />
                                     ) : (
                                       <img 
                                         src={resolveAssetUrl(post.mediaUrl)} 
@@ -2717,7 +2721,9 @@ export default function Home() {
                                       <video 
                                         className="w-full h-full object-cover" 
                                         controls
-                                        src={save.action.recordingUrl}
+                                        playsInline
+                                        preload="metadata"
+                                        src={resolveAssetUrl(save.action.recordingUrl)}
                                       />
                                     ) : (
                                       <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -2745,9 +2751,13 @@ export default function Home() {
                                   {(save.selectedMediaUrl || save.post.mediaUrl) && (
                                     <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                                       {save.post.mediaType === 'video' ? (
-                                        <video className="w-full h-full object-cover">
-                                          <source src={resolveAssetUrl(save.selectedMediaUrl || save.post.mediaUrl)} type="video/mp4" />
-                                        </video>
+                                        <video 
+                                          className="w-full h-full object-cover"
+                                          controls
+                                          playsInline
+                                          preload="metadata"
+                                          src={resolveAssetUrl(save.selectedMediaUrl || save.post.mediaUrl)}
+                                        />
                                       ) : (
                                         <img 
                                           src={resolveAssetUrl(save.selectedMediaUrl || save.post.mediaUrl)} 

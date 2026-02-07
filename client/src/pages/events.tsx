@@ -762,9 +762,10 @@ export default function Events() {
                         {event.mediaType === 'video' ? (
                           <video 
                             src={event.mediaUrl} 
-                            controls 
-                            className="w-full max-h-64 object-cover"
+                            controls
+                            playsInline
                             preload="metadata"
+                            className="w-full max-h-64 object-cover"
                           />
                         ) : (
                           <img 
