@@ -298,15 +298,15 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
     },
     onSuccess: async () => {
       setNewComment("");
-      refetchComments();
-      // Clear cache and refetch for consistency
       try {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/actions');
         await enhancedCache.removeByPattern('/api/kliq-feed');
         await enhancedCache.removeByPattern('/api/notifications');
       } catch (e) {}
+      queryClient.invalidateQueries({ queryKey: [`/api/actions/${action.id}/comments`] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      // Refetch notifications immediately for instant update
+      await refetchComments();
       queryClient.refetchQueries({ queryKey: ["/api/notifications"] });
     },
   });

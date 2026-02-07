@@ -7844,10 +7844,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               : commenter?.username || 'Someone';
             await notificationService.createNotification({
               userId: action.userId,
-              type: 'action_comment',
+              type: 'comment',
+              title: 'New comment on your video',
               message: `${commenterName} commented on your video "${action.title}"`,
-              relatedEntityId: actionId,
-              relatedEntityType: 'action',
+              relatedId: actionId,
+              relatedType: 'action',
               isRead: false
             });
 
@@ -8032,10 +8033,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             : liker?.username || 'Someone';
           await notificationService.createNotification({
             userId: action.userId,
-            type: 'action_like',
+            type: 'post_like',
+            title: 'Video liked',
             message: `${likerName} liked your video "${action.title}"`,
-            relatedEntityId: actionId,
-            relatedEntityType: 'action',
+            relatedId: actionId,
+            relatedType: 'action',
             isRead: false
           });
 
