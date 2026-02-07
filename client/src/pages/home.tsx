@@ -2723,6 +2723,7 @@ export default function Home() {
                                         controls
                                         playsInline
                                         preload="metadata"
+                                        poster={save.action.thumbnailUrl ? resolveAssetUrl(save.action.thumbnailUrl) : undefined}
                                         src={resolveAssetUrl(save.action.recordingUrl)}
                                       />
                                     ) : (
