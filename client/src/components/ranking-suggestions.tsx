@@ -232,103 +232,103 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
               className="transition-all duration-200 hover:shadow-md"
               data-testid={`suggestion-card-${suggestion.id}`}
             >
-              <CardContent className="pt-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3 flex-1">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage 
-                        src={suggestion.friend.profileImageUrl} 
-                        alt={getName(suggestion.friend)} 
-                      />
-                      <AvatarFallback>{getInitials(suggestion.friend)}</AvatarFallback>
-                    </Avatar>
+              <CardContent className="pt-4 pb-3">
+                <div className="flex items-center gap-3 mb-2">
+                  <Avatar className="h-10 w-10 shrink-0">
+                    <AvatarImage 
+                      src={suggestion.friend.profileImageUrl} 
+                      alt={getName(suggestion.friend)} 
+                    />
+                    <AvatarFallback>{getInitials(suggestion.friend)}</AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium truncate">{getName(suggestion.friend)}</span>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground shrink-0">
+                        {getRankChangeIcon(suggestion.currentRank, suggestion.suggestedRank)}
+                        <span className="text-xs">
+                          #{suggestion.currentRank} → #{suggestion.suggestedRank}
+                        </span>
+                      </div>
+                    </div>
                     
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">{getName(suggestion.friend)}</span>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          {getRankChangeIcon(suggestion.currentRank, suggestion.suggestedRank)}
-                          <span className="text-xs">
-                            #{suggestion.currentRank} → #{suggestion.suggestedRank}
-                          </span>
-                        </div>
-                      </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs flex items-center gap-1"
+                      >
+                        {getReasonIcon(suggestion.primaryReason)}
+                        {getReasonLabel(suggestion.primaryReason)}
+                      </Badge>
                       
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge 
-                          variant="outline" 
-                          className="text-xs flex items-center gap-1"
-                        >
-                          {getReasonIcon(suggestion.primaryReason)}
-                          {getReasonLabel(suggestion.primaryReason)}
-                        </Badge>
-                        
-                        <Badge variant="secondary" className="text-xs">
-                          {parseFloat(suggestion.confidence).toFixed(0)}% confident
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {suggestion.justificationMessage}
-                      </p>
-
-                      {expandedSuggestion === suggestion.id && (
-                        <div className="mt-3 p-3 bg-muted/30 rounded-lg text-xs space-y-2">
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <span className="font-medium">Total Interactions:</span>
-                              <span className="ml-1">{suggestion.supportingMetrics.totalInteractions}</span>
-                            </div>
-                            <div>
-                              <span className="font-medium">Overall Score:</span>
-                              <span className="ml-1">{parseFloat(suggestion.supportingMetrics.overallScore).toFixed(1)}</span>
-                            </div>
-                            <div>
-                              <span className="font-medium">Engagement:</span>
-                              <span className="ml-1">{parseFloat(suggestion.supportingMetrics.engagementScore).toFixed(1)}</span>
-                            </div>
-                            <div>
-                              <span className="font-medium">Consistency:</span>
-                              <span className="ml-1">{parseFloat(suggestion.supportingMetrics.consistencyScore).toFixed(1)}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      <Badge variant="secondary" className="text-xs">
+                        {parseFloat(suggestion.confidence).toFixed(0)}% confident
+                      </Badge>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center gap-2 ml-4">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setExpandedSuggestion(
-                        expandedSuggestion === suggestion.id ? null : suggestion.id
-                      )}
-                      data-testid={`button-toggle-details-${suggestion.id}`}
-                    >
-                      {expandedSuggestion === suggestion.id ? "Less" : "Details"}
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => dismissSuggestionMutation.mutate(suggestion.id)}
-                      disabled={dismissSuggestionMutation.isPending}
-                      data-testid={`button-dismiss-${suggestion.id}`}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                    
-                    <Button
-                      size="sm"
-                      onClick={() => acceptSuggestionMutation.mutate(suggestion.id)}
-                      disabled={acceptSuggestionMutation.isPending}
-                      data-testid={`button-accept-${suggestion.id}`}
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      Apply
-                    </Button>
+                </div>
+                
+                <p className="text-sm text-muted-foreground mb-3">
+                  {suggestion.justificationMessage}
+                </p>
+
+                {expandedSuggestion === suggestion.id && (
+                  <div className="mb-3 p-3 bg-muted/30 rounded-lg text-xs space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="font-medium">Total Interactions:</span>
+                        <span className="ml-1">{suggestion.supportingMetrics.totalInteractions}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Overall Score:</span>
+                        <span className="ml-1">{parseFloat(suggestion.supportingMetrics.overallScore).toFixed(1)}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Engagement:</span>
+                        <span className="ml-1">{parseFloat(suggestion.supportingMetrics.engagementScore).toFixed(1)}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Consistency:</span>
+                        <span className="ml-1">{parseFloat(suggestion.supportingMetrics.consistencyScore).toFixed(1)}</span>
+                      </div>
+                    </div>
                   </div>
+                )}
+
+                <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                  <Button
+                    size="sm"
+                    onClick={() => acceptSuggestionMutation.mutate(suggestion.id)}
+                    disabled={acceptSuggestionMutation.isPending}
+                    className="flex-1"
+                    data-testid={`button-accept-${suggestion.id}`}
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    Apply Ranking
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => dismissSuggestionMutation.mutate(suggestion.id)}
+                    disabled={dismissSuggestionMutation.isPending}
+                    data-testid={`button-dismiss-${suggestion.id}`}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Dismiss
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setExpandedSuggestion(
+                      expandedSuggestion === suggestion.id ? null : suggestion.id
+                    )}
+                    data-testid={`button-toggle-details-${suggestion.id}`}
+                  >
+                    {expandedSuggestion === suggestion.id ? "Less" : "Details"}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
