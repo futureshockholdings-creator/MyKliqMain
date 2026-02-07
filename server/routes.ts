@@ -12375,17 +12375,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/friend-ranking/generate', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      console.log(`[SmartRanking] Generating suggestions for user: ${userId}`);
+      
+      // Ensure DB constraints exist (safe, idempotent)
+      await friendRankingIntelligence.ensureDbConstraints();
       
       // Update analytics for all friends first
       const friendships = await storage.getUserFriendships(userId);
+      console.log(`[SmartRanking] Found ${friendships.length} friendships`);
       
-      // Update interaction analytics for each friendship
+      // Update interaction analytics for each friendship (continue on individual failures)
       for (const friendship of friendships) {
-        await friendRankingIntelligence.updateInteractionAnalytics(userId, friendship.friendId);
+        try {
+          await friendRankingIntelligence.updateInteractionAnalytics(userId, friendship.friendId);
+          console.log(`[SmartRanking] Updated analytics for friend: ${friendship.friendId}`);
+        } catch (analyticsError: any) {
+          console.error(`[SmartRanking] Failed to update analytics for friend ${friendship.friendId}:`, analyticsError?.message || analyticsError);
+        }
       }
       
       // Generate new ranking suggestions
       const suggestions = await friendRankingIntelligence.generateRankingSuggestions(userId);
+      console.log(`[SmartRanking] Generated ${suggestions.length} suggestions`);
       
       // Store the suggestions
       await friendRankingIntelligence.storeRankingSuggestions(suggestions);
@@ -12395,8 +12406,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         count: suggestions.length,
         suggestions 
       });
-    } catch (error) {
-      console.error("Error generating ranking suggestions:", error);
+    } catch (error: any) {
+      console.error("[SmartRanking] Error generating ranking suggestions:", error?.message || error);
+      console.error("[SmartRanking] Stack:", error?.stack);
       res.status(500).json({ message: "Failed to generate ranking suggestions" });
     }
   });

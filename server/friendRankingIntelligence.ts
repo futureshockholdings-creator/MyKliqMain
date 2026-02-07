@@ -25,6 +25,25 @@ import { eq, and, desc, sql, gte } from 'drizzle-orm';
 // Smart Friend Ranking Intelligence System
 export class FriendRankingIntelligence {
   
+  async ensureDbConstraints(): Promise<void> {
+    try {
+      await db.execute(sql`
+        DO $$ BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint 
+            WHERE conname = 'user_interaction_analytics_user_friend_unique'
+          ) THEN
+            ALTER TABLE user_interaction_analytics 
+            ADD CONSTRAINT user_interaction_analytics_user_friend_unique 
+            UNIQUE (user_id, friend_id);
+          END IF;
+        END $$;
+      `);
+    } catch (e) {
+      console.log("[SmartRanking] Could not ensure DB constraints (non-critical):", (e as any)?.message);
+    }
+  }
+  
   // Weighted scoring factors (adjustable based on analysis)
   private static readonly SCORING_WEIGHTS = {
     messagesSent: 3.0,
@@ -208,17 +227,29 @@ export class FriendRankingIntelligence {
   async updateInteractionAnalytics(userId: string, friendId: string): Promise<void> {
     const analytics = await this.calculateInteractionAnalytics(userId, friendId);
     
-    // Upsert the analytics data
-    await db
-      .insert(userInteractionAnalytics)
-      .values(analytics)
-      .onConflictDoUpdate({
-        target: [userInteractionAnalytics.userId, userInteractionAnalytics.friendId],
-        set: {
+    // Manual upsert: check if record exists, then update or insert
+    const existing = await db
+      .select({ id: userInteractionAnalytics.id })
+      .from(userInteractionAnalytics)
+      .where(and(
+        eq(userInteractionAnalytics.userId, userId),
+        eq(userInteractionAnalytics.friendId, friendId)
+      ))
+      .limit(1);
+
+    if (existing.length > 0) {
+      await db
+        .update(userInteractionAnalytics)
+        .set({
           ...analytics,
           updatedAt: new Date(),
-        },
-      });
+        })
+        .where(eq(userInteractionAnalytics.id, existing[0].id));
+    } else {
+      await db
+        .insert(userInteractionAnalytics)
+        .values(analytics);
+    }
   }
 
   /**
