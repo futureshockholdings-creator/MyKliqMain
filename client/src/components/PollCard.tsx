@@ -64,10 +64,18 @@ export function PollCard({ poll }: PollCardProps) {
     mutationFn: async () => {
       await apiRequest("DELETE", `/api/polls/${poll.id}`);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/polls');
+        await enhancedCache.removeByPattern('/api/kliq-feed');
+      } catch (e) {}
       queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
       queryClient.invalidateQueries({ queryKey: ["/api/polls", "mine"] });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/polls"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/polls", "mine"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
         title: "Poll deleted",
         description: "Your poll has been removed",

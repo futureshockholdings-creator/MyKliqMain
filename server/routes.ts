@@ -9141,7 +9141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Poll not found" });
       }
       
-      if (poll.authorId !== userId) {
+      if (poll.userId !== userId) {
         return res.status(403).json({ message: "You can only delete your own polls" });
       }
       
