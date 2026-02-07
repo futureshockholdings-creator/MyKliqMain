@@ -7835,24 +7835,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: content.trim()
       });
       
-      // Create notification for the action author
-      const action = await storage.getActionById(actionId);
-      if (action && action.userId !== userId) {
-        const commenter = await storage.getUser(userId);
-        const commenterName = commenter?.firstName && commenter?.lastName 
-          ? `${commenter.firstName} ${commenter.lastName}` 
-          : commenter?.username || 'Someone';
-        await storage.createNotification({
-          userId: action.userId,
-          type: 'action_comment',
-          message: `${commenterName} commented on your video "${action.title}"`,
-          relatedEntityId: actionId,
-          relatedEntityType: 'action',
-          isRead: false
-        });
-      }
-      
       res.json(comment);
+
+      (async () => {
+        try {
+          const action = await storage.getActionById(actionId);
+          if (action && action.userId !== userId) {
+            const commenter = await storage.getUser(userId);
+            const commenterName = commenter?.firstName && commenter?.lastName 
+              ? `${commenter.firstName} ${commenter.lastName}` 
+              : commenter?.username || 'Someone';
+            await notificationService.createNotification({
+              userId: action.userId,
+              type: 'action_comment',
+              message: `${commenterName} commented on your video "${action.title}"`,
+              relatedEntityId: actionId,
+              relatedEntityType: 'action',
+              isRead: false
+            });
+
+            if ((app as any).broadcastNotification) {
+              (app as any).broadcastNotification(action.userId);
+            }
+          }
+        } catch (notifError) {
+          console.error("Error sending action comment notification:", notifError);
+        }
+      })();
     } catch (error) {
       console.error("Error adding action comment:", error);
       res.status(500).json({ message: "Failed to add comment" });
@@ -8024,7 +8033,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const likerName = liker?.firstName && liker?.lastName 
             ? `${liker.firstName} ${liker.lastName}` 
             : liker?.username || 'Someone';
-          await storage.createNotification({
+          await notificationService.createNotification({
             userId: action.userId,
             type: 'action_like',
             message: `${likerName} liked your video "${action.title}"`,
@@ -8032,6 +8041,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             relatedEntityType: 'action',
             isRead: false
           });
+
+          if ((app as any).broadcastNotification) {
+            (app as any).broadcastNotification(action.userId);
+          }
         }
       }
       
