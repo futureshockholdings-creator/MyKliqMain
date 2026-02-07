@@ -84,8 +84,12 @@ export function Messages() {
     },
     onSuccess: () => {
       enhancedCache.removeByPattern('/api/messages');
-      queryClient.invalidateQueries({ queryKey: ["/api/messages/conversations"] });
       toast({ title: "Conversation deleted" });
+    },
+    onSettled: () => {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/messages/conversations"] });
+      }, 1500);
     },
   });
 
