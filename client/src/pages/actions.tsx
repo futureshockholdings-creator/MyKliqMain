@@ -1091,17 +1091,6 @@ export default function Actions() {
                       webkit-playsinline="true"
                       className="w-full rounded-lg aspect-video bg-black"
                       preload="metadata"
-                      onLoadedMetadata={(e) => {
-                        const video = e.currentTarget;
-                        if (video.duration === Infinity || isNaN(video.duration) || video.duration === 0) {
-                          video.currentTime = 1e101;
-                          const onTimeUpdate = () => {
-                            video.removeEventListener('timeupdate', onTimeUpdate);
-                            video.currentTime = 0;
-                          };
-                          video.addEventListener('timeupdate', onTimeUpdate);
-                        }
-                      }}
                     >
                       <source 
                         src={resolveAssetUrl(recording.recordingUrl)} 
