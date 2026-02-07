@@ -7838,7 +7838,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const action = await storage.getActionById(actionId);
           console.log(`[Action Comment Notification] actionId=${actionId}, commenterId=${userId}, actionFound=${!!action}, actionOwnerId=${action?.userId}, isSelfComment=${action?.userId === userId}`);
-          if (action && action.userId !== userId) {
+          if (action) {
             const commenter = await storage.getUser(userId);
             const commenterName = commenter?.firstName && commenter?.lastName 
               ? `${commenter.firstName} ${commenter.lastName}` 
@@ -8033,7 +8033,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (result?.liked) {
         const action = await storage.getActionById(actionId);
         console.log(`[Action Like Notification] actionFound=${!!action}, actionOwnerId=${action?.userId}, isSelfLike=${action?.userId === userId}`);
-        if (action && action.userId !== userId) {
+        if (action) {
           const liker = await storage.getUser(userId);
           const likerName = liker?.firstName && liker?.lastName 
             ? `${liker.firstName} ${liker.lastName}` 
