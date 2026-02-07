@@ -9129,7 +9129,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/polls/:pollId', isAuthenticated, async (req: any, res) => {
     try {
       const { pollId } = req.params;
-      const userId = req.user?.id || req.user?.claims?.sub;
+      const userId = req.user?.claims?.sub || req.user?.id;
+      
+      console.log(`[Delete Poll] pollId=${pollId}, userId=${userId}, req.user.id=${req.user?.id}, req.user.claims.sub=${req.user?.claims?.sub}`);
       
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -9138,8 +9140,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the poll to verify ownership
       const poll = await storage.getPollById(pollId);
       if (!poll) {
+        console.log(`[Delete Poll] Poll not found: ${pollId}`);
         return res.status(404).json({ message: "Poll not found" });
       }
+      
+      console.log(`[Delete Poll] poll.userId=${poll.userId}, matches=${poll.userId === userId}`);
       
       if (poll.userId !== userId) {
         return res.status(403).json({ message: "You can only delete your own polls" });
@@ -9148,9 +9153,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Delete the poll
       await storage.deletePoll(pollId);
       
-      // Invalidate feed cache
-      await cacheService.invalidatePattern('kliq-feed');
+      // Invalidate all relevant caches
+      const { invalidateCache } = await import('./cache');
       invalidateCache('kliq-feed');
+      invalidateCache('posts');
+      invalidateCache('polls');
+      const { cacheService } = await import('./cacheService');
+      await cacheService.invalidatePattern('kliq-feed:');
+      await cacheService.invalidatePattern('polls:');
       
       res.json({ message: "Poll deleted successfully" });
     } catch (error) {
