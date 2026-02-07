@@ -12669,6 +12669,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const newUserBorder = await storage.purchaseBorder(userId, borderId);
       
+      await cacheService.invalidatePattern(`user:${userId}`);
+      await cacheService.invalidatePattern('borders');
+      
       res.json({ 
         success: true, 
         border: newUserBorder,

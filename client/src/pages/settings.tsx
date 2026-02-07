@@ -1073,10 +1073,20 @@ export default function Settings() {
     mutationFn: async (borderId: string) => {
       return await apiRequest("POST", "/api/kliq-koins/purchase-border", { borderId });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/borders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/my-borders"] });
+    onSuccess: async () => {
+      try {
+        const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
+        await enhancedCache.removeByPattern('/api/kliq-koins');
+      } catch (e) {
+        console.log('Cache clear error (non-critical):', e);
+      }
+
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/kliq-koins/wallet"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/kliq-koins/borders"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/kliq-koins/my-borders"] }),
+      ]);
+
       toast({
         title: "Border Purchased! 🎉",
         description: "Your new border has been added to your collection.",
