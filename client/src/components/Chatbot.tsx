@@ -45,12 +45,12 @@ const knowledgeBase: KnowledgeBase = {
   },
   messages: {
     keywords: ['messages', 'chat', 'dm', 'direct message', 'conversation', 'im', 'message circle icon', 'incognito', 'private'],
-    response: "Messages/IM page (💬 MessageCircle icon) offers two types of private conversations: 1) Regular messaging - standard private chats with text, photos, videos, GIFs, and moviecons, 2) Incognito messaging - ultra-private conversations that auto-delete after 7 days for maximum privacy. All message types show notification badges for unread messages and support rich media sharing.",
+    response: "Messages/IM page (💬 MessageCircle icon) offers two types of private conversations: 1) Regular messaging - standard private chats with text, photos, videos, GIFs, and moviecons, 2) Incognito messaging - ultra-private conversations that auto-delete after 3 days for maximum privacy. All message types show notification badges for unread messages and support rich media sharing.",
     relatedTopics: ['chat', 'media', 'navigation', 'incognito', 'privacy']
   },
   incognito: {
     keywords: ['incognito', 'private', 'secret', 'auto-delete', 'temporary messages', 'disappearing', 'privacy'],
-    response: "Incognito messaging is MyKliq's ultra-private chat feature. Key features: 1) Complete auto-deletion - entire conversations and all messages are permanently deleted after 7 days, 2) Enhanced privacy protection - no permanent record kept in database, 3) Automatic cleanup runs hourly, 4) Same rich media support as regular messages, 5) Perfect for sensitive or temporary conversations that require maximum confidentiality.",
+    response: "Incognito messaging is MyKliq's ultra-private chat feature. Key features: 1) Complete auto-deletion - entire conversations and all messages are permanently deleted after 3 days, 2) Enhanced privacy protection - no permanent record kept in database, 3) Automatic cleanup runs hourly, 4) Same rich media support as regular messages, 5) Perfect for sensitive or temporary conversations that require maximum confidentiality.",
     relatedTopics: ['messages', 'privacy', 'auto-delete', 'security']
   },
   meetup: {

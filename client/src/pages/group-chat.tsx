@@ -305,7 +305,7 @@ export function GroupChat() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Messages auto-delete after 7 days
+            Messages auto-delete after 3 days
           </p>
         </form>
 
