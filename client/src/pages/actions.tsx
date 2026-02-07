@@ -82,8 +82,11 @@ export default function Actions() {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [processingActionId, setProcessingActionId] = useState<string | null>(null);
+  const [processingTitle, setProcessingTitle] = useState<string>("");
   
   const videoRef = useRef<HTMLVideoElement>(null);
+  const myRecordingsRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const recordingStartTimeRef = useRef<number | null>(null);
@@ -518,11 +521,6 @@ export default function Actions() {
       
       recordedChunksRef.current = [];
       
-      toast({
-        title: "Recording saved!",
-        description: "Your stream recording has been saved.",
-      });
-      
       return data.recordingUrl;
     } catch (error: any) {
       const errMsg = error?.message || String(error);
@@ -588,13 +586,9 @@ export default function Actions() {
   const handleEndAction = async () => {
     if (selectedAction) {
       const actionId = selectedAction.id;
+      const actionTitle = selectedAction.title || "Stream";
       const recorder = mediaRecorderRef.current;
       const hasRecording = recorder && recorder.state !== 'inactive';
-      
-      toast({
-        title: "Stream ended!",
-        description: hasRecording ? "Your recording is being saved..." : "Your live stream has ended.",
-      });
       
       if (ws) {
         ws.send(JSON.stringify({
@@ -631,6 +625,21 @@ export default function Actions() {
           }
         });
         
+        stopStream();
+        setSelectedAction(null);
+        setIsStreaming(false);
+        if (ws) {
+          ws.close();
+          setWs(null);
+        }
+        
+        setProcessingActionId(actionId);
+        setProcessingTitle(actionTitle);
+        
+        setTimeout(() => {
+          myRecordingsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+        
         try {
           await apiRequest("PUT", `/api/actions/${actionId}/end`);
           console.log('[EndAction] Action ended via API');
@@ -638,7 +647,10 @@ export default function Actions() {
           console.error('[EndAction] Error ending action:', e);
         }
         
-        await uploadRecording(actionId);
+        const result = await uploadRecording(actionId);
+        
+        setProcessingActionId(null);
+        setProcessingTitle("");
         
         try {
           const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
@@ -651,12 +663,11 @@ export default function Actions() {
         await queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
         await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
         
-        stopStream();
-        setSelectedAction(null);
-        setIsStreaming(false);
-        if (ws) {
-          ws.close();
-          setWs(null);
+        if (result) {
+          toast({
+            title: "Recording saved!",
+            description: "Your stream recording is ready to view.",
+          });
         }
       } else {
         endActionMutation.mutate(actionId);
@@ -1052,9 +1063,22 @@ export default function Actions() {
         )}
 
       {/* My Recordings Section */}
-      <div className="mt-8">
+      <div className="mt-8" ref={myRecordingsRef}>
         <h2 className="text-xl font-semibold text-white mb-4">My Recordings</h2>
         <p className="text-gray-400 text-sm mb-4">Your last 10 recorded streams (oldest auto-deleted when limit reached)</p>
+        
+        {processingActionId && (
+          <Card className="bg-gray-800 border-purple-500 border-2 mb-4 animate-pulse">
+            <CardContent className="py-8 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                <h3 className="text-white font-semibold">Processing Stream Recording</h3>
+                <p className="text-gray-400 text-sm">"{processingTitle}" is being uploaded and processed...</p>
+                <p className="text-gray-500 text-xs">This may take a few seconds</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         {recordingsLoading ? (
           <Card className="bg-gray-800 border-gray-700">
