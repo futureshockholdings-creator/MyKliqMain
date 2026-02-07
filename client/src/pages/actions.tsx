@@ -319,15 +319,17 @@ export default function Actions() {
       }
       
       recordedChunksRef.current = [];
-      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') 
-        ? 'video/webm;codecs=vp9,opus'
-        : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
-          ? 'video/webm;codecs=vp8,opus'
-          : MediaRecorder.isTypeSupported('video/webm')
-            ? 'video/webm'
-            : MediaRecorder.isTypeSupported('video/mp4')
-              ? 'video/mp4'
-              : '';
+      const mimeType = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1,mp4a.40.2')
+        ? 'video/mp4;codecs=avc1,mp4a.40.2'
+        : MediaRecorder.isTypeSupported('video/mp4')
+          ? 'video/mp4'
+          : MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+            ? 'video/webm;codecs=vp8,opus'
+            : MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+              ? 'video/webm;codecs=vp9,opus'
+              : MediaRecorder.isTypeSupported('video/webm')
+                ? 'video/webm'
+                : '';
       
       if (!mimeType) {
         toast({
@@ -1090,12 +1092,10 @@ export default function Actions() {
                       playsInline
                       webkit-playsinline="true"
                       className="w-full rounded-lg aspect-video bg-black"
-                      preload="metadata"
+                      preload="auto"
+                      src={resolveAssetUrl(recording.recordingUrl)}
                     >
-                      <source 
-                        src={resolveAssetUrl(recording.recordingUrl)} 
-                        type={recording.recordingUrl.endsWith('.mp4') ? 'video/mp4' : 'video/webm'} 
-                      />
+                      Your browser does not support video playback.
                     </video>
                   )}
                   
