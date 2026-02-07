@@ -650,32 +650,6 @@ export default function Actions() {
         queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
         await queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
         await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
-
-        setTimeout(async () => {
-          try {
-            const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
-            await enhancedCache.removeByPattern('/api/actions');
-            await enhancedCache.removeByPattern('/api/kliq-feed');
-          } catch (e) {}
-          queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-          queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
-          queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
-        }, 8000);
-
-        setTimeout(async () => {
-          try {
-            const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
-            await enhancedCache.removeByPattern('/api/actions');
-            await enhancedCache.removeByPattern('/api/kliq-feed');
-          } catch (e) {}
-          queryClient.invalidateQueries({ queryKey: ["/api/actions"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/actions/my-recordings"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-          queryClient.refetchQueries({ queryKey: ["/api/actions/my-recordings"] });
-          queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
-        }, 15000);
         
         stopStream();
         setSelectedAction(null);

@@ -7610,20 +7610,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[UPLOAD] SUCCESS: Recording uploaded for action ${actionId}: ${recordingUrl} (${(req.file.size / 1024 / 1024).toFixed(2)}MB)`);
       
-      res.json({ success: true, recordingUrl });
-
-      thumbnailService.generateThumbnailFromVideo(recordingUrl, `action_${actionId}`)
-        .then(async (thumbnailUrl) => {
-          if (thumbnailUrl) {
-            await storage.updateAction(actionId, { thumbnailUrl });
-            console.log(`✅ Generated thumbnail for action recording: ${actionId} -> ${thumbnailUrl}`);
-          } else {
-            console.log(`⚠️ Thumbnail generation returned null for action: ${actionId}`);
-          }
-        })
-        .catch((err) => {
-          console.error(`❌ Thumbnail generation failed for action: ${actionId}`, err?.message);
-        });
+      let thumbnailUrl: string | null = null;
+      try {
+        thumbnailUrl = await thumbnailService.generateThumbnailFromVideo(recordingUrl, `action_${actionId}`);
+        if (thumbnailUrl) {
+          await storage.updateAction(actionId, { thumbnailUrl });
+          console.log(`✅ Generated thumbnail for action recording: ${actionId} -> ${thumbnailUrl}`);
+        }
+      } catch (err: any) {
+        console.error(`❌ Thumbnail generation failed for action: ${actionId}`, err?.message);
+      }
+      
+      res.json({ success: true, recordingUrl, thumbnailUrl });
     } catch (error: any) {
       console.error("[UPLOAD] FAILED with error:", error?.message || error, error?.stack?.substring(0, 500));
       res.status(500).json({ message: "Failed to upload recording" });
@@ -7761,20 +7759,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       chunkedUploads.delete(uploadId);
 
       console.log(`[CHUNK-UPLOAD] SUCCESS: ${recordingUrl}`);
-      res.json({ success: true, recordingUrl });
-
-      thumbnailService.generateThumbnailFromVideo(recordingUrl, `action_${session.actionId}`)
-        .then(async (thumbnailUrl) => {
-          if (thumbnailUrl) {
-            await storage.updateAction(session.actionId, { thumbnailUrl });
-            console.log(`✅ Generated thumbnail for action recording: ${session.actionId} -> ${thumbnailUrl}`);
-          } else {
-            console.log(`⚠️ Thumbnail generation returned null for action: ${session.actionId}`);
-          }
-        })
-        .catch((err) => {
-          console.error(`❌ Thumbnail generation failed for action: ${session.actionId}`, err?.message);
-        });
+      
+      let thumbnailUrl: string | null = null;
+      try {
+        thumbnailUrl = await thumbnailService.generateThumbnailFromVideo(recordingUrl, `action_${session.actionId}`);
+        if (thumbnailUrl) {
+          await storage.updateAction(session.actionId, { thumbnailUrl });
+          console.log(`✅ Generated thumbnail for action recording: ${session.actionId} -> ${thumbnailUrl}`);
+        }
+      } catch (err: any) {
+        console.error(`❌ Thumbnail generation failed for action: ${session.actionId}`, err?.message);
+      }
+      
+      res.json({ success: true, recordingUrl, thumbnailUrl });
     } catch (error: any) {
       console.error("[CHUNK-UPLOAD] Complete error:", error?.message, error?.stack?.substring(0, 300));
       res.status(500).json({ message: "Failed to finalize upload" });
