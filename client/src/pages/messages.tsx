@@ -183,75 +183,68 @@ export function Messages() {
                 : `link-conversation-${(conversation as IndividualConversation).otherUser.id}`;
               
               return (
-                <div 
+                <Link
                   key={conversation.id}
-                  className="flex items-center gap-2"
+                  to={linkTo}
+                  data-testid={testId}
                 >
-                  <Link
-                    to={linkTo}
-                    className="flex-1"
-                    data-testid={testId}
-                  >
-                    <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-white text-black hover:bg-gray-50 transition-colors cursor-pointer h-20 w-96">
-                      {isGroup ? (
-                        <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                          <Users className="w-6 h-6 text-purple-600" />
+                  <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-white text-black hover:bg-gray-50 transition-colors cursor-pointer">
+                    {isGroup ? (
+                      <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                        <Users className="w-6 h-6 text-purple-600" />
+                      </div>
+                    ) : (
+                      <Avatar className="w-12 h-12 flex-shrink-0">
+                        <AvatarImage src={resolveAssetUrl((conversation as IndividualConversation).otherUser.profileImageUrl)} />
+                        <AvatarFallback className="bg-blue-100 text-blue-600">
+                          {getInitials((conversation as IndividualConversation).otherUser)}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <h3 className="font-semibold text-black truncate max-w-[120px] sm:max-w-[180px]" data-testid={isGroup ? `text-groupname-${conversation.id}` : `text-username-${(conversation as IndividualConversation).otherUser.id}`}>
+                            {isGroup 
+                              ? (conversation as GroupConversation).groupName 
+                              : getDisplayName((conversation as IndividualConversation).otherUser)}
+                          </h3>
+                          {isGroup && (
+                            <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 flex-shrink-0">
+                              Group
+                            </Badge>
+                          )}
                         </div>
-                      ) : (
-                        <Avatar className="w-12 h-12 flex-shrink-0">
-                          <AvatarImage src={resolveAssetUrl((conversation as IndividualConversation).otherUser.profileImageUrl)} />
-                          <AvatarFallback className="bg-blue-100 text-blue-600">
-                            {getInitials((conversation as IndividualConversation).otherUser)}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs text-gray-500 whitespace-nowrap" data-testid={`text-time-${conversation.id}`}>
+                            {formatDistanceToNow(new Date(conversation.lastActivity), { addSuffix: true })}
+                          </span>
+                          <button
+                            className="text-red-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors"
+                            onClick={(e) => handleDelete(e, conversation)}
+                            disabled={deleteConversationMutation.isPending}
+                            data-testid={`btn-delete-${conversation.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {conversation.lastMessage && (
+                        <p className="text-sm text-gray-600 truncate mt-1" data-testid={`text-last-message-${conversation.id}`}>
+                          {conversation.lastMessage.content}
+                        </p>
                       )}
                       
-                      <div className="flex-1 min-w-0 overflow-hidden">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            <h3 className="font-semibold text-black truncate max-w-[120px] sm:max-w-[180px]" data-testid={isGroup ? `text-groupname-${conversation.id}` : `text-username-${(conversation as IndividualConversation).otherUser.id}`}>
-                              {isGroup 
-                                ? (conversation as GroupConversation).groupName 
-                                : getDisplayName((conversation as IndividualConversation).otherUser)}
-                            </h3>
-                            {isGroup && (
-                              <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 flex-shrink-0">
-                                Group
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="text-xs text-gray-500 whitespace-nowrap" data-testid={`text-time-${conversation.id}`}>
-                              {formatDistanceToNow(new Date(conversation.lastActivity), { addSuffix: true })}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {conversation.lastMessage && (
-                          <p className="text-sm text-gray-600 truncate mt-1" data-testid={`text-last-message-${conversation.id}`}>
-                            {conversation.lastMessage.content}
-                          </p>
-                        )}
-                        
-                        {isGroup && (
-                          <p className="text-xs text-gray-500 mt-1 truncate">
-                            {(conversation as GroupConversation).participants.length} members
-                          </p>
-                        )}
-                      </div>
+                      {isGroup && (
+                        <p className="text-xs text-gray-500 mt-1 truncate">
+                          {(conversation as GroupConversation).participants.length} members
+                        </p>
+                      )}
                     </div>
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50 p-2"
-                    onClick={(e) => handleDelete(e, conversation)}
-                    disabled={deleteConversationMutation.isPending}
-                    data-testid={`btn-delete-${conversation.id}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                  </div>
+                </Link>
               );
             })}
           </div>

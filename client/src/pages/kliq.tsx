@@ -734,6 +734,8 @@ export default function Kliq() {
       setIsGroupChatDialogOpen(false);
       setSelectedParticipants([]);
       setGroupChatName("");
+      enhancedCache.removeByPattern('/api/messages');
+      queryClient.invalidateQueries({ queryKey: ["/api/messages/conversations"] });
       toast({
         title: "Group chat created!",
         description: "Your group chat has been created",
