@@ -7837,12 +7837,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       (async () => {
         try {
           const action = await storage.getActionById(actionId);
+          console.log(`[Action Comment Notification] actionId=${actionId}, commenterId=${userId}, actionFound=${!!action}, actionOwnerId=${action?.userId}, isSelfComment=${action?.userId === userId}`);
           if (action && action.userId !== userId) {
             const commenter = await storage.getUser(userId);
             const commenterName = commenter?.firstName && commenter?.lastName 
               ? `${commenter.firstName} ${commenter.lastName}` 
               : commenter?.username || 'Someone';
-            await notificationService.createNotification({
+            const notification = await notificationService.createNotification({
               userId: action.userId,
               type: 'comment',
               title: 'New comment on your video',
@@ -7851,10 +7852,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
               relatedType: 'action',
               isRead: false
             });
+            console.log(`[Action Comment Notification] Created notification:`, notification?.id);
 
             if ((app as any).broadcastNotification) {
               (app as any).broadcastNotification(action.userId);
+              console.log(`[Action Comment Notification] Broadcast sent to user ${action.userId}`);
             }
+          } else {
+            console.log(`[Action Comment Notification] Skipped: action not found or self-comment`);
           }
         } catch (notifError) {
           console.error("Error sending action comment notification:", notifError);
@@ -8024,26 +8029,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.toggleActionLike(actionId, userId);
       
       // Create notification for the action author if it's a new like
+      console.log(`[Action Like Notification] actionId=${actionId}, likerId=${userId}, liked=${result?.liked}`);
       if (result?.liked) {
         const action = await storage.getActionById(actionId);
+        console.log(`[Action Like Notification] actionFound=${!!action}, actionOwnerId=${action?.userId}, isSelfLike=${action?.userId === userId}`);
         if (action && action.userId !== userId) {
           const liker = await storage.getUser(userId);
           const likerName = liker?.firstName && liker?.lastName 
             ? `${liker.firstName} ${liker.lastName}` 
             : liker?.username || 'Someone';
-          await notificationService.createNotification({
-            userId: action.userId,
-            type: 'post_like',
-            title: 'Video liked',
-            message: `${likerName} liked your video "${action.title}"`,
-            relatedId: actionId,
-            relatedType: 'action',
-            isRead: false
-          });
+          try {
+            const notification = await notificationService.createNotification({
+              userId: action.userId,
+              type: 'post_like',
+              title: 'Video liked',
+              message: `${likerName} liked your video "${action.title}"`,
+              relatedId: actionId,
+              relatedType: 'action',
+              isRead: false
+            });
+            console.log(`[Action Like Notification] Created notification:`, notification?.id);
+          } catch (notifErr) {
+            console.error(`[Action Like Notification] Failed to create notification:`, notifErr);
+          }
 
           if ((app as any).broadcastNotification) {
             (app as any).broadcastNotification(action.userId);
+            console.log(`[Action Like Notification] Broadcast sent to user ${action.userId}`);
           }
+        } else {
+          console.log(`[Action Like Notification] Skipped: action not found or self-like`);
         }
       }
       
