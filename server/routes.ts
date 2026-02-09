@@ -5145,7 +5145,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Invalidate user profile cache
       await cacheService.del(`user:profile:${userId}`);
 
-      res.status(200).json({ objectPath });
+      // Return the full updated user so the client can update its cache immediately
+      const updatedUser = await storage.getUser(userId);
+      res.status(200).json(updatedUser);
     } catch (error) {
       console.error("Error updating profile picture:", error);
       res.status(500).json({ error: "Internal server error" });

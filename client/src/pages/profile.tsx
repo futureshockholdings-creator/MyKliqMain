@@ -77,20 +77,17 @@ export default function Profile() {
     onSuccess: async (updatedUser) => {
       console.log('[ProfilePicture] Server response:', updatedUser);
       
-      // Clear enterprise cache first to prevent stale data from repopulating
       await enhancedCache.removeByPattern('/api/auth/user');
       await enhancedCache.removeByPattern('/api/user');
       
-      // Force browser to refetch images by updating the global cache key
       (window as any).__profileCacheKey = Date.now();
       
-      // Directly update TanStack Query cache with the response data
       if (updatedUser && updatedUser.id) {
         console.log('[ProfilePicture] Setting query data with updated user, profileImageUrl:', updatedUser.profileImageUrl);
         queryClient.setQueryData(["/api/auth/user"], updatedUser);
-      } else {
-        console.warn('[ProfilePicture] No valid user data returned from server');
       }
+      
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
         title: "Success",
