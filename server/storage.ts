@@ -5495,17 +5495,19 @@ export class DatabaseStorage implements IStorage {
     const RESTORE_COST = 10;
     
     return await db.transaction(async (tx) => {
-      // Get current streak data
       const [currentStreak] = await tx
         .select()
         .from(loginStreaks)
         .where(eq(loginStreaks.userId, userId));
 
-      if (!currentStreak || currentStreak.previousStreak === 0) {
+      if (!currentStreak || currentStreak.longestStreak === 0) {
         throw new Error('No streak available to restore');
       }
 
-      // Get user's koin balance within the same transaction
+      if (currentStreak.currentStreak >= currentStreak.longestStreak) {
+        throw new Error('Your current streak is already at or above your longest streak');
+      }
+
       const [userKoins] = await tx
         .select()
         .from(kliqKoins)
@@ -5517,13 +5519,11 @@ export class DatabaseStorage implements IStorage {
 
       const newBalance = parseFloat(userKoins.balance as any) - RESTORE_COST;
 
-      // Deduct koins within the same transaction
       await tx
         .update(kliqKoins)
         .set({ balance: newBalance, updatedAt: new Date() })
         .where(eq(kliqKoins.userId, userId));
 
-      // Record the transaction within the same transaction
       await tx.insert(kliqKoinTransactions).values({
         userId,
         amount: -RESTORE_COST,
@@ -5532,13 +5532,12 @@ export class DatabaseStorage implements IStorage {
         balanceAfter: newBalance,
       });
 
-      // Restore the streak and clear previousStreak
       const [updatedStreak] = await tx
         .update(loginStreaks)
         .set({ 
-          currentStreak: currentStreak.previousStreak,
-          previousStreak: 0, // Clear so they can't restore again
-          lastLoginDate: new Date().toISOString().split('T')[0] as any, // Update last login to today
+          currentStreak: currentStreak.longestStreak,
+          previousStreak: 0,
+          lastLoginDate: new Date().toISOString().split('T')[0] as any,
           updatedAt: new Date() 
         })
         .where(eq(loginStreaks.userId, userId))

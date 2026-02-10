@@ -41,7 +41,8 @@ export function StreakDashboardCard({ streakData, isLoading, onRestoreStreak, is
 
   const currentStreak = streakData?.currentStreak || 0;
   const longestStreak = streakData?.longestStreak || 0;
-  const previousStreak = streakData?.previousStreak || 0;
+
+  const canRestore = longestStreak > 0 && currentStreak < longestStreak;
 
   const nextTier = STREAK_TIERS.find(t => t.tier > currentStreak);
   const progressToNext = nextTier 
@@ -81,17 +82,17 @@ export function StreakDashboardCard({ streakData, isLoading, onRestoreStreak, is
           </div>
         )}
 
-        {previousStreak > 0 && (
+        {canRestore && (
           <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg border border-orange-400/50">
             <div className="flex items-center gap-2">
               <RotateCcw className="w-5 h-5 text-orange-400" />
               <div>
                 <div className="text-white font-medium">Restore Your Streak</div>
-                <div className="text-purple-300 text-sm">Get back your {previousStreak} day streak</div>
+                <div className="text-purple-300 text-sm">Get back your {longestStreak} day streak</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-orange-500/20 text-orange-300">{previousStreak} days</Badge>
+              <Badge variant="secondary" className="bg-orange-500/20 text-orange-300">{longestStreak} days</Badge>
               <Button
                 size="sm"
                 onClick={onRestoreStreak}

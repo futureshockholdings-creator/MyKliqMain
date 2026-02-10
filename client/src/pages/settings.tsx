@@ -1187,12 +1187,18 @@ export default function Settings() {
     mutationFn: async () => {
       return await apiRequest("POST", "/api/kliq-koins/restore-streak", {});
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/streak"] });
+    onSuccess: async (data: any) => {
+      await enhancedCache.removeByPattern('/api/kliq-koins/');
+      
+      if (data?.streak) {
+        queryClient.setQueryData(["/api/kliq-koins/streak"], data.streak);
+      }
+      
+      await queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/wallet"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/kliq-koins/streak"] });
       toast({
-        title: "Streak Restored! 🔥",
-        description: "Your streak has been restored successfully.",
+        title: "Streak Restored!",
+        description: `Your streak has been restored to ${data?.streak?.currentStreak || 'your longest'} days!`,
       });
     },
     onError: (error: any) => {
