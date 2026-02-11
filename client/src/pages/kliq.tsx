@@ -23,6 +23,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
 import { PageWrapper } from "@/components/PageWrapper";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
+import { getAuthToken, isTokenExpired } from "@/lib/tokenStorage";
 import html2canvas from "html2canvas";
 
 export default function Kliq() {
@@ -712,9 +713,14 @@ export default function Kliq() {
       const blob = await response.blob();
 
       const baseUrl = getApiBaseUrl();
+      const uploadHeaders: Record<string, string> = { "Content-Type": "image/png" };
+      const token = getAuthToken();
+      if (token && !isTokenExpired(token)) {
+        uploadHeaders["Authorization"] = `Bearer ${token}`;
+      }
       const uploadRes = await fetch(`${baseUrl}/api/media/upload-direct`, {
         method: "POST",
-        headers: { "Content-Type": "image/png" },
+        headers: uploadHeaders,
         body: blob,
         credentials: "include",
       });
@@ -1261,11 +1267,10 @@ export default function Kliq() {
           {friends.length > 0 && (
             <div className="flex justify-between items-center">
               <Button
-                variant="outline"
                 size="sm"
                 onClick={handleCapturePyramid}
                 disabled={isCapturingPyramid}
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 data-testid="button-post-pyramid"
               >
                 <Share2 className="w-4 h-4 mr-2" />
