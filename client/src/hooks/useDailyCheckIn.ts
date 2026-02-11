@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 
-const LAST_CHECKIN_PREFIX = "mykliq_last_checkin_";
+const LAST_CHECKIN_PREFIX = "mykliq_last_checkin_v2_";
 
 function getEstLoginDay(): string {
   const now = new Date();
