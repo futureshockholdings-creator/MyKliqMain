@@ -5411,20 +5411,18 @@ export class DatabaseStorage implements IStorage {
         userStreak = await this.initializeUserStreak(userId);
       }
 
-      // Get current time in EST/EDT (America/New_York timezone)
       const now = new Date();
       const estTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
       
-      // Calculate the "login day" based on noon EST reset time
-      // If it's before noon EST, use yesterday's date as the login day
-      // If it's noon or after, use today's date as the login day
       const hour = estTime.getHours();
       const loginDay = new Date(estTime);
       if (hour < 12) {
-        // Before noon EST - use yesterday as the login day
         loginDay.setDate(loginDay.getDate() - 1);
       }
-      const loginDayStr = loginDay.toISOString().split('T')[0];
+      const y = loginDay.getFullYear();
+      const m = String(loginDay.getMonth() + 1).padStart(2, '0');
+      const d = String(loginDay.getDate()).padStart(2, '0');
+      const loginDayStr = `${y}-${m}-${d}`;
       
       const lastLogin = userStreak.lastLoginDate?.toString();
 
@@ -5433,10 +5431,12 @@ export class DatabaseStorage implements IStorage {
         return { streak: userStreak, koinsAwarded: 0 };
       }
 
-      // Calculate yesterday's login day for streak checking
       const yesterdayLoginDay = new Date(loginDay);
       yesterdayLoginDay.setDate(yesterdayLoginDay.getDate() - 1);
-      const yesterdayStr = yesterdayLoginDay.toISOString().split('T')[0];
+      const yy = yesterdayLoginDay.getFullYear();
+      const ym = String(yesterdayLoginDay.getMonth() + 1).padStart(2, '0');
+      const yd = String(yesterdayLoginDay.getDate()).padStart(2, '0');
+      const yesterdayStr = `${yy}-${ym}-${yd}`;
 
       let newStreak = userStreak.currentStreak;
       let tierUnlocked: ProfileBorder | undefined;
