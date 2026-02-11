@@ -5426,8 +5426,10 @@ export class DatabaseStorage implements IStorage {
       
       const lastLogin = userStreak.lastLoginDate?.toString();
 
-      // Check if already logged in during current login day (noon to noon period)
+      console.log(`[Streak] userId=${userId} | nowUTC=${now.toISOString()} | estHour=${hour} | loginDayStr=${loginDayStr} | lastLogin=${lastLogin} | currentStreak=${userStreak.currentStreak}`);
+
       if (lastLogin === loginDayStr) {
+        console.log(`[Streak] Already checked in for ${loginDayStr}, skipping`);
         return { streak: userStreak, koinsAwarded: 0 };
       }
 

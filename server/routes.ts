@@ -12502,9 +12502,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/kliq-koins/login', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      console.log(`[Streak] processLogin called for user ${userId}`);
       const result = await storage.processLogin(userId);
+      console.log(`[Streak] result for ${userId}: streak=${result.streak.currentStreak}, koinsAwarded=${result.koinsAwarded}, lastLogin=${result.streak.lastLoginDate}`);
       
-      // Reconcile any missing borders (self-healing for users who missed awards)
       try {
         await reconcileUserBorders(userId);
       } catch (borderError) {
@@ -12518,6 +12519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tierUnlocked: result.tierUnlocked,
       });
     } catch (error) {
+      console.error(`[Streak] processLogin error:`, error);
       res.status(500).json({ message: "Failed to process login" });
     }
   });
