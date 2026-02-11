@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,9 +13,9 @@ import { RankingSuggestions } from "@/components/ranking-suggestions";
 import { useVideoCall } from "@/contexts/VideoCallContext";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut, Calendar, MessagesSquare } from "lucide-react";
+import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut, Calendar, MessagesSquare, Share2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { resolveAssetUrl } from "@/lib/apiConfig";
+import { resolveAssetUrl, getApiBaseUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { getInviteMessage, getAppStoreUrl, getDownloadText } from "@/lib/deviceDetection";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +23,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
 import { PageWrapper } from "@/components/PageWrapper";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
+import html2canvas from "html2canvas";
 
 export default function Kliq() {
   const [kliqName, setKliqName] = useState("");
@@ -41,6 +42,11 @@ export default function Kliq() {
   const [isJoinKliqDialogOpen, setIsJoinKliqDialogOpen] = useState(false);
   const [joinInviteCode, setJoinInviteCode] = useState("");
   const [isJoiningKliq, setIsJoiningKliq] = useState(false);
+  const [pyramidPreview, setPyramidPreview] = useState<string | null>(null);
+  const [isCapturingPyramid, setIsCapturingPyramid] = useState(false);
+  const [isPostingPyramid, setIsPostingPyramid] = useState(false);
+  const [showPyramidConfirm, setShowPyramidConfirm] = useState(false);
+  const pyramidRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const userData = user as { 
     id?: string; 
@@ -672,6 +678,87 @@ export default function Kliq() {
     closeKliqMutation.mutate();
   };
 
+  const handleCapturePyramid = useCallback(async () => {
+    if (!pyramidRef.current) return;
+    setIsCapturingPyramid(true);
+    try {
+      const canvas = await html2canvas(pyramidRef.current, {
+        backgroundColor: null,
+        useCORS: true,
+        allowTaint: true,
+        scale: 2,
+        logging: false,
+      });
+      const dataUrl = canvas.toDataURL("image/png");
+      setPyramidPreview(dataUrl);
+      setShowPyramidConfirm(true);
+    } catch (error) {
+      console.error("Failed to capture pyramid:", error);
+      toast({
+        title: "Capture failed",
+        description: "Could not capture your pyramid. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCapturingPyramid(false);
+    }
+  }, [toast]);
+
+  const handlePostPyramid = useCallback(async () => {
+    if (!pyramidPreview) return;
+    setIsPostingPyramid(true);
+    try {
+      const response = await fetch(pyramidPreview);
+      const blob = await response.blob();
+
+      const baseUrl = getApiBaseUrl();
+      const uploadRes = await fetch(`${baseUrl}/api/media/upload-direct`, {
+        method: "POST",
+        headers: { "Content-Type": "image/png" },
+        body: blob,
+        credentials: "include",
+      });
+
+      if (!uploadRes.ok) throw new Error("Upload failed");
+      const { mediaUrl } = await uploadRes.json();
+
+      const kliqDisplayName = userData?.kliqName || "My Kliq";
+      await apiRequest("POST", "/api/posts", {
+        content: `Check out my ${kliqDisplayName} friend pyramid!`,
+        mediaUrl,
+        mediaType: "image",
+      });
+
+      await enhancedCache.removeByPattern('/api/posts');
+      await queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+
+      setShowPyramidConfirm(false);
+      setPyramidPreview(null);
+      toast({
+        title: "Pyramid posted!",
+        description: "Your friend pyramid has been shared to Headlines",
+      });
+    } catch (error) {
+      console.error("Failed to post pyramid:", error);
+      if (isUnauthorizedError(error as Error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/api/login"; }, 500);
+        return;
+      }
+      toast({
+        title: "Post failed",
+        description: "Could not post your pyramid. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPostingPyramid(false);
+    }
+  }, [pyramidPreview, userData?.kliqName, queryClient, toast]);
+
   const handleMessageFriend = async (friendId: string, friendName: string) => {
     try {
       // Create or get conversation
@@ -1146,6 +1233,7 @@ export default function Kliq() {
             </Card>
           ) : (
             <PyramidChart
+              ref={pyramidRef}
               friends={friends.map(f => ({
                 id: f.friend.id,
                 firstName: f.friend.firstName,
@@ -1169,9 +1257,20 @@ export default function Kliq() {
             )}
           </div>
 
-          {/* Leave Kliq Button - only show if user has friends */}
+          {/* Post Pyramid & Leave Kliq Buttons - only show if user has friends */}
           {friends.length > 0 && (
-            <div className="flex justify-start">
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCapturePyramid}
+                disabled={isCapturingPyramid}
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                data-testid="button-post-pyramid"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                {isCapturingPyramid ? "Capturing..." : "Post Pyramid"}
+              </Button>
               <Dialog open={isLeaveKliqDialogOpen} onOpenChange={setIsLeaveKliqDialogOpen}>
                 <DialogTrigger asChild>
                   <Button 
@@ -1251,6 +1350,51 @@ export default function Kliq() {
                       ? (userData?.kliqClosed ? "Opening..." : "Closing...")
                       : (userData?.kliqClosed ? "Open Kliq" : "Close Kliq")
                     }
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Post Pyramid Confirmation Dialog */}
+          <Dialog open={showPyramidConfirm} onOpenChange={(open) => {
+            setShowPyramidConfirm(open);
+            if (!open) setPyramidPreview(null);
+          }}>
+            <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto">
+              <DialogHeader>
+                <DialogTitle className="text-primary">Post Pyramid to Headlines</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Share your friend pyramid to your Headlines feed?
+                </p>
+                {pyramidPreview && (
+                  <div className="rounded-lg overflow-hidden border border-border">
+                    <img 
+                      src={pyramidPreview} 
+                      alt="Pyramid preview" 
+                      className="w-full h-auto"
+                    />
+                  </div>
+                )}
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowPyramidConfirm(false);
+                      setPyramidPreview(null);
+                    }}
+                    className="bg-muted hover:bg-muted/80"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handlePostPyramid}
+                    disabled={isPostingPyramid}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    {isPostingPyramid ? "Posting..." : "Post to Headlines"}
                   </Button>
                 </div>
               </div>

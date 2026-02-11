@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ interface PyramidChartProps {
   onJoinKliq?: () => void;
 }
 
-export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 28, kliqName, kliqLeftEmoji = '🏆', kliqRightEmoji = '🏆', kliqClosed, onCloseKliq, isClosingKliq, onJoinKliq }: PyramidChartProps) {
+export const PyramidChart = forwardRef<HTMLDivElement, PyramidChartProps>(function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 28, kliqName, kliqLeftEmoji = '🏆', kliqRightEmoji = '🏆', kliqClosed, onCloseKliq, isClosingKliq, onJoinKliq }, ref) {
   const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
   const [showRemoveButton, setShowRemoveButton] = useState<string | null>(null);
   const [isHolding, setIsHolding] = useState<string | null>(null);
@@ -265,7 +265,7 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
   );
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 space-y-6">
+    <div ref={ref} className="bg-card border border-border rounded-xl p-6 space-y-6">
       <div className="text-center">
         <h3 className="text-xl font-bold text-primary mb-2">
           {kliqLeftEmoji} {kliqName || "My Kliq"} {kliqRightEmoji}
@@ -345,4 +345,4 @@ export function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, on
       </div>
     </div>
   );
-}
+});
