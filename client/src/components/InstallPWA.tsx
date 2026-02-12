@@ -13,20 +13,20 @@ function IOSBanner({ onInstall, onDismiss, showSteps }: { onInstall: () => void;
   if (showSteps) {
     return (
       <div className="fixed top-0 left-0 right-0 z-[9999] bg-gray-100 border-b border-gray-300 shadow-md">
-        <div className="px-3 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-gray-900">Install MyKliq</span>
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-lg font-bold text-gray-900">Install MyKliq</span>
             <button onClick={onDismiss} className="text-gray-500 hover:text-gray-700 p-1">
-              <X className="w-4 h-4" />
+              <X className="w-6 h-6" />
             </button>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-xs">1</span>
-              <p className="text-xs text-gray-700">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-base">1</span>
+              <p className="text-base text-gray-700">
                 Tap the{" "}
                 <span className="inline-flex items-center align-middle">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
                     <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
                     <polyline points="16 6 12 2 8 6" />
                     <line x1="12" y1="2" x2="12" y2="15" />
@@ -35,13 +35,13 @@ function IOSBanner({ onInstall, onDismiss, showSteps }: { onInstall: () => void;
                 {" "}Share button in Safari
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-xs">2</span>
-              <p className="text-xs text-gray-700">Tap "Add to Home Screen"</p>
+            <div className="flex items-center gap-3">
+              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-base">2</span>
+              <p className="text-base text-gray-700">Tap "Add to Home Screen"</p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-xs">3</span>
-              <p className="text-xs text-gray-700">Tap "Add" to install</p>
+            <div className="flex items-center gap-3">
+              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-base">3</span>
+              <p className="text-base text-gray-700">Tap "Add" to install</p>
             </div>
           </div>
         </div>
@@ -51,12 +51,12 @@ function IOSBanner({ onInstall, onDismiss, showSteps }: { onInstall: () => void;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[9999] bg-gray-100 border-b border-gray-300 shadow-md">
-      <div className="flex items-center px-3 py-2.5 gap-3">
+      <div className="flex items-center px-4 py-3 gap-3">
         <button onClick={onDismiss} className="flex-shrink-0 text-gray-400 hover:text-gray-600">
-          <X className="w-5 h-5" />
+          <X className="w-6 h-6" />
         </button>
 
-        <div className="flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden shadow-sm">
+        <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden shadow-sm">
           <img 
             src="/icons/icon-192x192.png" 
             alt="MyKliq" 
@@ -65,13 +65,13 @@ function IOSBanner({ onInstall, onDismiss, showSteps }: { onInstall: () => void;
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900 leading-tight">MyKliq</p>
-          <p className="text-xs text-gray-500 leading-tight mt-0.5">Your Private Social Circle</p>
+          <p className="text-base font-semibold text-gray-900 leading-tight">MyKliq</p>
+          <p className="text-sm text-gray-500 leading-tight mt-0.5">Your Private Social Circle</p>
         </div>
 
         <button
           onClick={onInstall}
-          className="flex-shrink-0 bg-green-500 hover:bg-green-600 text-black font-semibold text-sm px-4 py-1.5 rounded-full transition-colors"
+          className="flex-shrink-0 bg-green-500 hover:bg-green-600 text-black font-bold text-base px-5 py-2 rounded-full transition-colors"
         >
           Install
         </button>
