@@ -60,6 +60,9 @@ Profile borders are earned through login streaks (8 tiers), referrals (5 tiers),
 ### Invite Code System
 Invite codes can be used unlimited times. The system tracks member removals; a rejoining user who was previously removed will require owner approval, which clears the removal record upon approval.
 
+### PWA Install Prompt
+A unified install dialog appears 3 seconds after page load for users visiting in a browser. Detects iOS vs Android/Desktop automatically. On Android/Desktop, the "Install App" button triggers the native `beforeinstallprompt`. On iOS, the same "Install App" button transitions the dialog to show step-by-step Safari instructions (Share icon → Add to Home Screen → Add). The prompt hides if the app is already running in standalone/PWA mode and remembers dismissal for 7 days via localStorage.
+
 ### PWA App Icon Badging
 The PWA displays unread notification counts on the app icon when installed to the home screen using the Badging API (`navigator.setAppBadge`/`clearAppBadge`). The badge updates on notification data changes (15-second polling) and clears on logout or when all notifications are read.
 
