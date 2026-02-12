@@ -9,6 +9,77 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+function IOSBanner({ onInstall, onDismiss, showSteps }: { onInstall: () => void; onDismiss: () => void; showSteps: boolean }) {
+  if (showSteps) {
+    return (
+      <div className="fixed top-0 left-0 right-0 z-[9999] bg-gray-100 border-b border-gray-300 shadow-md">
+        <div className="px-3 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-gray-900">Install MyKliq</span>
+            <button onClick={onDismiss} className="text-gray-500 hover:text-gray-700 p-1">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-xs">1</span>
+              <p className="text-xs text-gray-700">
+                Tap the{" "}
+                <span className="inline-flex items-center align-middle">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>
+                </span>
+                {" "}Share button in Safari
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-xs">2</span>
+              <p className="text-xs text-gray-700">Tap "Add to Home Screen"</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-xs">3</span>
+              <p className="text-xs text-gray-700">Tap "Add" to install</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[9999] bg-gray-100 border-b border-gray-300 shadow-md">
+      <div className="flex items-center px-3 py-2.5 gap-3">
+        <button onClick={onDismiss} className="flex-shrink-0 text-gray-400 hover:text-gray-600">
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden shadow-sm">
+          <img 
+            src="/icons/icon-192x192.png" 
+            alt="MyKliq" 
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-gray-900 leading-tight">MyKliq</p>
+          <p className="text-xs text-gray-500 leading-tight mt-0.5">Your Private Social Circle</p>
+        </div>
+
+        <button
+          onClick={onInstall}
+          className="flex-shrink-0 bg-green-500 hover:bg-green-600 text-black font-semibold text-sm px-4 py-1.5 rounded-full transition-colors"
+        >
+          Install
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function InstallPWA() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showDialog, setShowDialog] = useState(false);
@@ -91,130 +162,54 @@ export function InstallPWA() {
     return null;
   }
 
+  if (isIOS) {
+    return (
+      <IOSBanner
+        onInstall={handleInstallClick}
+        onDismiss={handleDismiss}
+        showSteps={showIOSSteps}
+      />
+    );
+  }
+
   return (
     <Dialog open={showDialog} onOpenChange={(open) => {
       if (!open) handleDismiss();
-      else setShowIOSSteps(false);
     }}>
       <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto p-0 gap-0 rounded-2xl overflow-hidden [&>button]:hidden">
-        {!showIOSSteps ? (
-          <div className="flex flex-col items-center text-center p-6">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4 shadow-lg">
-              <img 
-                src="/icons/icon-192x192.png" 
-                alt="MyKliq" 
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            <h2 className="text-xl font-bold text-foreground mb-1">Install MyKliq</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Add MyKliq to your home screen for quick access and a better experience
-            </p>
-
-            <div className="w-full space-y-3">
-              <Button
-                onClick={handleInstallClick}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-xl"
-                size="lg"
-              >
-                <Download className="w-5 h-5 mr-2" />
-                Install App
-              </Button>
-              <Button
-                onClick={handleDismiss}
-                variant="ghost"
-                className="w-full text-muted-foreground hover:text-foreground"
-                size="lg"
-              >
-                Not Now
-              </Button>
-            </div>
+        <div className="flex flex-col items-center text-center p-6">
+          <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4 shadow-lg">
+            <img 
+              src="/icons/icon-192x192.png" 
+              alt="MyKliq" 
+              className="w-full h-full object-cover"
+            />
           </div>
-        ) : (
-          <div className="flex flex-col items-center text-center p-6">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden mb-4 shadow-lg">
-              <img 
-                src="/icons/icon-192x192.png" 
-                alt="MyKliq" 
-                className="w-full h-full object-cover"
-              />
-            </div>
 
-            <h2 className="text-lg font-bold text-foreground mb-1">Install MyKliq</h2>
-            <p className="text-sm text-muted-foreground mb-5">
-              Follow these steps to add MyKliq to your home screen
-            </p>
+          <h2 className="text-xl font-bold text-foreground mb-1">Install MyKliq</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Add MyKliq to your home screen for quick access and a better experience
+          </p>
 
-            <div className="w-full space-y-4 text-left">
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
-                  1
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">
-                    Tap the Share button
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Look for the{" "}
-                    <span className="inline-flex items-center align-middle">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
-                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                        <polyline points="16 6 12 2 8 6" />
-                        <line x1="12" y1="2" x2="12" y2="15" />
-                      </svg>
-                    </span>
-                    {" "}icon at the bottom of Safari
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
-                  2
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">
-                    Scroll down and tap "Add to Home Screen"
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Look for the{" "}
-                    <span className="inline-flex items-center align-middle">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                        <line x1="12" y1="8" x2="12" y2="16" />
-                        <line x1="8" y1="12" x2="16" y2="12" />
-                      </svg>
-                    </span>
-                    {" "}icon in the share menu
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/50">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
-                  3
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">
-                    Tap "Add" to install
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    MyKliq will appear on your home screen
-                  </p>
-                </div>
-              </div>
-            </div>
-
+          <div className="w-full space-y-3">
             <Button
-              onClick={handleDismiss}
-              className="w-full mt-5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-xl"
+              onClick={handleInstallClick}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-xl"
               size="lg"
             >
-              Got It
+              <Download className="w-5 h-5 mr-2" />
+              Install App
+            </Button>
+            <Button
+              onClick={handleDismiss}
+              variant="ghost"
+              className="w-full text-muted-foreground hover:text-foreground"
+              size="lg"
+            >
+              Not Now
             </Button>
           </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );
