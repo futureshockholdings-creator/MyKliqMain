@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 
 interface MediaItem {
   id?: string;
@@ -91,12 +92,9 @@ export function ImageGallery({
       onTouchEnd={onTouchEnd}
     >
       {currentMedia.mediaType === 'video' ? (
-        <video 
-          className="w-full h-full object-cover" 
-          controls
-          playsInline
-          preload="metadata"
+        <VideoThumbnail
           src={resolveUrl(currentMedia.mediaUrl)}
+          className=""
         />
       ) : (
         <img 

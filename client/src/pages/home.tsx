@@ -47,6 +47,7 @@ import { addOptimisticNotification, rollbackOptimisticNotification } from "@/lib
 import { LinkifyText } from "@/components/LinkifyText";
 import { ImageGallery } from "@/components/ImageGallery";
 import { ImageViewer } from "@/components/ImageViewer";
+import { VideoThumbnail } from "@/components/VideoThumbnail";
 
 import type { Meme, Moviecon } from "@shared/schema";
 
@@ -2535,11 +2536,7 @@ export default function Home() {
                                 {post.mediaUrl && (
                                   <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                                     {post.mediaType === 'video' ? (
-                                      <video 
-                                        className="w-full h-full object-cover"
-                                        controls
-                                        playsInline
-                                        preload="metadata"
+                                      <VideoThumbnail
                                         src={resolveAssetUrl(post.mediaUrl)}
                                       />
                                     ) : (
@@ -2752,11 +2749,7 @@ export default function Home() {
                                   {(save.selectedMediaUrl || save.post.mediaUrl) && (
                                     <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                                       {save.post.mediaType === 'video' ? (
-                                        <video 
-                                          className="w-full h-full object-cover"
-                                          controls
-                                          playsInline
-                                          preload="metadata"
+                                        <VideoThumbnail
                                           src={resolveAssetUrl(save.selectedMediaUrl || save.post.mediaUrl)}
                                         />
                                       ) : (
