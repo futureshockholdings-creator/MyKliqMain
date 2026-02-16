@@ -19,6 +19,15 @@ html, body {
   overflow-x: hidden;
 }
 
+/* Prevent iOS Safari auto-zoom on form inputs */
+@media (max-width: 768px) {
+  input, textarea, select, input[type="text"], input[type="email"], 
+  input[type="password"], input[type="number"], input[type="search"],
+  input[type="tel"], input[type="url"], [contenteditable="true"] {
+    font-size: 16px !important;
+  }
+}
+
 /* Mobile-first responsive adjustments */
 @media (max-width: 768px) {
   html, body {
