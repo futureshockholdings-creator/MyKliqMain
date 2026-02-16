@@ -13,7 +13,8 @@ import { RankingSuggestions } from "@/components/ranking-suggestions";
 import { useVideoCall } from "@/contexts/VideoCallContext";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut, Calendar, MessagesSquare, Share2 } from "lucide-react";
+import { Users, Edit, Plus, Copy, MessageCircle, X, BarChart3, LogOut, Calendar, MessagesSquare, Share2, PhoneCall } from "lucide-react";
+import { useGroupVideoCall } from "@/contexts/GroupVideoCallContext";
 import { apiRequest } from "@/lib/queryClient";
 import { resolveAssetUrl, getApiBaseUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
@@ -38,7 +39,9 @@ export default function Kliq() {
   const [isLeaveKliqDialogOpen, setIsLeaveKliqDialogOpen] = useState(false);
   const [isCloseKliqDialogOpen, setIsCloseKliqDialogOpen] = useState(false);
   const [isGroupChatDialogOpen, setIsGroupChatDialogOpen] = useState(false);
+  const [isGroupVideoCallDialogOpen, setIsGroupVideoCallDialogOpen] = useState(false);
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+  const [selectedVideoCallParticipants, setSelectedVideoCallParticipants] = useState<string[]>([]);
   const [groupChatName, setGroupChatName] = useState("");
   const [isJoinKliqDialogOpen, setIsJoinKliqDialogOpen] = useState(false);
   const [joinInviteCode, setJoinInviteCode] = useState("");
@@ -65,6 +68,7 @@ export default function Kliq() {
   
   // Video call functionality
   const { initiateCall } = useVideoCall();
+  const { initiateGroupCall, callState: groupCallState } = useGroupVideoCall();
 
   // Fetch friends
   const { data: friends = [], isLoading: friendsLoading } = useQuery<{ 
@@ -863,6 +867,23 @@ export default function Kliq() {
     );
   };
 
+  const toggleVideoCallParticipant = (userId: string) => {
+    setSelectedVideoCallParticipants(prev => {
+      if (prev.includes(userId)) {
+        return prev.filter(id => id !== userId);
+      }
+      if (prev.length >= 7) {
+        toast({
+          title: "Limit Reached",
+          description: "You can select up to 7 friends for a group video call (8 total including you)",
+          variant: "destructive",
+        });
+        return prev;
+      }
+      return [...prev, userId];
+    });
+  };
+
   const handleCreateGroupChat = () => {
     if (selectedParticipants.length < 2) {
       toast({
@@ -877,6 +898,43 @@ export default function Kliq() {
       name: groupChatName.trim() || undefined,
       participantIds: selectedParticipants,
     });
+  };
+
+  const handleStartGroupVideoCall = async () => {
+    if (selectedVideoCallParticipants.length < 1) {
+      toast({
+        title: "Error",
+        description: "Please select at least 1 friend to call",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const participantsList = selectedVideoCallParticipants.map(id => {
+        const f = friends.find(fr => fr.friend.id === id);
+        return {
+          id,
+          name: f ? `${f.friend.firstName || ''} ${f.friend.lastName || ''}`.trim() || 'Unknown' : 'Unknown',
+          avatar: f?.friend.profileImageUrl,
+        };
+      });
+
+      const kliqDisplayName = userData.kliqName || 'Kliq Video Call';
+      await initiateGroupCall(
+        `kliq_video_${userData.id}`,
+        kliqDisplayName,
+        participantsList
+      );
+      setIsGroupVideoCallDialogOpen(false);
+      setSelectedVideoCallParticipants([]);
+    } catch (error: any) {
+      toast({
+        title: "Call Failed",
+        description: error.message || "Unable to start group video call. Please check your camera and microphone permissions.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -1202,6 +1260,97 @@ export default function Kliq() {
                     data-testid="button-create-group"
                   >
                     {createGroupChatMutation.isPending ? "Creating..." : "Create Group Chat"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Group Video Call Button - Top Right Corner */}
+            <Dialog open={isGroupVideoCallDialogOpen} onOpenChange={(open) => {
+              setIsGroupVideoCallDialogOpen(open);
+              if (!open) setSelectedVideoCallParticipants([]);
+            }}>
+              <DialogTrigger asChild>
+                <Button
+                  size="lg"
+                  className="absolute top-0 right-0 z-10 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg h-12 w-12 rounded-full p-0"
+                  disabled={groupCallState !== 'idle'}
+                  data-testid="button-group-video-call"
+                >
+                  <PhoneCall className="!w-8 !h-8" strokeWidth={1.5} />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-mykliq-green">Group Video Call</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Select Friends to Call (max 7)
+                      <span className="ml-2 text-muted-foreground">
+                        {selectedVideoCallParticipants.length}/7 selected
+                      </span>
+                    </label>
+                    {friends.length === 0 ? (
+                      <div className="p-4 bg-muted rounded-lg text-center">
+                        <p className="text-sm text-muted-foreground">
+                          You need at least 1 friend to start a group video call.
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Add friends to your kliq first!
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {friends.map((f) => (
+                          <div
+                            key={f.friend.id}
+                            className={`flex items-center space-x-3 p-3 rounded-lg bg-muted hover:bg-muted/80 cursor-pointer ${
+                              selectedVideoCallParticipants.length >= 7 && !selectedVideoCallParticipants.includes(f.friend.id)
+                                ? 'opacity-50'
+                                : ''
+                            }`}
+                            onClick={() => toggleVideoCallParticipant(f.friend.id)}
+                          >
+                            <Checkbox
+                              checked={selectedVideoCallParticipants.includes(f.friend.id)}
+                              onCheckedChange={() => toggleVideoCallParticipant(f.friend.id)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <div className="flex items-center gap-2 flex-1">
+                              {f.friend.profileImageUrl ? (
+                                <img
+                                  src={resolveAssetUrl(f.friend.profileImageUrl)}
+                                  alt={`${f.friend.firstName} ${f.friend.lastName}`}
+                                  className="w-10 h-10 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold">
+                                  {f.friend.firstName?.[0]}{f.friend.lastName?.[0]}
+                                </div>
+                              )}
+                              <span className="font-medium">
+                                {f.friend.firstName} {f.friend.lastName}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-muted-foreground text-center">
+                    Group video calls support up to 8 participants (you + 7 friends)
+                  </p>
+
+                  <Button
+                    onClick={handleStartGroupVideoCall}
+                    disabled={selectedVideoCallParticipants.length < 1 || groupCallState !== 'idle'}
+                    className="w-full bg-mykliq-green hover:bg-mykliq-green/90 text-white"
+                    data-testid="button-start-group-call"
+                  >
+                    {groupCallState !== 'idle' ? "In Call..." : `Start Video Call (${selectedVideoCallParticipants.length + 1} participants)`}
                   </Button>
                 </div>
               </DialogContent>

@@ -410,6 +410,10 @@ class GroupVideoCallService {
       throw new Error('Already in a call');
     }
 
+    if (participants.length > 7) {
+      throw new Error('Group video calls are limited to 8 participants (you + 7 friends)');
+    }
+
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       console.error('📞 [Group] WebSocket not connected, attempting reconnect...');
       this.setupWebSocket();
