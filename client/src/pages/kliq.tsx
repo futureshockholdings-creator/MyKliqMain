@@ -1273,11 +1273,14 @@ export default function Kliq() {
               <DialogTrigger asChild>
                 <Button
                   size="lg"
-                  className="absolute top-0 right-0 z-10 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg h-12 w-12 rounded-full p-0"
+                  className="absolute top-0 right-0 z-10 bg-red-600 hover:bg-red-700 text-white shadow-lg h-12 w-12 rounded-full p-0"
                   disabled={groupCallState !== 'idle'}
                   data-testid="button-group-video-call"
                 >
-                  <PhoneCall className="!w-8 !h-8" strokeWidth={1.5} />
+                  <div className="relative">
+                    <PhoneCall className="!w-6 !h-6 absolute -top-1 -left-1" strokeWidth={1.5} />
+                    <PhoneCall className="!w-6 !h-6 absolute top-1 left-1" strokeWidth={1.5} />
+                  </div>
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto max-h-[80vh] overflow-y-auto">
