@@ -233,14 +233,23 @@ class GroupVideoCallService {
   private handleIncomingGroupCall(message: any) {
     const participants = new Map<string, GroupCallParticipant>();
     
+    participants.set(message.from, {
+      id: message.from,
+      name: message.initiatorName || 'Unknown',
+      avatar: message.initiatorAvatar,
+      status: 'pending'
+    });
+    
     if (message.participants) {
       message.participants.forEach((p: any) => {
-        participants.set(p.id, {
-          id: p.id,
-          name: p.name || 'Unknown',
-          avatar: p.avatar,
-          status: 'pending'
-        });
+        if (p.id !== message.from && p.id !== this.userId) {
+          participants.set(p.id, {
+            id: p.id,
+            name: p.name || 'Unknown',
+            avatar: p.avatar,
+            status: 'pending'
+          });
+        }
       });
     }
 
@@ -311,7 +320,18 @@ class GroupVideoCallService {
   }
 
   private handleParticipantLeft(participantId: string) {
+    if (participantId === this.userId) return;
+    
     console.log('📞 [Group] Handling participant left:', participantId);
+    
+    if (this.currentCallInfo?.participants.has(participantId)) {
+      const participant = this.currentCallInfo.participants.get(participantId)!;
+      if (participant.status === 'left') {
+        return;
+      }
+      participant.status = 'left';
+    }
+    
     this.remoteStreams.delete(participantId);
     
     const connection = this.peerConnections.get(participantId);
@@ -320,19 +340,16 @@ class GroupVideoCallService {
       this.peerConnections.delete(participantId);
     }
     
-    if (this.currentCallInfo?.participants.has(participantId)) {
-      this.currentCallInfo.participants.get(participantId)!.status = 'left';
-    }
-    
     this.handlers.onParticipantLeft?.(participantId);
     
     if (this.callState === 'connected' && this.currentCallInfo?.startTime) {
-      const activeParticipants = Array.from(this.currentCallInfo?.participants.values() || [])
-        .filter(p => p.status === 'connected');
+      const allOtherParticipants = Array.from(this.currentCallInfo?.participants.values() || []);
+      const stillConnected = allOtherParticipants.filter(p => p.status === 'connected');
+      const stillPending = allOtherParticipants.filter(p => p.status === 'pending' || p.status === 'ringing');
       
       const callDuration = Date.now() - this.currentCallInfo.startTime.getTime();
-      if (activeParticipants.length === 0 && callDuration > 3000) {
-        console.log('📞 [Group] No active participants remaining, ending call');
+      if (stillConnected.length === 0 && stillPending.length === 0 && callDuration > 3000) {
+        console.log('📞 [Group] No other participants remaining (connected or pending), ending call');
         this.endCall();
       }
     }
