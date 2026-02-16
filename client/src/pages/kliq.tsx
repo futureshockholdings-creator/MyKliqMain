@@ -1297,13 +1297,13 @@ export default function Kliq() {
               <DialogTrigger asChild>
                 <Button
                   size="lg"
-                  className="absolute top-0 right-0 z-10 bg-red-600 hover:bg-red-700 text-white shadow-lg h-12 w-12 rounded-full p-0"
+                  className="absolute top-0 right-0 z-10 bg-red-600 hover:bg-red-700 text-white shadow-lg h-12 w-12 rounded-full p-0 flex items-center justify-center overflow-hidden"
                   disabled={groupCallState !== 'idle'}
                   data-testid="button-group-video-call"
                 >
-                  <div className="relative">
-                    <PhoneCall className="!w-6 !h-6 absolute -top-1 -left-1" strokeWidth={1.5} />
-                    <PhoneCall className="!w-6 !h-6 absolute top-1 left-1" strokeWidth={1.5} />
+                  <div className="flex items-center justify-center">
+                    <PhoneCall className="w-4 h-4 -mr-1" strokeWidth={2} />
+                    <PhoneCall className="w-4 h-4 -ml-1" strokeWidth={2} />
                   </div>
                 </Button>
               </DialogTrigger>
@@ -1497,7 +1497,7 @@ export default function Kliq() {
                               className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
                             />
                             <img
-                              src={kliq.kliqOwner?.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(kliq.kliqOwner?.username || 'User')}&background=random`}
+                              src={kliq.kliqOwner?.profileImageUrl ? resolveAssetUrl(kliq.kliqOwner.profileImageUrl) : `https://ui-avatars.com/api/?name=${encodeURIComponent(kliq.kliqOwner?.username || 'User')}&background=random`}
                               alt={kliq.kliqOwner?.username}
                               className="w-8 h-8 rounded-full object-cover"
                             />
