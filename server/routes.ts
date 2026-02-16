@@ -20,7 +20,7 @@ import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
 import { performanceOptimizer } from "./performanceOptimizer";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts, friendships } from "@shared/schema";
 import { generateMobileToken, verifyMobileToken, JWT_CONFIG } from "./mobile-auth";
 import { eq, and, or, desc, sql as sqlOp, isNotNull, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -5387,6 +5387,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error("Error leaving kliq:", error);
+      res.status(500).json({ message: "Failed to leave kliq" });
+    }
+  });
+
+  // Get kliqs the user has joined (excluding their own)
+  app.get('/api/kliqs/joined', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const allKliqs = await storage.getKliqsForUser(userId);
+      const joinedKliqs = allKliqs.filter(k => !k.isOwner);
+      res.json(joinedKliqs);
+    } catch (error) {
+      console.error("Error fetching joined kliqs:", error);
+      res.status(500).json({ message: "Failed to fetch joined kliqs" });
+    }
+  });
+
+  // Leave a specific kliq by removing the friendship with the kliq owner
+  app.delete('/api/kliqs/:kliqOwnerId/leave', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const kliqOwnerId = req.params.kliqOwnerId;
+
+      if (userId === kliqOwnerId) {
+        return res.status(400).json({ message: "You cannot leave your own kliq" });
+      }
+
+      // Remove the friendship where the kliq owner added this user
+      await db
+        .delete(friendships)
+        .where(
+          and(
+            eq(friendships.userId, kliqOwnerId),
+            eq(friendships.friendId, userId),
+            eq(friendships.status, 'accepted')
+          )
+        );
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error leaving specific kliq:", error);
       res.status(500).json({ message: "Failed to leave kliq" });
     }
   });

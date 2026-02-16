@@ -37,6 +37,7 @@ export default function Kliq() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [friendToRemove, setFriendToRemove] = useState<string | null>(null);
   const [isLeaveKliqDialogOpen, setIsLeaveKliqDialogOpen] = useState(false);
+  const [selectedKliqsToLeave, setSelectedKliqsToLeave] = useState<string[]>([]);
   const [isCloseKliqDialogOpen, setIsCloseKliqDialogOpen] = useState(false);
   const [isGroupChatDialogOpen, setIsGroupChatDialogOpen] = useState(false);
   const [isGroupVideoCallDialogOpen, setIsGroupVideoCallDialogOpen] = useState(false);
@@ -502,17 +503,30 @@ export default function Kliq() {
     },
   });
 
-  // Leave Kliq mutation - removes all friendships
+  // Query for kliqs the user has joined (not their own)
+  const { data: joinedKliqs = [] } = useQuery({
+    queryKey: ["/api/kliqs/joined"],
+    queryFn: async () => {
+      return apiRequest("GET", "/api/kliqs/joined");
+    },
+    enabled: isLeaveKliqDialogOpen,
+  });
+
+  // Leave specific kliq mutation
   const leaveKliqMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("DELETE", "/api/friends/leave-kliq");
+    mutationFn: async (kliqOwnerIds: string[]) => {
+      await Promise.all(
+        kliqOwnerIds.map(id => apiRequest("DELETE", `/api/kliqs/${id}/leave`))
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliqs/joined"] });
       setIsLeaveKliqDialogOpen(false);
+      setSelectedKliqsToLeave([]);
       toast({
-        title: "Left kliq",
-        description: "You have successfully left your kliq",
+        title: "Left kliq(s)",
+        description: "You have successfully left the selected kliq(s)",
       });
     },
     onError: (error) => {
@@ -672,7 +686,17 @@ export default function Kliq() {
   };
 
   const handleLeaveKliq = () => {
-    leaveKliqMutation.mutate();
+    if (selectedKliqsToLeave.length > 0) {
+      leaveKliqMutation.mutate(selectedKliqsToLeave);
+    }
+  };
+
+  const toggleKliqToLeave = (kliqId: string) => {
+    setSelectedKliqsToLeave(prev => 
+      prev.includes(kliqId) 
+        ? prev.filter(id => id !== kliqId)
+        : [...prev, kliqId]
+    );
   };
 
   const handleCloseKliq = () => {
@@ -1428,7 +1452,10 @@ export default function Kliq() {
                 <Share2 className="w-4 h-4 mr-2" />
                 {isCapturingPyramid ? "Capturing..." : "Post Pyramid"}
               </Button>
-              <Dialog open={isLeaveKliqDialogOpen} onOpenChange={setIsLeaveKliqDialogOpen}>
+              <Dialog open={isLeaveKliqDialogOpen} onOpenChange={(open) => {
+                setIsLeaveKliqDialogOpen(open);
+                if (!open) setSelectedKliqsToLeave([]);
+              }}>
                 <DialogTrigger asChild>
                   <Button 
                     variant="destructive" 
@@ -1440,18 +1467,57 @@ export default function Kliq() {
                     Leave Kliq
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
+                <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="text-red-600">Leave Kliq</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      Are you sure you want to leave your kliq? This will remove all your friends and cannot be undone.
+                      Select the kliq(s) you want to leave:
                     </p>
+                    {joinedKliqs.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        You haven't joined any other kliqs yet.
+                      </p>
+                    ) : (
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {joinedKliqs.map((kliq: any) => (
+                          <div
+                            key={kliq.kliqId}
+                            className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                              selectedKliqsToLeave.includes(kliq.kliqId)
+                                ? "border-red-500 bg-red-500/10"
+                                : "border-border hover:bg-muted/50"
+                            }`}
+                            onClick={() => toggleKliqToLeave(kliq.kliqId)}
+                          >
+                            <Checkbox
+                              checked={selectedKliqsToLeave.includes(kliq.kliqId)}
+                              onCheckedChange={() => toggleKliqToLeave(kliq.kliqId)}
+                              className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
+                            />
+                            <img
+                              src={kliq.kliqOwner?.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(kliq.kliqOwner?.username || 'User')}&background=random`}
+                              alt={kliq.kliqOwner?.username}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{kliq.kliqName}</p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                by {kliq.kliqOwner?.firstName || kliq.kliqOwner?.username || 'Unknown'}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <div className="flex gap-2 justify-end">
                       <Button
                         variant="outline"
-                        onClick={() => setIsLeaveKliqDialogOpen(false)}
+                        onClick={() => {
+                          setIsLeaveKliqDialogOpen(false);
+                          setSelectedKliqsToLeave([]);
+                        }}
                         className="bg-muted hover:bg-muted/80"
                       >
                         Cancel
@@ -1459,10 +1525,10 @@ export default function Kliq() {
                       <Button
                         variant="destructive"
                         onClick={handleLeaveKliq}
-                        disabled={leaveKliqMutation.isPending}
+                        disabled={leaveKliqMutation.isPending || selectedKliqsToLeave.length === 0}
                         className="bg-red-600 hover:bg-red-700"
                       >
-                        {leaveKliqMutation.isPending ? "Leaving..." : "Leave Kliq"}
+                        {leaveKliqMutation.isPending ? "Leaving..." : `Leave${selectedKliqsToLeave.length > 0 ? ` (${selectedKliqsToLeave.length})` : ''}`}
                       </Button>
                     </div>
                   </div>
