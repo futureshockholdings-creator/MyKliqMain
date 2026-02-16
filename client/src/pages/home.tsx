@@ -2358,7 +2358,7 @@ export default function Home() {
             <Button
               onClick={handleCreatePost}
               disabled={(!newPost.trim() && !selectedMeme && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-6 flex-shrink-0"
+              className="bg-primary hover:bg-primary/90 !text-black font-bold px-6 flex-shrink-0"
               style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
             >
               {createPostMutation.isPending ? "Posting..." : "Post!"}
