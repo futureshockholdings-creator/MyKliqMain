@@ -1302,8 +1302,8 @@ export default function Kliq() {
                   data-testid="button-group-video-call"
                 >
                   <div className="flex items-center justify-center">
-                    <PhoneCall className="!w-8 !h-8 -mr-1" strokeWidth={1} />
-                    <PhoneCall className="!w-8 !h-8 -ml-1" strokeWidth={1} />
+                    <PhoneCall className="!w-7 !h-7 -mr-1" strokeWidth={1} />
+                    <PhoneCall className="!w-7 !h-7 -ml-1" strokeWidth={1} />
                   </div>
                 </Button>
               </DialogTrigger>
