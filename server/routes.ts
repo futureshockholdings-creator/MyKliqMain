@@ -22,7 +22,7 @@ import { performanceOptimizer } from "./performanceOptimizer";
 
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts, friendships } from "@shared/schema";
 import { generateMobileToken, verifyMobileToken, JWT_CONFIG } from "./mobile-auth";
-import { eq, and, or, desc, sql as sqlOp, isNotNull, inArray } from "drizzle-orm";
+import { eq, and, or, desc, sql as sqlOp, isNotNull, isNull, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
@@ -12376,6 +12376,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending broadcast:", error);
       res.status(500).json({ message: "Failed to send broadcast" });
+    }
+  });
+
+  app.post('/api/admin/backfill-video-thumbnails', async (req, res) => {
+    try {
+      const { password } = req.query;
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(401).json({ message: "Admin access required" });
+      }
+
+      const videoPosts = await db
+        .select({ id: posts.id, mediaUrl: posts.mediaUrl })
+        .from(posts)
+        .where(
+          and(
+            eq(posts.mediaType, 'video'),
+            isNotNull(posts.mediaUrl),
+            isNull(posts.videoThumbnailUrl)
+          )
+        );
+
+      console.log(`[Backfill] Found ${videoPosts.length} video posts without thumbnails`);
+      res.json({ message: `Processing ${videoPosts.length} video posts`, count: videoPosts.length });
+
+      for (const post of videoPosts) {
+        try {
+          const thumbUrl = await thumbnailService.generateThumbnailFromVideo(post.mediaUrl!, `post_${post.id}`);
+          if (thumbUrl) {
+            await storage.updatePost(post.id, { videoThumbnailUrl: thumbUrl });
+            console.log(`✅ [Backfill] Generated thumbnail for post ${post.id} -> ${thumbUrl}`);
+          }
+        } catch (err) {
+          console.error(`[Backfill] Failed for post ${post.id}:`, err);
+        }
+      }
+      console.log(`[Backfill] Complete`);
+    } catch (error) {
+      console.error("Error backfilling video thumbnails:", error);
+      res.status(500).json({ message: "Failed to backfill thumbnails" });
     }
   });
 
