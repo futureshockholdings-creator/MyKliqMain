@@ -17,6 +17,7 @@ interface ImageGalleryProps {
   className?: string;
   resolveUrl?: (url: string) => string;
   onImageClick?: (index: number, allMedia: MediaItem[]) => void;
+  videoThumbnailUrl?: string | null;
 }
 
 export function ImageGallery({ 
@@ -25,7 +26,8 @@ export function ImageGallery({
   fallbackType,
   className = "",
   resolveUrl = (url) => url,
-  onImageClick
+  onImageClick,
+  videoThumbnailUrl
 }: ImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -95,6 +97,7 @@ export function ImageGallery({
         <VideoThumbnail
           src={resolveUrl(currentMedia.mediaUrl)}
           className=""
+          posterUrl={videoThumbnailUrl ? resolveUrl(videoThumbnailUrl) : undefined}
         />
       ) : (
         <img 

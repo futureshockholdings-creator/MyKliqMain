@@ -5,10 +5,11 @@ interface VideoThumbnailProps {
   src: string;
   className?: string;
   onClick?: () => void;
+  posterUrl?: string;
 }
 
-export function VideoThumbnail({ src, className = "", onClick }: VideoThumbnailProps) {
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+export function VideoThumbnail({ src, className = "", onClick, posterUrl }: VideoThumbnailProps) {
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(posterUrl || null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [thumbnailReady, setThumbnailReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -74,6 +75,11 @@ export function VideoThumbnail({ src, className = "", onClick }: VideoThumbnailP
   }, [src]);
 
   useEffect(() => {
+    if (posterUrl) {
+      setThumbnailUrl(posterUrl);
+      setThumbnailReady(true);
+      return;
+    }
     generateThumbnail();
     return () => {
       if (thumbnailVideoRef.current) {
@@ -86,7 +92,7 @@ export function VideoThumbnail({ src, className = "", onClick }: VideoThumbnailP
       }
       listenersRef.current = [];
     };
-  }, [generateThumbnail]);
+  }, [generateThumbnail, posterUrl]);
 
   const handlePlay = () => {
     setIsPlaying(true);

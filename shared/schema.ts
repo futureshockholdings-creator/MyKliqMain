@@ -454,6 +454,7 @@ export const posts = pgTable("posts", {
   sharedFromPostId: varchar("shared_from_post_id").references(() => posts.id, { onDelete: "cascade" }),
   originalAuthorId: varchar("original_author_id").references(() => users.id, { onDelete: "cascade" }),
   postType: varchar("post_type").default("regular"),
+  videoThumbnailUrl: varchar("video_thumbnail_url"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [

@@ -225,7 +225,7 @@ export interface IStorage {
   createPostWithMedia(post: InsertPost, mediaItems: { url: string; type: "image" | "video" }[]): Promise<Post & { media: PostMedia[] }>;
   getPostMedia(postId: string): Promise<PostMedia[]>;
   addPostMedia(postId: string, mediaItems: { url: string; type: "image" | "video" }[]): Promise<PostMedia[]>;
-  updatePost(postId: string, updates: Partial<Pick<Post, 'content'>>): Promise<Post>;
+  updatePost(postId: string, updates: Partial<Pick<Post, 'content' | 'videoThumbnailUrl'>>): Promise<Post>;
   deletePost(postId: string): Promise<void>;
   likePost(postId: string, userId: string): Promise<void>;
   unlikePost(postId: string, userId: string): Promise<void>;
@@ -862,6 +862,7 @@ export class DatabaseStorage implements IStorage {
         sharedFromPostId: posts.sharedFromPostId,
         originalAuthorId: posts.originalAuthorId,
         postType: posts.postType,
+        videoThumbnailUrl: posts.videoThumbnailUrl,
         author: users,
         authorBorder: profileBorders,
         gif: gifs,
@@ -966,6 +967,7 @@ export class DatabaseStorage implements IStorage {
       sharedFromPostId: post.sharedFromPostId,
       originalAuthorId: post.originalAuthorId,
       postType: post.postType,
+      videoThumbnailUrl: post.videoThumbnailUrl,
       author: post.author,
       authorBorder: post.authorBorder,
       comments: commentsByPost[post.id] || [],
@@ -1371,7 +1373,7 @@ export class DatabaseStorage implements IStorage {
     return await db.insert(postMedia).values(mediaToInsert).returning();
   }
 
-  async updatePost(postId: string, updates: Partial<Pick<Post, 'content'>>): Promise<Post> {
+  async updatePost(postId: string, updates: Partial<Pick<Post, 'content' | 'videoThumbnailUrl'>>): Promise<Post> {
     const [updatedPost] = await db
       .update(posts)
       .set({ ...updates, updatedAt: new Date() })

@@ -5560,6 +5560,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error awarding Koins for post creation:", koinError);
       }
       
+      if (post.mediaType === 'video' && post.mediaUrl && !post.videoThumbnailUrl) {
+        const videoPath = post.mediaUrl;
+        thumbnailService.generateThumbnailFromVideo(videoPath, `post_${post.id}`)
+          .then(async (thumbUrl) => {
+            if (thumbUrl) {
+              await storage.updatePost(post.id, { videoThumbnailUrl: thumbUrl });
+              console.log(`✅ Generated thumbnail for video post: ${post.id} -> ${thumbUrl}`);
+            }
+          })
+          .catch(err => {
+            console.error(`Failed to generate thumbnail for post ${post.id}:`, err);
+          });
+      }
+
       // Broadcast feed update to all connected clients
       try {
         (req.app as any).broadcastFeedUpdate('post');

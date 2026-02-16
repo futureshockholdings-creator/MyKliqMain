@@ -2538,6 +2538,7 @@ export default function Home() {
                                     {post.mediaType === 'video' ? (
                                       <VideoThumbnail
                                         src={resolveAssetUrl(post.mediaUrl)}
+                                        posterUrl={post.videoThumbnailUrl ? resolveAssetUrl(post.videoThumbnailUrl) : undefined}
                                       />
                                     ) : (
                                       <img 
@@ -2751,6 +2752,7 @@ export default function Home() {
                                       {save.post.mediaType === 'video' ? (
                                         <VideoThumbnail
                                           src={resolveAssetUrl(save.selectedMediaUrl || save.post.mediaUrl)}
+                                          posterUrl={save.post.videoThumbnailUrl ? resolveAssetUrl(save.post.videoThumbnailUrl) : undefined}
                                         />
                                       ) : (
                                         <img 
@@ -3460,6 +3462,7 @@ export default function Home() {
                         resolveUrl={resolveAssetUrl}
                         className="max-h-96"
                         onImageClick={handleOpenImageViewer}
+                        videoThumbnailUrl={item.videoThumbnailUrl}
                       />
                     </div>
                   );
