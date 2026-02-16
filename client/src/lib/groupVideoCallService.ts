@@ -270,6 +270,7 @@ class GroupVideoCallService {
 
   private handleParticipantJoinedSignal(message: any) {
     if (!this.currentCallInfo) return;
+    if (message.userId === this.userId) return;
     
     const participant: GroupCallParticipant = {
       id: message.userId,
@@ -294,6 +295,7 @@ class GroupVideoCallService {
 
   private handleParticipantAccepted(message: any) {
     if (!this.currentCallInfo) return;
+    if (message.userId === this.userId) return;
     
     const participant = this.currentCallInfo.participants.get(message.userId);
     if (participant) {

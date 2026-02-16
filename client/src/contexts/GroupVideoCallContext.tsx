@@ -43,23 +43,25 @@ export function GroupVideoCallProvider({ children }: { children: ReactNode }) {
       const userName = (user as any).firstName || (user as any).username || 'User';
       const userAvatar = (user as any).profileImageUrl;
 
+      const filterSelf = (list: any[]) => list.filter(p => p.id !== user.id);
+
       groupVideoCallService.initialize(user.id, {
         onCallStateChange: (state) => {
           setCallState(state);
           if (state === 'connected') {
-            setParticipants(groupVideoCallService.getParticipants());
+            setParticipants(filterSelf(groupVideoCallService.getParticipants()));
           }
         },
         onIncomingGroupCall: (callInfo) => {
           setCurrentCallInfo(callInfo);
-          setParticipants(Array.from(callInfo.participants.values()));
+          setParticipants(filterSelf(Array.from(callInfo.participants.values())));
         },
         onParticipantJoined: (participant) => {
-          setParticipants(groupVideoCallService.getParticipants());
+          setParticipants(filterSelf(groupVideoCallService.getParticipants()));
           setRemoteStreams(new Map(groupVideoCallService.getRemoteStreams()));
         },
         onParticipantLeft: (participantId) => {
-          setParticipants(groupVideoCallService.getParticipants());
+          setParticipants(filterSelf(groupVideoCallService.getParticipants()));
           setRemoteStreams(new Map(groupVideoCallService.getRemoteStreams()));
         },
         onParticipantStream: (participantId, stream) => {
@@ -116,7 +118,7 @@ export function GroupVideoCallProvider({ children }: { children: ReactNode }) {
         callerAvatar
       );
       setCurrentCallInfo(groupVideoCallService.getCurrentCallInfo());
-      setParticipants(groupVideoCallService.getParticipants());
+      setParticipants(groupVideoCallService.getParticipants().filter(p => p.id !== user.id));
     } catch (err: any) {
       setError(err.message);
     }
