@@ -2447,7 +2447,7 @@ export default function Home() {
               <Button
                 key={mood.label}
                 variant="outline"
-                className="flex flex-col gap-2 h-auto py-4 hover:bg-accent"
+                className="flex flex-col gap-2 h-auto py-4 bg-white hover:bg-gray-50 border-gray-200"
                 onClick={() => {
                   setSelectedMood(mood.label);
                   setShowMoodDialog(false);
