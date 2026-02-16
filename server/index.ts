@@ -11,6 +11,10 @@ import { setupVite, serveStatic, log } from "./vite";
 import { performanceOptimizer } from "./performanceOptimizer";
 import { rateLimitService } from "./rateLimitService";
 import { firebaseNotificationService } from "./firebase-notifications";
+import { thumbnailService } from "./thumbnailService";
+import { db } from "./db";
+import { posts } from "@shared/schema";
+import { eq, and, isNotNull, isNull } from "drizzle-orm";
 
 const app = express();
 
@@ -196,6 +200,35 @@ app.get('/health', (req, res) => {
           }
         } catch (error) {
           console.error("Failed to seed educational posts:", error);
+        }
+
+        try {
+          const videoPosts = await db
+            .select({ id: posts.id, mediaUrl: posts.mediaUrl })
+            .from(posts)
+            .where(
+              and(
+                eq(posts.mediaType, 'video'),
+                isNotNull(posts.mediaUrl),
+                isNull(posts.videoThumbnailUrl)
+              )
+            );
+          if (videoPosts.length > 0) {
+            log(`Backfilling thumbnails for ${videoPosts.length} video posts...`);
+            for (const post of videoPosts) {
+              try {
+                const thumbUrl = await thumbnailService.generateThumbnailFromVideo(post.mediaUrl!, `post_${post.id}`);
+                if (thumbUrl) {
+                  await db.update(posts).set({ videoThumbnailUrl: thumbUrl }).where(eq(posts.id, post.id));
+                  log(`✅ Backfilled thumbnail for post ${post.id}`);
+                }
+              } catch (err) {
+                console.error(`Failed to backfill thumbnail for post ${post.id}:`, err);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Failed to backfill video thumbnails:", error);
         }
 
         // Start the birthday service for automatic birthday messages
