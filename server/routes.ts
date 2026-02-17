@@ -12,7 +12,7 @@ import { queryOptimizer } from './queryOptimizer';
 import { notificationService } from "./notificationService";
 import { thumbnailService } from "./thumbnailService";
 import { maintenanceService } from "./maintenanceService";
-import { sendChatbotConversation } from "./emailService";
+import { sendChatbotConversation, sendNewUserNotification } from "./emailService";
 import { reconcileUserBorders } from "./borderReconciliation";
 import { pool, db } from "./db";
 import { friendRankingIntelligence } from "./friendRankingIntelligence";
@@ -399,10 +399,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // If invite code was provided, create kliq membership
+        let inviteCodeOwnerName: string | undefined;
         if (receivedInviteCode && receivedInviteCode.trim()) {
           try {
             const inviteCodeOwner = await storage.getUserByInviteCode(receivedInviteCode.trim());
             if (inviteCodeOwner) {
+              inviteCodeOwnerName = `${inviteCodeOwner.firstName} ${inviteCodeOwner.lastName}`;
               // Add new user to invite code owner's kliq (one-way only)
               // The new user joins the owner's kliq, NOT the other way around
               const existingFriends = await storage.getFriends(inviteCodeOwner.id);
@@ -435,6 +437,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
         
+        sendNewUserNotification({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          inviteCodeUsed: receivedInviteCode?.trim() || undefined,
+          inviteCodeOwnerName
+        }).catch(err => console.error('New user notification email failed:', err));
+
         res.json({ 
           message: "Profile created successfully", 
           user: newUser 
