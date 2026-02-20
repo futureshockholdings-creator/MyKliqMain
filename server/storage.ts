@@ -2537,15 +2537,24 @@ export class DatabaseStorage implements IStorage {
       .select({
         message: messages,
         sender: users,
+        gif: gifs,
+        meme: memes,
+        moviecon: moviecons,
       })
       .from(messages)
       .innerJoin(users, eq(messages.senderId, users.id))
+      .leftJoin(gifs, eq(messages.gifId, gifs.id))
+      .leftJoin(memes, eq(messages.memeId, memes.id))
+      .leftJoin(moviecons, eq(messages.movieconId, moviecons.id))
       .where(eq(messages.groupConversationId, groupId))
       .orderBy(messages.createdAt);
     
-    const groupMessages = messagesData.map(({ message, sender }) => ({
+    const groupMessages = messagesData.map(({ message, sender, gif, meme, moviecon }) => ({
       ...message,
       sender,
+      gif,
+      meme,
+      moviecon,
     }));
     
     return {

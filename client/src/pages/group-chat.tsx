@@ -9,10 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { apiRequest } from "@/lib/queryClient";
 import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useAuth } from "@/hooks/useAuth";
-import type { User } from "@shared/schema";
+import type { User, Meme, Moviecon } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { PageWrapper } from "@/components/PageWrapper";
 import { GroupVideoCallButton } from "@/components/GroupVideoCallButton";
+import { MessageMediaPicker } from "@/components/MessageMediaPicker";
+import { MemeDisplay } from "@/components/MemeDisplay";
+import { MovieconDisplay } from "@/components/MovieconDisplay";
 
 interface MessageData {
   id: string;
@@ -21,6 +24,11 @@ interface MessageData {
   groupConversationId: string;
   isRead: boolean;
   createdAt: string;
+  mediaUrl?: string;
+  mediaType?: "image" | "video";
+  meme?: any;
+  gif?: any;
+  moviecon?: any;
   sender: {
     id: string;
     email: string;
@@ -50,6 +58,10 @@ export function GroupChat() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [messageText, setMessageText] = useState("");
+  const [selectedMedia, setSelectedMedia] = useState<{
+    type: "meme" | "moviecon" | "image" | "video";
+    data: any;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const hasScrolledToTop = useRef(false);
@@ -57,18 +69,15 @@ export function GroupChat() {
   const { data: groupChat, isLoading } = useQuery<GroupConversationData>({
     queryKey: ["/api/group-chats", groupChatId],
     enabled: !!groupChatId,
-    staleTime: 5000, // Consider data stale after 5 seconds
-    refetchInterval: 3000, // Poll every 3 seconds for new messages (same as individual conversations)
+    staleTime: 5000,
+    refetchInterval: 3000,
   });
 
-  // Mark group chat notifications as read when opening the conversation
   useEffect(() => {
     if (groupChatId) {
-      // Mark notifications related to this group chat as read
       apiRequest("PATCH", `/api/notifications/mark-read-by-related/${groupChatId}`, {
         types: ["message", "incognito_message"]
       }).then(() => {
-        // Invalidate notifications cache to update badge counts
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       }).catch((err) => {
         console.error("Failed to mark group notifications as read:", err);
@@ -77,11 +86,12 @@ export function GroupChat() {
   }, [groupChatId, queryClient]);
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (messageData: { content: string }) => {
+    mutationFn: async (messageData: { content?: string; mediaUrl?: string; mediaType?: "image" | "video"; memeId?: string; movieconId?: string }) => {
       return apiRequest("POST", `/api/group-chats/${groupChatId}/messages`, messageData);
     },
     onMutate: async (newMessage) => {
       setMessageText("");
+      setSelectedMedia(null);
       
       await queryClient.cancelQueries({ queryKey: ["/api/group-chats", groupChatId] });
       
@@ -91,7 +101,7 @@ export function GroupChat() {
       if (previousData && user) {
         const optimisticMessage: MessageData = {
           id: tempId,
-          content: newMessage.content,
+          content: newMessage.content || "",
           senderId: String(user.id),
           groupConversationId: groupChatId!,
           isRead: true,
@@ -126,6 +136,11 @@ export function GroupChat() {
           groupConversationId: groupChatId!,
           isRead: true,
           createdAt: serverMessage.createdAt || new Date().toISOString(),
+          mediaUrl: serverMessage.mediaUrl || undefined,
+          mediaType: serverMessage.mediaType || undefined,
+          meme: serverMessage.meme || undefined,
+          gif: serverMessage.gif || undefined,
+          moviecon: serverMessage.moviecon || undefined,
           sender: serverMessage.sender || (user ? {
             id: String(user.id),
             email: user.email || "",
@@ -162,7 +177,6 @@ export function GroupChat() {
     }
   };
 
-  // Scroll to top on initial page load (newest messages are at top)
   useEffect(() => {
     if (groupChat && !hasScrolledToTop.current) {
       scrollToTop();
@@ -171,7 +185,6 @@ export function GroupChat() {
     }
   }, [groupChat]);
 
-  // Reset scroll flag when navigating to a different chat
   useEffect(() => {
     hasScrolledToTop.current = false;
   }, [groupChatId]);
@@ -180,9 +193,47 @@ export function GroupChat() {
     e.preventDefault();
     const content = messageText.trim();
     
-    if (content) {
-      sendMessageMutation.mutate({ content });
+    if (content || selectedMedia) {
+      const messageData: any = {};
+      
+      if (content) {
+        messageData.content = content;
+      }
+      
+      if (selectedMedia) {
+        switch (selectedMedia.type) {
+          case "meme":
+            messageData.memeId = selectedMedia.data.id;
+            break;
+          case "moviecon":
+            messageData.movieconId = selectedMedia.data.id;
+            break;
+          case "image":
+          case "video":
+            messageData.mediaUrl = selectedMedia.data.url;
+            messageData.mediaType = selectedMedia.type;
+            break;
+        }
+      }
+      
+      sendMessageMutation.mutate(messageData);
     }
+  };
+
+  const handleMemeSelect = (meme: Meme) => {
+    setSelectedMedia({ type: "meme", data: meme });
+  };
+
+  const handleMovieconSelect = (moviecon: Moviecon) => {
+    setSelectedMedia({ type: "moviecon", data: moviecon });
+  };
+
+  const handleMediaSelect = (mediaUrl: string, mediaType: "image" | "video") => {
+    setSelectedMedia({ type: mediaType, data: { url: mediaUrl } });
+  };
+
+  const clearSelectedMedia = () => {
+    setSelectedMedia(null);
   };
 
   const getDisplayName = (userData: MessageData["sender"]) => {
@@ -285,7 +336,47 @@ export function GroupChat() {
 
         {/* Message Input - at top (matching individual conversation layout) */}
         <form onSubmit={handleSendMessage} className="p-4 border-b border-border bg-background">
+          {selectedMedia && (
+            <div className="mb-3 p-3 bg-white text-black rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {selectedMedia.type === "meme" && (
+                    <>
+                      <span className="text-sm font-medium">😂 MEME selected:</span>
+                      <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
+                    </>
+                  )}
+                  {selectedMedia.type === "moviecon" && (
+                    <>
+                      <span className="text-sm font-medium">🎬 Moviecon selected:</span>
+                      <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
+                    </>
+                  )}
+                  {(selectedMedia.type === "image" || selectedMedia.type === "video") && (
+                    <>
+                      <span className="text-sm font-medium">
+                        {selectedMedia.type === "image" ? "📷 Photo" : "🎥 Video"} selected
+                      </span>
+                    </>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSelectedMedia}
+                  data-testid="button-clear-media"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="flex gap-2">
+            <MessageMediaPicker
+              onSelectMeme={handleMemeSelect}
+              onSelectMoviecon={handleMovieconSelect}
+              onSelectMedia={handleMediaSelect}
+            />
             <Input
               type="text"
               placeholder="Type a message..."
@@ -297,7 +388,7 @@ export function GroupChat() {
             />
             <Button
               type="submit"
-              disabled={!messageText.trim() || sendMessageMutation.isPending}
+              disabled={(!messageText.trim() && !selectedMedia) || sendMessageMutation.isPending}
               className="bg-mykliq-green hover:bg-mykliq-green/90 text-white"
               data-testid="button-send"
             >
@@ -343,7 +434,41 @@ export function GroupChat() {
                       {isCurrentUser ? "You" : getDisplayName(message.sender)}
                     </span>
                     <div className="rounded-lg px-4 py-2 bg-white text-black">
-                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                      {message.content && (
+                        <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                      )}
+                      
+                      {message.mediaUrl && (
+                        <div className="rounded-lg overflow-hidden mt-1">
+                          {message.mediaType === "image" ? (
+                            <img 
+                              src={resolveAssetUrl(message.mediaUrl)} 
+                              alt="Shared image" 
+                              className="max-w-xs max-h-64 object-cover rounded-lg"
+                            />
+                          ) : (
+                            <video 
+                              src={resolveAssetUrl(message.mediaUrl)} 
+                              controls
+                              playsInline
+                              preload="metadata"
+                              className="max-w-xs max-h-64 rounded-lg"
+                            />
+                          )}
+                        </div>
+                      )}
+                      
+                      {(message.meme || message.gif) && (
+                        <div className="rounded-lg overflow-hidden mt-1">
+                          <MemeDisplay meme={message.meme || message.gif} className="max-w-xs" />
+                        </div>
+                      )}
+                      
+                      {message.moviecon && (
+                        <div className="rounded-lg overflow-hidden mt-1">
+                          <MovieconDisplay moviecon={message.moviecon} className="max-w-xs" />
+                        </div>
+                      )}
                     </div>
                     <span className="text-xs text-muted-foreground mt-1">
                       {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
