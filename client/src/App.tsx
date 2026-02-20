@@ -62,6 +62,7 @@ import { Chatbot } from "@/components/Chatbot";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { PinVerificationModal } from "@/components/PinVerificationModal";
 import { InstallPWA } from "@/components/InstallPWA";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { useState } from "react";
 
 function Navigation({ currentPath }: { currentPath: string }) {
@@ -305,7 +306,7 @@ function AppContent() {
   return (
     <TooltipProvider>
       <div className="bg-background min-h-screen h-screen text-foreground">
-        {/* Navigation - Only show when authenticated and not on public pages */}
+        <OfflineBanner />
         {isAuthenticated && !isLoading && !isPublicPage && (
           <Navigation currentPath={currentPath} />
         )}

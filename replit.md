@@ -30,6 +30,9 @@ Features include a hierarchical feed filtered by friend rankings, kliq-wide cont
 ### Caching Architecture
 A dual-cache system (SimpleCache and CacheService) with Redis support, in-memory fallback, pattern-based invalidation, and LRU eviction optimizes performance. The web client uses a two-tier `EnhancedCache` (memory and IndexedDB). Server-side caching includes specific TTLs for various content types, and client-side cache keys include the userId for isolation. Notification caches are optimized for faster alerts with 10-second server-side TTL and 15-second client-side polling, with immediate invalidation on notification creation.
 
+### Offline Support
+A dedicated `OfflineStore` (`client/src/lib/offlineStore.ts`) uses IndexedDB via localforage to cache key API responses (feed, user profile, friends, messages, themes, stories, etc.) with a 7-day TTL. Cache keys include userId for per-user isolation. When the device loses internet or network requests fail (including captive portals/flaky connections), the `enterpriseFetch` pipeline and TanStack Query automatically fall back to offline-cached data. A red `OfflineBanner` component appears at the top of the screen with iOS safe-area support. The offline store is cleared on logout. The `useOfflineStatus` hook uses `useSyncExternalStore` for reactive connectivity detection.
+
 ### Messaging & Notifications
 Individual conversations poll every 3 seconds for new messages, with notifications created on message send. Group chats also poll every 3 seconds, and group messages create notifications for all participants.
 

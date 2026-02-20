@@ -1,6 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { enterpriseFetch, enterpriseApiRequest } from "./enterprise/enterpriseFetch";
 import { performanceMonitor } from "./enterprise/performanceMonitor";
+import { offlineStore } from "./offlineStore";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -43,11 +44,25 @@ export function getQueryFn<T>(options: {
       
       return data;
     } catch (error: any) {
-      // Handle 401 unauthorized
       if (unauthorizedBehavior === "returnNull" && error?.message?.includes('401')) {
         return null as T;
       }
-      
+
+      if (offlineStore.shouldCache(url)) {
+        const isNetworkError = error?.message?.includes('Failed to fetch') ||
+          error?.message?.includes('NetworkError') ||
+          error?.message?.includes('Load failed') ||
+          !offlineStore.getOnlineStatus();
+
+        if (isNetworkError) {
+          const offlineData = await offlineStore.getOfflineData<T>(url);
+          if (offlineData !== null) {
+            console.log(`[QueryFn] Serving offline data for ${url}`);
+            return offlineData;
+          }
+        }
+      }
+
       throw error;
     }
   };
@@ -62,10 +77,10 @@ export const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000,      // 5 minutes instead of Infinity for better data freshness
       gcTime: 10 * 60 * 1000,        // Garbage collect after 10 minutes to prevent memory leaks
       retry: (failureCount, error: any) => {
-        // Don't retry on auth errors or client errors
         if (error?.message?.includes('401') || error?.message?.includes('403')) return false;
         if (error?.message?.includes('400')) return false;
-        return failureCount < 2; // Only retry twice for network issues
+        if (!offlineStore.getOnlineStatus()) return false;
+        return failureCount < 2;
       },
     },
     mutations: {

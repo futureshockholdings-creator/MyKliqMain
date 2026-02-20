@@ -811,10 +811,12 @@ export default function Settings() {
       // 2. Mark that we're logging out to prevent auto-redirect on login page
       sessionStorage.setItem('forceLogout', 'true');
       
-      // 3. Clear ALL enterprise caches (memory + IndexedDB + request scheduler + circuit breakers)
-      // This is now async and properly awaited
       console.log('[Logout] Cleaning up enterprise services...');
       await cleanupEnterpriseServices();
+
+      console.log('[Logout] Clearing offline store...');
+      const { offlineStore } = await import('@/lib/offlineStore');
+      await offlineStore.clearAll();
       
       // 4. Completely REMOVE all user-specific queries from TanStack Query
       // Using predicate-based removal to catch ALL API queries regardless of structure

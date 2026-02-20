@@ -10,6 +10,7 @@ import { circuitBreaker } from './circuitBreaker';
 import { performanceMonitor } from './performanceMonitor';
 import { buildApiUrl } from '../apiConfig';
 import { getAuthToken, removeAuthToken, isTokenExpired, getUserIdFromToken } from '../tokenStorage';
+import { offlineStore } from '../offlineStore';
 
 interface EnterpriseFetchOptions extends Omit<RequestInit, 'priority'> {
   skipCache?: boolean;
@@ -121,21 +122,37 @@ export async function enterpriseFetch<T = any>(
               console.log('[EnterpriseFetch] Stored auth token from X-Auth-Token header');
             }
 
-            return await res.json();
+            const jsonData = await res.json();
+
+            if (offlineStore.shouldCache(url)) {
+              offlineStore.saveForOffline(url, jsonData).catch(() => {});
+            }
+
+            return jsonData;
           },
           { expectedDuration: 1000 }
         );
       },
-      // Fallback: try to get from cache if circuit is open
       shouldCache
         ? async () => {
             const cached = await enhancedCache.get<T>(cacheKey);
-            // Check for undefined (missing) vs falsy but valid (0, false, [], etc.)
             if (cached !== undefined) {
               console.log(`[EnterpriseFetch] Using cache fallback for ${url}`);
               performanceMonitor.trackCacheHit(true);
               return cached;
             }
+
+            if (offlineStore.shouldCache(url)) {
+              const offlineData = await offlineStore.getOfflineData<T>(url);
+              if (offlineData !== null) {
+                console.log(`[EnterpriseFetch] Using offline store fallback for ${url}`);
+                if (!offlineStore.getOnlineStatus()) {
+                  offlineStore.markOffline();
+                }
+                return offlineData;
+              }
+            }
+
             throw new Error('No cache fallback available');
           }
         : undefined
