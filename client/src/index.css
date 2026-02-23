@@ -19,14 +19,8 @@ html, body {
   overflow-x: hidden;
 }
 
-/* iOS Safari: prevent sticky hover and focus highlights on touch devices */
-html.touch-device button:not(:active),
-html.touch-device [role="button"]:not(:active),
-html.touch-device a:not(:active) {
-  transition: background-color 0s !important;
-}
-
-@media (hover: none) and (pointer: coarse) {
+/* iOS Safari: clear focus ring on touch devices */
+@media (pointer: coarse) {
   button:focus,
   button:focus:not(:focus-visible),
   [role="button"]:focus,
