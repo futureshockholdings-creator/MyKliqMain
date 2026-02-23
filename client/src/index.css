@@ -19,6 +19,23 @@ html, body {
   overflow-x: hidden;
 }
 
+/* Remove sticky focus highlight on buttons/interactive elements after touch on mobile */
+@media (hover: none) and (pointer: coarse) {
+  button:focus:not(:focus-visible),
+  [role="button"]:focus:not(:focus-visible),
+  a:focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    background-color: inherit;
+  }
+}
+
+/* Also handle tap highlight on WebKit mobile browsers */
+button, [role="button"], a {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* Prevent iOS Safari auto-zoom on form inputs */
 @media (max-width: 768px) {
   input, textarea, select, input[type="text"], input[type="email"], 
