@@ -2169,7 +2169,8 @@ export default function Home() {
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
               placeholder="What's happening in your kliq?"
-              className="flex-1 bg-white text-black placeholder-gray-500 border-none resize-none"
+              className="flex-1 border-none resize-none"
+              style={{ backgroundColor: '#ffffff', color: '#000000' }}
               rows={2}
               data-testid="textarea-new-post"
             />
