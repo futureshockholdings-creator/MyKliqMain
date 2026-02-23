@@ -30,6 +30,8 @@ import { MovieconPicker } from "@/components/MovieconPicker";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { YouTubeEmbedList } from "@/components/YouTubeEmbed";
 import { extractYouTubeUrlsFromText } from "@/lib/youtubeUtils";
+import { SocialMediaEmbedList } from "@/components/SocialMediaEmbed";
+import { extractSocialMediaUrlsFromText } from "@/lib/socialMediaUtils";
 import { PollCard } from "@/components/PollCard";
 import { SponsoredAd } from "@/components/SponsoredAd";
 import { GoogleSearch } from "@/components/GoogleSearch";
@@ -3420,7 +3422,8 @@ export default function Home() {
               
               {item.content && (
                 (() => {
-                  const { cleanText, youtubeUrls } = extractYouTubeUrlsFromText(item.content);
+                  const { cleanText: ytCleanText, youtubeUrls } = extractYouTubeUrlsFromText(item.content);
+                  const { cleanText, socialUrls } = extractSocialMediaUrlsFromText(ytCleanText);
                   const isEventPost = cleanText?.includes('📅 New event:') || cleanText?.includes('✏️ Updated event:');
                   
                   return (
@@ -3440,6 +3443,11 @@ export default function Home() {
                       {youtubeUrls.length > 0 && (
                         <div className="mb-3">
                           <YouTubeEmbedList urls={youtubeUrls} />
+                        </div>
+                      )}
+                      {socialUrls.length > 0 && (
+                        <div className="mb-3">
+                          <SocialMediaEmbedList urls={socialUrls} />
                         </div>
                       )}
                     </>
@@ -3584,13 +3592,19 @@ export default function Home() {
                               </p>
                               {comment.content && (
                                 (() => {
-                                  const { cleanText, youtubeUrls } = extractYouTubeUrlsFromText(comment.content);
+                                  const { cleanText: ytCleanText, youtubeUrls } = extractYouTubeUrlsFromText(comment.content);
+                                  const { cleanText, socialUrls } = extractSocialMediaUrlsFromText(ytCleanText);
                                   return (
                                     <>
                                       {cleanText && <p className="text-sm text-foreground">{translatePost(cleanText)}</p>}
                                       {youtubeUrls.length > 0 && (
                                         <div className="mt-2">
                                           <YouTubeEmbedList urls={youtubeUrls} />
+                                        </div>
+                                      )}
+                                      {socialUrls.length > 0 && (
+                                        <div className="mt-2">
+                                          <SocialMediaEmbedList urls={socialUrls} />
                                         </div>
                                       )}
                                     </>
