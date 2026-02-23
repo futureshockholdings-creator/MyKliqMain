@@ -54,17 +54,14 @@ registerServiceWorker();
 // after verifying they accepted Terms & Privacy during sign-up (termsAcceptedAt)
 
 if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+  document.documentElement.classList.add('touch-device');
   document.addEventListener('touchend', (e) => {
     const target = e.target as HTMLElement;
     const button = target.closest('button, [role="button"], a');
     if (button && button instanceof HTMLElement) {
-      button.blur();
-      button.style.pointerEvents = 'none';
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          button.style.pointerEvents = '';
-        });
-      });
+      setTimeout(() => {
+        button.blur();
+      }, 100);
     }
   }, { passive: true });
 }
