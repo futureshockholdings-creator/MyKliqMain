@@ -58,8 +58,12 @@ if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
     const target = e.target as HTMLElement;
     const button = target.closest('button, [role="button"], a');
     if (button && button instanceof HTMLElement) {
+      button.blur();
+      button.style.pointerEvents = 'none';
       requestAnimationFrame(() => {
-        button.blur();
+        requestAnimationFrame(() => {
+          button.style.pointerEvents = '';
+        });
       });
     }
   }, { passive: true });
