@@ -53,4 +53,16 @@ registerServiceWorker();
 // It will only be initialized for authenticated users in App.tsx
 // after verifying they accepted Terms & Privacy during sign-up (termsAcceptedAt)
 
+if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+  document.addEventListener('touchend', (e) => {
+    const target = e.target as HTMLElement;
+    const button = target.closest('button, [role="button"], a');
+    if (button && button instanceof HTMLElement) {
+      requestAnimationFrame(() => {
+        button.blur();
+      });
+    }
+  }, { passive: true });
+}
+
 createRoot(document.getElementById("root")!).render(<App />);
