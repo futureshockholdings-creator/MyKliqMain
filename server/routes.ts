@@ -9817,8 +9817,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { type } = req.body;
-      const notifications = await notificationService.markAllAsRead(userId, type);
-      res.json(notifications);
+      console.log(`[MARK-ALL-READ-DEBUG] userId=${userId} marking all as read, type=${type}`);
+      const notifs = await notificationService.markAllAsRead(userId, type);
+      console.log(`[MARK-ALL-READ-DEBUG] Marked ${Array.isArray(notifs) ? notifs.length : 0} notifications as read for userId=${userId}`);
+      res.json(notifs);
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
       res.status(500).json({ message: "Failed to mark notifications as read" });
@@ -9831,6 +9833,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const { relatedId } = req.params;
       const { types } = req.body; // Array of notification types to mark as read
+      
+      console.log(`[MARK-READ-DEBUG] userId=${userId} marking relatedId=${relatedId} types=${JSON.stringify(types)}`);
       
       // Mark notifications matching the criteria as read
       const result = await db
@@ -9845,6 +9849,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           )
         )
         .returning();
+      
+      if (result.length > 0) {
+        console.log(`[MARK-READ-DEBUG] Marked ${result.length} notifications as read for userId=${userId}, relatedId=${relatedId}, notificationIds=${result.map(n => n.id).join(',')}`);
+      }
       
       res.json({ success: true, count: result.length });
     } catch (error) {
