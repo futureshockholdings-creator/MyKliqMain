@@ -40,6 +40,17 @@ button, [role="button"], a {
   -webkit-touch-callout: none;
 }
 
+/* Force post creation textarea to always be white with black text */
+.post-input-forced,
+.post-input-forced:focus,
+.post-input-forced:active {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+.post-input-forced::placeholder {
+  color: #6b7280 !important;
+}
+
 /* Prevent iOS Safari auto-zoom on form inputs */
 @media (max-width: 768px) {
   input, textarea, select, input[type="text"], input[type="email"], 
