@@ -99,8 +99,8 @@ export function SocialMediaEmbed({ socialUrl, className = "" }: SocialMediaEmbed
             <Icon className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white font-semibold text-sm">{config.name} {socialUrl.contentType}</p>
-            <p className="text-white/60 text-xs truncate">{displayPath}</p>
+            <p className="text-white font-semibold text-sm">Shared Post</p>
+            <p className="text-white/60 text-xs truncate">{socialUrl.url}</p>
           </div>
         </div>
 
