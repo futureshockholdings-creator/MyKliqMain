@@ -34,6 +34,8 @@ import { SocialMediaEmbedList } from "@/components/SocialMediaEmbed";
 import { extractSocialMediaUrlsFromText } from "@/lib/socialMediaUtils";
 import { TwitchEmbedList } from "@/components/TwitchEmbed";
 import { extractTwitchUrlsFromText } from "@/lib/twitchUtils";
+import { LinkPreviewList } from "@/components/LinkPreviewCard";
+import { extractGenericUrls } from "@/lib/linkPreviewUtils";
 import { PollCard } from "@/components/PollCard";
 import { SponsoredAd } from "@/components/SponsoredAd";
 import { GoogleSearch } from "@/components/GoogleSearch";
@@ -3427,6 +3429,7 @@ export default function Home() {
                   const { cleanText: ytCleanText, youtubeUrls } = extractYouTubeUrlsFromText(item.content);
                   const { cleanText: twCleanText, twitchUrls } = extractTwitchUrlsFromText(ytCleanText);
                   const { cleanText, socialUrls } = extractSocialMediaUrlsFromText(twCleanText);
+                  const genericUrls = extractGenericUrls(cleanText || '');
                   const isEventPost = cleanText?.includes('📅 New event:') || cleanText?.includes('✏️ Updated event:');
                   
                   return (
@@ -3456,6 +3459,11 @@ export default function Home() {
                       {socialUrls.length > 0 && (
                         <div className="mb-3">
                           <SocialMediaEmbedList urls={socialUrls} />
+                        </div>
+                      )}
+                      {genericUrls.length > 0 && (
+                        <div className="mb-3">
+                          <LinkPreviewList urls={genericUrls} />
                         </div>
                       )}
                     </>
@@ -3603,6 +3611,7 @@ export default function Home() {
                                   const { cleanText: ytCleanText, youtubeUrls } = extractYouTubeUrlsFromText(comment.content);
                                   const { cleanText: twCleanText, twitchUrls } = extractTwitchUrlsFromText(ytCleanText);
                                   const { cleanText, socialUrls } = extractSocialMediaUrlsFromText(twCleanText);
+                                  const genericUrls = extractGenericUrls(cleanText || '');
                                   return (
                                     <>
                                       {cleanText && <p className="text-sm text-foreground">{translatePost(cleanText)}</p>}
@@ -3619,6 +3628,11 @@ export default function Home() {
                                       {socialUrls.length > 0 && (
                                         <div className="mt-2">
                                           <SocialMediaEmbedList urls={socialUrls} />
+                                        </div>
+                                      )}
+                                      {genericUrls.length > 0 && (
+                                        <div className="mt-2">
+                                          <LinkPreviewList urls={genericUrls} />
                                         </div>
                                       )}
                                     </>

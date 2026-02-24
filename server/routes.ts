@@ -5134,6 +5134,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/link-preview", async (req, res) => {
+    const { url } = req.query;
+
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: "URL parameter is required" });
+    }
+
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      return res.status(400).json({ error: "Invalid URL" });
+    }
+
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return res.status(400).json({ error: "Only HTTP/HTTPS URLs are allowed" });
+    }
+
+    const hostname = parsedUrl.hostname.toLowerCase();
+    const blockedPatterns = [
+      /^localhost$/i,
+      /^127\./,
+      /^10\./,
+      /^172\.(1[6-9]|2[0-9]|3[01])\./,
+      /^192\.168\./,
+      /^0\./,
+      /^169\.254\./,
+      /^\[::1\]$/,
+      /^\[fc/i,
+      /^\[fd/i,
+      /^\[fe80:/i,
+      /^metadata\.google/i,
+      /\.internal$/i,
+      /\.local$/i,
+    ];
+    if (blockedPatterns.some(p => p.test(hostname))) {
+      return res.status(400).json({ error: "URL not allowed" });
+    }
+
+    const cacheKey = `link-preview:${url}`;
+    const cached = await cacheService.get(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; MyKliqBot/1.0)',
+          'Accept': 'text/html',
+        },
+        signal: controller.signal,
+        redirect: 'follow',
+        size: 2 * 1024 * 1024,
+      } as any);
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        return res.status(502).json({ error: "Failed to fetch URL" });
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('text/html')) {
+        return res.status(400).json({ error: "URL does not point to an HTML page" });
+      }
+
+      const html = await response.text();
+      const maxParse = html.substring(0, 50000);
+
+      const getMetaContent = (property: string): string | null => {
+        const ogPattern = new RegExp(`<meta[^>]*(?:property|name)=["']${property}["'][^>]*content=["']([^"']*)["']`, 'i');
+        const match = maxParse.match(ogPattern);
+        if (match) return match[1];
+        const reversed = new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["']${property}["']`, 'i');
+        const revMatch = maxParse.match(reversed);
+        return revMatch ? revMatch[1] : null;
+      };
+
+      let title = getMetaContent('og:title') || getMetaContent('twitter:title');
+      if (!title) {
+        const titleMatch = maxParse.match(/<title[^>]*>([^<]*)<\/title>/i);
+        title = titleMatch ? titleMatch[1].trim() : null;
+      }
+
+      const description = getMetaContent('og:description') || getMetaContent('twitter:description') || getMetaContent('description');
+      const image = getMetaContent('og:image') || getMetaContent('twitter:image') || getMetaContent('twitter:image:src');
+      const siteName = getMetaContent('og:site_name');
+
+      let favicon: string | null = null;
+      const iconMatch = maxParse.match(/<link[^>]*rel=["'](?:icon|shortcut icon|apple-touch-icon)["'][^>]*href=["']([^"']*)["']/i);
+      if (iconMatch) {
+        favicon = iconMatch[1];
+        if (favicon.startsWith('/')) {
+          const parsed = new URL(url);
+          favicon = `${parsed.origin}${favicon}`;
+        } else if (!favicon.startsWith('http')) {
+          const parsed = new URL(url);
+          favicon = `${parsed.origin}/${favicon}`;
+        }
+      } else {
+        const parsed = new URL(url);
+        favicon = `${parsed.origin}/favicon.ico`;
+      }
+
+      const result = {
+        title: title || null,
+        description: description ? description.substring(0, 300) : null,
+        image: image || null,
+        siteName: siteName || new URL(url).hostname.replace('www.', ''),
+        favicon,
+        url,
+      };
+
+      await cacheService.set(cacheKey, result, 3600);
+
+      res.json(result);
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        return res.status(504).json({ error: "Request timed out" });
+      }
+      console.error("Link preview error:", error);
+      res.status(500).json({ error: "Failed to generate link preview" });
+    }
+  });
+
   // Profile picture update endpoint
   app.put("/api/user/profile-picture", isAuthenticated, async (req: any, res) => {
     if (!req.body.profileImageURL) {
