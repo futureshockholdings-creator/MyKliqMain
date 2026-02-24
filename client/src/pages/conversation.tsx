@@ -16,6 +16,15 @@ import { MemeDisplay } from "@/components/MemeDisplay";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { PageWrapper } from "@/components/PageWrapper";
 import { VideoCallButton } from "@/components/VideoCallButton";
+import { YouTubeEmbedList } from "@/components/YouTubeEmbed";
+import { extractYouTubeUrlsFromText } from "@/lib/youtubeUtils";
+import { TwitchEmbedList } from "@/components/TwitchEmbed";
+import { extractTwitchUrlsFromText } from "@/lib/twitchUtils";
+import { SocialMediaEmbedList } from "@/components/SocialMediaEmbed";
+import { extractSocialMediaUrlsFromText } from "@/lib/socialMediaUtils";
+import { LinkPreviewList } from "@/components/LinkPreviewCard";
+import { extractGenericUrls } from "@/lib/linkPreviewUtils";
+import { LinkifyText } from "@/components/LinkifyText";
 
 interface MessageData {
   id: string;
@@ -402,9 +411,41 @@ export function Conversation() {
                       >
                         {/* Text content */}
                         {message.content && (
-                          <div className="px-4 py-2">
-                            {message.content}
-                          </div>
+                          (() => {
+                            const { cleanText: ytCleanText, youtubeUrls } = extractYouTubeUrlsFromText(message.content);
+                            const { cleanText: twCleanText, twitchUrls } = extractTwitchUrlsFromText(ytCleanText);
+                            const { cleanText, socialUrls } = extractSocialMediaUrlsFromText(twCleanText);
+                            const genericUrls = extractGenericUrls(cleanText || '');
+                            return (
+                              <div className="px-4 py-2">
+                                {cleanText && (
+                                  <p className="whitespace-pre-wrap break-words">
+                                    <LinkifyText text={cleanText} />
+                                  </p>
+                                )}
+                                {youtubeUrls.length > 0 && (
+                                  <div className="mt-2">
+                                    <YouTubeEmbedList urls={youtubeUrls} />
+                                  </div>
+                                )}
+                                {twitchUrls.length > 0 && (
+                                  <div className="mt-2">
+                                    <TwitchEmbedList urls={twitchUrls} />
+                                  </div>
+                                )}
+                                {socialUrls.length > 0 && (
+                                  <div className="mt-2">
+                                    <SocialMediaEmbedList urls={socialUrls} />
+                                  </div>
+                                )}
+                                {genericUrls.length > 0 && (
+                                  <div className="mt-2">
+                                    <LinkPreviewList urls={genericUrls} />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()
                         )}
                         
                         {/* Media content */}
