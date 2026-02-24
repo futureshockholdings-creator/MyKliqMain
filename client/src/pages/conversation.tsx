@@ -435,12 +435,12 @@ export function Conversation() {
                                 )}
                                 {socialUrls.length > 0 && (
                                   <div className="mt-2">
-                                    <SocialMediaEmbedList urls={socialUrls} />
+                                    <SocialMediaEmbedList urls={socialUrls} className="max-w-[14rem]" />
                                   </div>
                                 )}
                                 {genericUrls.length > 0 && (
                                   <div className="mt-2">
-                                    <LinkPreviewList urls={genericUrls} />
+                                    <LinkPreviewList urls={genericUrls} className="max-w-[14rem]" />
                                   </div>
                                 )}
                               </div>
