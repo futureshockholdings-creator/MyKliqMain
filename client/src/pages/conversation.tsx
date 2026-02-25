@@ -23,7 +23,7 @@ import { extractTwitchUrlsFromText } from "@/lib/twitchUtils";
 import { SocialMediaEmbedList } from "@/components/SocialMediaEmbed";
 import { extractSocialMediaUrlsFromText } from "@/lib/socialMediaUtils";
 import { LinkPreviewList } from "@/components/LinkPreviewCard";
-import { extractGenericUrls } from "@/lib/linkPreviewUtils";
+import { extractGenericUrlsFromText } from "@/lib/linkPreviewUtils";
 import { LinkifyText } from "@/components/LinkifyText";
 
 interface MessageData {
@@ -414,8 +414,8 @@ export function Conversation() {
                           (() => {
                             const { cleanText: ytCleanText, youtubeUrls } = extractYouTubeUrlsFromText(message.content);
                             const { cleanText: twCleanText, twitchUrls } = extractTwitchUrlsFromText(ytCleanText);
-                            const { cleanText, socialUrls } = extractSocialMediaUrlsFromText(twCleanText);
-                            const genericUrls = extractGenericUrls(cleanText || '');
+                            const { cleanText: smCleanText, socialUrls } = extractSocialMediaUrlsFromText(twCleanText);
+                            const { cleanText, genericUrls } = extractGenericUrlsFromText(smCleanText || '');
                             return (
                               <div className="px-4 py-2">
                                 {cleanText && (

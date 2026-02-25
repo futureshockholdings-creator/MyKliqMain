@@ -35,7 +35,7 @@ import { extractSocialMediaUrlsFromText } from "@/lib/socialMediaUtils";
 import { TwitchEmbedList } from "@/components/TwitchEmbed";
 import { extractTwitchUrlsFromText } from "@/lib/twitchUtils";
 import { LinkPreviewList } from "@/components/LinkPreviewCard";
-import { extractGenericUrls } from "@/lib/linkPreviewUtils";
+import { extractGenericUrlsFromText } from "@/lib/linkPreviewUtils";
 import { PollCard } from "@/components/PollCard";
 import { SponsoredAd } from "@/components/SponsoredAd";
 import { GoogleSearch } from "@/components/GoogleSearch";
@@ -3428,8 +3428,8 @@ export default function Home() {
                 (() => {
                   const { cleanText: ytCleanText, youtubeUrls } = extractYouTubeUrlsFromText(item.content);
                   const { cleanText: twCleanText, twitchUrls } = extractTwitchUrlsFromText(ytCleanText);
-                  const { cleanText, socialUrls } = extractSocialMediaUrlsFromText(twCleanText);
-                  const genericUrls = extractGenericUrls(cleanText || '');
+                  const { cleanText: smCleanText, socialUrls } = extractSocialMediaUrlsFromText(twCleanText);
+                  const { cleanText, genericUrls } = extractGenericUrlsFromText(smCleanText || '');
                   const isEventPost = cleanText?.includes('📅 New event:') || cleanText?.includes('✏️ Updated event:');
                   
                   return (
@@ -3610,8 +3610,8 @@ export default function Home() {
                                 (() => {
                                   const { cleanText: ytCleanText, youtubeUrls } = extractYouTubeUrlsFromText(comment.content);
                                   const { cleanText: twCleanText, twitchUrls } = extractTwitchUrlsFromText(ytCleanText);
-                                  const { cleanText, socialUrls } = extractSocialMediaUrlsFromText(twCleanText);
-                                  const genericUrls = extractGenericUrls(cleanText || '');
+                                  const { cleanText: smCleanText, socialUrls } = extractSocialMediaUrlsFromText(twCleanText);
+                                  const { cleanText, genericUrls } = extractGenericUrlsFromText(smCleanText || '');
                                   return (
                                     <>
                                       {cleanText && <p className="text-sm text-foreground">{translatePost(cleanText)}</p>}

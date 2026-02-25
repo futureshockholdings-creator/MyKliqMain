@@ -33,3 +33,33 @@ export function extractGenericUrls(text: string): string[] {
 
   return generic;
 }
+
+export function extractGenericUrlsFromText(text: string): {
+  cleanText: string;
+  genericUrls: string[];
+} {
+  if (!text) return { cleanText: text, genericUrls: [] };
+
+  const matches = text.match(urlPattern) || [];
+  const genericUrls: string[] = [];
+  const seen = new Set<string>();
+  let cleanText = text;
+
+  for (const rawUrl of matches) {
+    const cleaned = rawUrl.replace(/[)}\]>,;.!?]+$/, '');
+    if (!isAlreadyHandled(cleaned) && !seen.has(cleaned)) {
+      seen.add(cleaned);
+      genericUrls.push(cleaned);
+      const escapedUrl = cleaned.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      cleanText = cleanText.replace(new RegExp(escapedUrl, 'g'), '');
+    }
+  }
+
+  cleanText = cleanText
+    .replace(/\s+/g, ' ')
+    .replace(/^\s+|\s+$/g, '')
+    .replace(/\n\s*\n/g, '\n')
+    .trim();
+
+  return { cleanText, genericUrls };
+}
