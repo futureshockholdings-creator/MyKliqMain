@@ -11229,7 +11229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       });
       
-      const authUrl = oauthService.generateAuthUrl(platform, state, codeChallenge);
+      const authUrl = oauthService.generateAuthUrl(platform, state);
       res.json({ authUrl });
     } catch (error) {
       console.error(`Error starting OAuth for ${req.params.platform}:`, error);
