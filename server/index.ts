@@ -161,6 +161,16 @@ app.get('/', (req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
+
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`[Fatal] Port ${port} is already in use. A previous process may still be running. Exiting.`);
+      process.exit(1);
+    } else {
+      throw err;
+    }
+  });
+
   server.listen(
     {
       port,
