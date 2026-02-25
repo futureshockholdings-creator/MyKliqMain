@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
+import http from "http";
 import { registerRoutes } from "./routes";
 import { startBirthdayService } from "./birthdayService";
 import { startMoodBoostScheduler } from "./services/moodBoostScheduler";
@@ -161,6 +162,24 @@ app.get('/health', (req, res) => {
       // Initialize Firebase Admin SDK for push notifications
       if (firebaseNotificationService.isInitialized()) {
         log("Firebase Admin SDK ready for push notifications");
+      }
+
+      // Self-ping every 4 minutes in production to prevent cold starts / container recycling
+      if (process.env.NODE_ENV !== 'development') {
+        setInterval(() => {
+          const req = http.get(`http://localhost:${port}/health`, (res) => {
+            res.resume();
+            if (res.statusCode === 200) {
+              log('[KeepAlive] Self-ping OK');
+            } else {
+              log(`[KeepAlive] Self-ping returned status ${res.statusCode}`);
+            }
+          });
+          req.on('error', (err) => {
+            log(`[KeepAlive] Self-ping failed: ${err.message}`);
+          });
+          req.end();
+        }, 4 * 60 * 1000);
       }
 
       // Delay background services to avoid connection burst on cold start
