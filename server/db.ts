@@ -19,9 +19,9 @@ export const pool = new Pool({
   connectionTimeoutMillis: 15000,   // Higher timeout for heavy load
   idleTimeoutMillis: 30000,         // Shorter idle time for serverless
   max: 25,                          // Increased for high concurrency scaling
-  min: 0,                           // Zero minimum to avoid cold start connection bursts
+  min: 2,                           // Keep 2 warm connections to eliminate cold-start delays
   maxUses: 10000,                   // Higher connection reuse for efficiency
-  allowExitOnIdle: true,            // Allow pool to shrink when idle
+  allowExitOnIdle: false,           // Keep pool alive between requests
   keepAlive: true,                  // Enable TCP keep-alive
   log: (message, level) => {
     if (level === 'error' || message.includes('timeout')) {

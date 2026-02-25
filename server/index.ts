@@ -105,9 +105,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint for UptimeRobot (registered BEFORE Vite to avoid catch-all)
+// Health check endpoint for UptimeRobot and Replit (registered BEFORE Vite to avoid catch-all)
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Replit's internal health checker hits `/` with Go-http-client — respond 200 immediately
+// so the deployment doesn't get killed during startup or background restarts
+app.get('/', (req, res, next) => {
+  const ua = req.headers['user-agent'] || '';
+  const accept = req.headers['accept'] || '';
+  if (ua.includes('Go-http-client') || !accept.includes('text/html')) {
+    return res.status(200).json({ status: 'ok' });
+  }
+  next();
 });
 
 (async () => {
