@@ -10595,7 +10595,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Setup WebSocket server for real-time Action features
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-  
+
+  wss.on('error', (err) => {
+    console.error('[WSS] Server error:', err.message);
+  });
+
   const activeGroupCalls = new Map<string, Set<string>>();
   
   wss.on('connection', (ws: ExtendedWebSocket, req) => {

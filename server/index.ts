@@ -161,152 +161,147 @@ app.get('/', (req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
+  let bindAttempts = 0;
+  const maxBindAttempts = 5;
+
+  const onListening = () => {
+    log(`serving on port ${port}`);
+
+    if (firebaseNotificationService.isInitialized()) {
+      log("Firebase Admin SDK ready for push notifications");
+    }
+
+    if (process.env.NODE_ENV !== 'development') {
+      setInterval(() => {
+        const req = http.get(`http://localhost:${port}/health`, (res) => {
+          res.resume();
+          if (res.statusCode === 200) {
+            log('[KeepAlive] Self-ping OK');
+          } else {
+            log(`[KeepAlive] Self-ping returned status ${res.statusCode}`);
+          }
+        });
+        req.on('error', (err) => {
+          log(`[KeepAlive] Self-ping failed: ${err.message}`);
+        });
+        req.end();
+      }, 4 * 60 * 1000);
+    }
+
+    setTimeout(async () => {
+      try {
+        const result = await seedBorders();
+        if (result.inserted > 0) {
+          log(`Seeded ${result.inserted} profile borders`);
+        }
+        const reconcileResult = await reconcileAllUsersWithStreaks();
+        if (reconcileResult.totalStreakBorders > 0 || reconcileResult.totalReferralBorders > 0 || reconcileResult.totalSportsBorders > 0) {
+          log(`Reconciled borders: ${reconcileResult.totalStreakBorders} streak, ${reconcileResult.totalReferralBorders} referral, ${reconcileResult.totalSportsBorders} sports`);
+        }
+      } catch (error) {
+        console.error("Failed to seed/reconcile borders:", error);
+      }
+
+      try {
+        const memesResult = await seedMemes();
+        if (memesResult.inserted > 0) {
+          log(`Seeded ${memesResult.inserted} memes`);
+        }
+      } catch (error) {
+        console.error("Failed to seed memes:", error);
+      }
+
+      try {
+        const { seedEducationalPosts } = await import('./seedEducationalPosts');
+        const eduResult = await seedEducationalPosts();
+        if (eduResult > 0) {
+          log(`Seeded ${eduResult} educational posts`);
+        }
+      } catch (error) {
+        console.error("Failed to seed educational posts:", error);
+      }
+
+      try {
+        const videoPosts = await db
+          .select({ id: posts.id, mediaUrl: posts.mediaUrl })
+          .from(posts)
+          .where(
+            and(
+              eq(posts.mediaType, 'video'),
+              isNotNull(posts.mediaUrl),
+              isNull(posts.videoThumbnailUrl)
+            )
+          );
+        if (videoPosts.length > 0) {
+          log(`Backfilling thumbnails for ${videoPosts.length} video posts...`);
+          for (const post of videoPosts) {
+            try {
+              const thumbUrl = await thumbnailService.generateThumbnailFromVideo(post.mediaUrl!, `post_${post.id}`);
+              if (thumbUrl) {
+                await db.update(posts).set({ videoThumbnailUrl: thumbUrl }).where(eq(posts.id, post.id));
+                log(`✅ Backfilled thumbnail for post ${post.id}`);
+              }
+            } catch (err) {
+              console.error(`Failed to backfill thumbnail for post ${post.id}:`, err);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to backfill video thumbnails:", error);
+      }
+
+      startBirthdayService();
+      startMoodBoostScheduler();
+      startReferralBonusService();
+
+      try {
+        const { startAutoSync } = await import('./socialSyncService');
+        startAutoSync(15);
+        log("Social content auto-sync service started (15 min interval)");
+      } catch (error) {
+        console.error("Failed to start social sync service:", error);
+      }
+
+      log("Background services started");
+    }, 10000);
+
+    const gracefulShutdown = (signal: string) => {
+      log(`Received ${signal}, shutting down gracefully`);
+      server.close(() => {
+        log("HTTP server closed");
+        const { pool } = require("./db");
+        pool.end(() => {
+          log("Database pool closed");
+          process.exit(0);
+        });
+      });
+    };
+
+    process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+    process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+  };
 
   server.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
-      console.error(`[Fatal] Port ${port} is already in use. A previous process may still be running. Exiting.`);
-      process.exit(1);
+      if (bindAttempts < maxBindAttempts) {
+        console.error(`[Server] Port ${port} busy (attempt ${bindAttempts}/${maxBindAttempts}), retrying in 2s...`);
+        setTimeout(() => {
+          server.close();
+          tryListen();
+        }, 2000);
+      } else {
+        console.error(`[Fatal] Port ${port} still busy after ${maxBindAttempts} attempts. Exiting.`);
+        process.exit(1);
+      }
     } else {
       throw err;
     }
   });
 
-  server.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
+  const tryListen = () => {
+    bindAttempts++;
+    server.listen({ port, host: "0.0.0.0", reusePort: true }, onListening);
+  };
 
-      // Initialize Firebase Admin SDK for push notifications
-      if (firebaseNotificationService.isInitialized()) {
-        log("Firebase Admin SDK ready for push notifications");
-      }
-
-      // Self-ping every 4 minutes in production to prevent cold starts / container recycling
-      if (process.env.NODE_ENV !== 'development') {
-        setInterval(() => {
-          const req = http.get(`http://localhost:${port}/health`, (res) => {
-            res.resume();
-            if (res.statusCode === 200) {
-              log('[KeepAlive] Self-ping OK');
-            } else {
-              log(`[KeepAlive] Self-ping returned status ${res.statusCode}`);
-            }
-          });
-          req.on('error', (err) => {
-            log(`[KeepAlive] Self-ping failed: ${err.message}`);
-          });
-          req.end();
-        }, 4 * 60 * 1000);
-      }
-
-      // Delay background services to avoid connection burst on cold start
-      setTimeout(async () => {
-        // Seed borders if they don't exist (ensures production has all borders)
-        try {
-          const result = await seedBorders();
-          if (result.inserted > 0) {
-            log(`Seeded ${result.inserted} profile borders`);
-          }
-          
-          // Reconcile borders for users who may have missed rewards
-          const reconcileResult = await reconcileAllUsersWithStreaks();
-          if (reconcileResult.totalStreakBorders > 0 || reconcileResult.totalReferralBorders > 0 || reconcileResult.totalSportsBorders > 0) {
-            log(`Reconciled borders: ${reconcileResult.totalStreakBorders} streak, ${reconcileResult.totalReferralBorders} referral, ${reconcileResult.totalSportsBorders} sports`);
-          }
-        } catch (error) {
-          console.error("Failed to seed/reconcile borders:", error);
-        }
-
-        // Seed memes if they don't exist (ensures production has all memes)
-        try {
-          const memesResult = await seedMemes();
-          if (memesResult.inserted > 0) {
-            log(`Seeded ${memesResult.inserted} memes`);
-          }
-        } catch (error) {
-          console.error("Failed to seed memes:", error);
-        }
-
-        // Seed educational posts if they don't exist (for new user onboarding)
-        try {
-          const { seedEducationalPosts } = await import('./seedEducationalPosts');
-          const eduResult = await seedEducationalPosts();
-          if (eduResult > 0) {
-            log(`Seeded ${eduResult} educational posts`);
-          }
-        } catch (error) {
-          console.error("Failed to seed educational posts:", error);
-        }
-
-        try {
-          const videoPosts = await db
-            .select({ id: posts.id, mediaUrl: posts.mediaUrl })
-            .from(posts)
-            .where(
-              and(
-                eq(posts.mediaType, 'video'),
-                isNotNull(posts.mediaUrl),
-                isNull(posts.videoThumbnailUrl)
-              )
-            );
-          if (videoPosts.length > 0) {
-            log(`Backfilling thumbnails for ${videoPosts.length} video posts...`);
-            for (const post of videoPosts) {
-              try {
-                const thumbUrl = await thumbnailService.generateThumbnailFromVideo(post.mediaUrl!, `post_${post.id}`);
-                if (thumbUrl) {
-                  await db.update(posts).set({ videoThumbnailUrl: thumbUrl }).where(eq(posts.id, post.id));
-                  log(`✅ Backfilled thumbnail for post ${post.id}`);
-                }
-              } catch (err) {
-                console.error(`Failed to backfill thumbnail for post ${post.id}:`, err);
-              }
-            }
-          }
-        } catch (error) {
-          console.error("Failed to backfill video thumbnails:", error);
-        }
-
-        // Start the birthday service for automatic birthday messages
-        startBirthdayService();
-
-        // Start the mood boost scheduler for AI-powered uplifting posts
-        startMoodBoostScheduler();
-
-        // Start the referral bonus service to award referral bonuses
-        startReferralBonusService();
-        
-        // Start the social content auto-sync service (syncs every 15 minutes)
-        try {
-          const { startAutoSync } = await import('./socialSyncService');
-          startAutoSync(15); // Sync every 15 minutes
-          log("Social content auto-sync service started (15 min interval)");
-        } catch (error) {
-          console.error("Failed to start social sync service:", error);
-        }
-        
-        log("Background services started");
-      }, 10000); // 10 second delay to let connections stabilize
-
-      // Setup graceful shutdown for production
-      const gracefulShutdown = (signal: string) => {
-        log(`Received ${signal}, shutting down gracefully`);
-        server.close(() => {
-          log("HTTP server closed");
-          const { pool } = require("./db");
-          pool.end(() => {
-            log("Database pool closed");
-            process.exit(0);
-          });
-        });
-      };
-
-      process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-      process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-    },
-  );
+  tryListen();
 })();
