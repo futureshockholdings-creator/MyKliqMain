@@ -36,6 +36,7 @@ import { TwitchEmbedList } from "@/components/TwitchEmbed";
 import { extractTwitchUrlsFromText } from "@/lib/twitchUtils";
 import { LinkPreviewList } from "@/components/LinkPreviewCard";
 import { extractGenericUrlsFromText } from "@/lib/linkPreviewUtils";
+import { PostContentWithEmbeds, CommentContentWithEmbeds } from "@/components/PostContentWithEmbeds";
 import { PollCard } from "@/components/PollCard";
 import { SponsoredAd } from "@/components/SponsoredAd";
 import { GoogleSearch } from "@/components/GoogleSearch";
@@ -3425,50 +3426,10 @@ export default function Home() {
               </div>
               
               {item.content && (
-                (() => {
-                  const { cleanText: ytCleanText, youtubeUrls } = extractYouTubeUrlsFromText(item.content);
-                  const { cleanText: twCleanText, twitchUrls } = extractTwitchUrlsFromText(ytCleanText);
-                  const { cleanText: smCleanText, socialUrls } = extractSocialMediaUrlsFromText(twCleanText);
-                  const { cleanText, genericUrls } = extractGenericUrlsFromText(smCleanText || '');
-                  const isEventPost = cleanText?.includes('📅 New event:') || cleanText?.includes('✏️ Updated event:');
-                  
-                  return (
-                    <>
-                      {cleanText && (
-                        isEventPost ? (
-                          <Link href="/events" className="block cursor-pointer hover:bg-primary/5 rounded p-2 -m-2 transition-colors">
-                            <p className="text-foreground mb-3">{translatePost(cleanText)}</p>
-                            <p className="text-xs text-muted-foreground italic">Click to view event details and manage attendance</p>
-                          </Link>
-                        ) : (
-                          <p className="text-foreground mb-3 whitespace-pre-wrap">
-                            <LinkifyText text={translatePost(cleanText)} />
-                          </p>
-                        )
-                      )}
-                      {youtubeUrls.length > 0 && (
-                        <div className="mb-3">
-                          <YouTubeEmbedList urls={youtubeUrls} />
-                        </div>
-                      )}
-                      {twitchUrls.length > 0 && (
-                        <div className="mb-3">
-                          <TwitchEmbedList urls={twitchUrls} />
-                        </div>
-                      )}
-                      {socialUrls.length > 0 && (
-                        <div className="mb-3">
-                          <SocialMediaEmbedList urls={socialUrls} />
-                        </div>
-                      )}
-                      {genericUrls.length > 0 && (
-                        <div className="mb-3">
-                          <LinkPreviewList urls={genericUrls} />
-                        </div>
-                      )}
-                    </>
-                  );
-                })()
+                <PostContentWithEmbeds
+                  content={item.content}
+                  translateFn={translatePost}
+                />
               )}
               
               {/* Media Content - supports multi-image posts */}
@@ -3607,37 +3568,10 @@ export default function Home() {
                                 {comment.author?.firstName} {comment.author?.lastName}
                               </p>
                               {comment.content && (
-                                (() => {
-                                  const { cleanText: ytCleanText, youtubeUrls } = extractYouTubeUrlsFromText(comment.content);
-                                  const { cleanText: twCleanText, twitchUrls } = extractTwitchUrlsFromText(ytCleanText);
-                                  const { cleanText: smCleanText, socialUrls } = extractSocialMediaUrlsFromText(twCleanText);
-                                  const { cleanText, genericUrls } = extractGenericUrlsFromText(smCleanText || '');
-                                  return (
-                                    <>
-                                      {cleanText && <p className="text-sm text-foreground">{translatePost(cleanText)}</p>}
-                                      {youtubeUrls.length > 0 && (
-                                        <div className="mt-2">
-                                          <YouTubeEmbedList urls={youtubeUrls} />
-                                        </div>
-                                      )}
-                                      {twitchUrls.length > 0 && (
-                                        <div className="mt-2">
-                                          <TwitchEmbedList urls={twitchUrls} />
-                                        </div>
-                                      )}
-                                      {socialUrls.length > 0 && (
-                                        <div className="mt-2">
-                                          <SocialMediaEmbedList urls={socialUrls} />
-                                        </div>
-                                      )}
-                                      {genericUrls.length > 0 && (
-                                        <div className="mt-2">
-                                          <LinkPreviewList urls={genericUrls} />
-                                        </div>
-                                      )}
-                                    </>
-                                  );
-                                })()
+                                <CommentContentWithEmbeds
+                                  content={comment.content}
+                                  translateFn={translatePost}
+                                />
                               )}
                               {comment.meme && (
                                 <div className="mt-2">

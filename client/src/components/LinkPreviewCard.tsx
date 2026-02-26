@@ -10,27 +10,66 @@ interface LinkPreviewData {
   url: string;
 }
 
-const previewCache = new Map<string, LinkPreviewData | null>();
+const CACHE_TTL = 24 * 60 * 60 * 1000;
+const sessionCache = new Map<string, LinkPreviewData | null>();
+
+function getStoredPreview(url: string): LinkPreviewData | null {
+  try {
+    const raw = localStorage.getItem(`lp:${url}`);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL) {
+      localStorage.removeItem(`lp:${url}`);
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function storePreview(url: string, data: LinkPreviewData) {
+  try {
+    localStorage.setItem(`lp:${url}`, JSON.stringify({ data, ts: Date.now() }));
+  } catch {
+    // Storage quota exceeded or unavailable — skip silently
+  }
+}
 
 async function fetchPreview(url: string): Promise<LinkPreviewData | null> {
-  if (previewCache.has(url)) return previewCache.get(url)!;
+  if (sessionCache.has(url)) return sessionCache.get(url)!;
+
+  const stored = getStoredPreview(url);
+  if (stored) {
+    sessionCache.set(url, stored);
+    return stored;
+  }
 
   try {
     const res = await fetch(`/api/link-preview?url=${encodeURIComponent(url)}`);
     if (!res.ok) {
-      previewCache.set(url, null);
+      sessionCache.set(url, null);
       return null;
     }
     const data = await res.json();
     if (!data.title && !data.description && !data.image) {
-      previewCache.set(url, null);
+      sessionCache.set(url, null);
       return null;
     }
-    previewCache.set(url, data);
+    sessionCache.set(url, data);
+    storePreview(url, data);
     return data;
   } catch {
-    previewCache.set(url, null);
+    sessionCache.set(url, null);
     return null;
+  }
+}
+
+function getDomain(url: string): string {
+  try {
+    return new URL(url.startsWith('http') ? url : `https://${url}`).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
   }
 }
 
@@ -40,12 +79,17 @@ interface LinkPreviewProps {
 }
 
 export function LinkPreview({ url, className = "" }: LinkPreviewProps) {
-  const [preview, setPreview] = useState<LinkPreviewData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cached = getStoredPreview(url) ?? sessionCache.get(url) ?? null;
+  const sessionHit = sessionCache.has(url) ? sessionCache.get(url)! : null;
+  const initial = cached ?? sessionHit;
+
+  const [preview, setPreview] = useState<LinkPreviewData | null>(initial);
+  const [loading, setLoading] = useState(!initial);
   const [imgError, setImgError] = useState(false);
   const [faviconError, setFaviconError] = useState(false);
 
   useEffect(() => {
+    if (initial) return;
     let cancelled = false;
     setLoading(true);
     setImgError(false);
@@ -76,7 +120,20 @@ export function LinkPreview({ url, className = "" }: LinkPreviewProps) {
     );
   }
 
-  if (!preview) return null;
+  if (!preview) {
+    return (
+      <a
+        href={url.startsWith('http') ? url : `https://${url}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 hover:border-primary/50 transition-colors no-underline ${className}`}
+      >
+        <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
+        <span className="text-sm text-muted-foreground truncate">{getDomain(url)}</span>
+        <ExternalLink className="w-3 h-3 text-muted-foreground shrink-0 ml-auto" />
+      </a>
+    );
+  }
 
   return (
     <a
