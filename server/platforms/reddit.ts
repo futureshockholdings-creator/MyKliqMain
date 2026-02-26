@@ -73,13 +73,14 @@ export class RedditOAuth implements OAuthPlatform {
     });
 
     if (!response.ok) {
-      throw new Error(`Reddit token refresh error: ${response.statusText}`);
+      const status = response.status;
+      throw new Error(`401 Reddit token refresh failed (${status}): ${response.statusText}`);
     }
 
     const data = await response.json();
     return {
       accessToken: data.access_token,
-      refreshToken: refreshToken, // Reddit doesn't return a new refresh token
+      refreshToken: refreshToken,
       expiresIn: data.expires_in,
       tokenType: data.token_type || 'Bearer',
     };
@@ -101,46 +102,42 @@ export class RedditOAuth implements OAuthPlatform {
   }
 
   async fetchUserPosts(accessToken: string, userId?: string): Promise<SocialPost[]> {
-    try {
-      // Get user info if userId not provided
-      let username = userId;
-      if (!username) {
-        const userInfo = await this.getUserInfo(accessToken);
-        username = userInfo.name;
-      }
-
-      // Fetch recent posts and comments for the user
-      const response = await fetch(`https://oauth.reddit.com/user/${username}/submitted?limit=10`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'User-Agent': 'MyKliq/1.0',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Reddit API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      return data.data.children.map((post: any) => ({
-        id: post.data.id,
-        platform: 'reddit',
-        content: post.data.title || post.data.body || '',
-        mediaUrl: post.data.thumbnail && post.data.thumbnail.startsWith('http') ? post.data.thumbnail : undefined,
-        platformPostId: post.data.id,
-        originalUrl: `https://reddit.com${post.data.permalink}`,
-        createdAt: new Date(post.data.created_utc * 1000),
-        metadata: {
-          subreddit: post.data.subreddit,
-          score: post.data.score,
-          numComments: post.data.num_comments,
-        },
-      }));
-    } catch (error) {
-      console.error('Error fetching Reddit posts:', error);
-      return [];
+    let username = userId;
+    if (!username) {
+      const userInfo = await this.getUserInfo(accessToken);
+      username = userInfo.name;
     }
+
+    const response = await fetch(`https://oauth.reddit.com/user/${username}/submitted?limit=10`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'User-Agent': 'MyKliq/1.0',
+      },
+    });
+
+    if (!response.ok) {
+      const status = response.status;
+      const msg = `Reddit API error (${status}): ${response.statusText}`;
+      if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      throw new Error(msg);
+    }
+
+    const data = await response.json();
+    
+    return data.data.children.map((post: any) => ({
+      id: post.data.id,
+      platform: 'reddit',
+      content: post.data.title || post.data.body || '',
+      mediaUrl: post.data.thumbnail && post.data.thumbnail.startsWith('http') ? post.data.thumbnail : undefined,
+      platformPostId: post.data.id,
+      originalUrl: `https://reddit.com${post.data.permalink}`,
+      createdAt: new Date(post.data.created_utc * 1000),
+      metadata: {
+        subreddit: post.data.subreddit,
+        score: post.data.score,
+        numComments: post.data.num_comments,
+      },
+    }));
   }
 
   async revokeTokens(accessToken: string): Promise<void> {

@@ -68,7 +68,8 @@ export class PinterestOAuth implements OAuthPlatform {
     });
 
     if (!response.ok) {
-      throw new Error(`Pinterest token refresh error: ${response.statusText}`);
+      const status = response.status;
+      throw new Error(`401 Pinterest token refresh failed (${status}): ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -95,46 +96,41 @@ export class PinterestOAuth implements OAuthPlatform {
   }
 
   async fetchUserPosts(accessToken: string, userId?: string): Promise<SocialPost[]> {
-    try {
-      // Fetch user's pins
-      const response = await fetch('https://api.pinterest.com/v5/pins?page_size=25', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
+    const response = await fetch('https://api.pinterest.com/v5/pins?page_size=25', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
 
-      if (!response.ok) {
-        throw new Error(`Pinterest API error: ${response.statusText}`);
-      }
+    if (!response.ok) {
+      const status = response.status;
+      const msg = `Pinterest API error (${status}): ${response.statusText}`;
+      if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      throw new Error(msg);
+    }
 
-      const data = await response.json();
-      
-      if (!data.items) {
-        return [];
-      }
-
-      return data.items.map((pin: any) => ({
-        id: pin.id,
-        platform: 'pinterest',
-        content: pin.description || pin.title || '',
-        mediaUrl: pin.media?.images?.['400x300']?.url || pin.media?.images?.original?.url,
-        platformPostId: pin.id,
-        originalUrl: pin.link || `https://www.pinterest.com/pin/${pin.id}`,
-        createdAt: new Date(pin.created_at),
-        metadata: {
-          boardId: pin.board_id,
-          altText: pin.alt_text,
-        },
-      }));
-    } catch (error) {
-      console.error('Error fetching Pinterest pins:', error);
+    const data = await response.json();
+    
+    if (!data.items) {
       return [];
     }
+
+    return data.items.map((pin: any) => ({
+      id: pin.id,
+      platform: 'pinterest',
+      content: pin.description || pin.title || '',
+      mediaUrl: pin.media?.images?.['400x300']?.url || pin.media?.images?.original?.url,
+      platformPostId: pin.id,
+      originalUrl: pin.link || `https://www.pinterest.com/pin/${pin.id}`,
+      createdAt: new Date(pin.created_at),
+      metadata: {
+        boardId: pin.board_id,
+        altText: pin.alt_text,
+      },
+    }));
   }
 
   async revokeTokens(accessToken: string): Promise<void> {
-    // Pinterest doesn't have a public token revocation endpoint
-    // Tokens expire automatically
     return;
   }
 }

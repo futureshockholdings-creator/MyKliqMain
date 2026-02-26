@@ -43,7 +43,6 @@ class SocialSyncService {
         };
       }
 
-      const accessToken = decryptFromStorage(credential.encryptedAccessToken);
       const platformImpl = oauthService.getPlatform(platform);
       
       if (!platformImpl) {
@@ -54,6 +53,36 @@ class SocialSyncService {
           totalFetched: 0,
           error: 'Platform not supported',
         };
+      }
+
+      let accessToken = decryptFromStorage(credential.encryptedAccessToken);
+
+      if (credential.tokenExpiresAt && credential.encryptedRefreshToken) {
+        const fiveMinutesFromNow = new Date(Date.now() + 5 * 60 * 1000);
+        if (credential.tokenExpiresAt <= fiveMinutesFromNow) {
+          console.log(`[SocialSync] Proactively refreshing token for ${platform} (expires ${credential.tokenExpiresAt.toISOString()})...`);
+          try {
+            const refreshToken = decryptFromStorage(credential.encryptedRefreshToken);
+            const newTokens = await platformImpl.refreshTokens(refreshToken);
+            const updatedFields: any = {
+              encryptedAccessToken: encryptForStorage(newTokens.accessToken),
+              lastSyncAt: new Date(),
+            };
+            if (newTokens.refreshToken) {
+              updatedFields.encryptedRefreshToken = encryptForStorage(newTokens.refreshToken);
+            }
+            if (newTokens.expiresIn) {
+              updatedFields.tokenExpiresAt = new Date(Date.now() + newTokens.expiresIn * 1000);
+            } else if (platform === 'bluesky') {
+              updatedFields.tokenExpiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+            }
+            await storage.updateSocialCredential(credential.id, updatedFields);
+            accessToken = newTokens.accessToken;
+            console.log(`[SocialSync] Proactive refresh succeeded for ${platform}`);
+          } catch (proactiveRefreshError: any) {
+            console.warn(`[SocialSync] Proactive refresh failed for ${platform}, will try with existing token:`, proactiveRefreshError.message);
+          }
+        }
       }
 
       let posts: SocialPost[];
@@ -208,10 +237,10 @@ class SocialSyncService {
 
     // Delete posts older than 24 hours from all other platforms (TOS compliance)
     // Using 1 day as the keepDays parameter which equals 24 hours
-    await storage.deleteOldExternalPosts('youtube', 1);
-    await storage.deleteOldExternalPosts('reddit', 1);
-    await storage.deleteOldExternalPosts('pinterest', 1);
-    await storage.deleteOldExternalPosts('discord', 1);
+    await storage.deleteOldExternalPosts('youtube', 7);
+    await storage.deleteOldExternalPosts('reddit', 7);
+    await storage.deleteOldExternalPosts('pinterest', 7);
+    await storage.deleteOldExternalPosts('discord', 7);
     await storage.deleteOldExternalPosts('bluesky', 7);
 
     console.log(`[SocialSync] Cleaned up old posts (24hr limit for TOS compliance): ${totalDeleted} Twitch posts removed`);

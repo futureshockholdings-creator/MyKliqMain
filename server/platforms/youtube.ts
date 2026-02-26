@@ -72,13 +72,14 @@ export class YouTubeOAuth implements OAuthPlatform {
     });
 
     if (!response.ok) {
-      throw new Error(`YouTube token refresh error: ${response.statusText}`);
+      const status = response.status;
+      throw new Error(`401 YouTube token refresh failed (${status}): ${response.statusText}`);
     }
 
     const data = await response.json();
     return {
       accessToken: data.access_token,
-      refreshToken: refreshToken, // YouTube doesn't return a new refresh token
+      refreshToken: refreshToken,
       expiresIn: data.expires_in,
       tokenType: data.token_type || 'Bearer',
     };
@@ -111,62 +112,58 @@ export class YouTubeOAuth implements OAuthPlatform {
   }
 
   async fetchUserPosts(accessToken: string, userId?: string): Promise<SocialPost[]> {
-    try {
-      // Get channel info if userId not provided
-      let channelId = userId;
-      if (!channelId) {
-        const userInfo = await this.getUserInfo(accessToken);
-        channelId = userInfo.id;
-      }
+    let channelId = userId;
+    if (!channelId) {
+      const userInfo = await this.getUserInfo(accessToken);
+      channelId = userInfo.id;
+    }
 
-      // Get uploads playlist ID
-      const channelResponse = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${channelId}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
+    const channelResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${channelId}`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
 
-      if (!channelResponse.ok) {
-        throw new Error(`YouTube API error: ${channelResponse.statusText}`);
-      }
+    if (!channelResponse.ok) {
+      const status = channelResponse.status;
+      const msg = `YouTube channels API error (${status}): ${channelResponse.statusText}`;
+      if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      throw new Error(msg);
+    }
 
-      const channelData = await channelResponse.json();
-      const uploadsPlaylistId = channelData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+    const channelData = await channelResponse.json();
+    const uploadsPlaylistId = channelData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
 
-      if (!uploadsPlaylistId) {
-        return [];
-      }
-
-      // Fetch recent videos from uploads playlist
-      const videosResponse = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=10`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!videosResponse.ok) {
-        throw new Error(`YouTube API error: ${videosResponse.statusText}`);
-      }
-
-      const videosData = await videosResponse.json();
-      
-      return videosData.items?.map((item: any) => ({
-        id: item.snippet.resourceId.videoId,
-        platform: 'youtube',
-        content: item.snippet.title,
-        mediaUrl: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url,
-        platformPostId: item.snippet.resourceId.videoId,
-        originalUrl: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`,
-        createdAt: new Date(item.snippet.publishedAt),
-        metadata: {
-          description: item.snippet.description,
-          channelTitle: item.snippet.channelTitle,
-        },
-      })) || [];
-    } catch (error) {
-      console.error('Error fetching YouTube posts:', error);
+    if (!uploadsPlaylistId) {
       return [];
     }
+
+    const videosResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=10`,
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+
+    if (!videosResponse.ok) {
+      const status = videosResponse.status;
+      const msg = `YouTube playlistItems API error (${status}): ${videosResponse.statusText}`;
+      if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      throw new Error(msg);
+    }
+
+    const videosData = await videosResponse.json();
+    
+    return videosData.items?.map((item: any) => ({
+      id: item.snippet.resourceId.videoId,
+      platform: 'youtube',
+      content: item.snippet.title,
+      mediaUrl: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url,
+      platformPostId: item.snippet.resourceId.videoId,
+      originalUrl: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`,
+      createdAt: new Date(item.snippet.publishedAt),
+      metadata: {
+        description: item.snippet.description,
+        channelTitle: item.snippet.channelTitle,
+      },
+    })) || [];
   }
 
   async revokeTokens(accessToken: string): Promise<void> {

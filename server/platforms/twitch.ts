@@ -81,7 +81,8 @@ export class TwitchOAuth implements OAuthPlatform {
     });
 
     if (!response.ok) {
-      throw new Error(`Twitch token refresh error: ${response.statusText}`);
+      const status = response.status;
+      throw new Error(`401 Twitch token refresh failed (${status}): ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -110,46 +111,42 @@ export class TwitchOAuth implements OAuthPlatform {
   }
 
   async fetchUserPosts(accessToken: string, userId?: string): Promise<SocialPost[]> {
-    try {
-      // Get user info if userId not provided
-      if (!userId) {
-        const userInfo = await this.getUserInfo(accessToken);
-        userId = userInfo.id;
-      }
-
-      // Fetch recent streams/videos for the user
-      const response = await fetch(`https://api.twitch.tv/helix/videos?user_id=${userId}&first=10`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Client-Id': this.clientId,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Twitch API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      return data.data.map((video: any) => ({
-        id: video.id,
-        platform: 'twitch',
-        content: video.title,
-        mediaUrl: video.thumbnail_url?.replace('%{width}', '480').replace('%{height}', '270'),
-        platformPostId: video.id,
-        originalUrl: video.url,
-        createdAt: new Date(video.created_at),
-        metadata: {
-          type: video.type,
-          duration: video.duration,
-          viewCount: video.view_count,
-          language: video.language,
-        },
-      }));
-    } catch (error) {
-      console.error('Error fetching Twitch posts:', error);
-      return [];
+    if (!userId) {
+      const userInfo = await this.getUserInfo(accessToken);
+      userId = userInfo.id;
     }
+
+    const response = await fetch(`https://api.twitch.tv/helix/videos?user_id=${userId}&first=10`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Client-Id': this.clientId,
+      },
+    });
+
+    if (!response.ok) {
+      const status = response.status;
+      const msg = `Twitch API error (${status}): ${response.statusText}`;
+      if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      throw new Error(msg);
+    }
+
+    const data = await response.json();
+    
+    return data.data.map((video: any) => ({
+      id: video.id,
+      platform: 'twitch',
+      content: video.title,
+      mediaUrl: video.thumbnail_url?.replace('%{width}', '480').replace('%{height}', '270'),
+      platformPostId: video.id,
+      originalUrl: video.url,
+      createdAt: new Date(video.created_at),
+      metadata: {
+        type: video.type,
+        duration: video.duration,
+        viewCount: video.view_count,
+        language: video.language,
+      },
+    }));
   }
 
   async revokeTokens(accessToken: string): Promise<void> {
