@@ -11095,7 +11095,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         platform: 'bluesky',
         encryptedAccessToken,
         encryptedRefreshToken,
-        tokenExpiresAt: null,
+        tokenExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
         platformUserId: userInfo.did,
         platformUsername: userInfo.handle,
         isActive: true,

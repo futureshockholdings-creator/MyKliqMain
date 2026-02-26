@@ -1,6 +1,6 @@
 import { storage } from './storage';
 import { oauthService, SocialPost } from './oauthService';
-import { decryptFromStorage } from './cryptoService';
+import { decryptFromStorage, encryptForStorage } from './cryptoService';
 import { db } from './db';
 import { externalPosts, socialCredentials } from '@shared/schema';
 import { eq, and, inArray, lt } from 'drizzle-orm';
@@ -61,18 +61,52 @@ class SocialSyncService {
         posts = await platformImpl.fetchUserPosts(accessToken, credential.platformUserId);
       } catch (fetchError: any) {
         console.error(`Error fetching posts from ${platform}:`, fetchError);
-        
-        if (fetchError.message?.includes('401') || fetchError.message?.includes('Unauthorized')) {
-          await storage.updateSocialCredential(credential.id, { isActive: false });
+
+        const isAuthError = fetchError.message?.includes('401') || fetchError.message?.includes('Unauthorized');
+
+        if (isAuthError && credential.encryptedRefreshToken) {
+          console.log(`[SocialSync] Attempting token refresh for ${platform} user ${userId}...`);
+          try {
+            const refreshToken = decryptFromStorage(credential.encryptedRefreshToken);
+            const newTokens = await platformImpl.refreshTokens(refreshToken);
+
+            const updatedFields: any = {
+              encryptedAccessToken: encryptForStorage(newTokens.accessToken),
+              lastSyncAt: new Date(),
+            };
+            if (newTokens.refreshToken) {
+              updatedFields.encryptedRefreshToken = encryptForStorage(newTokens.refreshToken);
+            }
+            if (platform === 'bluesky') {
+              updatedFields.tokenExpiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+            }
+            await storage.updateSocialCredential(credential.id, updatedFields);
+
+            console.log(`[SocialSync] Token refresh succeeded for ${platform}, retrying fetch...`);
+            posts = await platformImpl.fetchUserPosts(newTokens.accessToken, credential.platformUserId);
+          } catch (refreshError: any) {
+            console.error(`[SocialSync] Token refresh failed for ${platform}:`, refreshError);
+            await storage.updateSocialCredential(credential.id, { isActive: false });
+            return {
+              platform,
+              success: false,
+              newPosts: 0,
+              totalFetched: 0,
+              error: `Token refresh failed: ${refreshError.message}`,
+            };
+          }
+        } else {
+          if (isAuthError) {
+            await storage.updateSocialCredential(credential.id, { isActive: false });
+          }
+          return {
+            platform,
+            success: false,
+            newPosts: 0,
+            totalFetched: 0,
+            error: fetchError.message || 'Failed to fetch posts',
+          };
         }
-        
-        return {
-          platform,
-          success: false,
-          newPosts: 0,
-          totalFetched: 0,
-          error: fetchError.message || 'Failed to fetch posts',
-        };
       }
 
       if (!posts || posts.length === 0) {
@@ -178,7 +212,7 @@ class SocialSyncService {
     await storage.deleteOldExternalPosts('reddit', 1);
     await storage.deleteOldExternalPosts('pinterest', 1);
     await storage.deleteOldExternalPosts('discord', 1);
-    await storage.deleteOldExternalPosts('bluesky', 1);
+    await storage.deleteOldExternalPosts('bluesky', 7);
 
     console.log(`[SocialSync] Cleaned up old posts (24hr limit for TOS compliance): ${totalDeleted} Twitch posts removed`);
 

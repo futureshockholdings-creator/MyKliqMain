@@ -48,28 +48,26 @@ export class BlueskyOAuth implements OAuthPlatform {
   }
 
   async refreshTokens(refreshToken: string): Promise<OAuthTokens> {
-    try {
-      const response = await fetch('https://bsky.social/xrpc/com.atproto.server.refreshSession', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${refreshToken}`,
-        },
-      });
+    const response = await fetch('https://bsky.social/xrpc/com.atproto.server.refreshSession', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${refreshToken}`,
+      },
+    });
 
-      if (!response.ok) {
-        throw new Error(`Bluesky token refresh error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return {
-        accessToken: data.accessJwt,
-        refreshToken: data.refreshJwt,
-        tokenType: 'Bearer',
-      };
-    } catch (error: any) {
-      console.error('Error refreshing Bluesky tokens:', error);
-      throw error;
+    if (!response.ok) {
+      const status = response.status;
+      const msg = `Bluesky token refresh failed with status ${status}: ${response.statusText}`;
+      console.error(msg);
+      throw new Error(`401 ${msg}`);
     }
+
+    const data = await response.json();
+    return {
+      accessToken: data.accessJwt,
+      refreshToken: data.refreshJwt,
+      tokenType: 'Bearer',
+    };
   }
 
   async getUserInfo(accessToken: string): Promise<any> {
@@ -99,78 +97,82 @@ export class BlueskyOAuth implements OAuthPlatform {
   }
 
   async fetchUserPosts(accessToken: string, userId?: string): Promise<SocialPost[]> {
-    try {
-      const sessionResponse = await fetch('https://bsky.social/xrpc/com.atproto.server.getSession', {
+    const sessionResponse = await fetch('https://bsky.social/xrpc/com.atproto.server.getSession', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!sessionResponse.ok) {
+      const status = sessionResponse.status;
+      const msg = `Bluesky getSession failed with status ${status}: ${sessionResponse.statusText}`;
+      console.error(msg);
+      throw new Error(`401 ${msg}`);
+    }
+
+    const session = await sessionResponse.json();
+    const handle = session.handle;
+
+    const feedResponse = await fetch(
+      `https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(handle)}&limit=20`,
+      {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
         },
-      });
-
-      if (!sessionResponse.ok) {
-        throw new Error('Failed to get Bluesky session');
       }
+    );
 
-      const session = await sessionResponse.json();
-      const handle = session.handle;
-
-      const feedResponse = await fetch(
-        `https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(handle)}&limit=20`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      if (!feedResponse.ok) {
-        throw new Error(`Bluesky feed error: ${feedResponse.statusText}`);
+    if (!feedResponse.ok) {
+      const status = feedResponse.status;
+      const msg = `Bluesky getAuthorFeed failed with status ${status}: ${feedResponse.statusText}`;
+      console.error(msg);
+      if (status === 401 || status === 400) {
+        throw new Error(`401 ${msg}`);
       }
+      throw new Error(msg);
+    }
 
-      const feedData = await feedResponse.json();
+    const feedData = await feedResponse.json();
 
-      if (!feedData.feed || !Array.isArray(feedData.feed)) {
-        return [];
-      }
-
-      return feedData.feed.map((item: any) => {
-        const post = item.post;
-        const record = post.record;
-
-        let mediaUrl: string | undefined;
-        if (post.embed?.images?.length > 0) {
-          mediaUrl = post.embed.images[0].fullsize || post.embed.images[0].thumb;
-        } else if (post.embed?.thumbnail) {
-          mediaUrl = post.embed.thumbnail;
-        }
-
-        const postUri = post.uri;
-        const postId = postUri.split('/').pop();
-        const originalUrl = `https://bsky.app/profile/${handle}/post/${postId}`;
-
-        return {
-          id: postUri,
-          platform: 'bluesky',
-          content: record.text || '',
-          mediaUrl,
-          platformPostId: postUri,
-          originalUrl,
-          createdAt: new Date(record.createdAt || post.indexedAt),
-          metadata: {
-            likes: post.likeCount || 0,
-            reposts: post.repostCount || 0,
-            replies: post.replyCount || 0,
-            author: {
-              handle: post.author?.handle,
-              displayName: post.author?.displayName,
-              avatar: post.author?.avatar,
-            },
-          },
-        };
-      });
-    } catch (error) {
-      console.error('Error fetching Bluesky posts:', error);
+    if (!feedData.feed || !Array.isArray(feedData.feed)) {
       return [];
     }
+
+    return feedData.feed.map((item: any) => {
+      const post = item.post;
+      const record = post.record;
+
+      let mediaUrl: string | undefined;
+      if (post.embed?.images?.length > 0) {
+        mediaUrl = post.embed.images[0].fullsize || post.embed.images[0].thumb;
+      } else if (post.embed?.thumbnail) {
+        mediaUrl = post.embed.thumbnail;
+      }
+
+      const postUri = post.uri;
+      const postId = postUri.split('/').pop();
+      const originalUrl = `https://bsky.app/profile/${handle}/post/${postId}`;
+
+      return {
+        id: postUri,
+        platform: 'bluesky',
+        content: record.text || '',
+        mediaUrl,
+        platformPostId: postUri,
+        originalUrl,
+        createdAt: new Date(record.createdAt || post.indexedAt),
+        metadata: {
+          likes: post.likeCount || 0,
+          reposts: post.repostCount || 0,
+          replies: post.replyCount || 0,
+          author: {
+            handle: post.author?.handle,
+            displayName: post.author?.displayName,
+            avatar: post.author?.avatar,
+          },
+        },
+      };
+    });
   }
 
   async revokeTokens(accessToken: string): Promise<void> {
