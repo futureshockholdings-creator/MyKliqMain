@@ -17,6 +17,14 @@ import { db } from "./db";
 import { posts } from "@shared/schema";
 import { eq, and, isNotNull, isNull } from "drizzle-orm";
 
+process.on('uncaughtException', (err) => {
+  console.error('[Server] Uncaught exception (non-fatal):', err.message);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[Server] Unhandled rejection (non-fatal):', reason);
+});
+
 const app = express();
 
 // CORS configuration for mobile and cross-origin requests
