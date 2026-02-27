@@ -37,7 +37,8 @@ function storePreview(url: string, data: LinkPreviewData) {
 }
 
 async function fetchPreview(url: string): Promise<LinkPreviewData | null> {
-  if (sessionCache.has(url)) return sessionCache.get(url)!;
+  const sessionHit = sessionCache.get(url);
+  if (sessionHit !== undefined) return sessionHit;
 
   const stored = getStoredPreview(url);
   if (stored) {
@@ -48,19 +49,16 @@ async function fetchPreview(url: string): Promise<LinkPreviewData | null> {
   try {
     const res = await fetch(`/api/link-preview?url=${encodeURIComponent(url)}`);
     if (!res.ok) {
-      sessionCache.set(url, null);
       return null;
     }
     const data = await res.json();
-    if (!data.title && !data.description && !data.image) {
-      sessionCache.set(url, null);
+    if (!data.siteName && !data.title && !data.description && !data.image) {
       return null;
     }
     sessionCache.set(url, data);
     storePreview(url, data);
     return data;
   } catch {
-    sessionCache.set(url, null);
     return null;
   }
 }

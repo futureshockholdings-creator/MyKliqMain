@@ -5181,71 +5181,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
+      const timeout = setTimeout(() => controller.abort(), 8000);
 
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; MyKliqBot/1.0)',
-          'Accept': 'text/html',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
         },
         signal: controller.signal,
         redirect: 'follow',
-        size: 2 * 1024 * 1024,
       } as any);
       clearTimeout(timeout);
 
       if (!response.ok) {
+        await cacheService.set(cacheKey, null, 300);
         return res.status(502).json({ error: "Failed to fetch URL" });
       }
 
       const contentType = response.headers.get('content-type') || '';
       if (!contentType.includes('text/html')) {
+        await cacheService.set(cacheKey, null, 300);
         return res.status(400).json({ error: "URL does not point to an HTML page" });
       }
 
       const html = await response.text();
-      const maxParse = html.substring(0, 50000);
+      const headEnd = html.indexOf('</head>');
+      const maxParse = headEnd > 0 ? html.substring(0, headEnd) : html.substring(0, 80000);
+
+      const decodeHtmlEntities = (str: string): string => {
+        return str
+          .replace(/&amp;/gi, '&')
+          .replace(/&quot;/gi, '"')
+          .replace(/&#039;/gi, "'")
+          .replace(/&apos;/gi, "'")
+          .replace(/&lt;/gi, '<')
+          .replace(/&gt;/gi, '>')
+          .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
+          .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+      };
+
+      const resolveUrl = (val: string): string => {
+        if (!val) return val;
+        if (val.startsWith('http://') || val.startsWith('https://')) return val;
+        if (val.startsWith('//')) return `https:${val}`;
+        if (val.startsWith('/')) return `${parsedUrl.origin}${val}`;
+        return `${parsedUrl.origin}/${val}`;
+      };
 
       const getMetaContent = (property: string): string | null => {
-        const ogPattern = new RegExp(`<meta[^>]*(?:property|name)=["']${property}["'][^>]*content=["']([^"']*)["']`, 'i');
+        const escaped = property.replace(/:/g, '\\:').replace(/\./g, '\\.');
+        const ogPattern = new RegExp(`<meta[^>]*(?:property|name)=["']?${escaped}["']?[^>]*content=["']([^"']*)["']`, 'i');
         const match = maxParse.match(ogPattern);
-        if (match) return match[1];
-        const reversed = new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["']${property}["']`, 'i');
+        if (match) return decodeHtmlEntities(match[1]);
+        const reversed = new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*(?:property|name)=["']?${escaped}["']?`, 'i');
         const revMatch = maxParse.match(reversed);
-        return revMatch ? revMatch[1] : null;
+        return revMatch ? decodeHtmlEntities(revMatch[1]) : null;
       };
 
       let title = getMetaContent('og:title') || getMetaContent('twitter:title');
       if (!title) {
         const titleMatch = maxParse.match(/<title[^>]*>([^<]*)<\/title>/i);
-        title = titleMatch ? titleMatch[1].trim() : null;
+        title = titleMatch ? decodeHtmlEntities(titleMatch[1].trim()) : null;
       }
 
       const description = getMetaContent('og:description') || getMetaContent('twitter:description') || getMetaContent('description');
-      const image = getMetaContent('og:image') || getMetaContent('twitter:image') || getMetaContent('twitter:image:src');
+      const rawImage = getMetaContent('og:image') || getMetaContent('twitter:image') || getMetaContent('twitter:image:src');
+      const image = rawImage ? resolveUrl(rawImage) : null;
       const siteName = getMetaContent('og:site_name');
 
       let favicon: string | null = null;
-      const iconMatch = maxParse.match(/<link[^>]*rel=["'](?:icon|shortcut icon|apple-touch-icon)["'][^>]*href=["']([^"']*)["']/i);
+      const iconMatch = maxParse.match(/<link[^>]*rel=["']?(?:icon|shortcut icon|apple-touch-icon)["']?[^>]*href=["']([^"']*)["']/i);
       if (iconMatch) {
-        favicon = iconMatch[1];
-        if (favicon.startsWith('/')) {
-          const parsed = new URL(url);
-          favicon = `${parsed.origin}${favicon}`;
-        } else if (!favicon.startsWith('http')) {
-          const parsed = new URL(url);
-          favicon = `${parsed.origin}/${favicon}`;
-        }
+        favicon = resolveUrl(iconMatch[1]);
       } else {
-        const parsed = new URL(url);
-        favicon = `${parsed.origin}/favicon.ico`;
+        favicon = `${parsedUrl.origin}/favicon.ico`;
       }
 
       const result = {
         title: title || null,
         description: description ? description.substring(0, 300) : null,
-        image: image || null,
-        siteName: siteName || new URL(url).hostname.replace('www.', ''),
+        image,
+        siteName: siteName || parsedUrl.hostname.replace('www.', ''),
         favicon,
         url,
       };
@@ -5255,9 +5272,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error: any) {
       if (error.name === 'AbortError') {
+        await cacheService.set(cacheKey, null, 300);
         return res.status(504).json({ error: "Request timed out" });
       }
       console.error("Link preview error:", error);
+      await cacheService.set(cacheKey, null, 300);
       res.status(500).json({ error: "Failed to generate link preview" });
     }
   });
