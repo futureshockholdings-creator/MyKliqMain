@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ExternalLink, Globe } from 'lucide-react';
+import { buildApiUrl } from '@/lib/apiConfig';
 
 interface LinkPreviewData {
   title: string | null;
@@ -47,7 +48,7 @@ async function fetchPreview(url: string): Promise<LinkPreviewData | null> {
   }
 
   try {
-    const res = await fetch(`/api/link-preview?url=${encodeURIComponent(url)}`);
+    const res = await fetch(buildApiUrl(`/api/link-preview?url=${encodeURIComponent(url)}`));
     if (!res.ok) {
       return null;
     }
