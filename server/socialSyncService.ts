@@ -151,6 +151,15 @@ class SocialSyncService {
         };
       }
 
+      // For Discord, remap the platform post ID to be credential-based, not guild-hash based.
+      // This ensures the same DB record is matched across syncs even if guild list changes,
+      // preventing the "age resets every 7 days" bug.
+      if (platform === 'discord') {
+        for (const post of posts) {
+          post.platformPostId = `discord-activity-${credential.id}`;
+        }
+      }
+
       const platformPostIds = posts.map(p => p.platformPostId);
       const existingPosts = await db
         .select({ platformPostId: externalPosts.platformPostId })
@@ -162,6 +171,15 @@ class SocialSyncService {
       
       const existingIds = new Set(existingPosts.map(p => p.platformPostId));
       const newPosts = posts.filter(p => !existingIds.has(p.platformPostId));
+
+      // For Discord posts that already exist, update content only (preserve original platformCreatedAt).
+      // This allows guild name changes to appear without resetting the post's age.
+      if (platform === 'discord') {
+        const existingDiscordPosts = posts.filter(p => existingIds.has(p.platformPostId));
+        for (const post of existingDiscordPosts) {
+          await storage.upsertDiscordPostContent(post.platformPostId, credential.id, post.content);
+        }
+      }
 
       if (newPosts.length > 0) {
         const externalPostsToInsert = newPosts.map(post => ({
@@ -235,15 +253,15 @@ class SocialSyncService {
       .returning();
     totalDeleted += twitchResult.length;
 
-    // Delete posts older than 24 hours from all other platforms (TOS compliance)
-    // Using 1 day as the keepDays parameter which equals 24 hours
+    // Delete posts older than 7 days from time-sensitive platforms.
+    // Discord is excluded — its summary post is a persistent activity indicator
+    // that should only be removed when the user disconnects their account.
     await storage.deleteOldExternalPosts('youtube', 7);
     await storage.deleteOldExternalPosts('reddit', 7);
     await storage.deleteOldExternalPosts('pinterest', 7);
-    await storage.deleteOldExternalPosts('discord', 7);
     await storage.deleteOldExternalPosts('bluesky', 7);
 
-    console.log(`[SocialSync] Cleaned up old posts (24hr limit for TOS compliance): ${totalDeleted} Twitch posts removed`);
+    console.log(`[SocialSync] Cleaned up old posts: ${totalDeleted} Twitch posts removed (Discord excluded — persistent activity indicator)`);
 
     return { deleted: totalDeleted };
   }

@@ -365,6 +365,7 @@ export interface IStorage {
   createExternalPost(post: InsertExternalPost): Promise<ExternalPost>;
   createExternalPosts(posts: InsertExternalPost[]): Promise<ExternalPost[]>;
   deleteOldExternalPosts(platform: string, keepDays: number): Promise<void>;
+  upsertDiscordPostContent(platformPostId: string, credentialId: string, content: string): Promise<void>;
 
   // Sports preferences operations
   getUserSportsPreferences(userId: string): Promise<UserSportsPreference[]>;
@@ -4668,6 +4669,16 @@ export class DatabaseStorage implements IStorage {
       .where(and(
         eq(externalPosts.platform, platform),
         sql`${externalPosts.platformCreatedAt} < ${cutoffDate}`
+      ));
+  }
+
+  async upsertDiscordPostContent(platformPostId: string, credentialId: string, content: string): Promise<void> {
+    await db
+      .update(externalPosts)
+      .set({ content })
+      .where(and(
+        eq(externalPosts.platformPostId, platformPostId),
+        eq(externalPosts.socialCredentialId, credentialId)
       ));
   }
 

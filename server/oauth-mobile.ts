@@ -18,7 +18,7 @@ import { Request, Response } from 'express';
 import crypto from 'crypto';
 import * as client from 'openid-client';
 import { db } from './db';
-import { users, socialCredentials } from '../shared/schema';
+import { users, socialCredentials, externalPosts } from '../shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { generateMobileToken, generateCodeVerifier, generateCodeChallenge, generateOAuthState } from './mobile-auth';
 import { encryptForStorage } from './cryptoService';
@@ -608,6 +608,21 @@ export async function disconnectPlatform(req: Request, res: Response): Promise<v
     const { platform } = req.params;
     const userId = (req as any).userId;
 
+    // Fetch credential IDs BEFORE deleting credentials (cascade won't help since
+    // external_posts.social_credential_id has onDelete: cascade already, but we
+    // want to be explicit and ensure cleanup happens correctly).
+    const userCredentials = await db
+      .select({ id: socialCredentials.id })
+      .from(socialCredentials)
+      .where(
+        and(
+          eq(socialCredentials.userId, userId),
+          eq(socialCredentials.platform, platform)
+        )
+      );
+
+    // Delete credentials (cascade will also delete external_posts via FK if set,
+    // but we delete explicitly for safety).
     await db.delete(socialCredentials)
       .where(
         and(
@@ -615,6 +630,19 @@ export async function disconnectPlatform(req: Request, res: Response): Promise<v
           eq(socialCredentials.platform, platform)
         )
       );
+
+    // Explicitly delete external posts for this platform/user.
+    if (userCredentials.length > 0) {
+      const { inArray: inArr } = await import('drizzle-orm');
+      const credentialIds = userCredentials.map(c => c.id);
+      await db.delete(externalPosts)
+        .where(
+          and(
+            eq(externalPosts.platform, platform),
+            inArr(externalPosts.socialCredentialId, credentialIds)
+          )
+        );
+    }
 
     res.json({
       success: true,
