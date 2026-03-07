@@ -13,7 +13,6 @@ declare global {
 class AnalyticsService {
   private initialized = false;
   private measurementId: string | null = null;
-  private scriptLoaded = false;
 
   /**
    * Initialize Google Analytics 4
@@ -21,13 +20,8 @@ class AnalyticsService {
    * This is recorded in the database as termsAcceptedAt
    */
   init() {
-    // Get GA4 measurement ID from environment variable
-    this.measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
-
-    if (!this.measurementId) {
-      console.log('[Analytics] GA4 measurement ID not configured - analytics disabled');
-      return;
-    }
+    // Use env variable if provided, otherwise fall back to the hardcoded ID in index.html
+    this.measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-Q3VCE04DVT';
 
     if (this.initialized) {
       console.log('[Analytics] GA4 already initialized');
@@ -35,33 +29,26 @@ class AnalyticsService {
     }
 
     try {
-      // Grant consent (users accepted terms during sign-up)
+      // gtag script is loaded directly in index.html — no dynamic injection needed.
+      // Just configure consent and settings via the already-available window.gtag.
       if (window.gtag) {
         window.gtag('consent', 'default', {
           analytics_storage: 'granted',
-          ad_storage: 'denied', // We don't use ads
+          ad_storage: 'denied',
         });
+
+        window.gtag('config', this.measurementId, {
+          send_page_view: true,
+          anonymize_ip: true,
+          cookie_flags: 'SameSite=None;Secure',
+          cookie_expires: 63072000,
+        });
+
+        this.initialized = true;
+        console.log('[Analytics] GA4 initialized with user consent');
+      } else {
+        console.warn('[Analytics] gtag not available yet — will retry on next call');
       }
-
-      // Only load script if not already loaded
-      if (!this.scriptLoaded) {
-        const script = document.createElement('script');
-        script.async = true;
-        script.src = `https://www.googletagmanager.com/gtag/js?id=${this.measurementId}`;
-        document.head.appendChild(script);
-        this.scriptLoaded = true;
-      }
-
-      // Configure GA4 with privacy-focused settings
-      window.gtag('config', this.measurementId, {
-        send_page_view: true,
-        anonymize_ip: true, // GDPR compliance - anonymize IP addresses
-        cookie_flags: 'SameSite=None;Secure', // Cookie security
-        cookie_expires: 63072000, // 2 years in seconds
-      });
-
-      this.initialized = true;
-      console.log('[Analytics] GA4 initialized with user consent');
     } catch (error) {
       console.error('[Analytics] Failed to initialize GA4:', error);
     }

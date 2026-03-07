@@ -115,17 +115,14 @@
     }
     </script>
 
-  <!-- Google Analytics 4 (GA4) -->
-  <!-- Analytics consent is granted when users accept Terms & Privacy during sign-up -->
-  <!-- This is recorded in the database as termsAcceptedAt -->
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q3VCE04DVT"></script>
   <script>
-    // Initialize Google Analytics dataLayer
     window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    window.gtag = gtag;
+    function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
-    // GA4 will be configured dynamically by the app if VITE_GA4_MEASUREMENT_ID is provided
+    gtag('config', 'G-Q3VCE04DVT');
   </script>
 </head>
 
