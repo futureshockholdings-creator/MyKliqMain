@@ -7630,6 +7630,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/calendar/sync-to-all', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { sourceKliqId } = req.body;
+
+      if (!sourceKliqId) {
+        return res.status(400).json({ message: "sourceKliqId is required" });
+      }
+
+      await assertUserInKliq(userId, sourceKliqId);
+
+      const { calendarNotes: calendarNotesTable } = await import("@shared/schema");
+      const { and, eq } = await import("drizzle-orm");
+
+      const sourceNotes = await db
+        .select()
+        .from(calendarNotesTable)
+        .where(and(
+          eq(calendarNotesTable.kliqId, sourceKliqId),
+          eq(calendarNotesTable.userId, userId)
+        ));
+
+      if (sourceNotes.length === 0) {
+        return res.json({ success: true, synced: 0, skipped: 0, targetKliqs: 0 });
+      }
+
+      const allKliqs = await storage.getKliqsForUser(userId);
+      const targetKliqs = allKliqs.filter((k: any) => k.kliqId !== sourceKliqId);
+
+      if (targetKliqs.length === 0) {
+        return res.json({ success: true, synced: 0, skipped: 0, targetKliqs: 0 });
+      }
+
+      let totalSynced = 0;
+      let totalSkipped = 0;
+
+      for (const targetKliq of targetKliqs) {
+        const existingNotes = await db
+          .select({ title: calendarNotesTable.title, noteDate: calendarNotesTable.noteDate })
+          .from(calendarNotesTable)
+          .where(and(
+            eq(calendarNotesTable.kliqId, targetKliq.kliqId),
+            eq(calendarNotesTable.userId, userId)
+          ));
+
+        const existingKeys = new Set(
+          existingNotes.map((n: any) => `${n.title}::${n.noteDate}`)
+        );
+
+        for (const note of sourceNotes) {
+          const key = `${note.title}::${note.noteDate}`;
+          if (existingKeys.has(key)) {
+            totalSkipped++;
+            continue;
+          }
+          await storage.createCalendarNote({
+            kliqId: targetKliq.kliqId,
+            userId,
+            title: note.title,
+            noteDate: note.noteDate,
+            description: note.description,
+            remindKliq: note.remindKliq ?? false,
+          });
+          totalSynced++;
+        }
+      }
+
+      res.json({
+        success: true,
+        synced: totalSynced,
+        skipped: totalSkipped,
+        targetKliqs: targetKliqs.length,
+      });
+    } catch (error: any) {
+      console.error("Error syncing calendar to all kliqs:", error);
+      if (error.message === 'You do not have access to this kliq calendar') {
+        return res.status(403).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to sync calendar" });
+    }
+  });
+
   app.put('/api/calendar/notes/:noteId', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

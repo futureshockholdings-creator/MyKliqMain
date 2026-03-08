@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Trash2, Edit, Bell, User, CalendarDays, Users } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Trash2, Edit, Bell, User, CalendarDays, Users, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isToday } from "date-fns";
 import { useLocation } from "wouter";
@@ -80,6 +80,7 @@ export default function Calendar() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedKliqId, setSelectedKliqId] = useState<string | null>(null);
+  const [isSyncConfirmOpen, setIsSyncConfirmOpen] = useState(false);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -255,6 +256,27 @@ export default function Calendar() {
     },
   });
 
+  const syncToAllMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedKliqId) throw new Error("No kliq selected");
+      return await apiRequest("POST", "/api/calendar/sync-to-all", { sourceKliqId: selectedKliqId });
+    },
+    onSuccess: (data: any) => {
+      setIsSyncConfirmOpen(false);
+      if (data.targetKliqs === 0) {
+        toast({ title: "Nothing to sync", description: "You don't belong to any other kliqs." });
+      } else if (data.synced === 0) {
+        toast({ title: "Already up to date", description: `All your entries already exist across your ${data.targetKliqs} other kliq${data.targetKliqs !== 1 ? 's' : ''}.` });
+      } else {
+        toast({ title: "Sync complete", description: `Added ${data.synced} entr${data.synced !== 1 ? 'ies' : 'y'} across ${data.targetKliqs} kliq${data.targetKliqs !== 1 ? 's' : ''}.${data.skipped > 0 ? ` ${data.skipped} already existed and were skipped.` : ''}` });
+      }
+    },
+    onError: () => {
+      setIsSyncConfirmOpen(false);
+      toast({ title: "Sync failed", description: "Failed to sync your calendar. Please try again.", variant: "destructive" });
+    },
+  });
+
   const onSubmit = (data: NoteFormData) => {
     if (editingNote) {
       updateNoteMutation.mutate({ id: editingNote.id, data });
@@ -339,8 +361,44 @@ export default function Calendar() {
                     ))}
                   </SelectContent>
                 </Select>
+
+                {/* Sync to all kliqs button */}
+                {accessibleKliqs.length > 1 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsSyncConfirmOpen(true)}
+                    disabled={!selectedKliqId || syncToAllMutation.isPending}
+                    data-testid="button-sync-calendar"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Copy className={`h-4 w-4 ${syncToAllMutation.isPending ? 'animate-pulse' : ''}`} />
+                    {syncToAllMutation.isPending ? 'Syncing…' : 'Sync'}
+                  </Button>
+                )}
               </div>
             )}
+
+            {/* Sync confirmation dialog */}
+            <Dialog open={isSyncConfirmOpen} onOpenChange={setIsSyncConfirmOpen}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Sync to all kliqs?</DialogTitle>
+                </DialogHeader>
+                <p className="text-sm text-muted-foreground">
+                  This will copy all your calendar entries from <strong>{accessibleKliqs.find(k => k.kliqId === selectedKliqId)?.kliqName || 'this kliq'}</strong> to your other {accessibleKliqs.length - 1} kliq{accessibleKliqs.length - 1 !== 1 ? 's' : ''}. Entries that already exist in other kliqs won't be duplicated.
+                </p>
+                <div className="flex justify-end gap-2 mt-2">
+                  <Button variant="outline" onClick={() => setIsSyncConfirmOpen(false)} disabled={syncToAllMutation.isPending}>
+                    Cancel
+                  </Button>
+                  <Button onClick={() => syncToAllMutation.mutate()} disabled={syncToAllMutation.isPending}>
+                    <Copy className="h-4 w-4 mr-1.5" />
+                    {syncToAllMutation.isPending ? 'Syncing…' : 'Sync'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           <div className="flex items-center justify-between mt-4">
