@@ -11780,7 +11780,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { platform } = req.params;
       
       const { socialSyncService } = await import('./socialSyncService');
-      const result = await socialSyncService.syncUserPlatform(userId, platform);
+      const result = await socialSyncService.syncUserPlatform(userId, platform, true);
       
       if (!result.success) {
         return res.status(400).json({ 
@@ -11812,10 +11812,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalNewPosts = results.reduce((sum, r) => sum + r.newPosts, 0);
       const successfulPlatforms = results.filter(r => r.success).map(r => r.platform);
       const failedPlatforms = results.filter(r => !r.success).map(r => r.platform);
-      
+
+      if (successfulPlatforms.length === 0 && failedPlatforms.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Sync failed for all platforms. Please try again.`,
+          results,
+          summary: { totalNewPosts, successfulPlatforms, failedPlatforms },
+        });
+      }
+
+      const partialWarning = failedPlatforms.length > 0
+        ? ` (${failedPlatforms.length} platform${failedPlatforms.length > 1 ? 's' : ''} failed)`
+        : '';
+
       res.json({
         success: true,
-        message: `Synced ${totalNewPosts} new posts across ${successfulPlatforms.length} platforms`,
+        message: `Synced ${totalNewPosts} new posts across ${successfulPlatforms.length} platform${successfulPlatforms.length !== 1 ? 's' : ''}${partialWarning}`,
         results,
         summary: {
           totalNewPosts,

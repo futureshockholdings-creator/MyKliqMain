@@ -16,17 +16,21 @@ export interface SyncResult {
 class SocialSyncService {
   private syncLock: Set<string> = new Set();
 
-  async syncUserPlatform(userId: string, platform: string): Promise<SyncResult> {
+  async syncUserPlatform(userId: string, platform: string, forceUnlock: boolean = false): Promise<SyncResult> {
     const lockKey = `${userId}:${platform}`;
     
     if (this.syncLock.has(lockKey)) {
-      return {
-        platform,
-        success: false,
-        newPosts: 0,
-        totalFetched: 0,
-        error: 'Sync already in progress',
-      };
+      if (!forceUnlock) {
+        return {
+          platform,
+          success: false,
+          newPosts: 0,
+          totalFetched: 0,
+          error: 'Sync already in progress',
+        };
+      }
+      // User explicitly requested sync — clear the stale lock and proceed
+      this.syncLock.delete(lockKey);
     }
 
     this.syncLock.add(lockKey);
