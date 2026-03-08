@@ -32,8 +32,8 @@ import { YouTubeEmbedList, YouTubeEmbed } from "@/components/YouTubeEmbed";
 import { extractYouTubeUrlsFromText } from "@/lib/youtubeUtils";
 import { SocialMediaEmbedList } from "@/components/SocialMediaEmbed";
 import { extractSocialMediaUrlsFromText } from "@/lib/socialMediaUtils";
-import { TwitchEmbedList } from "@/components/TwitchEmbed";
-import { extractTwitchUrlsFromText } from "@/lib/twitchUtils";
+import { TwitchEmbedList, TwitchEmbed } from "@/components/TwitchEmbed";
+import { extractTwitchUrlsFromText, detectTwitchUrl } from "@/lib/twitchUtils";
 import { LinkPreviewList } from "@/components/LinkPreviewCard";
 import { extractGenericUrlsFromText } from "@/lib/linkPreviewUtils";
 import { PostContentWithEmbeds, CommentContentWithEmbeds } from "@/components/PostContentWithEmbeds";
@@ -3902,7 +3902,11 @@ export default function Home() {
                     <div className="mb-3">
                       <YouTubeEmbed url={item.postUrl} />
                     </div>
-                  ) : item.mediaUrl && (
+                  ) : item.platform === 'twitch' && item.postUrl && detectTwitchUrl(item.postUrl) ? (
+                    <div className="mb-3">
+                      <TwitchEmbed twitchUrl={detectTwitchUrl(item.postUrl)!} />
+                    </div>
+                  ) : item.mediaUrl ? (
                     <div className="mb-3 rounded-lg overflow-hidden">
                       <img 
                         src={item.mediaUrl} 
@@ -3910,7 +3914,7 @@ export default function Home() {
                         className="w-full object-cover max-h-96"
                       />
                     </div>
-                  )}
+                  ) : null}
                   
                   {/* View Original Button */}
                   <a
