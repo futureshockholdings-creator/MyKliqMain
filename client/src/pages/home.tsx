@@ -28,7 +28,7 @@ import { MemePicker } from "@/components/MemePicker";
 import { MemeDisplay } from "@/components/MemeDisplay";
 import { MovieconPicker } from "@/components/MovieconPicker";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
-import { YouTubeEmbedList } from "@/components/YouTubeEmbed";
+import { YouTubeEmbedList, YouTubeEmbed } from "@/components/YouTubeEmbed";
 import { extractYouTubeUrlsFromText } from "@/lib/youtubeUtils";
 import { SocialMediaEmbedList } from "@/components/SocialMediaEmbed";
 import { extractSocialMediaUrlsFromText } from "@/lib/socialMediaUtils";
@@ -3897,8 +3897,12 @@ export default function Home() {
                     </p>
                   )}
                   
-                  {/* Media Thumbnail */}
-                  {item.mediaUrl && (
+                  {/* Media / Embedded Player */}
+                  {item.platform === 'youtube' && item.postUrl ? (
+                    <div className="mb-3">
+                      <YouTubeEmbed url={item.postUrl} />
+                    </div>
+                  ) : item.mediaUrl && (
                     <div className="mb-3 rounded-lg overflow-hidden">
                       <img 
                         src={item.mediaUrl} 
