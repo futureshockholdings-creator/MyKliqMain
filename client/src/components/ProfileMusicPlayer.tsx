@@ -22,7 +22,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
   const [duration, setDuration] = useState(0);
   const [hasError, setHasError] = useState(false);
   const [isYouTubeUrl, setIsYouTubeUrl] = useState(false);
-  const [waitingForTouch, setWaitingForTouch] = useState(false);
+  const [waitingForTouch, setWaitingForTouch] = useState(false); // tracks state only; no UI shown
   const [currentTrackIndex, setCurrentTrackIndex] = useState(() =>
     musicUrls.length > 0 ? Math.floor(Math.random() * musicUrls.length) : 0
   );
@@ -294,19 +294,6 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
         )}
       </div>
 
-      {/* Safari / autoplay-blocked nudge — shown when waiting for first real touch */}
-      {waitingForTouch && (
-        <div className="mb-3 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30 flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-          </span>
-          <span className="text-xs font-medium text-primary">
-            Tap anywhere on this page to start music
-          </span>
-        </div>
-      )}
-
       {hasError && (
         <div className="mb-3 p-2 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
           {currentMusicUrl.toLowerCase().endsWith('.m4p')
@@ -333,10 +320,6 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
           data-testid="button-play-pause"
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          {/* Animated ring on the play button while waiting for first touch */}
-          {waitingForTouch && (
-            <span className="absolute inset-0 rounded-md animate-ping ring-2 ring-primary/60 pointer-events-none" />
-          )}
         </Button>
 
         {musicUrls.length > 1 && (
