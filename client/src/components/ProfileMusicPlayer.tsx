@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Music, ExternalLink, AlertTriangle, SkipForward } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
@@ -10,16 +10,10 @@ interface ProfileMusicPlayerProps {
   autoPlay?: boolean;
 }
 
-function detectSafari(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent;
-  return /Safari/.test(ua) && !/Chrome/.test(ua) && !/Chromium/.test(ua) && !/Android/.test(ua);
-}
-
 export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: ProfileMusicPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const unlockListenerAttached = useRef(false);
-  const isSafari = useRef(detectSafari());
+  // Stored so we can remove exactly the listener we added
+  const unlockFnRef = useRef<(() => void) | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -28,95 +22,95 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
   const [duration, setDuration] = useState(0);
   const [hasError, setHasError] = useState(false);
   const [isYouTubeUrl, setIsYouTubeUrl] = useState(false);
-  const [showEmbedPlayer, setShowEmbedPlayer] = useState(false);
   const [waitingForTouch, setWaitingForTouch] = useState(false);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(() => {
-    return musicUrls.length > 0 ? Math.floor(Math.random() * musicUrls.length) : 0;
-  });
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(() =>
+    musicUrls.length > 0 ? Math.floor(Math.random() * musicUrls.length) : 0
+  );
 
   const currentMusicUrl = musicUrls[currentTrackIndex] || '';
   const currentMusicTitle = musicTitles[currentTrackIndex] || 'Unknown Track';
 
-  const selectRandomTrack = useCallback(() => {
+  // Remove document-level unlock listeners (called on success, track change, unmount)
+  const removeUnlockListeners = () => {
+    if (unlockFnRef.current) {
+      document.removeEventListener("touchstart", unlockFnRef.current, true);
+      document.removeEventListener("mousedown", unlockFnRef.current, true);
+      unlockFnRef.current = null;
+    }
+  };
+
+  const selectRandomTrack = () => {
     if (musicUrls.length <= 1) return;
     let newIndex;
     do {
       newIndex = Math.floor(Math.random() * musicUrls.length);
     } while (newIndex === currentTrackIndex);
     setCurrentTrackIndex(newIndex);
-  }, [musicUrls.length, currentTrackIndex]);
+  };
 
-  // Attach/detach the first-touch document unlock listener
-  const attachUnlockListener = useCallback(() => {
-    if (unlockListenerAttached.current) return;
-    unlockListenerAttached.current = true;
-
-    const unlock = () => {
-      const audio = audioRef.current;
-      if (!audio) return;
-      const p = audio.play();
-      if (p !== undefined) {
-        p.then(() => {
-          setIsPlaying(true);
-          setWaitingForTouch(false);
-        }).catch(() => {
-          setWaitingForTouch(false);
-        });
-      }
-      document.removeEventListener("touchstart", unlock, true);
-      document.removeEventListener("click", unlock, true);
-      unlockListenerAttached.current = false;
-    };
-
-    // Use capture phase so the event fires before anything else on the page
-    document.addEventListener("touchstart", unlock, { capture: true, once: true });
-    document.addEventListener("click", unlock, { capture: true, once: true });
-
-    return () => {
-      document.removeEventListener("touchstart", unlock, true);
-      document.removeEventListener("click", unlock, true);
-      unlockListenerAttached.current = false;
-    };
-  }, []);
-
+  // Main audio setup effect — runs whenever the track URL changes
   useEffect(() => {
+    // Clear any pending unlock listeners from the previous track
+    removeUnlockListeners();
+    setWaitingForTouch(false);
+
     const isYT = currentMusicUrl.includes('youtube.com') || currentMusicUrl.includes('youtu.be');
     setIsYouTubeUrl(isYT);
     setHasError(false);
 
     const audio = audioRef.current;
-    if (!audio || isYT) return;
+    if (!audio || isYT || !currentMusicUrl) return;
 
     const updateTime = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration);
-    const handleError = () => {
-      setHasError(true);
-      setIsPlaying(false);
+    const handleError = () => { setHasError(true); setIsPlaying(false); };
+    const handleEnded = () => {
+      // pick next random track
+      if (musicUrls.length > 1) {
+        let newIndex;
+        do { newIndex = Math.floor(Math.random() * musicUrls.length); }
+        while (newIndex === currentTrackIndex);
+        setCurrentTrackIndex(newIndex);
+      }
     };
-    const handleEnded = () => selectRandomTrack();
 
     audio.addEventListener("timeupdate", updateTime);
     audio.addEventListener("loadedmetadata", updateDuration);
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("error", handleError);
     audio.loop = false;
-    setHasError(false);
 
-    if (autoPlay && currentMusicUrl) {
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsPlaying(true);
-            setWaitingForTouch(false);
-          })
-          .catch(() => {
-            // Autoplay was blocked — set up first-touch unlock
-            setIsPlaying(false);
-            setWaitingForTouch(true);
-            attachUnlockListener();
-          });
-      }
+    if (autoPlay) {
+      audio.play()
+        .then(() => {
+          setIsPlaying(true);
+          setWaitingForTouch(false);
+        })
+        .catch(() => {
+          // Autoplay was blocked (Safari, or browsers with strict policy).
+          // Register a one-shot listener on the document so the very first
+          // real user gesture — anywhere on the page — starts the music.
+          setIsPlaying(false);
+          setWaitingForTouch(true);
+
+          const unlockAudio = () => {
+            // This runs synchronously inside a real user gesture so Safari allows it.
+            audio.play()
+              .then(() => {
+                setIsPlaying(true);
+                setWaitingForTouch(false);
+              })
+              .catch(() => {
+                setWaitingForTouch(false);
+              });
+            removeUnlockListeners();
+          };
+
+          unlockFnRef.current = unlockAudio;
+          // touchstart for mobile (Safari iOS), mousedown for desktop
+          document.addEventListener("touchstart", unlockAudio, { capture: true });
+          document.addEventListener("mousedown", unlockAudio, { capture: true });
+        });
     }
 
     return () => {
@@ -125,42 +119,35 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("error", handleError);
     };
-  }, [currentMusicUrl, autoPlay, attachUnlockListener, selectRandomTrack]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMusicUrl, autoPlay]);
 
-  // Auto-play when track changes (if already unlocked / non-Safari)
+  // Cleanup unlock listeners when the component unmounts
+  useEffect(() => {
+    return () => { removeUnlockListeners(); };
+  }, []);
+
+  // Resume playback when track index changes (user clicked Next)
   useEffect(() => {
     if (isYouTubeUrl || !currentMusicUrl) return;
     const audio = audioRef.current;
     if (audio && isPlaying) {
       audio.play().catch(() => setIsPlaying(false));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTrackIndex]);
 
-  // Clean up unlock listeners on unmount
-  useEffect(() => {
-    return () => {
-      unlockListenerAttached.current = false;
-    };
-  }, []);
-
   const togglePlay = () => {
-    if (isYouTubeUrl) {
-      setShowEmbedPlayer(!showEmbedPlayer);
-      return;
-    }
+    if (isYouTubeUrl) return;
     const audio = audioRef.current;
     if (!audio || hasError) return;
 
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
-      setWaitingForTouch(false);
     } else {
       audio.play()
-        .then(() => {
-          setIsPlaying(true);
-          setWaitingForTouch(false);
-        })
+        .then(() => { setIsPlaying(true); setWaitingForTouch(false); })
         .catch(() => setHasError(true));
     }
   };
@@ -178,10 +165,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     const audio = audioRef.current;
     if (audio) {
       audio.volume = newVolume;
-      if (newVolume > 0 && isMuted) {
-        audio.muted = false;
-        setIsMuted(false);
-      }
+      if (newVolume > 0 && isMuted) { audio.muted = false; setIsMuted(false); }
     }
   };
 
@@ -204,9 +188,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     return match?.[1] || null;
   };
 
-  const openExternalUrl = () => {
-    window.open(currentMusicUrl, '_blank', 'noopener,noreferrer');
-  };
+  const openExternalUrl = () => window.open(currentMusicUrl, '_blank', 'noopener,noreferrer');
 
   if (!musicUrls.length || !currentMusicUrl) {
     return (
@@ -232,36 +214,23 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
                 {currentTrackIndex + 1}/{musicUrls.length}
               </span>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={openExternalUrl}
-              className="text-muted-foreground hover:text-foreground"
-              title="Open on YouTube"
-            >
+            <Button variant="ghost" size="sm" onClick={openExternalUrl}
+              className="text-muted-foreground hover:text-foreground" title="Open on YouTube">
               <ExternalLink className="w-4 h-4" />
             </Button>
           </div>
-
           {videoId && (
             <div className="relative">
               <iframe
-                width="100%"
-                height="300"
+                width="100%" height="300"
                 src={`https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&rel=0&modestbranding=1&mute=0`}
-                title={currentMusicTitle}
-                frameBorder="0"
+                title={currentMusicTitle} frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="rounded-lg shadow-lg"
-                style={{
-                  background: 'linear-gradient(45deg, #1a1a1a, #2a2a2a)',
-                  minHeight: '300px'
-                }}
+                allowFullScreen className="rounded-lg shadow-lg"
+                style={{ background: 'linear-gradient(45deg, #1a1a1a, #2a2a2a)', minHeight: '300px' }}
               />
             </div>
           )}
-
           {!videoId && (
             <Alert className="border-destructive bg-destructive/10">
               <AlertTriangle className="w-4 h-4 text-destructive" />
@@ -271,7 +240,6 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
               </AlertDescription>
             </Alert>
           )}
-
           <div className="flex justify-between items-center text-xs text-muted-foreground">
             <span>YouTube Music Player</span>
             <span className="bg-primary/20 px-2 py-1 rounded text-primary">YOUTUBE</span>
@@ -289,16 +257,14 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
             <Music className="w-4 h-4" />
             <span className="text-sm">Unable to load audio file</span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={openExternalUrl}
-            className="text-muted-foreground hover:text-foreground"
-          >
+          <Button variant="ghost" size="sm" onClick={openExternalUrl}
+            className="text-muted-foreground hover:text-foreground">
             <ExternalLink className="w-3 h-3" />
           </Button>
         </div>
-        <p className="text-xs text-destructive/80 mt-1">Try opening the link directly or check if the URL is accessible.</p>
+        <p className="text-xs text-destructive/80 mt-1">
+          Try opening the link directly or check if the URL is accessible.
+        </p>
       </div>
     );
   }
@@ -308,11 +274,8 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
       <audio
         ref={audioRef}
         src={currentMusicUrl}
-        preload="metadata"
-        onError={() => {
-          setIsPlaying(false);
-          setHasError(true);
-        }}
+        preload="auto"
+        onError={() => { setIsPlaying(false); setHasError(true); }}
         onCanPlay={() => setHasError(false)}
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
@@ -320,9 +283,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
 
       <div className="flex items-center gap-3 mb-3">
         <Music className="w-5 h-5 text-primary" />
-        <span className="text-primary font-medium flex-1 truncate">
-          {currentMusicTitle}
-        </span>
+        <span className="text-primary font-medium flex-1 truncate">{currentMusicTitle}</span>
         {musicUrls.length > 1 && (
           <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
             {currentTrackIndex + 1}/{musicUrls.length}
@@ -333,11 +294,16 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
         )}
       </div>
 
-      {/* Safari first-touch nudge */}
+      {/* Safari / autoplay-blocked nudge — shown when waiting for first real touch */}
       {waitingForTouch && (
-        <div className="mb-3 flex items-center gap-2 text-xs text-primary/70 animate-pulse">
-          <Music className="w-3 h-3" />
-          <span>Tap anywhere to start music</span>
+        <div className="mb-3 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30 flex items-center gap-2">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+          </span>
+          <span className="text-xs font-medium text-primary">
+            Tap anywhere on this page to start music
+          </span>
         </div>
       )}
 
@@ -345,21 +311,14 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
         <div className="mb-3 p-2 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
           {currentMusicUrl.toLowerCase().endsWith('.m4p')
             ? "M4P files may have playback restrictions. Some protected iTunes files cannot be played in browsers."
-            : "Unable to play this audio file. The format may not be supported."
-          }
+            : "Unable to play this audio file. The format may not be supported."}
         </div>
       )}
 
       {/* Progress Bar */}
       <div className="mb-3">
-        <Slider
-          value={[currentTime]}
-          max={duration || 100}
-          step={1}
-          onValueChange={handleSeek}
-          className="w-full"
-          data-testid="slider-progress"
-        />
+        <Slider value={[currentTime]} max={duration || 100} step={1}
+          onValueChange={handleSeek} className="w-full" data-testid="slider-progress" />
         <div className="flex justify-between text-xs text-muted-foreground mt-1">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
@@ -369,52 +328,33 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
       {/* Controls */}
       <div className="flex items-center gap-2">
         <Button
-          variant="ghost"
-          size="sm"
-          onClick={togglePlay}
-          className={`text-primary hover:text-primary/80 relative ${waitingForTouch ? 'animate-pulse' : ''}`}
+          variant="ghost" size="sm" onClick={togglePlay}
+          className="text-primary hover:text-primary/80 relative"
           data-testid="button-play-pause"
-          title={waitingForTouch ? "Tap to start music" : undefined}
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          {/* Ripple ring shown while waiting for first touch */}
+          {/* Animated ring on the play button while waiting for first touch */}
           {waitingForTouch && (
-            <span className="absolute inset-0 rounded-md ring-2 ring-primary/50 animate-ping pointer-events-none" />
+            <span className="absolute inset-0 rounded-md animate-ping ring-2 ring-primary/60 pointer-events-none" />
           )}
         </Button>
 
         {musicUrls.length > 1 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={selectRandomTrack}
-            className="text-primary hover:text-primary/80"
-            title="Next random track"
-            data-testid="button-next-track"
-          >
+          <Button variant="ghost" size="sm" onClick={selectRandomTrack}
+            className="text-primary hover:text-primary/80" title="Next random track"
+            data-testid="button-next-track">
             <SkipForward className="w-4 h-4" />
           </Button>
         )}
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleMute}
-          className="text-primary hover:text-primary/80"
-          data-testid="button-mute"
-        >
+        <Button variant="ghost" size="sm" onClick={toggleMute}
+          className="text-primary hover:text-primary/80" data-testid="button-mute">
           {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </Button>
 
         <div className="flex-1 mx-2">
-          <Slider
-            value={[volume]}
-            max={1}
-            step={0.1}
-            onValueChange={handleVolumeChange}
-            className="w-full"
-            data-testid="slider-volume"
-          />
+          <Slider value={[volume]} max={1} step={0.1}
+            onValueChange={handleVolumeChange} className="w-full" data-testid="slider-volume" />
         </div>
       </div>
     </div>
