@@ -33,8 +33,8 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
   // Remove document-level unlock listeners (called on success, track change, unmount)
   const removeUnlockListeners = () => {
     if (unlockFnRef.current) {
-      document.removeEventListener("touchstart", unlockFnRef.current, true);
-      document.removeEventListener("mousedown", unlockFnRef.current, true);
+      document.removeEventListener("touchend", unlockFnRef.current, false);
+      document.removeEventListener("click", unlockFnRef.current, false);
       unlockFnRef.current = null;
     }
   };
@@ -94,7 +94,26 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
           setWaitingForTouch(true);
 
           const unlockAudio = () => {
-            // This runs synchronously inside a real user gesture so Safari allows it.
+            removeUnlockListeners();
+
+            // Prime the iOS audio subsystem via AudioContext before calling play().
+            // This is necessary on some iOS versions where play() alone can still
+            // be rejected even inside a valid gesture handler.
+            try {
+              const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+              if (AudioCtx) {
+                const ctx = new AudioCtx() as AudioContext;
+                // Create a silent buffer and play it — this fully unlocks the audio stack.
+                const buf = ctx.createBuffer(1, 1, 22050);
+                const src = ctx.createBufferSource();
+                src.buffer = buf;
+                src.connect(ctx.destination);
+                src.start(0);
+                ctx.resume().catch(() => {});
+              }
+            } catch (_) {}
+
+            // Now call play() — iOS will honour it because we're still inside the gesture.
             audio.play()
               .then(() => {
                 setIsPlaying(true);
@@ -103,13 +122,13 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
               .catch(() => {
                 setWaitingForTouch(false);
               });
-            removeUnlockListeners();
           };
 
           unlockFnRef.current = unlockAudio;
-          // touchstart for mobile (Safari iOS), mousedown for desktop
-          document.addEventListener("touchstart", unlockAudio, { capture: true });
-          document.addEventListener("mousedown", unlockAudio, { capture: true });
+          // touchend fires only after a complete tap (not during a scroll — key difference
+          // from touchstart). click is the fallback for desktop and older devices.
+          document.addEventListener("touchend", unlockAudio, false);
+          document.addEventListener("click", unlockAudio, false);
         });
     }
 
