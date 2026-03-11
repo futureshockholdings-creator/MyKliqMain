@@ -370,7 +370,7 @@ export default function UserProfile() {
             </CardHeader>
             <CardContent>
               <ProfileMusicPlayer
-                musicUrls={profileUser.profileMusicUrls}
+                musicUrls={(profileUser.profileMusicUrls || []).map((u: string) => resolveAssetUrl(u) || u)}
                 musicTitles={profileUser.profileMusicTitles}
                 autoPlay={true}
               />

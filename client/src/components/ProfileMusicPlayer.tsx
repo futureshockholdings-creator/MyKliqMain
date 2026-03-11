@@ -33,8 +33,9 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
   // Remove document-level unlock listeners (called on success, track change, unmount)
   const removeUnlockListeners = () => {
     if (unlockFnRef.current) {
-      document.removeEventListener("touchend", unlockFnRef.current, false);
-      document.removeEventListener("click", unlockFnRef.current, false);
+      document.removeEventListener("touchstart", unlockFnRef.current, true);
+      document.removeEventListener("touchend",   unlockFnRef.current, true);
+      document.removeEventListener("click",      unlockFnRef.current, true);
       unlockFnRef.current = null;
     }
   };
@@ -125,10 +126,11 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
           };
 
           unlockFnRef.current = unlockAudio;
-          // touchend fires only after a complete tap (not during a scroll — key difference
-          // from touchstart). click is the fallback for desktop and older devices.
-          document.addEventListener("touchend", unlockAudio, false);
-          document.addEventListener("click", unlockAudio, false);
+          // Howler.js pattern: all three events in capture phase so scroll
+          // containers cannot swallow them before they reach this handler.
+          document.addEventListener("touchstart", unlockAudio, true);
+          document.addEventListener("touchend",   unlockAudio, true);
+          document.addEventListener("click",      unlockAudio, true);
         });
     }
 
@@ -288,8 +290,22 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     );
   }
 
+  // Direct handler on the card element — absolute fallback if document-level
+  // listeners are swallowed by scroll containers on iOS Safari.
+  const handleCardInteraction = () => {
+    if (!isPlaying && !isYouTubeUrl && !hasError && audioRef.current) {
+      if (unlockFnRef.current) {
+        unlockFnRef.current();
+      }
+    }
+  };
+
   return (
-    <div className="bg-card border-border rounded-lg p-4 border">
+    <div
+      className="bg-card border-border rounded-lg p-4 border"
+      onTouchStart={handleCardInteraction}
+      onClick={handleCardInteraction}
+    >
       <audio
         ref={audioRef}
         src={currentMusicUrl}

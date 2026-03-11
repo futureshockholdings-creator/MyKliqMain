@@ -362,7 +362,7 @@ export default function Profile() {
                 <Label className="text-sm font-medium text-foreground">Current Profile Music</Label>
                 <div className="mt-2">
                   <ProfileMusicPlayer
-                    musicUrls={(user as User).profileMusicUrls!}
+                    musicUrls={((user as User).profileMusicUrls || []).map((u: string) => resolveAssetUrl(u) || u)}
                     musicTitles={(user as User).profileMusicTitles!}
                     autoPlay={true}
                   />
