@@ -12,8 +12,6 @@ interface ProfileMusicPlayerProps {
 
 export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: ProfileMusicPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
-  // Stored so we can remove exactly the listener we added
-  const unlockFnRef = useRef<(() => void) | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -22,23 +20,14 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
   const [duration, setDuration] = useState(0);
   const [hasError, setHasError] = useState(false);
   const [isYouTubeUrl, setIsYouTubeUrl] = useState(false);
-  const [waitingForTouch, setWaitingForTouch] = useState(false); // tracks state only; no UI shown
+  // True after autoplay is blocked — user must tap play to start
+  const [blockedByPolicy, setBlockedByPolicy] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(() =>
     musicUrls.length > 0 ? Math.floor(Math.random() * musicUrls.length) : 0
   );
 
   const currentMusicUrl = musicUrls[currentTrackIndex] || '';
   const currentMusicTitle = musicTitles[currentTrackIndex] || 'Unknown Track';
-
-  // Remove document-level unlock listeners (called on success, track change, unmount)
-  const removeUnlockListeners = () => {
-    if (unlockFnRef.current) {
-      document.removeEventListener("touchstart", unlockFnRef.current, true);
-      document.removeEventListener("touchend",   unlockFnRef.current, true);
-      document.removeEventListener("click",      unlockFnRef.current, true);
-      unlockFnRef.current = null;
-    }
-  };
 
   const selectRandomTrack = () => {
     if (musicUrls.length <= 1) return;
@@ -51,9 +40,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
 
   // Main audio setup effect — runs whenever the track URL changes
   useEffect(() => {
-    // Clear any pending unlock listeners from the previous track
-    removeUnlockListeners();
-    setWaitingForTouch(false);
+    setBlockedByPolicy(false);
 
     const isYT = currentMusicUrl.includes('youtube.com') || currentMusicUrl.includes('youtu.be');
     setIsYouTubeUrl(isYT);
@@ -66,7 +53,6 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     const updateDuration = () => setDuration(audio.duration);
     const handleError = () => { setHasError(true); setIsPlaying(false); };
     const handleEnded = () => {
-      // pick next random track
       if (musicUrls.length > 1) {
         let newIndex;
         do { newIndex = Math.floor(Math.random() * musicUrls.length); }
@@ -85,52 +71,16 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
       audio.play()
         .then(() => {
           setIsPlaying(true);
-          setWaitingForTouch(false);
+          setBlockedByPolicy(false);
         })
         .catch(() => {
-          // Autoplay was blocked (Safari, or browsers with strict policy).
-          // Register a one-shot listener on the document so the very first
-          // real user gesture — anywhere on the page — starts the music.
+          // Autoplay was blocked by browser policy (common on iOS Safari and
+          // some desktop browsers). We do NOT register document-level listeners
+          // here — those fire before button clicks and cause double play() calls
+          // that confuse iOS Safari. Instead we just show a tap-to-play cue and
+          // let the play button's click handler (a real user gesture) start audio.
           setIsPlaying(false);
-          setWaitingForTouch(true);
-
-          const unlockAudio = () => {
-            removeUnlockListeners();
-
-            // Prime the iOS audio subsystem via AudioContext before calling play().
-            // This is necessary on some iOS versions where play() alone can still
-            // be rejected even inside a valid gesture handler.
-            try {
-              const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-              if (AudioCtx) {
-                const ctx = new AudioCtx() as AudioContext;
-                // Create a silent buffer and play it — this fully unlocks the audio stack.
-                const buf = ctx.createBuffer(1, 1, 22050);
-                const src = ctx.createBufferSource();
-                src.buffer = buf;
-                src.connect(ctx.destination);
-                src.start(0);
-                ctx.resume().catch(() => {});
-              }
-            } catch (_) {}
-
-            // Now call play() — iOS will honour it because we're still inside the gesture.
-            audio.play()
-              .then(() => {
-                setIsPlaying(true);
-                setWaitingForTouch(false);
-              })
-              .catch(() => {
-                setWaitingForTouch(false);
-              });
-          };
-
-          unlockFnRef.current = unlockAudio;
-          // Howler.js pattern: all three events in capture phase so scroll
-          // containers cannot swallow them before they reach this handler.
-          document.addEventListener("touchstart", unlockAudio, true);
-          document.addEventListener("touchend",   unlockAudio, true);
-          document.addEventListener("click",      unlockAudio, true);
+          setBlockedByPolicy(true);
         });
     }
 
@@ -143,11 +93,6 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMusicUrl, autoPlay]);
 
-  // Cleanup unlock listeners when the component unmounts
-  useEffect(() => {
-    return () => { removeUnlockListeners(); };
-  }, []);
-
   // Resume playback when track index changes (user clicked Next)
   useEffect(() => {
     if (isYouTubeUrl || !currentMusicUrl) return;
@@ -158,6 +103,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTrackIndex]);
 
+  // Play button handler — always a direct user gesture, iOS Safari allows this
   const togglePlay = () => {
     if (isYouTubeUrl) return;
     const audio = audioRef.current;
@@ -167,9 +113,29 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
       audio.pause();
       setIsPlaying(false);
     } else {
+      // iOS AudioContext must be resumed inside a user gesture.
+      // Do it here synchronously, then call audio.play().
+      try {
+        const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx() as AudioContext;
+          const buf = ctx.createBuffer(1, 1, 22050);
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          src.connect(ctx.destination);
+          src.start(0);
+          ctx.resume().catch(() => {});
+        }
+      } catch (_) {}
+
       audio.play()
-        .then(() => { setIsPlaying(true); setWaitingForTouch(false); })
-        .catch(() => setHasError(true));
+        .then(() => {
+          setIsPlaying(true);
+          setBlockedByPolicy(false);
+        })
+        .catch(() => {
+          // Still blocked — don't set hasError, just leave the cue visible
+        });
     }
   };
 
@@ -290,22 +256,8 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     );
   }
 
-  // Direct handler on the card element — absolute fallback if document-level
-  // listeners are swallowed by scroll containers on iOS Safari.
-  const handleCardInteraction = () => {
-    if (!isPlaying && !isYouTubeUrl && !hasError && audioRef.current) {
-      if (unlockFnRef.current) {
-        unlockFnRef.current();
-      }
-    }
-  };
-
   return (
-    <div
-      className="bg-card border-border rounded-lg p-4 border"
-      onTouchStart={handleCardInteraction}
-      onClick={handleCardInteraction}
-    >
+    <div className="bg-card border-border rounded-lg p-4 border">
       <audio
         ref={audioRef}
         src={currentMusicUrl}
@@ -329,12 +281,11 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
         )}
       </div>
 
-      {hasError && (
-        <div className="mb-3 p-2 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
-          {currentMusicUrl.toLowerCase().endsWith('.m4p')
-            ? "M4P files may have playback restrictions. Some protected iTunes files cannot be played in browsers."
-            : "Unable to play this audio file. The format may not be supported."}
-        </div>
+      {/* Tap-to-play nudge shown only when blocked by browser autoplay policy */}
+      {blockedByPolicy && !isPlaying && (
+        <p className="text-xs text-muted-foreground mb-2 text-center animate-pulse">
+          Tap ▶ to start playing
+        </p>
       )}
 
       {/* Progress Bar */}
@@ -351,7 +302,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
       <div className="flex items-center gap-2">
         <Button
           variant="ghost" size="sm" onClick={togglePlay}
-          className="text-primary hover:text-primary/80 relative"
+          className="text-primary hover:text-primary/80"
           data-testid="button-play-pause"
         >
           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
