@@ -13,12 +13,6 @@ interface ProfileMusicPlayerProps {
 export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: ProfileMusicPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Web Audio API graph — created once per component lifetime, reused across plays.
-  // In iOS Safari PWA (WKWebView standalone mode) the audio element must be
-  // routed through an AudioContext; plain audio.play() resolves but is silent.
-  const audioCtxRef   = useRef<AudioContext | null>(null);
-  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
-
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0.7);
@@ -31,35 +25,8 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     musicUrls.length > 0 ? Math.floor(Math.random() * musicUrls.length) : 0
   );
 
-  const currentMusicUrl  = musicUrls[currentTrackIndex]  || '';
+  const currentMusicUrl   = musicUrls[currentTrackIndex]  || '';
   const currentMusicTitle = musicTitles[currentTrackIndex] || 'Unknown Track';
-
-  // Ensure the Web Audio graph is wired up.
-  // Must be called inside a user-gesture handler so AudioContext can be created
-  // and resumed synchronously (iOS requirement).
-  const ensureAudioGraph = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new AudioCtx() as AudioContext;
-    }
-    const ctx = audioCtxRef.current;
-
-    // Resume suspended context (required after page load on iOS Safari / PWA)
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
-    }
-
-    // createMediaElementSource can only be called once per audio element.
-    if (!sourceNodeRef.current) {
-      sourceNodeRef.current = ctx.createMediaElementSource(audio);
-      sourceNodeRef.current.connect(ctx.destination);
-    }
-  };
 
   const selectRandomTrack = () => {
     if (musicUrls.length <= 1) return;
@@ -70,7 +37,6 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     setCurrentTrackIndex(newIndex);
   };
 
-  // Main audio setup — runs whenever the track URL changes
   useEffect(() => {
     setBlockedByPolicy(false);
 
@@ -83,7 +49,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
 
     const updateTime     = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => setDuration(audio.duration);
-    const handleError    = () => { setHasError(true);  setIsPlaying(false); };
+    const handleError    = () => { setHasError(true); setIsPlaying(false); };
     const handleEnded    = () => {
       if (musicUrls.length > 1) {
         let newIndex;
@@ -93,17 +59,16 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
       }
     };
 
-    audio.addEventListener("timeupdate",      updateTime);
-    audio.addEventListener("loadedmetadata",  updateDuration);
-    audio.addEventListener("ended",           handleEnded);
-    audio.addEventListener("error",           handleError);
+    audio.addEventListener("timeupdate",     updateTime);
+    audio.addEventListener("loadedmetadata", updateDuration);
+    audio.addEventListener("ended",          handleEnded);
+    audio.addEventListener("error",          handleError);
     audio.loop = false;
 
     if (autoPlay) {
       audio.play()
         .then(() => { setIsPlaying(true); setBlockedByPolicy(false); })
         .catch(() => {
-          // Autoplay blocked — show tap cue; play button handler does the real work.
           setIsPlaying(false);
           setBlockedByPolicy(true);
         });
@@ -118,7 +83,6 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMusicUrl, autoPlay]);
 
-  // Resume playback when track index changes (user clicked Next)
   useEffect(() => {
     if (isYouTubeUrl || !currentMusicUrl) return;
     const audio = audioRef.current;
@@ -127,15 +91,6 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTrackIndex]);
-
-  // Cleanup AudioContext on unmount
-  useEffect(() => {
-    return () => {
-      audioCtxRef.current?.close().catch(() => {});
-      audioCtxRef.current  = null;
-      sourceNodeRef.current = null;
-    };
-  }, []);
 
   const togglePlay = () => {
     if (isYouTubeUrl) return;
@@ -146,15 +101,19 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
       audio.pause();
       setIsPlaying(false);
     } else {
-      // Wire up Web Audio graph inside this gesture handler.
-      // This is the critical step for iOS Safari PWA / WKWebView:
-      // the AudioContext must be created AND resumed synchronously here.
-      ensureAudioGraph();
-
+      // On iOS Safari / WKWebView PWA, audio.play() must be called directly
+      // inside a click/touchend handler to be considered a trusted user gesture.
+      // Do NOT await anything before this call — any async gap breaks the gesture chain.
       audio.play()
-        .then(() => { setIsPlaying(true); setBlockedByPolicy(false); })
-        .catch(() => {
-          // Still blocked — leave the tap cue visible, don't set hasError
+        .then(() => {
+          setIsPlaying(true);
+          setBlockedByPolicy(false);
+        })
+        .catch((err) => {
+          // NotAllowedError = still blocked (should not happen from a click).
+          // AbortError = interrupted (another play() call racing).
+          // Log for debugging but do NOT set hasError — audio may still be usable.
+          console.warn('[MusicPlayer] play() rejected:', err?.name, err?.message);
         });
     }
   };
@@ -227,16 +186,14 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
             </Button>
           </div>
           {videoId && (
-            <div className="relative">
-              <iframe
-                width="100%" height="300"
-                src={`https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&rel=0&modestbranding=1&mute=0`}
-                title={currentMusicTitle} frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen className="rounded-lg shadow-lg"
-                style={{ background: 'linear-gradient(45deg, #1a1a1a, #2a2a2a)', minHeight: '300px' }}
-              />
-            </div>
+            <iframe
+              width="100%" height="300"
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&rel=0&modestbranding=1&mute=0`}
+              title={currentMusicTitle} frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen className="rounded-lg shadow-lg"
+              style={{ background: 'linear-gradient(45deg, #1a1a1a, #2a2a2a)', minHeight: '300px' }}
+            />
           )}
           {!videoId && (
             <Alert className="border-destructive bg-destructive/10">
@@ -278,14 +235,11 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
 
   return (
     <div className="bg-card border-border rounded-lg p-4 border">
-      {/* playsInline + x-webkit-airplay are both required for reliable audio
-          playback in iOS Safari and PWA (WKWebView) standalone mode. */}
       <audio
         ref={audioRef}
         src={currentMusicUrl}
         preload="auto"
         playsInline
-        {...{ "x-webkit-airplay": "allow", "webkit-playsinline": "true" } as any}
         onError={() => { setIsPlaying(false); setHasError(true); }}
         onCanPlay={() => setHasError(false)}
         onPlay={() => setIsPlaying(true)}
@@ -311,7 +265,6 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
         </p>
       )}
 
-      {/* Progress Bar */}
       <div className="mb-3">
         <Slider value={[currentTime]} max={duration || 100} step={1}
           onValueChange={handleSeek} className="w-full" data-testid="slider-progress" />
@@ -321,7 +274,6 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
         </div>
       </div>
 
-      {/* Controls */}
       <div className="flex items-center gap-2">
         <Button
           variant="ghost" size="sm" onClick={togglePlay}
