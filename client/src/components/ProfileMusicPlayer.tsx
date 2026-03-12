@@ -21,6 +21,9 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
   const [hasError, setHasError] = useState(false);
   const [isYouTubeUrl, setIsYouTubeUrl] = useState(false);
   const [blockedByPolicy, setBlockedByPolicy] = useState(false);
+  // YouTube: don't load the iframe until the user taps — iOS Safari blocks autoplay
+  // inside iframes loaded on page load. Loading it on tap makes it a real gesture.
+  const [ytPlayerActive, setYtPlayerActive] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(() =>
     musicUrls.length > 0 ? Math.floor(Math.random() * musicUrls.length) : 0
   );
@@ -34,6 +37,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
     do {
       newIndex = Math.floor(Math.random() * musicUrls.length);
     } while (newIndex === currentTrackIndex);
+    setYtPlayerActive(false); // reset YouTube player when switching tracks
     setCurrentTrackIndex(newIndex);
   };
 
