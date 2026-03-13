@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { UserTheme } from "@shared/schema";
 import { getAccessibleForeground } from "@/lib/colorUtils";
+import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useAuth } from "./useAuth";
 
 // localStorage key for theme persistence (survives hard refresh)
@@ -238,6 +239,25 @@ const applyTheme = (theme: Partial<UserTheme>) => {
       root.style.setProperty('--background', `linear-gradient(135deg, hsl(${startHsl}), hsl(${endHsl}))`);
       root.style.setProperty('background-image', `linear-gradient(135deg, hsl(${startHsl}), hsl(${endHsl}))`);
     }
+  } else if (theme.backgroundType === 'image' && theme.backgroundImageUrl) {
+    const fit = theme.backgroundImageFit || 'cover';
+    const resolvedUrl = resolveAssetUrl(theme.backgroundImageUrl) || theme.backgroundImageUrl;
+    root.style.setProperty('background-image', `url("${resolvedUrl}")`);
+    if (fit === 'tile') {
+      root.style.setProperty('background-size', 'auto');
+      root.style.setProperty('background-repeat', 'repeat');
+      root.style.setProperty('background-position', 'top left');
+    } else if (fit === 'contain') {
+      root.style.setProperty('background-size', 'contain');
+      root.style.setProperty('background-repeat', 'no-repeat');
+      root.style.setProperty('background-position', 'center center');
+    } else {
+      // cover (default)
+      root.style.setProperty('background-size', 'cover');
+      root.style.setProperty('background-repeat', 'no-repeat');
+      root.style.setProperty('background-position', 'center center');
+    }
+    root.style.setProperty('background-attachment', 'fixed');
   } else if (theme.backgroundType === 'pattern' && theme.backgroundPattern) {
     // Apply pattern backgrounds
     const primaryHsl = theme.primaryColor ? safeHexToHsl(theme.primaryColor, 'primaryColor-pattern') : null;

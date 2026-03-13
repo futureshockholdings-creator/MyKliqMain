@@ -4,8 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Palette, Type, Navigation, Image } from "lucide-react";
+import { Palette, Type, Navigation, Image, Upload, X } from "lucide-react";
 import type { UserTheme } from "@shared/schema";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import { resolveAssetUrl } from "@/lib/apiConfig";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ThemeEditorProps {
   theme?: UserTheme | null;
@@ -142,6 +145,8 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
               <SelectContent>
                 <SelectItem value="solid">Solid Color</SelectItem>
                 <SelectItem value="gradient">Gradient</SelectItem>
+                <SelectItem value="pattern">Pattern</SelectItem>
+                <SelectItem value="image">Image</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -219,6 +224,74 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                   <SelectItem value="geometric">Geometric</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {currentTheme.backgroundType === 'image' && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-gray-400">Background Image</Label>
+                {(currentTheme as any).backgroundImageUrl ? (
+                  <div className="mt-2 space-y-2">
+                    <div className="relative w-full h-28 rounded-lg overflow-hidden border border-gray-600">
+                      <img
+                        src={resolveAssetUrl((currentTheme as any).backgroundImageUrl) || (currentTheme as any).backgroundImageUrl}
+                        alt="Background preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateTheme('backgroundImageUrl', null)}
+                        className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-2">
+                    <ObjectUploader
+                      maxNumberOfFiles={1}
+                      maxFileSize={10485760}
+                      allowedFileTypes={['image/*']}
+                      onGetUploadParameters={async (file) => {
+                        const res = await apiRequest('POST', '/api/objects/upload');
+                        const data = await res.json();
+                        return { method: 'PUT' as const, url: data.uploadURL };
+                      }}
+                      onComplete={(result) => {
+                        const uploaded = result.successful?.[0];
+                        if (uploaded) {
+                          const rawUrl: string = (uploaded as any).uploadURL || (uploaded as any).response?.uploadURL || '';
+                          const objectPath = rawUrl.split('?')[0].replace(/^https?:\/\/[^/]+/, '');
+                          updateTheme('backgroundImageUrl', objectPath);
+                        }
+                      }}
+                      buttonClassName="w-full bg-gray-700 border border-gray-600 hover:bg-gray-600 text-white"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Image
+                    </ObjectUploader>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label className="text-gray-400">Image Fit</Label>
+                <Select
+                  value={(currentTheme as any).backgroundImageFit || 'cover'}
+                  onValueChange={(value) => updateTheme('backgroundImageFit', value)}
+                >
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cover">Cover (fill screen)</SelectItem>
+                    <SelectItem value="contain">Contain (fit inside)</SelectItem>
+                    <SelectItem value="tile">Tile (repeat)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
         </CardContent>

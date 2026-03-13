@@ -57,6 +57,9 @@ Users can share posts within their kliq, creating copies in their feed without n
 ### Sports Preferences System
 Users can select unlimited teams per sport (NFL, NBA, MLB, NHL, Soccer) for live score updates on the headlines feed. For individual sports (PGA Golf, NASCAR, F1, Tennis, UFC, Boxing), users select the sport to receive leaderboards and status updates. Integration with the ESPN API provides data.
 
+### Theme Background Image
+Users can upload a custom photo as their app background by selecting "Image" in the Background Style dropdown in the theme editor. After uploading (via object storage, same pipeline as profile pictures), a thumbnail preview appears with an X button to remove it. An "Image Fit" dropdown offers three layout modes: Cover (fills the screen), Contain (letterboxed), and Tile (repeating). The image URL is stored in the `backgroundImageUrl` column and the fit in `backgroundImageFit` on `user_themes`. `useTheme.ts` applies the correct `background-image`, `background-size`, `background-repeat`, and `background-position` CSS properties. Surprise Me does not include the `image` type — it only randomizes colors and gradients.
+
 ### Highlighted Posts
 Users can highlight posts with a "fire" effect, featuring a pulsating red-orange border animation and a yellow/amber background gradient.
 

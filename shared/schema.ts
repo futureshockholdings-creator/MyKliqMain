@@ -97,6 +97,8 @@ export const userThemes = pgTable("user_themes", {
   backgroundGradientStart: varchar("background_gradient_start").default("#FF1493"),
   backgroundGradientEnd: varchar("background_gradient_end").default("#00BFFF"),
   backgroundPattern: varchar("background_pattern").default("dots"), // 'dots', 'lines', 'waves', 'geometric'
+  backgroundImageUrl: varchar("background_image_url"),
+  backgroundImageFit: varchar("background_image_fit").default("cover"), // 'cover', 'contain', 'tile'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
