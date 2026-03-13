@@ -255,8 +255,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                       maxFileSize={10485760}
                       allowedFileTypes={['image/*']}
                       onGetUploadParameters={async (file) => {
-                        const res = await apiRequest('POST', '/api/objects/upload');
-                        const data = await res.json();
+                        const data = await apiRequest('POST', '/api/objects/upload');
                         return { method: 'PUT' as const, url: data.uploadURL };
                       }}
                       onComplete={(result) => {
