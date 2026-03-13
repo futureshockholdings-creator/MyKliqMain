@@ -131,15 +131,15 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-muted-foreground">Background Type</Label>
+            <Label className="text-gray-400">Background Type</Label>
             <Select 
               value={currentTheme.backgroundType || "solid"} 
               onValueChange={(value) => updateTheme('backgroundType', value)}
             >
-              <SelectTrigger className="bg-white border-gray-300 text-black">
+              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-card border-border">
+              <SelectContent>
                 <SelectItem value="solid">Solid Color</SelectItem>
                 <SelectItem value="gradient">Gradient</SelectItem>
               </SelectContent>
@@ -148,18 +148,18 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
 
           {currentTheme.backgroundType === 'solid' && (
             <div>
-              <Label className="text-muted-foreground">Background Color</Label>
+              <Label className="text-gray-400">Background Color</Label>
               <div className="flex gap-2 mt-1">
                 <input
                   type="color"
                   value={currentTheme.backgroundColor || "#000000"}
                   onChange={(e) => updateTheme('backgroundColor', e.target.value)}
-                  className="w-12 h-10 rounded border-2 border-border cursor-pointer"
+                  className="w-12 h-10 rounded border-2 border-gray-600 cursor-pointer"
                 />
                 <Input
                   value={currentTheme.backgroundColor || "#000000"}
                   onChange={(e) => updateTheme('backgroundColor', e.target.value)}
-                  className="flex-1 bg-white border-gray-300 text-black"
+                  className="flex-1 bg-gray-700 border-gray-600 text-white"
                 />
               </div>
             </div>
@@ -168,34 +168,34 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
           {currentTheme.backgroundType === 'gradient' && (
             <>
               <div>
-                <Label className="text-muted-foreground">Gradient Start</Label>
+                <Label className="text-gray-400">Gradient Start</Label>
                 <div className="flex gap-2 mt-1">
                   <input
                     type="color"
                     value={currentTheme.backgroundGradientStart || "#FF1493"}
                     onChange={(e) => updateTheme('backgroundGradientStart', e.target.value)}
-                    className="w-12 h-10 rounded border-2 border-border cursor-pointer"
+                    className="w-12 h-10 rounded border-2 border-gray-600 cursor-pointer"
                   />
                   <Input
                     value={currentTheme.backgroundGradientStart || "#FF1493"}
                     onChange={(e) => updateTheme('backgroundGradientStart', e.target.value)}
-                    className="flex-1 bg-white border-gray-300 text-black"
+                    className="flex-1 bg-gray-700 border-gray-600 text-white"
                   />
                 </div>
               </div>
               <div>
-                <Label className="text-muted-foreground">Gradient End</Label>
+                <Label className="text-gray-400">Gradient End</Label>
                 <div className="flex gap-2 mt-1">
                   <input
                     type="color"
                     value={currentTheme.backgroundGradientEnd || "#00BFFF"}
                     onChange={(e) => updateTheme('backgroundGradientEnd', e.target.value)}
-                    className="w-12 h-10 rounded border-2 border-border cursor-pointer"
+                    className="w-12 h-10 rounded border-2 border-gray-600 cursor-pointer"
                   />
                   <Input
                     value={currentTheme.backgroundGradientEnd || "#00BFFF"}
                     onChange={(e) => updateTheme('backgroundGradientEnd', e.target.value)}
-                    className="flex-1 bg-white border-gray-300 text-black"
+                    className="flex-1 bg-gray-700 border-gray-600 text-white"
                   />
                 </div>
               </div>
@@ -204,15 +204,15 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
 
           {currentTheme.backgroundType === 'pattern' && (
             <div>
-              <Label className="text-muted-foreground">Pattern Style</Label>
+              <Label className="text-gray-400">Pattern Style</Label>
               <Select 
                 value={currentTheme.backgroundPattern || "dots"} 
                 onValueChange={(value) => updateTheme('backgroundPattern', value)}
               >
-                <SelectTrigger className="bg-white border-gray-300 text-black">
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent>
                   <SelectItem value="dots">Dots</SelectItem>
                   <SelectItem value="lines">Lines</SelectItem>
                   <SelectItem value="waves">Waves</SelectItem>
