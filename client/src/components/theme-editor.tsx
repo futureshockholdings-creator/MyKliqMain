@@ -258,16 +258,30 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                         const data = await apiRequest('POST', '/api/objects/upload');
                         return { method: 'PUT' as const, url: data.uploadURL };
                       }}
-                      onComplete={async (result) => {
+                      onComplete={(result) => {
                         const uploaded = result.successful?.[0];
                         if (uploaded) {
                           const rawUrl: string = (uploaded as any).uploadURL || '';
+                          // Normalize the presigned GCS URL to an /objects/... path
+                          // matching what the server's normalizeObjectEntityPath does
+                          let objectPath: string;
                           try {
-                            const data = await apiRequest('PUT', '/api/user/theme/background-image', { backgroundImageUrl: rawUrl });
-                            updateTheme('backgroundImageUrl', data.backgroundImageUrl);
-                          } catch (err) {
-                            console.error('Failed to save background image URL:', err);
+                            const urlWithoutQuery = rawUrl.split('?')[0];
+                            if (urlWithoutQuery.startsWith('https://storage.googleapis.com')) {
+                              const parsed = new URL(urlWithoutQuery);
+                              const uploadsIdx = parsed.pathname.indexOf('/uploads/');
+                              if (uploadsIdx !== -1) {
+                                objectPath = `/objects/${parsed.pathname.slice(uploadsIdx + 1)}`;
+                              } else {
+                                objectPath = parsed.pathname;
+                              }
+                            } else {
+                              objectPath = urlWithoutQuery.replace(/^https?:\/\/[^/]+/, '');
+                            }
+                          } catch {
+                            objectPath = rawUrl;
                           }
+                          updateTheme('backgroundImageUrl', objectPath);
                         }
                       }}
                       buttonClassName="w-full bg-gray-700 border border-gray-600 hover:bg-gray-600 text-white"
