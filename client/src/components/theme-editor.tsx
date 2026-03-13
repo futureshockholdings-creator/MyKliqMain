@@ -258,12 +258,16 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                         const data = await apiRequest('POST', '/api/objects/upload');
                         return { method: 'PUT' as const, url: data.uploadURL };
                       }}
-                      onComplete={(result) => {
+                      onComplete={async (result) => {
                         const uploaded = result.successful?.[0];
                         if (uploaded) {
-                          const rawUrl: string = (uploaded as any).uploadURL || (uploaded as any).response?.uploadURL || '';
-                          const objectPath = rawUrl.split('?')[0].replace(/^https?:\/\/[^/]+/, '');
-                          updateTheme('backgroundImageUrl', objectPath);
+                          const rawUrl: string = (uploaded as any).uploadURL || '';
+                          try {
+                            const data = await apiRequest('PUT', '/api/user/theme/background-image', { backgroundImageUrl: rawUrl });
+                            updateTheme('backgroundImageUrl', data.backgroundImageUrl);
+                          } catch (err) {
+                            console.error('Failed to save background image URL:', err);
+                          }
                         }
                       }}
                       buttonClassName="w-full bg-gray-700 border border-gray-600 hover:bg-gray-600 text-white"

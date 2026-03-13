@@ -20,7 +20,7 @@ import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
 import { performanceOptimizer } from "./performanceOptimizer";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts, friendships, notifications } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts, friendships, notifications, userThemes } from "@shared/schema";
 import { generateMobileToken, verifyMobileToken, JWT_CONFIG } from "./mobile-auth";
 import { eq, and, or, desc, sql as sqlOp, isNotNull, isNull, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -5306,6 +5306,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json(updatedUser);
     } catch (error) {
       console.error("Error updating profile picture:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Theme background image upload endpoint - normalizes presigned URL to object path
+  app.put("/api/user/theme/background-image", isAuthenticated, async (req: any, res) => {
+    const { backgroundImageUrl } = req.body;
+    if (!backgroundImageUrl) {
+      return res.status(400).json({ error: "backgroundImageUrl is required" });
+    }
+    try {
+      const userId = req.user.claims.sub;
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = objectStorageService.normalizeObjectEntityPath(backgroundImageUrl);
+
+      // Only update the backgroundImageUrl column — leave all other theme fields intact
+      await db.update(userThemes)
+        .set({ backgroundImageUrl: objectPath, updatedAt: new Date() })
+        .where(eq(userThemes.userId, userId));
+      await cacheService.invalidatePattern('user/theme');
+
+      res.status(200).json({ backgroundImageUrl: objectPath });
+    } catch (error) {
+      console.error("Error saving theme background image:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });
