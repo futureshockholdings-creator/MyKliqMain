@@ -119,7 +119,8 @@ class SocialSyncService {
             posts = await platformImpl.fetchUserPosts(newTokens.accessToken, credential.platformUserId);
           } catch (refreshError: any) {
             console.error(`[SocialSync] Token refresh failed for ${platform}:`, refreshError);
-            await storage.updateSocialCredential(credential.id, { isActive: false });
+            // Update lastSyncAt so the UI shows the most recent attempt, not a stale date.
+            await storage.updateSocialCredential(credential.id, { lastSyncAt: new Date() });
             return {
               platform,
               success: false,
@@ -129,9 +130,8 @@ class SocialSyncService {
             };
           }
         } else {
-          if (isAuthError) {
-            await storage.updateSocialCredential(credential.id, { isActive: false });
-          }
+          // Non-auth fetch error — update lastSyncAt and retry on the next cycle.
+          await storage.updateSocialCredential(credential.id, { lastSyncAt: new Date() });
           return {
             platform,
             success: false,
@@ -257,15 +257,14 @@ class SocialSyncService {
       .returning();
     totalDeleted += twitchResult.length;
 
-    // Delete posts older than 7 days from time-sensitive platforms.
-    // Discord is excluded — its summary post is a persistent activity indicator
-    // that should only be removed when the user disconnects their account.
+    // Delete posts older than 7 days from all non-Twitch platforms.
+    await storage.deleteOldExternalPosts('discord', 7);
     await storage.deleteOldExternalPosts('youtube', 7);
     await storage.deleteOldExternalPosts('reddit', 7);
     await storage.deleteOldExternalPosts('pinterest', 7);
     await storage.deleteOldExternalPosts('bluesky', 7);
 
-    console.log(`[SocialSync] Cleaned up old posts: ${totalDeleted} Twitch posts removed (Discord excluded — persistent activity indicator)`);
+    console.log(`[SocialSync] Cleaned up old posts: ${totalDeleted} Twitch posts removed + 7-day cleanup ran for discord/youtube/reddit/pinterest/bluesky`);
 
     return { deleted: totalDeleted };
   }

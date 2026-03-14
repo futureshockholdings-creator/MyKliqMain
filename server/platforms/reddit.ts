@@ -119,6 +119,8 @@ export class RedditOAuth implements OAuthPlatform {
       const status = response.status;
       const msg = `Reddit API error (${status}): ${response.statusText}`;
       if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      // 404 means the user has no public posts or the profile is private — treat as empty
+      if (status === 404) return [];
       throw new Error(msg);
     }
 
