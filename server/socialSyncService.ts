@@ -37,14 +37,63 @@ class SocialSyncService {
     
     try {
       const credential = await storage.getSocialCredential(userId, platform);
-      if (!credential || !credential.isActive) {
+      if (!credential) {
         return {
           platform,
           success: false,
           newPosts: 0,
           totalFetched: 0,
-          error: 'Platform not connected or inactive',
+          error: 'Platform not connected',
         };
+      }
+
+      // Auto-recover inactive credentials: if we still have a refresh token, try to
+      // re-enable the credential before giving up. This fixes cases where the old code
+      // incorrectly set isActive=false on a transient refresh failure.
+      if (!credential.isActive) {
+        if (credential.encryptedRefreshToken) {
+          try {
+            const { decryptFromStorage, encryptForStorage } = await import('./cryptoService');
+            const platformImpl = oauthService.getPlatform(platform);
+            const refreshToken = decryptFromStorage(credential.encryptedRefreshToken);
+            const newTokens = await platformImpl.refreshTokens(refreshToken);
+            const updatedFields: any = {
+              encryptedAccessToken: encryptForStorage(newTokens.accessToken),
+              isActive: true,
+              lastSyncAt: new Date(),
+            };
+            if (newTokens.refreshToken) updatedFields.encryptedRefreshToken = encryptForStorage(newTokens.refreshToken);
+            if (newTokens.expiresIn) {
+              updatedFields.tokenExpiresAt = new Date(Date.now() + newTokens.expiresIn * 1000);
+            } else if (platform === 'bluesky') {
+              updatedFields.tokenExpiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+            }
+            await storage.updateSocialCredential(credential.id, updatedFields);
+            console.log(`[SocialSync] Auto-recovered inactive ${platform} credential for user ${userId}`);
+            // Re-fetch so we proceed with a fresh credential object
+            const recovered = await storage.getSocialCredential(userId, platform);
+            if (!recovered?.isActive) throw new Error('Recovery failed');
+            Object.assign(credential, recovered);
+          } catch (recoverErr: any) {
+            await storage.updateSocialCredential(credential.id, { lastSyncAt: new Date() });
+            return {
+              platform,
+              success: false,
+              newPosts: 0,
+              totalFetched: 0,
+              error: `Credential inactive and recovery failed: ${recoverErr.message}`,
+            };
+          }
+        } else {
+          await storage.updateSocialCredential(credential.id, { lastSyncAt: new Date() });
+          return {
+            platform,
+            success: false,
+            newPosts: 0,
+            totalFetched: 0,
+            error: 'Platform credential inactive and no refresh token available',
+          };
+        }
       }
 
       const platformImpl = oauthService.getPlatform(platform);
@@ -228,14 +277,14 @@ class SocialSyncService {
 
   async syncAllUserPlatforms(userId: string): Promise<SyncResult[]> {
     const credentials = await storage.getSocialCredentials(userId);
-    const activeCredentials = credentials.filter(c => c.isActive);
 
-    if (activeCredentials.length === 0) {
+    if (credentials.length === 0) {
       return [];
     }
 
+    // Include inactive credentials so they get a chance to auto-recover via token refresh.
     const results = await Promise.all(
-      activeCredentials.map(cred => this.syncUserPlatform(userId, cred.platform))
+      credentials.map(cred => this.syncUserPlatform(userId, cred.platform))
     );
 
     return results;

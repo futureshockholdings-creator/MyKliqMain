@@ -11215,16 +11215,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const encryptedAccessToken = encryptForStorage(tokens.accessToken);
       const encryptedRefreshToken = tokens.refreshToken ? encryptForStorage(tokens.refreshToken) : null;
 
-      await storage.createSocialCredential({
-        userId,
-        platform: 'bluesky',
-        encryptedAccessToken,
-        encryptedRefreshToken,
-        tokenExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
-        platformUserId: userInfo.did,
-        platformUsername: userInfo.handle,
-        isActive: true,
-      });
+      // Upsert: if a credential already exists (possibly inactive), update it so
+      // reconnecting always re-enables the account without creating duplicate rows.
+      const existingCredential = await storage.getSocialCredential(userId, 'bluesky');
+      if (existingCredential) {
+        await storage.updateSocialCredential(existingCredential.id, {
+          encryptedAccessToken,
+          encryptedRefreshToken,
+          tokenExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+          platformUserId: userInfo.did,
+          platformUsername: userInfo.handle,
+          isActive: true,
+        });
+      } else {
+        await storage.createSocialCredential({
+          userId,
+          platform: 'bluesky',
+          encryptedAccessToken,
+          encryptedRefreshToken,
+          tokenExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
+          platformUserId: userInfo.did,
+          platformUsername: userInfo.handle,
+          isActive: true,
+        });
+      }
 
       const SOCIAL_CONNECTION_REWARD = 1000;
       try {
