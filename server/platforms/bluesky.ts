@@ -97,28 +97,29 @@ export class BlueskyOAuth implements OAuthPlatform {
   }
 
   async fetchUserPosts(accessToken: string, userId?: string): Promise<SocialPost[]> {
-    const sessionResponse = await fetch('https://bsky.social/xrpc/com.atproto.server.getSession', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
+    // Use the stored DID directly as the actor — avoids an extra getSession API call
+    // and removes a second 401 failure surface point.
+    let actor = userId;
+    let handle = userId; // fallback for URL construction
 
-    if (!sessionResponse.ok) {
-      const status = sessionResponse.status;
-      const msg = `Bluesky getSession failed with status ${status}: ${sessionResponse.statusText}`;
-      console.error(msg);
-      throw new Error(`401 ${msg}`);
+    if (!actor) {
+      // No DID stored — fall back to getSession to resolve the handle
+      const sessionResponse = await fetch('https://bsky.social/xrpc/com.atproto.server.getSession', {
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      });
+      if (!sessionResponse.ok) {
+        const status = sessionResponse.status;
+        throw new Error(`401 Bluesky getSession failed with status ${status}: ${sessionResponse.statusText}`);
+      }
+      const session = await sessionResponse.json();
+      actor = session.did;
+      handle = session.handle;
     }
 
-    const session = await sessionResponse.json();
-    const handle = session.handle;
-
     const feedResponse = await fetch(
-      `https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(handle)}&limit=20`,
+      `https://bsky.social/xrpc/app.bsky.feed.getAuthorFeed?actor=${encodeURIComponent(actor!)}&limit=30&filter=posts_no_replies`,
       {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
+        headers: { 'Authorization': `Bearer ${accessToken}` },
       }
     );
 
@@ -126,9 +127,7 @@ export class BlueskyOAuth implements OAuthPlatform {
       const status = feedResponse.status;
       const msg = `Bluesky getAuthorFeed failed with status ${status}: ${feedResponse.statusText}`;
       console.error(msg);
-      if (status === 401 || status === 400) {
-        throw new Error(`401 ${msg}`);
-      }
+      if (status === 401 || status === 400) throw new Error(`401 ${msg}`);
       throw new Error(msg);
     }
 
@@ -138,41 +137,59 @@ export class BlueskyOAuth implements OAuthPlatform {
       return [];
     }
 
-    return feedData.feed.map((item: any) => {
-      const post = item.post;
-      const record = post.record;
+    // Only keep the user's own original posts (not reposts of other people's content).
+    // Reposts have item.reason.$type === 'app.bsky.feed.defs#reasonRepost' and
+    // item.post.author.did !== actor.
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-      let mediaUrl: string | undefined;
-      if (post.embed?.images?.length > 0) {
-        mediaUrl = post.embed.images[0].fullsize || post.embed.images[0].thumb;
-      } else if (post.embed?.thumbnail) {
-        mediaUrl = post.embed.thumbnail;
-      }
+    return feedData.feed
+      .filter((item: any) => {
+        // Exclude reposts
+        if (item.reason?.['$type'] === 'app.bsky.feed.defs#reasonRepost') return false;
+        // Exclude posts authored by someone other than this user
+        if (actor && item.post?.author?.did && item.post.author.did !== actor) return false;
+        // Only keep posts within the 7-day retention window to avoid the
+        // delete-then-re-add cycle between cleanup and sync.
+        const postDate = new Date(item.post?.record?.createdAt || item.post?.indexedAt);
+        return postDate >= sevenDaysAgo;
+      })
+      .map((item: any) => {
+        const post = item.post;
+        const record = post.record;
 
-      const postUri = post.uri;
-      const postId = postUri.split('/').pop();
-      const originalUrl = `https://bsky.app/profile/${handle}/post/${postId}`;
+        let mediaUrl: string | undefined;
+        if (post.embed?.images?.length > 0) {
+          mediaUrl = post.embed.images[0].fullsize || post.embed.images[0].thumb;
+        } else if (post.embed?.thumbnail) {
+          mediaUrl = post.embed.thumbnail;
+        }
 
-      return {
-        id: postUri,
-        platform: 'bluesky',
-        content: record.text || '',
-        mediaUrl,
-        platformPostId: postUri,
-        originalUrl,
-        createdAt: new Date(record.createdAt || post.indexedAt),
-        metadata: {
-          likes: post.likeCount || 0,
-          reposts: post.repostCount || 0,
-          replies: post.replyCount || 0,
-          author: {
-            handle: post.author?.handle,
-            displayName: post.author?.displayName,
-            avatar: post.author?.avatar,
+        const postUri = post.uri;
+        const postId = postUri.split('/').pop();
+        // Use handle if we resolved it, otherwise use actor (DID works in bsky.app URLs too)
+        const profileActor = handle || actor;
+        const originalUrl = `https://bsky.app/profile/${profileActor}/post/${postId}`;
+
+        return {
+          id: postUri,
+          platform: 'bluesky',
+          content: record.text || '',
+          mediaUrl,
+          platformPostId: postUri,
+          originalUrl,
+          createdAt: new Date(record.createdAt || post.indexedAt),
+          metadata: {
+            likes: post.likeCount || 0,
+            reposts: post.repostCount || 0,
+            replies: post.replyCount || 0,
+            author: {
+              handle: post.author?.handle,
+              displayName: post.author?.displayName,
+              avatar: post.author?.avatar,
+            },
           },
-        },
-      };
-    });
+        };
+      });
   }
 
   async revokeTokens(accessToken: string): Promise<void> {
