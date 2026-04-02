@@ -183,8 +183,8 @@ const applyTheme = (theme: Partial<UserTheme>) => {
   // Dynamic card/sidebar background based on font color for visibility
   // When font is dark/black, background should be white/light
   // When font is white/light, background should stay dark (current default)
-  // Use fallback to #FFFFFF (white) if fontColor is missing - prevents black backgrounds on refresh
-  const effectiveFontColor = theme.fontColor || '#FFFFFF';
+  // Use fallback to #111111 (near-black) if fontColor is missing - matches the white default background
+  const effectiveFontColor = theme.fontColor || '#111111';
   {
     const fontIsLight = isLightColor(effectiveFontColor);
     
