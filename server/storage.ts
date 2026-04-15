@@ -393,6 +393,7 @@ export interface IStorage {
   
   // Birthday operations
   getUsersWithBirthdayToday(): Promise<User[]>;
+  getKliqBirthdaysToday(userId: string): Promise<User[]>;
   createBirthdayMessage(message: InsertBirthdayMessage): Promise<BirthdayMessage>;
   getBirthdayMessagesSentThisYear(birthdayUserId: string, year: number): Promise<BirthdayMessage[]>;
   getAllUsers(): Promise<User[]>;
@@ -3606,6 +3607,29 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(users)
       .where(sql`substring(${users.birthdate}, 6, 5) = ${monthDay}`);
+  }
+
+  async getKliqBirthdaysToday(userId: string): Promise<User[]> {
+    const today = new Date();
+    const monthDay = `${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+
+    // Only return users who have a birthday today AND have an accepted friendship
+    // with the requesting user in either direction.
+    return await db
+      .select({ ...users })
+      .from(users)
+      .where(
+        sql`substring(${users.birthdate}, 6, 5) = ${monthDay}
+          AND EXISTS (
+            SELECT 1 FROM friendships f
+            WHERE f.status = 'accepted'
+              AND (
+                (f.user_id = ${userId} AND f.friend_id = ${users.id})
+                OR
+                (f.friend_id = ${userId} AND f.user_id = ${users.id})
+              )
+          )`
+      );
   }
 
   async createBirthdayMessage(message: InsertBirthdayMessage): Promise<BirthdayMessage> {

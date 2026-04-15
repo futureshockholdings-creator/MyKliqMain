@@ -9928,7 +9928,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Birthday routes
   app.get("/api/birthdays/today", isAuthenticated, async (req: any, res) => {
     try {
-      const birthdayUsers = await storage.getUsersWithBirthdayToday();
+      const userId = req.user.claims.sub;
+      // Only show birthdays for users who are in the requesting user's kliq
+      const birthdayUsers = await storage.getKliqBirthdaysToday(userId);
       res.json(birthdayUsers);
     } catch (error) {
       console.error("Error fetching birthday users:", error);
