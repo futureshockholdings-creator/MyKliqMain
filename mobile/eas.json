@@ -1,6 +1,6 @@
 {
   "cli": {
-    "version": ">= 5.9.0",
+    "version": ">= 16.0.0",
     "appVersionSource": "remote"
   },
   "build": {
@@ -13,13 +13,11 @@
       },
       "ios": {
         "resourceClass": "m-medium",
-        "simulator": true,
-        "bundleIdentifier": "com.mykliq.app.dev"
+        "simulator": true
       },
       "android": {
         "buildType": "apk",
-        "gradleCommand": ":app:assembleDebug",
-        "applicationId": "com.mykliq.app.dev"
+        "gradleCommand": ":app:assembleDebug"
       }
     },
     "preview": {
@@ -30,11 +28,12 @@
       },
       "ios": {
         "resourceClass": "m-medium",
-        "bundleIdentifier": "com.mykliq.app.preview"
+        "distribution": "internal",
+        "credentialsSource": "remote"
       },
       "android": {
         "buildType": "apk",
-        "applicationId": "com.mykliq.app.preview"
+        "credentialsSource": "remote"
       }
     },
     "production": {
@@ -45,11 +44,12 @@
       },
       "ios": {
         "resourceClass": "m-medium",
-        "bundleIdentifier": "com.mykliq.app"
+        "distribution": "store",
+        "credentialsSource": "remote"
       },
       "android": {
-        "buildType": "aab",
-        "applicationId": "com.mykliq.app"
+        "buildType": "app-bundle",
+        "credentialsSource": "remote"
       }
     }
   },
