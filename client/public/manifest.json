@@ -60,6 +60,13 @@
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Profile"
+    },
+    {
+      "src": "/screenshots/desktop-feed.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "MyKliq on Desktop"
     }
   ],
   "related_applications": [],
