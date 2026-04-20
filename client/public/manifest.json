@@ -1,13 +1,16 @@
 {
+  "id": "/",
   "name": "MyKliq - Your Private Social Circle",
   "short_name": "MyKliq",
-  "description": "Connect with your closest friends in a private, customizable social environment",
+  "description": "MyKliq is a private social media app built for close-knit friend groups. Rank your friends, share photos, videos, stories, and polls, send incognito messages, earn Kliq Koins rewards, and customize your entire experience with themes and backgrounds — all in a private, invite-only space free from ads and algorithms.",
+  "lang": "en",
+  "dir": "ltr",
   "start_url": "/",
-  "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#FF1B8D",
-  "orientation": "portrait-primary",
   "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#316bf1",
   "icons": [
     {
       "src": "/icons/icon-180x180.png",
@@ -28,19 +31,35 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["social", "lifestyle"],
+  "categories": ["social", "lifestyle", "entertainment", "communication"],
   "screenshots": [
     {
-      "src": "/screenshots/mobile-1.png",
-      "sizes": "750x1334",
+      "src": "/screenshots/01-feed.png",
+      "sizes": "768x1408",
       "type": "image/png",
-      "form_factor": "narrow"
+      "form_factor": "narrow",
+      "label": "Your Kliq Feed"
     },
     {
-      "src": "/screenshots/desktop-1.png",
-      "sizes": "1920x1080",
+      "src": "/screenshots/02-stories.png",
+      "sizes": "768x1408",
       "type": "image/png",
-      "form_factor": "wide"
+      "form_factor": "narrow",
+      "label": "Stories"
+    },
+    {
+      "src": "/screenshots/03-messages.png",
+      "sizes": "768x1408",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Messages"
+    },
+    {
+      "src": "/screenshots/04-profile.png",
+      "sizes": "768x1408",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Profile"
     }
   ],
   "related_applications": [],
