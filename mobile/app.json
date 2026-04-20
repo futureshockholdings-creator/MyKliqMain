@@ -85,11 +85,12 @@
       "apiUrl": "https://api.mykliq.com",
       "appStoreDescription": "MyKliq is a private social media app built for close-knit friend groups. Rank your friends, share photos, videos, stories, and polls, send incognito messages, earn Kliq Koins rewards, and customize your entire experience with themes and backgrounds — all in a private, invite-only space free from ads and algorithms.",
       "appStoreKeywords": "private social media, close friends, friend group, invite only, social circle, private sharing, kliq, friend ranking, incognito messaging, kliq koins",
+      "releaseNotes": "Initial release of MyKliq — your private social circle. Share photos, videos, stories, and polls with your closest friends. Earn Kliq Koins, send incognito messages, and customize your experience with themes and backgrounds.",
       "eas": {
         "projectId": "151d8bfd-7b02-4a03-9c18-54555950035b"
       }
     },
-    "owner": "REPLACE_WITH_YOUR_EXPO_USERNAME",
+    "owner": "futureshockholdings",
     "updates": {
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/151d8bfd-7b02-4a03-9c18-54555950035b"
