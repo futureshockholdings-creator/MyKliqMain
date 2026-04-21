@@ -30,13 +30,13 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "(bash mobile/scripts/update-dev-api-url.sh || echo 'Warning: EAS API URL update failed - ensure eas CLI is installed and run \"eas login\" if not authenticated') && npm run dev"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000

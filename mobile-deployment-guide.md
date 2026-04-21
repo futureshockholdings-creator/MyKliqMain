@@ -231,9 +231,29 @@ echo $REPLIT_DEV_DOMAIN
 
 The value will be something like `abc123-myrepl.replit.dev` — the exact format may vary. Do not hard-code a guessed domain; always use the variable.
 
-### How to update the EAS API_URL secret
+### Automatic update on Repl start (no action needed)
 
-A helper script automates this step. Run it from the project root (you must be logged in to EAS with `eas login`):
+The `Start application` workflow now runs `mobile/scripts/update-dev-api-url.sh` automatically every time the Repl starts. You can confirm it ran by checking the workflow startup logs — you will see a line like:
+
+```
+Updating EAS development API_URL to: https://<your-dev-domain>
+```
+
+If the update fails for any reason (CLI not installed, not authenticated, network error, or `REPLIT_DEV_DOMAIN` unset), the workflow prints a warning and continues starting the server — the app will not be blocked from starting:
+
+```
+Warning: EAS API URL update failed - ensure eas CLI is installed and run "eas login" if not authenticated
+```
+
+In that case, check the full startup log for the underlying error from the script, fix it, then log in to EAS once and restart the workflow:
+
+```bash
+eas login
+```
+
+### Updating manually (if needed)
+
+If you ever need to trigger the update outside of a normal Repl start, run the helper script directly from the project root (you must be logged in to EAS with `eas login`):
 
 ```bash
 bash mobile/scripts/update-dev-api-url.sh
@@ -261,11 +281,10 @@ After updating the secret, trigger a new development build so the updated URL is
 eas build --platform all --profile development
 ```
 
-### When to do this
+### When to update manually
 
-- After restarting the Repl or any time the dev preview URL changes
-- Any time development builds show API connection errors or network timeouts
-- Before starting a new round of internal testing on development builds
+- Any time development builds show API connection errors or network timeouts after the automatic update was skipped
+- Before starting a new round of internal testing on development builds (if `eas login` was not active during the last Repl start)
 
 > **Note**: Preview and production builds always use `https://api.mykliq.com` and are not affected by dev domain changes.
 
