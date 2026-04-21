@@ -217,6 +217,50 @@ Since you're moving to mobile-only:
 3. **Mobile Backend**: Use Replit's provided domain for API calls
 4. **Production Database**: Consider migrating to dedicated hosting for production mobile app
 
+## 🔧 Updating the Development API URL
+
+The EAS `API_URL` secret for development builds points to the Replit dev domain. This domain can change when the Repl is restarted or the environment shifts. When it changes, development builds will fail to connect to the API.
+
+### How to find your current dev domain
+
+The most reliable source of truth is the `$REPLIT_DEV_DOMAIN` environment variable. Run this in the Replit Shell:
+
+```bash
+echo $REPLIT_DEV_DOMAIN
+```
+
+The value will be something like `abc123-myrepl.replit.dev` — the exact format may vary. Do not hard-code a guessed domain; always use the variable.
+
+### How to update the EAS API_URL secret
+
+Whenever the dev domain changes, run this command from the `mobile/` directory (you must be logged in to EAS with `eas login`):
+
+```bash
+eas env:update development --name API_URL --value "https://$REPLIT_DEV_DOMAIN" --non-interactive
+```
+
+Confirm the update took effect:
+
+```bash
+eas env:list development
+```
+
+The `API_URL` entry should now show the new domain.
+
+After updating the secret, trigger a new development build so the updated URL is baked into the app:
+
+```bash
+eas build --platform all --profile development
+```
+
+### When to do this
+
+- After restarting the Repl or any time the dev preview URL changes
+- Any time development builds show API connection errors or network timeouts
+- Before starting a new round of internal testing on development builds
+
+> **Note**: Preview and production builds always use `https://api.mykliq.com` and are not affected by dev domain changes.
+
 ## 📈 Launch Strategy
 
 **Week 1**: iOS TestFlight beta with close friends
