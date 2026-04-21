@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "check:eas": "bash scripts/check-eas-cli.sh"
   },
   "dependencies": {
     "expo": "~51.0.0",
@@ -34,7 +35,7 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~18.2.79",
-    "eas-cli": "latest",
+    "eas-cli": "^18.0.0",
     "typescript": "~5.3.3"
   },
   "private": true

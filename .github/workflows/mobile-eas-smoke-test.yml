@@ -1,0 +1,42 @@
+name: Mobile EAS CLI Smoke Test
+
+on:
+  push:
+    paths:
+      - 'mobile/package.json'
+      - 'mobile/package-lock.json'
+      - 'mobile/scripts/**'
+      - '.github/workflows/mobile-eas-smoke-test.yml'
+  pull_request:
+    paths:
+      - 'mobile/package.json'
+      - 'mobile/package-lock.json'
+      - 'mobile/scripts/**'
+      - '.github/workflows/mobile-eas-smoke-test.yml'
+  workflow_dispatch:
+
+jobs:
+  eas-smoke-test:
+    name: Verify EAS CLI boots after npm install
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm ci
+
+      - name: Run EAS CLI smoke test
+        working-directory: mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npm run check:eas
