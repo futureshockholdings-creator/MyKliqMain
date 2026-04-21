@@ -63,7 +63,7 @@
     },
     {
       "src": "/screenshots/desktop-feed.png",
-      "sizes": "1280x800",
+      "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
       "label": "MyKliq on Desktop"
