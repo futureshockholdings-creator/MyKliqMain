@@ -35,16 +35,12 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "command -v eas >/dev/null 2>&1 || npm install -g eas-cli; bash mobile/scripts/update-dev-api-url.sh; npm run dev"
+args = "npm run dev"
 waitForPort = 5000
 
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 8081
-externalPort = 8081
 
 [agent]
 integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.0", "discord:1.0.0", "javascript_gemini:1.0.0"]
