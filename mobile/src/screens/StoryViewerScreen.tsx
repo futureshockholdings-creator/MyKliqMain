@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { apiClient } from '../lib/apiClient';
 import type { StoryGroupData, StoryData } from '../../shared/api-contracts';
 
@@ -47,6 +47,15 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
   const currentGroup = storyGroups[currentGroupIndex];
   const currentStory = currentGroup?.stories[currentStoryIndex];
   const totalStories = currentGroup?.stories.length || 0;
+
+  // Video player (expo-video)
+  const videoPlayer = useVideoPlayer(
+    currentStory?.mediaType === 'video' ? currentStory.mediaUrl : null,
+    (player) => {
+      player.loop = false;
+      player.timeUpdateEventInterval = 0.1; // ~100ms updates for smooth progress bar
+    }
+  );
 
   // Pure helper functions for deterministic navigation (architect recommendation)
   const getNextIndices = useCallback((groupIdx: number, storyIdx: number): { groupIdx: number; storyIdx: number; shouldClose: boolean } => {
@@ -197,17 +206,57 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
     elapsedTimeRef.current = 0; // Reset elapsed time for previous story
   }, [currentGroupIndex, currentStoryIndex, getPreviousIndices, currentGroup]);
 
-  const handleVideoProgress = (status: AVPlaybackStatus) => {
-    if ('positionMillis' in status && 'durationMillis' in status && status.durationMillis) {
-      const progress = status.positionMillis / status.durationMillis;
-      const progressAnim = getProgressAnim(currentGroupIndex, currentStoryIndex, currentGroup.stories);
-      progressAnim.setValue(progress);
+  // Update video source when story changes, or pause player for non-video stories
+  useEffect(() => {
+    if (currentStory?.mediaType !== 'video') {
+      // Explicitly pause player when switching to an image story to prevent
+      // background audio/state leaking from a previously played video
+      videoPlayer.pause();
+      return;
     }
-    
-    if ('didJustFinish' in status && status.didJustFinish) {
+    videoPlayer.replace(currentStory.mediaUrl);
+    videoPlayer.loop = false;
+    if (!paused) {
+      videoPlayer.play();
+    }
+  }, [currentStory?.id]);
+
+  // Control video playback when paused state changes
+  useEffect(() => {
+    if (currentStory?.mediaType !== 'video') return;
+    if (paused) {
+      videoPlayer.pause();
+    } else {
+      videoPlayer.play();
+    }
+  }, [paused, currentStory?.mediaType]);
+
+  // Track video progress and handle end of video
+  useEffect(() => {
+    const timeUpdateSub = videoPlayer.addListener('timeUpdate', ({ currentTime }) => {
+      const duration = videoPlayer.duration;
+      if (duration && duration > 0) {
+        const progressAnim = getProgressAnim(currentGroupIndex, currentStoryIndex, currentGroup.stories);
+        progressAnim.setValue(currentTime / duration);
+      }
+    });
+
+    const playToEndSub = videoPlayer.addListener('playToEnd', () => {
       handleNext();
-    }
-  };
+    });
+
+    const statusSub = videoPlayer.addListener('statusChange', ({ status }) => {
+      if (status === 'readyToPlay') {
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      timeUpdateSub.remove();
+      playToEndSub.remove();
+      statusSub.remove();
+    };
+  }, [currentGroupIndex, currentStoryIndex, handleNext]);
 
   // Gesture handlers with tap/long-press separation (architect recommendation)
   const handlePressIn = useCallback((e: any) => {
@@ -325,15 +374,11 @@ export default function StoryViewerScreen({ route, navigation }: StoryViewerScre
       >
         <View className="flex-1" data-testid="story-content-area">
         {currentStory.mediaType === 'video' ? (
-          <Video
-            source={{ uri: currentStory.mediaUrl }}
+          <VideoView
+            player={videoPlayer}
             style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay={!paused}
-            isLooping={false}
-            onLoad={() => setIsLoading(false)}
-            onPlaybackStatusUpdate={handleVideoProgress}
-            progressUpdateIntervalMillis={100}
+            contentFit="contain"
+            nativeControls={false}
           />
         ) : (
           <Image
