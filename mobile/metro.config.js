@@ -6,7 +6,7 @@ const config = getDefaultConfig(__dirname);
 // Enable CSS support for NativeWind
 config.transformer = {
   ...config.transformer,
-  babelTransformerPath: require.resolve("react-native-svg-transformer"),
+  babelTransformerPath: require.resolve("react-native-svg-transformer/expo"),
 };
 
 config.resolver = {
