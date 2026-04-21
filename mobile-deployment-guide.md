@@ -233,7 +233,15 @@ The value will be something like `abc123-myrepl.replit.dev` — the exact format
 
 ### How to update the EAS API_URL secret
 
-Whenever the dev domain changes, run this command from the `mobile/` directory (you must be logged in to EAS with `eas login`):
+A helper script automates this step. Run it from the project root (you must be logged in to EAS with `eas login`):
+
+```bash
+bash mobile/scripts/update-dev-api-url.sh
+```
+
+The script reads `$REPLIT_DEV_DOMAIN`, calls `eas env:update` for the development environment, and prints the new URL so you can confirm it was applied.
+
+Alternatively, run the EAS command directly from the `mobile/` directory:
 
 ```bash
 eas env:update development --name API_URL --value "https://$REPLIT_DEV_DOMAIN" --non-interactive
