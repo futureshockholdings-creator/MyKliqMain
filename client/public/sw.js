@@ -95,6 +95,39 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  let data = { title: 'MyKliq', body: 'You have a new notification' };
+  try { data = event.data.json(); } catch (e) {}
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'MyKliq', {
+      body: data.body || 'You have a new notification',
+      icon: '/icons/icon-192x192.png',
+      badge: '/icons/icon-192x192.png',
+      tag: data.tag || 'mykliq-notification',
+      data: data
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(clients.openWindow(url));
+});
+
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'background-sync') {
+    event.waitUntil(Promise.resolve());
+  }
+});
+
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'periodic-sync') {
+    event.waitUntil(Promise.resolve());
+  }
+});
+
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
