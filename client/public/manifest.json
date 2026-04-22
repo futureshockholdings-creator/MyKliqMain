@@ -34,35 +34,35 @@
   "categories": ["social", "lifestyle", "entertainment", "communication"],
   "screenshots": [
     {
-      "src": "/screenshots/01-feed.png",
+      "src": "https://api.mykliq.app/screenshots/01-feed.png",
       "sizes": "768x1408",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Your Kliq Feed"
     },
     {
-      "src": "/screenshots/02-stories.png",
+      "src": "https://api.mykliq.app/screenshots/02-stories.png",
       "sizes": "768x1408",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Stories"
     },
     {
-      "src": "/screenshots/03-messages.png",
+      "src": "https://api.mykliq.app/screenshots/03-messages.png",
       "sizes": "768x1408",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Messages"
     },
     {
-      "src": "/screenshots/04-profile.png",
+      "src": "https://api.mykliq.app/screenshots/04-profile.png",
       "sizes": "768x1408",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Profile"
     },
     {
-      "src": "/screenshots/desktop-feed.png",
+      "src": "https://api.mykliq.app/screenshots/desktop-feed.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",

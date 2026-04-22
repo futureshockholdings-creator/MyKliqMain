@@ -5060,6 +5060,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve demo screenshots for marketing page
   app.use("/demo-screenshots", express.static(path.join(process.cwd(), "public", "demo-screenshots")));
 
+  // Serve PWA store screenshots (referenced in manifest.json)
+  app.use("/screenshots", express.static(path.join(process.cwd(), "public", "screenshots")));
+
   // Serve uploaded objects (profile pictures, etc.)
   app.get("/objects/:objectPath(*)", async (req, res) => {
     const objectStorageService = new ObjectStorageService();
