@@ -554,38 +554,32 @@ p .emoji-large, span .emoji-large, div .emoji-large {
   }
 }
 
-/* Chasing light glow border animation for invite card */
-@keyframes chasing-glow {
-  0% {
-    box-shadow:
-      4px 0 12px 2px rgba(236, 72, 153, 0.8),
-      0 0 0 2px rgba(236, 72, 153, 0.3);
-  }
-  25% {
-    box-shadow:
-      0 4px 12px 2px rgba(139, 92, 246, 0.8),
-      0 0 0 2px rgba(139, 92, 246, 0.3);
-  }
-  50% {
-    box-shadow:
-      -4px 0 12px 2px rgba(59, 130, 246, 0.8),
-      0 0 0 2px rgba(59, 130, 246, 0.3);
-  }
-  75% {
-    box-shadow:
-      0 -4px 12px 2px rgba(16, 185, 129, 0.8),
-      0 0 0 2px rgba(16, 185, 129, 0.3);
-  }
-  100% {
-    box-shadow:
-      4px 0 12px 2px rgba(236, 72, 153, 0.8),
-      0 0 0 2px rgba(236, 72, 153, 0.3);
-  }
+/* Animated gradient border for invite card */
+@keyframes rotate-border {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.invite-card-glow {
-  animation: chasing-glow 2.5s linear infinite;
-  border: 2px solid transparent;
+.invite-card-glow-wrapper {
+  padding: 3px;
+  border-radius: 0.875rem;
+  background: linear-gradient(
+    -45deg,
+    #ec4899, #f97316, #eab308,
+    #22c55e, #3b82f6, #8b5cf6,
+    #ec4899
+  );
+  background-size: 400% 400%;
+  animation: rotate-border 2.5s ease infinite;
+  box-shadow:
+    0 0 18px rgba(236, 72, 153, 0.55),
+    0 0 32px rgba(139, 92, 246, 0.4),
+    0 0 48px rgba(59, 130, 246, 0.25);
+}
+
+.invite-card-glow-wrapper > div {
   border-radius: 0.75rem;
+  overflow: hidden;
 }
 

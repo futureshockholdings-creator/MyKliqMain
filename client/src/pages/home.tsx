@@ -368,6 +368,66 @@ function EditCommentForm({ comment, onUpdate }: { comment: any; onUpdate: () => 
   );
 }
 
+function FeedInviteCard({
+  kliqMemberCount,
+  firstName,
+  inviteCode,
+  onDismiss,
+}: {
+  kliqMemberCount: number;
+  firstName: string;
+  inviteCode: string;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="invite-card-glow-wrapper mb-6">
+      <div className="bg-card p-4 space-y-4">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h3 className="font-bold text-foreground text-base flex items-center gap-2">
+              📣 Invite Friends to Your Kliq
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              You have {kliqMemberCount} of 10 members — keep growing!
+            </p>
+          </div>
+          <button
+            onClick={onDismiss}
+            className="text-muted-foreground hover:text-foreground shrink-0 mt-0.5"
+            aria-label="Dismiss invite card"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="bg-muted/60 rounded-lg p-3 space-y-2">
+          <p className="text-xs font-semibold text-foreground uppercase tracking-wide">How to invite your friends:</p>
+          <ol className="space-y-2 text-xs text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <span className="font-bold text-foreground shrink-0 w-4">1.</span>
+              <span>Tap the green <strong className="text-foreground">Copy</strong> button below — your full invite message is instantly copied to your clipboard.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="font-bold text-foreground shrink-0 w-4">2.</span>
+              <span>Open a text message, WhatsApp, iMessage, or any messaging app on your phone.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="font-bold text-foreground shrink-0 w-4">3.</span>
+              <span>Long-press in the message field, tap <strong className="text-foreground">Paste</strong>, then hit send. That's it!</span>
+            </li>
+          </ol>
+        </div>
+
+        <InviteCard
+          firstName={firstName}
+          inviteCode={inviteCode}
+          showNote={false}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [newPost, setNewPost] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -465,15 +525,21 @@ export default function Home() {
       setShowFeedInviteCard(false);
       return;
     }
-    // Daily gate: show once per day
-    const storageKey = `invite-card-shown-${userData.id}`;
-    const lastShown = localStorage.getItem(storageKey);
-    const today = new Date().toDateString();
-    if (lastShown !== today) {
+    // 12-hour dismiss gate: show card until dismissed, re-show after 12 hours
+    const storageKey = `invite-card-dismissed-${userData.id}`;
+    const lastDismissed = localStorage.getItem(storageKey);
+    const twelveHoursMs = 12 * 60 * 60 * 1000;
+    if (!lastDismissed || (Date.now() - parseInt(lastDismissed, 10)) > twelveHoursMs) {
       setShowFeedInviteCard(true);
-      localStorage.setItem(storageKey, today);
     }
   }, [userData?.id, userData?.inviteCode, userData?.firstName, kliqMemberCount]);
+
+  const handleDismissInviteCard = () => {
+    if (userData?.id) {
+      localStorage.setItem(`invite-card-dismissed-${userData.id}`, Date.now().toString());
+    }
+    setShowFeedInviteCard(false);
+  };
 
   // Redirect to landing if not authenticated
   useEffect(() => {
@@ -3214,30 +3280,12 @@ export default function Home() {
       ) : (feedItems as any[]).length === 0 ? (
         <>
           {showFeedInviteCard && userData?.inviteCode && userData?.firstName && (
-            <div className="invite-card-glow mb-6 rounded-xl overflow-hidden">
-              <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
-                    📣 Grow your Kliq
-                  </h3>
-                  <button
-                    onClick={() => setShowFeedInviteCard(false)}
-                    className="text-muted-foreground hover:text-foreground text-xs"
-                    aria-label="Dismiss invite card"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  You have {kliqMemberCount} of 10 members. Share your invite to grow your kliq!
-                </p>
-                <InviteCard
-                  firstName={userData.firstName}
-                  inviteCode={userData.inviteCode}
-                  showNote={false}
-                />
-              </div>
-            </div>
+            <FeedInviteCard
+              kliqMemberCount={kliqMemberCount}
+              firstName={userData.firstName}
+              inviteCode={userData.inviteCode}
+              onDismiss={handleDismissInviteCard}
+            />
           )}
           <Card className="bg-card border-border">
             <CardContent className="p-8 text-center">
@@ -3265,30 +3313,12 @@ export default function Home() {
 
           {/* Feed invite card — shown at the top when feed has fewer than 2 items */}
           {combinedFeed.length < 2 && showFeedInviteCard && userData?.inviteCode && userData?.firstName && (
-            <div className="invite-card-glow mb-6 rounded-xl overflow-hidden">
-              <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
-                    📣 Grow your Kliq
-                  </h3>
-                  <button
-                    onClick={() => setShowFeedInviteCard(false)}
-                    className="text-muted-foreground hover:text-foreground text-xs"
-                    aria-label="Dismiss invite card"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  You have {kliqMemberCount} of 10 members. Share your invite to grow your kliq!
-                </p>
-                <InviteCard
-                  firstName={userData.firstName}
-                  inviteCode={userData.inviteCode}
-                  showNote={false}
-                />
-              </div>
-            </div>
+            <FeedInviteCard
+              kliqMemberCount={kliqMemberCount}
+              firstName={userData.firstName}
+              inviteCode={userData.inviteCode}
+              onDismiss={handleDismissInviteCard}
+            />
           )}
           
           {combinedFeed.map((item: any, index: number) => {
@@ -3302,30 +3332,12 @@ export default function Home() {
             <div key={`feed-wrapper-${item.id}-${index}`}>
               {/* Feed invite card — injected before the second feed item for users with 2+ items */}
               {index === 1 && combinedFeed.length >= 2 && showFeedInviteCard && userData?.inviteCode && userData?.firstName && (
-                <div className="invite-card-glow mb-6 rounded-xl overflow-hidden">
-                  <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
-                        📣 Grow your Kliq
-                      </h3>
-                      <button
-                        onClick={() => setShowFeedInviteCard(false)}
-                        className="text-muted-foreground hover:text-foreground text-xs"
-                        aria-label="Dismiss invite card"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      You have {kliqMemberCount} of 10 members. Share your invite to grow your kliq!
-                    </p>
-                    <InviteCard
-                      firstName={userData.firstName}
-                      inviteCode={userData.inviteCode}
-                      showNote={false}
-                    />
-                  </div>
-                </div>
+                <FeedInviteCard
+                  kliqMemberCount={kliqMemberCount}
+                  firstName={userData.firstName}
+                  inviteCode={userData.inviteCode}
+                  onDismiss={handleDismissInviteCard}
+                />
               )}
               {/* Show sponsored ad before this item if conditions are met */}
               {showAd && (targetedAds as any[])[adIndex] && (
