@@ -417,6 +417,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 rank
               });
               
+              // Notify the inviter that someone joined via their invite code
+              try {
+                const inviteeName = `${firstName.trim()} ${lastName.trim()}`;
+                await notificationService.createNotification({
+                  userId: inviteCodeOwner.id,
+                  type: 'system',
+                  title: 'New Kliq Member!',
+                  message: `${inviteeName} joined MyKliq using your invite code!`,
+                  actionUrl: '/kliq',
+                  relatedId: String(userId),
+                  relatedType: 'user',
+                  priority: 'normal',
+                });
+              } catch (notifyError) {
+                console.error("Error sending kliq join notification to inviter:", notifyError);
+              }
+              
               // Mark invite code as used
               await storage.markInviteCodeAsUsed(receivedInviteCode.trim(), userId, inviteCodeOwner.id);
               
