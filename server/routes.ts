@@ -5489,6 +5489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
          LIMIT 20`,
         [userId]
       );
+      console.log(`[Suggestions] userId=${userId} rows=${result.rows.length}`, JSON.stringify(result.rows.slice(0,5)));
       res.json(result.rows);
     } catch (error) {
       console.error("Error fetching friend suggestions:", error);
