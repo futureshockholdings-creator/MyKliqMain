@@ -554,28 +554,45 @@ p .emoji-large, span .emoji-large, div .emoji-large {
   }
 }
 
-/* Animated gradient border for invite card */
-@keyframes rotate-border {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+/* Chasing light banner effect for invite card */
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes border-spin {
+  to { --border-angle: 360deg; }
 }
 
 .invite-card-glow-wrapper {
   padding: 3px;
   border-radius: 0.875rem;
-  background: linear-gradient(
-    -45deg,
-    #ec4899, #f97316, #eab308,
-    #22c55e, #3b82f6, #8b5cf6,
-    #ec4899
+  background: conic-gradient(
+    from var(--border-angle),
+    #1e1b4b 0deg,
+    #1d4ed8 55deg,
+    #7c3aed 75deg,
+    #ffffff 88deg,
+    #fef08a 90deg,
+    #ffffff 92deg,
+    #7c3aed 108deg,
+    #1d4ed8 160deg,
+    #1e1b4b 200deg,
+    #0f172a 260deg,
+    #1d4ed8 300deg,
+    #7c3aed 320deg,
+    #ffffff 333deg,
+    #fef08a 335deg,
+    #ffffff 337deg,
+    #7c3aed 350deg,
+    #1e1b4b 360deg
   );
-  background-size: 400% 400%;
-  animation: rotate-border 2.5s ease infinite;
+  animation: border-spin 1.8s linear infinite;
   box-shadow:
-    0 0 18px rgba(236, 72, 153, 0.55),
-    0 0 32px rgba(139, 92, 246, 0.4),
-    0 0 48px rgba(59, 130, 246, 0.25);
+    0 0 20px rgba(124, 58, 237, 0.75),
+    0 0 40px rgba(29, 78, 216, 0.55),
+    0 0 60px rgba(124, 58, 237, 0.3);
 }
 
 .invite-card-glow-wrapper > div {

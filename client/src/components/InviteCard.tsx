@@ -49,10 +49,11 @@ export function InviteCard({ firstName, inviteCode, kliqClosed, showNote = true 
           <Button
             size="sm"
             onClick={copyInviteMessage}
-            className="bg-mykliq-green hover:bg-mykliq-green/90 text-white shrink-0"
+            className="shrink-0 border-2 border-black text-black font-bold"
+            style={{ backgroundColor: '#00c853', color: '#000000' }}
             data-testid="button-copy-invite"
           >
-            <Copy className="w-4 h-4" />
+            <Copy className="w-4 h-4 text-black" />
           </Button>
         </div>
       </div>
