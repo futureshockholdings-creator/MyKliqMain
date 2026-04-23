@@ -111,6 +111,19 @@ export default function Kliq() {
   
   const safePendingRequests = pendingRequests ?? [];
 
+  // Fetch friend suggestions — mutual second-degree connections
+  const { data: friendSuggestions } = useQuery<{
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    profileImageUrl?: string;
+    bio?: string;
+    mutualCount: number;
+  }[]>({
+    queryKey: ["/api/friends/suggestions"],
+    staleTime: 60000,
+  });
+
   // Approve pending request mutation
   const approvePendingMutation = useMutation({
     mutationFn: async (friendId: string) => {
@@ -1083,6 +1096,61 @@ export default function Kliq() {
               </CardContent>
             </Card>
           </div>
+
+          {/* People You May Know — mutual second-degree connections */}
+          {friendSuggestions && friendSuggestions.length > 0 && (
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">People You May Know</h3>
+                <p className="text-xs text-muted-foreground">Friends of your kliq members</p>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none">
+                {friendSuggestions.map((person) => {
+                  const initials = `${person.firstName?.[0] ?? ""}${person.lastName?.[0] ?? ""}`.toUpperCase();
+                  const fullName = `${person.firstName ?? ""} ${person.lastName ?? ""}`.trim();
+                  return (
+                    <div
+                      key={person.id}
+                      className="snap-start shrink-0 w-36 bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-2 text-center"
+                    >
+                      {person.profileImageUrl ? (
+                        <img
+                          src={resolveAssetUrl(person.profileImageUrl)}
+                          alt={fullName}
+                          className="w-14 h-14 rounded-full object-cover border-2 border-border"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-primary/10 border-2 border-border flex items-center justify-center text-lg font-bold text-primary">
+                          {initials || "?"}
+                        </div>
+                      )}
+                      <div className="w-full">
+                        <p className="text-xs font-semibold text-foreground leading-tight truncate">{fullName}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {person.mutualCount} mutual {Number(person.mutualCount) === 1 ? "friend" : "friends"}
+                        </p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const msg = getInviteMessage(userData?.firstName ?? "", userData?.inviteCode ?? "");
+                            await navigator.clipboard.writeText(msg);
+                            toast({ title: "Invite copied!", description: `Paste it to ${person.firstName ?? "them"} in any messaging app.` });
+                          } catch {
+                            toast({ title: "Could not copy", description: "Please copy your invite code manually from below.", variant: "destructive" });
+                          }
+                        }}
+                        className="w-full text-xs font-bold py-1.5 px-2 rounded-lg border-2 border-black"
+                        style={{ backgroundColor: "#00c853", color: "#000000" }}
+                      >
+                        Invite to Kliq
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Join Kliq Dialog */}
           <Dialog open={isJoinKliqDialogOpen} onOpenChange={setIsJoinKliqDialogOpen}>
