@@ -111,7 +111,7 @@ export default function Kliq() {
   
   const safePendingRequests = pendingRequests ?? [];
 
-  // Fetch friend suggestions — mutual second-degree connections
+  // Fetch friend suggestions — mutual second-degree connections + users who already have you in their kliq
   const { data: friendSuggestions } = useQuery<{
     id: string;
     firstName?: string;
@@ -119,6 +119,7 @@ export default function Kliq() {
     profileImageUrl?: string;
     bio?: string;
     mutualCount: number;
+    suggestionType: 'mutual' | 'in_their_kliq';
   }[]>({
     queryKey: ["/api/friends/suggestions"],
     staleTime: 60000,
@@ -1102,7 +1103,7 @@ export default function Kliq() {
             <div className="space-y-3">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">People You May Know</h3>
-                <p className="text-xs text-muted-foreground">Friends of your kliq members</p>
+                <p className="text-xs text-muted-foreground">Friends of friends &amp; people who already have you in their kliq</p>
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none">
                 {friendSuggestions.map((person) => {
@@ -1126,9 +1127,15 @@ export default function Kliq() {
                       )}
                       <div className="w-full">
                         <p className="text-xs font-semibold text-foreground leading-tight truncate">{fullName}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {person.mutualCount} mutual {Number(person.mutualCount) === 1 ? "friend" : "friends"}
-                        </p>
+                        {person.suggestionType === 'in_their_kliq' ? (
+                          <p className="text-xs font-medium mt-0.5" style={{ color: "#00c853" }}>
+                            You're in their kliq
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {person.mutualCount} mutual {Number(person.mutualCount) === 1 ? "friend" : "friends"}
+                          </p>
+                        )}
                       </div>
                       <button
                         onClick={async () => {

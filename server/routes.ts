@@ -5440,26 +5440,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const result = await pool.query(
-        `SELECT
-           u.id,
-           u.first_name AS "firstName",
-           u.last_name  AS "lastName",
-           u.profile_image_url AS "profileImageUrl",
-           u.bio,
-           COUNT(DISTINCT f1.user_id) AS "mutualCount"
-         FROM friendships f1
-         JOIN friendships f2 ON f1.friend_id = f2.user_id
-         JOIN users u ON u.id = f2.friend_id
-         WHERE f1.user_id = $1
-           AND f1.status = 'accepted'
-           AND f2.status = 'accepted'
-           AND f2.friend_id != $1
-           AND u.id != $1
-           AND f2.friend_id NOT IN (
-             SELECT friend_id FROM friendships WHERE user_id = $1
-           )
-         GROUP BY u.id, u.first_name, u.last_name, u.profile_image_url, u.bio
-         ORDER BY "mutualCount" DESC
+        `SELECT * FROM (
+           -- Mutual second-degree connections
+           SELECT
+             u.id,
+             u.first_name AS "firstName",
+             u.last_name  AS "lastName",
+             u.profile_image_url AS "profileImageUrl",
+             u.bio,
+             COUNT(DISTINCT f1.user_id) AS "mutualCount",
+             'mutual' AS "suggestionType"
+           FROM friendships f1
+           JOIN friendships f2 ON f1.friend_id = f2.user_id
+           JOIN users u ON u.id = f2.friend_id
+           WHERE f1.user_id = $1
+             AND f1.status = 'accepted'
+             AND f2.status = 'accepted'
+             AND f2.friend_id != $1
+             AND u.id != $1
+             AND f2.friend_id NOT IN (
+               SELECT friend_id FROM friendships WHERE user_id = $1
+             )
+           GROUP BY u.id, u.first_name, u.last_name, u.profile_image_url, u.bio
+
+           UNION ALL
+
+           -- Users who already have you in their kliq
+           SELECT
+             u.id,
+             u.first_name AS "firstName",
+             u.last_name  AS "lastName",
+             u.profile_image_url AS "profileImageUrl",
+             u.bio,
+             0 AS "mutualCount",
+             'in_their_kliq' AS "suggestionType"
+           FROM friendships f
+           JOIN users u ON u.id = f.user_id
+           WHERE f.friend_id = $1
+             AND f.status = 'accepted'
+             AND f.user_id != $1
+             AND f.user_id NOT IN (
+               SELECT friend_id FROM friendships WHERE user_id = $1
+             )
+         ) combined
+         ORDER BY
+           CASE "suggestionType" WHEN 'in_their_kliq' THEN 0 ELSE 1 END,
+           "mutualCount" DESC
          LIMIT 20`,
         [userId]
       );
