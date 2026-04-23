@@ -3212,27 +3212,83 @@ export default function Home() {
           ))}
         </div>
       ) : (feedItems as any[]).length === 0 ? (
-        <Card className="bg-card border-border">
-          <CardContent className="p-8 text-center">
-            <div className="text-4xl mb-4">🌟</div>
-            <h3 className="text-lg font-bold text-muted-foreground mb-2">Your feed is empty</h3>
-            <p className="text-muted-foreground text-sm mb-4">
-              Invite friends to your kliq or create your first post to get started!
-            </p>
-            <Button
-              onClick={() => setNewPost("Hello, MyKliq! 👋")}
-              variant="outline"
-              className="border-primary text-primary hover:bg-primary/10"
-            >
-              Create your first post
-            </Button>
-          </CardContent>
-        </Card>
+        <>
+          {showFeedInviteCard && userData?.inviteCode && userData?.firstName && (
+            <div className="invite-card-glow mb-6 rounded-xl overflow-hidden">
+              <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                    📣 Grow your Kliq
+                  </h3>
+                  <button
+                    onClick={() => setShowFeedInviteCard(false)}
+                    className="text-muted-foreground hover:text-foreground text-xs"
+                    aria-label="Dismiss invite card"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  You have {kliqMemberCount} of 10 members. Share your invite to grow your kliq!
+                </p>
+                <InviteCard
+                  firstName={userData.firstName}
+                  inviteCode={userData.inviteCode}
+                  showNote={false}
+                />
+              </div>
+            </div>
+          )}
+          <Card className="bg-card border-border">
+            <CardContent className="p-8 text-center">
+              <div className="text-4xl mb-4">🌟</div>
+              <h3 className="text-lg font-bold text-muted-foreground mb-2">Your feed is empty</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Invite friends to your kliq or create your first post to get started!
+              </p>
+              <Button
+                onClick={() => setNewPost("Hello, MyKliq! 👋")}
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary/10"
+              >
+                Create your first post
+              </Button>
+            </CardContent>
+          </Card>
+        </>
       ) : (
         <>
           {/* Unified Sports Carousel - team games and individual sports together */}
           {allSportsUpdates.length > 0 && (
             <SportsCarousel updates={allSportsUpdates} />
+          )}
+
+          {/* Feed invite card — shown at the top when feed has fewer than 2 items */}
+          {combinedFeed.length < 2 && showFeedInviteCard && userData?.inviteCode && userData?.firstName && (
+            <div className="invite-card-glow mb-6 rounded-xl overflow-hidden">
+              <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                    📣 Grow your Kliq
+                  </h3>
+                  <button
+                    onClick={() => setShowFeedInviteCard(false)}
+                    className="text-muted-foreground hover:text-foreground text-xs"
+                    aria-label="Dismiss invite card"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  You have {kliqMemberCount} of 10 members. Share your invite to grow your kliq!
+                </p>
+                <InviteCard
+                  firstName={userData.firstName}
+                  inviteCode={userData.inviteCode}
+                  showNote={false}
+                />
+              </div>
+            </div>
           )}
           
           {combinedFeed.map((item: any, index: number) => {
@@ -3244,8 +3300,8 @@ export default function Home() {
 
           return (
             <div key={`feed-wrapper-${item.id}-${index}`}>
-              {/* Feed invite card — injected before the second feed item for users with < 10 kliq members */}
-              {index === 1 && showFeedInviteCard && userData?.inviteCode && userData?.firstName && (
+              {/* Feed invite card — injected before the second feed item for users with 2+ items */}
+              {index === 1 && combinedFeed.length >= 2 && showFeedInviteCard && userData?.inviteCode && userData?.firstName && (
                 <div className="invite-card-glow mb-6 rounded-xl overflow-hidden">
                   <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
