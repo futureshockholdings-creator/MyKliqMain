@@ -309,8 +309,8 @@ export default function Signup() {
         description: "Your profile has been created successfully.",
       });
 
-      // Redirect to the new user's profile page
-      window.location.href = "/profile";
+      // Redirect to the new user's profile page with newUser flag for onboarding modal
+      window.location.href = "/profile?newUser=true";
     } catch (error: any) {
       toast({
         title: "Signup Failed",

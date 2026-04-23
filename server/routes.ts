@@ -5501,6 +5501,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "accepted"
       });
 
+      // Notify the inviter that someone joined their kliq using their invite code
+      try {
+        const joiner = await storage.getUser(userId);
+        const joinerName = joiner?.firstName && joiner?.lastName
+          ? `${joiner.firstName} ${joiner.lastName}`
+          : joiner?.firstName || 'Someone';
+        await notificationService.createNotification({
+          userId: inviter.id,
+          type: 'system',
+          title: 'New Kliq Member!',
+          message: `${joinerName} joined MyKliq using your invite code!`,
+          actionUrl: '/kliq',
+          relatedId: userId,
+          relatedType: 'user',
+          priority: 'normal',
+        });
+      } catch (notifyError) {
+        console.error("Error sending kliq join notification:", notifyError);
+      }
+
       // Create pending referral bonus for the inviter (only if no existing bonus for this invitee)
       try {
         const existingBonuses = await storage.getReferralBonusesByInvitee(userId);

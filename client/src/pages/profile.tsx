@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,10 @@ import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
 import { MusicUploader } from "@/components/MusicUploader";
 import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { InviteCard } from "@/components/InviteCard";
+import { getInviteMessage } from "@/lib/deviceDetection";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera } from "lucide-react";
+import { Camera, Share2 } from "lucide-react";
 import { PageWrapper } from "@/components/PageWrapper";
 
 
@@ -27,6 +29,21 @@ export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Onboarding invite modal — shown once when redirected from signup with ?newUser=true
+  const [showOnboardingModal, setShowOnboardingModal] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("newUser") === "true";
+  });
+
+  // Remove the ?newUser=true param from the URL without a reload so the modal only shows once
+  useEffect(() => {
+    if (showOnboardingModal) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("newUser");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [showOnboardingModal]);
 
 
 
@@ -169,6 +186,7 @@ export default function Profile() {
   }
 
   const typedUser = user as User;
+  const hasInviteInfo = !!(typedUser.inviteCode && typedUser.firstName);
   
   // Resolve asset URLs to absolute URLs for split deployment (AWS Amplify + Replit)
   const resolvedBackgroundUrl = resolveAssetUrl(typedUser.backgroundImageUrl);
@@ -179,6 +197,52 @@ export default function Profile() {
 
   return (
     <PageWrapper>
+      {/* Onboarding invite modal — full-screen takeover shown once after signup */}
+      {hasInviteInfo && showOnboardingModal && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm p-6">
+          <div className="w-full max-w-md space-y-6">
+            <div className="text-center space-y-2">
+              <div className="text-5xl">🎉</div>
+              <h1 className="text-2xl font-bold text-foreground">Welcome to MyKliq!</h1>
+              <p className="text-muted-foreground text-sm">
+                Your kliq is ready. Share your invite code with people you want to connect with.
+              </p>
+            </div>
+
+            <InviteCard
+              firstName={typedUser.firstName!}
+              inviteCode={typedUser.inviteCode!}
+              kliqClosed={typedUser.kliqClosed ?? false}
+              showNote={false}
+            />
+
+            <p className="text-xs text-muted-foreground text-center">
+              Copy the message above and share it with anyone you'd like to invite.
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <Button
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground gap-2 py-6 text-base"
+                onClick={() => {
+                  navigator.clipboard.writeText(getInviteMessage(typedUser.firstName!, typedUser.inviteCode!)).catch(() => {});
+                  setShowOnboardingModal(false);
+                }}
+              >
+                <Share2 className="w-5 h-5" />
+                Copy &amp; Share
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full text-muted-foreground hover:text-foreground"
+                onClick={() => setShowOnboardingModal(false)}
+              >
+                Maybe Later
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-6xl mx-auto p-4 md:p-6">
         <div className="space-y-4 md:space-y-6">
         {/* Profile Picture & Background Section */}

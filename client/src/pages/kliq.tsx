@@ -19,6 +19,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { resolveAssetUrl, getApiBaseUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { getInviteMessage, getAppStoreUrl, getDownloadText } from "@/lib/deviceDetection";
+import { InviteCard } from "@/components/InviteCard";
 import { useAuth } from "@/hooks/useAuth";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useLocation } from "wouter";
@@ -1636,45 +1637,16 @@ export default function Kliq() {
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="bg-muted rounded p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="text-sm text-muted-foreground font-medium flex-1" data-testid="text-invite-message">
-                    {userData?.inviteCode && userData?.firstName 
-                      ? (
-                          <>
-                            {userData.firstName} wants you to join their Kliq. Use the following Invite Code {userData.inviteCode} and{' '}
-                            <a 
-                              href={getAppStoreUrl()} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-500 hover:text-blue-600 underline"
-                            >
-                              {getDownloadText()}
-                            </a>
-                            {' '}- "A Different Social Experience"
-                          </>
-                        )
-                      : "Loading..."
-                    }
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={copyInviteCode}
-                    className="bg-mykliq-green hover:bg-mykliq-green/90 text-white shrink-0"
-                    disabled={!userData?.inviteCode || !userData?.firstName}
-                    data-testid="button-copy-invite"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-              <p className="text-xs text-card-foreground">
-                {userData?.kliqClosed 
-                  ? "Your kliq is closed to new members. Existing friends can still use your code but new people cannot join."
-                  : "Copy and paste this complete message to invite friends to your kliq"
-                }
-              </p>
+            <CardContent>
+              {userData?.inviteCode && userData?.firstName ? (
+                <InviteCard
+                  firstName={userData.firstName}
+                  inviteCode={userData.inviteCode}
+                  kliqClosed={userData.kliqClosed}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              )}
             </CardContent>
           </Card>
 

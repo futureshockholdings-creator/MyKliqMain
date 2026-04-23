@@ -554,3 +554,38 @@ p .emoji-large, span .emoji-large, div .emoji-large {
   }
 }
 
+/* Chasing light glow border animation for invite card */
+@keyframes chasing-glow {
+  0% {
+    box-shadow:
+      4px 0 12px 2px rgba(236, 72, 153, 0.8),
+      0 0 0 2px rgba(236, 72, 153, 0.3);
+  }
+  25% {
+    box-shadow:
+      0 4px 12px 2px rgba(139, 92, 246, 0.8),
+      0 0 0 2px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow:
+      -4px 0 12px 2px rgba(59, 130, 246, 0.8),
+      0 0 0 2px rgba(59, 130, 246, 0.3);
+  }
+  75% {
+    box-shadow:
+      0 -4px 12px 2px rgba(16, 185, 129, 0.8),
+      0 0 0 2px rgba(16, 185, 129, 0.3);
+  }
+  100% {
+    box-shadow:
+      4px 0 12px 2px rgba(236, 72, 153, 0.8),
+      0 0 0 2px rgba(236, 72, 153, 0.3);
+  }
+}
+
+.invite-card-glow {
+  animation: chasing-glow 2.5s linear infinite;
+  border: 2px solid transparent;
+  border-radius: 0.75rem;
+}
+

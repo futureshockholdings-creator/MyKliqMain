@@ -55,6 +55,7 @@ import { LinkifyText } from "@/components/LinkifyText";
 import { ImageGallery } from "@/components/ImageGallery";
 import { ImageViewer } from "@/components/ImageViewer";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
+import { InviteCard } from "@/components/InviteCard";
 
 import type { Meme, Moviecon } from "@shared/schema";
 
@@ -437,6 +438,42 @@ export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { translatePost, translateMoodText } = usePostTranslation();
+
+  // Fetch friends to check kliq member count for feed invite card
+  const { data: friendsList = [] } = useQuery<{ id: string; friendId: string }[]>({
+    queryKey: ["/api/friends"],
+    enabled: !!userData?.id,
+    staleTime: 60000,
+  });
+
+  const kliqMemberCount = friendsList.length;
+
+  // Determine whether to show feed invite card (< 10 members, once per day per user)
+  // Permanently hidden once user reaches 10 members (localStorage "goal-reached" flag)
+  const [showFeedInviteCard, setShowFeedInviteCard] = useState(false);
+  useEffect(() => {
+    if (!userData?.id || !userData?.inviteCode || !userData?.firstName) return;
+    const goalKey = `invite-card-goal-reached-${userData.id}`;
+    // Permanently hide once the 10-member goal is reached
+    if (kliqMemberCount >= 10) {
+      localStorage.setItem(goalKey, "true");
+      setShowFeedInviteCard(false);
+      return;
+    }
+    // If goal was previously reached in another session, keep hidden
+    if (localStorage.getItem(goalKey) === "true") {
+      setShowFeedInviteCard(false);
+      return;
+    }
+    // Daily gate: show once per day
+    const storageKey = `invite-card-shown-${userData.id}`;
+    const lastShown = localStorage.getItem(storageKey);
+    const today = new Date().toDateString();
+    if (lastShown !== today) {
+      setShowFeedInviteCard(true);
+      localStorage.setItem(storageKey, today);
+    }
+  }, [userData?.id, userData?.inviteCode, userData?.firstName, kliqMemberCount]);
 
   // Redirect to landing if not authenticated
   useEffect(() => {
@@ -3207,6 +3244,33 @@ export default function Home() {
 
           return (
             <div key={`feed-wrapper-${item.id}-${index}`}>
+              {/* Feed invite card — injected before the second feed item for users with < 10 kliq members */}
+              {index === 1 && showFeedInviteCard && userData?.inviteCode && userData?.firstName && (
+                <div className="invite-card-glow mb-6 rounded-xl overflow-hidden">
+                  <div className="bg-card border border-border/50 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                        📣 Grow your Kliq
+                      </h3>
+                      <button
+                        onClick={() => setShowFeedInviteCard(false)}
+                        className="text-muted-foreground hover:text-foreground text-xs"
+                        aria-label="Dismiss invite card"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      You have {kliqMemberCount} of 10 members. Share your invite to grow your kliq!
+                    </p>
+                    <InviteCard
+                      firstName={userData.firstName}
+                      inviteCode={userData.inviteCode}
+                      showNote={false}
+                    />
+                  </div>
+                </div>
+              )}
               {/* Show sponsored ad before this item if conditions are met */}
               {showAd && (targetedAds as any[])[adIndex] && (
                 <div className="mb-4" key={`ad-${adIndex}-${index}`}>
