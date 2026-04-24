@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "YzKLeFF_BzYRDzqIpQ9Q6"
+uri = "file://mobile/assets/splash.png"
+type = "image"
+title = "MyKliq Mobile Splash Screen"
