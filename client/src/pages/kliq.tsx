@@ -1137,21 +1137,40 @@ export default function Kliq() {
                           </p>
                         )}
                       </div>
-                      <button
-                        onClick={async () => {
-                          try {
-                            const msg = getInviteMessage(userData?.firstName ?? "", userData?.inviteCode ?? "");
-                            await navigator.clipboard.writeText(msg);
-                            toast({ title: "Invite copied!", description: `Paste it to ${person.firstName ?? "them"} in any messaging app.` });
-                          } catch {
-                            toast({ title: "Could not copy", description: "Please copy your invite code manually from below.", variant: "destructive" });
-                          }
-                        }}
-                        className="w-full text-xs font-bold py-1.5 px-2 rounded-lg border-2 border-black"
-                        style={{ backgroundColor: "#00c853", color: "#000000" }}
-                      >
-                        Invite to Kliq
-                      </button>
+                      {person.suggestionType === 'in_their_kliq' ? (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await apiRequest("POST", `/api/friends/konnect/${person.id}`);
+                              await queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
+                              await queryClient.invalidateQueries({ queryKey: ["/api/friends/suggestions"] });
+                              toast({ title: "Konnected!", description: `${person.firstName ?? "They"} has been added to your kliq.` });
+                            } catch {
+                              toast({ title: "Could not konnect", description: "Something went wrong. Please try again.", variant: "destructive" });
+                            }
+                          }}
+                          className="w-full text-xs font-bold py-1.5 px-2 rounded-lg border-2 border-black"
+                          style={{ backgroundColor: "#00c853", color: "#000000" }}
+                        >
+                          Konnect to Kliq
+                        </button>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            try {
+                              const msg = getInviteMessage(userData?.firstName ?? "", userData?.inviteCode ?? "");
+                              await navigator.clipboard.writeText(msg);
+                              toast({ title: "Invite copied!", description: `Paste it to ${person.firstName ?? "them"} in any messaging app.` });
+                            } catch {
+                              toast({ title: "Could not copy", description: "Please copy your invite code manually from below.", variant: "destructive" });
+                            }
+                          }}
+                          className="w-full text-xs font-bold py-1.5 px-2 rounded-lg border-2 border-black"
+                          style={{ backgroundColor: "#00c853", color: "#000000" }}
+                        >
+                          Invite to Kliq
+                        </button>
+                      )}
                     </div>
                   );
                 })}

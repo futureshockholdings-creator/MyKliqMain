@@ -5496,6 +5496,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Konnect — auto-accept add for users who already have you in their kliq
+  app.post('/api/friends/konnect/:targetUserId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { targetUserId } = req.params;
+
+      if (userId === targetUserId) {
+        return res.status(400).json({ message: "Cannot konnect with yourself" });
+      }
+
+      // Verify the target actually has the current user in their kliq
+      const theirFriends = await storage.getFriends(targetUserId);
+      const theyHaveUs = theirFriends.find(f => f.friendId === userId);
+      if (!theyHaveUs) {
+        return res.status(403).json({ message: "This user does not have you in their kliq" });
+      }
+
+      // Make sure we haven't already added them
+      const ourFriends = await storage.getFriends(userId);
+      if (ourFriends.find(f => f.friendId === targetUserId)) {
+        return res.status(400).json({ message: "Already in your kliq" });
+      }
+
+      // Respect the 28-member limit
+      if (ourFriends.length >= 28) {
+        return res.status(400).json({ message: "Your kliq is full (28 members max)" });
+      }
+
+      const rank = ourFriends.length + 1;
+      const friendship = await storage.addFriend({
+        userId,
+        friendId: targetUserId,
+        rank,
+        status: "accepted",
+      });
+
+      res.json(friendship);
+    } catch (error) {
+      console.error("Error konnecting friend:", error);
+      res.status(500).json({ message: "Failed to konnect" });
+    }
+  });
+
   app.post('/api/friends/invite', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
