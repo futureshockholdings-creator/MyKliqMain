@@ -1103,7 +1103,7 @@ export default function Kliq() {
             <div className="space-y-3">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">People You May Know</h3>
-                <p className="text-xs text-muted-foreground">Friends of friends &amp; people who already have you in their kliq</p>
+                <p className="text-xs text-muted-foreground">Scroll to see people connected to your kliq</p>
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none">
                 {friendSuggestions.map((person) => {
