@@ -1,68 +1,52 @@
 const sharp = require('sharp');
-const path = require('path');
+const fs = require('fs');
 
-const GREEN = '#00e676';
-const WHITE = '#ffffff';
-
-// ─── 1. Static splash.png ───────────────────────────────────────────────────
-// Green background, white icon + wordmark, centred
-
+const ICON_GREEN = '#2ae149';   // exact green sampled from the original icon
 const SW = 1284, SH = 2778;
-const iconSize = 400;
-const iconCX = SW / 2, iconCY = SH * 0.39;
-const scale = iconSize / 400;
-const tx = iconCX - iconSize / 2;
-const ty = iconCY - iconSize / 2;
 
-const splashSvg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${SW}" height="${SH}" viewBox="0 0 ${SW} ${SH}" xmlns="http://www.w3.org/2000/svg">
-  <!-- Green background -->
-  <rect width="${SW}" height="${SH}" fill="${GREEN}"/>
+// Icon at 560px — large enough to be bold on screen
+const ICON_PX = 560;
+const ICON_X = Math.round((SW - ICON_PX) / 2);
+const ICON_Y = Math.round(SH * 0.30);   // sit slightly above centre
 
-  <!-- Person-add icon (white), 400px, local 400×400 space -->
-  <g transform="translate(${tx.toFixed(1)}, ${ty.toFixed(1)}) scale(${scale.toFixed(4)})">
-    <circle cx="148" cy="100" r="72"
-            fill="none" stroke="${WHITE}" stroke-width="38" stroke-linecap="round"/>
-    <path d="M 10 310 Q 10 205 148 205 Q 286 205 286 310"
-          fill="none" stroke="${WHITE}" stroke-width="38"
-          stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="272" y1="265" x2="402" y2="265"
-          stroke="${WHITE}" stroke-width="50" stroke-linecap="round"/>
-    <line x1="337" y1="200" x2="337" y2="330"
-          stroke="${WHITE}" stroke-width="50" stroke-linecap="round"/>
-  </g>
-
-  <!-- MyKliq wordmark -->
-  <text x="${SW / 2}" y="${SH * 0.535}"
+// SVG text strip: "MyKliq" in the same green on transparent bg
+const TEXT_W = SW, TEXT_H = 220;
+const TEXT_Y = ICON_Y + ICON_PX + 48;   // just below the icon
+const textSvg = Buffer.from(`
+<svg width="${TEXT_W}" height="${TEXT_H}" xmlns="http://www.w3.org/2000/svg">
+  <text x="${TEXT_W / 2}" y="160"
         font-family="Arial, Helvetica, sans-serif"
-        font-size="172" font-weight="bold"
-        text-anchor="middle" fill="${WHITE}">MyKliq</text>
-</svg>`;
+        font-size="180" font-weight="bold"
+        text-anchor="middle"
+        fill="#000000">MyKliq</text>
+</svg>`);
 
-// ─── 2. logo-white.png ───────────────────────────────────────────────────────
-// Transparent background, white icon only — used for the spinning animation
+async function run() {
+  // Resize the original icon
+  const iconBuf = await sharp('client/public/icons/icon-512x512.png')
+    .resize(ICON_PX, ICON_PX)
+    .png()
+    .toBuffer();
 
-const LW = 512, LH = 512;
-const lScale = LW / 400;
-const logoSvg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${LW}" height="${LH}" viewBox="0 0 ${LW} ${LH}" xmlns="http://www.w3.org/2000/svg">
-  <g transform="scale(${lScale.toFixed(4)})">
-    <circle cx="148" cy="100" r="72"
-            fill="none" stroke="${WHITE}" stroke-width="38" stroke-linecap="round"/>
-    <path d="M 10 310 Q 10 205 148 205 Q 286 205 286 310"
-          fill="none" stroke="${WHITE}" stroke-width="38"
-          stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="272" y1="265" x2="402" y2="265"
-          stroke="${WHITE}" stroke-width="50" stroke-linecap="round"/>
-    <line x1="337" y1="200" x2="337" y2="330"
-          stroke="${WHITE}" stroke-width="50" stroke-linecap="round"/>
-  </g>
-</svg>`;
+  // Green background → icon → text label
+  await sharp({
+    create: { width: SW, height: SH, channels: 3, background: ICON_GREEN },
+  })
+    .composite([
+      { input: iconBuf,  left: ICON_X,     top: ICON_Y    },
+      { input: textSvg,  left: 0,           top: TEXT_Y    },
+    ])
+    .png()
+    .toFile('mobile/assets/splash.png');
 
-Promise.all([
-  sharp(Buffer.from(splashSvg)).png().toFile('mobile/assets/splash.png'),
-  sharp(Buffer.from(logoSvg)).png().toFile('mobile/assets/logo-white.png'),
-]).then(() => {
+  // Copy original icon to mobile/assets for the spinning animation
+  fs.copyFileSync(
+    'client/public/icons/icon-512x512.png',
+    'mobile/assets/person-plus-icon.png'
+  );
+
   console.log('✅ mobile/assets/splash.png');
-  console.log('✅ mobile/assets/logo-white.png');
-}).catch(err => { console.error(err); process.exit(1); });
+  console.log('✅ mobile/assets/person-plus-icon.png');
+}
+
+run().catch(err => { console.error(err); process.exit(1); });

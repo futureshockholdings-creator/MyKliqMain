@@ -12,7 +12,7 @@ import { queryClient } from './src/lib/queryClient';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { initializeEnterpriseServices, cleanupEnterpriseServices } from './src/lib/enterpriseInit';
 
-const BRAND_GREEN = '#00e676';
+const BRAND_GREEN = '#2ae149';   // exact green from original icon
 
 function SplashAnimation() {
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -37,7 +37,7 @@ function SplashAnimation() {
     <View style={styles.splash}>
       <StatusBar style="dark" />
       <Animated.Image
-        source={require('./assets/logo-white.png')}
+        source={require('./assets/person-plus-icon.png')}
         style={[styles.logo, { transform: [{ rotate }] }]}
         resizeMode="contain"
       />
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     height: 160,
   },
   wordmark: {
-    color: '#ffffff',
+    color: '#000000',
     fontSize: 40,
     fontWeight: 'bold',
     letterSpacing: 1,
