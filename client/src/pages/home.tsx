@@ -2267,7 +2267,7 @@ export default function Home() {
         <Card className="bg-gradient-to-r from-mykliq-purple/20 to-secondary/20 border-mykliq-purple/30">
         <CardContent className="p-4">
           <div className="flex items-center space-x-3 mb-3">
-            <Avatar className="w-12 h-12 border-2 border-mykliq-orange">
+            <Avatar className="w-14 h-14 border-2 border-mykliq-orange">
               <AvatarImage src={resolveProfileImageUrl(userData?.profileImageUrl, userData?.updatedAt)} />
               <AvatarFallback className="bg-muted text-foreground">
                 {userData?.firstName?.[0] || "U"}
