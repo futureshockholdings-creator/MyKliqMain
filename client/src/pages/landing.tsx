@@ -112,6 +112,27 @@ export default function Landing() {
           </h1>
           <p className="text-white/90 text-sm md:text-base lg:text-lg">Your Exclusive Social Circle</p>
         </div>
+
+        {/* Login + Forgot Password — top right of banner */}
+        <div className="absolute top-4 right-4 md:top-5 md:right-6 flex flex-col items-end gap-1">
+          <Link href="/login">
+            <Button
+              className="bg-white text-primary font-bold hover:bg-white/90 shadow-md px-4 py-2 h-auto text-sm"
+              data-testid="button-login-top"
+            >
+              <LogIn className="w-4 h-4 mr-1.5" />
+              Login
+            </Button>
+          </Link>
+          <Link href="/forgot-password">
+            <button
+              className="text-white/90 hover:text-white text-xs underline underline-offset-2 transition-colors"
+              data-testid="link-forgot-password-top"
+            >
+              Forgot Password?
+            </button>
+          </Link>
+        </div>
       </div>
 
       <div className="relative z-10 w-full bg-card min-h-screen">
@@ -256,32 +277,6 @@ export default function Landing() {
               </DialogContent>
             </Dialog>
 
-            {/* Login Link */}
-            <div className="text-center pt-3 space-y-2">
-              <Link href="/login">
-                <Button 
-                  variant="ghost" 
-                  className="text-muted-foreground hover:text-primary text-sm underline"
-                  data-testid="link-login"
-                >
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Already have an account? Login here
-                </Button>
-              </Link>
-              
-              {/* Forgot Password Link */}
-              <div>
-                <Link href="/forgot-password">
-                  <Button 
-                    variant="ghost" 
-                    className="text-muted-foreground hover:text-primary text-sm underline"
-                    data-testid="link-forgot-password"
-                  >
-                    Forgot Password?
-                  </Button>
-                </Link>
-              </div>
-            </div>
           </div>
 
           {/* Footer */}
