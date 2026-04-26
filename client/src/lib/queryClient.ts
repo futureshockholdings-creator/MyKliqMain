@@ -30,9 +30,9 @@ export function getQueryFn<T>(options: {
 }): QueryFunction<T> {
   const { on401: unauthorizedBehavior } = options;
   return async ({ queryKey }) => {
+    // url must be declared outside try/catch so the catch block can reference it
+    const url = queryKey.join("/") as string;
     try {
-      const url = queryKey.join("/") as string;
-      
       // Skip disk cache for critical endpoints that need fresh data on page load
       const skipDisk = SKIP_DISK_CACHE_ENDPOINTS.some(ep => url.includes(ep));
       
@@ -58,6 +58,7 @@ export function getQueryFn<T>(options: {
           const offlineData = await offlineStore.getOfflineData<T>(url);
           if (offlineData !== null) {
             console.log(`[QueryFn] Serving offline data for ${url}`);
+            offlineStore.markOffline();
             return offlineData;
           }
         }

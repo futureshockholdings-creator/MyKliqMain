@@ -126,6 +126,10 @@ export async function enterpriseFetch<T = any>(
 
             if (offlineStore.shouldCache(url)) {
               offlineStore.saveForOffline(url, jsonData).catch(() => {});
+              // Restore online status if it was marked offline due to a previous flaky request
+              if (!offlineStore.getOnlineStatus()) {
+                offlineStore.markOnline();
+              }
             }
 
             return jsonData;
@@ -146,9 +150,9 @@ export async function enterpriseFetch<T = any>(
               const offlineData = await offlineStore.getOfflineData<T>(url);
               if (offlineData !== null) {
                 console.log(`[EnterpriseFetch] Using offline store fallback for ${url}`);
-                if (!offlineStore.getOnlineStatus()) {
-                  offlineStore.markOffline();
-                }
+                // Always mark offline when we fall back to cached data due to a network failure
+                // This ensures the red banner appears for flaky connections too, not just full offline
+                offlineStore.markOffline();
                 return offlineData;
               }
             }
