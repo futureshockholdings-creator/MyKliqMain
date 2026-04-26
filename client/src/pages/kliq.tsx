@@ -1079,21 +1079,21 @@ export default function Kliq() {
 
         <TabsContent value="friends" className="space-y-6">
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2">
             <Card className="bg-card border-border">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-card-foreground" data-testid="text-friend-count">
+              <CardContent className="p-2 text-center">
+                <div className="text-base font-bold text-card-foreground" data-testid="text-friend-count">
                   {friends.length}/28
                 </div>
-                <div className="text-sm text-card-foreground">Friends</div>
+                <div className="text-xs text-card-foreground">Friends</div>
               </CardContent>
             </Card>
             <Card className="bg-card border-border">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-card-foreground" data-testid="text-open-spots">
+              <CardContent className="p-2 text-center">
+                <div className="text-base font-bold text-card-foreground" data-testid="text-open-spots">
                   {28 - friends.length}
                 </div>
-                <div className="text-sm text-card-foreground">Open Spots</div>
+                <div className="text-xs text-card-foreground">Open Spots</div>
               </CardContent>
             </Card>
           </div>
@@ -1102,8 +1102,16 @@ export default function Kliq() {
           {friendSuggestions && friendSuggestions.length > 0 && (
             <div className="space-y-3">
               <div>
-                <h3 className="text-sm font-semibold text-foreground">People You May Know</h3>
-                <p className="text-xs text-muted-foreground">Scroll to see people connected to your kliq</p>
+                <h3
+                  className="text-lg font-extrabold"
+                  style={{
+                    color: "#2ae149",
+                    WebkitTextStroke: "1px black",
+                    paintOrder: "stroke fill",
+                  }}
+                >
+                  Konnect Opportunities
+                </h3>
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none">
                 {friendSuggestions.map((person) => {
@@ -1112,27 +1120,27 @@ export default function Kliq() {
                   return (
                     <div
                       key={person.id}
-                      className="snap-start shrink-0 w-36 bg-card border border-border rounded-xl p-3 flex flex-col items-center gap-2 text-center"
+                      className="snap-start shrink-0 w-48 bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-3 text-center"
                     >
                       {person.profileImageUrl ? (
                         <img
                           src={resolveAssetUrl(person.profileImageUrl)}
                           alt={fullName}
-                          className="w-14 h-14 rounded-full object-cover border-2 border-border"
+                          className="w-20 h-20 rounded-full object-cover border-2 border-border"
                         />
                       ) : (
-                        <div className="w-14 h-14 rounded-full bg-primary/10 border-2 border-border flex items-center justify-center text-lg font-bold text-primary">
+                        <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-border flex items-center justify-center text-2xl font-bold text-primary">
                           {initials || "?"}
                         </div>
                       )}
                       <div className="w-full">
-                        <p className="text-xs font-semibold text-foreground leading-tight truncate">{fullName}</p>
+                        <p className="text-sm font-semibold text-foreground leading-tight truncate">{fullName}</p>
                         {person.suggestionType === 'in_their_kliq' ? (
-                          <p className="text-xs font-medium mt-0.5" style={{ color: "#00c853" }}>
+                          <p className="text-sm font-medium mt-1" style={{ color: "#00c853" }}>
                             You're in their kliq
                           </p>
                         ) : (
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-sm text-muted-foreground mt-1">
                             {person.mutualCount} mutual {Number(person.mutualCount) === 1 ? "friend" : "friends"}
                           </p>
                         )}
@@ -1149,7 +1157,7 @@ export default function Kliq() {
                               toast({ title: "Could not konnect", description: "Something went wrong. Please try again.", variant: "destructive" });
                             }
                           }}
-                          className="w-full text-xs font-bold py-1.5 px-2 rounded-lg border-2 border-black"
+                          className="w-full text-sm font-bold py-2 px-3 rounded-lg border-2 border-black"
                           style={{ backgroundColor: "#00c853", color: "#000000" }}
                         >
                           Konnect to Kliq
@@ -1165,7 +1173,7 @@ export default function Kliq() {
                               toast({ title: "Could not copy", description: "Please copy your invite code manually from below.", variant: "destructive" });
                             }
                           }}
-                          className="w-full text-xs font-bold py-1.5 px-2 rounded-lg border-2 border-black"
+                          className="w-full text-sm font-bold py-2 px-3 rounded-lg border-2 border-black"
                           style={{ backgroundColor: "#00c853", color: "#000000" }}
                         >
                           Invite to Kliq
