@@ -3456,7 +3456,7 @@ export default function Home() {
                   fallback={item.author.firstName?.[0] || "U"}
                   borderImageUrl={item.author.id === userData?.id ? (userData as any)?.equippedBorder?.imageUrl : item.authorBorder?.imageUrl}
                   borderName={item.author.id === userData?.id ? (userData as any)?.equippedBorder?.name : item.authorBorder?.name}
-                  size="md"
+                  size="feed"
                 />
                 <div className="flex-1">
                   <p className="font-bold text-primary">

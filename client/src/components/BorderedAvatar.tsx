@@ -9,12 +9,13 @@ interface BorderedAvatarProps {
   className?: string;
   borderImageUrl?: string | null;
   borderName?: string | null;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "feed" | "lg" | "xl";
 }
 
 const sizeClasses = {
   sm: "w-8 h-8",
   md: "w-10 h-10",
+  feed: "w-12 h-12",
   lg: "w-16 h-16",
   xl: "w-24 h-24",
 };
@@ -22,6 +23,7 @@ const sizeClasses = {
 const iconSizeClasses = {
   sm: "text-xs",
   md: "text-sm",
+  feed: "text-sm",
   lg: "text-base",
   xl: "text-lg",
 };
