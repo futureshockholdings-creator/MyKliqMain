@@ -332,8 +332,10 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
               <SelectContent>
                 <SelectItem value="comic">Comic Sans MS (Default)</SelectItem>
                 <SelectItem value="helvetica">Helvetica (Clean)</SelectItem>
+                <SelectItem value="arial">Arial (Modern)</SelectItem>
                 <SelectItem value="times">Times New Roman (Classic)</SelectItem>
                 <SelectItem value="impact">Impact (Bold)</SelectItem>
+                <SelectItem value="oswald">Oswald (Condensed)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -413,10 +415,12 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
             style={{
               background: `linear-gradient(45deg, ${currentTheme.primaryColor || "#FF1493"}, ${currentTheme.secondaryColor || "#00BFFF"})`,
               color: currentTheme.fontColor || "#FFFFFF",
-              fontFamily: (currentTheme.fontFamily || "comic") === "comic" ? "Comic Sans MS, cursive" : 
+              fontFamily: (currentTheme.fontFamily || "comic") === "comic" ? "Comic Sans MS, cursive" :
                           currentTheme.fontFamily === "helvetica" ? "Helvetica, sans-serif" :
+                          currentTheme.fontFamily === "arial" ? "Arial, Helvetica, sans-serif" :
                           currentTheme.fontFamily === "times" ? "Times New Roman, serif" :
-                          currentTheme.fontFamily === "impact" ? "Impact, sans-serif" : "inherit"
+                          currentTheme.fontFamily === "impact" ? "Impact, sans-serif" :
+                          currentTheme.fontFamily === "oswald" ? "Oswald, sans-serif" : "inherit"
             }}
           >
             <p className="font-bold mb-2">Your theme preview</p>

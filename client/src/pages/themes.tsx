@@ -121,7 +121,7 @@ export default function Themes() {
       backgroundPattern = patterns[Math.floor(Math.random() * patterns.length)];
     }
 
-    const fontFamilies = ['comic', 'helvetica', 'times', 'impact'];
+    const fontFamilies = ['comic', 'helvetica', 'arial', 'times', 'impact', 'oswald'];
     const borderStyles = ['retro', 'modern'];
     
     const randomTheme = {

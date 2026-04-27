@@ -175,7 +175,9 @@ const applyTheme = (theme: Partial<UserTheme>) => {
       comic: 'Comic Neue, Comic Sans MS, cursive',
       helvetica: 'Helvetica, sans-serif',
       times: 'Times New Roman, serif',
-      impact: 'Impact, sans-serif'
+      impact: 'Impact, sans-serif',
+      oswald: 'Oswald, sans-serif',
+      arial: 'Arial, Helvetica, sans-serif',
     };
     root.style.setProperty('--font-sans', fontMap[theme.fontFamily as keyof typeof fontMap] || fontMap.comic);
   }

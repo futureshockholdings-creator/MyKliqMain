@@ -143,7 +143,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
               </div>
             )}
             <Bell className="w-5 h-5" />
-            <span className="text-[10px] mt-0.5">{t('navigation.alerts')}</span>
+            <span className="text-[9px] mt-0.5 whitespace-nowrap" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{t('navigation.alerts')}</span>
           </button>
 
           {navItems.map((item) => {
@@ -166,7 +166,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
                   </div>
                 )}
                 <item.icon className="w-5 h-5" />
-                <span className="text-[10px] mt-0.5 text-center leading-tight break-words whitespace-pre-line max-w-12">{item.label}</span>
+                <span className="text-[9px] mt-0.5 text-center whitespace-nowrap" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{item.label}</span>
               </button>
             );
           })}
