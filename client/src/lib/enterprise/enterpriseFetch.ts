@@ -91,7 +91,8 @@ export async function enterpriseFetch<T = any>(
             const shouldBypassBrowserCache = url.includes('/api/kliq-feed') || 
                                               url.includes('/api/posts') ||
                                               url.includes('/api/notifications') ||
-                                              url.includes('/api/auth/user');
+                                              url.includes('/api/auth/user') ||
+                                              url.includes('/api/friend-ranking');
             
             const res = await fetch(fullUrl, {
               ...fetchOptions,
@@ -179,14 +180,17 @@ export async function enterpriseFetch<T = any>(
     // Notifications need real-time updates - skip ALL client-side caching
     // This ensures alerts show within 15-25 seconds (server-side 10s cache + polling interval)
     const isNotificationEndpoint = url.includes('/api/notifications');
+    // Ranking suggestions must always be fetched fresh — stale IDs cause 404 on accept/dismiss
+    const isRankingEndpoint = url.includes('/api/friend-ranking');
+    const skipAllCache = isNotificationEndpoint || isRankingEndpoint;
     
     return enhancedCache.swr(
       cacheKey,
       fetchFn,
       {
         diskTTL: cacheTTL,
-        skipDisk: skipDisk || isNotificationEndpoint, // Skip disk cache for notifications
-        skipMemory: isNotificationEndpoint, // Skip 5-minute memory cache for notifications
+        skipDisk: skipDisk || skipAllCache,
+        skipMemory: skipAllCache,
       }
     );
   }
