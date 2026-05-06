@@ -22,7 +22,8 @@ export async function apiRequest(
 type UnauthorizedBehavior = "returnNull" | "throw";
 // Endpoints that should skip disk cache to ensure fresh data on page load
 const SKIP_DISK_CACHE_ENDPOINTS = [
-  '/api/auth/user',  // User profile data must always be fresh after mutations
+  '/api/auth/user',          // User profile data must always be fresh after mutations
+  '/api/friend-ranking',     // Ranking suggestions must always be fetched fresh; SWR cache causes stale cards
 ];
 
 export function getQueryFn<T>(options: {
