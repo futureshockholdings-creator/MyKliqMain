@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ChevronUp, ChevronDown, TrendingUp, MessageCircle, Eye, X, Check, Lightbulb, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -40,44 +39,81 @@ interface RankingSuggestionsProps {
 
 export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps) {
   const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(null);
+  // Optimistic sets — cards are removed from UI immediately on action
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [acceptedIds, setAcceptedIds] = useState<Set<string>>(new Set());
+  // Per-suggestion pending tracking to prevent double-click on individual cards
+  const [pendingDismiss, setPendingDismiss] = useState<Set<string>>(new Set());
+  const [pendingAccept, setPendingAccept] = useState<Set<string>>(new Set());
+  // Keep generate button locked until the fresh suggestion list has loaded
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch pending ranking suggestions
-  const { data: suggestions = [], isLoading } = useQuery<RankingSuggestion[]>({
+  const { data: rawSuggestions = [], isLoading } = useQuery<RankingSuggestion[]>({
     queryKey: ['/api/friend-ranking/suggestions'],
-    refetchInterval: 300000, // Refresh every 5 minutes
+    refetchInterval: 300000,
+    staleTime: 0, // Always refetch when invalidated
   });
 
-  // Accept suggestion mutation
+  // Filter out optimistically dismissed/accepted cards
+  const suggestions = rawSuggestions.filter(
+    (s) => !dismissedIds.has(s.id) && !acceptedIds.has(s.id)
+  );
+
+  const refreshSuggestions = useCallback(async () => {
+    await queryClient.refetchQueries({ queryKey: ['/api/friend-ranking/suggestions'], exact: true });
+  }, [queryClient]);
+
+  // Accept suggestion mutation — optimistic: remove card immediately
   const acceptSuggestionMutation = useMutation({
     mutationFn: async (suggestionId: string) => {
       return await apiRequest("POST", `/api/friend-ranking/suggestions/${suggestionId}/accept`);
+    },
+    onMutate: (suggestionId: string) => {
+      setAcceptedIds((prev) => new Set(prev).add(suggestionId));
+      setPendingAccept((prev) => new Set(prev).add(suggestionId));
     },
     onSuccess: () => {
       toast({
         title: "Ranking Updated",
         description: "Friend ranking has been updated based on your interactions.",
       });
-      
-      // Refresh suggestions and notify parent component
       queryClient.invalidateQueries({ queryKey: ['/api/friend-ranking/suggestions'] });
       queryClient.invalidateQueries({ queryKey: ['/api/friends'] });
       onRankingChange?.();
     },
-    onError: () => {
+    onError: (_err, suggestionId) => {
+      // Roll back optimistic removal so user can try again
+      setAcceptedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(suggestionId);
+        return next;
+      });
       toast({
         title: "Error",
         description: "Failed to update ranking. Please try again.",
         variant: "destructive",
       });
     },
+    onSettled: (_data, _err, suggestionId) => {
+      setPendingAccept((prev) => {
+        const next = new Set(prev);
+        next.delete(suggestionId);
+        return next;
+      });
+    },
   });
 
-  // Dismiss suggestion mutation
+  // Dismiss suggestion mutation — optimistic: remove card immediately
   const dismissSuggestionMutation = useMutation({
     mutationFn: async (suggestionId: string) => {
       return await apiRequest("POST", `/api/friend-ranking/suggestions/${suggestionId}/dismiss`);
+    },
+    onMutate: (suggestionId: string) => {
+      setDismissedIds((prev) => new Set(prev).add(suggestionId));
+      setPendingDismiss((prev) => new Set(prev).add(suggestionId));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/friend-ranking/suggestions'] });
@@ -86,23 +122,39 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
         description: "The ranking suggestion has been dismissed.",
       });
     },
-    onError: () => {
+    onError: (_err, suggestionId) => {
+      // Roll back optimistic removal
+      setDismissedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(suggestionId);
+        return next;
+      });
       toast({
         title: "Error",
         description: "Failed to dismiss suggestion. Please try again.",
         variant: "destructive",
       });
     },
+    onSettled: (_data, _err, suggestionId) => {
+      setPendingDismiss((prev) => {
+        const next = new Set(prev);
+        next.delete(suggestionId);
+        return next;
+      });
+    },
   });
 
-  // Generate new suggestions mutation
-  const generateSuggestionsMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", "/api/friend-ranking/generate");
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/friend-ranking/suggestions'] });
-      
+  // Generate new suggestions — keeps button locked until fresh list arrives
+  const handleGenerate = useCallback(async () => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    // Clear stale optimistic state so the fresh list is shown as-is
+    setDismissedIds(new Set());
+    setAcceptedIds(new Set());
+    try {
+      const data = await apiRequest("POST", "/api/friend-ranking/generate");
+      // Force a real network fetch (bypasses SWR memory cache)
+      await refreshSuggestions();
       if (data.count > 0) {
         toast({
           title: "New Suggestions Available",
@@ -114,15 +166,16 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
           description: "Your current rankings align well with your interaction patterns.",
         });
       }
-    },
-    onError: () => {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to generate new suggestions. Please try again.",
         variant: "destructive",
       });
-    },
-  });
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [isGenerating, refreshSuggestions, toast]);
 
   const getInitials = (friend: RankingSuggestion['friend']) => {
     const first = friend.firstName?.[0] || "";
@@ -202,15 +255,15 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
             </Badge>
           )}
         </h3>
-        
+
         <Button
           size="sm"
-          onClick={() => generateSuggestionsMutation.mutate()}
-          disabled={generateSuggestionsMutation.isPending}
+          onClick={handleGenerate}
+          disabled={isGenerating}
           data-testid="button-generate-suggestions"
           className="bg-green-600 text-white hover:bg-green-700 disabled:bg-green-600/50 disabled:text-white/70"
         >
-          {generateSuggestionsMutation.isPending ? "Analyzing..." : "Analyze Interactions"}
+          {isGenerating ? "Analyzing..." : "Analyze Interactions"}
         </Button>
       </div>
 
@@ -227,21 +280,21 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
       ) : (
         <div className="space-y-3">
           {suggestions.map((suggestion: RankingSuggestion) => (
-            <Card 
-              key={suggestion.id} 
+            <Card
+              key={suggestion.id}
               className="transition-all duration-200 hover:shadow-md"
               data-testid={`suggestion-card-${suggestion.id}`}
             >
               <CardContent className="pt-4 pb-3">
                 <div className="flex items-center gap-3 mb-2">
                   <Avatar className="h-10 w-10 shrink-0">
-                    <AvatarImage 
-                      src={suggestion.friend.profileImageUrl} 
-                      alt={getName(suggestion.friend)} 
+                    <AvatarImage
+                      src={suggestion.friend.profileImageUrl}
+                      alt={getName(suggestion.friend)}
                     />
                     <AvatarFallback>{getInitials(suggestion.friend)}</AvatarFallback>
                   </Avatar>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium truncate">{getName(suggestion.friend)}</span>
@@ -252,23 +305,23 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className="text-xs flex items-center gap-1"
                       >
                         {getReasonIcon(suggestion.primaryReason)}
                         {getReasonLabel(suggestion.primaryReason)}
                       </Badge>
-                      
+
                       <Badge variant="secondary" className="text-xs">
                         {parseFloat(suggestion.confidence).toFixed(0)}% confident
                       </Badge>
                     </div>
                   </div>
                 </div>
-                
+
                 <p className="text-sm text-muted-foreground mb-3">
                   {suggestion.justificationMessage}
                 </p>
@@ -300,25 +353,25 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
                   <Button
                     size="sm"
                     onClick={() => acceptSuggestionMutation.mutate(suggestion.id)}
-                    disabled={acceptSuggestionMutation.isPending}
+                    disabled={pendingAccept.has(suggestion.id) || pendingDismiss.has(suggestion.id)}
                     className="flex-1"
                     data-testid={`button-accept-${suggestion.id}`}
                   >
                     <Check className="h-4 w-4 mr-1" />
                     Apply Ranking
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => dismissSuggestionMutation.mutate(suggestion.id)}
-                    disabled={dismissSuggestionMutation.isPending}
+                    disabled={pendingDismiss.has(suggestion.id) || pendingAccept.has(suggestion.id)}
                     data-testid={`button-dismiss-${suggestion.id}`}
                   >
                     <X className="h-4 w-4 mr-1" />
                     Dismiss
                   </Button>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
