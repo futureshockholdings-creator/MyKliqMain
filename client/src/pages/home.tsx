@@ -1848,6 +1848,11 @@ export default function Home() {
       setReportDescription("");
       setAlsoBlockUser(false);
       setSelectedPostToReport(null);
+      if (variables.blockAuthor) {
+        // Immediately refresh feed and stories so blocked content disappears
+        queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+      }
       toast({
         title: variables.blockAuthor ? "Content reported and user blocked" : "Report submitted",
         description: variables.blockAuthor

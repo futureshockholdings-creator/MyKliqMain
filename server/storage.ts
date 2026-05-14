@@ -906,7 +906,7 @@ export class DatabaseStorage implements IStorage {
     const [allLikes, allComments, allMedia] = await Promise.all([
       // Batch fetch all likes
       postIds.length > 0 ? db.select().from(postLikes).where(inArray(postLikes.postId, postIds)) : [] as any[],
-      // Batch fetch all comments with joins and like counts
+      // Batch fetch all comments with joins and like counts (excluding blocked users' comments)
       postIds.length > 0 ? db
         .select({
           id: comments.id,
@@ -931,7 +931,11 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(memes, eq(comments.memeId, memes.id))
         .leftJoin(moviecons, eq(comments.movieconId, moviecons.id))
         .leftJoin(commentLikes, eq(comments.id, commentLikes.commentId))
-        .where(inArray(comments.postId, postIds))
+        .where(
+          blockedIds.length > 0
+            ? and(inArray(comments.postId, postIds), not(inArray(comments.userId, blockedIds)))
+            : inArray(comments.postId, postIds)
+        )
         .groupBy(comments.id, users.id, profileBorders.id, gifs.id, memes.id, moviecons.id)
         .orderBy(comments.createdAt) : [] as any[],
       // Batch fetch all post media for multi-image posts

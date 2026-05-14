@@ -6566,6 +6566,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "You cannot block yourself" });
       }
       await storage.blockUser(currentUserId, userId);
+      // Create an admin-visible report so moderators are aware of user blocks
+      try {
+        await db.insert(rulesReports).values({
+          reportedBy: currentUserId,
+          postAuthorId: userId,
+          reason: "user_blocked",
+          description: `User ${currentUserId} blocked user ${userId}`,
+          status: "pending",
+        });
+      } catch (_) {
+        // Non-critical — block succeeds even if notification creation fails
+      }
       res.json({ success: true });
     } catch (error: any) {
       console.error("[BLOCK] Error blocking user:", error?.message);
