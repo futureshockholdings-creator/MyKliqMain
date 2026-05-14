@@ -1837,28 +1837,44 @@ export default function Home() {
   // Report post mutation
   const reportPostMutation = useMutation({
     mutationFn: async ({ postId, reason, description, blockAuthor }: { postId: string; reason: string; description: string; blockAuthor?: boolean }) => {
+      // Report always happens first; block is best-effort
       await apiRequest("POST", "/api/reports", { postId, reason, description });
+      let blockSucceeded = false;
       if (blockAuthor && selectedPostToReport?.author?.id) {
-        await blockUserMutation.mutateAsync(selectedPostToReport.author.id);
+        try {
+          await blockUserMutation.mutateAsync(selectedPostToReport.author.id);
+          blockSucceeded = true;
+        } catch {
+          blockSucceeded = false;
+        }
       }
+      return { blockAttempted: !!blockAuthor, blockSucceeded };
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (result, variables) => {
       setShowReportDialog(false);
       setReportReason("");
       setReportDescription("");
       setAlsoBlockUser(false);
       setSelectedPostToReport(null);
-      if (variables.blockAuthor) {
+      if (result?.blockSucceeded) {
         // Immediately refresh feed and stories so blocked content disappears
         queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
         queryClient.invalidateQueries({ queryKey: ["/api/stories"] });
+        toast({
+          title: "Content reported and user blocked",
+          description: "The content has been reported and you will no longer see posts from this user.",
+        });
+      } else if (result?.blockAttempted && !result?.blockSucceeded) {
+        toast({
+          title: "Report submitted",
+          description: "Your report was received. The block could not be applied — try again from Settings.",
+        });
+      } else {
+        toast({
+          title: "Report submitted",
+          description: "Thank you for helping keep MyKliq safe. Our team will review this content.",
+        });
       }
-      toast({
-        title: variables.blockAuthor ? "Content reported and user blocked" : "Report submitted",
-        description: variables.blockAuthor
-          ? "The content has been reported and you will no longer see posts from this user."
-          : "Thank you for helping keep MyKliq safe. Our team will review this content.",
-      });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {

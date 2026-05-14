@@ -269,7 +269,7 @@ export default function Signup() {
     if (!termsAccepted) {
       toast({
         title: "Terms Not Accepted",
-        description: "You must agree to the Privacy Policy, Disclaimer, and Community Guidelines to create an account",
+        description: "You must agree to the Terms of Use, Privacy Policy, Disclaimer, and Community Guidelines to create an account",
         variant: "destructive"
       });
       return;
