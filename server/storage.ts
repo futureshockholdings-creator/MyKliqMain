@@ -38,6 +38,7 @@ import {
   passwordResetTokens,
   passwordResetAttempts,
   rulesReports,
+  userBlocks,
   moodBoostPosts,
   type User,
   type UpsertUser,
@@ -103,6 +104,8 @@ import {
   type InsertVideoCall,
   type CallParticipant,
   type InsertCallParticipant,
+  type UserBlock,
+  type InsertUserBlock,
   type MoodBoostPost,
   type InsertMoodBoostPost,
   gifs,
@@ -468,6 +471,12 @@ export interface IStorage {
   getActiveUsersForRankingAnalysis(): Promise<User[]>;
   getUserFriendships(userId: string): Promise<Friendship[]>;
 
+  // Block operations
+  blockUser(userId: string, blockedUserId: string): Promise<void>;
+  unblockUser(userId: string, blockedUserId: string): Promise<void>;
+  isUserBlocked(userId: string, blockedUserId: string): Promise<boolean>;
+  getBlockedUserIds(userId: string): Promise<string[]>;
+
   // Report operations
   createReport(report: InsertReport): Promise<Report>;
   getReports(filters: { status?: string; page?: number; limit?: number }): Promise<any[]>;
@@ -832,8 +841,14 @@ export class DatabaseStorage implements IStorage {
     const friendIds = userFriends.map(f => f.friendId);
     friendIds.push(userId); // Include user's own posts
 
+    // Get blocked users to exclude from feed
+    const blockedIds = await this.getBlockedUserIds(userId);
+
     // Apply content filters
-    let whereConditions = [inArray(posts.userId, friendIds)];
+    let whereConditions: any[] = [inArray(posts.userId, friendIds)];
+    if (blockedIds.length > 0) {
+      whereConditions.push(not(inArray(posts.userId, blockedIds)));
+    }
     
     if (filters.length > 0) {
       const filterConditions = filters.map(filter => 
@@ -986,6 +1001,12 @@ export class DatabaseStorage implements IStorage {
     const friendIds = userFriends.map(f => f.friendId);
     friendIds.push(userId); // Include user's own content
 
+    // Get blocked users to exclude from feed
+    const blockedIds = await this.getBlockedUserIds(userId);
+    const visibleFriendIds = blockedIds.length > 0
+      ? friendIds.filter(id => !blockedIds.includes(id))
+      : friendIds;
+
     const feedItems: any[] = [];
     
     // Educational posts: Show 1-2 randomly selected posts for users <7 days old
@@ -1040,7 +1061,7 @@ export class DatabaseStorage implements IStorage {
         this.getPosts(userId, filters),
         
         // 2. Get polls from kliq members (optimized query)
-        friendIds.length > 0 ? db
+        visibleFriendIds.length > 0 ? db
           .select({
             id: polls.id,
             userId: polls.userId,
@@ -1060,12 +1081,12 @@ export class DatabaseStorage implements IStorage {
           .from(polls)
           .innerJoin(users, eq(polls.userId, users.id))
           .leftJoin(profileBorders, eq(users.equippedBorderId, profileBorders.id))
-          .where(inArray(polls.userId, friendIds))
+          .where(inArray(polls.userId, visibleFriendIds))
           .orderBy(desc(polls.createdAt))
           .limit(limit * 2) : [], // Get more to account for filtering
           
         // 3. Get events from kliq members (optimized query)
-        friendIds.length > 0 ? db
+        visibleFriendIds.length > 0 ? db
           .select({
             id: events.id,
             userId: events.userId,
@@ -1086,7 +1107,7 @@ export class DatabaseStorage implements IStorage {
           })
           .from(events)
           .innerJoin(users, eq(events.userId, users.id))
-          .where(inArray(events.userId, friendIds))
+          .where(inArray(events.userId, visibleFriendIds))
           .orderBy(desc(events.createdAt))
           .limit(limit * 2) : [], // Get more to account for filtering
           
@@ -1113,13 +1134,13 @@ export class DatabaseStorage implements IStorage {
           .from(externalPosts)
           .innerJoin(socialCredentials, eq(externalPosts.socialCredentialId, socialCredentials.id))
           .innerJoin(users, eq(socialCredentials.userId, users.id))
-          .where(inArray(socialCredentials.userId, friendIds))
+          .where(inArray(socialCredentials.userId, visibleFriendIds))
           .orderBy(desc(externalPosts.platformCreatedAt))
           .limit(limit * 2) : [] // Get more to account for filtering
       ]);
 
       // Get actions separately to avoid query issues (paginated)
-      const actionsData = friendIds.length > 0 ? await db
+      const actionsData = visibleFriendIds.length > 0 ? await db
         .select({
           id: actions.id,
           userId: actions.userId,
@@ -1878,6 +1899,12 @@ export class DatabaseStorage implements IStorage {
     const friendIds = userFriends.map(f => f.friendId);
     friendIds.push(userId); // Include user's own stories
 
+    // Get blocked users to exclude from stories
+    const blockedIds = await this.getBlockedUserIds(userId);
+    const visibleIds = blockedIds.length > 0
+      ? friendIds.filter(id => !blockedIds.includes(id))
+      : friendIds;
+
     const now = new Date();
     const storiesData = await db
       .select({
@@ -1893,7 +1920,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(stories)
       .innerJoin(users, eq(stories.userId, users.id))
-      .where(and(inArray(stories.userId, friendIds), sql`${stories.expiresAt} > ${now}`))
+      .where(and(inArray(stories.userId, visibleIds), sql`${stories.expiresAt} > ${now}`))
       .orderBy(desc(stories.createdAt));
 
     // Optimize N+1: batch fetch all story views for current user
@@ -5933,6 +5960,32 @@ export class DatabaseStorage implements IStorage {
 
     // Default to all
     return this.getAllActiveDeviceTokens();
+  }
+
+  // Block operations
+  async blockUser(userId: string, blockedUserId: string): Promise<void> {
+    await db.insert(userBlocks).values({ userId, blockedUserId }).onConflictDoNothing();
+  }
+
+  async unblockUser(userId: string, blockedUserId: string): Promise<void> {
+    await db.delete(userBlocks).where(
+      and(eq(userBlocks.userId, userId), eq(userBlocks.blockedUserId, blockedUserId))
+    );
+  }
+
+  async isUserBlocked(userId: string, blockedUserId: string): Promise<boolean> {
+    const [block] = await db.select().from(userBlocks).where(
+      and(eq(userBlocks.userId, userId), eq(userBlocks.blockedUserId, blockedUserId))
+    );
+    return !!block;
+  }
+
+  async getBlockedUserIds(userId: string): Promise<string[]> {
+    const blocks = await db
+      .select({ blockedUserId: userBlocks.blockedUserId })
+      .from(userBlocks)
+      .where(eq(userBlocks.userId, userId));
+    return blocks.map(b => b.blockedUserId);
   }
 }
 

@@ -42,6 +42,7 @@ import Settings from "@/pages/settings";
 import PrivacyPolicy from "./pages/privacy-policy";
 import Disclaimer from "./pages/disclaimer";
 import CommunityGuidelines from "./pages/community-guidelines";
+import TermsOfUse from "./pages/terms-of-use";
 import ContactUs from "./pages/contact-us";
 import Signup from "@/pages/signup";
 import Login from "@/pages/login";
@@ -221,6 +222,7 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/disclaimer" component={Disclaimer} />
       <Route path="/community-guidelines" component={CommunityGuidelines} />
+      <Route path="/terms-of-use" component={TermsOfUse} />
       <Route path="/contact-us" component={ContactUs} />
       <Route path="/advertiser-requirements" component={AdvertiserRequirements} />
       <Route path="/advertiser-onboarding" component={AdvertiserOnboarding} />

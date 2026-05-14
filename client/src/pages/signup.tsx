@@ -718,6 +718,15 @@ export default function Signup() {
                         >
                           I agree to the{" "}
                           <Link 
+                            href="/terms-of-use" 
+                            className="text-primary hover:underline font-medium"
+                            target="_blank"
+                            data-testid="link-terms-of-use"
+                          >
+                            Terms of Use
+                          </Link>
+                          {", "}
+                          <Link 
                             href="/privacy-policy" 
                             className="text-primary hover:underline font-medium"
                             target="_blank"

@@ -462,6 +462,7 @@ export default function Home() {
   const [selectedPostToReport, setSelectedPostToReport] = useState<any>(null);
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
+  const [alsoBlockUser, setAlsoBlockUser] = useState(false);
   const [isPostingHoroscope, setIsPostingHoroscope] = useState(false);
   const [isPostingBibleVerse, setIsPostingBibleVerse] = useState(false);
   
@@ -1826,19 +1827,32 @@ export default function Home() {
     },
   });
 
+  // Block user mutation
+  const blockUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      await apiRequest("POST", `/api/users/${userId}/block`, {});
+    },
+  });
+
   // Report post mutation
   const reportPostMutation = useMutation({
-    mutationFn: async ({ postId, reason, description }: { postId: string; reason: string; description: string }) => {
+    mutationFn: async ({ postId, reason, description, blockAuthor }: { postId: string; reason: string; description: string; blockAuthor?: boolean }) => {
       await apiRequest("POST", "/api/reports", { postId, reason, description });
+      if (blockAuthor && selectedPostToReport?.author?.id) {
+        await blockUserMutation.mutateAsync(selectedPostToReport.author.id);
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       setShowReportDialog(false);
       setReportReason("");
       setReportDescription("");
+      setAlsoBlockUser(false);
       setSelectedPostToReport(null);
       toast({
-        title: "Report submitted",
-        description: "Thank you for helping keep MyKliq safe. Our team will review this content.",
+        title: variables.blockAuthor ? "Content reported and user blocked" : "Report submitted",
+        description: variables.blockAuthor
+          ? "The content has been reported and you will no longer see posts from this user."
+          : "Thank you for helping keep MyKliq safe. Our team will review this content.",
       });
     },
     onError: (error) => {
@@ -2051,7 +2065,8 @@ export default function Home() {
     reportPostMutation.mutate({
       postId: selectedPostToReport.id,
       reason: reportReason,
-      description: reportDescription
+      description: reportDescription,
+      blockAuthor: alsoBlockUser,
     });
   };
 
@@ -4166,7 +4181,14 @@ export default function Home() {
       </Dialog>
 
       {/* Report Dialog */}
-      <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+      <Dialog open={showReportDialog} onOpenChange={(open) => {
+        setShowReportDialog(open);
+        if (!open) {
+          setReportReason("");
+          setReportDescription("");
+          setAlsoBlockUser(false);
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
@@ -4208,6 +4230,29 @@ export default function Home() {
                 className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
               />
             </div>
+
+            {/* Block user option */}
+            {selectedPostToReport?.author?.id && (
+              <div className="flex items-center space-x-3 border border-border rounded-lg p-3 bg-muted/30">
+                <input
+                  type="checkbox"
+                  id="block-user-checkbox"
+                  checked={alsoBlockUser}
+                  onChange={(e) => setAlsoBlockUser(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 cursor-pointer"
+                  data-testid="checkbox-block-user"
+                />
+                <label
+                  htmlFor="block-user-checkbox"
+                  className="text-sm text-foreground cursor-pointer leading-tight"
+                >
+                  <span className="font-medium">Also block this user</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5">
+                    Their posts will be hidden from your feed
+                  </span>
+                </label>
+              </div>
+            )}
             
             <div className="flex justify-end space-x-2">
               <Button
@@ -4216,6 +4261,7 @@ export default function Home() {
                   setShowReportDialog(false);
                   setReportReason("");
                   setReportDescription("");
+                  setAlsoBlockUser(false);
                 }}
                 disabled={reportPostMutation.isPending}
               >

@@ -6557,6 +6557,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Block a user
+  app.post('/api/users/:userId/block', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.claims.sub;
+      const { userId } = req.params;
+      if (currentUserId === userId) {
+        return res.status(400).json({ message: "You cannot block yourself" });
+      }
+      await storage.blockUser(currentUserId, userId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("[BLOCK] Error blocking user:", error?.message);
+      res.status(500).json({ message: "Failed to block user" });
+    }
+  });
+
+  // Unblock a user
+  app.delete('/api/users/:userId/block', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.claims.sub;
+      const { userId } = req.params;
+      await storage.unblockUser(currentUserId, userId);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("[BLOCK] Error unblocking user:", error?.message);
+      res.status(500).json({ message: "Failed to unblock user" });
+    }
+  });
+
+  // Get blocked users list
+  app.get('/api/users/blocked', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const blockedIds = await storage.getBlockedUserIds(userId);
+      res.json({ blockedUserIds: blockedIds });
+    } catch (error: any) {
+      console.error("[BLOCK] Error fetching blocked users:", error?.message);
+      res.status(500).json({ message: "Failed to fetch blocked users" });
+    }
+  });
+
   // Get all reports (admin only)
   app.get('/api/admin/reports', async (req: any, res) => {
     try {

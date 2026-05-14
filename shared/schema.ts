@@ -1948,3 +1948,18 @@ export const insertAdminBroadcastSchema = createInsertSchema(adminBroadcasts).om
 });
 export type InsertAdminBroadcast = z.infer<typeof insertAdminBroadcastSchema>;
 export type AdminBroadcast = typeof adminBroadcasts.$inferSelect;
+
+// User Blocks - track which users have blocked which other users
+export const userBlocks = pgTable("user_blocks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  blockedUserId: varchar("blocked_user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_user_blocks_user_id").on(table.userId),
+  uniqueIndex("idx_user_blocks_unique").on(table.userId, table.blockedUserId),
+]);
+
+export const insertUserBlockSchema = createInsertSchema(userBlocks).omit({ id: true, createdAt: true });
+export type InsertUserBlock = z.infer<typeof insertUserBlockSchema>;
+export type UserBlock = typeof userBlocks.$inferSelect;

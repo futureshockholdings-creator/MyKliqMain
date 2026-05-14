@@ -382,8 +382,16 @@ export default function Login() {
 
           {/* Footer */}
           <div className="text-center pt-6 border-t border-border space-y-3">
-            {/* Privacy Policy, Disclaimer, Guidelines, and Contact Us Links */}
+            {/* Terms, Privacy Policy, Disclaimer, Guidelines, and Contact Us Links */}
             <div className="flex justify-center items-center gap-4 text-xs flex-wrap">
+              <button 
+                className="text-muted-foreground hover:text-primary underline transition-colors"
+                onClick={() => window.open('/terms-of-use', '_blank')}
+                data-testid="link-terms-of-use"
+              >
+                Terms of Use
+              </button>
+              <span className="text-gray-600">•</span>
               <button 
                 className="text-muted-foreground hover:text-primary underline transition-colors"
                 onClick={() => window.open('/privacy-policy', '_blank')}
