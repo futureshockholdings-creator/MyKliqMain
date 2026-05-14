@@ -37,6 +37,8 @@ import {
   Gift,
   Clock,
   CheckCircle,
+  UserX,
+  Shield,
 } from "lucide-react";
 import { 
   SiPinterest, 
@@ -62,6 +64,13 @@ interface SocialAccount {
   isActive: boolean;
   lastSyncAt: string | null;
   createdAt: string;
+}
+
+interface BlockedUser {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  profileImageUrl: string | null;
 }
 
 // Custom text icon for Tumblr
@@ -801,6 +810,25 @@ export default function Settings() {
   const [showBlueskyDialog, setShowBlueskyDialog] = useState(false);
   const [blueskyHandle, setBlueskyHandle] = useState('');
   const [blueskyAppPassword, setBlueskyAppPassword] = useState('');
+
+  // Blocked users
+  const { data: blockedData, isLoading: blockedLoading } = useQuery<{ blockedUsers: BlockedUser[] }>({
+    queryKey: ["/api/users/blocked"],
+  });
+  const blockedUsers = blockedData?.blockedUsers ?? [];
+
+  const unblockUser = useMutation({
+    mutationFn: async (userId: string) => {
+      return await apiRequest("DELETE", `/api/users/${userId}/block`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/blocked"] });
+      toast({ title: "User unblocked", description: "This user can now see your content again." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to unblock user. Please try again.", variant: "destructive" });
+    },
+  });
 
   const handleLogout = async () => {
     try {
@@ -1666,6 +1694,53 @@ export default function Settings() {
             {user && (
               <AnalyticsConsentSettings initialConsent={user.analyticsConsent !== false} />
             )}
+
+            {/* Blocked Users */}
+            <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Blocked Users
+                </CardTitle>
+                <CardDescription className="text-purple-200">
+                  People you have blocked. Unblock them to let them see your content again.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {blockedLoading ? (
+                  <p className="text-purple-200 text-sm text-center py-4">Loading...</p>
+                ) : blockedUsers.length === 0 ? (
+                  <p className="text-purple-200 text-sm text-center py-4">You haven't blocked anyone.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {blockedUsers.map((blocked) => {
+                      const displayName = [blocked.firstName, blocked.lastName].filter(Boolean).join(" ") || "Unknown User";
+                      const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+                      return (
+                        <div key={blocked.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
+                          <Avatar className="w-10 h-10 flex-shrink-0">
+                            <AvatarImage src={blocked.profileImageUrl ?? undefined} alt={displayName} />
+                            <AvatarFallback className="bg-purple-700 text-white text-sm">{initials}</AvatarFallback>
+                          </Avatar>
+                          <span className="flex-1 text-white font-medium truncate">{displayName}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-white/20 text-white hover:bg-white/10 flex-shrink-0"
+                            disabled={unblockUser.isPending}
+                            onClick={() => unblockUser.mutate(blocked.id)}
+                            data-testid={`button-unblock-${blocked.id}`}
+                          >
+                            <UserX className="w-4 h-4 mr-1" />
+                            Unblock
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Account Management */}
             <Card className="bg-white/10 backdrop-blur-sm border-white/20">

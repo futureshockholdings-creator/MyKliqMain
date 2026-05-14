@@ -6603,7 +6603,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const blockedIds = await storage.getBlockedUserIds(userId);
-      res.json({ blockedUserIds: blockedIds });
+      if (blockedIds.length === 0) {
+        return res.json({ blockedUsers: [] });
+      }
+      const blockedUsers = await db
+        .select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImageUrl: users.profileImageUrl,
+        })
+        .from(users)
+        .where(inArray(users.id, blockedIds));
+      res.json({ blockedUsers });
     } catch (error: any) {
       console.error("[BLOCK] Error fetching blocked users:", error?.message);
       res.status(500).json({ message: "Failed to fetch blocked users" });
