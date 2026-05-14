@@ -226,6 +226,7 @@ function Router() {
       <Route path="/contact-us" component={ContactUs} />
       <Route path="/advertiser-requirements" component={AdvertiserRequirements} />
       <Route path="/advertiser-onboarding" component={AdvertiserOnboarding} />
+
       <Route path="/landing" component={Landing} />
       <Route path="/signup*" component={Signup} />
       <Route path="/login" component={Login} />
