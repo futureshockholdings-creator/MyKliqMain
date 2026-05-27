@@ -22,11 +22,11 @@
       "bundleIdentifier": "com.mykliq.app",
       "buildNumber": "1",
       "infoPlist": {
-        "NSCameraUsageDescription": "MyKliq needs camera access to take photos and videos for posts and stories.",
-        "NSPhotoLibraryUsageDescription": "MyKliq needs photo library access to select photos and videos for posts and stories.",
-        "NSPhotoLibraryAddUsageDescription": "MyKliq needs permission to save photos and videos to your library.",
-        "NSMicrophoneUsageDescription": "MyKliq needs microphone access for video recording and voice messages.",
-        "NSLocationWhenInUseUsageDescription": "MyKliq needs your location to show nearby meetups and check-in at locations.",
+        "NSCameraUsageDescription": "MyKliq uses your camera to take profile photos, capture photos and videos for posts and stories, record video for live streams, and make video calls with friends. Photos and videos are only uploaded when you choose to share them.",
+        "NSPhotoLibraryUsageDescription": "MyKliq accesses your photo library so you can choose existing photos and videos to share in posts and stories. Media is only uploaded when you select and share it.",
+        "NSPhotoLibraryAddUsageDescription": "MyKliq saves photos and videos to your library only when you explicitly tap the save button.",
+        "NSMicrophoneUsageDescription": "MyKliq uses your microphone to record audio when you capture videos for posts and stories, during live streams, and during video calls with friends. Audio is only recorded during active use.",
+        "NSLocationWhenInUseUsageDescription": "MyKliq uses your location to show nearby meetups, let you check in at a location, and help friends find events happening close to you. Location is only accessed while you are using the app.",
         "UIBackgroundModes": ["remote-notification"]
       },
       "config": {
@@ -58,13 +58,13 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow MyKliq to access your camera to take photos and videos."
+          "cameraPermission": "MyKliq uses your camera to take profile photos, capture photos and videos for posts and stories, record video for live streams, and make video calls with friends. Photos and videos are only uploaded when you choose to share them."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow MyKliq to access your photos to share with your kliq."
+          "photosPermission": "MyKliq accesses your photo library so you can choose existing photos and videos to share in posts and stories. Media is only uploaded when you select and share it."
         }
       ],
       [
@@ -77,7 +77,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow MyKliq to use your location for nearby meetups and check-ins."
+          "locationAlwaysAndWhenInUsePermission": "MyKliq uses your location to show nearby meetups, let you check in at a location, and help friends find events happening close to you. Location is only accessed while you are using the app."
         }
       ]
     ],
