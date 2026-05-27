@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, KeyboardAvoidingView, Platform, Alert, TouchableOpacity, Linking } from 'react-native';
 import { useAuth } from '../providers/AuthProvider';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -26,6 +26,18 @@ export default function LoginScreen() {
     }
   };
 
+  const openTerms = () => {
+    Linking.openURL('https://mykliq.app/terms-of-use').catch(() => {
+      Alert.alert('Error', 'Unable to open Terms of Use. Please visit mykliq.app/terms-of-use in your browser.');
+    });
+  };
+
+  const openPrivacy = () => {
+    Linking.openURL('https://mykliq.app/privacy-policy').catch(() => {
+      Alert.alert('Error', 'Unable to open Privacy Policy. Please visit mykliq.app/privacy-policy in your browser.');
+    });
+  };
+
   return (
     <KeyboardAvoidingView 
       className="flex-1 bg-background" 
@@ -41,7 +53,7 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        <View className="mb-10">
+        <View className="mb-6">
           <Input
             label="Phone Number"
             value={phoneNumber}
@@ -68,6 +80,31 @@ export default function LoginScreen() {
             disabled={loading}
             size="lg"
           />
+        </View>
+
+        <View className="items-center mb-4">
+          <Text className="text-muted-foreground text-xs text-center leading-5">
+            By continuing you agree to our{' '}
+            <Text
+              className="text-primary underline"
+              onPress={openTerms}
+              accessible={true}
+              accessibilityRole="link"
+              accessibilityLabel="Terms of Use"
+            >
+              Terms of Use
+            </Text>
+            {' '}and{' '}
+            <Text
+              className="text-primary underline"
+              onPress={openPrivacy}
+              accessible={true}
+              accessibilityRole="link"
+              accessibilityLabel="Privacy Policy"
+            >
+              Privacy Policy
+            </Text>
+          </Text>
         </View>
 
         <Text className="text-muted-foreground text-center text-xs">

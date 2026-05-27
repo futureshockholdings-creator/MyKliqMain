@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, RefreshControl, ActivityIndicator, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, RefreshControl, ActivityIndicator, ScrollView, TouchableOpacity, Image, Alert, Modal, Pressable } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { apiClient } from '../lib/apiClient';
@@ -18,17 +18,38 @@ interface FeedResponse {
   hasMore: boolean;
 }
 
+const REPORT_REASONS = [
+  { key: 'spam', label: 'Spam' },
+  { key: 'harassment', label: 'Harassment' },
+  { key: 'inappropriate', label: 'Inappropriate content' },
+  { key: 'other', label: 'Other' },
+];
+
+interface ReportModalState {
+  visible: boolean;
+  post: any | null;
+  reason: string;
+  alsoBlock: boolean;
+  submitting: boolean;
+}
+
 export default function HomeScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigation = useNavigation<any>();
   const { isConnected } = useNetworkStatus();
   const [cachedPosts, setCachedPosts] = useState<any[]>([]);
-  
-  // Enterprise optimization: automatic cleanup on unmount
+  const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
+  const [reportModal, setReportModal] = useState<ReportModalState>({
+    visible: false,
+    post: null,
+    reason: '',
+    alsoBlock: false,
+    submitting: false,
+  });
+
   const cleanup = useMemoryCleanup();
 
-  // Load cached feed posts on mount
   useEffect(() => {
     getCachedFeedPosts().then(cached => {
       if (cached) {
@@ -56,7 +77,6 @@ export default function HomeScreen() {
     enabled: isConnected,
   });
 
-  // Cache feed posts when data loads
   useEffect(() => {
     if (data?.pages[0]?.posts) {
       cacheFeedPosts(data.pages[0].posts);
@@ -66,7 +86,6 @@ export default function HomeScreen() {
   const likeMutation = useMutation({
     mutationFn: (postId: string) => apiClient.likePost(postId),
     onMutate: async (postId) => {
-      // Optimistic update
       await queryClient.cancelQueries({ queryKey: ['/api/mobile/feed'] });
       const previousData = queryClient.getQueryData(['/api/mobile/feed']);
       
@@ -92,15 +111,106 @@ export default function HomeScreen() {
       return { previousData };
     },
     onError: (err, postId, context) => {
-      // Revert optimistic update on error
       if (context?.previousData) {
         queryClient.setQueryData(['/api/mobile/feed'], context.previousData);
       }
     },
   });
 
-  // Use cached posts if offline and no fresh data
-  const posts = data?.pages.flatMap((page) => page.posts) || (!isConnected && cachedPosts.length > 0 ? cachedPosts : []);
+  const removePostsFromFeed = useCallback((authorId: string) => {
+    queryClient.setQueryData(['/api/mobile/feed'], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page: FeedResponse) => ({
+          ...page,
+          posts: page.posts.filter(
+            (post: any) => String(post.author?.id) !== String(authorId)
+          ),
+        })),
+      };
+    });
+    setBlockedUserIds(prev => new Set([...prev, String(authorId)]));
+  }, [queryClient]);
+
+  const openReportModal = useCallback((post: any) => {
+    if (!isConnected) {
+      Alert.alert('No Internet', 'You need an internet connection to report posts.');
+      return;
+    }
+    setReportModal({
+      visible: true,
+      post,
+      reason: '',
+      alsoBlock: false,
+      submitting: false,
+    });
+  }, [isConnected]);
+
+  const openBlockConfirm = useCallback((post: any) => {
+    if (!isConnected) {
+      Alert.alert('No Internet', 'You need an internet connection to block users.');
+      return;
+    }
+    const authorName = `${post.author?.firstName || 'Unknown'} ${post.author?.lastName || ''}`.trim();
+    Alert.alert(
+      `Block ${authorName}?`,
+      `Their posts will no longer appear in your feed. You can unblock them later in Settings.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await apiClient.blockUser(String(post.author.id));
+              removePostsFromFeed(String(post.author.id));
+              Alert.alert('Blocked', `${authorName} has been blocked.`);
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Could not block this user. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  }, [isConnected, removePostsFromFeed]);
+
+  const submitReport = async () => {
+    if (!reportModal.reason) {
+      Alert.alert('Select a reason', 'Please select a reason for your report.');
+      return;
+    }
+    setReportModal(prev => ({ ...prev, submitting: true }));
+    try {
+      await apiClient.reportPost({
+        postId: String(reportModal.post.id),
+        reason: reportModal.reason,
+      });
+      if (reportModal.alsoBlock && reportModal.post?.author?.id) {
+        await apiClient.blockUser(String(reportModal.post.author.id));
+        removePostsFromFeed(String(reportModal.post.author.id));
+      } else {
+        queryClient.setQueryData(['/api/mobile/feed'], (old: any) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page: FeedResponse) => ({
+              ...page,
+              posts: page.posts.filter((p: any) => String(p.id) !== String(reportModal.post.id)),
+            })),
+          };
+        });
+      }
+      setReportModal({ visible: false, post: null, reason: '', alsoBlock: false, submitting: false });
+      Alert.alert('Reported', 'Thank you for your report. Our team will review it shortly.');
+    } catch (err: any) {
+      setReportModal(prev => ({ ...prev, submitting: false }));
+      Alert.alert('Error', err.message || 'Could not submit your report. Please try again.');
+    }
+  };
+
+  const rawPosts = data?.pages.flatMap((page) => page.posts) || (!isConnected && cachedPosts.length > 0 ? cachedPosts : []);
+  const posts = rawPosts.filter((post: any) => !blockedUserIds.has(String(post.author?.id)));
 
   const handleRefresh = () => {
     refetch();
@@ -113,7 +223,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Load cached stories
   const [cachedStoriesData, setCachedStoriesData] = useState<StoriesResponse | null>(null);
   
   useEffect(() => {
@@ -124,7 +233,6 @@ export default function HomeScreen() {
     });
   }, []);
 
-  // Fetch stories
   const {
     data: storiesData,
     isLoading: storiesLoading,
@@ -137,20 +245,15 @@ export default function HomeScreen() {
     enabled: isConnected,
   });
 
-  // Cache stories when data loads
   useEffect(() => {
     if (storiesData) {
       cacheStories([storiesData]);
     }
   }, [storiesData]);
 
-  // Use cached stories if offline
   const displayStoriesData = storiesData || (!isConnected ? cachedStoriesData : null);
 
   const renderStoryItem = ({ item, index }: { item: StoryGroupData; index: number }) => {
-    // Phase 2: Use actual view status from backend
-    // Purple ring = hasUnviewedStories (any story not viewed)
-    // Gray ring = all stories viewed
     const hasUnviewed = item.hasUnviewedStories;
     const viewStatus = hasUnviewed ? 'has new stories' : 'all stories viewed';
     
@@ -329,9 +432,12 @@ export default function HomeScreen() {
         data={posts}
         renderItem={({ item }) => (
           <PostCard 
-            post={item} 
+            post={item}
+            currentUserId={user?.id ? String(user.id) : undefined}
             onLike={() => likeMutation.mutate(item.id)}
             onComment={() => navigation.navigate('CommentsScreen', { postId: item.id })}
+            onReport={openReportModal}
+            onBlock={openBlockConfirm}
           />
         )}
         keyExtractor={(item) => item.id}
@@ -347,6 +453,105 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={posts.length === 0 ? { flex: 1 } : { paddingBottom: 20 }}
       />
+
+      {/* Report Modal */}
+      <Modal
+        visible={reportModal.visible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => !reportModal.submitting && setReportModal(prev => ({ ...prev, visible: false }))}
+        accessible={true}
+        accessibilityViewIsModal={true}
+      >
+        <Pressable
+          className="flex-1 bg-black/50 justify-end"
+          onPress={() => !reportModal.submitting && setReportModal(prev => ({ ...prev, visible: false }))}
+        >
+          <Pressable onPress={() => {}} className="bg-background rounded-t-3xl p-6">
+            <Text className="text-foreground text-xl font-bold mb-1">Report Post</Text>
+            <Text className="text-muted-foreground text-sm mb-5">
+              Why are you reporting this post?
+            </Text>
+
+            {REPORT_REASONS.map(({ key, label }) => (
+              <TouchableOpacity
+                key={key}
+                className={`flex-row items-center py-3 px-4 mb-2 rounded-xl border ${
+                  reportModal.reason === key
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border bg-muted/30'
+                }`}
+                onPress={() => setReportModal(prev => ({ ...prev, reason: key }))}
+                accessible={true}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: reportModal.reason === key }}
+                accessibilityLabel={label}
+              >
+                <View className={`w-5 h-5 rounded-full border-2 mr-3 items-center justify-center ${
+                  reportModal.reason === key ? 'border-primary' : 'border-muted-foreground'
+                }`}>
+                  {reportModal.reason === key && (
+                    <View className="w-2.5 h-2.5 rounded-full bg-primary" />
+                  )}
+                </View>
+                <Text className="text-foreground text-base">{label}</Text>
+              </TouchableOpacity>
+            ))}
+
+            {reportModal.post?.author?.id && String(reportModal.post.author.id) !== String(user?.id) && (
+              <TouchableOpacity
+                className="flex-row items-center py-3 px-4 mt-1 mb-4 rounded-xl border border-border bg-muted/30"
+                onPress={() => setReportModal(prev => ({ ...prev, alsoBlock: !prev.alsoBlock }))}
+                accessible={true}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: reportModal.alsoBlock }}
+                accessibilityLabel={`Also block ${reportModal.post?.author?.firstName || 'this user'}`}
+              >
+                <View className={`w-5 h-5 rounded border-2 mr-3 items-center justify-center ${
+                  reportModal.alsoBlock ? 'border-primary bg-primary' : 'border-muted-foreground'
+                }`}>
+                  {reportModal.alsoBlock && (
+                    <Text className="text-white text-xs font-bold">✓</Text>
+                  )}
+                </View>
+                <Text className="text-foreground text-base">
+                  Also block {reportModal.post?.author?.firstName || 'this user'}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <View className="flex-row gap-3 mt-2">
+              <TouchableOpacity
+                className="flex-1 py-3 rounded-xl border border-border items-center"
+                onPress={() => setReportModal(prev => ({ ...prev, visible: false }))}
+                disabled={reportModal.submitting}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel"
+              >
+                <Text className="text-foreground font-semibold text-base">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`flex-1 py-3 rounded-xl items-center ${
+                  reportModal.submitting || !reportModal.reason ? 'bg-primary/50' : 'bg-primary'
+                }`}
+                onPress={submitReport}
+                disabled={reportModal.submitting || !reportModal.reason}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Submit report"
+                accessibilityState={{ disabled: reportModal.submitting || !reportModal.reason }}
+              >
+                {reportModal.submitting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text className="text-primary-foreground font-semibold text-base">Submit</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

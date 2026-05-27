@@ -1,20 +1,22 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ActionSheetIOS, Alert, Platform } from 'react-native';
 import { Card } from './ui/Card';
 import { useAccessibleTextStyles } from '../hooks/useAccessibleTextStyles';
 import { getImageForPreset, prefetchImage } from '../utils/imageOptimization';
 
 interface PostCardProps {
   post: any;
+  currentUserId?: string;
   onLike: () => void;
   onComment?: () => void;
   onShare?: () => void;
+  onReport?: (post: any) => void;
+  onBlock?: (post: any) => void;
 }
 
-export default function PostCard({ post, onLike, onComment, onShare }: PostCardProps) {
+export default function PostCard({ post, currentUserId, onLike, onComment, onShare, onReport, onBlock }: PostCardProps) {
   const accessibleStyles = useAccessibleTextStyles();
   
-  // Prefetch images for better performance
   useEffect(() => {
     if (post.author?.profileImageUrl) {
       prefetchImage(getImageForPreset(post.author.profileImageUrl, 'profilePicture'));
@@ -37,6 +39,48 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
 
   const authorName = `${post.author?.firstName || 'Unknown'} ${post.author?.lastName || ''}`.trim();
   const timeAgo = formatTimeAgo(post.createdAt);
+  const isOwnPost = currentUserId && post.author?.id && String(post.author.id) === String(currentUserId);
+
+  const handleMoreOptions = () => {
+    const options: string[] = ['Report this post'];
+    if (!isOwnPost) {
+      options.push(`Block ${post.author?.firstName || 'user'}`);
+    }
+    options.push('Cancel');
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex: options.length - 1,
+          destructiveButtonIndex: options.length - 2,
+        },
+        (index) => {
+          if (index === 0) {
+            onReport?.(post);
+          } else if (!isOwnPost && index === 1) {
+            onBlock?.(post);
+          }
+        }
+      );
+    } else {
+      const alertButtons: any[] = [
+        {
+          text: 'Report this post',
+          onPress: () => onReport?.(post),
+        },
+      ];
+      if (!isOwnPost) {
+        alertButtons.push({
+          text: `Block ${post.author?.firstName || 'user'}`,
+          style: 'destructive',
+          onPress: () => onBlock?.(post),
+        });
+      }
+      alertButtons.push({ text: 'Cancel', style: 'cancel' });
+      Alert.alert('Post Options', undefined, alertButtons);
+    }
+  };
 
   return (
     <Card className="mx-4 mb-4">
@@ -69,6 +113,17 @@ export default function PostCard({ post, onLike, onComment, onShare }: PostCardP
             {timeAgo}
           </Text>
         </View>
+        <TouchableOpacity
+          onPress={handleMoreOptions}
+          className="p-2 -mr-1"
+          accessible={true}
+          accessibilityLabel="Post options"
+          accessibilityHint="Report this post or block the author"
+          accessibilityRole="button"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text className="text-muted-foreground text-lg font-bold">⋯</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Content */}

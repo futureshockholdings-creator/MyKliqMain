@@ -463,6 +463,24 @@ export class ApiClient {
       body: JSON.stringify(theme),
     });
   }
+
+  // Content Moderation
+  async reportPost(data: {
+    postId: string;
+    reason: string;
+    description?: string;
+  }) {
+    return this.request('/api/reports', {
+      method: 'POST',
+      body: JSON.stringify({ ...data, contentType: 'post' }),
+    });
+  }
+
+  async blockUser(userId: string) {
+    return this.request(`/api/users/${userId}/block`, {
+      method: 'POST',
+    });
+  }
 }
 
 export const apiClient = new ApiClient();
