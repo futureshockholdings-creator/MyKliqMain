@@ -1,18 +1,9 @@
 name: Mobile EAS CLI Smoke Test
 
+# This workflow is retired — the app is distributed via PWABuilder, not EAS.
+# Kept as a manual-only reference in case EAS is needed in the future.
+# Trigger: workflow_dispatch only (never runs automatically on push).
 on:
-  push:
-    paths:
-      - 'mobile/package.json'
-      - 'mobile/package-lock.json'
-      - 'mobile/scripts/**'
-      - '.github/workflows/mobile-eas-smoke-test.yml'
-  pull_request:
-    paths:
-      - 'mobile/package.json'
-      - 'mobile/package-lock.json'
-      - 'mobile/scripts/**'
-      - '.github/workflows/mobile-eas-smoke-test.yml'
   workflow_dispatch:
 
 jobs:
