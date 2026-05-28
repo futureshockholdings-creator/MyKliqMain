@@ -17,12 +17,22 @@ frontend:
   cache:
     paths: []
   customHeaders:
+    - pattern: '/sw.js'
+      headers:
+        - key: 'Service-Worker-Allowed'
+          value: '/'
+        - key: 'Cache-Control'
+          value: 'no-cache'
+        - key: 'Content-Type'
+          value: 'application/javascript'
     - pattern: '/sw-ios.js'
       headers:
         - key: 'Service-Worker-Allowed'
           value: '/'
         - key: 'Cache-Control'
           value: 'no-cache'
+        - key: 'Content-Type'
+          value: 'application/javascript'
     - pattern: '/firebase-messaging-sw.js'
       headers:
         - key: 'Service-Worker-Allowed'
