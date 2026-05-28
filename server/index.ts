@@ -119,11 +119,12 @@ app.get('/health', (req, res) => {
 });
 
 // Replit's internal health checker hits `/` with Go-http-client — respond 200 immediately
-// so the deployment doesn't get killed during startup or background restarts
+// so the deployment doesn't get killed during startup or background restarts.
+// IMPORTANT: do NOT intercept based on Accept header — service workers fetch('/')
+// without 'text/html' in Accept and must receive the real HTML, not JSON.
 app.get('/', (req, res, next) => {
   const ua = req.headers['user-agent'] || '';
-  const accept = req.headers['accept'] || '';
-  if (ua.includes('Go-http-client') || !accept.includes('text/html')) {
+  if (ua.includes('Go-http-client')) {
     return res.status(200).json({ status: 'ok' });
   }
   next();
