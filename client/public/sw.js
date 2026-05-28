@@ -1,38 +1,85 @@
-const CACHE_NAME = 'mykliq-v13';
-const STATIC_CACHE = 'mykliq-static-v13';
-const DYNAMIC_CACHE = 'mykliq-dynamic-v13';
+const CACHE_NAME = 'mykliq-v14';
+const STATIC_CACHE = 'mykliq-static-v14';
+const DYNAMIC_CACHE = 'mykliq-dynamic-v14';
+
+// Minimal HTML shell stored synthetically — no network needed.
+// This guarantees a status-200 response for offline navigation even on first
+// install, before any real page has been fetched and cached.
+const OFFLINE_SHELL_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2ae149">
+  <title>MyKliq</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+         display:flex;flex-direction:column;align-items:center;justify-content:center;
+         min-height:100vh;gap:16px;color:#333}
+    .logo{width:80px;height:80px;border-radius:20px;background:#2ae149;
+          display:flex;align-items:center;justify-content:center;font-size:36px}
+    h1{font-size:24px;font-weight:700}
+    p{font-size:15px;color:#666;text-align:center;max-width:280px}
+  </style>
+</head>
+<body>
+  <div class="logo">&#128101;</div>
+  <h1>MyKliq</h1>
+  <p id="msg">Connecting&hellip;</p>
+  <script>
+    var m = document.getElementById('msg');
+    function tryReload() { if (navigator.onLine) { location.reload(); } }
+    if (navigator.onLine) {
+      m.textContent = 'Loading your kliq\u2026';
+      setTimeout(tryReload, 800);
+    } else {
+      m.textContent = 'You\u2019re offline. We\u2019ll reload when your connection is back.';
+      window.addEventListener('online', tryReload);
+    }
+  </script>
+</body>
+</html>`;
+
+const SYNTHETIC_RESPONSE = () => new Response(OFFLINE_SHELL_HTML, {
+  status: 200,
+  headers: { 'Content-Type': 'text/html; charset=utf-8' }
+});
 
 // ─── Install ─────────────────────────────────────────────────────────────────
-// Use individual fetch + put (not cache.addAll) so one failing URL can't
-// silently wipe the entire pre-cache.  Promise.allSettled ensures we always
-// advance to activation even when an asset is temporarily unavailable.
 self.addEventListener('install', (event) => {
-  console.log('[SW v13] Installing…');
-  const SHELL_URLS = [
-    '/',
-    '/index.html',
-    '/offline.html',
-    '/manifest.json',
-    '/icons/icon-192x192.png',
-    '/icons/icon-512x512.png',
-    '/icons/icon-180x180.png'
-  ];
+  console.log('[SW v14] Installing…');
 
   event.waitUntil(
     caches.open(STATIC_CACHE).then(async (cache) => {
+      // 1. Store the synthetic shell immediately — guaranteed, no network.
+      await cache.put('/__offline-shell', SYNTHETIC_RESPONSE());
+      console.log('[SW v14] Synthetic offline shell stored');
+
+      // 2. Best-effort: also pre-fetch real assets from the network.
+      //    We use Promise.allSettled so a single failure never blocks activation.
+      const SHELL_URLS = [
+        '/',
+        '/index.html',
+        '/offline.html',
+        '/manifest.json',
+        '/icons/icon-192x192.png',
+        '/icons/icon-512x512.png',
+      ];
+
       const results = await Promise.allSettled(
         SHELL_URLS.map(url =>
-          fetch(url, { cache: 'reload' })
+          fetch(new Request(url, { cache: 'reload', credentials: 'same-origin' }))
             .then(res => {
-              if (res.ok) {
+              if (res.ok && res.status === 200) {
                 return cache.put(url, res);
               }
             })
-            .catch(() => { /* individual URL fail — skip silently */ })
+            .catch(() => { /* skip — synthetic shell covers offline */ })
         )
       );
       const cached = results.filter(r => r.status === 'fulfilled').length;
-      console.log(`[SW v13] Pre-cached ${cached}/${SHELL_URLS.length} shell assets`);
+      console.log(`[SW v14] Pre-cached ${cached}/${SHELL_URLS.length} shell assets`);
     })
     .then(() => self.skipWaiting())
     .catch(() => self.skipWaiting())
@@ -41,13 +88,13 @@ self.addEventListener('install', (event) => {
 
 // ─── Activate ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[SW v13] Activating…');
+  console.log('[SW v14] Activating…');
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
         keys.map(k => {
           if (k !== STATIC_CACHE && k !== DYNAMIC_CACHE) {
-            console.log('[SW v13] Removing old cache:', k);
+            console.log('[SW v14] Removing old cache:', k);
             return caches.delete(k);
           }
         })
@@ -63,67 +110,44 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
-  // API calls: bypass SW — offline fallback is handled in-app via IndexedDB.
+  // API calls: bypass SW entirely — offline data comes from IndexedDB.
   if (request.url.includes('/api/') || request.url.includes('api.mykliq')) return;
 
-  // ── Navigation requests ────────────────────────────────────────────────────
-  // Cache-first strategy: serve the React app shell from cache immediately so
-  // the app launches offline and shows IndexedDB-cached data (feed, stories,
-  // messages).  Always attempt a background network refresh to keep it current.
+  // ── Navigation (page loads) ───────────────────────────────────────────────
+  // Network-first: serve fresh content when online and update the cache.
+  // Fallback chain on failure: real cached HTML → synthetic shell → inline 200.
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
-      // ignoreVary bypasses Vary-header mismatches (common with CDN responses)
-      const MATCH_OPTS = { ignoreVary: true, ignoreSearch: true };
-
-      const cached =
-        (await caches.match('/index.html', MATCH_OPTS)) ||
-        (await caches.match('/', MATCH_OPTS)) ||
-        (await caches.match(request, MATCH_OPTS));
-
-      // Background refresh — update the shell without blocking the response
-      const networkRefresh = (async () => {
-        try {
-          const res = await fetch(request);
-          if (res.ok) {
-            const cache = await caches.open(STATIC_CACHE);
-            await cache.put('/index.html', res.clone());
-            await cache.put('/', res.clone());
-          }
-        } catch { /* offline — ignore */ }
-      })();
-
-      if (cached) {
-        // Return instantly from cache; refresh in background
-        event.waitUntil(networkRefresh);
-        return cached;
-      }
-
-      // Nothing in cache yet (very first launch).  Fetch from network and
-      // store it so the NEXT offline visit succeeds.
       try {
+        // 1. Try the network first.
         const res = await fetch(request);
         if (res.ok) {
+          // Cache the real response for future offline use.
           const cache = await caches.open(STATIC_CACHE);
           await cache.put('/index.html', res.clone());
           await cache.put('/', res.clone());
         }
         return res;
       } catch {
-        // Truly offline and nothing cached — serve the offline placeholder
-        return (
-          (await caches.match('/offline.html', { ignoreVary: true })) ||
-          new Response('<html><body>Offline</body></html>', {
-            status: 200,
-            headers: { 'Content-Type': 'text/html' }
-          })
-        );
+        // Network is offline — work through the fallback chain.
+        const OPTS = { ignoreVary: true, ignoreSearch: true };
+
+        const cached =
+          (await caches.match('/index.html', OPTS)) ||
+          (await caches.match('/', OPTS)) ||
+          (await caches.match(request, OPTS)) ||
+          (await caches.match('/offline.html', OPTS)) ||
+          (await caches.match('/__offline-shell', OPTS));
+
+        // Always return a valid 200 — the synthetic shell is the last resort.
+        return cached || SYNTHETIC_RESPONSE();
       }
     })());
     return;
   }
 
-  // ── Static assets (JS bundles, CSS, images, fonts) ────────────────────────
-  // Stale-while-revalidate: return cached immediately, update in background.
+  // ── Static assets (JS, CSS, images, fonts) ───────────────────────────────
+  // Stale-while-revalidate: serve from cache immediately, refresh in background.
   event.respondWith(
     caches.match(request, { ignoreVary: true }).then(cached => {
       const netFetch = fetch(request)
