@@ -1,40 +1,53 @@
-const CACHE_NAME = 'mykliq-v12';
-const STATIC_CACHE = 'mykliq-static-v12';
-const DYNAMIC_CACHE = 'mykliq-dynamic-v12';
-
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  '/icons/icon-180x180.png',
-  '/manifest.json',
-  '/offline.html'
-];
+const CACHE_NAME = 'mykliq-v13';
+const STATIC_CACHE = 'mykliq-static-v13';
+const DYNAMIC_CACHE = 'mykliq-dynamic-v13';
 
 // ─── Install ─────────────────────────────────────────────────────────────────
+// Use individual fetch + put (not cache.addAll) so one failing URL can't
+// silently wipe the entire pre-cache.  Promise.allSettled ensures we always
+// advance to activation even when an asset is temporarily unavailable.
 self.addEventListener('install', (event) => {
-  console.log('[SW v12] Installing…');
+  console.log('[SW v13] Installing…');
+  const SHELL_URLS = [
+    '/',
+    '/index.html',
+    '/offline.html',
+    '/manifest.json',
+    '/icons/icon-192x192.png',
+    '/icons/icon-512x512.png',
+    '/icons/icon-180x180.png'
+  ];
+
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then(cache => cache.addAll(STATIC_ASSETS))
-      .then(() => self.skipWaiting())
-      .catch(err => {
-        console.error('[SW v12] Pre-cache failed:', err);
-        return self.skipWaiting();
-      })
+    caches.open(STATIC_CACHE).then(async (cache) => {
+      const results = await Promise.allSettled(
+        SHELL_URLS.map(url =>
+          fetch(url, { cache: 'reload' })
+            .then(res => {
+              if (res.ok) {
+                return cache.put(url, res);
+              }
+            })
+            .catch(() => { /* individual URL fail — skip silently */ })
+        )
+      );
+      const cached = results.filter(r => r.status === 'fulfilled').length;
+      console.log(`[SW v13] Pre-cached ${cached}/${SHELL_URLS.length} shell assets`);
+    })
+    .then(() => self.skipWaiting())
+    .catch(() => self.skipWaiting())
   );
 });
 
 // ─── Activate ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[SW v12] Activating…');
+  console.log('[SW v13] Activating…');
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
         keys.map(k => {
           if (k !== STATIC_CACHE && k !== DYNAMIC_CACHE) {
-            console.log('[SW v12] Deleting old cache:', k);
+            console.log('[SW v13] Removing old cache:', k);
             return caches.delete(k);
           }
         })
@@ -50,50 +63,73 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
-  // API requests: bypass SW entirely — offline fallback handled in-app via IndexedDB.
+  // API calls: bypass SW — offline fallback is handled in-app via IndexedDB.
   if (request.url.includes('/api/') || request.url.includes('api.mykliq')) return;
 
-  // Navigation (page loads): cache-first so the React app shell loads offline.
-  // The app's IndexedDB store then provides cached feed/stories/messages.
+  // ── Navigation requests ────────────────────────────────────────────────────
+  // Cache-first strategy: serve the React app shell from cache immediately so
+  // the app launches offline and shows IndexedDB-cached data (feed, stories,
+  // messages).  Always attempt a background network refresh to keep it current.
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
-      // Check cache first — enables offline launch without any network wait
-      const cached =
-        (await caches.match(request, { ignoreSearch: true })) ||
-        (await caches.match('/index.html')) ||
-        (await caches.match('/'));
+      // ignoreVary bypasses Vary-header mismatches (common with CDN responses)
+      const MATCH_OPTS = { ignoreVary: true, ignoreSearch: true };
 
-      // Always background-refresh the shell so it stays current
-      const networkFetch = fetch(request)
-        .then(async (res) => {
-          if (res && res.status === 200) {
+      const cached =
+        (await caches.match('/index.html', MATCH_OPTS)) ||
+        (await caches.match('/', MATCH_OPTS)) ||
+        (await caches.match(request, MATCH_OPTS));
+
+      // Background refresh — update the shell without blocking the response
+      const networkRefresh = (async () => {
+        try {
+          const res = await fetch(request);
+          if (res.ok) {
             const cache = await caches.open(STATIC_CACHE);
             await cache.put('/index.html', res.clone());
+            await cache.put('/', res.clone());
           }
-          return res;
-        })
-        .catch(() => null);
+        } catch { /* offline — ignore */ }
+      })();
 
       if (cached) {
-        event.waitUntil(networkFetch);
+        // Return instantly from cache; refresh in background
+        event.waitUntil(networkRefresh);
         return cached;
       }
 
-      // Nothing cached yet (first ever launch) — wait for network
-      const netRes = await networkFetch;
-      return netRes || (await caches.match('/offline.html'));
+      // Nothing in cache yet (very first launch).  Fetch from network and
+      // store it so the NEXT offline visit succeeds.
+      try {
+        const res = await fetch(request);
+        if (res.ok) {
+          const cache = await caches.open(STATIC_CACHE);
+          await cache.put('/index.html', res.clone());
+          await cache.put('/', res.clone());
+        }
+        return res;
+      } catch {
+        // Truly offline and nothing cached — serve the offline placeholder
+        return (
+          (await caches.match('/offline.html', { ignoreVary: true })) ||
+          new Response('<html><body>Offline</body></html>', {
+            status: 200,
+            headers: { 'Content-Type': 'text/html' }
+          })
+        );
+      }
     })());
     return;
   }
 
-  // Static assets (JS bundles, CSS, images): stale-while-revalidate.
+  // ── Static assets (JS bundles, CSS, images, fonts) ────────────────────────
+  // Stale-while-revalidate: return cached immediately, update in background.
   event.respondWith(
-    caches.match(request).then(cached => {
+    caches.match(request, { ignoreVary: true }).then(cached => {
       const netFetch = fetch(request)
         .then(res => {
           if (res && res.status === 200) {
-            const clone = res.clone();
-            caches.open(DYNAMIC_CACHE).then(c => c.put(request, clone));
+            caches.open(DYNAMIC_CACHE).then(c => c.put(request, res.clone()));
           }
           return res;
         })

@@ -1,48 +1,52 @@
 /**
- * iOS Safari PWA Service Worker — v3
+ * iOS Safari PWA Service Worker — v4
  * Handles Web Push (VAPID, no Firebase) and offline caching for iOS Safari.
  */
 
-const CACHE_NAME = 'mykliq-ios-v3';
-const STATIC_CACHE = 'mykliq-ios-static-v3';
-const DYNAMIC_CACHE = 'mykliq-ios-dynamic-v3';
-
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/offline.html',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  '/icons/icon-180x180.png',
-  '/manifest.json'
-];
+const CACHE_NAME = 'mykliq-ios-v4';
+const STATIC_CACHE = 'mykliq-ios-static-v4';
+const DYNAMIC_CACHE = 'mykliq-ios-dynamic-v4';
 
 // ─── Install ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[iOS SW v3] Installing…');
+  console.log('[iOS SW v4] Installing…');
+  const SHELL_URLS = [
+    '/',
+    '/index.html',
+    '/offline.html',
+    '/manifest.json',
+    '/icons/icon-192x192.png',
+    '/icons/icon-512x512.png',
+    '/icons/icon-180x180.png'
+  ];
+
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then(cache => cache.addAll(STATIC_ASSETS))
-      .then(() => {
-        console.log('[iOS SW v3] App shell cached — offline launch enabled');
-        return self.skipWaiting();
-      })
-      .catch(err => {
-        console.error('[iOS SW v3] Pre-cache failed:', err);
-        return self.skipWaiting();
-      })
+    caches.open(STATIC_CACHE).then(async (cache) => {
+      const results = await Promise.allSettled(
+        SHELL_URLS.map(url =>
+          fetch(url, { cache: 'reload' })
+            .then(res => {
+              if (res.ok) return cache.put(url, res);
+            })
+            .catch(() => {})
+        )
+      );
+      const cached = results.filter(r => r.status === 'fulfilled').length;
+      console.log(`[iOS SW v4] Pre-cached ${cached}/${SHELL_URLS.length} shell assets`);
+    })
+    .then(() => self.skipWaiting())
+    .catch(() => self.skipWaiting())
   );
 });
 
 // ─── Activate ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[iOS SW v3] Activating…');
+  console.log('[iOS SW v4] Activating…');
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
         keys.map(k => {
           if (k !== STATIC_CACHE && k !== DYNAMIC_CACHE && k.startsWith('mykliq-ios')) {
-            console.log('[iOS SW v3] Deleting old cache:', k);
             return caches.delete(k);
           }
         })
@@ -58,47 +62,63 @@ self.addEventListener('fetch', (event) => {
 
   if (request.method !== 'GET') return;
 
-  // API requests: bypass SW — offline handled in-app via IndexedDB (critical for iOS).
+  // API requests: bypass SW — offline handled in-app via IndexedDB.
   if (url.pathname.startsWith('/api/') || url.hostname.includes('api.mykliq')) return;
 
-  // Navigation: cache-first so iOS users can launch the app offline and see
-  // their cached feed/stories/messages from the app's IndexedDB store.
+  // Navigation: cache-first — iOS users launch offline and see cached data.
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
-      const cached =
-        (await caches.match(request, { ignoreSearch: true })) ||
-        (await caches.match('/index.html')) ||
-        (await caches.match('/'));
+      const MATCH_OPTS = { ignoreVary: true, ignoreSearch: true };
 
-      const networkFetch = fetch(request)
-        .then(async (res) => {
-          if (res && res.status === 200) {
+      const cached =
+        (await caches.match('/index.html', MATCH_OPTS)) ||
+        (await caches.match('/', MATCH_OPTS)) ||
+        (await caches.match(request, MATCH_OPTS));
+
+      const networkRefresh = (async () => {
+        try {
+          const res = await fetch(request);
+          if (res.ok) {
             const cache = await caches.open(STATIC_CACHE);
             await cache.put('/index.html', res.clone());
+            await cache.put('/', res.clone());
           }
-          return res;
-        })
-        .catch(() => null);
+        } catch { /* offline — ignore */ }
+      })();
 
       if (cached) {
-        event.waitUntil(networkFetch);
+        event.waitUntil(networkRefresh);
         return cached;
       }
 
-      const netRes = await networkFetch;
-      return netRes || (await caches.match('/offline.html'));
+      try {
+        const res = await fetch(request);
+        if (res.ok) {
+          const cache = await caches.open(STATIC_CACHE);
+          await cache.put('/index.html', res.clone());
+          await cache.put('/', res.clone());
+        }
+        return res;
+      } catch {
+        return (
+          (await caches.match('/offline.html', { ignoreVary: true })) ||
+          new Response('<html><body>Offline</body></html>', {
+            status: 200,
+            headers: { 'Content-Type': 'text/html' }
+          })
+        );
+      }
     })());
     return;
   }
 
   // Static assets: stale-while-revalidate
   event.respondWith(
-    caches.match(request).then(cached => {
+    caches.match(request, { ignoreVary: true }).then(cached => {
       const netFetch = fetch(request)
         .then(res => {
           if (res && res.status === 200) {
-            const clone = res.clone();
-            caches.open(DYNAMIC_CACHE).then(c => c.put(request, clone));
+            caches.open(DYNAMIC_CACHE).then(c => c.put(request, res.clone()));
           }
           return res;
         })
@@ -110,7 +130,7 @@ self.addEventListener('fetch', (event) => {
 
 // ─── Push notifications ───────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
-  console.log('[iOS SW v3] Push received');
+  console.log('[iOS SW v4] Push received');
 
   fetch('https://api.mykliq.app/api/push/debug-log', {
     method: 'POST',
@@ -142,13 +162,12 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     self.registration.showNotification(title, options)
-      .then(() => console.log('[iOS SW v3] Notification shown'))
-      .catch(err => console.error('[iOS SW v3] Notification failed:', err))
+      .then(() => console.log('[iOS SW v4] Notification shown'))
+      .catch(err => console.error('[iOS SW v4] Notification failed:', err))
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
-  console.log('[iOS SW v3] Notification clicked');
   event.notification.close();
   const urlToOpen = event.notification.data?.url || '/';
   event.waitUntil(
