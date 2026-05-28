@@ -16,10 +16,24 @@ export function registerServiceWorker() {
       
       navigator.serviceWorker
         .register(swFile)
-        .then(registration => {
+        .then(async registration => {
           console.log(`[PWA] Service Worker registered (${swFile}):`, registration.scope);
-          
+
           pwaUpdateManager.init();
+
+          // Register for Periodic Background Sync so the app can refresh cached
+          // content while in the background (also satisfies PWABuilder's check).
+          if ('periodicSync' in registration) {
+            try {
+              await (registration as any).periodicSync.register('content-sync', {
+                minInterval: 24 * 60 * 60 * 1000 // once per day
+              });
+              console.log('[PWA] Periodic Background Sync registered');
+            } catch (e) {
+              // Permission not granted or API not supported — non-fatal
+              console.log('[PWA] Periodic Background Sync not available:', e);
+            }
+          }
         })
         .catch(error => {
           console.error('[PWA] Service Worker registration failed:', error);
