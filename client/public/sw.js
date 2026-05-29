@@ -1,6 +1,5 @@
-const CACHE_NAME = 'mykliq-v16';
+const CACHE_NAME = 'mykliq-v17';
 
-// Assets pre-cached during install so the app works offline from first load.
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -11,100 +10,105 @@ const PRECACHE_ASSETS = [
   '/icons/icon-180x180.png'
 ];
 
-// ── Install ────────────────────────────────────────────────────────────────
-self.addEventListener('install', event => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(PRECACHE_ASSETS);
-    await self.skipWaiting();
-  })());
+// ── Install: pre-cache the app shell ───────────────────────────────────────
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.addAll(PRECACHE_ASSETS);
+      await self.skipWaiting();
+    })()
+  );
 });
 
-// ── Activate ───────────────────────────────────────────────────────────────
-self.addEventListener('activate', event => {
-  event.waitUntil((async () => {
-    // Remove stale caches from previous versions.
-    const keys = await caches.keys();
-    await Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-    );
-    await self.clients.claim();
-  })());
+// ── Activate: remove stale caches ─────────────────────────────────────────
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys =>
+        Promise.all(
+          keys.map(key => {
+            if (key !== CACHE_NAME) return caches.delete(key);
+          })
+        )
+      )
+      .then(() => self.clients.claim())
+  );
 });
 
-// ── Fetch ──────────────────────────────────────────────────────────────────
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+// ── Fetch: Cache-First strategy ────────────────────────────────────────────
+// Matches the pattern described in PWABuilder / MDN service worker docs:
+// search the cache first; if found return it; if not, fetch from network,
+// cache the response, and return it.
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    (async () => {
+      // 1. Cache hit → return immediately (works offline)
+      const r = await caches.match(e.request);
+      if (r) return r;
 
-  // Let API calls go straight to the network — never cache them.
-  const url = event.request.url;
-  if (url.includes('/api/') || url.includes('api.mykliq.app')) return;
-
-  event.respondWith((async () => {
-    const cache = await caches.open(CACHE_NAME);
-
-    // Cache-First: return cached response immediately if available.
-    const cachedResponse = await cache.match(event.request);
-    if (cachedResponse !== undefined) {
-      return cachedResponse;
-    }
-
-    // Cache miss — fetch from network, cache the result, then return it.
-    try {
-      const networkResponse = await fetch(event.request);
-      if (networkResponse && networkResponse.status === 200) {
-        cache.put(event.request, networkResponse.clone());
+      // 2. Cache miss → go to the network
+      try {
+        const response = await fetch(e.request);
+        // Only cache successful GET responses (cache.put rejects non-GET)
+        if (e.request.method === 'GET' && response.status === 200) {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(e.request, response.clone());
+        }
+        return response;
+      } catch (_err) {
+        // Network failed (offline) and nothing in cache.
+        // Return the pre-cached offline page for navigation requests.
+        if (e.request.mode === 'navigate') {
+          const offline = await caches.match('/offline.html');
+          if (offline) return offline;
+        }
+        // For non-navigation requests (images, scripts, etc.) just let it fail.
+        throw _err;
       }
-      return networkResponse;
-    } catch {
-      // Offline and not in cache — return the offline fallback page.
-      const offline = await cache.match('/offline.html');
-      return offline || new Response('Offline', { status: 503 });
-    }
-  })());
+    })()
+  );
 });
 
 // ── Push notifications ─────────────────────────────────────────────────────
-self.addEventListener('push', event => {
-  if (!event.data) return;
+self.addEventListener('push', (e) => {
+  if (!e.data) return;
   let data = { title: 'MyKliq', body: 'You have a new notification' };
-  try { data = event.data.json(); } catch (e) {}
-  event.waitUntil(
+  try { data = e.data.json(); } catch (_) {}
+  e.waitUntil(
     self.registration.showNotification(data.title || 'MyKliq', {
       body: data.body || 'You have a new notification',
       icon: '/icons/icon-192x192.png',
       badge: '/icons/icon-192x192.png',
       tag: data.tag || 'mykliq-notification',
-      data: data
+      data
     })
   );
 });
 
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  const url = event.notification.data?.url || '/';
-  event.waitUntil(clients.openWindow(url));
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = e.notification.data?.url || '/';
+  e.waitUntil(clients.openWindow(url));
 });
 
 // ── Background sync ────────────────────────────────────────────────────────
-self.addEventListener('sync', event => {
-  if (event.tag === 'background-sync') {
-    event.waitUntil(Promise.resolve());
+self.addEventListener('sync', (e) => {
+  if (e.tag === 'background-sync') {
+    e.waitUntil(Promise.resolve());
   }
 });
 
-self.addEventListener('periodicsync', event => {
-  if (event.tag === 'content-sync' || event.tag === 'periodic-sync') {
-    event.waitUntil(Promise.resolve());
+self.addEventListener('periodicsync', (e) => {
+  if (e.tag === 'content-sync' || e.tag === 'periodic-sync') {
+    e.waitUntil(Promise.resolve());
   }
 });
 
 // ── Messages ───────────────────────────────────────────────────────────────
-self.addEventListener('message', event => {
-  if (event.data?.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  if (event.data?.type === 'CHECK_VERSION') {
-    event.source?.postMessage({ type: 'VERSION_INFO', version: CACHE_NAME });
+self.addEventListener('message', (e) => {
+  if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
+  if (e.data?.type === 'CHECK_VERSION') {
+    e.source?.postMessage({ type: 'VERSION_INFO', version: CACHE_NAME });
   }
 });
