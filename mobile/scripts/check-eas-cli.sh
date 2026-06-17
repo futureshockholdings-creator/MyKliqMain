@@ -29,7 +29,7 @@ echo "      ${VERSION_OUTPUT}"
 VERSION=$(echo "${VERSION_OUTPUT}" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || true)
 VERSION=$(echo "${VERSION}" | awk 'NR==1')
 MAJOR=$(echo "${VERSION}" | cut -d. -f1)
-PINNED_MAJOR=18
+PINNED_MAJOR=20
 
 if [ "${MAJOR}" -ne "${PINNED_MAJOR}" ]; then
   echo "ERROR: eas-cli major version is ${MAJOR} but expected ${PINNED_MAJOR}." >&2

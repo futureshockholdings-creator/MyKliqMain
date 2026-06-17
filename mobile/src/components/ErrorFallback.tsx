@@ -18,21 +18,19 @@ export function ErrorFallback({ error, resetError, isDevelopment = __DEV__ }: Er
           We're sorry for the inconvenience. The app encountered an unexpected error.
         </Text>
 
-        {isDevelopment && (
-          <ScrollView style={styles.errorDetails}>
-            <Text style={styles.errorTitle}>
-              Error Details (Development Mode):
+        <ScrollView style={styles.errorDetails}>
+          <Text style={styles.errorTitle}>
+            Error Details:
+          </Text>
+          <Text style={styles.errorMessage}>
+            {error.message}
+          </Text>
+          {error.stack && (
+            <Text style={styles.errorStack}>
+              {error.stack}
             </Text>
-            <Text style={styles.errorMessage}>
-              {error.message}
-            </Text>
-            {error.stack && (
-              <Text style={styles.errorStack}>
-                {error.stack}
-              </Text>
-            )}
-          </ScrollView>
-        )}
+          )}
+        </ScrollView>
 
         <TouchableOpacity
           style={styles.button}

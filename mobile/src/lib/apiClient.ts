@@ -481,6 +481,13 @@ export class ApiClient {
       method: 'POST',
     });
   }
+
+  async post<T = any>(endpoint: string, body?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

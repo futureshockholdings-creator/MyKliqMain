@@ -45,7 +45,8 @@
       "ios": {
         "resourceClass": "m-medium",
         "distribution": "store",
-        "credentialsSource": "remote"
+        "credentialsSource": "remote",
+        "image": "macos-sequoia-15.6-xcode-26.0"
       },
       "android": {
         "buildType": "app-bundle",
@@ -58,7 +59,10 @@
       "ios": {
         "appleId": "futureshockholdings@gmail.com",
         "ascAppId": "6767392719",
-        "appleTeamId": "7S3JDKMQRG"
+        "appleTeamId": "7S3JDKMQRG",
+        "ascApiKeyIssuerId": "9a70c0df-6958-4e52-a301-a160e6f5bc79",
+        "ascApiKeyId": "VB3CCUDZMQ",
+        "ascApiKeyPath": "./AuthKey_VB3CCUDZMQ.p8"
       },
       "android": {
         "serviceAccountKeyPath": "./path/to/google-service-account.json",

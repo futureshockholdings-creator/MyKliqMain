@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "82bc6e72-a605-4f8f-a04c-9f723c0927cd"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "app.mykliq",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}
