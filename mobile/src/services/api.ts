@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
-const API_BASE_URL = 'http://localhost:5000/api'; // Change to your deployed URL
-const SERVER_BASE_URL = 'http://localhost:5000'; // Server base for media URLs
+const SERVER_BASE_URL = Constants.expoConfig?.extra?.apiUrl || 'https://api.mykliq.app';
+const API_BASE_URL = `${SERVER_BASE_URL}/api`;
 
 interface ApiResponse<T> {
   success?: boolean;
