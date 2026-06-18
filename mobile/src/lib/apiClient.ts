@@ -417,11 +417,11 @@ export class ApiClient {
 
   // Profile
   async getProfile() {
-    return this.request('/api/mobile/profile');
+    return this.request('/api/mobile/user/profile');
   }
 
   async updateProfile(data: any) {
-    return this.request('/api/mobile/profile', {
+    return this.request('/api/mobile/user/profile', {
       method: 'PUT',
       body: JSON.stringify(data),
     });
