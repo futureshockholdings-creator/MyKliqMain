@@ -6,3 +6,9 @@ id = "YzKLeFF_BzYRDzqIpQ9Q6"
 uri = "file://mobile/assets/splash.png"
 type = "image"
 title = "MyKliq Splash Screen — Final"
+
+[[outputs]]
+id = "bgkw5RdGj7zDiCMD73NIe"
+uri = "file://mobile/ios-xcode-export.zip"
+type = "unspecified"
+title = "MyKliq iOS Xcode Project (ios-xcode-export.zip)"
