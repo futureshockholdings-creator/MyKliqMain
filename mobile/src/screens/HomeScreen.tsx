@@ -269,6 +269,7 @@ export default function HomeScreen() {
           navigation.navigate('StoryViewerModal', {
             storyGroups,
             initialGroupIndex: index,
+            initialStoryIndex: 0,
           });
         }}
         className="items-center mr-4"

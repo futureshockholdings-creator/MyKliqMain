@@ -1,0 +1,1 @@
+- [EAS Build — Replit lockfile registry issue](eas-replit-lockfile.md) — package-lock.json from Replit bakes in internal package-firewall URLs; EAS macOS builds fail with ENOTFOUND. Fix + Xcode 26 image name noted.

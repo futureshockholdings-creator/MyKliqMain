@@ -153,23 +153,33 @@ export class ApiClient {
 
       return data;
     } catch (error) {
-      // Queue mutating requests if offline
-      if (enableOfflineQueue && this.isMutatingRequest(options.method)) {
-        // Treat all TypeErrors from fetch as network errors (covers all offline scenarios)
-        // This includes: "Network request failed", "Failed to fetch", localized variants, etc.
-        const isNetworkError = error instanceof TypeError;
-        
-        if (isNetworkError) {
-          console.log(`[ApiClient] Network error (${error.message}), queueing request: ${endpoint}`);
-          
-          // Parse body for queueing
+      // TypeErrors from fetch indicate a network failure (no connection, DNS failure, etc.)
+      const isNetworkError = error instanceof TypeError;
+
+      // Build a rich debug string that captures everything about the error
+      const errType = (error as any)?.constructor?.name ?? 'UnknownError';
+      const errMsg  = (error instanceof Error ? error.message : String(error)) || '(no message)';
+      const errStack = (error instanceof Error && error.stack) ? error.stack : '(no stack)';
+      const fullUrl = `${this.baseUrl}${endpoint}`;
+
+      console.error(
+        `[ApiClient] Request failed\n` +
+        `  URL   : ${fullUrl}\n` +
+        `  Type  : ${errType}\n` +
+        `  Msg   : ${errMsg}\n` +
+        `  Stack : ${errStack}`
+      );
+
+      if (isNetworkError) {
+        if (enableOfflineQueue && this.isMutatingRequest(options.method)) {
+          // Queue the request for retry when the connection is restored
           let body;
           try {
             body = options.body ? JSON.parse(options.body as string) : undefined;
           } catch {
             body = options.body;
           }
-          
+
           await requestQueue.add(
             endpoint,
             options.method as any,
@@ -177,12 +187,17 @@ export class ApiClient {
             'normal',
             `${options.method} ${endpoint}`
           );
-          
-          // Throw a user-friendly error
+
           throw new Error('No internet connection. Your action will be synced when you\'re back online.');
         }
+
+        // Non-queued requests (auth) — include full diagnostics in the thrown error
+        const detailed = new Error(
+          `[${errType}] ${errMsg}\n\nURL: ${fullUrl}\n\nStack:\n${errStack}`
+        );
+        throw detailed;
       }
-      
+
       throw error;
     }
   }
@@ -191,12 +206,13 @@ export class ApiClient {
     return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method?.toUpperCase() || '');
   }
 
-  // Authentication
+  // Authentication — bypass circuit breaker and offline queue; auth calls must
+  // always reach the server directly and can never be replayed from a queue.
   async login(phoneNumber: string, password: string) {
-    return this.request('/api/mobile/auth/login', {
+    return this.executeRequest('/api/mobile/auth/login', {
       method: 'POST',
       body: JSON.stringify({ phoneNumber, password }),
-    });
+    }, false);
   }
 
   async signup(data: {
@@ -207,10 +223,10 @@ export class ApiClient {
     birthdate: string;
     inviteCode?: string;
   }) {
-    return this.request('/api/mobile/auth/signup', {
+    return this.executeRequest('/api/mobile/auth/signup', {
       method: 'POST',
       body: JSON.stringify(data),
-    });
+    }, false);
   }
 
   async logout() {

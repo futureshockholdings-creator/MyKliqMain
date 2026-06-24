@@ -9,11 +9,12 @@
       "distribution": "internal",
       "env": {
         "APP_VARIANT": "development",
-        "API_URL": "$API_URL"
+        "API_URL": "https://api.mykliq.com"
       },
       "ios": {
         "resourceClass": "m-medium",
-        "simulator": true
+        "image": "macos-sequoia-15.6-xcode-26.2",
+        "credentialsSource": "remote"
       },
       "android": {
         "buildType": "apk",
@@ -28,6 +29,7 @@
       },
       "ios": {
         "resourceClass": "m-medium",
+        "image": "macos-sequoia-15.6-xcode-26.2",
         "distribution": "internal",
         "credentialsSource": "remote"
       },
@@ -46,7 +48,7 @@
         "resourceClass": "m-medium",
         "distribution": "store",
         "credentialsSource": "remote",
-        "image": "macos-sequoia-15.6-xcode-26.0"
+        "image": "macos-sequoia-15.6-xcode-26.2"
       },
       "android": {
         "buildType": "app-bundle",

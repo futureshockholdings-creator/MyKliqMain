@@ -53,9 +53,6 @@
       ],
       "googleServicesFile": "./google-services.json"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
     "plugins": [
       [
         "expo-camera",
@@ -97,6 +94,11 @@
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/93ff5396-1b87-4ae0-88a4-915838a8bf05"
     },
-    "runtimeVersion": "54.0.0"
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
   }
 }

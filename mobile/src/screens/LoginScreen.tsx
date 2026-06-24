@@ -20,7 +20,14 @@ export default function LoginScreen() {
     try {
       await login(phoneNumber, password);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message || 'Invalid phone number or password');
+      const msg = error?.message || String(error) || 'Unknown error';
+      const stack = error?.stack || '(no stack trace)';
+      Alert.alert(
+        'Login Failed',
+        msg + '\n\n--- Stack Trace ---\n' + stack,
+        [{ text: 'OK' }],
+        { cancelable: true }
+      );
     } finally {
       setLoading(false);
     }

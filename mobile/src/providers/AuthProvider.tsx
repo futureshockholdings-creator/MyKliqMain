@@ -69,12 +69,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response: any = await apiClient.login(phoneNumber, password);
       await apiClient.setAuthToken(response.token);
+      const userPayload = response.user || response;
       const userData = {
-        id: response.userId,
-        firstName: response.firstName,
-        lastName: response.lastName,
+        id: userPayload.id || userPayload.userId,
+        firstName: userPayload.firstName,
+        lastName: userPayload.lastName,
         phoneNumber,
-        profileImageUrl: response.profileImageUrl,
+        profileImageUrl: userPayload.profileImageUrl,
       };
       setUser(userData);
       

@@ -617,8 +617,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Find user by phone number
-      const user = await storage.getUserByPhone(phoneNumber);
+      // Normalize phone: try exact match first, then digits-only fallback
+      let user = await storage.getUserByPhone(phoneNumber.trim());
+      if (!user) {
+        const digitsOnly = phoneNumber.replace(/\D/g, '');
+        const withPlus = '+' + digitsOnly;
+        user = await storage.getUserByPhone(digitsOnly) || await storage.getUserByPhone(withPlus);
+      }
       if (!user) {
         return res.status(401).json({ 
           message: "Invalid phone number or password" 
