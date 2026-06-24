@@ -52,6 +52,7 @@ import AdminReports from "@/pages/admin-reports";
 import PostView from "@/pages/post-view";
 import AdvertiserRequirements from "@/pages/advertiser-requirements";
 import AdvertiserOnboarding from "@/pages/advertiser-onboarding";
+import ChildSafety from "./pages/child-safety";
 
 // Navigation Component
 import { Home as HomeIcon, Users, Calendar, User, Palette, MessageCircle, Video, MapPin, Bell, Settings as SettingsIcon } from "lucide-react";
@@ -223,6 +224,7 @@ function Router() {
       <Route path="/disclaimer" component={Disclaimer} />
       <Route path="/community-guidelines" component={CommunityGuidelines} />
       <Route path="/terms-of-use" component={TermsOfUse} />
+      <Route path="/child-safety" component={ChildSafety} />
       <Route path="/contact-us" component={ContactUs} />
       <Route path="/advertiser-requirements" component={AdvertiserRequirements} />
       <Route path="/advertiser-onboarding" component={AdvertiserOnboarding} />
