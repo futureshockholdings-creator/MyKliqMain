@@ -20,6 +20,9 @@ export default function Footer() {
               <Link href="/contact-us" className="font-medium hover:underline transition-all text-xs sm:text-sm !text-black" data-testid="link-contact-us">
                 Contact Us
               </Link>
+              <Link href="/child-safety" className="font-medium hover:underline transition-all text-xs sm:text-sm !text-black">
+                Child Safety
+              </Link>
             </div>
           </div>
           <div className="text-center md:text-right">
