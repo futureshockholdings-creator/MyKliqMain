@@ -17,6 +17,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { cn } from "@/lib/utils";
 import { MediaUpload } from "@/components/MediaUpload";
 import { PageWrapper } from "@/components/PageWrapper";
+import { NearbyActivitiesCarousel } from "@/components/NearbyActivitiesCarousel";
 
 interface CountdownProps {
   targetDate: string;
@@ -440,6 +441,7 @@ export default function Events() {
         </div>
         
         <Dialog open={showCreateEvent} onOpenChange={setShowCreateEvent}>
+
           <DialogTrigger asChild>
             <Button className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
               <Plus className="w-4 h-4 mr-2" />
@@ -681,6 +683,10 @@ export default function Events() {
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="border border-border rounded-xl p-4 bg-card/50">
+        <NearbyActivitiesCarousel />
       </div>
 
       {!Array.isArray(events) || events.length === 0 ? (

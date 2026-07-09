@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { MapPin, Loader2, Edit } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { NearbyActivitiesCarousel } from '@/components/NearbyActivitiesCarousel';
 
 export default function MeetupPage() {
   const { toast } = useToast();
@@ -367,6 +368,10 @@ export default function MeetupPage() {
             Your kliq members will be able to see where you are and can join you if they want.
           </p>
         </div>
+      </div>
+
+      <div className="w-full max-w-2xl mx-auto px-4 mt-6">
+        <NearbyActivitiesCarousel />
       </div>
     </div>
   );

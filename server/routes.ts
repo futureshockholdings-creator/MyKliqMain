@@ -7575,6 +7575,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Nearby activities endpoint
+  app.get('/api/nearby-activities', isAuthenticated, async (req: any, res) => {
+    const { postal } = req.query as { postal?: string };
+    if (!postal || !postal.trim()) {
+      return res.status(400).json({ message: "postal is required" });
+    }
+
+    try {
+      let lat: number | null = null;
+      let lng: number | null = null;
+
+      // 1. Try zippopotam.us (US/CA/GB/AU/DE/FR/NL etc — 60+ countries)
+      const zippoCountries = ["us","ca","gb","au","de","fr","nl","be","dk","fi","no","se","es","pt","pl","cz","sk","at","ch","it","nz","br","mx","jp","in","sg","hk","za"];
+      const clean = postal.trim().toUpperCase().replace(/\s+/g, " ");
+      for (const cc of zippoCountries) {
+        try {
+          const r = await fetch(`https://api.zippopotam.us/${cc}/${encodeURIComponent(clean)}`, { signal: AbortSignal.timeout(4000) });
+          if (r.ok) {
+            const d = await r.json();
+            if (d.places?.[0]) {
+              lat = parseFloat(d.places[0].latitude);
+              lng = parseFloat(d.places[0].longitude);
+              break;
+            }
+          }
+        } catch {}
+      }
+
+      // 2. Fallback: Nominatim (handles virtually all international postal codes)
+      if (lat === null) {
+        try {
+          const r = await fetch(
+            `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(clean)}&format=json&limit=1`,
+            { headers: { "User-Agent": "MyKliq/1.0 (mykliq.app)" }, signal: AbortSignal.timeout(5000) }
+          );
+          if (r.ok) {
+            const d = await r.json();
+            if (d[0]) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
+          }
+        } catch {}
+      }
+
+      if (lat === null || lng === null) {
+        return res.json([]);
+      }
+
+      const activities: any[] = [];
+      const radiusMiles = 25;
+      const radiusMeters = radiusMiles * 1609;
+
+      // 3. Ticketmaster Discovery API (optional — needs TICKETMASTER_API_KEY env var)
+      const tmKey = process.env.TICKETMASTER_API_KEY;
+      if (tmKey) {
+        try {
+          const tmUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&latlong=${lat},${lng}&radius=${radiusMiles}&unit=miles&size=12&sort=date,asc&locale=*`;
+          const r = await fetch(tmUrl, { signal: AbortSignal.timeout(5000) });
+          if (r.ok) {
+            const d = await r.json();
+            const events = d._embedded?.events || [];
+            for (const e of events) {
+              const cat = (e.classifications?.[0]?.segment?.name || "event").toLowerCase();
+              const categoryMap: Record<string, string> = { "music": "event", "sports": "sports", "arts & theatre": "arts", "family": "family", "film": "entertainment", "miscellaneous": "entertainment" };
+              activities.push({
+                id: `tm-${e.id}`,
+                title: e.name,
+                category: categoryMap[cat] || "event",
+                date: e.dates?.start?.localDate ? new Date(e.dates.start.localDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : undefined,
+                venueName: e._embedded?.venues?.[0]?.name,
+                imageUrl: e.images?.find((i: any) => i.ratio === "3_2")?.url || e.images?.[0]?.url,
+                externalUrl: e.url,
+              });
+            }
+          }
+        } catch {}
+      }
+
+      // 4. OSM Overpass — parks, entertainment, arts, sport venues (no API key needed)
+      if (activities.length < 12) {
+        try {
+          const overpassQuery = `
+            [out:json][timeout:8];
+            (
+              node["leisure"~"park|nature_reserve|beach_resort|marina|golf_course|sports_centre|stadium|arena|amusement_park"](around:${radiusMeters},${lat},${lng});
+              node["tourism"~"attraction|museum|gallery|theme_park|zoo|aquarium|viewpoint"](around:${radiusMeters},${lat},${lng});
+              node["amenity"~"cinema|theatre|arts_centre|nightclub|bowling_alley|casino|community_centre"](around:${radiusMeters},${lat},${lng});
+              node["sport"](around:${radiusMeters},${lat},${lng});
+            );
+            out body 20;
+          `;
+          const r = await fetch("https://overpass-api.de/api/interpreter", {
+            method: "POST",
+            body: `data=${encodeURIComponent(overpassQuery)}`,
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            signal: AbortSignal.timeout(8000),
+          });
+          if (r.ok) {
+            const d = await r.json();
+            const seen = new Set<string>();
+            for (const el of (d.elements || []).slice(0, 20)) {
+              const name = el.tags?.name;
+              if (!name || seen.has(name)) continue;
+              seen.add(name);
+              const tag = el.tags;
+              let category: string = "outdoor";
+              if (tag.tourism === "museum" || tag.tourism === "gallery" || tag.amenity === "arts_centre" || tag.amenity === "theatre") category = "arts";
+              else if (tag.amenity === "cinema" || tag.amenity === "nightclub" || tag.amenity === "bowling_alley" || tag.amenity === "casino") category = "entertainment";
+              else if (tag.leisure === "sports_centre" || tag.leisure === "stadium" || tag.leisure === "arena" || tag.sport) category = "sports";
+              else if (tag.tourism === "theme_park" || tag.tourism === "zoo" || tag.tourism === "aquarium" || tag.amenity === "community_centre" || tag.leisure === "amusement_park") category = "family";
+              else if (tag.tourism === "attraction" || tag.tourism === "viewpoint") category = "outdoor";
+
+              const osmUrl = `https://www.openstreetmap.org/node/${el.id}`;
+              activities.push({
+                id: `osm-${el.id}`,
+                title: name,
+                category,
+                venueName: tag["addr:city"] || tag["addr:suburb"] || undefined,
+                externalUrl: tag.website || tag.url || osmUrl,
+              });
+            }
+          }
+        } catch {}
+      }
+
+      res.json(activities.slice(0, 20));
+    } catch (error) {
+      console.error("[nearby-activities] Error:", error);
+      res.status(500).json({ message: "Failed to fetch nearby activities" });
+    }
+  });
+
   // Event routes
   app.get('/api/events', isAuthenticated, async (req: any, res) => {
     try {
