@@ -7586,35 +7586,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let lat: number | null = null;
       let lng: number | null = null;
 
-      // 1. Try zippopotam.us (US/CA/GB/AU/DE/FR/NL etc — 60+ countries)
-      const zippoCountries = ["us","ca","gb","au","de","fr","nl","be","dk","fi","no","se","es","pt","pl","cz","sk","at","ch","it","nz","br","mx","jp","in","sg","hk","za"];
-      const clean = postal.trim().toUpperCase().replace(/\s+/g, " ");
-      for (const cc of zippoCountries) {
-        try {
-          const r = await fetch(`https://api.zippopotam.us/${cc}/${encodeURIComponent(clean)}`, { signal: AbortSignal.timeout(4000) });
-          if (r.ok) {
-            const d = await r.json();
-            if (d.places?.[0]) {
-              lat = parseFloat(d.places[0].latitude);
-              lng = parseFloat(d.places[0].longitude);
-              break;
-            }
-          }
-        } catch {}
-      }
+      const clean = postal.trim().replace(/\s+/g, " ");
 
-      // 2. Fallback: Nominatim (handles virtually all international postal codes)
+      // 1. Nominatim first — handles all countries, postal codes, city names reliably
+      try {
+        const nmUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(clean)}&format=json&limit=1&addressdetails=0`;
+        const r = await fetch(nmUrl, {
+          headers: { "User-Agent": "MyKliq/1.0 (mykliq.app)" },
+          signal: AbortSignal.timeout(6000),
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (d[0]) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
+        }
+      } catch {}
+
+      // 2. Fallback: zippopotam.us — try US first, then CA/GB/AU
       if (lat === null) {
-        try {
-          const r = await fetch(
-            `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(clean)}&format=json&limit=1`,
-            { headers: { "User-Agent": "MyKliq/1.0 (mykliq.app)" }, signal: AbortSignal.timeout(5000) }
-          );
-          if (r.ok) {
-            const d = await r.json();
-            if (d[0]) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
-          }
-        } catch {}
+        const fallbackCountries = ["us", "ca", "gb", "au", "de", "fr", "nl", "au"];
+        const cleanUpper = clean.toUpperCase();
+        for (const cc of fallbackCountries) {
+          try {
+            const r = await fetch(`https://api.zippopotam.us/${cc}/${encodeURIComponent(cleanUpper)}`, { signal: AbortSignal.timeout(4000) });
+            if (r.ok) {
+              const d = await r.json();
+              if (d.places?.[0]) {
+                lat = parseFloat(d.places[0].latitude);
+                lng = parseFloat(d.places[0].longitude);
+                break;
+              }
+            }
+          } catch {}
+        }
       }
 
       if (lat === null || lng === null) {
@@ -7652,28 +7655,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 4. OSM Overpass — parks, entertainment, arts, sport venues (no API key needed)
+      // Uses nwr (node/way/relation) so named venues stored as polygons are included
       if (activities.length < 12) {
         try {
           const overpassQuery = `
-            [out:json][timeout:8];
+            [out:json][timeout:15];
             (
-              node["leisure"~"park|nature_reserve|beach_resort|marina|golf_course|sports_centre|stadium|arena|amusement_park"](around:${radiusMeters},${lat},${lng});
-              node["tourism"~"attraction|museum|gallery|theme_park|zoo|aquarium|viewpoint"](around:${radiusMeters},${lat},${lng});
-              node["amenity"~"cinema|theatre|arts_centre|nightclub|bowling_alley|casino|community_centre"](around:${radiusMeters},${lat},${lng});
-              node["sport"](around:${radiusMeters},${lat},${lng});
+              nwr["leisure"~"^(park|nature_reserve|beach_resort|marina|golf_course|sports_centre|stadium|arena|amusement_park)$"]["name"](around:${radiusMeters},${lat},${lng});
+              nwr["tourism"~"^(attraction|museum|gallery|theme_park|zoo|aquarium|viewpoint)$"]["name"](around:${radiusMeters},${lat},${lng});
+              nwr["amenity"~"^(cinema|theatre|arts_centre|nightclub|bowling_alley|casino|community_centre)$"]["name"](around:${radiusMeters},${lat},${lng});
+              nwr["sport"]["name"](around:${radiusMeters},${lat},${lng});
             );
-            out body 20;
+            out tags center 30;
           `;
           const r = await fetch("https://overpass-api.de/api/interpreter", {
             method: "POST",
             body: `data=${encodeURIComponent(overpassQuery)}`,
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(15000),
           });
           if (r.ok) {
             const d = await r.json();
             const seen = new Set<string>();
-            for (const el of (d.elements || []).slice(0, 20)) {
+            for (const el of (d.elements || []).slice(0, 30)) {
               const name = el.tags?.name;
               if (!name || seen.has(name)) continue;
               seen.add(name);
@@ -7685,7 +7689,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               else if (tag.tourism === "theme_park" || tag.tourism === "zoo" || tag.tourism === "aquarium" || tag.amenity === "community_centre" || tag.leisure === "amusement_park") category = "family";
               else if (tag.tourism === "attraction" || tag.tourism === "viewpoint") category = "outdoor";
 
-              const osmUrl = `https://www.openstreetmap.org/node/${el.id}`;
+              const elType = el.type === "node" ? "node" : el.type === "way" ? "way" : "relation";
+              const osmUrl = `https://www.openstreetmap.org/${elType}/${el.id}`;
               activities.push({
                 id: `osm-${el.id}`,
                 title: name,

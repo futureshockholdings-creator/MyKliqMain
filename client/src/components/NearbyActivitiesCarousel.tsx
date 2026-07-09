@@ -96,11 +96,11 @@ export function NearbyActivitiesCarousel() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 bg-white rounded-xl p-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Need something to get into? 🎉</h2>
-          <p className="text-sm text-muted-foreground">Discover local events & activities near you</p>
+          <h2 className="text-lg font-bold text-gray-900">Need something to get into? 🎉</h2>
+          <p className="text-sm text-gray-500">Discover local events & activities near you</p>
         </div>
         {activities.length > 0 && (
           <div className="flex gap-1">
@@ -116,13 +116,13 @@ export function NearbyActivitiesCarousel() {
 
       <div className="flex gap-2">
         <div className="relative flex-1 max-w-xs">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Postal / Zip Code"
             value={postalInput}
             onChange={(e) => setPostalInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="pl-9"
+            className="pl-9 bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
           />
         </div>
         <Button onClick={handleSearch} disabled={!postalInput.trim() || isLoading} size="sm">
@@ -154,7 +154,7 @@ export function NearbyActivitiesCarousel() {
       {activities.length > 0 && (
         <div ref={scrollRef} className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x">
           {activities.map((activity) => (
-            <Card key={activity.id} className="flex-shrink-0 w-56 snap-start border-border hover:border-primary/50 transition-colors">
+            <Card key={activity.id} className="flex-shrink-0 w-56 snap-start bg-white border-gray-200 hover:border-primary/50 transition-colors">
               {activity.imageUrl ? (
                 <div className="h-32 rounded-t-xl overflow-hidden bg-muted">
                   <img
