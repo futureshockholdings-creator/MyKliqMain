@@ -685,9 +685,7 @@ export default function Events() {
         </Dialog>
       </div>
 
-      <div className="border border-border rounded-xl p-4 bg-card/50">
-        <NearbyActivitiesCarousel />
-      </div>
+      <NearbyActivitiesCarousel />
 
       {!Array.isArray(events) || events.length === 0 ? (
         <Card className="bg-card border-border text-center">

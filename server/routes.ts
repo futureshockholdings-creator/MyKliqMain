@@ -7654,27 +7654,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch {}
       }
 
-      // 4. OSM Overpass — parks, entertainment, arts, sport venues (no API key needed)
-      // Uses nwr (node/way/relation) so named venues stored as polygons are included
+      // 4. OSM Overpass — parks, entertainment, arts, sport venues
       if (activities.length < 12) {
-        try {
-          const overpassQuery = `
-            [out:json][timeout:15];
-            (
-              nwr["leisure"~"^(park|nature_reserve|beach_resort|marina|golf_course|sports_centre|stadium|arena|amusement_park)$"]["name"](around:${radiusMeters},${lat},${lng});
-              nwr["tourism"~"^(attraction|museum|gallery|theme_park|zoo|aquarium|viewpoint)$"]["name"](around:${radiusMeters},${lat},${lng});
-              nwr["amenity"~"^(cinema|theatre|arts_centre|nightclub|bowling_alley|casino|community_centre)$"]["name"](around:${radiusMeters},${lat},${lng});
-              nwr["sport"]["name"](around:${radiusMeters},${lat},${lng});
-            );
-            out tags center 30;
-          `;
-          const r = await fetch("https://overpass-api.de/api/interpreter", {
-            method: "POST",
-            body: `data=${encodeURIComponent(overpassQuery)}`,
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            signal: AbortSignal.timeout(15000),
-          });
-          if (r.ok) {
+        const overpassQuery = `[out:json][timeout:20];(node["tourism"~"museum|attraction|gallery|theme_park|zoo|aquarium"]["name"](around:${radiusMeters},${lat},${lng});way["tourism"~"museum|attraction|gallery|theme_park|zoo|aquarium"]["name"](around:${radiusMeters},${lat},${lng});node["leisure"~"park|sports_centre|stadium|arena|golf_course|amusement_park"]["name"](around:${radiusMeters},${lat},${lng});way["leisure"~"park|sports_centre|stadium|arena|golf_course|amusement_park"]["name"](around:${radiusMeters},${lat},${lng});node["amenity"~"cinema|theatre|arts_centre|nightclub|bowling_alley|casino|community_centre"]["name"](around:${radiusMeters},${lat},${lng});way["amenity"~"cinema|theatre|arts_centre|nightclub|bowling_alley|casino|community_centre"]["name"](around:${radiusMeters},${lat},${lng}););out tags center 30;`;
+
+        const overpassMirrors = [
+          "https://overpass.kumi.systems/api/interpreter",
+          "https://overpass.openstreetmap.fr/api/interpreter",
+          "https://overpass-api.de/api/interpreter",
+        ];
+
+        for (const mirror of overpassMirrors) {
+          try {
+            const r = await fetch(mirror, {
+              method: "POST",
+              body: `data=${encodeURIComponent(overpassQuery)}`,
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
+              },
+              signal: AbortSignal.timeout(20000),
+            });
+            if (!r.ok) { console.warn(`[nearby] Overpass mirror ${mirror} returned ${r.status}`); continue; }
             const d = await r.json();
             const seen = new Set<string>();
             for (const el of (d.elements || []).slice(0, 30)) {
@@ -7687,20 +7688,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
               else if (tag.amenity === "cinema" || tag.amenity === "nightclub" || tag.amenity === "bowling_alley" || tag.amenity === "casino") category = "entertainment";
               else if (tag.leisure === "sports_centre" || tag.leisure === "stadium" || tag.leisure === "arena" || tag.sport) category = "sports";
               else if (tag.tourism === "theme_park" || tag.tourism === "zoo" || tag.tourism === "aquarium" || tag.amenity === "community_centre" || tag.leisure === "amusement_park") category = "family";
-              else if (tag.tourism === "attraction" || tag.tourism === "viewpoint") category = "outdoor";
-
-              const elType = el.type === "node" ? "node" : el.type === "way" ? "way" : "relation";
-              const osmUrl = `https://www.openstreetmap.org/${elType}/${el.id}`;
+              const elType = el.type === "way" ? "way" : el.type === "relation" ? "relation" : "node";
               activities.push({
                 id: `osm-${el.id}`,
                 title: name,
                 category,
                 venueName: tag["addr:city"] || tag["addr:suburb"] || undefined,
-                externalUrl: tag.website || tag.url || osmUrl,
+                externalUrl: tag.website || tag.url || `https://www.openstreetmap.org/${elType}/${el.id}`,
               });
             }
+            if (activities.length > 0) break;
+          } catch (e: any) {
+            console.warn(`[nearby] Overpass mirror ${mirror} failed:`, e?.message);
           }
-        } catch {}
+        }
+      }
+
+      // 5. Fallback: Nominatim amenity search if Overpass still returned nothing
+      if (activities.length === 0) {
+        try {
+          const cats = [
+            { q: "museum", category: "arts" },
+            { q: "park", category: "outdoor" },
+            { q: "stadium", category: "sports" },
+            { q: "cinema", category: "entertainment" },
+            { q: "theatre", category: "arts" },
+            { q: "zoo", category: "family" },
+          ];
+          for (const { q, category } of cats) {
+            const r = await fetch(
+              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&lat=${lat}&lon=${lng}&format=json&limit=4&bounded=1&viewbox=${lng - 0.5},${lat + 0.5},${lng + 0.5},${lat - 0.5}`,
+              { headers: { "User-Agent": "MyKliq/1.0 (mykliq.app)" }, signal: AbortSignal.timeout(5000) }
+            );
+            if (!r.ok) continue;
+            const items = await r.json();
+            for (const item of items.slice(0, 4)) {
+              if (!item.display_name) continue;
+              const title = item.display_name.split(",")[0].trim();
+              activities.push({
+                id: `nm-${item.place_id}`,
+                title,
+                category,
+                externalUrl: `https://www.openstreetmap.org/${item.osm_type}/${item.osm_id}`,
+              });
+            }
+            if (activities.length >= 12) break;
+          }
+        } catch (e: any) {
+          console.warn("[nearby] Nominatim fallback failed:", e?.message);
+        }
       }
 
       res.json(activities.slice(0, 20));

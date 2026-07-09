@@ -1,10 +1,10 @@
 import { useState, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, Search, ChevronLeft, ChevronRight, ExternalLink, Share2 } from "lucide-react";
+import { MapPin, Search, ChevronLeft, ChevronRight, ExternalLink, Share2, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,55 +16,99 @@ interface NearbyActivity {
   venueName?: string;
   imageUrl?: string;
   externalUrl?: string;
-  distance?: string;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  event: "bg-primary/20 text-primary",
-  outdoor: "bg-green-500/20 text-green-700",
-  family: "bg-yellow-500/20 text-yellow-700",
-  arts: "bg-purple-500/20 text-purple-700",
-  sports: "bg-blue-500/20 text-blue-700",
-  entertainment: "bg-pink-500/20 text-pink-700",
+  event: "bg-purple-100 text-purple-700",
+  outdoor: "bg-green-100 text-green-700",
+  family: "bg-yellow-100 text-yellow-700",
+  arts: "bg-pink-100 text-pink-700",
+  sports: "bg-blue-100 text-blue-700",
+  entertainment: "bg-orange-100 text-orange-700",
 };
 
 function ActivityCardSkeleton() {
   return (
-    <div className="flex-shrink-0 w-56 rounded-xl border border-border bg-card animate-pulse">
-      <div className="h-32 bg-muted rounded-t-xl" />
+    <div className="flex-shrink-0 w-56 rounded-xl border border-gray-200 bg-white animate-pulse">
+      <div className="h-32 bg-gray-100 rounded-t-xl" />
       <div className="p-3 space-y-2">
-        <div className="h-3 bg-muted rounded w-16" />
-        <div className="h-4 bg-muted rounded w-full" />
-        <div className="h-3 bg-muted rounded w-3/4" />
-        <div className="h-8 bg-muted rounded w-full mt-2" />
+        <div className="h-3 bg-gray-100 rounded w-16" />
+        <div className="h-4 bg-gray-100 rounded w-full" />
+        <div className="h-3 bg-gray-100 rounded w-3/4" />
+        <div className="h-8 bg-gray-100 rounded w-full mt-2" />
       </div>
     </div>
   );
+}
+
+async function geocodePostal(postal: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(postal)}&format=json&limit=1`,
+      { headers: { "Accept": "application/json" } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  } catch {}
+  return null;
+}
+
+async function fetchVenues(lat: number, lng: number): Promise<NearbyActivity[]> {
+  const radius = 25000;
+  const query = `[out:json][timeout:25];(node["tourism"~"museum|attraction|gallery|theme_park|zoo|aquarium"]["name"](around:${radius},${lat},${lng});way["tourism"~"museum|attraction|gallery|theme_park|zoo|aquarium"]["name"](around:${radius},${lat},${lng});node["leisure"~"park|sports_centre|stadium|arena|golf_course|amusement_park"]["name"](around:${radius},${lat},${lng});way["leisure"~"park|sports_centre|stadium|arena|golf_course|amusement_park"]["name"](around:${radius},${lat},${lng});node["amenity"~"cinema|theatre|arts_centre|nightclub|bowling_alley|casino"]["name"](around:${radius},${lat},${lng});way["amenity"~"cinema|theatre|arts_centre|nightclub|bowling_alley|casino"]["name"](around:${radius},${lat},${lng}););out tags center 30;`;
+
+  const mirrors = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.openstreetmap.fr/api/interpreter",
+  ];
+
+  for (const mirror of mirrors) {
+    try {
+      const res = await fetch(mirror, {
+        method: "POST",
+        body: `data=${encodeURIComponent(query)}`,
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const seen = new Set<string>();
+      const results: NearbyActivity[] = [];
+      for (const el of (data.elements || []).slice(0, 30)) {
+        const name: string = el.tags?.name;
+        if (!name || seen.has(name)) continue;
+        seen.add(name);
+        const tag = el.tags;
+        let category: NearbyActivity["category"] = "outdoor";
+        if (tag.tourism === "museum" || tag.tourism === "gallery" || tag.amenity === "arts_centre" || tag.amenity === "theatre") category = "arts";
+        else if (tag.amenity === "cinema" || tag.amenity === "nightclub" || tag.amenity === "bowling_alley" || tag.amenity === "casino") category = "entertainment";
+        else if (tag.leisure === "sports_centre" || tag.leisure === "stadium" || tag.leisure === "arena") category = "sports";
+        else if (tag.tourism === "theme_park" || tag.tourism === "zoo" || tag.tourism === "aquarium" || tag.leisure === "amusement_park") category = "family";
+        const elType = el.type === "way" ? "way" : el.type === "relation" ? "relation" : "node";
+        results.push({
+          id: `osm-${el.id}`,
+          title: name,
+          category,
+          venueName: tag["addr:city"] || tag["addr:suburb"] || undefined,
+          externalUrl: tag.website || tag.url || `https://www.openstreetmap.org/${elType}/${el.id}`,
+        });
+      }
+      if (results.length > 0) return results;
+    } catch {}
+  }
+  return [];
 }
 
 export function NearbyActivitiesCarousel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [postalInput, setPostalInput] = useState(
-    () => localStorage.getItem("mykliq_postal_code") || ""
-  );
-  const [searchPostal, setSearchPostal] = useState(
-    () => localStorage.getItem("mykliq_postal_code") || ""
-  );
+  const [postalInput, setPostalInput] = useState("");
+  const [activities, setActivities] = useState<NearbyActivity[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [postingId, setPostingId] = useState<string | null>(null);
-
-  const { data: activities = [], isLoading, isError } = useQuery<NearbyActivity[]>({
-    queryKey: ["/api/nearby-activities", searchPostal],
-    queryFn: async () => {
-      if (!searchPostal) return [];
-      const res = await fetch(`/api/nearby-activities?postal=${encodeURIComponent(searchPostal)}`);
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
-    },
-    enabled: !!searchPostal,
-    staleTime: 1000 * 60 * 10,
-  });
 
   const postMutation = useMutation({
     mutationFn: async (activity: NearbyActivity) => {
@@ -84,15 +128,28 @@ export function NearbyActivitiesCarousel() {
     },
   });
 
-  const handleSearch = () => {
-    if (!postalInput.trim()) return;
-    localStorage.setItem("mykliq_postal_code", postalInput.trim());
-    setSearchPostal(postalInput.trim());
+  const handleSearch = async () => {
+    const val = postalInput.trim();
+    if (!val) return;
+    setIsLoading(true);
+    setHasSearched(false);
+    setActivities([]);
+    try {
+      const coords = await geocodePostal(val);
+      if (!coords) {
+        setHasSearched(true);
+        setIsLoading(false);
+        return;
+      }
+      const results = await fetchVenues(coords.lat, coords.lng);
+      setActivities(results);
+    } catch {}
+    setHasSearched(true);
+    setIsLoading(false);
   };
 
   const scroll = (dir: "left" | "right") => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollBy({ left: dir === "left" ? -280 : 280, behavior: "smooth" });
+    scrollRef.current?.scrollBy({ left: dir === "left" ? -280 : 280, behavior: "smooth" });
   };
 
   return (
@@ -126,8 +183,8 @@ export function NearbyActivitiesCarousel() {
           />
         </div>
         <Button onClick={handleSearch} disabled={!postalInput.trim() || isLoading} size="sm">
-          <Search className="h-4 w-4 mr-1" />
-          Search
+          {isLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Search className="h-4 w-4 mr-1" />}
+          {isLoading ? "Searching…" : "Search"}
         </Button>
       </div>
 
@@ -137,16 +194,10 @@ export function NearbyActivitiesCarousel() {
         </div>
       )}
 
-      {isError && (
-        <div className="text-sm text-muted-foreground text-center py-4">
-          Couldn't load activities. Check the postal code and try again.
-        </div>
-      )}
-
-      {!isLoading && !isError && searchPostal && activities.length === 0 && (
-        <div className="text-center py-6 text-muted-foreground">
+      {!isLoading && hasSearched && activities.length === 0 && (
+        <div className="text-center py-6 text-gray-500">
           <MapPin className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">No activities found near <strong>{searchPostal}</strong>.</p>
+          <p className="text-sm">No activities found near <strong>{postalInput}</strong>.</p>
           <p className="text-xs mt-1">Try a nearby zip code or a bigger city.</p>
         </div>
       )}
@@ -155,30 +206,19 @@ export function NearbyActivitiesCarousel() {
         <div ref={scrollRef} className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x">
           {activities.map((activity) => (
             <Card key={activity.id} className="flex-shrink-0 w-56 snap-start bg-white border-gray-200 hover:border-primary/50 transition-colors">
-              {activity.imageUrl ? (
-                <div className="h-32 rounded-t-xl overflow-hidden bg-muted">
-                  <img
-                    src={activity.imageUrl}
-                    alt={activity.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                </div>
-              ) : (
-                <div className="h-32 rounded-t-xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                  <MapPin className="h-10 w-10 text-primary/40" />
-                </div>
-              )}
+              <div className="h-32 rounded-t-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                <MapPin className="h-10 w-10 text-gray-300" />
+              </div>
               <CardContent className="p-3 space-y-1.5">
-                <Badge className={`text-xs ${CATEGORY_COLORS[activity.category] || CATEGORY_COLORS.event}`}>
+                <Badge className={`text-xs font-medium ${CATEGORY_COLORS[activity.category] || CATEGORY_COLORS.event}`}>
                   {activity.category}
                 </Badge>
-                <p className="font-semibold text-sm leading-tight line-clamp-2">{activity.title}</p>
+                <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{activity.title}</p>
                 {activity.venueName && (
-                  <p className="text-xs text-muted-foreground line-clamp-1">{activity.venueName}</p>
+                  <p className="text-xs text-gray-500 line-clamp-1">{activity.venueName}</p>
                 )}
                 {activity.date && (
-                  <p className="text-xs text-muted-foreground">{activity.date}</p>
+                  <p className="text-xs text-gray-500">{activity.date}</p>
                 )}
                 <div className="flex gap-1 pt-1">
                   <Button
@@ -194,7 +234,7 @@ export function NearbyActivitiesCarousel() {
                     {postingId === activity.id ? "Posting…" : "Post to Feed"}
                   </Button>
                   {activity.externalUrl && (
-                    <Button size="sm" variant="outline" className="h-7 w-7 p-0" asChild>
+                    <Button size="sm" variant="outline" className="h-7 w-7 p-0 border-gray-200" asChild>
                       <a href={activity.externalUrl} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-3 w-3" />
                       </a>
