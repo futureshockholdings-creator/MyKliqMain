@@ -7587,37 +7587,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let lng: number | null = null;
 
       const clean = postal.trim().replace(/\s+/g, " ");
+      const isUsZip = /^\d{5}(-\d{4})?$/.test(clean);
+      const isCanadian = /^[A-Za-z]\d[A-Za-z][\s-]?\d[A-Za-z]\d$/.test(clean);
 
-      // 1. Nominatim first — handles all countries, postal codes, city names reliably
-      try {
-        const nmUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(clean)}&format=json&limit=1&addressdetails=0`;
-        const r = await fetch(nmUrl, {
-          headers: { "User-Agent": "MyKliq/1.0 (mykliq.app)" },
-          signal: AbortSignal.timeout(6000),
-        });
-        if (r.ok) {
-          const d = await r.json();
-          if (d[0]) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
-        }
-      } catch {}
-
-      // 2. Fallback: zippopotam.us — try US first, then CA/GB/AU
-      if (lat === null) {
-        const fallbackCountries = ["us", "ca", "gb", "au", "de", "fr", "nl", "au"];
-        const cleanUpper = clean.toUpperCase();
-        for (const cc of fallbackCountries) {
-          try {
-            const r = await fetch(`https://api.zippopotam.us/${cc}/${encodeURIComponent(cleanUpper)}`, { signal: AbortSignal.timeout(4000) });
-            if (r.ok) {
-              const d = await r.json();
-              if (d.places?.[0]) {
-                lat = parseFloat(d.places[0].latitude);
-                lng = parseFloat(d.places[0].longitude);
-                break;
-              }
+      // 1. Zippopotam for US/CA — most accurate for North American codes
+      if (isUsZip || isCanadian) {
+        const cc = isUsZip ? "us" : "ca";
+        try {
+          const r = await fetch(`https://api.zippopotam.us/${cc}/${encodeURIComponent(clean.toUpperCase().replace(/\s/g, ""))}`, { signal: AbortSignal.timeout(5000) });
+          if (r.ok) {
+            const d = await r.json();
+            if (d.places?.[0]) {
+              lat = parseFloat(d.places[0].latitude);
+              lng = parseFloat(d.places[0].longitude);
             }
-          } catch {}
-        }
+          }
+        } catch {}
+      }
+
+      // 2. Nominatim for international / fallback
+      if (lat === null) {
+        try {
+          const r = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(clean)}&format=json&limit=1`,
+            { headers: { "User-Agent": "MyKliq/1.0 (mykliq.app)" }, signal: AbortSignal.timeout(6000) }
+          );
+          if (r.ok) {
+            const d = await r.json();
+            if (d[0]) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
+          }
+        } catch {}
       }
 
       if (lat === null || lng === null) {
@@ -7654,88 +7653,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch {}
       }
 
-      // 4. OSM Overpass — parks, entertainment, arts, sport venues
-      if (activities.length < 12) {
-        const overpassQuery = `[out:json][timeout:20];(node["tourism"~"museum|attraction|gallery|theme_park|zoo|aquarium"]["name"](around:${radiusMeters},${lat},${lng});way["tourism"~"museum|attraction|gallery|theme_park|zoo|aquarium"]["name"](around:${radiusMeters},${lat},${lng});node["leisure"~"park|sports_centre|stadium|arena|golf_course|amusement_park"]["name"](around:${radiusMeters},${lat},${lng});way["leisure"~"park|sports_centre|stadium|arena|golf_course|amusement_park"]["name"](around:${radiusMeters},${lat},${lng});node["amenity"~"cinema|theatre|arts_centre|nightclub|bowling_alley|casino|community_centre"]["name"](around:${radiusMeters},${lat},${lng});way["amenity"~"cinema|theatre|arts_centre|nightclub|bowling_alley|casino|community_centre"]["name"](around:${radiusMeters},${lat},${lng}););out tags center 30;`;
+      // 4. Nominatim structured amenity search — parallel batches for speed
+      const pad = 0.4;
+      const viewbox = `${lng - pad},${lat + pad},${lng + pad},${lat - pad}`;
+      const nmBase = "https://nominatim.openstreetmap.org/search";
+      const nmHdrs = { "User-Agent": "MyKliq/1.0 (mykliq.app)" };
+      const seen = new Set<string>();
 
-        const overpassMirrors = [
-          "https://overpass.kumi.systems/api/interpreter",
-          "https://overpass.openstreetmap.fr/api/interpreter",
-          "https://overpass-api.de/api/interpreter",
-        ];
-
-        for (const mirror of overpassMirrors) {
-          try {
-            const r = await fetch(mirror, {
-              method: "POST",
-              body: `data=${encodeURIComponent(overpassQuery)}`,
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Accept": "application/json",
-              },
-              signal: AbortSignal.timeout(20000),
-            });
-            if (!r.ok) { console.warn(`[nearby] Overpass mirror ${mirror} returned ${r.status}`); continue; }
-            const d = await r.json();
-            const seen = new Set<string>();
-            for (const el of (d.elements || []).slice(0, 30)) {
-              const name = el.tags?.name;
-              if (!name || seen.has(name)) continue;
-              seen.add(name);
-              const tag = el.tags;
-              let category: string = "outdoor";
-              if (tag.tourism === "museum" || tag.tourism === "gallery" || tag.amenity === "arts_centre" || tag.amenity === "theatre") category = "arts";
-              else if (tag.amenity === "cinema" || tag.amenity === "nightclub" || tag.amenity === "bowling_alley" || tag.amenity === "casino") category = "entertainment";
-              else if (tag.leisure === "sports_centre" || tag.leisure === "stadium" || tag.leisure === "arena" || tag.sport) category = "sports";
-              else if (tag.tourism === "theme_park" || tag.tourism === "zoo" || tag.tourism === "aquarium" || tag.amenity === "community_centre" || tag.leisure === "amusement_park") category = "family";
-              const elType = el.type === "way" ? "way" : el.type === "relation" ? "relation" : "node";
-              activities.push({
-                id: `osm-${el.id}`,
-                title: name,
-                category,
-                venueName: tag["addr:city"] || tag["addr:suburb"] || undefined,
-                externalUrl: tag.website || tag.url || `https://www.openstreetmap.org/${elType}/${el.id}`,
-              });
-            }
-            if (activities.length > 0) break;
-          } catch (e: any) {
-            console.warn(`[nearby] Overpass mirror ${mirror} failed:`, e?.message);
-          }
-        }
-      }
-
-      // 5. Fallback: Nominatim amenity search if Overpass still returned nothing
-      if (activities.length === 0) {
+      const nmFetch = async (key: string, value: string, category: string) => {
         try {
-          const cats = [
-            { q: "museum", category: "arts" },
-            { q: "park", category: "outdoor" },
-            { q: "stadium", category: "sports" },
-            { q: "cinema", category: "entertainment" },
-            { q: "theatre", category: "arts" },
-            { q: "zoo", category: "family" },
-          ];
-          for (const { q, category } of cats) {
-            const r = await fetch(
-              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&lat=${lat}&lon=${lng}&format=json&limit=4&bounded=1&viewbox=${lng - 0.5},${lat + 0.5},${lng + 0.5},${lat - 0.5}`,
-              { headers: { "User-Agent": "MyKliq/1.0 (mykliq.app)" }, signal: AbortSignal.timeout(5000) }
-            );
-            if (!r.ok) continue;
-            const items = await r.json();
-            for (const item of items.slice(0, 4)) {
-              if (!item.display_name) continue;
-              const title = item.display_name.split(",")[0].trim();
-              activities.push({
-                id: `nm-${item.place_id}`,
-                title,
-                category,
-                externalUrl: `https://www.openstreetmap.org/${item.osm_type}/${item.osm_id}`,
-              });
+          const url = `${nmBase}?${key}=${encodeURIComponent(value)}&format=json&limit=5&bounded=1&viewbox=${viewbox}`;
+          const r = await fetch(url, { headers: nmHdrs, signal: AbortSignal.timeout(7000) });
+          if (!r.ok) return [];
+          const items: any[] = await r.json();
+          return items.map((item: any) => ({
+            id: `nm-${item.place_id}`,
+            title: item.display_name?.split(",")[0]?.trim() || "",
+            category,
+            externalUrl: item.osm_type && item.osm_id
+              ? `https://www.openstreetmap.org/${item.osm_type}/${item.osm_id}`
+              : undefined,
+          })).filter((x: any) => x.title);
+        } catch { return []; }
+      };
+
+      // Batch 1: arts & entertainment (parallel)
+      const batch1 = await Promise.all([
+        nmFetch("amenity", "museum", "arts"),
+        nmFetch("amenity", "theatre", "arts"),
+        nmFetch("amenity", "cinema", "entertainment"),
+        nmFetch("amenity", "arts_centre", "arts"),
+      ]);
+      await new Promise(r => setTimeout(r, 300));
+
+      // Batch 2: outdoor & sports (parallel)
+      const batch2 = await Promise.all([
+        nmFetch("leisure", "park", "outdoor"),
+        nmFetch("leisure", "stadium", "sports"),
+        nmFetch("tourism", "attraction", "outdoor"),
+        nmFetch("tourism", "gallery", "arts"),
+      ]);
+      await new Promise(r => setTimeout(r, 300));
+
+      // Batch 3: family & more (parallel)
+      const batch3 = await Promise.all([
+        nmFetch("tourism", "zoo", "family"),
+        nmFetch("tourism", "aquarium", "family"),
+        nmFetch("amenity", "bowling_alley", "entertainment"),
+        nmFetch("leisure", "golf_course", "outdoor"),
+      ]);
+
+      for (const batch of [batch1, batch2, batch3]) {
+        for (const results of batch) {
+          for (const item of results) {
+            if (!seen.has(item.title)) {
+              seen.add(item.title);
+              activities.push(item);
             }
-            if (activities.length >= 12) break;
           }
-        } catch (e: any) {
-          console.warn("[nearby] Nominatim fallback failed:", e?.message);
         }
       }
 
