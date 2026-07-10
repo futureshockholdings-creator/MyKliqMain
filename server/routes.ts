@@ -7731,24 +7731,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // 5. Enrich with images in parallel — three strategies per venue
-      // A: exact Wikipedia title from OSM extratags (highest confidence)
-      // B: Wikidata P18 property → Wikimedia Commons direct photo (great for venues)
-      // C: Wikipedia search API with city context (fuzzy fallback)
+      // 5. Enrich with images in parallel — two strategies per venue
+      // A: Wikipedia REST summary API using exact OSM extratag title (most reliable)
+      // B: OpenSearch to find exact article title, then REST summary (fuzzy fallback)
       const top = activities.slice(0, 20);
       const wikiHdrs = { "User-Agent": "MyKliq/1.0 (mykliq.app)" };
 
-      const getWikidataImage = async (qid: string): Promise<string | undefined> => {
+      const getWikiRestImage = async (title: string): Promise<string | undefined> => {
         try {
-          const url = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${qid}&props=claims&format=json`;
+          const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
           const r = await fetch(url, { headers: wikiHdrs, signal: AbortSignal.timeout(5000) });
           if (!r.ok) return undefined;
           const d = await r.json();
-          const p18 = d?.entities?.[qid]?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
-          if (!p18) return undefined;
-          // Wikimedia Commons thumbnail URL
-          const encoded = encodeURIComponent(p18.replace(/ /g, "_"));
-          return `https://commons.wikimedia.org/wiki/Special:FilePath/${encoded}?width=400`;
+          return d?.thumbnail?.source || d?.originalimage?.source;
         } catch { return undefined; }
       };
 
@@ -7756,33 +7751,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           let imageUrl: string | undefined;
 
-          // Strategy A — direct exact Wikipedia title from OSM extratags
+          // Strategy A — exact title from OSM extratags via Wikipedia REST summary
           if (activity.wikiTitle) {
-            const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(activity.wikiTitle)}&prop=pageimages&format=json&pithumbsize=400&redirects=1`;
-            const r = await fetch(url, { headers: wikiHdrs, signal: AbortSignal.timeout(5000) });
-            if (r.ok) {
-              const d = await r.json();
-              const page = Object.values(d?.query?.pages || {})[0] as any;
-              imageUrl = page?.thumbnail?.source;
-            }
+            imageUrl = await getWikiRestImage(activity.wikiTitle);
           }
 
-          // Strategy B — Wikidata P18 (direct venue photo from Wikimedia Commons)
-          if (!imageUrl && activity.wikidataId) {
-            imageUrl = await getWikidataImage(activity.wikidataId);
-          }
-
-          // Strategy C — Wikipedia search with city context (fuzzy)
+          // Strategy B — OpenSearch finds best matching article title, then REST summary
           if (!imageUrl) {
             const query = cityName ? `${activity.title} ${cityName}` : activity.title;
-            const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&prop=pageimages&format=json&pithumbsize=400&gsrlimit=1`;
-            const r = await fetch(url, { headers: wikiHdrs, signal: AbortSignal.timeout(5000) });
-            if (r.ok) {
-              const d = await r.json();
-              const pages = d?.query?.pages;
-              if (pages) {
-                const page = Object.values(pages)[0] as any;
-                imageUrl = page?.thumbnail?.source;
+            const searchUrl = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=1&format=json&redirects=resolve`;
+            const sr = await fetch(searchUrl, { headers: wikiHdrs, signal: AbortSignal.timeout(5000) });
+            if (sr.ok) {
+              const sd = await sr.json();
+              const exactTitle = sd?.[1]?.[0];
+              if (exactTitle) {
+                imageUrl = await getWikiRestImage(exactTitle);
               }
             }
           }
