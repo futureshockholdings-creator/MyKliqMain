@@ -7634,30 +7634,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const radiusMiles = 25;
       const radiusMeters = radiusMiles * 1609;
 
-      // 3. Ticketmaster Discovery API (optional — needs TICKETMASTER_API_KEY env var)
+      // 3. Ticketmaster Discovery API — next 24 hrs, one call per segment for category mix
       const tmKey = process.env.TICKETMASTER_API_KEY;
       if (tmKey) {
-        try {
-          const tmUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&latlong=${lat},${lng}&radius=${radiusMiles}&unit=miles&size=12&sort=date,asc&locale=*`;
-          const r = await fetch(tmUrl, { signal: AbortSignal.timeout(5000) });
-          if (r.ok) {
+        const now = new Date();
+        const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        const startDT = now.toISOString().split(".")[0] + "Z";
+        const endDT = in24h.toISOString().split(".")[0] + "Z";
+        const tmBase = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&latlong=${lat},${lng}&radius=${radiusMiles}&unit=miles&sort=date,asc&locale=*&startDateTime=${startDT}&endDateTime=${endDT}&size=5`;
+        const tmCategoryMap: Record<string, string> = { "KZFzniwnSyZfZ7v7nJ": "event", "KZFzniwnSyZfZ7v7nE": "sports", "KZFzniwnSyZfZ7v7na": "arts", "KZFzniwnSyZfZ7v7nl": "family", "KZFzniwnSyZfZ7v7n1": "entertainment" };
+        // Segment IDs: Music, Sports, Arts & Theatre, Family, Film
+        const tmSegments = [
+          { id: "KZFzniwnSyZfZ7v7nJ", cat: "event" },    // Music
+          { id: "KZFzniwnSyZfZ7v7nE", cat: "sports" },   // Sports
+          { id: "KZFzniwnSyZfZ7v7na", cat: "arts" },     // Arts & Theatre
+          { id: "KZFzniwnSyZfZ7v7nl", cat: "family" },   // Family
+          { id: "KZFzniwnSyZfZ7v7n1", cat: "entertainment" }, // Film
+        ];
+        const tmResults = await Promise.all(tmSegments.map(async (seg) => {
+          try {
+            const r = await fetch(`${tmBase}&segmentId=${seg.id}`, { signal: AbortSignal.timeout(5000) });
+            if (!r.ok) return [];
             const d = await r.json();
-            const events = d._embedded?.events || [];
-            for (const e of events) {
-              const cat = (e.classifications?.[0]?.segment?.name || "event").toLowerCase();
-              const categoryMap: Record<string, string> = { "music": "event", "sports": "sports", "arts & theatre": "arts", "family": "family", "film": "entertainment", "miscellaneous": "entertainment" };
-              activities.push({
-                id: `tm-${e.id}`,
-                title: e.name,
-                category: categoryMap[cat] || "event",
-                date: e.dates?.start?.localDate ? new Date(e.dates.start.localDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : undefined,
-                venueName: e._embedded?.venues?.[0]?.name,
-                imageUrl: e.images?.find((i: any) => i.ratio === "3_2")?.url || e.images?.[0]?.url,
-                externalUrl: e.url,
-              });
-            }
+            return (d._embedded?.events || []).map((e: any) => ({
+              id: `tm-${e.id}`,
+              title: e.name,
+              category: seg.cat,
+              date: e.dates?.start?.localDate
+                ? new Date(e.dates.start.localDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                : undefined,
+              venueName: e._embedded?.venues?.[0]?.name,
+              imageUrl: e.images?.find((i: any) => i.ratio === "3_2")?.url || e.images?.[0]?.url,
+              externalUrl: e.url,
+            }));
+          } catch { return []; }
+        }));
+        // Interleave by category so mix is even
+        const tmMax = 4;
+        for (let i = 0; i < tmMax; i++) {
+          for (const bucket of tmResults) {
+            if (bucket[i]) activities.push(bucket[i]);
           }
-        } catch {}
+        }
       }
 
       // 4. Nominatim structured amenity search — parallel batches for speed
@@ -7669,7 +7687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const nmFetch = async (key: string, value: string, category: string) => {
         try {
-          const url = `${nmBase}?${key}=${encodeURIComponent(value)}&format=json&limit=5&bounded=1&viewbox=${viewbox}&extratags=1`;
+          const url = `${nmBase}?${key}=${encodeURIComponent(value)}&format=json&limit=8&bounded=1&viewbox=${viewbox}&extratags=1`;
           const r = await fetch(url, { headers: nmHdrs, signal: AbortSignal.timeout(7000) });
           if (!r.ok) return [];
           const items: any[] = await r.json();
@@ -7731,9 +7749,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Interleave venue results by category so the carousel has a good mix
+      const tmItems = activities.filter((a: any) => a.id.startsWith("tm-"));
+      const venueItems = activities.filter((a: any) => !a.id.startsWith("tm-"));
+      const venueCats = ["sports", "entertainment", "arts", "outdoor", "family", "event"];
+      const venueBuckets: Record<string, any[]> = {};
+      for (const c of venueCats) venueBuckets[c] = [];
+      for (const v of venueItems) (venueBuckets[v.category] || venueBuckets["event"]).push(v);
+      const interleavedVenues: any[] = [];
+      let hasMore = true;
+      while (hasMore) {
+        hasMore = false;
+        for (const c of venueCats) {
+          const item = venueBuckets[c].shift();
+          if (item) { interleavedVenues.push(item); hasMore = true; }
+        }
+      }
+      const merged = [...tmItems, ...interleavedVenues];
+
       // 5. Enrich with Wikipedia images — batch calls (2 requests total, not 20+)
       // Avoids Wikipedia rate-limiting that was causing near-zero hit rate
-      const top = activities.slice(0, 20);
+      const top = merged.slice(0, 40);
       const wikiHdrs = { "User-Agent": "MyKliq/1.0 (mykliq.app)" };
 
       // Extract images from a batch MediaWiki response, returns title→imageUrl map

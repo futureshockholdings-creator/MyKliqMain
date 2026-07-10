@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, Search, ChevronLeft, ChevronRight, ExternalLink, Share2, Loader2 } from "lucide-react";
+import { MapPin, Search, ChevronLeft, ChevronRight, ExternalLink, Share2, Loader2, Plus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { getAuthToken } from "@/lib/tokenStorage";
 import { useToast } from "@/hooks/use-toast";
@@ -20,11 +20,11 @@ interface NearbyActivity {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  event: "bg-purple-100 text-purple-700",
-  outdoor: "bg-green-100 text-green-700",
-  family: "bg-yellow-100 text-yellow-700",
-  arts: "bg-pink-100 text-pink-700",
-  sports: "bg-blue-100 text-blue-700",
+  event:         "bg-purple-100 text-purple-700",
+  outdoor:       "bg-green-100 text-green-700",
+  family:        "bg-yellow-100 text-yellow-700",
+  arts:          "bg-pink-100 text-pink-700",
+  sports:        "bg-blue-100 text-blue-700",
   entertainment: "bg-orange-100 text-orange-700",
 };
 
@@ -86,6 +86,8 @@ function ActivityCardSkeleton() {
   );
 }
 
+const PAGE_SIZE = 20;
+
 export function NearbyActivitiesCarousel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -93,8 +95,9 @@ export function NearbyActivitiesCarousel() {
   const [postalInput, setPostalInput] = useState("");
   const [submittedPostal, setSubmittedPostal] = useState("");
   const [postingId, setPostingId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const { data: activities = [], isLoading, isError } = useQuery<NearbyActivity[]>({
+  const { data: allActivities = [], isLoading, isError } = useQuery<NearbyActivity[]>({
     queryKey: ["/api/nearby-activities", submittedPostal],
     queryFn: async () => {
       const token = getAuthToken();
@@ -109,6 +112,9 @@ export function NearbyActivitiesCarousel() {
     staleTime: 1000 * 60 * 10,
     retry: false,
   });
+
+  const activities = allActivities.slice(0, visibleCount);
+  const hasMore = allActivities.length > visibleCount;
 
   const postMutation = useMutation({
     mutationFn: async (activity: NearbyActivity) => {
@@ -131,7 +137,15 @@ export function NearbyActivitiesCarousel() {
   const handleSearch = () => {
     const val = postalInput.trim();
     if (!val) return;
+    setVisibleCount(PAGE_SIZE);
     setSubmittedPostal(val);
+  };
+
+  const handleShowMore = () => {
+    setVisibleCount(prev => prev + PAGE_SIZE);
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ left: scrollRef.current.scrollWidth, behavior: "smooth" });
+    }, 50);
   };
 
   const scroll = (dir: "left" | "right") => {
@@ -184,7 +198,7 @@ export function NearbyActivitiesCarousel() {
         <p className="text-sm text-gray-500 text-center py-4">Couldn't load results. Try again.</p>
       )}
 
-      {!isLoading && !isError && submittedPostal && activities.length === 0 && (
+      {!isLoading && !isError && submittedPostal && allActivities.length === 0 && (
         <div className="text-center py-6 text-gray-500">
           <MapPin className="h-8 w-8 mx-auto mb-2 opacity-40" />
           <p className="text-sm">No activities found near <strong>{submittedPostal}</strong>.</p>
@@ -219,7 +233,7 @@ export function NearbyActivitiesCarousel() {
                     }}
                   >
                     <Share2 className="h-3 w-3 mr-1" />
-                    {postingId === activity.id ? "Posting…" : "Post to Feed"}
+                    {postingId === activity.id ? "Posting…" : "Post to Headlines"}
                   </Button>
                   {activity.externalUrl && (
                     <Button size="sm" variant="outline" className="h-7 w-7 p-0 border-gray-200" asChild>
@@ -232,6 +246,19 @@ export function NearbyActivitiesCarousel() {
               </CardContent>
             </Card>
           ))}
+
+          {hasMore && (
+            <div className="flex-shrink-0 w-40 snap-start flex items-center justify-center">
+              <button
+                onClick={handleShowMore}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 hover:border-primary/40 hover:text-primary transition-colors w-full h-full min-h-[200px]"
+              >
+                <Plus className="h-6 w-6" />
+                <span className="text-xs font-medium text-center">Show More</span>
+                <span className="text-xs opacity-60">{allActivities.length - visibleCount} more</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
