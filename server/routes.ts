@@ -7681,7 +7681,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch {}
 
-      res.json(activities);
+      // Deduplicate by event ID (Ticketmaster can return the same event under multiple classifications)
+      const seen = new Set<string>();
+      const unique = activities.filter((a: any) => {
+        if (seen.has(a.id)) return false;
+        seen.add(a.id);
+        return true;
+      });
+
+      res.json(unique);
     } catch (error) {
       console.error("[nearby-activities] Error:", error);
       res.status(500).json({ message: "Failed to fetch nearby activities" });
