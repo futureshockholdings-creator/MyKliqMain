@@ -7714,7 +7714,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json(activities.slice(0, 20));
+      // 5. Enrich with Wikipedia thumbnails in parallel (best-effort)
+      const top = activities.slice(0, 20);
+      await Promise.all(top.map(async (activity) => {
+        try {
+          const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(activity.title)}&prop=pageimages&format=json&pithumbsize=400&redirects=1`;
+          const r = await fetch(wikiUrl, {
+            headers: { "User-Agent": "MyKliq/1.0 (mykliq.app)" },
+            signal: AbortSignal.timeout(4000),
+          });
+          if (!r.ok) return;
+          const d = await r.json();
+          const pages = d?.query?.pages;
+          if (!pages) return;
+          const page = Object.values(pages)[0] as any;
+          if (page?.thumbnail?.source) {
+            activity.imageUrl = page.thumbnail.source;
+          }
+        } catch {}
+      }));
+
+      res.json(top);
     } catch (error) {
       console.error("[nearby-activities] Error:", error);
       res.status(500).json({ message: "Failed to fetch nearby activities" });

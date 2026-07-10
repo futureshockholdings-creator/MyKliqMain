@@ -28,6 +28,50 @@ const CATEGORY_COLORS: Record<string, string> = {
   entertainment: "bg-orange-100 text-orange-700",
 };
 
+const CATEGORY_GRADIENTS: Record<string, string> = {
+  arts:          "from-pink-400 to-purple-500",
+  entertainment: "from-orange-400 to-rose-500",
+  outdoor:       "from-green-400 to-teal-500",
+  sports:        "from-blue-400 to-indigo-500",
+  family:        "from-yellow-400 to-orange-400",
+  event:         "from-violet-400 to-purple-500",
+};
+
+const CATEGORY_EMOJIS: Record<string, string> = {
+  arts:          "🎨",
+  entertainment: "🎬",
+  outdoor:       "🌳",
+  sports:        "🏟️",
+  family:        "🎡",
+  event:         "🎉",
+};
+
+function ActivityThumbnail({ imageUrl, category, title }: { imageUrl?: string; category: string; title: string }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const gradient = CATEGORY_GRADIENTS[category] || CATEGORY_GRADIENTS.event;
+  const emoji = CATEGORY_EMOJIS[category] || "📍";
+
+  if (imageUrl && !imgFailed) {
+    return (
+      <div className="h-32 rounded-t-xl overflow-hidden bg-gray-100">
+        <img
+          src={imageUrl}
+          alt={title}
+          className="w-full h-full object-cover"
+          onError={() => setImgFailed(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`h-32 rounded-t-xl bg-gradient-to-br ${gradient} flex flex-col items-center justify-center gap-1`}>
+      <span className="text-3xl">{emoji}</span>
+      <span className="text-white/80 text-xs font-medium capitalize">{category}</span>
+    </div>
+  );
+}
+
 function ActivityCardSkeleton() {
   return (
     <div className="flex-shrink-0 w-56 rounded-xl border border-gray-200 bg-white animate-pulse">
@@ -152,9 +196,7 @@ export function NearbyActivitiesCarousel() {
         <div ref={scrollRef} className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x">
           {activities.map((activity) => (
             <Card key={activity.id} className="flex-shrink-0 w-56 snap-start bg-white border-gray-200 hover:border-primary/50 transition-colors">
-              <div className="h-32 rounded-t-xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
-                <MapPin className="h-10 w-10 text-gray-300" />
-              </div>
+              <ActivityThumbnail imageUrl={activity.imageUrl} category={activity.category} title={activity.title} />
               <CardContent className="p-3 space-y-1.5">
                 <Badge className={`text-xs font-medium border-0 ${CATEGORY_COLORS[activity.category] || CATEGORY_COLORS.event}`}>
                   {activity.category}
