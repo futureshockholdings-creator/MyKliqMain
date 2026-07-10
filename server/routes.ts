@@ -7678,11 +7678,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // extratags.wikipedia looks like "en:Lincoln Park Zoo"
             const wikiTag: string | undefined = item.extratags?.wikipedia;
             const wikiTitle = wikiTag ? wikiTag.replace(/^[a-z]{2}:/, "") : undefined;
+            // extratags.wikidata looks like "Q1234567"
+            const wikidataId: string | undefined = item.extratags?.wikidata;
             return {
               id: `nm-${item.place_id}`,
               title,
               category,
               wikiTitle,
+              wikidataId,
               externalUrl: item.osm_type && item.osm_id
                 ? `https://www.openstreetmap.org/${item.osm_type}/${item.osm_id}`
                 : undefined,
@@ -7728,17 +7731,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // 5. Enrich with Wikipedia thumbnails in parallel (best-effort)
-      // Strategy A: use exact wikiTitle from extratags (highest confidence)
-      // Strategy B: Wikipedia search API with title + city context (fuzzy, much higher hit rate)
+      // 5. Enrich with images in parallel — three strategies per venue
+      // A: exact Wikipedia title from OSM extratags (highest confidence)
+      // B: Wikidata P18 property → Wikimedia Commons direct photo (great for venues)
+      // C: Wikipedia search API with city context (fuzzy fallback)
       const top = activities.slice(0, 20);
       const wikiHdrs = { "User-Agent": "MyKliq/1.0 (mykliq.app)" };
+
+      const getWikidataImage = async (qid: string): Promise<string | undefined> => {
+        try {
+          const url = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${qid}&props=claims&format=json`;
+          const r = await fetch(url, { headers: wikiHdrs, signal: AbortSignal.timeout(5000) });
+          if (!r.ok) return undefined;
+          const d = await r.json();
+          const p18 = d?.entities?.[qid]?.claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+          if (!p18) return undefined;
+          // Wikimedia Commons thumbnail URL
+          const encoded = encodeURIComponent(p18.replace(/ /g, "_"));
+          return `https://commons.wikimedia.org/wiki/Special:FilePath/${encoded}?width=400`;
+        } catch { return undefined; }
+      };
+
       await Promise.all(top.map(async (activity) => {
         try {
           let imageUrl: string | undefined;
 
+          // Strategy A — direct exact Wikipedia title from OSM extratags
           if (activity.wikiTitle) {
-            // Strategy A — direct exact title from OSM extratags
             const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(activity.wikiTitle)}&prop=pageimages&format=json&pithumbsize=400&redirects=1`;
             const r = await fetch(url, { headers: wikiHdrs, signal: AbortSignal.timeout(5000) });
             if (r.ok) {
@@ -7748,8 +7767,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
+          // Strategy B — Wikidata P18 (direct venue photo from Wikimedia Commons)
+          if (!imageUrl && activity.wikidataId) {
+            imageUrl = await getWikidataImage(activity.wikidataId);
+          }
+
+          // Strategy C — Wikipedia search with city context (fuzzy)
           if (!imageUrl) {
-            // Strategy B — search API with city context for fuzzy matching
             const query = cityName ? `${activity.title} ${cityName}` : activity.title;
             const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&prop=pageimages&format=json&pithumbsize=400&gsrlimit=1`;
             const r = await fetch(url, { headers: wikiHdrs, signal: AbortSignal.timeout(5000) });
