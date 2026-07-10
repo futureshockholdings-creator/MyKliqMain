@@ -7590,6 +7590,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isUsZip = /^\d{5}(-\d{4})?$/.test(clean);
       const isCanadian = /^[A-Za-z]\d[A-Za-z][\s-]?\d[A-Za-z]\d$/.test(clean);
 
+      let cityName = "";
+
       // 1. Zippopotam for US/CA — most accurate for North American codes
       if (isUsZip || isCanadian) {
         const cc = isUsZip ? "us" : "ca";
@@ -7600,6 +7602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (d.places?.[0]) {
               lat = parseFloat(d.places[0].latitude);
               lng = parseFloat(d.places[0].longitude);
+              cityName = d.places[0]["place name"] || "";
             }
           }
         } catch {}
@@ -7609,12 +7612,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (lat === null) {
         try {
           const r = await fetch(
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(clean)}&format=json&limit=1`,
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(clean)}&format=json&limit=1&addressdetails=1`,
             { headers: { "User-Agent": "MyKliq/1.0 (mykliq.app)" }, signal: AbortSignal.timeout(6000) }
           );
           if (r.ok) {
             const d = await r.json();
-            if (d[0]) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
+            if (d[0]) {
+              lat = parseFloat(d[0].lat);
+              lng = parseFloat(d[0].lon);
+              cityName = d[0].address?.city || d[0].address?.town || d[0].address?.village || "";
+            }
           }
         } catch {}
       }
@@ -7662,18 +7669,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const nmFetch = async (key: string, value: string, category: string) => {
         try {
-          const url = `${nmBase}?${key}=${encodeURIComponent(value)}&format=json&limit=5&bounded=1&viewbox=${viewbox}`;
+          const url = `${nmBase}?${key}=${encodeURIComponent(value)}&format=json&limit=5&bounded=1&viewbox=${viewbox}&extratags=1`;
           const r = await fetch(url, { headers: nmHdrs, signal: AbortSignal.timeout(7000) });
           if (!r.ok) return [];
           const items: any[] = await r.json();
-          return items.map((item: any) => ({
-            id: `nm-${item.place_id}`,
-            title: item.display_name?.split(",")[0]?.trim() || "",
-            category,
-            externalUrl: item.osm_type && item.osm_id
-              ? `https://www.openstreetmap.org/${item.osm_type}/${item.osm_id}`
-              : undefined,
-          })).filter((x: any) => x.title);
+          return items.map((item: any) => {
+            const title = item.display_name?.split(",")[0]?.trim() || "";
+            // extratags.wikipedia looks like "en:Lincoln Park Zoo"
+            const wikiTag: string | undefined = item.extratags?.wikipedia;
+            const wikiTitle = wikiTag ? wikiTag.replace(/^[a-z]{2}:/, "") : undefined;
+            return {
+              id: `nm-${item.place_id}`,
+              title,
+              category,
+              wikiTitle,
+              externalUrl: item.osm_type && item.osm_id
+                ? `https://www.openstreetmap.org/${item.osm_type}/${item.osm_id}`
+                : undefined,
+            };
+          }).filter((x: any) => x.title);
         } catch { return []; }
       };
 
@@ -7715,22 +7729,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 5. Enrich with Wikipedia thumbnails in parallel (best-effort)
+      // Strategy A: use exact wikiTitle from extratags (highest confidence)
+      // Strategy B: Wikipedia search API with title + city context (fuzzy, much higher hit rate)
       const top = activities.slice(0, 20);
+      const wikiHdrs = { "User-Agent": "MyKliq/1.0 (mykliq.app)" };
       await Promise.all(top.map(async (activity) => {
         try {
-          const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(activity.title)}&prop=pageimages&format=json&pithumbsize=400&redirects=1`;
-          const r = await fetch(wikiUrl, {
-            headers: { "User-Agent": "MyKliq/1.0 (mykliq.app)" },
-            signal: AbortSignal.timeout(4000),
-          });
-          if (!r.ok) return;
-          const d = await r.json();
-          const pages = d?.query?.pages;
-          if (!pages) return;
-          const page = Object.values(pages)[0] as any;
-          if (page?.thumbnail?.source) {
-            activity.imageUrl = page.thumbnail.source;
+          let imageUrl: string | undefined;
+
+          if (activity.wikiTitle) {
+            // Strategy A — direct exact title from OSM extratags
+            const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(activity.wikiTitle)}&prop=pageimages&format=json&pithumbsize=400&redirects=1`;
+            const r = await fetch(url, { headers: wikiHdrs, signal: AbortSignal.timeout(5000) });
+            if (r.ok) {
+              const d = await r.json();
+              const page = Object.values(d?.query?.pages || {})[0] as any;
+              imageUrl = page?.thumbnail?.source;
+            }
           }
+
+          if (!imageUrl) {
+            // Strategy B — search API with city context for fuzzy matching
+            const query = cityName ? `${activity.title} ${cityName}` : activity.title;
+            const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&prop=pageimages&format=json&pithumbsize=400&gsrlimit=1`;
+            const r = await fetch(url, { headers: wikiHdrs, signal: AbortSignal.timeout(5000) });
+            if (r.ok) {
+              const d = await r.json();
+              const pages = d?.query?.pages;
+              if (pages) {
+                const page = Object.values(pages)[0] as any;
+                imageUrl = page?.thumbnail?.source;
+              }
+            }
+          }
+
+          if (imageUrl) activity.imageUrl = imageUrl;
         } catch {}
       }));
 
