@@ -7681,11 +7681,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch {}
 
-      // Deduplicate by event ID (Ticketmaster can return the same event under multiple classifications)
-      const seen = new Set<string>();
+      // Deduplicate by both ID and normalized title
+      // (Ticketmaster sometimes lists the same event with different IDs across venues/dates)
+      const seenIds = new Set<string>();
+      const seenTitles = new Set<string>();
       const unique = activities.filter((a: any) => {
-        if (seen.has(a.id)) return false;
-        seen.add(a.id);
+        const normTitle = a.title.toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (seenIds.has(a.id) || seenTitles.has(normTitle)) return false;
+        seenIds.add(a.id);
+        seenTitles.add(normTitle);
         return true;
       });
 
