@@ -5944,19 +5944,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
       }
 
-      // Invalidate cache FIRST so the refetch triggered by the broadcast sees fresh data
-      const { invalidateCache } = await import('./cache');
-      invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
-      invalidateCache('posts'); // Invalidate posts caches (old cache system)
-      await cacheService.invalidatePattern('kliq-feed');
-
-      // Broadcast AFTER cache is clear so clients refetch and see the new post immediately
-      try {
-        (req.app as any).broadcastFeedUpdate('post');
-      } catch (broadcastError) {
-        console.error("Error broadcasting feed update:", broadcastError);
-      }
-      
       // Detect if post has a mood field and trigger mood boost generation
       if (post.mood) {
         console.log(`🎭 Detected mood post from user ${userId}: ${post.mood}`);
@@ -5976,10 +5963,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create notifications for post likes (for future likes)
-      // Note: Actual like notifications will be created when someone likes the post
-      
+      // Respond immediately — client should not wait for cache/broadcast
       res.json(post);
+
+      // Fire cache invalidation + broadcast in background (non-blocking)
+      setImmediate(async () => {
+        try {
+          const { invalidateCache } = await import('./cache');
+          invalidateCache('kliq-feed');
+          invalidateCache('posts');
+          await cacheService.invalidatePattern('kliq-feed');
+        } catch {}
+        try { (req.app as any).broadcastFeedUpdate('post'); } catch {}
+      });
     } catch (error) {
       console.error("Error creating post:", error);
       res.status(500).json({ message: "Failed to create post" });

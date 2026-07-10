@@ -133,7 +133,8 @@ export function NearbyActivitiesCarousel() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+      // Refetch immediately — server now responds before background cache/broadcast work
+      queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       toast({ title: "Posted to Headlines!", description: "Your kliq can see it now." });
       setPostingId(null);
     },

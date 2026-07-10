@@ -3607,7 +3607,10 @@ export default function Home() {
                   const isEventPost = cleanText?.includes('📅 New event:') || cleanText?.includes('✏️ Updated event:');
 
                   // Nearby-event posts: compact banner, stretched to fill (removes gray letterboxing)
-                  if (item.postType === 'nearby_event' && item.mediaUrl) {
+                  // Detect by postType OR by 🎟️ content prefix (catches older posts too)
+                  const isNearbyEvent = item.postType === 'nearby_event' ||
+                    (item.content?.startsWith('🎟️') && !!item.mediaUrl);
+                  if (isNearbyEvent && item.mediaUrl) {
                     return (
                       <div className="mb-3 rounded-lg overflow-hidden" style={{ height: '12rem' }}>
                         <img
