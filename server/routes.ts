@@ -7630,256 +7630,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json([]);
       }
 
-      const activities: any[] = [];
       const radiusMiles = 25;
-      const radiusMeters = radiusMiles * 1609;
-
-      // 3. Ticketmaster Discovery API — next 24 hrs, one call per segment for category mix
       const tmKey = process.env.TICKETMASTER_API_KEY;
-      if (tmKey) {
-        const now = new Date();
-        const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-        const startDT = now.toISOString().split(".")[0] + "Z";
-        const endDT = in24h.toISOString().split(".")[0] + "Z";
-        const tmBase = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&latlong=${lat},${lng}&radius=${radiusMiles}&unit=miles&sort=date,asc&locale=*&startDateTime=${startDT}&endDateTime=${endDT}&size=5`;
-        const tmCategoryMap: Record<string, string> = { "KZFzniwnSyZfZ7v7nJ": "event", "KZFzniwnSyZfZ7v7nE": "sports", "KZFzniwnSyZfZ7v7na": "arts", "KZFzniwnSyZfZ7v7nl": "family", "KZFzniwnSyZfZ7v7n1": "entertainment" };
-        // Segment IDs: Music, Sports, Arts & Theatre, Family, Film
-        const tmSegments = [
-          { id: "KZFzniwnSyZfZ7v7nJ", cat: "event" },    // Music
-          { id: "KZFzniwnSyZfZ7v7nE", cat: "sports" },   // Sports
-          { id: "KZFzniwnSyZfZ7v7na", cat: "arts" },     // Arts & Theatre
-          { id: "KZFzniwnSyZfZ7v7nl", cat: "family" },   // Family
-          { id: "KZFzniwnSyZfZ7v7n1", cat: "entertainment" }, // Film
-        ];
-        const tmResults = await Promise.all(tmSegments.map(async (seg) => {
-          try {
-            const r = await fetch(`${tmBase}&segmentId=${seg.id}`, { signal: AbortSignal.timeout(5000) });
-            if (!r.ok) return [];
-            const d = await r.json();
-            return (d._embedded?.events || []).map((e: any) => ({
+      if (!tmKey) {
+        return res.json([]);
+      }
+
+      // Ticketmaster Discovery API — upcoming events, one call per segment for category mix
+      // size=8 per segment × 5 segments = up to 40 results, all with official images
+      const now = new Date();
+      const in30days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const startDT = now.toISOString().split(".")[0] + "Z";
+      const endDT = in30days.toISOString().split(".")[0] + "Z";
+      const tmBase = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&latlong=${lat},${lng}&radius=${radiusMiles}&unit=miles&sort=date,asc&locale=*&startDateTime=${startDT}&endDateTime=${endDT}&size=8`;
+
+      const tmSegments = [
+        { id: "KZFzniwnSyZfZ7v7nJ", cat: "event" },         // Music
+        { id: "KZFzniwnSyZfZ7v7nE", cat: "sports" },        // Sports
+        { id: "KZFzniwnSyZfZ7v7na", cat: "arts" },          // Arts & Theatre
+        { id: "KZFzniwnSyZfZ7v7nl", cat: "family" },        // Family
+        { id: "KZFzniwnSyZfZ7v7n1", cat: "entertainment" }, // Film
+      ];
+
+      const tmResults = await Promise.all(tmSegments.map(async (seg) => {
+        try {
+          const r = await fetch(`${tmBase}&segmentId=${seg.id}`, { signal: AbortSignal.timeout(6000) });
+          if (!r.ok) return [];
+          const d = await r.json();
+          return (d._embedded?.events || []).map((e: any) => {
+            // Prefer 16:9 or 3:2 ratio, fall back to first image
+            const img = e.images?.find((i: any) => i.ratio === "16_9" && i.width >= 640)?.url
+              || e.images?.find((i: any) => i.ratio === "3_2")?.url
+              || e.images?.[0]?.url;
+            return {
               id: `tm-${e.id}`,
               title: e.name,
               category: seg.cat,
               date: e.dates?.start?.localDate
-                ? new Date(e.dates.start.localDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                ? new Date(e.dates.start.localDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
                 : undefined,
               venueName: e._embedded?.venues?.[0]?.name,
-              imageUrl: e.images?.find((i: any) => i.ratio === "3_2")?.url || e.images?.[0]?.url,
+              imageUrl: img || undefined,
               externalUrl: e.url,
-            }));
-          } catch { return []; }
-        }));
-        // Interleave by category so mix is even
-        const tmMax = 4;
-        for (let i = 0; i < tmMax; i++) {
-          for (const bucket of tmResults) {
-            if (bucket[i]) activities.push(bucket[i]);
-          }
-        }
-      }
-
-      // 4. Nominatim structured amenity search — parallel batches for speed
-      const pad = 0.4;
-      const viewbox = `${lng - pad},${lat + pad},${lng + pad},${lat - pad}`;
-      const nmBase = "https://nominatim.openstreetmap.org/search";
-      const nmHdrs = { "User-Agent": "MyKliq/1.0 (mykliq.app)" };
-      const seen = new Set<string>();
-
-      const nmFetch = async (key: string, value: string, category: string) => {
-        try {
-          const url = `${nmBase}?${key}=${encodeURIComponent(value)}&format=json&limit=8&bounded=1&viewbox=${viewbox}&extratags=1`;
-          const r = await fetch(url, { headers: nmHdrs, signal: AbortSignal.timeout(7000) });
-          if (!r.ok) return [];
-          const items: any[] = await r.json();
-          return items.map((item: any) => {
-            const title = item.display_name?.split(",")[0]?.trim() || "";
-            // extratags.wikipedia looks like "en:Lincoln Park Zoo"
-            const wikiTag: string | undefined = item.extratags?.wikipedia;
-            const wikiTitle = wikiTag ? wikiTag.replace(/^[a-z]{2}:/, "") : undefined;
-            // extratags.wikidata looks like "Q1234567"
-            const wikidataId: string | undefined = item.extratags?.wikidata;
-            return {
-              id: `nm-${item.place_id}`,
-              title,
-              category,
-              wikiTitle,
-              wikidataId,
-              externalUrl: item.osm_type && item.osm_id
-                ? `https://www.openstreetmap.org/${item.osm_type}/${item.osm_id}`
-                : undefined,
             };
-          }).filter((x: any) => x.title);
+          });
         } catch { return []; }
-      };
+      }));
 
-      // Batch 1: arts & entertainment (parallel)
-      const batch1 = await Promise.all([
-        nmFetch("amenity", "museum", "arts"),
-        nmFetch("amenity", "theatre", "arts"),
-        nmFetch("amenity", "cinema", "entertainment"),
-        nmFetch("amenity", "arts_centre", "arts"),
-      ]);
-      await new Promise(r => setTimeout(r, 300));
-
-      // Batch 2: outdoor & sports (parallel)
-      const batch2 = await Promise.all([
-        nmFetch("leisure", "park", "outdoor"),
-        nmFetch("leisure", "stadium", "sports"),
-        nmFetch("tourism", "attraction", "outdoor"),
-        nmFetch("tourism", "gallery", "arts"),
-      ]);
-      await new Promise(r => setTimeout(r, 300));
-
-      // Batch 3: family & more (parallel)
-      const batch3 = await Promise.all([
-        nmFetch("tourism", "zoo", "family"),
-        nmFetch("tourism", "aquarium", "family"),
-        nmFetch("amenity", "bowling_alley", "entertainment"),
-        nmFetch("leisure", "golf_course", "outdoor"),
-      ]);
-
-      for (const batch of [batch1, batch2, batch3]) {
-        for (const results of batch) {
-          for (const item of results) {
-            if (!seen.has(item.title)) {
-              seen.add(item.title);
-              activities.push(item);
-            }
-          }
+      // Interleave by category so the carousel has a balanced mix
+      const maxPerSeg = 8;
+      const activities: any[] = [];
+      for (let i = 0; i < maxPerSeg; i++) {
+        for (const bucket of tmResults) {
+          if (bucket[i]) activities.push(bucket[i]);
         }
       }
 
-      // Interleave venue results by category so the carousel has a good mix
-      const tmItems = activities.filter((a: any) => a.id.startsWith("tm-"));
-      const venueItems = activities.filter((a: any) => !a.id.startsWith("tm-"));
-      const venueCats = ["sports", "entertainment", "arts", "outdoor", "family", "event"];
-      const venueBuckets: Record<string, any[]> = {};
-      for (const c of venueCats) venueBuckets[c] = [];
-      for (const v of venueItems) (venueBuckets[v.category] || venueBuckets["event"]).push(v);
-      const interleavedVenues: any[] = [];
-      let hasMore = true;
-      while (hasMore) {
-        hasMore = false;
-        for (const c of venueCats) {
-          const item = venueBuckets[c].shift();
-          if (item) { interleavedVenues.push(item); hasMore = true; }
-        }
-      }
-      const merged = [...tmItems, ...interleavedVenues];
-
-      // 5. Enrich with Wikipedia images — batch calls (2 requests total, not 20+)
-      // Avoids Wikipedia rate-limiting that was causing near-zero hit rate
-      const top = merged.slice(0, 40);
-      const wikiHdrs = { "User-Agent": "MyKliq/1.0 (mykliq.app)" };
-
-      // Extract images from a batch MediaWiki response, returns title→imageUrl map
-      const parseBatchWiki = (d: any): Map<string, string> => {
-        const map = new Map<string, string>();
-        if (!d?.query?.pages) return map;
-        // Build reverse maps for normalization and redirects
-        const norm = new Map<string, string>();
-        for (const n of (d.query.normalized || [])) norm.set(n.to.toLowerCase(), n.from.toLowerCase());
-        for (const rd of (d.query.redirects || [])) norm.set(rd.to.toLowerCase(), rd.from.toLowerCase());
-        for (const page of Object.values(d.query.pages) as any[]) {
-          const img = page?.thumbnail?.source;
-          if (!img || page.missing !== undefined) continue;
-          const pt = page.title.toLowerCase();
-          map.set(pt, img);
-          const orig = norm.get(pt);
-          if (orig) map.set(orig, img);
-        }
-        return map;
-      };
-
-      // Batch 1: exact venue names (pipe-separated, single request)
-      const batchTitles1 = top.map(a => (a.wikiTitle || a.title).replace(/ /g, "_"));
-      let imgMap = new Map<string, string>();
-      try {
-        const r = await fetch(
-          `https://en.wikipedia.org/w/api.php?action=query&titles=${batchTitles1.join("|")}&prop=pageimages&pithumbsize=400&format=json&redirects=1`,
-          { headers: wikiHdrs, signal: AbortSignal.timeout(8000) }
-        );
-        if (r.ok) imgMap = parseBatchWiki(await r.json());
-      } catch {}
-
-      // Batch 2: retry misses with city context appended (one more request)
-      const misses = top.filter(a => {
-        const key = (a.wikiTitle || a.title).toLowerCase();
-        return !imgMap.has(key);
-      });
-      if (misses.length > 0 && cityName) {
-        const batchTitles2 = misses.map(a => `${(a.wikiTitle || a.title)} ${cityName}`.replace(/ /g, "_"));
-        try {
-          const r = await fetch(
-            `https://en.wikipedia.org/w/api.php?action=query&titles=${batchTitles2.join("|")}&prop=pageimages&pithumbsize=400&format=json&redirects=1`,
-            { headers: wikiHdrs, signal: AbortSignal.timeout(8000) }
-          );
-          if (r.ok) {
-            const extra = parseBatchWiki(await r.json());
-            extra.forEach((v, k) => imgMap.set(k, v));
-          }
-        } catch {}
-      }
-
-      // Apply batch-matched images first
-      for (const activity of top) {
-        const key = (activity.wikiTitle || activity.title).toLowerCase();
-        const img = imgMap.get(key) || imgMap.get(activity.title.toLowerCase());
-        if (img) activity.imageUrl = img;
-      }
-
-      // Batch 3: Wikipedia geo search — finds all nearby Wikipedia articles with photos
-      // by proximity, then fuzzy-matches to venues still missing images (2 more requests)
-      const stillMissing = top.filter((a: any) => !a.imageUrl && !a.id.startsWith("tm-"));
-      if (stillMissing.length > 0) {
-        try {
-          // Step A: geo search returns up to 50 nearby article titles + page IDs
-          const geoR = await fetch(
-            `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lng}&gsradius=15000&gslimit=50&format=json`,
-            { headers: wikiHdrs, signal: AbortSignal.timeout(7000) }
-          );
-          if (geoR.ok) {
-            const geoData = await geoR.json();
-            const geoArticles: any[] = geoData?.query?.geosearch || [];
-            if (geoArticles.length > 0) {
-              const pageIds = geoArticles.map((a: any) => a.pageid).join("|");
-              // Step B: batch fetch thumbnail images for all those articles
-              const imgR = await fetch(
-                `https://en.wikipedia.org/w/api.php?action=query&pageids=${pageIds}&prop=pageimages&pithumbsize=400&format=json`,
-                { headers: wikiHdrs, signal: AbortSignal.timeout(7000) }
-              );
-              if (imgR.ok) {
-                const imgData = await imgR.json();
-                // Build map: lowercased article title → image URL
-                const geoMap = new Map<string, string>();
-                for (const page of Object.values(imgData?.query?.pages || {}) as any[]) {
-                  if (page?.thumbnail?.source && page.title) {
-                    geoMap.set(page.title.toLowerCase(), page.thumbnail.source);
-                  }
-                }
-                // Fuzzy match: venue name words vs article title words
-                for (const activity of stillMissing) {
-                  if (activity.imageUrl) continue;
-                  const actWords = activity.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
-                  let bestImg: string | undefined;
-                  let bestScore = 0;
-                  for (const [artTitle, img] of geoMap) {
-                    const matchCount = actWords.filter((w: string) => artTitle.includes(w)).length;
-                    const score = matchCount / Math.max(actWords.length, 1);
-                    if (score > bestScore && score >= 0.5) {
-                      bestScore = score;
-                      bestImg = img;
-                    }
-                  }
-                  if (bestImg) activity.imageUrl = bestImg;
-                }
-              }
-            }
-          }
-        } catch {}
-      }
-
-      res.json(top);
+      res.json(activities.slice(0, 40));
     } catch (error) {
       console.error("[nearby-activities] Error:", error);
       res.status(500).json({ message: "Failed to fetch nearby activities" });
