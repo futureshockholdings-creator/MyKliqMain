@@ -118,10 +118,17 @@ export function NearbyActivitiesCarousel() {
 
   const postMutation = useMutation({
     mutationFn: async (activity: NearbyActivity) => {
-      const content = activity.externalUrl
-        ? `I'm checking this out 👀 ${activity.title} — ${activity.externalUrl}`
-        : `I'm checking this out 👀 ${activity.title}${activity.venueName ? ` at ${activity.venueName}` : ""}`;
-      return apiRequest("POST", "/api/posts", { content });
+      const lines: string[] = [`🎟️ ${activity.title}`];
+      if (activity.venueName) lines.push(`📍 ${activity.venueName}`);
+      if (activity.date) lines.push(`📅 ${activity.date}`);
+      if (activity.externalUrl) lines.push(`🔗 ${activity.externalUrl}`);
+      const content = lines.join("\n");
+      return apiRequest("POST", "/api/posts", {
+        content,
+        ...(activity.imageUrl
+          ? { mediaUrl: activity.imageUrl, mediaType: "image" }
+          : {}),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
