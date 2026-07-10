@@ -5944,20 +5944,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
       }
 
-      // Broadcast feed update to all connected clients
+      // Invalidate cache FIRST so the refetch triggered by the broadcast sees fresh data
+      const { invalidateCache } = await import('./cache');
+      invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
+      invalidateCache('posts'); // Invalidate posts caches (old cache system)
+      await cacheService.invalidatePattern('kliq-feed');
+
+      // Broadcast AFTER cache is clear so clients refetch and see the new post immediately
       try {
         (req.app as any).broadcastFeedUpdate('post');
       } catch (broadcastError) {
         console.error("Error broadcasting feed update:", broadcastError);
       }
-      
-      // Invalidate cache for feeds that need to show this new post
-      const { invalidateCache } = await import('./cache');
-      invalidateCache('kliq-feed'); // Invalidate all kliq feed caches (old cache system)
-      invalidateCache('posts'); // Invalidate posts caches (old cache system)
-      
-      // Also invalidate the new cache system used by performanceOptimizer
-      await cacheService.invalidatePattern('kliq-feed');
       
       // Detect if post has a mood field and trigger mood boost generation
       if (post.mood) {

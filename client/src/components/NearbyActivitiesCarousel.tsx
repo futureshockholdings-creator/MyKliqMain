@@ -118,10 +118,11 @@ export function NearbyActivitiesCarousel() {
 
   const postMutation = useMutation({
     mutationFn: async (activity: NearbyActivity) => {
+      // Keep text clean — no URL so it doesn't trigger a link preview card in the feed
       const lines: string[] = [`🎟️ ${activity.title}`];
       if (activity.venueName) lines.push(`📍 ${activity.venueName}`);
       if (activity.date) lines.push(`📅 ${activity.date}`);
-      if (activity.externalUrl) lines.push(`🔗 ${activity.externalUrl}`);
+      lines.push("Tap the ticket link to get yours! 🙌");
       const content = lines.join("\n");
       return apiRequest("POST", "/api/posts", {
         content,
