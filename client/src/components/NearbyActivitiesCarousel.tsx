@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Search, ChevronLeft, ChevronRight, ExternalLink, Share2, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { getAuthToken } from "@/lib/tokenStorage";
 import { useToast } from "@/hooks/use-toast";
 
 interface NearbyActivity {
@@ -52,8 +53,9 @@ export function NearbyActivitiesCarousel() {
   const { data: activities = [], isLoading, isError } = useQuery<NearbyActivity[]>({
     queryKey: ["/api/nearby-activities", submittedPostal],
     queryFn: async () => {
+      const token = getAuthToken();
       const res = await fetch(`/api/nearby-activities?postal=${encodeURIComponent(submittedPostal)}`, {
-        headers: { "Authorization": `Bearer ${localStorage.getItem("auth_token") || ""}` },
+        headers: token ? { "Authorization": `Bearer ${token}` } : {},
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch");
