@@ -3605,6 +3605,21 @@ export default function Home() {
                 (() => {
                   const { cleanText } = extractYouTubeUrlsFromText(item.content || '');
                   const isEventPost = cleanText?.includes('📅 New event:') || cleanText?.includes('✏️ Updated event:');
+
+                  // Nearby-event posts: compact banner, stretched to fill (removes gray letterboxing)
+                  if (item.postType === 'nearby_event' && item.mediaUrl) {
+                    return (
+                      <div className="mb-3 rounded-lg overflow-hidden" style={{ height: '12rem' }}>
+                        <img
+                          src={resolveAssetUrl(item.mediaUrl)}
+                          alt="Event"
+                          className="w-full h-full"
+                          style={{ objectFit: 'fill' }}
+                          loading="lazy"
+                        />
+                      </div>
+                    );
+                  }
                   
                   const mediaElement = (
                     <div className="mb-3 rounded-lg overflow-hidden bg-black/20">

@@ -126,6 +126,7 @@ export function NearbyActivitiesCarousel() {
       const content = lines.join("\n");
       return apiRequest("POST", "/api/posts", {
         content,
+        postType: "nearby_event",
         ...(activity.imageUrl
           ? { mediaUrl: activity.imageUrl, mediaType: "image" }
           : {}),
