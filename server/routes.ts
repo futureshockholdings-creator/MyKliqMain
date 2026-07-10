@@ -7636,36 +7636,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json([]);
       }
 
-      // Ticketmaster Discovery API — upcoming events, one call per segment for category mix
-      // size=8 per segment × 5 segments = up to 40 results, all with official images
+      // Ticketmaster Discovery API — all ticket-purchasable events within 72 hrs
+      // No segment filter = concerts, sports, museums, auctions, comedy, theatre, everything
       const now = new Date();
-      const in30days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const in72h = new Date(now.getTime() + 72 * 60 * 60 * 1000);
       const startDT = now.toISOString().split(".")[0] + "Z";
-      const endDT = in30days.toISOString().split(".")[0] + "Z";
-      const tmBase = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&latlong=${lat},${lng}&radius=${radiusMiles}&unit=miles&sort=date,asc&locale=*&startDateTime=${startDT}&endDateTime=${endDT}&size=8`;
+      const endDT = in72h.toISOString().split(".")[0] + "Z";
 
-      const tmSegments = [
-        { id: "KZFzniwnSyZfZ7v7nJ", cat: "event" },         // Music
-        { id: "KZFzniwnSyZfZ7v7nE", cat: "sports" },        // Sports
-        { id: "KZFzniwnSyZfZ7v7na", cat: "arts" },          // Arts & Theatre
-        { id: "KZFzniwnSyZfZ7v7nl", cat: "family" },        // Family
-        { id: "KZFzniwnSyZfZ7v7n1", cat: "entertainment" }, // Film
-      ];
+      const tmUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&latlong=${lat},${lng}&radius=${radiusMiles}&unit=miles&sort=date,asc&locale=*&startDateTime=${startDT}&endDateTime=${endDT}&size=40`;
 
-      const tmResults = await Promise.all(tmSegments.map(async (seg) => {
-        try {
-          const r = await fetch(`${tmBase}&segmentId=${seg.id}`, { signal: AbortSignal.timeout(6000) });
-          if (!r.ok) return [];
+      // Segment → category label mapping for badge colors
+      const segCatMap: Record<string, string> = {
+        "KZFzniwnSyZfZ7v7nJ": "event",         // Music
+        "KZFzniwnSyZfZ7v7nE": "sports",        // Sports
+        "KZFzniwnSyZfZ7v7na": "arts",          // Arts & Theatre
+        "KZFzniwnSyZfZ7v7nl": "family",        // Family
+        "KZFzniwnSyZfZ7v7n1": "entertainment", // Film/Media
+      };
+
+      let activities: any[] = [];
+      try {
+        const r = await fetch(tmUrl, { signal: AbortSignal.timeout(8000) });
+        if (r.ok) {
           const d = await r.json();
-          return (d._embedded?.events || []).map((e: any) => {
-            // Prefer 16:9 or 3:2 ratio, fall back to first image
+          activities = (d._embedded?.events || []).map((e: any) => {
+            const segId = e.classifications?.[0]?.segment?.id;
+            const category = segCatMap[segId] || "event";
+            // Prefer wide 16:9 image ≥640px, then 3:2, then first available
             const img = e.images?.find((i: any) => i.ratio === "16_9" && i.width >= 640)?.url
               || e.images?.find((i: any) => i.ratio === "3_2")?.url
               || e.images?.[0]?.url;
             return {
               id: `tm-${e.id}`,
               title: e.name,
-              category: seg.cat,
+              category,
               date: e.dates?.start?.localDate
                 ? new Date(e.dates.start.localDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
                 : undefined,
@@ -7674,19 +7678,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               externalUrl: e.url,
             };
           });
-        } catch { return []; }
-      }));
-
-      // Interleave by category so the carousel has a balanced mix
-      const maxPerSeg = 8;
-      const activities: any[] = [];
-      for (let i = 0; i < maxPerSeg; i++) {
-        for (const bucket of tmResults) {
-          if (bucket[i]) activities.push(bucket[i]);
         }
-      }
+      } catch {}
 
-      res.json(activities.slice(0, 40));
+      res.json(activities);
     } catch (error) {
       console.error("[nearby-activities] Error:", error);
       res.status(500).json({ message: "Failed to fetch nearby activities" });
