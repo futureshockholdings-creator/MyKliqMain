@@ -7731,48 +7731,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // 5. Enrich with images in parallel — two strategies per venue
-      // A: Wikipedia REST summary API using exact OSM extratag title (most reliable)
-      // B: OpenSearch to find exact article title, then REST summary (fuzzy fallback)
+      // 5. Enrich with Wikipedia images — batch calls (2 requests total, not 20+)
+      // Avoids Wikipedia rate-limiting that was causing near-zero hit rate
       const top = activities.slice(0, 20);
       const wikiHdrs = { "User-Agent": "MyKliq/1.0 (mykliq.app)" };
 
-      const getWikiRestImage = async (title: string): Promise<string | undefined> => {
-        try {
-          const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
-          const r = await fetch(url, { headers: wikiHdrs, signal: AbortSignal.timeout(5000) });
-          if (!r.ok) return undefined;
-          const d = await r.json();
-          return d?.thumbnail?.source || d?.originalimage?.source;
-        } catch { return undefined; }
+      // Extract images from a batch MediaWiki response, returns title→imageUrl map
+      const parseBatchWiki = (d: any): Map<string, string> => {
+        const map = new Map<string, string>();
+        if (!d?.query?.pages) return map;
+        // Build reverse maps for normalization and redirects
+        const norm = new Map<string, string>();
+        for (const n of (d.query.normalized || [])) norm.set(n.to.toLowerCase(), n.from.toLowerCase());
+        for (const rd of (d.query.redirects || [])) norm.set(rd.to.toLowerCase(), rd.from.toLowerCase());
+        for (const page of Object.values(d.query.pages) as any[]) {
+          const img = page?.thumbnail?.source;
+          if (!img || page.missing !== undefined) continue;
+          const pt = page.title.toLowerCase();
+          map.set(pt, img);
+          const orig = norm.get(pt);
+          if (orig) map.set(orig, img);
+        }
+        return map;
       };
 
-      await Promise.all(top.map(async (activity) => {
+      // Batch 1: exact venue names (pipe-separated, single request)
+      const batchTitles1 = top.map(a => (a.wikiTitle || a.title).replace(/ /g, "_"));
+      let imgMap = new Map<string, string>();
+      try {
+        const r = await fetch(
+          `https://en.wikipedia.org/w/api.php?action=query&titles=${batchTitles1.join("|")}&prop=pageimages&pithumbsize=400&format=json&redirects=1`,
+          { headers: wikiHdrs, signal: AbortSignal.timeout(8000) }
+        );
+        if (r.ok) imgMap = parseBatchWiki(await r.json());
+      } catch {}
+
+      // Batch 2: retry misses with city context appended (one more request)
+      const misses = top.filter(a => {
+        const key = (a.wikiTitle || a.title).toLowerCase();
+        return !imgMap.has(key);
+      });
+      if (misses.length > 0 && cityName) {
+        const batchTitles2 = misses.map(a => `${(a.wikiTitle || a.title)} ${cityName}`.replace(/ /g, "_"));
         try {
-          let imageUrl: string | undefined;
-
-          // Strategy A — exact title from OSM extratags via Wikipedia REST summary
-          if (activity.wikiTitle) {
-            imageUrl = await getWikiRestImage(activity.wikiTitle);
+          const r = await fetch(
+            `https://en.wikipedia.org/w/api.php?action=query&titles=${batchTitles2.join("|")}&prop=pageimages&pithumbsize=400&format=json&redirects=1`,
+            { headers: wikiHdrs, signal: AbortSignal.timeout(8000) }
+          );
+          if (r.ok) {
+            const extra = parseBatchWiki(await r.json());
+            extra.forEach((v, k) => imgMap.set(k, v));
           }
-
-          // Strategy B — OpenSearch finds best matching article title, then REST summary
-          if (!imageUrl) {
-            const query = cityName ? `${activity.title} ${cityName}` : activity.title;
-            const searchUrl = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=1&format=json&redirects=resolve`;
-            const sr = await fetch(searchUrl, { headers: wikiHdrs, signal: AbortSignal.timeout(5000) });
-            if (sr.ok) {
-              const sd = await sr.json();
-              const exactTitle = sd?.[1]?.[0];
-              if (exactTitle) {
-                imageUrl = await getWikiRestImage(exactTitle);
-              }
-            }
-          }
-
-          if (imageUrl) activity.imageUrl = imageUrl;
         } catch {}
-      }));
+      }
+
+      // Apply images to activities
+      for (const activity of top) {
+        const key = (activity.wikiTitle || activity.title).toLowerCase();
+        const img = imgMap.get(key) || imgMap.get(activity.title.toLowerCase());
+        if (img) activity.imageUrl = img;
+      }
 
       res.json(top);
     } catch (error) {
