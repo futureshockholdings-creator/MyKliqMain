@@ -7821,11 +7821,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch {}
       }
 
-      // Apply images to activities
+      // Apply batch-matched images first
       for (const activity of top) {
         const key = (activity.wikiTitle || activity.title).toLowerCase();
         const img = imgMap.get(key) || imgMap.get(activity.title.toLowerCase());
         if (img) activity.imageUrl = img;
+      }
+
+      // Batch 3: Wikipedia geo search — finds all nearby Wikipedia articles with photos
+      // by proximity, then fuzzy-matches to venues still missing images (2 more requests)
+      const stillMissing = top.filter((a: any) => !a.imageUrl && !a.id.startsWith("tm-"));
+      if (stillMissing.length > 0) {
+        try {
+          // Step A: geo search returns up to 50 nearby article titles + page IDs
+          const geoR = await fetch(
+            `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lng}&gsradius=15000&gslimit=50&format=json`,
+            { headers: wikiHdrs, signal: AbortSignal.timeout(7000) }
+          );
+          if (geoR.ok) {
+            const geoData = await geoR.json();
+            const geoArticles: any[] = geoData?.query?.geosearch || [];
+            if (geoArticles.length > 0) {
+              const pageIds = geoArticles.map((a: any) => a.pageid).join("|");
+              // Step B: batch fetch thumbnail images for all those articles
+              const imgR = await fetch(
+                `https://en.wikipedia.org/w/api.php?action=query&pageids=${pageIds}&prop=pageimages&pithumbsize=400&format=json`,
+                { headers: wikiHdrs, signal: AbortSignal.timeout(7000) }
+              );
+              if (imgR.ok) {
+                const imgData = await imgR.json();
+                // Build map: lowercased article title → image URL
+                const geoMap = new Map<string, string>();
+                for (const page of Object.values(imgData?.query?.pages || {}) as any[]) {
+                  if (page?.thumbnail?.source && page.title) {
+                    geoMap.set(page.title.toLowerCase(), page.thumbnail.source);
+                  }
+                }
+                // Fuzzy match: venue name words vs article title words
+                for (const activity of stillMissing) {
+                  if (activity.imageUrl) continue;
+                  const actWords = activity.title.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
+                  let bestImg: string | undefined;
+                  let bestScore = 0;
+                  for (const [artTitle, img] of geoMap) {
+                    const matchCount = actWords.filter((w: string) => artTitle.includes(w)).length;
+                    const score = matchCount / Math.max(actWords.length, 1);
+                    if (score > bestScore && score >= 0.5) {
+                      bestScore = score;
+                      bestImg = img;
+                    }
+                  }
+                  if (bestImg) activity.imageUrl = bestImg;
+                }
+              }
+            }
+          }
+        } catch {}
       }
 
       res.json(top);
