@@ -305,6 +305,34 @@ function AppContent() {
     }
   }, [isAuthenticated, isLoading, (user as any)?.analyticsConsent]);
 
+  // Force-refresh key data when app returns from background after 10+ minutes.
+  // This clears stale circuit-breaker state and overrides any cached data
+  // so users always see current posts and theme on cold open.
+  useEffect(() => {
+    let hiddenAt: number | null = null;
+    const STALE_THRESHOLD = 10 * 60 * 1000; // 10 minutes
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        hiddenAt = Date.now();
+      } else if (document.visibilityState === 'visible' && hiddenAt !== null) {
+        const hiddenDuration = Date.now() - hiddenAt;
+        if (hiddenDuration >= STALE_THRESHOLD) {
+          // App was in background long enough for data to be stale — force refetch
+          queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/user/theme'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/stories'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+        }
+        hiddenAt = null;
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   // Check if we're on a public page that doesn't require authentication
   const isPublicPage = ['/signup', '/signup/', '/privacy-policy', '/disclaimer', '/landing', '/forgot-password'].includes(currentPath);
 

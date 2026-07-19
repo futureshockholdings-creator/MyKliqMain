@@ -302,12 +302,12 @@ export function useTheme() {
     queryKey: ["/api/user/theme"],
     enabled: isAuthenticated && !authLoading, // Only fetch when authenticated
     retry: false,
-    staleTime: Infinity, // Never consider data stale
-    gcTime: Infinity, // Never garbage collect
-    refetchOnWindowFocus: false, // Don't refetch when window gains focus
-    refetchOnMount: false, // Don't refetch on component mount if data exists
-    refetchInterval: false, // Disable automatic refetching
-    refetchOnReconnect: false, // Don't refetch on reconnect
+    staleTime: 30 * 60 * 1000, // Consider stale after 30 minutes
+    gcTime: 60 * 60 * 1000,   // Keep in memory for 1 hour
+    refetchOnWindowFocus: true, // Sync theme when app comes to foreground
+    refetchOnMount: true,       // Always check for theme changes on session start
+    refetchInterval: false,
+    refetchOnReconnect: true,   // Sync theme after reconnecting
   });
 
   // Apply theme from API and cache it for future hard refreshes
