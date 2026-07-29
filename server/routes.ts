@@ -7801,30 +7801,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let activities: any[] = [];
       try {
-        const r = await fetch(tmUrl, { signal: AbortSignal.timeout(8000) });
-        if (r.ok) {
-          const d = await r.json();
-          activities = (d._embedded?.events || []).map((e: any) => {
-            const segId = e.classifications?.[0]?.segment?.id;
-            const category = segCatMap[segId] || "event";
-            // Prefer wide 16:9 image ≥640px, then 3:2, then first available
-            const img = e.images?.find((i: any) => i.ratio === "16_9" && i.width >= 640)?.url
-              || e.images?.find((i: any) => i.ratio === "3_2")?.url
-              || e.images?.[0]?.url;
-            return {
-              id: `tm-${e.id}`,
-              title: e.name,
-              category,
-              date: e.dates?.start?.localDate
-                ? new Date(e.dates.start.localDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
-                : undefined,
-              venueName: e._embedded?.venues?.[0]?.name,
-              imageUrl: img || undefined,
-              externalUrl: e.url,
-            };
-          });
+        const r = await fetch(tmUrl, { signal: AbortSignal.timeout(12000) });
+        if (r.status === 429) {
+          console.error("[nearby-activities] Ticketmaster rate limit hit (429)");
+          return res.status(503).json({ message: "Event search temporarily unavailable. Please try again in a moment." });
         }
-      } catch {}
+        if (!r.ok) {
+          const errText = await r.text().catch(() => r.statusText);
+          console.error(`[nearby-activities] Ticketmaster returned ${r.status}: ${errText}`);
+          return res.status(502).json({ message: `Event service returned an error (${r.status}). Please try again.` });
+        }
+        const d = await r.json();
+        if (d.fault || d.errors) {
+          console.error("[nearby-activities] Ticketmaster API fault:", d.fault || d.errors);
+          return res.status(502).json({ message: "Event service returned an error. Please try again." });
+        }
+        activities = (d._embedded?.events || []).map((e: any) => {
+          const segId = e.classifications?.[0]?.segment?.id;
+          const category = segCatMap[segId] || "event";
+          // Prefer wide 16:9 image ≥640px, then 3:2, then first available
+          const img = e.images?.find((i: any) => i.ratio === "16_9" && i.width >= 640)?.url
+            || e.images?.find((i: any) => i.ratio === "3_2")?.url
+            || e.images?.[0]?.url;
+          return {
+            id: `tm-${e.id}`,
+            title: e.name,
+            category,
+            date: e.dates?.start?.localDate
+              ? new Date(e.dates.start.localDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+              : undefined,
+            venueName: e._embedded?.venues?.[0]?.name,
+            imageUrl: img || undefined,
+            externalUrl: e.url,
+          };
+        });
+      } catch (fetchErr: any) {
+        const isTimeout = fetchErr?.name === "AbortError" || fetchErr?.message?.includes("abort");
+        console.error(`[nearby-activities] Ticketmaster fetch ${isTimeout ? "timed out" : "failed"}:`, fetchErr?.message);
+        return res.status(504).json({ message: isTimeout ? "Event search timed out. Please try again." : "Could not reach the event service. Please try again." });
+      }
 
       // Deduplicate by both ID and normalized title
       // (Ticketmaster sometimes lists the same event with different IDs across venues/dates)

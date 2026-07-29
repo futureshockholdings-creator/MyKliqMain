@@ -97,20 +97,28 @@ export function NearbyActivitiesCarousel() {
   const [postingId, setPostingId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  const { data: allActivities = [], isLoading, isError } = useQuery<NearbyActivity[]>({
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const { data: allActivities = [], isLoading, isError, refetch } = useQuery<NearbyActivity[]>({
     queryKey: ["/api/nearby-activities", submittedPostal],
     queryFn: async () => {
+      setErrorMessage(null);
       const token = getAuthToken();
       const res = await fetch(`/api/nearby-activities?postal=${encodeURIComponent(submittedPostal)}`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {},
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Failed to fetch");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const msg = body?.message || "Couldn't load results. Try again.";
+        setErrorMessage(msg);
+        throw new Error(msg);
+      }
       return res.json();
     },
     enabled: !!submittedPostal,
     staleTime: 1000 * 60 * 10,
-    retry: false,
+    retry: 1, // one automatic retry for transient timeouts
   });
 
   const activities = allActivities.slice(0, visibleCount);
@@ -205,7 +213,10 @@ export function NearbyActivitiesCarousel() {
       )}
 
       {isError && (
-        <p className="text-sm text-gray-500 text-center py-4">Couldn't load results. Try again.</p>
+        <div className="text-center py-4">
+          <p className="text-sm text-gray-500">{errorMessage || "Couldn't load results. Try again."}</p>
+          <button onClick={() => refetch()} className="mt-2 text-xs text-primary underline">Retry</button>
+        </div>
       )}
 
       {!isLoading && !isError && submittedPostal && allActivities.length === 0 && (
