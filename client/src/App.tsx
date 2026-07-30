@@ -125,8 +125,8 @@ function Navigation({ currentPath }: { currentPath: string }) {
 
   return (
     <>
-      {/* Left Side Navigation */}
-      <div className="fixed left-0 top-0 bottom-0 bg-card border-r-2 border-primary z-50 w-16">
+      {/* ── Left Side Navigation (mobile only, hidden on desktop) ── */}
+      <div className="fixed left-0 top-0 bottom-0 bg-card border-r-2 border-primary z-50 w-16 md:hidden">
         <div className="flex flex-col items-center py-3 h-full">
           {/* Notification Bell */}
           <button
@@ -177,6 +177,57 @@ function Navigation({ currentPath }: { currentPath: string }) {
           <div className="mt-auto mb-4 flex justify-center">
             <LanguageSelector variant="dropdown" className="max-w-16 min-w-12" />
           </div>
+        </div>
+      </div>
+
+      {/* ── Bottom Navigation Bar (desktop only, hidden on mobile) ── */}
+      <div className="hidden md:flex fixed bottom-0 left-0 right-0 h-16 bg-card border-t-2 border-primary z-50 items-center justify-around px-4">
+        {/* Notification Bell */}
+        <button
+          onClick={toggleNotificationPanel}
+          className={cn(
+            "flex flex-col items-center px-3 py-1 transition-colors rounded-lg relative min-w-12",
+            "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          )}
+          data-testid="notification-bell-desktop"
+        >
+          {getTotalUnreadCount() > 0 && (
+            <div className="absolute top-0 right-1 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
+              <span className="text-[10px] text-destructive-foreground font-bold">
+                {getTotalUnreadCount() > 99 ? "99+" : getTotalUnreadCount()}
+              </span>
+            </div>
+          )}
+          <Bell className="w-5 h-5" />
+          <span className="text-[9px] mt-0.5 whitespace-nowrap" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{t('navigation.alerts')}</span>
+        </button>
+
+        {navItems.map((item) => {
+          const isActive = currentPath === item.path;
+          return (
+            <button
+              key={item.path}
+              onClick={() => handleNavigation(item.path, item.path === "/settings")}
+              className={cn(
+                "flex flex-col items-center px-3 py-1 transition-colors rounded-lg relative min-w-12",
+                isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              )}
+              data-testid={`nav-${item.tab}-desktop`}
+            >
+              {item.badgeType && (
+                <div className="absolute top-0 right-1">
+                  <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className="h-5 w-5" />
+                </div>
+              )}
+              <item.icon className="w-5 h-5" />
+              <span className="text-[9px] mt-0.5 text-center whitespace-nowrap" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{item.label}</span>
+            </button>
+          );
+        })}
+
+        {/* Language Selector */}
+        <div className="flex items-center">
+          <LanguageSelector variant="dropdown" className="max-w-16 min-w-12" />
         </div>
       </div>
 
@@ -347,7 +398,7 @@ function AppContent() {
         {/* Main App Container with responsive margins */}
         <div className={cn(
           "min-h-screen h-screen bg-background relative",
-          isAuthenticated && !isLoading && !isPublicPage ? "ml-16 w-[calc(100vw-4rem)]" : ""
+          isAuthenticated && !isLoading && !isPublicPage ? "ml-16 w-[calc(100vw-4rem)] md:ml-0 md:w-full" : ""
         )}>
           {/* Full Screen App Container with scroll */}
           <div id="main-scroll-container" className="w-full h-full relative overflow-y-auto overflow-x-hidden">
@@ -362,7 +413,7 @@ function AppContent() {
             )}
 
             {/* Main Content with proper scrolling and mobile padding */}
-            <div className="relative z-10 min-h-full pb-20 md:pb-4">
+            <div className="relative z-10 min-h-full pb-20 md:pb-20">
               <Router />
             </div>
           </div>
