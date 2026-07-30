@@ -38,9 +38,14 @@ export const detectDevice = (): DeviceInfo => {
   let appStoreUrl: string;
   let downloadText: string;
   
-  // All devices link to the main website
-  appStoreUrl = 'https://mykliq.app';
-  downloadText = 'join MyKliq at https://mykliq.app';
+  // Android → Google Play Store; everything else (iOS, Mac, desktop) → website
+  if (isAndroid) {
+    appStoreUrl = 'https://play.google.com/store/apps/details?id=com.mykliq';
+    downloadText = 'Join MyKliq';
+  } else {
+    appStoreUrl = 'https://mykliq.app';
+    downloadText = 'Join MyKliq';
+  }
   
   return {
     isApple,
@@ -59,7 +64,7 @@ export const detectDevice = (): DeviceInfo => {
 export const getInviteMessage = (firstName: string, inviteCode: string): string => {
   const device = detectDevice();
   
-  return `${firstName} wants you to join their Kliq. Use the following Invite Code ${inviteCode} and ${device.downloadText} - "A Different Social Experience"`;
+  return `${firstName} wants you to join their Kliq. Use the following Invite Code ${inviteCode} and Join MyKliq at ${device.appStoreUrl} - "A Different Social Experience"`;
 };
 
 /**
