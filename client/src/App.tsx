@@ -11,6 +11,7 @@ import { useAppBadge } from "@/hooks/useAppBadge";
 import { useTranslation } from "react-i18next";
 import "./i18n/config"; // Initialize i18n
 import { initializeEnterpriseServices, cleanupEnterpriseServices } from "@/lib/enterprise/enterpriseInit";
+import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 import { VideoCallProvider } from "@/contexts/VideoCallContext";
 import { IncomingCallOverlay } from "@/components/IncomingCallOverlay";
 import { VideoCallScreen } from "@/components/VideoCallScreen";
@@ -356,6 +357,23 @@ function AppContent() {
     }
   }, [isAuthenticated, isLoading, (user as any)?.analyticsConsent]);
 
+  // On every cold startup, wipe the disk (IndexedDB) cache for high-churn endpoints.
+  // These endpoints are now memory-only in enterpriseFetch, but old entries written by
+  // previous sessions may still exist in IndexedDB and will be served by the SWR fallback,
+  // causing stale theme/post data until the circuit breaker recovers (the "53 days" bug).
+  useEffect(() => {
+    const clearStaleStartupCache = async () => {
+      await Promise.all([
+        enhancedCache.removeByPattern('/api/kliq-feed'),
+        enhancedCache.removeByPattern('/api/user/theme'),
+        enhancedCache.removeByPattern('/api/auth/user'),
+        enhancedCache.removeByPattern('/api/stories'),
+        enhancedCache.removeByPattern('/api/posts'),
+      ]);
+    };
+    clearStaleStartupCache().catch(() => {});
+  }, []); // runs once on mount — before any queries fire
+
   // Force-refresh key data when app returns from background after 10+ minutes.
   // This clears stale circuit-breaker state and overrides any cached data
   // so users always see current posts and theme on cold open.
@@ -369,7 +387,11 @@ function AppContent() {
       } else if (document.visibilityState === 'visible' && hiddenAt !== null) {
         const hiddenDuration = Date.now() - hiddenAt;
         if (hiddenDuration >= STALE_THRESHOLD) {
-          // App was in background long enough for data to be stale — force refetch
+          // Also clear disk cache on long background — belt-and-suspenders
+          enhancedCache.removeByPattern('/api/kliq-feed').catch(() => {});
+          enhancedCache.removeByPattern('/api/user/theme').catch(() => {});
+          enhancedCache.removeByPattern('/api/auth/user').catch(() => {});
+          // Then invalidate React Query to trigger fresh fetches
           queryClient.invalidateQueries({ queryKey: ['/api/kliq-feed'] });
           queryClient.invalidateQueries({ queryKey: ['/api/user/theme'] });
           queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });

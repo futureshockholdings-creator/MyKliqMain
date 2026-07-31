@@ -107,9 +107,24 @@ class EnhancedCache {
           this.memoryCache.set(key, diskCached);
         }
         
-        // Revalidate in background
+        // Revalidate in background — but ONLY write back to disk if the result
+        // is genuinely different from what we already have. This prevents the
+        // circuit-breaker fallback (which returns the same stale cached data as
+        // a "successful" response) from refreshing the disk TTL and locking in
+        // stale data indefinitely.
+        const staledStr = JSON.stringify(diskCached);
         fetchFn()
-          .then((fresh) => this.set(key, fresh, options))
+          .then((fresh) => {
+            if (JSON.stringify(fresh) !== staledStr) {
+              // Truly fresh data — update both tiers
+              this.set(key, fresh, options);
+            } else {
+              // Circuit-breaker returned cached data; only refresh memory, not disk
+              if (!options.skipMemory) {
+                this.memoryCache.set(key, fresh);
+              }
+            }
+          })
           .catch((err) => console.error('[EnhancedCache] Background revalidation failed:', err));
         
         return diskCached;

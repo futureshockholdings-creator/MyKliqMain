@@ -178,18 +178,27 @@ export async function enterpriseFetch<T = any>(
   // Use enhanced cache with SWR pattern for GET requests
   if (shouldCache) {
     // Notifications need real-time updates - skip ALL client-side caching
-    // This ensures alerts show within 15-25 seconds (server-side 10s cache + polling interval)
     const isNotificationEndpoint = url.includes('/api/notifications');
     // Ranking suggestions must always be fetched fresh — stale IDs cause 404 on accept/dismiss
     const isRankingEndpoint = url.includes('/api/friend-ranking');
+    // High-churn user-specific endpoints: disk caching these causes the SWR circuit-breaker
+    // feedback loop that locks in stale data indefinitely. Memory-only (5 min TTL) is correct.
+    const isHighChurnEndpoint =
+      url.includes('/api/kliq-feed') ||
+      url.includes('/api/user/theme') ||
+      url.includes('/api/auth/user') ||
+      url.includes('/api/stories') ||
+      url.includes('/api/posts');
+
     const skipAllCache = isNotificationEndpoint || isRankingEndpoint;
-    
+    const skipDiskForEndpoint = isHighChurnEndpoint;
+
     return enhancedCache.swr(
       cacheKey,
       fetchFn,
       {
         diskTTL: cacheTTL,
-        skipDisk: skipDisk || skipAllCache,
+        skipDisk: skipDisk || skipAllCache || skipDiskForEndpoint,
         skipMemory: skipAllCache,
       }
     );
