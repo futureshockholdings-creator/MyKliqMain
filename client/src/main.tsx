@@ -4,6 +4,36 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
+// ── Version-keyed cache bust ──────────────────────────────────────────────
+// Bump CACHE_VERSION whenever a fix that requires clearing stale IndexedDB
+// data is deployed. On first load after a version change, both the
+// enterprise_cache and offline_data IndexedDB stores are wiped before React
+// renders — so no stale data can ever be served by the SWR fallback.
+const CACHE_VERSION = "v3";
+const CACHE_VERSION_KEY = "mykliq_cache_version";
+
+async function bustCacheIfNeeded() {
+  try {
+    const stored = localStorage.getItem(CACHE_VERSION_KEY);
+    if (stored !== CACHE_VERSION) {
+      // Dynamically import to avoid bloating the critical path normally
+      const localforage = (await import("localforage")).default;
+      // Clear enterprise disk cache (MyKliq / enterprise_cache)
+      const enterpriseCache = localforage.createInstance({ name: "MyKliq", storeName: "enterprise_cache" });
+      await enterpriseCache.clear();
+      // Clear offline store (MyKliq_Offline / offline_data)
+      const offlineCache = localforage.createInstance({ name: "MyKliq_Offline", storeName: "offline_data" });
+      await offlineCache.clear();
+      localStorage.setItem(CACHE_VERSION_KEY, CACHE_VERSION);
+      console.log(`[CacheBust] Cleared all IndexedDB caches — updated to ${CACHE_VERSION}`);
+    }
+  } catch (e) {
+    // Never block the app from loading
+    console.warn("[CacheBust] Could not clear caches:", e);
+  }
+}
+
+
 // Aggressive favicon update
 function updateFavicon() {
   // Remove all existing favicon links
@@ -66,4 +96,8 @@ if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
   }, { passive: true });
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Block rendering until cache bust completes (typically <50ms)
+// Using .then() instead of top-level await for broadest PWA compatibility
+bustCacheIfNeeded().then(() => {
+  createRoot(document.getElementById("root")!).render(<App />);
+});

@@ -11,19 +11,14 @@ interface OfflineEntry<T> {
   userId: string | null;
 }
 
+// Only truly static / slow-changing data belongs in the offline store.
+// High-churn endpoints (feed, theme, user, stories, notifications) are
+// intentionally excluded — they caused a circuit-breaker feedback loop
+// that kept refreshing stale timestamps, serving data that was weeks old.
 const CACHEABLE_ENDPOINTS = [
-  '/api/kliq-feed',
-  '/api/auth/user',
-  '/api/friends',
-  '/api/stories',
-  '/api/user/theme',
   '/api/filters',
-  '/api/mood-boost/posts',
   '/api/memes',
   '/api/moviecons',
-  '/api/conversations',
-  '/api/group-chats',
-  '/api/notifications',
   '/api/sports/updates',
   '/api/ads/targeted',
 ];

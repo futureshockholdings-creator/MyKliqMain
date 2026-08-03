@@ -7728,33 +7728,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      let lat: number | null = null;
-      let lng: number | null = null;
-
       const clean = postal.trim().replace(/\s+/g, " ");
       const isUsZip = /^\d{5}(-\d{4})?$/.test(clean);
       const isCanadian = /^[A-Za-z]\d[A-Za-z][\s-]?\d[A-Za-z]\d$/.test(clean);
 
-      let cityName = "";
-
-      // 1. Zippopotam for US/CA — most accurate for North American codes
-      if (isUsZip || isCanadian) {
-        const cc = isUsZip ? "us" : "ca";
-        try {
-          const r = await fetch(`https://api.zippopotam.us/${cc}/${encodeURIComponent(clean.toUpperCase().replace(/\s/g, ""))}`, { signal: AbortSignal.timeout(5000) });
-          if (r.ok) {
-            const d = await r.json();
-            if (d.places?.[0]) {
-              lat = parseFloat(d.places[0].latitude);
-              lng = parseFloat(d.places[0].longitude);
-              cityName = d.places[0]["place name"] || "";
-            }
-          }
-        } catch {}
+      const tmKey = process.env.TICKETMASTER_API_KEY;
+      if (!tmKey) {
+        return res.status(500).json({ message: "Event search is not configured." });
       }
 
-      // 2. Nominatim for international / fallback
-      if (lat === null) {
+      // Ticketmaster Discovery API — all ticket-purchasable events within 72 hrs
+      const now = new Date();
+      const in72h = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+      const startDT = now.toISOString().split(".")[0] + "Z";
+      const endDT = in72h.toISOString().split(".")[0] + "Z";
+
+      // For US/CA postal codes, use Ticketmaster's native postalCode parameter —
+      // this is faster, more reliable, and eliminates the external geocoding
+      // dependency (zippopotam.us) that was causing silent failures in production.
+      // For everything else, fall back to Nominatim → lat/long.
+      let locationParam: string;
+
+      if (isUsZip || isCanadian) {
+        // Ticketmaster natively understands US ZIP and Canadian postal codes
+        const normalizedPostal = clean.toUpperCase().replace(/\s/g, "");
+        locationParam = `postalCode=${encodeURIComponent(normalizedPostal)}&countryCode=${isUsZip ? "US" : "CA"}&radius=25&unit=miles`;
+      } else {
+        // International: geocode via Nominatim then use latlong
+        let lat: number | null = null;
+        let lng: number | null = null;
         try {
           const r = await fetch(
             `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(clean)}&format=json&limit=1&addressdetails=1`,
@@ -7762,33 +7764,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
           if (r.ok) {
             const d = await r.json();
-            if (d[0]) {
-              lat = parseFloat(d[0].lat);
-              lng = parseFloat(d[0].lon);
-              cityName = d[0].address?.city || d[0].address?.town || d[0].address?.village || "";
-            }
+            if (d[0]) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
           }
         } catch {}
+        if (lat === null || lng === null) {
+          return res.status(400).json({ message: `Could not locate "${clean}". Try a zip code or city name.` });
+        }
+        locationParam = `latlong=${lat},${lng}&radius=25&unit=miles`;
       }
 
-      if (lat === null || lng === null) {
-        return res.json([]);
-      }
-
-      const radiusMiles = 25;
-      const tmKey = process.env.TICKETMASTER_API_KEY;
-      if (!tmKey) {
-        return res.json([]);
-      }
-
-      // Ticketmaster Discovery API — all ticket-purchasable events within 72 hrs
-      // No segment filter = concerts, sports, museums, auctions, comedy, theatre, everything
-      const now = new Date();
-      const in72h = new Date(now.getTime() + 72 * 60 * 60 * 1000);
-      const startDT = now.toISOString().split(".")[0] + "Z";
-      const endDT = in72h.toISOString().split(".")[0] + "Z";
-
-      const tmUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&latlong=${lat},${lng}&radius=${radiusMiles}&unit=miles&sort=date,asc&locale=*&startDateTime=${startDT}&endDateTime=${endDT}&size=40`;
+      const tmUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&${locationParam}&sort=date,asc&locale=*&startDateTime=${startDT}&endDateTime=${endDT}&size=40`;
 
       // Segment → category label mapping for badge colors
       const segCatMap: Record<string, string> = {
