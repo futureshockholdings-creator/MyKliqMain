@@ -7732,8 +7732,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isUsZip = /^\d{5}(-\d{4})?$/.test(clean);
       const isCanadian = /^[A-Za-z]\d[A-Za-z][\s-]?\d[A-Za-z]\d$/.test(clean);
 
+      console.log(`[nearby-activities] START postal="${clean}" isUsZip=${isUsZip} isCanadian=${isCanadian}`);
+
       const tmKey = process.env.TICKETMASTER_API_KEY;
       if (!tmKey) {
+        console.error("[nearby-activities] TICKETMASTER_API_KEY not set");
         return res.status(500).json({ message: "Event search is not configured." });
       }
 
@@ -7743,18 +7746,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const startDT = now.toISOString().split(".")[0] + "Z";
       const endDT = in72h.toISOString().split(".")[0] + "Z";
 
-      // For US/CA postal codes, use Ticketmaster's native postalCode parameter —
-      // this is faster, more reliable, and eliminates the external geocoding
-      // dependency (zippopotam.us) that was causing silent failures in production.
-      // For everything else, fall back to Nominatim → lat/long.
+      // Strategy: US/CA → Ticketmaster native postalCode (no external geocoding needed)
+      // International → Nominatim geocode → latlong
+      // Redundant fallback for US: if postalCode returns 0 events, retry with latlong via zippopotam
       let locationParam: string;
+      let fallbackLatLng: { lat: number; lng: number } | null = null;
 
       if (isUsZip || isCanadian) {
-        // Ticketmaster natively understands US ZIP and Canadian postal codes
         const normalizedPostal = clean.toUpperCase().replace(/\s/g, "");
-        locationParam = `postalCode=${encodeURIComponent(normalizedPostal)}&countryCode=${isUsZip ? "US" : "CA"}&radius=25&unit=miles`;
+        const cc = isUsZip ? "US" : "CA";
+        locationParam = `postalCode=${encodeURIComponent(normalizedPostal)}&countryCode=${cc}&radius=25&unit=miles`;
+        // Pre-fetch lat/lng in parallel for the fallback (fire and forget)
+        const geoUrl = `https://api.zippopotam.us/${cc.toLowerCase()}/${encodeURIComponent(normalizedPostal)}`;
+        fetch(geoUrl, { signal: AbortSignal.timeout(4000) })
+          .then(r => r.ok ? r.json() : null)
+          .then(d => {
+            if (d?.places?.[0]) {
+              fallbackLatLng = { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) };
+            }
+          })
+          .catch(() => {});
       } else {
-        // International: geocode via Nominatim then use latlong
         let lat: number | null = null;
         let lng: number | null = null;
         try {
@@ -7766,14 +7778,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const d = await r.json();
             if (d[0]) { lat = parseFloat(d[0].lat); lng = parseFloat(d[0].lon); }
           }
-        } catch {}
+        } catch (e) {
+          console.error("[nearby-activities] Nominatim geocode failed:", e);
+        }
         if (lat === null || lng === null) {
+          console.log(`[nearby-activities] Could not geocode "${clean}" — returning 400`);
           return res.status(400).json({ message: `Could not locate "${clean}". Try a zip code or city name.` });
         }
         locationParam = `latlong=${lat},${lng}&radius=25&unit=miles`;
       }
 
       const tmUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&${locationParam}&sort=date,asc&locale=*&startDateTime=${startDT}&endDateTime=${endDT}&size=40`;
+      console.log(`[nearby-activities] Calling TM with params: ${locationParam}`);
 
       // Segment → category label mapping for badge colors
       const segCatMap: Record<string, string> = {
@@ -7784,50 +7800,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "KZFzniwnSyZfZ7v7n1": "entertainment", // Film/Media
       };
 
-      let activities: any[] = [];
-      try {
-        const r = await fetch(tmUrl, { signal: AbortSignal.timeout(12000) });
-        if (r.status === 429) {
-          console.error("[nearby-activities] Ticketmaster rate limit hit (429)");
-          return res.status(503).json({ message: "Event search temporarily unavailable. Please try again in a moment." });
-        }
+      const mapEvents = (events: any[]) => events.map((e: any) => {
+        const segId = e.classifications?.[0]?.segment?.id;
+        const category = segCatMap[segId] || "event";
+        const img = e.images?.find((i: any) => i.ratio === "16_9" && i.width >= 640)?.url
+          || e.images?.find((i: any) => i.ratio === "3_2")?.url
+          || e.images?.[0]?.url;
+        return {
+          id: `tm-${e.id}`,
+          title: e.name,
+          category,
+          date: e.dates?.start?.localDate
+            ? new Date(e.dates.start.localDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+            : undefined,
+          venueName: e._embedded?.venues?.[0]?.name,
+          imageUrl: img || undefined,
+          externalUrl: e.url,
+        };
+      });
+
+      const callTicketmaster = async (url: string): Promise<{ events: any[]; status: number; error?: string }> => {
+        const r = await fetch(url, { signal: AbortSignal.timeout(12000) });
+        console.log(`[nearby-activities] TM responded: HTTP ${r.status}`);
+        if (r.status === 429) return { events: [], status: 429, error: "rate_limit" };
         if (!r.ok) {
-          const errText = await r.text().catch(() => r.statusText);
-          console.error(`[nearby-activities] Ticketmaster returned ${r.status}: ${errText}`);
-          return res.status(502).json({ message: `Event service returned an error (${r.status}). Please try again.` });
+          const txt = await r.text().catch(() => r.statusText);
+          return { events: [], status: r.status, error: txt.slice(0, 200) };
         }
         const d = await r.json();
-        if (d.fault || d.errors) {
-          console.error("[nearby-activities] Ticketmaster API fault:", d.fault || d.errors);
-          return res.status(502).json({ message: "Event service returned an error. Please try again." });
+        if (d.fault || d.errors) return { events: [], status: 502, error: JSON.stringify(d.fault || d.errors).slice(0, 200) };
+        const raw = d._embedded?.events || [];
+        console.log(`[nearby-activities] TM returned ${raw.length} raw events (page total: ${d.page?.totalElements ?? "?"})`);
+        return { events: raw, status: 200 };
+      };
+
+      let activities: any[] = [];
+      try {
+        const primary = await callTicketmaster(tmUrl);
+
+        if (primary.status === 429) {
+          return res.status(503).json({ message: "Event search temporarily unavailable. Please try again in a moment." });
         }
-        activities = (d._embedded?.events || []).map((e: any) => {
-          const segId = e.classifications?.[0]?.segment?.id;
-          const category = segCatMap[segId] || "event";
-          // Prefer wide 16:9 image ≥640px, then 3:2, then first available
-          const img = e.images?.find((i: any) => i.ratio === "16_9" && i.width >= 640)?.url
-            || e.images?.find((i: any) => i.ratio === "3_2")?.url
-            || e.images?.[0]?.url;
-          return {
-            id: `tm-${e.id}`,
-            title: e.name,
-            category,
-            date: e.dates?.start?.localDate
-              ? new Date(e.dates.start.localDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
-              : undefined,
-            venueName: e._embedded?.venues?.[0]?.name,
-            imageUrl: img || undefined,
-            externalUrl: e.url,
-          };
-        });
+        if (primary.status !== 200) {
+          console.error(`[nearby-activities] TM primary error ${primary.status}: ${primary.error}`);
+          return res.status(502).json({ message: `Event service returned an error (${primary.status}). Please try again.` });
+        }
+
+        activities = mapEvents(primary.events);
+
+        // If postalCode returned 0 events, retry with lat/lng (handles edge-case TM coverage gaps)
+        if (activities.length === 0 && fallbackLatLng) {
+          console.log(`[nearby-activities] postalCode returned 0 — retrying with latlong fallback`);
+          // Give the pre-fetch time to complete if it hasn't yet (max 500ms)
+          await new Promise(r => setTimeout(r, 500));
+          if (fallbackLatLng) {
+            const fallbackUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&latlong=${fallbackLatLng.lat},${fallbackLatLng.lng}&radius=25&unit=miles&sort=date,asc&locale=*&startDateTime=${startDT}&endDateTime=${endDT}&size=40`;
+            console.log(`[nearby-activities] Fallback URL: latlong=${fallbackLatLng.lat},${fallbackLatLng.lng}`);
+            const fallback = await callTicketmaster(fallbackUrl);
+            if (fallback.status === 200 && fallback.events.length > 0) {
+              console.log(`[nearby-activities] Fallback returned ${fallback.events.length} events`);
+              activities = mapEvents(fallback.events);
+            }
+          }
+        }
       } catch (fetchErr: any) {
         const isTimeout = fetchErr?.name === "AbortError" || fetchErr?.message?.includes("abort");
-        console.error(`[nearby-activities] Ticketmaster fetch ${isTimeout ? "timed out" : "failed"}:`, fetchErr?.message);
+        console.error(`[nearby-activities] TM fetch ${isTimeout ? "timed out" : "failed"}:`, fetchErr?.message);
         return res.status(504).json({ message: isTimeout ? "Event search timed out. Please try again." : "Could not reach the event service. Please try again." });
       }
 
-      // Deduplicate by both ID and normalized title
-      // (Ticketmaster sometimes lists the same event with different IDs across venues/dates)
+      // Deduplicate by ID and normalized title
       const seenIds = new Set<string>();
       const seenTitles = new Set<string>();
       const unique = activities.filter((a: any) => {
@@ -7838,6 +7880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return true;
       });
 
+      console.log(`[nearby-activities] Returning ${unique.length} unique events for "${clean}"`);
       res.json(unique);
     } catch (error) {
       console.error("[nearby-activities] Error:", error);
