@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mykliq-v17';
+const CACHE_NAME = 'mykliq-v18';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -36,34 +36,44 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// ── Fetch: Cache-First strategy ────────────────────────────────────────────
-// Matches the pattern described in PWABuilder / MDN service worker docs:
-// search the cache first; if found return it; if not, fetch from network,
-// cache the response, and return it.
+// ── Fetch: Cache-First for static assets, Network-Only for API ─────────────
+// API calls (/api/*) must NEVER be cached by the service worker — they are
+// handled by React Query / enterpriseFetch with their own TTL logic.
+// Caching them here caused stale API responses (e.g. empty event lists) to be
+// served indefinitely with no request ever reaching the server.
 self.addEventListener('fetch', (e) => {
+  const url = new URL(e.request.url);
+
+  // Network-only: all API calls, non-GET requests, cross-origin requests
+  if (
+    url.pathname.startsWith('/api/') ||
+    e.request.method !== 'GET' ||
+    url.origin !== self.location.origin
+  ) {
+    return; // let the browser handle it — no service worker interception
+  }
+
+  // Cache-First for static assets (HTML shell, JS, CSS, images, icons)
   e.respondWith(
     (async () => {
       // 1. Cache hit → return immediately (works offline)
       const r = await caches.match(e.request);
       if (r) return r;
 
-      // 2. Cache miss → go to the network
+      // 2. Cache miss → fetch from network and cache for next time
       try {
         const response = await fetch(e.request);
-        // Only cache successful GET responses (cache.put rejects non-GET)
-        if (e.request.method === 'GET' && response.status === 200) {
+        if (response.status === 200) {
           const cache = await caches.open(CACHE_NAME);
           cache.put(e.request, response.clone());
         }
         return response;
       } catch (_err) {
-        // Network failed (offline) and nothing in cache.
-        // Return the pre-cached offline page for navigation requests.
+        // Network failed (offline) — return offline page for navigation
         if (e.request.mode === 'navigate') {
           const offline = await caches.match('/offline.html');
           if (offline) return offline;
         }
-        // For non-navigation requests (images, scripts, etc.) just let it fail.
         throw _err;
       }
     })()
