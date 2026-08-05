@@ -7740,32 +7740,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Event search is not configured." });
       }
 
-      // Ticketmaster Discovery API — all ticket-purchasable events within 72 hrs
+      // Search window: now → 7 days out. Wider window means smaller markets
+      // still return meaningful results instead of showing nothing.
       const now = new Date();
-      const in72h = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+      const in7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       const startDT = now.toISOString().split(".")[0] + "Z";
-      const endDT = in72h.toISOString().split(".")[0] + "Z";
+      const endDT = in7d.toISOString().split(".")[0] + "Z";
 
-      // Strategy: US/CA → Ticketmaster native postalCode (no external geocoding needed)
-      // International → Nominatim geocode → latlong
-      // Redundant fallback for US: if postalCode returns 0 events, retry with latlong via zippopotam
+      // Location strategy:
+      //   US/CA → geocode via zippopotam → latlong (returns ~10x more results than
+      //            the postalCode parameter for the same area). Fall back to postalCode
+      //            if geocoding fails.
+      //   International → Nominatim geocode → latlong
       let locationParam: string;
-      let fallbackLatLng: { lat: number; lng: number } | null = null;
 
       if (isUsZip || isCanadian) {
         const normalizedPostal = clean.toUpperCase().replace(/\s/g, "");
-        const cc = isUsZip ? "US" : "CA";
-        locationParam = `postalCode=${encodeURIComponent(normalizedPostal)}&countryCode=${cc}&radius=25&unit=miles`;
-        // Pre-fetch lat/lng in parallel for the fallback (fire and forget)
-        const geoUrl = `https://api.zippopotam.us/${cc.toLowerCase()}/${encodeURIComponent(normalizedPostal)}`;
-        fetch(geoUrl, { signal: AbortSignal.timeout(4000) })
-          .then(r => r.ok ? r.json() : null)
-          .then(d => {
+        const cc = isUsZip ? "us" : "ca";
+        let lat: number | null = null;
+        let lng: number | null = null;
+        try {
+          const r = await fetch(`https://api.zippopotam.us/${cc}/${encodeURIComponent(normalizedPostal)}`, { signal: AbortSignal.timeout(5000) });
+          if (r.ok) {
+            const d = await r.json();
             if (d?.places?.[0]) {
-              fallbackLatLng = { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) };
+              lat = parseFloat(d.places[0].latitude);
+              lng = parseFloat(d.places[0].longitude);
             }
-          })
-          .catch(() => {});
+          }
+        } catch {}
+        if (lat !== null && lng !== null) {
+          locationParam = `latlong=${lat},${lng}&radius=25&unit=miles`;
+        } else {
+          // Geocoding failed — fall back to Ticketmaster's postalCode parameter
+          locationParam = `postalCode=${encodeURIComponent(normalizedPostal)}&countryCode=${cc.toUpperCase()}&radius=25&unit=miles`;
+        }
       } else {
         let lat: number | null = null;
         let lng: number | null = null;
@@ -7869,18 +7878,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(504).json({ message: isTimeout ? "Event search timed out. Please try again." : "Could not reach the event service. Please try again." });
       }
 
-      // Deduplicate by ID and normalized title
+      // Deduplicate: same TM ID is a true duplicate; same title+date+venue is the
+      // same show listed at multiple ticket tiers. Different events that happen to
+      // share a name (e.g. two separate "Comedy Night" shows on different dates)
+      // are NOT duplicates and must both appear.
       const seenIds = new Set<string>();
-      const seenTitles = new Set<string>();
+      const seenComposite = new Set<string>();
       const unique = activities.filter((a: any) => {
-        const normTitle = a.title.toLowerCase().replace(/[^a-z0-9]/g, "");
-        if (seenIds.has(a.id) || seenTitles.has(normTitle)) return false;
+        if (seenIds.has(a.id)) return false;
+        const composite = `${a.title?.toLowerCase()}|${a.date ?? ""}|${a.venueName ?? ""}`;
+        if (seenComposite.has(composite)) return false;
         seenIds.add(a.id);
-        seenTitles.add(normTitle);
+        seenComposite.add(composite);
         return true;
       });
 
-      console.log(`[nearby-activities] Returning ${unique.length} unique events for "${clean}"`);
+      console.log(`[nearby-activities] Returning ${unique.length} unique events for "${clean}" (raw: ${activities.length})`);
       res.json(unique);
     } catch (error) {
       console.error("[nearby-activities] Error:", error);
