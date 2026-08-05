@@ -7740,12 +7740,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Event search is not configured." });
       }
 
-      // Search window: now → 7 days out. Wider window means smaller markets
-      // still return meaningful results instead of showing nothing.
+      // Search window: now → 3 days out.
       const now = new Date();
-      const in7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const in3d = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
       const startDT = now.toISOString().split(".")[0] + "Z";
-      const endDT = in7d.toISOString().split(".")[0] + "Z";
+      const endDT = in3d.toISOString().split(".")[0] + "Z";
 
       // Location strategy:
       //   US/CA → geocode via zippopotam → latlong (returns ~10x more results than
