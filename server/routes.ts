@@ -54,6 +54,10 @@ const upload = multer({
 // TODO: Post-MVP - Replace with ObjectStorageService for permanent, scalable storage
 const mediaRegistry = new Map<string, { buffer: Buffer; mimetype: string; filename: string }>();
 
+// Geocoding cache — zip/postal → {lat, lng} for 24h. Avoids hammering zippopotam.us
+// on every search (free API, rate-limits unauthenticated callers after sustained use).
+const geocodeCache = new Map<string, { lat: number; lng: number; expiresAt: number }>();
+
 // Stories and messages are now database-backed - no in-memory store needed
 
 // Password setup schema
@@ -7758,16 +7762,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const cc = isUsZip ? "us" : "ca";
         let lat: number | null = null;
         let lng: number | null = null;
-        try {
-          const r = await fetch(`https://api.zippopotam.us/${cc}/${encodeURIComponent(normalizedPostal)}`, { signal: AbortSignal.timeout(5000) });
-          if (r.ok) {
-            const d = await r.json();
-            if (d?.places?.[0]) {
-              lat = parseFloat(d.places[0].latitude);
-              lng = parseFloat(d.places[0].longitude);
+
+        // Check in-memory geocode cache first (24h TTL) to avoid zippopotam rate limits
+        const cacheKey = `${cc}:${normalizedPostal}`;
+        const cached = geocodeCache.get(cacheKey);
+        if (cached && cached.expiresAt > Date.now()) {
+          lat = cached.lat;
+          lng = cached.lng;
+          console.log(`[nearby-activities] geocode cache hit for ${cacheKey}`);
+        } else {
+          try {
+            const r = await fetch(`https://api.zippopotam.us/${cc}/${encodeURIComponent(normalizedPostal)}`, { signal: AbortSignal.timeout(5000) });
+            if (r.ok) {
+              const d = await r.json();
+              if (d?.places?.[0]) {
+                lat = parseFloat(d.places[0].latitude);
+                lng = parseFloat(d.places[0].longitude);
+                geocodeCache.set(cacheKey, { lat, lng, expiresAt: Date.now() + 24 * 60 * 60 * 1000 });
+              }
             }
-          }
-        } catch {}
+          } catch {}
+        }
+
         if (lat !== null && lng !== null) {
           locationParam = `latlong=${lat},${lng}&radius=25&unit=miles`;
         } else {
@@ -7855,22 +7871,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         activities = mapEvents(primary.events);
-
-        // If postalCode returned 0 events, retry with lat/lng (handles edge-case TM coverage gaps)
-        if (activities.length === 0 && fallbackLatLng) {
-          console.log(`[nearby-activities] postalCode returned 0 — retrying with latlong fallback`);
-          // Give the pre-fetch time to complete if it hasn't yet (max 500ms)
-          await new Promise(r => setTimeout(r, 500));
-          if (fallbackLatLng) {
-            const fallbackUrl = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${tmKey}&latlong=${fallbackLatLng.lat},${fallbackLatLng.lng}&radius=25&unit=miles&sort=date,asc&locale=*&startDateTime=${startDT}&endDateTime=${endDT}&size=40`;
-            console.log(`[nearby-activities] Fallback URL: latlong=${fallbackLatLng.lat},${fallbackLatLng.lng}`);
-            const fallback = await callTicketmaster(fallbackUrl);
-            if (fallback.status === 200 && fallback.events.length > 0) {
-              console.log(`[nearby-activities] Fallback returned ${fallback.events.length} events`);
-              activities = mapEvents(fallback.events);
-            }
-          }
-        }
       } catch (fetchErr: any) {
         const isTimeout = fetchErr?.name === "AbortError" || fetchErr?.message?.includes("abort");
         console.error(`[nearby-activities] TM fetch ${isTimeout ? "timed out" : "failed"}:`, fetchErr?.message);
