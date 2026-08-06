@@ -19,9 +19,20 @@ const swPath    = path.join(distDir, 'sw.js');
 const assetsDir = path.join(distDir, 'assets');
 
 // --- collect hashed assets ---------------------------------------------------
+// Only include CSS and small JS files (< 100 KB). The main app bundle is
+// 2.4 MB and frequently causes cache.add() to time out on slow connections,
+// which aborts the entire SW install and leaves the old SW in control.
+// Large JS bundles are cached on-demand by the Cache-First fetch handler.
+const MAX_PRECACHE_BYTES = 100 * 1024; // 100 KB
 const assetFiles = fs.existsSync(assetsDir)
   ? fs.readdirSync(assetsDir)
-      .filter(f => /\.(js|css)$/.test(f))
+      .filter(f => {
+        if (!/\.(js|css)$/.test(f)) return false;
+        try {
+          const stat = fs.statSync(path.join(assetsDir, f));
+          return stat.size <= MAX_PRECACHE_BYTES;
+        } catch { return false; }
+      })
       .map(f => `/assets/${f}`)
   : [];
 

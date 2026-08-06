@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mykliq-v18';
+const CACHE_NAME = 'mykliq-v19';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -11,11 +11,20 @@ const PRECACHE_ASSETS = [
 ];
 
 // ── Install: pre-cache the app shell ───────────────────────────────────────
+// Each asset is cached individually so one failure doesn't abort the install.
+// cache.addAll() is all-or-nothing — a single slow/failed fetch kills the
+// entire install event, leaving the old (possibly broken) SW in control.
 self.addEventListener('install', (e) => {
   e.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      await cache.addAll(PRECACHE_ASSETS);
+      await Promise.allSettled(
+        PRECACHE_ASSETS.map(url =>
+          cache.add(url).catch(err =>
+            console.warn(`[SW] Failed to precache ${url}:`, err)
+          )
+        )
+      );
       await self.skipWaiting();
     })()
   );

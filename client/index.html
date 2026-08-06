@@ -18,15 +18,7 @@
 
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json" />
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js")
-          .then(() => console.log("ServiceWorker Registered"))
-          .catch(err => console.log("SW Registration Failed:", err));
-      });
-    }
-  </script>
+  <!-- SW registration is handled by registerServiceWorker.ts (loaded via main.tsx) -->
 
 
   <!-- Theme Color -->
