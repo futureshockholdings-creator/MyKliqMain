@@ -447,7 +447,7 @@ export default function Actions() {
         'Content-Type': 'application/json',
       };
       
-      const CHUNK_SIZE = 384 * 1024; // 384KB raw = ~512KB base64 per chunk
+      const CHUNK_SIZE = 1024 * 1024; // 1MB raw = ~1.33MB base64 per chunk — fewer round trips
       const arrayBuffer = await blob.arrayBuffer();
       const uint8 = new Uint8Array(arrayBuffer);
       const totalChunks = Math.ceil(uint8.length / CHUNK_SIZE);

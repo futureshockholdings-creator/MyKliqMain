@@ -8624,19 +8624,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       chunkedUploads.delete(uploadId);
 
       console.log(`[CHUNK-UPLOAD] SUCCESS: ${recordingUrl}`);
-      
-      let thumbnailUrl: string | null = null;
-      try {
-        thumbnailUrl = await thumbnailService.generateThumbnailFromVideo(recordingUrl, `action_${session.actionId}`);
-        if (thumbnailUrl) {
-          await storage.updateAction(session.actionId, { thumbnailUrl });
-          console.log(`✅ Generated thumbnail for action recording: ${session.actionId} -> ${thumbnailUrl}`);
+
+      // Respond immediately — the client has the recordingUrl and can play the video.
+      // Thumbnail generation runs in the background so the client isn't kept waiting.
+      res.json({ success: true, recordingUrl, thumbnailUrl: null });
+
+      // Background: generate thumbnail from the buffer already in memory (avoids
+      // re-downloading the video from object storage, saving 10-20s).
+      setImmediate(async () => {
+        try {
+          const thumbnailUrl = await thumbnailService.generateThumbnailFromBuffer(
+            completeBuffer, `action_${session.actionId}`
+          );
+          if (thumbnailUrl) {
+            await storage.updateAction(session.actionId, { thumbnailUrl });
+            console.log(`✅ Thumbnail generated for action ${session.actionId} -> ${thumbnailUrl}`);
+          }
+        } catch (err: any) {
+          console.error(`❌ Background thumbnail failed for action ${session.actionId}:`, err?.message);
         }
-      } catch (err: any) {
-        console.error(`❌ Thumbnail generation failed for action: ${session.actionId}`, err?.message);
-      }
-      
-      res.json({ success: true, recordingUrl, thumbnailUrl });
+      });
     } catch (error: any) {
       console.error("[CHUNK-UPLOAD] Complete error:", error?.message, error?.stack?.substring(0, 300));
       res.status(500).json({ message: "Failed to finalize upload" });

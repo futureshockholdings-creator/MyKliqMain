@@ -42,6 +42,38 @@ export class ThumbnailService {
     }
   }
 
+  /**
+   * Generate a thumbnail directly from a Buffer already in memory.
+   * Skips the re-download step that generateThumbnailFromVideo requires,
+   * saving 10-20s on recordings that were just assembled server-side.
+   */
+  async generateThumbnailFromBuffer(buffer: Buffer, movieconId: string): Promise<string | null> {
+    const tmpDir = os.tmpdir();
+    const ts = Date.now();
+    const videoLocalPath = path.join(tmpDir, `video_${movieconId}_${ts}.webm`);
+    const thumbLocalPath = path.join(tmpDir, `thumb_${movieconId}_${ts}.jpg`);
+
+    try {
+      fs.writeFileSync(videoLocalPath, buffer);
+
+      const cmd = `ffmpeg -i "${videoLocalPath}" -ss 00:00:00.100 -vframes 1 -vf "scale=400:-1" -q:v 2 "${thumbLocalPath}" -y`;
+      await execAsync(cmd);
+
+      if (!fs.existsSync(thumbLocalPath)) {
+        console.error("Thumbnail generation from buffer failed - file not created");
+        return null;
+      }
+
+      const thumbnailUrl = await this.uploadThumbnail(thumbLocalPath, movieconId);
+      this.cleanup(videoLocalPath, thumbLocalPath);
+      return thumbnailUrl;
+    } catch (error) {
+      console.error("Error generating thumbnail from buffer:", error);
+      this.cleanup(videoLocalPath, thumbLocalPath);
+      return null;
+    }
+  }
+
   private async downloadVideo(objectPath: string, localPath: string): Promise<void> {
     const file = await this.objectStorageService.getObjectEntityFile(objectPath);
     const writeStream = fs.createWriteStream(localPath);
