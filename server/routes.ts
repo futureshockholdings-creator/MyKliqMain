@@ -6108,7 +6108,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await deleteMoodBoostPostsForUser(userId, true); // true = delete ALL mood boost posts
         
         // Invalidate mood boost cache immediately so frontend sees the change
-        invalidateCache('mood-boost');
+        const { invalidateCache: invalidateMoodCache } = await import('./cache');
+        invalidateMoodCache('mood-boost');
         await cacheService.invalidatePattern('mood-boost');
         
         // Then trigger new mood boost generation asynchronously (don't wait for it)
