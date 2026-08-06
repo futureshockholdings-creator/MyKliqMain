@@ -8493,16 +8493,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chunked upload: Initialize upload session
   const chunkedUploads = new Map<string, { chunks: Buffer[], mimeType: string, actionId: string, userId: string, totalChunks: number, received: number, createdAt: number }>();
 
-  // Clean up stale chunked uploads every 5 minutes
+  // Clean up stale chunked uploads every 10 minutes.
+  // TTL is 90 minutes — a large recording (57 chunks × ~17s each) can take
+  // 15-20 minutes to upload on a slow mobile connection. The old 10-minute
+  // TTL was killing sessions before they could complete.
   setInterval(() => {
     const now = Date.now();
     for (const [key, upload] of chunkedUploads.entries()) {
-      if (now - upload.createdAt > 10 * 60 * 1000) {
+      if (now - upload.createdAt > 90 * 60 * 1000) {
         chunkedUploads.delete(key);
         console.log(`[CHUNK-UPLOAD] Cleaned up stale upload: ${key}`);
       }
     }
-  }, 5 * 60 * 1000);
+  }, 10 * 60 * 1000);
 
   app.post('/api/actions/upload-recording/init', isAuthenticated, async (req: any, res) => {
     try {

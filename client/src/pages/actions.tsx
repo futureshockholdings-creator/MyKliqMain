@@ -472,33 +472,58 @@ export default function Actions() {
       const { uploadId } = await initRes.json();
       console.log(`[RecUpload] Upload session: ${uploadId}`);
       
-      // Step 2: Send chunks sequentially
+      // Step 2: Send chunks sequentially with retry + timeout
+      const CHUNK_TIMEOUT_MS = 45_000; // 45s per chunk — plenty for slow mobile
+      const MAX_RETRIES = 3;
+
+      // Fast base64: process in 8 KB batches via String.fromCharCode.apply
+      // instead of character-by-character concatenation (which is O(n²) on
+      // immutable strings and takes 15–25s per 384 KB chunk on mobile).
+      const toBase64 = (bytes: Uint8Array): string => {
+        const BATCH = 8192;
+        let binary = '';
+        for (let j = 0; j < bytes.length; j += BATCH) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(j, j + BATCH) as unknown as number[]);
+        }
+        return btoa(binary);
+      };
+
       for (let i = 0; i < totalChunks; i++) {
         const start = i * CHUNK_SIZE;
         const end = Math.min(start + CHUNK_SIZE, uint8.length);
-        const chunkData = uint8.slice(start, end);
-        
-        // Convert to base64
-        let binary = '';
-        const chunkArray = new Uint8Array(chunkData);
-        for (let j = 0; j < chunkArray.length; j++) {
-          binary += String.fromCharCode(chunkArray[j]);
+        const base64 = toBase64(uint8.subarray(start, end));
+
+        let lastErr: Error | null = null;
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), CHUNK_TIMEOUT_MS);
+          try {
+            const chunkUrl = buildApiUrl('/api/actions/upload-recording/chunk');
+            const chunkRes = await fetch(chunkUrl, {
+              method: 'POST',
+              headers,
+              credentials: 'include',
+              body: JSON.stringify({ uploadId, chunkIndex: i, data: base64 }),
+              signal: controller.signal,
+            });
+            clearTimeout(timer);
+            if (!chunkRes.ok) {
+              const errText = await chunkRes.text().catch(() => '');
+              throw new Error(`Chunk ${i + 1}/${totalChunks} failed (${chunkRes.status}): ${errText}`);
+            }
+            lastErr = null;
+            break; // success
+          } catch (e: any) {
+            clearTimeout(timer);
+            lastErr = e;
+            const isAbort = e?.name === 'AbortError';
+            console.warn(`[RecUpload] Chunk ${i + 1}/${totalChunks} attempt ${attempt + 1} failed (${isAbort ? 'timeout' : e?.message}), ${attempt + 1 < MAX_RETRIES ? 'retrying…' : 'giving up'}`);
+            if (attempt + 1 < MAX_RETRIES) {
+              await new Promise(r => setTimeout(r, 1500 * (attempt + 1))); // back-off
+            }
+          }
         }
-        const base64 = btoa(binary);
-        
-        const chunkUrl = buildApiUrl('/api/actions/upload-recording/chunk');
-        const chunkRes = await fetch(chunkUrl, {
-          method: 'POST',
-          headers,
-          credentials: 'include',
-          body: JSON.stringify({ uploadId, chunkIndex: i, data: base64 }),
-        });
-        
-        if (!chunkRes.ok) {
-          const errText = await chunkRes.text().catch(() => '');
-          throw new Error(`Chunk ${i + 1}/${totalChunks} failed (${chunkRes.status}): ${errText}`);
-        }
-        
+        if (lastErr) throw lastErr;
         console.log(`[RecUpload] Chunk ${i + 1}/${totalChunks} sent`);
       }
       
