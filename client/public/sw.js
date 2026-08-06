@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mykliq-v19';
+const CACHE_NAME = 'mykliq-v20';
 
 const PRECACHE_ASSETS = [
   '/',
