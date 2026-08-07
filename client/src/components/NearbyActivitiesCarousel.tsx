@@ -100,14 +100,23 @@ export function NearbyActivitiesCarousel() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { data: allActivities = [], isLoading, isError, refetch } = useQuery<NearbyActivity[]>({
-    queryKey: ["/api/nearby-activities", submittedPostal],
+    // Include a minute-resolution timestamp in the query key so React Query
+    // re-fetches if the user retries after a minute, and also so the URL
+    // never matches an old service-worker cached response.
+    queryKey: ["/api/nearby-activities", submittedPostal, Math.floor(Date.now() / 60000)],
     queryFn: async () => {
       setErrorMessage(null);
       const token = getAuthToken();
-      const res = await fetch(`/api/nearby-activities?postal=${encodeURIComponent(submittedPostal)}`, {
-        headers: token ? { "Authorization": `Bearer ${token}` } : {},
-        credentials: "include",
-      });
+      // _t busts any stale service-worker or browser cache entry for this postal code
+      const bust = Date.now();
+      const res = await fetch(
+        `/api/nearby-activities?postal=${encodeURIComponent(submittedPostal)}&_t=${bust}`,
+        {
+          headers: token ? { "Authorization": `Bearer ${token}` } : {},
+          credentials: "include",
+          cache: "no-store", // skip browser HTTP cache too
+        }
+      );
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         const msg = body?.message || "Couldn't load results. Try again.";

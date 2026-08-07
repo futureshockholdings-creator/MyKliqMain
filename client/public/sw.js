@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mykliq-v20';
+const CACHE_NAME = 'mykliq-v21';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -30,7 +30,7 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// ── Activate: remove stale caches ─────────────────────────────────────────
+// ── Activate: remove stale caches + purge any /api/ entries old SWs stored ──
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
@@ -41,6 +41,14 @@ self.addEventListener('activate', (e) => {
           })
         )
       )
+      // Extra safety: scan the current cache and evict any /api/ response that
+      // a buggy older SW version may have written before the Network-Only fix.
+      .then(() => caches.open(CACHE_NAME))
+      .then(cache => cache.keys())
+      .then(requests => {
+        const apiEntries = requests.filter(r => new URL(r.url).pathname.startsWith('/api/'));
+        return Promise.all(apiEntries.map(r => caches.delete(r)));
+      })
       .then(() => self.clients.claim())
   );
 });
