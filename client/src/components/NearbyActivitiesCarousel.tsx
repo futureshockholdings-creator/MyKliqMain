@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Search, ChevronLeft, ChevronRight, ExternalLink, Share2, Loader2, Plus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { getAuthToken } from "@/lib/tokenStorage";
+import { buildApiUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 
 interface NearbyActivity {
@@ -108,15 +109,16 @@ export function NearbyActivitiesCarousel() {
       setErrorMessage(null);
       const token = getAuthToken();
       // _t busts any stale service-worker or browser cache entry for this postal code
+      // buildApiUrl ensures the request goes to the canonical API origin
+      // (api.mykliq.app in production, same-origin in dev) — never a stale
+      // hardcoded Replit preview URL that could have its own service worker.
       const bust = Date.now();
-      const res = await fetch(
-        `/api/nearby-activities?postal=${encodeURIComponent(submittedPostal)}&_t=${bust}`,
-        {
-          headers: token ? { "Authorization": `Bearer ${token}` } : {},
-          credentials: "include",
-          cache: "no-store", // skip browser HTTP cache too
-        }
-      );
+      const url = buildApiUrl(`/api/nearby-activities?postal=${encodeURIComponent(submittedPostal)}&_t=${bust}`);
+      const res = await fetch(url, {
+        headers: token ? { "Authorization": `Bearer ${token}` } : {},
+        credentials: "include",
+        cache: "no-store", // skip browser HTTP cache layer too
+      });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         const msg = body?.message || "Couldn't load results. Try again.";

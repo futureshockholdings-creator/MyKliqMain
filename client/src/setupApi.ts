@@ -1,5 +1,15 @@
 
-const API_BASE = "https://c7dd138c-576d-4490-a426-c0be6e6124ca-00-1u3lut3kqrgq6.kirk.replit.dev";
+// Use the same dynamic base URL logic as apiConfig.ts so that:
+//   - On mykliq.app (production)  → https://api.mykliq.app
+//   - On Replit / dev             → '' (same origin, no rewrite)
+//
+// The old hardcoded Replit dev-tunnel URL caused every /api/ request to land
+// on a specific Replit preview origin that had its own service worker with a
+// stale cached [] response for /api/nearby-activities. Bumping the app SW
+// never affected that foreign origin, so the cache was permanent.
+import { getApiBaseUrl } from './lib/apiConfig';
+
+const API_BASE = getApiBaseUrl();
 
 const originalFetch = window.fetch;
 
@@ -10,11 +20,11 @@ window.fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
     url = `${API_BASE}${url}`;
   }
 
-  // 👇 Ensure cookies + credentials are sent
+  // Ensure cookies + credentials are sent on every request
   init.credentials = "include";
 
   console.log("📡 Fetching:", url);
   return originalFetch(url, init);
 };
 
-console.log("✅ Global API base set to:", API_BASE);
+console.log("✅ Global API base set to:", API_BASE || "(same origin)");

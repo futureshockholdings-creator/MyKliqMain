@@ -7894,6 +7894,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       console.log(`[nearby-activities] Returning ${unique.length} unique events for "${clean}" (raw: ${activities.length})`);
+      // Prevent any intermediate cache (browser, CDN, service worker) from
+      // storing this response — results must always come from the server.
+      res.set('Cache-Control', 'no-store, private, max-age=0');
       res.json(unique);
     } catch (error) {
       console.error("[nearby-activities] Error:", error);
