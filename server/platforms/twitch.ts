@@ -1,4 +1,5 @@
 import { OAuthPlatform, OAuthTokens, SocialPost } from '../oauthService';
+import { getWebOAuthRedirectUri } from '../socialOAuthUrls';
 
 export class TwitchOAuth implements OAuthPlatform {
   private clientId: string;
@@ -8,7 +9,7 @@ export class TwitchOAuth implements OAuthPlatform {
   constructor() {
     this.clientId = process.env.TWITCH_CLIENT_ID || '';
     this.clientSecret = process.env.TWITCH_CLIENT_SECRET || '';
-    this.redirectUri = `${process.env.BASE_URL || 'https://c7dd138c-576d-4490-a426-c0be6e6124ca-00-1u3lut3kqrgq6.kirk.replit.dev'}/api/oauth/callback/twitch`;
+    this.redirectUri = getWebOAuthRedirectUri('twitch');
   }
   
   isConfigured(): boolean {
@@ -22,7 +23,8 @@ export class TwitchOAuth implements OAuthPlatform {
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
       response_type: 'code',
-      scope: 'user:read:email channel:read:subscriptions',
+      // Reading channel videos does not require subscription access.
+      scope: 'user:read:email',
       state,
     });
 

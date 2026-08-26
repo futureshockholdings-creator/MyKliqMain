@@ -26,6 +26,8 @@ import { eq, and, or, desc, sql as sqlOp, isNotNull, isNull, inArray } from "dri
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
+import { createSocialOAuthState, consumeSocialOAuthState } from "./socialOAuthStateService";
+import { getAppReturnUrl, getWebOAuthRedirectUri } from "./socialOAuthUrls";
 import { z } from "zod";
 import multer from "multer";
 import { upload as adMediaUpload, validateImage, validateVideo } from "./uploadMiddleware";
@@ -752,6 +754,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     handleReplitOAuthCallback,
     initPlatformOAuth,
     handlePlatformOAuthCallback,
+    connectMobileBluesky,
+    getMobileSocialConnections,
     disconnectPlatform
   } = await import('./oauth-mobile');
   const { generateMobileToken, verifyMobileTokenMiddleware, verifyMobileToken: verifyMobileTokenFn } = await import('./mobile-auth');
@@ -854,6 +858,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Handle platform OAuth callback
   app.post('/api/mobile/oauth/:platform/callback', handlePlatformOAuthCallback);
+
+  // Bluesky uses a member-created app password rather than OAuth.
+  app.post('/api/mobile/social/bluesky/connect', verifyMobileToken, connectMobileBluesky);
+
+  // Metadata only; never expose encrypted provider tokens to the device.
+  app.get('/api/mobile/social/connections', verifyMobileToken, getMobileSocialConnections);
 
   // Disconnect platform
   app.delete('/api/mobile/oauth/:platform/disconnect', verifyMobileToken, disconnectPlatform);
@@ -11854,20 +11864,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { platform } = req.params;
       const userId = req.user.claims.sub;
       
-      // Generate state parameter for security
-      const state = `${userId}:${platform}:${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Store state in session for verification
-      req.session.oauthState = state;
-      
-      console.log('OAuth Authorize Debug:', {
-        platform,
-        state,
-        sessionId: req.sessionID,
-        storedState: req.session.oauthState,
-        hasSession: !!req.session
-      });
-      
       // Check if OAuth credentials are configured for this platform
       const credentialMap: Record<string, { clientId: string; clientSecret: string }> = {
         instagram: { 
@@ -11902,32 +11898,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const credentials = credentialMap[platform];
       
-      // Debug: Log credential check for Pinterest
-      if (platform === 'pinterest') {
-        console.log('Pinterest credentials check:', {
-          hasCredentials: !!credentials,
-          hasClientId: !!credentials?.clientId,
-          hasClientSecret: !!credentials?.clientSecret,
-          clientIdLength: credentials?.clientId?.length,
-          clientSecretLength: credentials?.clientSecret?.length
-        });
-      }
-      
       if (!credentials || !credentials.clientId || !credentials.clientSecret) {
         return res.status(400).json({
           message: `${platform} OAuth credentials not configured. Please add ${platform.toUpperCase()}_CLIENT_ID and ${platform.toUpperCase()}_CLIENT_SECRET environment variables.`
         });
       }
-      
-      // Explicitly save session before redirecting to external OAuth provider
-      await new Promise<void>((resolve, reject) => {
-        req.session.save((err: any) => {
-          if (err) reject(err);
-          else resolve();
-        });
+
+      const returnUrl = getAppReturnUrl(req.get('origin'));
+      const state = await createSocialOAuthState({
+        userId,
+        platform,
+        returnUrl,
+        redirectUri: getWebOAuthRedirectUri(platform),
       });
-      
       const authUrl = oauthService.generateAuthUrl(platform, state);
+      if (!authUrl) {
+        return res.status(400).json({ message: `Unsupported OAuth platform: ${platform}` });
+      }
       res.json({ authUrl });
     } catch (error) {
       console.error(`Error starting OAuth for ${req.params.platform}:`, error);
@@ -11940,49 +11927,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { platform } = req.params;
       const { code, state, error, error_description } = req.query;
-      
-      console.log('OAuth Callback - All query params:', req.query);
-      
+
+      const stateValue = typeof state === 'string' ? state : '';
+      const oauthState = stateValue
+        ? await consumeSocialOAuthState(stateValue, platform)
+        : null;
+      const returnUrl = oauthState?.returnUrl || getAppReturnUrl();
+      const redirectToSettings = (status: 'connected' | 'error', message?: string, sync?: 'complete' | 'warning') => {
+        const params = new URLSearchParams({ social: status });
+        if (message) params.set('message', message);
+        if (sync) params.set('sync', sync);
+        return res.redirect(`${returnUrl}/settings?${params.toString()}`);
+      };
+
+      if (!oauthState) {
+        return redirectToSettings('error', 'invalid_or_expired_authorization');
+      }
+
       // Check for OAuth errors from the provider
       if (error) {
-        console.error('OAuth provider error:', { error, error_description });
-        return res.redirect(`/settings?social=error&message=${encodeURIComponent(error_description || error)}`);
+        console.error(`OAuth provider denied ${platform} authorization:`, error);
+        return redirectToSettings('error', String(error_description || error));
       }
-      
-      if (!code) {
-        console.error('OAuth callback missing code parameter');
-        return res.redirect('/settings?social=error&message=missing_authorization_code');
+
+      if (typeof code !== 'string' || !code) {
+        console.error(`OAuth callback missing authorization code for ${platform}`);
+        return redirectToSettings('error', 'missing_authorization_code');
       }
-      
-      // Verify state parameter
-      const sessionState = req.session?.oauthState;
-      console.log('OAuth Callback Debug:', {
-        platform,
-        receivedState: state,
-        sessionState,
-        sessionId: req.sessionID,
-        hasSession: !!req.session,
-        sessionKeys: req.session ? Object.keys(req.session) : []
-      });
-      
-      if (!sessionState || sessionState !== state) {
-        console.error('State mismatch:', { sessionState, receivedState: state });
-        return res.status(400).json({ message: "Invalid state parameter" });
-      }
-      
-      // Extract user ID from state
-      const [userId] = state.split(':');
-      
-      // Retrieve code_verifier for PKCE (if stored for this platform)
-      const codeVerifier = req.session?.pkceCodeVerifier;
-      
+
+      const userId = oauthState.userId;
       // Handle OAuth callback through service
-      const result = await oauthService.handleOAuthCallback(platform, code, state, codeVerifier);
-      
-      // Clear session state
-      delete req.session.oauthState;
-      delete req.session.pkceCodeVerifier;
-      
+      const result = await oauthService.handleOAuthCallback(platform, code, userId, oauthState.codeVerifier);
+
       if (result.success) {
         // Award Kliq Koins for first-time connection using atomic transaction
         try {
@@ -12050,14 +12026,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error('Error awarding social connection Koins:', error);
           // Don't fail the OAuth flow if Koin award fails
         }
-        
-        res.redirect('/settings?social=connected');
+
+        try {
+          const { socialSyncService } = await import('./socialSyncService');
+          const syncResult = await socialSyncService.syncUserPlatform(userId, platform, true);
+          return redirectToSettings('connected', undefined, syncResult.success ? 'complete' : 'warning');
+        } catch (syncError) {
+          console.error(`Immediate ${platform} sync failed after connection:`, syncError);
+          return redirectToSettings('connected', undefined, 'warning');
+        }
       } else {
-        res.redirect(`/settings?social=error&message=${encodeURIComponent(result.error || 'OAuth failed')}`);
+        return redirectToSettings('error', result.error || 'OAuth failed');
       }
     } catch (error) {
       console.error(`Error in OAuth callback for ${req.params.platform}:`, error);
-      res.redirect('/settings?social=error&message=callback_error');
+      return res.redirect(`${getAppReturnUrl()}/settings?social=error&message=callback_error`);
     }
   });
 
@@ -12142,37 +12125,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get aggregated external posts (includes both OAuth and Replit Connector sources)
+  // Get external posts belonging to the authenticated member only. Workspace
+  // connectors are intentionally excluded because they represent a developer
+  // account, not a member-authorized social connection.
   app.get('/api/social/posts', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const posts = await storage.getExternalPosts(userId);
-      
-      // Also fetch from Replit connectors if available
-      const connectorPosts = [];
-      
-      try {
-        const { fetchYouTubeVideos } = await import('./connectors/youtube');
-        const youtubeVideos = await fetchYouTubeVideos();
-        connectorPosts.push(...youtubeVideos);
-      } catch (error) {
-        // YouTube connector not connected, skip
-      }
-      
-      try {
-        const { fetchDiscordData } = await import('./connectors/discord');
-        const discordData = await fetchDiscordData();
-        connectorPosts.push(...discordData);
-      } catch (error) {
-        // Discord connector not connected, skip
-      }
-      
-      // Merge and sort by date
-      const allPosts = [...posts, ...connectorPosts].sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      
-      res.json(allPosts);
+      res.json(posts);
     } catch (error) {
       console.error("Error fetching external posts:", error);
       res.status(500).json({ message: "Failed to fetch external posts" });

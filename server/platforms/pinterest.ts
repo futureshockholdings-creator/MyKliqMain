@@ -1,4 +1,5 @@
 import { OAuthPlatform, OAuthTokens, SocialPost } from '../oauthService';
+import { getWebOAuthRedirectUri } from '../socialOAuthUrls';
 
 export class PinterestOAuth implements OAuthPlatform {
   private clientId: string;
@@ -8,7 +9,7 @@ export class PinterestOAuth implements OAuthPlatform {
   constructor() {
     this.clientId = process.env.PINTEREST_CLIENT_ID || '';
     this.clientSecret = process.env.PINTEREST_CLIENT_SECRET || '';
-    this.redirectUri = `${process.env.BASE_URL || 'http://localhost:5000'}/api/oauth/callback/pinterest`;
+    this.redirectUri = getWebOAuthRedirectUri('pinterest');
   }
   
   isConfigured(): boolean {

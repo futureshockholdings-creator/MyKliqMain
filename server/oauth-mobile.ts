@@ -19,9 +19,12 @@ import crypto from 'crypto';
 import * as client from 'openid-client';
 import { db } from './db';
 import { users, socialCredentials, externalPosts } from '../shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { generateMobileToken, generateCodeVerifier, generateCodeChallenge, generateOAuthState } from './mobile-auth';
 import { encryptForStorage } from './cryptoService';
+import { createSocialOAuthState, consumeSocialOAuthState } from './socialOAuthStateService';
+import { getMobileOAuthRedirectUri } from './socialOAuthUrls';
+import { BlueskyOAuth } from './platforms/bluesky';
 
 // ============================================================================
 // PKCE STATE MANAGEMENT
@@ -274,6 +277,8 @@ interface PlatformConfig {
   clientId: string;
   clientSecret?: string;
   requiresPKCE: boolean;
+  tokenAuth: 'body' | 'basic';
+  authParams?: Record<string, string>;
 }
 
 /**
@@ -288,19 +293,107 @@ function getPlatformConfig(platform: string): PlatformConfig | null {
       clientId: process.env.YOUTUBE_CLIENT_ID || '',
       clientSecret: process.env.YOUTUBE_CLIENT_SECRET,
       requiresPKCE: true,
+      tokenAuth: 'body',
+      authParams: { access_type: 'offline', prompt: 'select_account consent' },
     },
     discord: {
       authEndpoint: 'https://discord.com/api/oauth2/authorize',
       tokenEndpoint: 'https://discord.com/api/oauth2/token',
-      scope: 'identify guilds',
+      scope: 'identify email guilds guilds.members.read',
       clientId: process.env.DISCORD_CLIENT_ID || '',
       clientSecret: process.env.DISCORD_CLIENT_SECRET,
-      requiresPKCE: false,
+      requiresPKCE: true,
+      tokenAuth: 'body',
     },
-    // Add more platforms as needed
+    twitch: {
+      authEndpoint: 'https://id.twitch.tv/oauth2/authorize',
+      tokenEndpoint: 'https://id.twitch.tv/oauth2/token',
+      scope: 'user:read:email',
+      clientId: process.env.TWITCH_CLIENT_ID || '',
+      clientSecret: process.env.TWITCH_CLIENT_SECRET,
+      requiresPKCE: true,
+      tokenAuth: 'body',
+    },
+    reddit: {
+      authEndpoint: 'https://www.reddit.com/api/v1/authorize',
+      tokenEndpoint: 'https://www.reddit.com/api/v1/access_token',
+      scope: 'identity read history',
+      clientId: process.env.REDDIT_CLIENT_ID || '',
+      clientSecret: process.env.REDDIT_CLIENT_SECRET,
+      requiresPKCE: false,
+      tokenAuth: 'basic',
+      authParams: { duration: 'permanent' },
+    },
+    pinterest: {
+      authEndpoint: 'https://www.pinterest.com/oauth/',
+      tokenEndpoint: 'https://api.pinterest.com/v5/oauth/token',
+      scope: 'boards:read,pins:read,user_accounts:read',
+      clientId: process.env.PINTEREST_CLIENT_ID || '',
+      clientSecret: process.env.PINTEREST_CLIENT_SECRET,
+      requiresPKCE: false,
+      tokenAuth: 'basic',
+    },
   };
 
   return configs[platform] || null;
+}
+
+async function getMobilePlatformIdentity(
+  platform: string,
+  accessToken: string,
+  clientId: string,
+): Promise<{ id: string; username: string }> {
+  let response: globalThis.Response;
+
+  switch (platform) {
+    case 'youtube': {
+      response = await fetch('https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) break;
+      const data = await response.json();
+      const channel = data.items?.[0];
+      if (!channel?.id || !channel.snippet?.title) throw new Error('No YouTube channel found for this account');
+      return { id: channel.id, username: channel.snippet.title };
+    }
+    case 'discord': {
+      response = await fetch('https://discord.com/api/users/@me', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) break;
+      const data = await response.json();
+      return { id: data.id, username: data.global_name || data.username };
+    }
+    case 'twitch': {
+      response = await fetch('https://api.twitch.tv/helix/users', {
+        headers: { Authorization: `Bearer ${accessToken}`, 'Client-Id': clientId },
+      });
+      if (!response.ok) break;
+      const data = await response.json();
+      const user = data.data?.[0];
+      return { id: user.id, username: user.display_name || user.login };
+    }
+    case 'reddit': {
+      response = await fetch('https://oauth.reddit.com/api/v1/me', {
+        headers: { Authorization: `Bearer ${accessToken}`, 'User-Agent': 'MyKliq/1.0' },
+      });
+      if (!response.ok) break;
+      const data = await response.json();
+      return { id: data.id || data.name, username: data.name };
+    }
+    case 'pinterest': {
+      response = await fetch('https://api.pinterest.com/v5/user_account', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) break;
+      const data = await response.json();
+      return { id: data.id, username: data.username || data.account_type || data.id };
+    }
+    default:
+      throw new Error(`Unsupported platform: ${platform}`);
+  }
+
+  throw new Error(`Could not identify the connected ${platform} account`);
 }
 
 /**
@@ -321,7 +414,7 @@ export async function initPlatformOAuth(req: Request, res: Response): Promise<vo
     if (!config) {
       res.status(400).json({ 
         success: false,
-        message: `Unsupported platform: ${platform}. Supported: youtube, discord, bluesky` 
+          message: `Unsupported platform: ${platform}. Supported: youtube, twitch, discord, reddit, pinterest`
       });
       return;
     }
@@ -334,19 +427,21 @@ export async function initPlatformOAuth(req: Request, res: Response): Promise<vo
       return;
     }
 
-    // Use provided redirect URI or fall back to environment variable
-    const oauthRedirectUri = redirectUri || process.env.MOBILE_OAUTH_REDIRECT_URI || 'myapp://oauth/callback';
+    const oauthRedirectUri = getMobileOAuthRedirectUri();
+    if (redirectUri && redirectUri !== oauthRedirectUri) {
+      res.status(400).json({ success: false, message: 'Invalid mobile redirect URI' });
+      return;
+    }
 
     // Generate PKCE parameters (if required)
     const codeVerifier = config.requiresPKCE ? generateCodeVerifier() : '';
     const codeChallenge = config.requiresPKCE ? generateCodeChallenge(codeVerifier) : '';
-    const state = generateOAuthState();
-
-    // Store state for verification
-    storeOAuthState(state, {
+    const state = await createSocialOAuthState({
       userId,
+      platform,
+      returnUrl: oauthRedirectUri,
+      redirectUri: oauthRedirectUri,
       codeVerifier,
-      provider: platform,
     });
 
     // Build authorization URL
@@ -356,6 +451,9 @@ export async function initPlatformOAuth(req: Request, res: Response): Promise<vo
     authUrl.searchParams.set('redirect_uri', oauthRedirectUri);
     authUrl.searchParams.set('scope', config.scope);
     authUrl.searchParams.set('state', state);
+    for (const [key, value] of Object.entries(config.authParams || {})) {
+      authUrl.searchParams.set(key, value);
+    }
     
     if (config.requiresPKCE) {
       authUrl.searchParams.set('code_challenge', codeChallenge);
@@ -389,7 +487,7 @@ export async function initPlatformOAuth(req: Request, res: Response): Promise<vo
 export async function handlePlatformOAuthCallback(req: Request, res: Response): Promise<void> {
   try {
     const { platform } = req.params;
-    const { code, state, redirectUri } = req.body;
+    const { code, state } = req.body;
 
     if (!code || !state) {
       res.status(400).json({ 
@@ -400,8 +498,8 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
     }
 
     // Verify and consume state
-    const oauthState = consumeOAuthState(state);
-    if (!oauthState || oauthState.provider !== platform) {
+    const oauthState = await consumeSocialOAuthState(state, platform);
+    if (!oauthState) {
       res.status(400).json({ 
         success: false,
         message: 'Invalid or expired OAuth state' 
@@ -426,17 +524,16 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
       return;
     }
 
-    // Use provided redirect URI or fall back to environment variable
-    const oauthRedirectUri = redirectUri || process.env.MOBILE_OAUTH_REDIRECT_URI || 'myapp://oauth/callback';
-
     // Exchange code for tokens
     const tokenParams = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      redirect_uri: oauthRedirectUri,
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
+      redirect_uri: oauthState.redirectUri,
     });
+    if (config.tokenAuth === 'body') {
+      tokenParams.set('client_id', config.clientId);
+      tokenParams.set('client_secret', config.clientSecret);
+    }
 
     if (config.requiresPKCE && oauthState.codeVerifier) {
       tokenParams.set('code_verifier', oauthState.codeVerifier);
@@ -446,6 +543,9 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        ...(config.tokenAuth === 'basic'
+          ? { Authorization: `Basic ${Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')}` }
+          : {}),
       },
       body: tokenParams,
     });
@@ -471,6 +571,8 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
       return;
     }
 
+    const identity = await getMobilePlatformIdentity(platform, tokens.access_token, config.clientId);
+
     // Encrypt tokens for secure storage
     const encryptedAccessToken = encryptForStorage(tokens.access_token);
     const encryptedRefreshToken = tokens.refresh_token 
@@ -482,8 +584,8 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
       .values({
         userId: oauthState.userId!,
         platform,
-        platformUserId: tokens.user_id || 'unknown',
-        platformUsername: tokens.username || platform,
+        platformUserId: identity.id,
+        platformUsername: identity.username,
         encryptedAccessToken,
         encryptedRefreshToken: encryptedRefreshToken || undefined,
         tokenExpiresAt: tokens.expires_in 
@@ -491,18 +593,21 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
           : undefined,
         scopes: config.scope.split(' '),
         isActive: true,
-        lastSyncAt: new Date(),
+        lastSyncAt: null,
       })
       .onConflictDoUpdate({
         target: [socialCredentials.userId, socialCredentials.platform],
         set: {
           encryptedAccessToken,
-          encryptedRefreshToken: encryptedRefreshToken || undefined,
+          encryptedRefreshToken: encryptedRefreshToken
+            || sql`COALESCE(excluded.encrypted_refresh_token, ${socialCredentials.encryptedRefreshToken})`,
+          platformUserId: identity.id,
+          platformUsername: identity.username,
           tokenExpiresAt: tokens.expires_in 
             ? new Date(Date.now() + tokens.expires_in * 1000)
             : undefined,
           isActive: true,
-          lastSyncAt: new Date(),
+          lastSyncAt: null,
           updatedAt: new Date(),
         },
       })
@@ -579,9 +684,20 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
       // Don't fail the OAuth flow if Koin award fails
     }
 
+    let syncWarning = false;
+    try {
+      const { socialSyncService } = await import('./socialSyncService');
+      const syncResult = await socialSyncService.syncUserPlatform(oauthState.userId, platform, true);
+      syncWarning = !syncResult.success;
+    } catch (syncError) {
+      console.error(`Immediate ${platform} mobile sync failed:`, syncError);
+      syncWarning = true;
+    }
+
     res.json({
       success: true,
       koinsAwarded,
+      syncWarning,
       account: {
         id: account.id,
         platform: account.platform,
@@ -595,6 +711,96 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
       success: false,
       message: 'Failed to complete OAuth flow' 
     });
+  }
+}
+
+export async function connectMobileBluesky(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = (req as any).userId;
+    const { handle, appPassword } = req.body;
+    if (!handle || !appPassword) {
+      res.status(400).json({ success: false, message: 'Bluesky handle and app password are required' });
+      return;
+    }
+
+    const bluesky = new BlueskyOAuth();
+    const { tokens, userInfo } = await bluesky.authenticateWithAppPassword(handle.trim(), appPassword);
+    const encryptedAccessToken = encryptForStorage(tokens.accessToken);
+    const encryptedRefreshToken = tokens.refreshToken ? encryptForStorage(tokens.refreshToken) : null;
+
+    const [account] = await db.insert(socialCredentials)
+      .values({
+        userId,
+        platform: 'bluesky',
+        platformUserId: userInfo.did || userInfo.id,
+        platformUsername: userInfo.handle || handle.trim(),
+        encryptedAccessToken,
+        encryptedRefreshToken: encryptedRefreshToken || undefined,
+        scopes: [],
+        isActive: true,
+        lastSyncAt: null,
+      })
+      .onConflictDoUpdate({
+        target: [socialCredentials.userId, socialCredentials.platform],
+        set: {
+          platformUserId: userInfo.did || userInfo.id,
+          platformUsername: userInfo.handle || handle.trim(),
+          encryptedAccessToken,
+          encryptedRefreshToken: encryptedRefreshToken
+            || sql`COALESCE(excluded.encrypted_refresh_token, ${socialCredentials.encryptedRefreshToken})`,
+          isActive: true,
+          lastSyncAt: null,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+
+    let syncWarning = false;
+    try {
+      const { socialSyncService } = await import('./socialSyncService');
+      const syncResult = await socialSyncService.syncUserPlatform(userId, 'bluesky', true);
+      syncWarning = !syncResult.success;
+    } catch (syncError) {
+      console.error('Immediate Bluesky mobile sync failed:', syncError);
+      syncWarning = true;
+    }
+
+    res.json({
+      success: true,
+      syncWarning,
+      account: {
+        id: account.id,
+        platform: account.platform,
+        platformUsername: account.platformUsername,
+        connectedAt: account.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error('Mobile Bluesky connection error:', error);
+    res.status(400).json({ success: false, message: 'Failed to connect Bluesky. Check your handle and app password.' });
+  }
+}
+
+export async function getMobileSocialConnections(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = (req as any).userId;
+    const connections = await db
+      .select({
+        id: socialCredentials.id,
+        platform: socialCredentials.platform,
+        platformUsername: socialCredentials.platformUsername,
+        isActive: socialCredentials.isActive,
+        lastSyncAt: socialCredentials.lastSyncAt,
+        connectedAt: socialCredentials.createdAt,
+      })
+      .from(socialCredentials)
+      .where(eq(socialCredentials.userId, userId))
+      .orderBy(socialCredentials.platform);
+
+    res.json({ success: true, connections });
+  } catch (error) {
+    console.error('Mobile social connection list error:', error);
+    res.status(500).json({ success: false, message: 'Failed to load social connections' });
   }
 }
 

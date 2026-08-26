@@ -1,4 +1,5 @@
 import { OAuthPlatform, OAuthTokens, SocialPost } from '../oauthService';
+import { getWebOAuthRedirectUri } from '../socialOAuthUrls';
 
 export class YouTubeOAuth implements OAuthPlatform {
   private clientId: string;
@@ -8,7 +9,7 @@ export class YouTubeOAuth implements OAuthPlatform {
   constructor() {
     this.clientId = process.env.YOUTUBE_CLIENT_ID || '';
     this.clientSecret = process.env.YOUTUBE_CLIENT_SECRET || '';
-    this.redirectUri = `${process.env.BASE_URL || 'http://localhost:5000'}/api/oauth/callback/youtube`;
+    this.redirectUri = getWebOAuthRedirectUri('youtube');
   }
   
   isConfigured(): boolean {
@@ -22,7 +23,9 @@ export class YouTubeOAuth implements OAuthPlatform {
       response_type: 'code',
       scope: 'https://www.googleapis.com/auth/youtube.readonly',
       access_type: 'offline',
-      prompt: 'consent',
+      // Selecting an account on every connection prevents a browser session from
+      // silently reconnecting the previous member's Google account.
+      prompt: 'select_account consent',
       state,
     });
 

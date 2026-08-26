@@ -489,24 +489,18 @@ export default function ProfileScreen() {
         
         <TouchableOpacity 
           className="flex-row justify-between items-center bg-card rounded-xl p-4 mb-3 border border-border"
-          onPress={() => {
-            Alert.alert(
-              'Settings',
-              'Settings screen coming soon! This will include privacy settings, account management, and more.',
-              [{ text: 'OK' }]
-            );
-          }}
-          data-testid="button-settings"
+          onPress={() => navigation.navigate('SocialAccountsScreen')}
+          data-testid="button-social-accounts"
           accessible={true}
-          accessibilityLabel="Settings"
-          accessibilityHint="Manage privacy settings and account preferences"
+          accessibilityLabel="Social accounts"
+          accessibilityHint="Connect and manage your social accounts"
           accessibilityRole="button"
         >
           <View className="flex-row items-center">
             <Settings color="#666" size={20} />
-            <Text className="text-foreground text-base ml-3">Settings</Text>
+            <Text className="text-foreground text-base ml-3">Social accounts</Text>
           </View>
-          <Text className="text-muted-foreground text-lg">⚙️</Text>
+          <Text className="text-muted-foreground text-lg">🔗</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 

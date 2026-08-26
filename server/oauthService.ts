@@ -74,7 +74,7 @@ export class OAuthService {
   async handleOAuthCallback(
     platform: string,
     code: string,
-    state: string,
+    userId: string,
     codeVerifier?: string
   ): Promise<{ success: boolean; userId?: string; error?: string }> {
     try {
@@ -83,8 +83,9 @@ export class OAuthService {
         return { success: false, error: 'Unsupported platform' };
       }
 
-      // Extract userId from state (format: userId:platform:random)
-      const [userId] = state.split(':');
+      if (!userId) {
+        return { success: false, error: 'Missing member identity for this connection' };
+      }
 
       // Exchange code for tokens
       const tokens = await platformImpl.exchangeCodeForTokens(code, codeVerifier);
@@ -92,22 +93,25 @@ export class OAuthService {
       // Get user info from the platform
       const userInfo = await platformImpl.getUserInfo(tokens.accessToken);
       
-      // Debug: Log what Reddit returns
-      if (platform === 'reddit') {
-        console.log('Reddit userInfo:', JSON.stringify(userInfo, null, 2));
+      const platformUserId = userInfo.id || userInfo.did || userInfo.login || userInfo.username || userInfo.name;
+      const platformUsername = userInfo.username || userInfo.handle || userInfo.login || userInfo.display_name || userInfo.name || userInfo.global_name;
+      if (!platformUserId || !platformUsername) {
+        return { success: false, error: `Could not identify the connected ${platform} account` };
       }
 
-      // Encrypt and store credentials
+      // Encrypt and store credentials. A reconnect must preserve the existing
+      // refresh token when a provider intentionally omits a replacement token.
       const encryptedAccessToken = encryptForStorage(tokens.accessToken);
-      const encryptedRefreshToken = tokens.refreshToken 
-        ? encryptForStorage(tokens.refreshToken) 
-        : null;
+      const existingCredential = await storage.getSocialCredential(userId, platform);
+      const encryptedRefreshToken = tokens.refreshToken
+        ? encryptForStorage(tokens.refreshToken)
+        : existingCredential?.encryptedRefreshToken ?? null;
 
       const credential: Omit<SocialCredential, 'id' | 'createdAt' | 'updatedAt'> = {
         userId,
         platform,
-        platformUserId: userInfo.id || userInfo.login || userInfo.username || userInfo.name,
-        platformUsername: userInfo.username || userInfo.login || userInfo.display_name || userInfo.name || userInfo.global_name,
+        platformUserId,
+        platformUsername,
         encryptedAccessToken,
         encryptedRefreshToken,
         tokenExpiresAt: tokens.expiresIn 
@@ -115,10 +119,14 @@ export class OAuthService {
           : null,
         scopes: [], // Will be filled based on platform requirements
         isActive: true,
-        lastSyncAt: null,
+        lastSyncAt: existingCredential?.lastSyncAt ?? null,
       };
 
-      await storage.createSocialCredential(credential);
+      if (existingCredential) {
+        await storage.updateSocialCredential(existingCredential.id, credential);
+      } else {
+        await storage.createSocialCredential(credential);
+      }
 
       return { success: true, userId };
     } catch (error) {

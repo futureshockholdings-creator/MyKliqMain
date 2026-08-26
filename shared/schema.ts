@@ -1582,7 +1582,12 @@ export const socialCredentials = pgTable("social_credentials", {
   lastSyncAt: timestamp("last_sync_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // A member may connect one account per provider. Reconnects update this row
+  // rather than creating ambiguous duplicate credentials.
+  uniqueIndex("social_credentials_user_platform_unique").on(table.userId, table.platform),
+  index("social_credentials_active_user_idx").on(table.userId, table.isActive),
+]);
 
 // Social connection rewards - tracks one-time Kliq Koin rewards for connecting platforms
 export const socialConnectionRewards = pgTable("social_connection_rewards", {
@@ -1628,6 +1633,22 @@ export const externalPosts = pgTable("external_posts", {
   platformCreatedAt: timestamp("platform_created_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Short-lived, server-side OAuth state. Keeping this outside browser sessions
+// makes provider callbacks reliable when the frontend and API use different
+// production domains, and binds a redirect URI/PKCE verifier to one attempt.
+export const socialOAuthStates = pgTable("social_oauth_states", {
+  state: varchar("state", { length: 128 }).primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  platform: varchar("platform", { length: 32 }).notNull(),
+  returnUrl: varchar("return_url", { length: 2048 }).notNull(),
+  redirectUri: varchar("redirect_uri", { length: 2048 }).notNull(),
+  encryptedCodeVerifier: text("encrypted_code_verifier"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("social_oauth_states_expiry_idx").on(table.expiresAt),
+]);
 
 // Sports preferences - tracks which sports and teams users follow
 export const userSportsPreferences = pgTable("user_sports_preferences", {

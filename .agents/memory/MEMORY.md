@@ -1,2 +1,3 @@
 - [EAS Build — Replit lockfile registry issue](eas-replit-lockfile.md) — package-lock.json from Replit bakes in internal package-firewall URLs; EAS macOS builds fail with ENOTFOUND. Fix + Xcode 26 image name noted.
 - [Service Worker must never cache API routes](sw-api-cache-bug.md) — sw.js Cache-First with no /api/ exclusion silently cached stale API responses; server logs showed zero requests. Diagnosis pattern + fix documented.
+- [Member social connections](member-social-connections.md) — OAuth and app-password accounts belong to individual members; never blend workspace connector content into member feeds.

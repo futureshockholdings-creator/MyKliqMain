@@ -811,6 +811,36 @@ export default function Settings() {
   const [blueskyHandle, setBlueskyHandle] = useState('');
   const [blueskyAppPassword, setBlueskyAppPassword] = useState('');
 
+  // OAuth providers return here after approval. Surface a clear outcome once
+  // and remove callback parameters so a later refresh does not repeat it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const socialStatus = params.get('social');
+    if (!socialStatus) return;
+
+    const message = params.get('message');
+    const syncWarning = params.get('sync') === 'warning';
+
+    if (socialStatus === 'connected') {
+      toast({
+        title: syncWarning ? "Account connected" : "Account connected and synced",
+        description: syncWarning
+          ? "Your account is connected. The first sync will retry automatically."
+          : "Your latest social content is now available in MyKliq.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/social/accounts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    } else {
+      toast({
+        title: "Connection failed",
+        description: message || "We couldn't complete that social account connection. Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    window.history.replaceState({}, "", window.location.pathname);
+  }, [queryClient]);
+
   // Blocked users
   const { data: blockedData, isLoading: blockedLoading } = useQuery<{ blockedUsers: BlockedUser[] }>({
     queryKey: ["/api/users/blocked"],

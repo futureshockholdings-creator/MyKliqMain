@@ -17,6 +17,7 @@ import ConversationScreen from '../screens/ConversationScreen';
 import KliqKoinScreen from '../screens/KliqKoinScreen';
 import CommentsScreen from '../screens/CommentsScreen';
 import NotificationPreferencesScreen from '../screens/NotificationPreferencesScreen';
+import SocialAccountsScreen from '../screens/SocialAccountsScreen';
 
 // Components
 import { OfflineIndicator } from '../components/OfflineIndicator';
@@ -186,6 +187,16 @@ const RootStackNavigator = () => {
         component={NotificationPreferencesScreen}
         options={{
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="SocialAccountsScreen"
+        component={SocialAccountsScreen}
+        options={{
+          headerTitle: 'Social accounts',
+          headerStyle: { backgroundColor: '#000' },
+          headerTintColor: '#00FF00',
+          headerBackTitleVisible: false,
         }}
       />
     </Stack.Navigator>
