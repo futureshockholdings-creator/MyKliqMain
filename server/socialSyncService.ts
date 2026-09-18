@@ -25,6 +25,16 @@ function isDefinitiveAuthError(error: unknown): boolean {
   return /unauthorized|invalid[_ ]grant|invalid[_ ]token|token.*revoked|revoked.*token/i.test(message);
 }
 
+function describeProviderError(error: unknown): { name: string; message: string; status?: number } {
+  if (error instanceof ProviderRequestError) {
+    return { name: error.name, message: error.message, status: error.status };
+  }
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message };
+  }
+  return { name: 'UnknownError', message: 'Unknown provider failure' };
+}
+
 class SocialSyncService {
   private syncLock: Set<string> = new Set();
 
@@ -168,7 +178,7 @@ class SocialSyncService {
       try {
         posts = await platformImpl.fetchUserPosts(accessToken, credential.platformUserId);
       } catch (fetchError: any) {
-        console.error(`Error fetching posts from ${platform}:`, fetchError);
+        console.error(`Error fetching posts from ${platform}:`, describeProviderError(fetchError));
 
         const isAuthError = isDefinitiveAuthError(fetchError);
 
@@ -193,7 +203,7 @@ class SocialSyncService {
             console.log(`[SocialSync] Token refresh succeeded for ${platform}, retrying fetch...`);
             posts = await platformImpl.fetchUserPosts(newTokens.accessToken, credential.platformUserId);
           } catch (refreshError: any) {
-            console.error(`[SocialSync] Token refresh failed for ${platform}:`, refreshError);
+            console.error(`[SocialSync] Token refresh failed for ${platform}:`, describeProviderError(refreshError));
             // Definitive provider auth failures must become reconnectable in the
             // clients. Transient provider/network failures remain active.
             await storage.updateSocialCredential(credential.id, {
@@ -299,7 +309,7 @@ class SocialSyncService {
         totalFetched: posts.length,
       };
     } catch (error: any) {
-      console.error(`Error syncing ${platform} for user ${userId}:`, error);
+      console.error(`Error syncing ${platform} for user ${userId}:`, describeProviderError(error));
       return {
         platform,
         success: false,
@@ -374,7 +384,7 @@ class SocialSyncService {
         synced += successCount;
         errors += errorCount;
       } catch (error) {
-        console.error(`Error auto-syncing user ${userId}:`, error);
+        console.error(`Error auto-syncing user ${userId}:`, describeProviderError(error));
         errors++;
       }
     }
@@ -402,7 +412,7 @@ export function startAutoSync(intervalMinutes: number = 15): void {
       
       await socialSyncService.cleanOldPosts();
     } catch (error) {
-      console.error('[SocialSync] Auto-sync failed:', error);
+      console.error('[SocialSync] Auto-sync failed:', describeProviderError(error));
     }
   };
 

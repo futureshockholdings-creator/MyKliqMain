@@ -49,6 +49,16 @@ export class ProviderRequestError extends Error {
   }
 }
 
+function describeOAuthError(error: unknown): { name: string; message: string; status?: number } {
+  if (error instanceof ProviderRequestError) {
+    return { name: error.name, message: error.message, status: error.status };
+  }
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message };
+  }
+  return { name: 'UnknownError', message: 'Unknown OAuth failure' };
+}
+
 export class OAuthService {
   private platforms: Map<string, OAuthPlatform> = new Map();
 
@@ -141,7 +151,7 @@ export class OAuthService {
 
       return { success: true, userId };
     } catch (error) {
-      console.error('OAuth callback error:', error);
+      console.error('OAuth callback error:', describeOAuthError(error));
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error' 
@@ -194,7 +204,7 @@ export class OAuthService {
             allPosts.push(...posts);
           }
         } catch (error) {
-          console.error(`Error fetching posts from ${cred.platform}:`, error);
+          console.error(`Error fetching posts from ${cred.platform}:`, describeOAuthError(error));
           // Mark credential as inactive if there's an auth error
           if (error instanceof Error && error.message.includes('401')) {
             await storage.updateSocialCredential(cred.id, { ...cred, isActive: false });
@@ -205,7 +215,7 @@ export class OAuthService {
       // Sort posts by creation date (newest first)
       return allPosts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     } catch (error) {
-      console.error('Error fetching user posts:', error);
+      console.error('Error fetching user posts:', describeOAuthError(error));
       return [];
     }
   }
@@ -225,7 +235,7 @@ export class OAuthService {
           const accessToken = decryptFromStorage(platformCred.encryptedAccessToken);
           await platformImpl.revokeTokens(accessToken);
         } catch (error) {
-          console.error('Error revoking tokens:', error);
+          console.error('Error revoking tokens:', describeOAuthError(error));
           // Continue with disconnection even if revocation fails
         }
       }
@@ -238,7 +248,7 @@ export class OAuthService {
 
       return true;
     } catch (error) {
-      console.error('Error disconnecting platform:', error);
+      console.error('Error disconnecting platform:', describeOAuthError(error));
       return false;
     }
   }
@@ -258,7 +268,7 @@ export class OAuthService {
         connectedAt: cred.createdAt,
       }));
     } catch (error) {
-      console.error('Error getting user connections:', error);
+      console.error('Error getting user connections:', describeOAuthError(error));
       return [];
     }
   }

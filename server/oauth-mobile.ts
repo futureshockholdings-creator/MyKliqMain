@@ -26,6 +26,13 @@ import { createSocialOAuthState, consumeSocialOAuthState } from './socialOAuthSt
 import { getMobileOAuthRedirectUri, getWebOAuthRedirectUri } from './socialOAuthUrls';
 import { BlueskyOAuth } from './platforms/bluesky';
 
+function describeMobileOAuthError(error: unknown): { name: string; message: string } {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message };
+  }
+  return { name: 'UnknownError', message: 'Unknown mobile OAuth failure' };
+}
+
 // ============================================================================
 // PKCE STATE MANAGEMENT
 // ============================================================================
@@ -143,7 +150,7 @@ export async function initReplitOAuth(req: Request, res: Response): Promise<void
       redirectUri: oauthRedirectUri,
     });
   } catch (error) {
-    console.error('Replit OAuth init error:', error);
+    console.error('Replit OAuth init error:', describeMobileOAuthError(error));
     res.status(500).json({ 
       success: false,
       message: 'Failed to initialize OAuth flow' 
@@ -255,7 +262,7 @@ export async function handleReplitOAuthCallback(req: Request, res: Response): Pr
       profileImageUrl: user.profileImageUrl,
     });
   } catch (error) {
-    console.error('Replit OAuth callback error:', error);
+    console.error('Replit OAuth callback error:', describeMobileOAuthError(error));
     res.status(500).json({ 
       success: false,
       message: 'Failed to complete OAuth flow' 
@@ -474,7 +481,7 @@ export async function initPlatformOAuth(req: Request, res: Response): Promise<vo
       redirectUri: appReturnUri,
     });
   } catch (error) {
-    console.error('Platform OAuth init error:', error);
+    console.error('Platform OAuth init error:', describeMobileOAuthError(error));
     res.status(500).json({ 
       success: false,
       message: 'Failed to initialize OAuth flow' 
@@ -557,8 +564,10 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
     });
 
     if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.error(`${platform} token exchange failed:`, errorText);
+      // Provider error bodies can echo codes or token-like values. Never write
+      // them to application logs.
+      await tokenResponse.text();
+      console.error(`${platform} token exchange failed with status ${tokenResponse.status}`);
       res.status(500).json({
         success: false,
         message: `Failed to exchange authorization code for ${platform} tokens`,
@@ -686,7 +695,7 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
         client.release();
       }
     } catch (error) {
-      console.error('Error awarding social connection Koins (mobile):', error);
+      console.error('Error awarding social connection Koins (mobile):', describeMobileOAuthError(error));
       // Don't fail the OAuth flow if Koin award fails
     }
 
@@ -696,7 +705,7 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
       const syncResult = await socialSyncService.syncUserPlatform(oauthState.userId, platform, true);
       syncWarning = !syncResult.success;
     } catch (syncError) {
-      console.error(`Immediate ${platform} mobile sync failed:`, syncError);
+      console.error(`Immediate ${platform} mobile sync failed:`, describeMobileOAuthError(syncError));
       syncWarning = true;
     }
 
@@ -712,7 +721,7 @@ export async function handlePlatformOAuthCallback(req: Request, res: Response): 
       },
     });
   } catch (error) {
-    console.error('Platform OAuth callback error:', error);
+    console.error('Platform OAuth callback error:', describeMobileOAuthError(error));
     res.status(500).json({ 
       success: false,
       message: 'Failed to complete OAuth flow' 
@@ -769,7 +778,7 @@ export async function connectMobileBluesky(req: Request, res: Response): Promise
       const syncResult = await socialSyncService.syncUserPlatform(userId, 'bluesky', true);
       syncWarning = !syncResult.success;
     } catch (syncError) {
-      console.error('Immediate Bluesky mobile sync failed:', syncError);
+      console.error('Immediate Bluesky mobile sync failed:', describeMobileOAuthError(syncError));
       syncWarning = true;
     }
 
@@ -784,7 +793,7 @@ export async function connectMobileBluesky(req: Request, res: Response): Promise
       },
     });
   } catch (error) {
-    console.error('Mobile Bluesky connection error:', error);
+    console.error('Mobile Bluesky connection error:', describeMobileOAuthError(error));
     res.status(400).json({ success: false, message: 'Failed to connect Bluesky. Check your handle and app password.' });
   }
 }
@@ -807,7 +816,7 @@ export async function getMobileSocialConnections(req: Request, res: Response): P
 
     res.json({ success: true, connections });
   } catch (error) {
-    console.error('Mobile social connection list error:', error);
+    console.error('Mobile social connection list error:', describeMobileOAuthError(error));
     res.status(500).json({ success: false, message: 'Failed to load social connections' });
   }
 }
@@ -863,7 +872,7 @@ export async function disconnectPlatform(req: Request, res: Response): Promise<v
       message: `Disconnected from ${platform}`,
     });
   } catch (error) {
-    console.error('Disconnect platform error:', error);
+    console.error('Disconnect platform error:', describeMobileOAuthError(error));
     res.status(500).json({ 
       success: false,
       message: 'Failed to disconnect platform' 

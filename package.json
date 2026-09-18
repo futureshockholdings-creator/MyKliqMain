@@ -8,6 +8,7 @@
     "build": "vite build && cp -r attached_assets dist/ && node scripts/generate-precache.js",
     "start": "NODE_ENV=production tsx server/index.ts",
     "check": "tsc",
+    "validate:social-isolation": "tsx scripts/validate-social-isolation.ts",
     "db:push": "drizzle-kit push",
     "server": "node dist/server/index.js",
     "preview": "vite preview"
