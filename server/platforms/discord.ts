@@ -1,4 +1,4 @@
-import { OAuthPlatform, OAuthTokens, SocialPost } from '../oauthService';
+import { OAuthPlatform, OAuthTokens, ProviderRequestError, SocialPost } from '../oauthService';
 import { createHash } from 'crypto';
 import { getWebOAuthRedirectUri } from '../socialOAuthUrls';
 
@@ -30,18 +30,21 @@ export class DiscordOAuth implements OAuthPlatform {
   }
 
   async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens> {
+    const tokenParams = new URLSearchParams({
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: this.redirectUri,
+    });
+    if (codeVerifier) tokenParams.set('code_verifier', codeVerifier);
+
     const response = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: this.redirectUri,
-      }),
+      body: tokenParams,
     });
 
     if (!response.ok) {
@@ -73,7 +76,8 @@ export class DiscordOAuth implements OAuthPlatform {
 
     if (!response.ok) {
       const status = response.status;
-      throw new Error(`401 Discord token refresh failed (${status}): ${response.statusText}`);
+      const responseBody = await response.text();
+      throw new ProviderRequestError(`Discord token refresh failed (${status}): ${response.statusText}`, status, responseBody);
     }
 
     const data = await response.json();
@@ -109,7 +113,7 @@ export class DiscordOAuth implements OAuthPlatform {
     if (!guildsResponse.ok) {
       const status = guildsResponse.status;
       const msg = `Discord API error (${status}): ${guildsResponse.statusText}`;
-      if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      if (status === 401) throw new ProviderRequestError(msg, status);
       throw new Error(msg);
     }
 

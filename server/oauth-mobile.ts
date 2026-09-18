@@ -23,7 +23,7 @@ import { eq, and, sql } from 'drizzle-orm';
 import { generateMobileToken, generateCodeVerifier, generateCodeChallenge, generateOAuthState } from './mobile-auth';
 import { encryptForStorage } from './cryptoService';
 import { createSocialOAuthState, consumeSocialOAuthState } from './socialOAuthStateService';
-import { getMobileOAuthRedirectUri } from './socialOAuthUrls';
+import { getMobileOAuthRedirectUri, getWebOAuthRedirectUri } from './socialOAuthUrls';
 import { BlueskyOAuth } from './platforms/bluesky';
 
 // ============================================================================
@@ -379,7 +379,8 @@ async function getMobilePlatformIdentity(
       });
       if (!response.ok) break;
       const data = await response.json();
-      return { id: data.id || data.name, username: data.name };
+      // Reddit's content endpoints use the username, not the opaque account ID.
+      return { id: data.name, username: data.name };
     }
     case 'pinterest': {
       response = await fetch('https://api.pinterest.com/v5/user_account', {
@@ -427,11 +428,16 @@ export async function initPlatformOAuth(req: Request, res: Response): Promise<vo
       return;
     }
 
-    const oauthRedirectUri = getMobileOAuthRedirectUri();
-    if (redirectUri && redirectUri !== oauthRedirectUri) {
+    const appReturnUri = getMobileOAuthRedirectUri();
+    if (redirectUri && redirectUri !== appReturnUri) {
       res.status(400).json({ success: false, message: 'Invalid mobile redirect URI' });
       return;
     }
+    // Providers redirect to the same HTTPS callback already registered for the
+    // web app. The server completes the member-bound exchange, then redirects
+    // into the mobile app. This avoids requiring separate provider applications
+    // or asking providers to accept a custom URI scheme as an OAuth callback.
+    const oauthRedirectUri = getWebOAuthRedirectUri(platform);
 
     // Generate PKCE parameters (if required)
     const codeVerifier = config.requiresPKCE ? generateCodeVerifier() : '';
@@ -439,7 +445,7 @@ export async function initPlatformOAuth(req: Request, res: Response): Promise<vo
     const state = await createSocialOAuthState({
       userId,
       platform,
-      returnUrl: oauthRedirectUri,
+      returnUrl: appReturnUri,
       redirectUri: oauthRedirectUri,
       codeVerifier,
     });
@@ -465,7 +471,7 @@ export async function initPlatformOAuth(req: Request, res: Response): Promise<vo
       authUrl: authUrl.toString(),
       state,
       platform,
-      redirectUri: oauthRedirectUri,
+      redirectUri: appReturnUri,
     });
   } catch (error) {
     console.error('Platform OAuth init error:', error);
@@ -736,6 +742,7 @@ export async function connectMobileBluesky(req: Request, res: Response): Promise
         platformUsername: userInfo.handle || handle.trim(),
         encryptedAccessToken,
         encryptedRefreshToken: encryptedRefreshToken || undefined,
+        tokenExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
         scopes: [],
         isActive: true,
         lastSyncAt: null,
@@ -748,6 +755,7 @@ export async function connectMobileBluesky(req: Request, res: Response): Promise
           encryptedAccessToken,
           encryptedRefreshToken: encryptedRefreshToken
             || sql`COALESCE(excluded.encrypted_refresh_token, ${socialCredentials.encryptedRefreshToken})`,
+          tokenExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
           isActive: true,
           lastSyncAt: null,
           updatedAt: new Date(),

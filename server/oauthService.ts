@@ -38,6 +38,17 @@ export interface OAuthPlatform {
   revokeTokens(accessToken: string): Promise<void>;
 }
 
+export class ProviderRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly responseBody = '',
+  ) {
+    super(message);
+    this.name = 'ProviderRequestError';
+  }
+}
+
 export class OAuthService {
   private platforms: Map<string, OAuthPlatform> = new Map();
 

@@ -1,4 +1,4 @@
-import { OAuthPlatform, OAuthTokens, SocialPost } from '../oauthService';
+import { OAuthPlatform, OAuthTokens, ProviderRequestError, SocialPost } from '../oauthService';
 import { getWebOAuthRedirectUri } from '../socialOAuthUrls';
 
 export class PinterestOAuth implements OAuthPlatform {
@@ -70,7 +70,8 @@ export class PinterestOAuth implements OAuthPlatform {
 
     if (!response.ok) {
       const status = response.status;
-      throw new Error(`401 Pinterest token refresh failed (${status}): ${response.statusText}`);
+      const responseBody = await response.text();
+      throw new ProviderRequestError(`Pinterest token refresh failed (${status}): ${response.statusText}`, status, responseBody);
     }
 
     const data = await response.json();
@@ -106,7 +107,7 @@ export class PinterestOAuth implements OAuthPlatform {
     if (!response.ok) {
       const status = response.status;
       const msg = `Pinterest API error (${status}): ${response.statusText}`;
-      if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      if (status === 401) throw new ProviderRequestError(msg, status);
       throw new Error(msg);
     }
 

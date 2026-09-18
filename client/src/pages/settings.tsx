@@ -1452,17 +1452,31 @@ export default function Settings() {
                             </div>
                             
                             <div className="flex gap-2 w-full sm:w-auto">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => syncAccount.mutate(account.platform)}
-                                disabled={syncAccount.isPending}
-                                className="border-white/20 text-white hover:bg-white/10 flex-1 sm:flex-none"
-                                data-testid={`button-sync-${account.platform}`}
-                              >
-                                <RefreshCw className={`w-4 h-4 ${syncAccount.isPending ? 'animate-spin' : ''}`} />
-                                <span className="ml-2 sm:hidden">Sync</span>
-                              </Button>
+                              {account.isActive ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => syncAccount.mutate(account.platform)}
+                                  disabled={syncAccount.isPending}
+                                  className="border-white/20 text-white hover:bg-white/10 flex-1 sm:flex-none"
+                                  data-testid={`button-sync-${account.platform}`}
+                                >
+                                  <RefreshCw className={`w-4 h-4 ${syncAccount.isPending ? 'animate-spin' : ''}`} />
+                                  <span className="ml-2 sm:hidden">Sync</span>
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => connectAccount.mutate(account.platform)}
+                                  disabled={connectAccount.isPending}
+                                  className="border-yellow-300/50 text-yellow-200 hover:bg-yellow-300/10 flex-1 sm:flex-none"
+                                  data-testid={`button-reconnect-${account.platform}`}
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                  <span className="ml-2">Reconnect</span>
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 variant="destructive"

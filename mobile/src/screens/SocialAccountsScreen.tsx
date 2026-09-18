@@ -33,7 +33,15 @@ const OAUTH_PROVIDERS: Array<{ id: Exclude<Provider, 'bluesky'>; label: string; 
 const MOBILE_REDIRECT_URI = 'mykliq://oauth/callback';
 const PENDING_CONNECTION_KEY = 'pending_social_connection';
 
-function readCallback(url: string): { code?: string; state?: string; error?: string; description?: string } | null {
+function readCallback(url: string): {
+  code?: string;
+  state?: string;
+  error?: string;
+  description?: string;
+  social?: 'connected' | 'error';
+  sync?: 'complete' | 'warning';
+  message?: string;
+} | null {
   if (!url.startsWith(MOBILE_REDIRECT_URI)) return null;
   const queryString = url.split('?')[1] || '';
   const query = new URLSearchParams(queryString);
@@ -42,6 +50,9 @@ function readCallback(url: string): { code?: string; state?: string; error?: str
     state: query.get('state') || undefined,
     error: query.get('error') || undefined,
     description: query.get('error_description') || undefined,
+    social: (query.get('social') as 'connected' | 'error' | null) || undefined,
+    sync: (query.get('sync') as 'complete' | 'warning' | null) || undefined,
+    message: query.get('message') || undefined,
   };
 }
 
@@ -74,6 +85,34 @@ export default function SocialAccountsScreen() {
     await SecureStore.deleteItemAsync(PENDING_CONNECTION_KEY);
     const pending = pendingRaw ? JSON.parse(pendingRaw) as { platform?: Provider; state?: string } : null;
 
+    // The provider now returns to MyKliq's registered HTTPS callback. The
+    // backend validates state, exchanges tokens, stores the member connection,
+    // performs the first sync, and then opens this deep link with the outcome.
+    if (callback.social) {
+      if (!pending?.platform || pending.platform === 'bluesky' || pending.state !== callback.state) {
+        Alert.alert('Connection failed', 'The authorization result did not match the connection you started.');
+        return;
+      }
+
+      if (callback.social === 'error') {
+        Alert.alert('Connection failed', callback.message || 'The provider did not complete the connection.');
+        return;
+      }
+
+      setWorking(pending.platform);
+      await loadConnections();
+      setWorking(null);
+      Alert.alert(
+        'Account connected',
+        callback.sync === 'warning'
+          ? 'Your account is connected. The first sync will retry shortly.'
+          : 'Your latest content has been synced.',
+      );
+      return;
+    }
+
+    // Backward compatibility for authorization sessions started before the
+    // server-side callback flow was deployed.
     if (!pending?.platform || pending.platform === 'bluesky' || !callback.state || !callback.code) {
       if (callback.error) {
         Alert.alert('Connection cancelled', callback.description || callback.error);
@@ -194,7 +233,7 @@ export default function SocialAccountsScreen() {
     <ScrollView className="flex-1 bg-background px-4 pt-4" contentContainerStyle={{ paddingBottom: 36 }}>
       <Text className="text-foreground text-2xl font-bold">Social accounts</Text>
       <Text className="text-muted-foreground mt-2 mb-6">
-        Connect your own accounts. Your imported content is private to your MyKliq profile.
+        Connect your own accounts. Imported posts appear for you and members of your Kliq.
       </Text>
 
       {loading ? (

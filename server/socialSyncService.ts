@@ -1,5 +1,5 @@
 import { storage } from './storage';
-import { oauthService, SocialPost } from './oauthService';
+import { oauthService, ProviderRequestError, SocialPost } from './oauthService';
 import { decryptFromStorage, encryptForStorage } from './cryptoService';
 import { db } from './db';
 import { externalPosts, socialCredentials } from '@shared/schema';
@@ -11,6 +11,18 @@ export interface SyncResult {
   newPosts: number;
   totalFetched: number;
   error?: string;
+}
+
+function isDefinitiveAuthError(error: unknown): boolean {
+  if (error instanceof ProviderRequestError) {
+    if (error.status === 401) return true;
+    if (error.status === 400) {
+      return /invalid[_ ]grant|invalid[_ ]token|expired[_ ]?token|ExpiredToken|token.*revoked|revoked.*token/i.test(error.responseBody);
+    }
+    return false;
+  }
+  const message = error instanceof Error ? error.message : String(error || '');
+  return /unauthorized|invalid[_ ]grant|invalid[_ ]token|token.*revoked|revoked.*token/i.test(message);
 }
 
 class SocialSyncService {
@@ -55,6 +67,7 @@ class SocialSyncService {
           try {
             const { decryptFromStorage, encryptForStorage } = await import('./cryptoService');
             const platformImpl = oauthService.getPlatform(platform);
+            if (!platformImpl) throw new Error(`Platform ${platform} is not supported`);
             const refreshToken = decryptFromStorage(credential.encryptedRefreshToken);
             const newTokens = await platformImpl.refreshTokens(refreshToken);
             const updatedFields: any = {
@@ -134,6 +147,19 @@ class SocialSyncService {
             console.log(`[SocialSync] Proactive refresh succeeded for ${platform}`);
           } catch (proactiveRefreshError: any) {
             console.warn(`[SocialSync] Proactive refresh failed for ${platform}, will try with existing token:`, proactiveRefreshError.message);
+            if (isDefinitiveAuthError(proactiveRefreshError)) {
+              await storage.updateSocialCredential(credential.id, {
+                isActive: false,
+                lastSyncAt: new Date(),
+              });
+              return {
+                platform,
+                success: false,
+                newPosts: 0,
+                totalFetched: 0,
+                error: 'Authorization expired or was revoked. Reconnect this account.',
+              };
+            }
           }
         }
       }
@@ -144,7 +170,7 @@ class SocialSyncService {
       } catch (fetchError: any) {
         console.error(`Error fetching posts from ${platform}:`, fetchError);
 
-        const isAuthError = fetchError.message?.includes('401') || fetchError.message?.includes('Unauthorized');
+        const isAuthError = isDefinitiveAuthError(fetchError);
 
         if (isAuthError && credential.encryptedRefreshToken) {
           console.log(`[SocialSync] Attempting token refresh for ${platform} user ${userId}...`);
@@ -168,25 +194,36 @@ class SocialSyncService {
             posts = await platformImpl.fetchUserPosts(newTokens.accessToken, credential.platformUserId);
           } catch (refreshError: any) {
             console.error(`[SocialSync] Token refresh failed for ${platform}:`, refreshError);
-            // Update lastSyncAt so the UI shows the most recent attempt, not a stale date.
-            await storage.updateSocialCredential(credential.id, { lastSyncAt: new Date() });
+            // Definitive provider auth failures must become reconnectable in the
+            // clients. Transient provider/network failures remain active.
+            await storage.updateSocialCredential(credential.id, {
+              lastSyncAt: new Date(),
+              ...(isDefinitiveAuthError(refreshError) ? { isActive: false } : {}),
+            });
             return {
               platform,
               success: false,
               newPosts: 0,
               totalFetched: 0,
-              error: `Token refresh failed: ${refreshError.message}`,
+              error: isDefinitiveAuthError(refreshError)
+                ? 'Authorization expired or was revoked. Reconnect this account.'
+                : `Token refresh failed: ${refreshError.message}`,
             };
           }
         } else {
-          // Non-auth fetch error — update lastSyncAt and retry on the next cycle.
-          await storage.updateSocialCredential(credential.id, { lastSyncAt: new Date() });
+          const definitiveAuthFailure = isAuthError && !credential.encryptedRefreshToken;
+          await storage.updateSocialCredential(credential.id, {
+            lastSyncAt: new Date(),
+            ...(definitiveAuthFailure ? { isActive: false } : {}),
+          });
           return {
             platform,
             success: false,
             newPosts: 0,
             totalFetched: 0,
-            error: fetchError.message || 'Failed to fetch posts',
+            error: definitiveAuthFailure
+              ? 'Authorization expired or was revoked. Reconnect this account.'
+              : fetchError.message || 'Failed to fetch posts',
           };
         }
       }

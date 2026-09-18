@@ -1,4 +1,4 @@
-import { OAuthPlatform, OAuthTokens, SocialPost } from '../oauthService';
+import { OAuthPlatform, OAuthTokens, ProviderRequestError, SocialPost } from '../oauthService';
 import { BskyAgent } from '@atproto/api';
 
 export class BlueskyOAuth implements OAuthPlatform {
@@ -57,9 +57,10 @@ export class BlueskyOAuth implements OAuthPlatform {
 
     if (!response.ok) {
       const status = response.status;
+      const responseBody = await response.text();
       const msg = `Bluesky token refresh failed with status ${status}: ${response.statusText}`;
       console.error(msg);
-      throw new Error(`401 ${msg}`);
+      throw new ProviderRequestError(msg, status, responseBody);
     }
 
     const data = await response.json();
@@ -109,7 +110,12 @@ export class BlueskyOAuth implements OAuthPlatform {
       });
       if (!sessionResponse.ok) {
         const status = sessionResponse.status;
-        throw new Error(`401 Bluesky getSession failed with status ${status}: ${sessionResponse.statusText}`);
+        const responseBody = await sessionResponse.text();
+        const msg = `Bluesky getSession failed with status ${status}: ${sessionResponse.statusText}`;
+        if (status === 401 || (status === 400 && /ExpiredToken|expired[_ ]?token/i.test(responseBody))) {
+          throw new ProviderRequestError(msg, status, responseBody);
+        }
+        throw new Error(msg);
       }
       const session = await sessionResponse.json();
       actor = session.did;
@@ -125,9 +131,12 @@ export class BlueskyOAuth implements OAuthPlatform {
 
     if (!feedResponse.ok) {
       const status = feedResponse.status;
+      const responseBody = await feedResponse.text();
       const msg = `Bluesky getAuthorFeed failed with status ${status}: ${feedResponse.statusText}`;
       console.error(msg);
-      if (status === 401 || status === 400) throw new Error(`401 ${msg}`);
+      if (status === 401 || (status === 400 && /ExpiredToken|expired[_ ]?token/i.test(responseBody))) {
+        throw new ProviderRequestError(msg, status, responseBody);
+      }
       throw new Error(msg);
     }
 

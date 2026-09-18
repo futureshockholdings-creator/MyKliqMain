@@ -1,4 +1,4 @@
-import { OAuthPlatform, OAuthTokens, SocialPost } from '../oauthService';
+import { OAuthPlatform, OAuthTokens, ProviderRequestError, SocialPost } from '../oauthService';
 import { getWebOAuthRedirectUri } from '../socialOAuthUrls';
 
 export class YouTubeOAuth implements OAuthPlatform {
@@ -33,18 +33,21 @@ export class YouTubeOAuth implements OAuthPlatform {
   }
 
   async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens> {
+    const tokenParams = new URLSearchParams({
+      client_id: this.clientId,
+      client_secret: this.clientSecret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: this.redirectUri,
+    });
+    if (codeVerifier) tokenParams.set('code_verifier', codeVerifier);
+
     const response = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-        code,
-        grant_type: 'authorization_code',
-        redirect_uri: this.redirectUri,
-      }),
+      body: tokenParams,
     });
 
     if (!response.ok) {
@@ -76,7 +79,8 @@ export class YouTubeOAuth implements OAuthPlatform {
 
     if (!response.ok) {
       const status = response.status;
-      throw new Error(`401 YouTube token refresh failed (${status}): ${response.statusText}`);
+      const responseBody = await response.text();
+      throw new ProviderRequestError(`YouTube token refresh failed (${status}): ${response.statusText}`, status, responseBody);
     }
 
     const data = await response.json();
@@ -129,7 +133,7 @@ export class YouTubeOAuth implements OAuthPlatform {
     if (!channelResponse.ok) {
       const status = channelResponse.status;
       const msg = `YouTube channels API error (${status}): ${channelResponse.statusText}`;
-      if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      if (status === 401) throw new ProviderRequestError(msg, status);
       throw new Error(msg);
     }
 
@@ -148,7 +152,7 @@ export class YouTubeOAuth implements OAuthPlatform {
     if (!videosResponse.ok) {
       const status = videosResponse.status;
       const msg = `YouTube playlistItems API error (${status}): ${videosResponse.statusText}`;
-      if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      if (status === 401) throw new ProviderRequestError(msg, status);
       throw new Error(msg);
     }
 

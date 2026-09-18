@@ -11924,6 +11924,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // OAuth callback handler
   app.get('/api/oauth/callback/:platform', async (req: any, res) => {
+    let validatedReturnUrl: string | undefined;
+    let validatedStateValue = '';
     try {
       const { platform } = req.params;
       const { code, state, error, error_description } = req.query;
@@ -11933,10 +11935,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? await consumeSocialOAuthState(stateValue, platform)
         : null;
       const returnUrl = oauthState?.returnUrl || getAppReturnUrl();
+      if (oauthState) {
+        validatedReturnUrl = oauthState.returnUrl;
+        validatedStateValue = stateValue;
+      }
       const redirectToSettings = (status: 'connected' | 'error', message?: string, sync?: 'complete' | 'warning') => {
         const params = new URLSearchParams({ social: status });
         if (message) params.set('message', message);
         if (sync) params.set('sync', sync);
+        if (returnUrl.startsWith('mykliq://')) {
+          if (stateValue) params.set('state', stateValue);
+          return res.redirect(`${returnUrl}?${params.toString()}`);
+        }
         return res.redirect(`${returnUrl}/settings?${params.toString()}`);
       };
 
@@ -12040,7 +12050,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error(`Error in OAuth callback for ${req.params.platform}:`, error);
-      return res.redirect(`${getAppReturnUrl()}/settings?social=error&message=callback_error`);
+      const returnUrl = validatedReturnUrl || getAppReturnUrl();
+      const params = new URLSearchParams({ social: 'error', message: 'callback_error' });
+      if (returnUrl.startsWith('mykliq://')) {
+        if (validatedStateValue) params.set('state', validatedStateValue);
+        return res.redirect(`${returnUrl}?${params.toString()}`);
+      }
+      return res.redirect(`${returnUrl}/settings?${params.toString()}`);
     }
   });
 

@@ -1,4 +1,4 @@
-import { OAuthPlatform, OAuthTokens, SocialPost } from '../oauthService';
+import { OAuthPlatform, OAuthTokens, ProviderRequestError, SocialPost } from '../oauthService';
 import { getWebOAuthRedirectUri } from '../socialOAuthUrls';
 
 export class TwitchOAuth implements OAuthPlatform {
@@ -32,13 +32,14 @@ export class TwitchOAuth implements OAuthPlatform {
   }
 
   async exchangeCodeForTokens(code: string, codeVerifier?: string): Promise<OAuthTokens> {
-    const requestBody = {
+    const requestBody: Record<string, string> = {
       client_id: this.clientId,
       client_secret: this.clientSecret,
       code,
       grant_type: 'authorization_code',
       redirect_uri: this.redirectUri,
     };
+    if (codeVerifier) requestBody.code_verifier = codeVerifier;
     
     console.log('Twitch token exchange request:', {
       redirect_uri: this.redirectUri,
@@ -84,7 +85,8 @@ export class TwitchOAuth implements OAuthPlatform {
 
     if (!response.ok) {
       const status = response.status;
-      throw new Error(`401 Twitch token refresh failed (${status}): ${response.statusText}`);
+      const responseBody = await response.text();
+      throw new ProviderRequestError(`Twitch token refresh failed (${status}): ${response.statusText}`, status, responseBody);
     }
 
     const data = await response.json();
@@ -128,7 +130,7 @@ export class TwitchOAuth implements OAuthPlatform {
     if (!response.ok) {
       const status = response.status;
       const msg = `Twitch API error (${status}): ${response.statusText}`;
-      if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      if (status === 401) throw new ProviderRequestError(msg, status);
       throw new Error(msg);
     }
 

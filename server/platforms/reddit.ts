@@ -1,4 +1,4 @@
-import { OAuthPlatform, OAuthTokens, SocialPost } from '../oauthService';
+import { OAuthPlatform, OAuthTokens, ProviderRequestError, SocialPost } from '../oauthService';
 import { getWebOAuthRedirectUri } from '../socialOAuthUrls';
 
 export class RedditOAuth implements OAuthPlatform {
@@ -75,7 +75,8 @@ export class RedditOAuth implements OAuthPlatform {
 
     if (!response.ok) {
       const status = response.status;
-      throw new Error(`401 Reddit token refresh failed (${status}): ${response.statusText}`);
+      const responseBody = await response.text();
+      throw new ProviderRequestError(`Reddit token refresh failed (${status}): ${response.statusText}`, status, responseBody);
     }
 
     const data = await response.json();
@@ -103,11 +104,12 @@ export class RedditOAuth implements OAuthPlatform {
   }
 
   async fetchUserPosts(accessToken: string, userId?: string): Promise<SocialPost[]> {
-    let username = userId;
-    if (!username) {
-      const userInfo = await this.getUserInfo(accessToken);
-      username = userInfo.name;
-    }
+    // Reddit's account `id` is an opaque identifier, but the submitted-posts
+    // endpoint requires the username. Resolve it from the authenticated account
+    // on every sync so existing credentials saved with the opaque ID also work.
+    const userInfo = await this.getUserInfo(accessToken);
+    const username = userInfo.name;
+    if (!username) throw new Error('Could not identify the connected Reddit username');
 
     const response = await fetch(`https://oauth.reddit.com/user/${username}/submitted?limit=10`, {
       headers: {
@@ -119,7 +121,7 @@ export class RedditOAuth implements OAuthPlatform {
     if (!response.ok) {
       const status = response.status;
       const msg = `Reddit API error (${status}): ${response.statusText}`;
-      if (status === 401 || status === 403) throw new Error(`401 ${msg}`);
+      if (status === 401) throw new ProviderRequestError(msg, status);
       // 404 means the user has no public posts or the profile is private — treat as empty
       if (status === 404) return [];
       throw new Error(msg);
