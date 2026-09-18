@@ -22,6 +22,13 @@ type Connection = {
   lastSyncAt?: string | null;
 };
 
+type DiscordSharing = {
+  configured: boolean;
+  linked: boolean;
+  guilds: Array<{ guildId: string; guildName: string; isActive: boolean; memberEnabled: boolean | null; canManage: boolean }>;
+  audit: Array<{ id: string; action: string; createdAt: string }>;
+};
+
 const OAUTH_PROVIDERS: Array<{ id: Exclude<Provider, 'bluesky'>; label: string; detail: string }> = [
   { id: 'youtube', label: 'YouTube', detail: 'Import videos from your own channel.' },
   { id: 'twitch', label: 'Twitch', detail: 'Import videos from your own channel.' },
@@ -63,6 +70,7 @@ export default function SocialAccountsScreen() {
   const [showBlueskyForm, setShowBlueskyForm] = useState(false);
   const [blueskyHandle, setBlueskyHandle] = useState('');
   const [blueskyAppPassword, setBlueskyAppPassword] = useState('');
+  const [discordSharing, setDiscordSharing] = useState<DiscordSharing | null>(null);
 
   const loadConnections = useCallback(async () => {
     try {
@@ -70,6 +78,13 @@ export default function SocialAccountsScreen() {
         `/api/mobile/social/connections?refresh=${Date.now()}`,
       );
       setConnections(result.connections || []);
+      const discord = (result.connections || []).some(connection => connection.platform === 'discord' && connection.isActive);
+      if (discord) {
+        const sharing = await apiClient.request<DiscordSharing>(`/api/mobile/discord/sharing?refresh=${Date.now()}`);
+        setDiscordSharing(sharing);
+      } else {
+        setDiscordSharing(null);
+      }
     } catch (error) {
       Alert.alert('Could not load accounts', error instanceof Error ? error.message : 'Please try again.');
     } finally {
@@ -229,6 +244,21 @@ export default function SocialAccountsScreen() {
 
   const connectionFor = (platform: Provider) => connections.find((connection) => connection.platform === platform && connection.isActive);
 
+  const setDiscordConsent = async (guildId: string, enabled: boolean) => {
+    setWorking('discord');
+    try {
+      await apiClient.request(`/api/mobile/discord/guilds/${guildId}/member-consent`, {
+        method: 'PUT',
+        body: JSON.stringify({ enabled }),
+      });
+      await loadConnections();
+    } catch (error) {
+      Alert.alert('Could not update sharing', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setWorking(null);
+    }
+  };
+
   return (
     <ScrollView className="flex-1 bg-background px-4 pt-4" contentContainerStyle={{ paddingBottom: 36 }}>
       <Text className="text-foreground text-2xl font-bold">Social accounts</Text>
@@ -264,6 +294,27 @@ export default function SocialAccountsScreen() {
               </View>
             );
           })}
+
+          {discordSharing?.linked ? (
+            <View className="bg-card border border-border rounded-xl p-4 mb-3">
+              <Text className="text-foreground text-lg font-semibold">Discord message sharing</Text>
+              <Text className="text-muted-foreground mt-1 mb-3">
+                Server admins choose permitted channels. You must opt in before your messages can appear in MyKliq. Direct messages are never read.
+              </Text>
+              {discordSharing.guilds.map(guild => (
+                <View key={guild.guildId} className="border-t border-border py-3">
+                  <Text className="text-foreground font-semibold">{guild.guildName}</Text>
+                  <Text className="text-muted-foreground text-sm">{guild.memberEnabled ? 'Your eligible channel messages are shared.' : 'Your messages are not shared.'}</Text>
+                  {guild.isActive ? <TouchableOpacity
+                    className={`rounded-lg py-2 mt-2 ${guild.memberEnabled ? 'bg-destructive' : 'bg-primary'}`}
+                    disabled={working === 'discord'}
+                    onPress={() => void setDiscordConsent(guild.guildId, !guild.memberEnabled)}
+                  ><Text className="text-center text-primary-foreground font-semibold">{guild.memberEnabled ? 'Stop sharing my messages' : 'Share my messages'}</Text></TouchableOpacity> : null}
+                </View>
+              ))}
+              <Text className="text-muted-foreground text-xs mt-2">Server installation and channel management are available in web Settings for Discord administrators.</Text>
+            </View>
+          ) : null}
 
           <View className="bg-card border border-border rounded-xl p-4 mb-3">
             <Text className="text-foreground text-lg font-semibold">Bluesky</Text>

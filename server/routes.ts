@@ -20,7 +20,7 @@ import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
 import { performanceOptimizer } from "./performanceOptimizer";
 
-import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts, friendships, notifications, userThemes } from "@shared/schema";
+import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts, friendships, notifications, userThemes, discordGuildInstallations, discordChannelPermissions, discordMemberPermissions, discordSharingAudit, socialCredentials } from "@shared/schema";
 import { generateMobileToken, verifyMobileToken, JWT_CONFIG } from "./mobile-auth";
 import { eq, and, or, desc, sql as sqlOp, isNotNull, isNull, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
@@ -867,6 +867,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Disconnect platform
   app.delete('/api/mobile/oauth/:platform/disconnect', verifyMobileToken, disconnectPlatform);
+
+  app.get('/api/mobile/discord/sharing', verifyMobileToken, async (req: any, res) => {
+    try {
+      const { listDiscordSharing } = await import('./discordBotService');
+      res.json(await listDiscordSharing(req.userId));
+    } catch {
+      res.status(500).json({ message: 'Failed to load Discord sharing settings' });
+    }
+  });
+
+  app.put('/api/mobile/discord/guilds/:guildId/member-consent', verifyMobileToken, async (req: any, res) => {
+    try {
+      const enabled = z.boolean().parse(req.body.enabled);
+      const credential = await storage.getSocialCredential(req.userId, 'discord');
+      if (!credential?.isActive) return res.status(400).json({ message: 'Connect your Discord account first' });
+      const { getUserGuilds } = await import('./discordBotService');
+      const guilds = await getUserGuilds(decryptFromStorage(credential.encryptedAccessToken));
+      if (!guilds.some(guild => guild.id === req.params.guildId)) return res.status(403).json({ message: 'You are not a member of this server' });
+      await db.transaction(async tx => {
+        await tx.insert(discordMemberPermissions).values({
+          guildId: req.params.guildId, userId: req.userId, socialCredentialId: credential.id,
+          discordUserId: credential.platformUserId, isEnabled: enabled, revokedAt: enabled ? null : new Date(),
+        }).onConflictDoUpdate({
+          target: [discordMemberPermissions.guildId, discordMemberPermissions.userId],
+          set: { socialCredentialId: credential.id, discordUserId: credential.platformUserId, isEnabled: enabled, revokedAt: enabled ? null : new Date(), updatedAt: new Date() },
+        });
+        await tx.insert(discordSharingAudit).values({
+          guildId: req.params.guildId, actorUserId: req.userId, action: enabled ? 'member_opted_in' : 'member_revoked',
+        });
+      });
+      res.json({ success: true, enabled });
+    } catch (error: any) {
+      res.status(error instanceof z.ZodError ? 400 : 500).json({ message: error.message || 'Could not update sharing consent' });
+    }
+  });
 
   // ========================================================================
   // MOBILE REAL-TIME & NOTIFICATIONS (Phase 0 Task 4)
@@ -11739,6 +11774,174 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching social accounts:", error);
       res.status(500).json({ message: "Failed to fetch social accounts" });
+    }
+  });
+
+  const getDiscordManagerContext = async (userId: string, guildId: string) => {
+    const credential = await storage.getSocialCredential(userId, 'discord');
+    if (!credential?.isActive) throw new Error('Connect your Discord account first');
+    const { getUserGuilds, canManageGuild } = await import('./discordBotService');
+    const guilds = await getUserGuilds(decryptFromStorage(credential.encryptedAccessToken));
+    const guild = guilds.find(item => item.id === guildId);
+    if (!guild || !canManageGuild(guild)) throw new Error('Discord Manage Server permission is required');
+    return { credential, guild };
+  };
+
+  app.get('/api/discord/sharing', isAuthenticated, async (req: any, res) => {
+    try {
+      const { listDiscordSharing } = await import('./discordBotService');
+      res.json(await listDiscordSharing(req.user.claims.sub));
+    } catch (error) {
+      console.error('Discord sharing status error:', error);
+      res.status(500).json({ message: 'Failed to load Discord sharing settings' });
+    }
+  });
+
+  app.post('/api/discord/bot/install', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const credential = await storage.getSocialCredential(userId, 'discord');
+      if (!credential?.isActive) return res.status(400).json({ message: 'Connect your Discord account first' });
+      const state = await createSocialOAuthState({
+        userId,
+        platform: 'discord-bot',
+        returnUrl: getAppReturnUrl(req.get('origin')),
+        redirectUri: `${process.env.BASE_URL || ''}/api/discord/bot/callback`,
+      });
+      const { getDiscordBotInstallUrl } = await import('./discordBotService');
+      res.json({ authUrl: getDiscordBotInstallUrl(state) });
+    } catch (error: any) {
+      res.status(error.message?.includes('not configured') ? 503 : 500).json({ message: error.message || 'Could not start bot installation' });
+    }
+  });
+
+  app.get('/api/discord/bot/callback', async (req: any, res) => {
+    const state = typeof req.query.state === 'string' ? req.query.state : '';
+    const authState = state ? await consumeSocialOAuthState(state, 'discord-bot') : null;
+    const returnUrl = authState?.returnUrl || getAppReturnUrl();
+    const finish = (status: string, message?: string) => {
+      const params = new URLSearchParams({ discordBot: status });
+      if (message) params.set('message', message);
+      return res.redirect(`${returnUrl}/settings?${params}`);
+    };
+    try {
+      if (!authState) return finish('error', 'Installation authorization expired');
+      if (req.query.error) return finish('error', String(req.query.error_description || req.query.error));
+      const { exchangeBotInstallCode, getBotGuild } = await import('./discordBotService');
+      const { guildId } = await exchangeBotInstallCode(String(req.query.code || ''));
+      const { guild } = await getDiscordManagerContext(authState.userId, guildId).then(async context => ({
+        ...context,
+        guild: await getBotGuild(guildId),
+      }));
+      await db.insert(discordGuildInstallations).values({
+        guildId,
+        guildName: guild.name,
+        installedByUserId: authState.userId,
+      }).onConflictDoUpdate({
+        target: discordGuildInstallations.guildId,
+        set: { guildName: guild.name, installedByUserId: authState.userId, isActive: true, revokedAt: null, updatedAt: new Date() },
+      });
+      await db.insert(discordSharingAudit).values({ guildId, actorUserId: authState.userId, action: 'bot_installed' });
+      finish('installed');
+    } catch (error: any) {
+      console.error('Discord bot callback error:', error);
+      finish('error', error.message || 'Bot installation failed');
+    }
+  });
+
+  app.get('/api/discord/guilds/:guildId/channels', isAuthenticated, async (req: any, res) => {
+    try {
+      await getDiscordManagerContext(req.user.claims.sub, req.params.guildId);
+      const { getGuildTextChannels } = await import('./discordBotService');
+      const [channels, selected] = await Promise.all([
+        getGuildTextChannels(req.params.guildId),
+        db.select().from(discordChannelPermissions).where(and(
+          eq(discordChannelPermissions.guildId, req.params.guildId),
+          eq(discordChannelPermissions.isEnabled, true),
+        )),
+      ]);
+      res.json({ channels, selectedChannelIds: selected.map(channel => channel.channelId) });
+    } catch (error: any) {
+      res.status(403).json({ message: error.message || 'Could not load channels' });
+    }
+  });
+
+  app.put('/api/discord/guilds/:guildId/channels', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await getDiscordManagerContext(userId, req.params.guildId);
+      const { getGuildTextChannels } = await import('./discordBotService');
+      const available = await getGuildTextChannels(req.params.guildId);
+      const requested = new Set(z.array(z.string()).max(100).parse(req.body.channelIds));
+      if (Array.from(requested).some(id => !available.some(channel => channel.id === id))) {
+        return res.status(400).json({ message: 'One or more channels are invalid' });
+      }
+      await db.transaction(async tx => {
+        await tx.update(discordChannelPermissions).set({ isEnabled: false, revokedAt: new Date(), updatedAt: new Date() })
+          .where(eq(discordChannelPermissions.guildId, req.params.guildId));
+        for (const channel of available.filter(item => requested.has(item.id))) {
+          await tx.insert(discordChannelPermissions).values({
+            guildId: req.params.guildId, channelId: channel.id, channelName: channel.name, enabledByUserId: userId,
+          }).onConflictDoUpdate({
+            target: [discordChannelPermissions.guildId, discordChannelPermissions.channelId],
+            set: { channelName: channel.name, enabledByUserId: userId, isEnabled: true, revokedAt: null, updatedAt: new Date() },
+          });
+        }
+        await tx.insert(discordSharingAudit).values({
+          guildId: req.params.guildId, actorUserId: userId, action: 'channels_updated',
+          details: { channelIds: Array.from(requested) },
+        });
+      });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(error instanceof z.ZodError ? 400 : 403).json({ message: error.message || 'Could not update channels' });
+    }
+  });
+
+  app.put('/api/discord/guilds/:guildId/member-consent', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const credential = await storage.getSocialCredential(userId, 'discord');
+      if (!credential?.isActive) return res.status(400).json({ message: 'Connect your Discord account first' });
+      const enabled = z.boolean().parse(req.body.enabled);
+      const guilds = await import('./discordBotService').then(mod =>
+        mod.getUserGuilds(decryptFromStorage(credential.encryptedAccessToken)));
+      if (!guilds.some(guild => guild.id === req.params.guildId)) return res.status(403).json({ message: 'You are not a member of this server' });
+      await db.transaction(async tx => {
+        await tx.insert(discordMemberPermissions).values({
+          guildId: req.params.guildId, userId, socialCredentialId: credential.id,
+          discordUserId: credential.platformUserId, isEnabled: enabled,
+          revokedAt: enabled ? null : new Date(),
+        }).onConflictDoUpdate({
+          target: [discordMemberPermissions.guildId, discordMemberPermissions.userId],
+          set: { socialCredentialId: credential.id, discordUserId: credential.platformUserId, isEnabled: enabled, revokedAt: enabled ? null : new Date(), updatedAt: new Date() },
+        });
+        await tx.insert(discordSharingAudit).values({
+          guildId: req.params.guildId, actorUserId: userId, action: enabled ? 'member_opted_in' : 'member_revoked',
+        });
+      });
+      res.json({ success: true, enabled });
+    } catch (error: any) {
+      res.status(error instanceof z.ZodError ? 400 : 500).json({ message: error.message || 'Could not update sharing consent' });
+    }
+  });
+
+  app.delete('/api/discord/guilds/:guildId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await getDiscordManagerContext(userId, req.params.guildId);
+      await db.transaction(async tx => {
+        await tx.update(discordGuildInstallations).set({ isActive: false, revokedAt: new Date(), updatedAt: new Date() })
+          .where(eq(discordGuildInstallations.guildId, req.params.guildId));
+        await tx.update(discordChannelPermissions).set({ isEnabled: false, revokedAt: new Date(), updatedAt: new Date() })
+          .where(eq(discordChannelPermissions.guildId, req.params.guildId));
+        await tx.update(discordMemberPermissions).set({ isEnabled: false, revokedAt: new Date(), updatedAt: new Date() })
+          .where(eq(discordMemberPermissions.guildId, req.params.guildId));
+        await tx.insert(discordSharingAudit).values({ guildId: req.params.guildId, actorUserId: userId, action: 'server_sharing_revoked' });
+      });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(403).json({ message: error.message || 'Could not revoke server sharing' });
     }
   });
 

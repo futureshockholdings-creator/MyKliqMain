@@ -9,6 +9,12 @@ Each social connection belongs to exactly one authenticated MyKliq member and on
 
 **How to apply:** Bind authorization state to the member server-side, consume it once, and return to the app URL saved at authorization time. Use member-owned encrypted credentials for OAuth providers and member-owned app passwords for Bluesky. Mobile provider authorization must use the same registered HTTPS API callbacks as web; after the server exchanges and stores tokens, it returns the result to the fixed `mykliq://oauth/callback` deep link.
 
+Discord message imports are the one bot-mediated exception to provider user APIs. A message is eligible only when all three permissions are active: the server has installed the bot, a server manager has enabled that exact public server channel, and the linked MyKliq member has opted in for that server. Direct messages are never eligible.
+
+**Why:** Discord user OAuth cannot read message history, while a bot could otherwise expose messages from members or channels that never consented.
+
+**How to apply:** Keep bot installation, channel permission, and member permission independently revocable and audited. Resolve every imported message back to that member's own Discord social credential so existing Kliq ownership and feed visibility rules remain authoritative.
+
 The YouTube and Twitch client IDs and secrets are already injected into the running workspace under the expected environment-variable names, even though the environment inventory API may report those legacy entries as absent.
 
 **Why:** Relying only on the inventory API produced an incorrect request to recreate provider applications that were already configured.

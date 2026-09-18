@@ -1634,6 +1634,61 @@ export const externalPosts = pgTable("external_posts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const discordGuildInstallations = pgTable("discord_guild_installations", {
+  guildId: varchar("guild_id", { length: 32 }).primaryKey(),
+  guildName: varchar("guild_name", { length: 120 }).notNull(),
+  installedByUserId: varchar("installed_by_user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  installedAt: timestamp("installed_at").defaultNow().notNull(),
+  revokedAt: timestamp("revoked_at"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("discord_guild_installations_user_idx").on(table.installedByUserId),
+]);
+
+export const discordChannelPermissions = pgTable("discord_channel_permissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  guildId: varchar("guild_id", { length: 32 }).references(() => discordGuildInstallations.guildId, { onDelete: "cascade" }).notNull(),
+  channelId: varchar("channel_id", { length: 32 }).notNull(),
+  channelName: varchar("channel_name", { length: 120 }).notNull(),
+  enabledByUserId: varchar("enabled_by_user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  isEnabled: boolean("is_enabled").default(true).notNull(),
+  enabledAt: timestamp("enabled_at").defaultNow().notNull(),
+  revokedAt: timestamp("revoked_at"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("discord_channel_permissions_guild_channel_unique").on(table.guildId, table.channelId),
+  index("discord_channel_permissions_enabled_idx").on(table.guildId, table.isEnabled),
+]);
+
+export const discordMemberPermissions = pgTable("discord_member_permissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  guildId: varchar("guild_id", { length: 32 }).references(() => discordGuildInstallations.guildId, { onDelete: "cascade" }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  socialCredentialId: varchar("social_credential_id").references(() => socialCredentials.id, { onDelete: "cascade" }).notNull(),
+  discordUserId: varchar("discord_user_id", { length: 32 }).notNull(),
+  isEnabled: boolean("is_enabled").default(true).notNull(),
+  enabledAt: timestamp("enabled_at").defaultNow().notNull(),
+  revokedAt: timestamp("revoked_at"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("discord_member_permissions_guild_user_unique").on(table.guildId, table.userId),
+  index("discord_member_permissions_discord_user_idx").on(table.guildId, table.discordUserId, table.isEnabled),
+]);
+
+export const discordSharingAudit = pgTable("discord_sharing_audit", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  guildId: varchar("guild_id", { length: 32 }).notNull(),
+  actorUserId: varchar("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+  action: varchar("action", { length: 64 }).notNull(),
+  channelId: varchar("channel_id", { length: 32 }),
+  details: jsonb("details").$type<Record<string, unknown>>().default({}),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("discord_sharing_audit_guild_created_idx").on(table.guildId, table.createdAt),
+  index("discord_sharing_audit_actor_idx").on(table.actorUserId, table.createdAt),
+]);
+
 // Short-lived, server-side OAuth state. Keeping this outside browser sessions
 // makes provider callbacks reliable when the frontend and API use different
 // production domains, and binds a redirect URI/PKCE verifier to one attempt.
@@ -1775,6 +1830,9 @@ export const insertExternalPostSchema = createInsertSchema(externalPosts).omit({
 });
 export type InsertExternalPost = z.infer<typeof insertExternalPostSchema>;
 export type ExternalPost = typeof externalPosts.$inferSelect;
+export type DiscordGuildInstallation = typeof discordGuildInstallations.$inferSelect;
+export type DiscordChannelPermission = typeof discordChannelPermissions.$inferSelect;
+export type DiscordMemberPermission = typeof discordMemberPermissions.$inferSelect;
 
 // Sports preferences types
 export const insertUserSportsPreferenceSchema = createInsertSchema(userSportsPreferences).omit({ 

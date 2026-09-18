@@ -57,6 +57,98 @@ import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 import { cleanupEnterpriseServices } from "@/lib/enterprise/enterpriseInit";
 import { removeAuthToken } from "@/lib/tokenStorage";
 
+interface DiscordSharingStatus {
+  configured: boolean;
+  linked: boolean;
+  guilds: Array<{ guildId: string; guildName: string; isActive: boolean; memberEnabled: boolean | null; canManage: boolean }>;
+  audit: Array<{ id: string; guildId: string; action: string; createdAt: string }>;
+}
+
+function DiscordGuildSharing({ guild }: { guild: DiscordSharingStatus["guilds"][number] }) {
+  const [editing, setEditing] = useState(false);
+  const { data } = useQuery<{ channels: Array<{ id: string; name: string }>; selectedChannelIds: string[] }>({
+    queryKey: ["/api/discord/guilds", guild.guildId, "channels"],
+    queryFn: async () => apiRequest("GET", `/api/discord/guilds/${guild.guildId}/channels`),
+    enabled: editing,
+    retry: false,
+  });
+  const [selection, setSelection] = useState<string[] | null>(null);
+  const selected = selection ?? data?.selectedChannelIds ?? [];
+  const save = useMutation({
+    mutationFn: () => apiRequest("PUT", `/api/discord/guilds/${guild.guildId}/channels`, { channelIds: selected }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/discord/sharing"] });
+      setEditing(false);
+      toast({ title: "Discord channels updated", description: "Only the selected channels are eligible for sharing." });
+    },
+  });
+  const consent = useMutation({
+    mutationFn: (enabled: boolean) => apiRequest("PUT", `/api/discord/guilds/${guild.guildId}/member-consent`, { enabled }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/discord/sharing"] }),
+  });
+  const revoke = useMutation({
+    mutationFn: () => apiRequest("DELETE", `/api/discord/guilds/${guild.guildId}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/discord/sharing"] }),
+  });
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div><p className="text-white font-medium">{guild.guildName}</p><p className="text-purple-200 text-xs">Server and member permission are both required.</p></div>
+        <Badge variant={guild.isActive ? "default" : "secondary"}>{guild.isActive ? "Bot installed" : "Revoked"}</Badge>
+      </div>
+      {editing && data && (
+        <div className="space-y-2">
+          {data.channels.map(channel => (
+            <label key={channel.id} className="flex items-center gap-2 text-sm text-purple-100">
+              <input type="checkbox" checked={selected.includes(channel.id)} onChange={() => setSelection(current => {
+                const value = current ?? data.selectedChannelIds;
+                return value.includes(channel.id) ? value.filter(id => id !== channel.id) : [...value, channel.id];
+              })} />
+              #{channel.name}
+            </label>
+          ))}
+          <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>Save permitted channels</Button>
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {guild.isActive && guild.canManage && <Button size="sm" variant="outline" onClick={() => setEditing(value => !value)}>Manage channels</Button>}
+        {guild.isActive && <Button size="sm" onClick={() => consent.mutate(!guild.memberEnabled)} disabled={consent.isPending}>
+          {guild.memberEnabled ? "Stop sharing my messages" : "Share my messages"}
+        </Button>}
+        {guild.isActive && guild.canManage && <Button size="sm" variant="destructive" onClick={() => revoke.mutate()} disabled={revoke.isPending}>Revoke server access</Button>}
+      </div>
+    </div>
+  );
+}
+
+function DiscordSharingCard() {
+  const { data, isLoading } = useQuery<DiscordSharingStatus>({ queryKey: ["/api/discord/sharing"] });
+  const install = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/discord/bot/install"),
+    onSuccess: result => window.location.assign(result.authUrl),
+    onError: (error: any) => toast({ title: "Bot installation unavailable", description: error.message, variant: "destructive" }),
+  });
+  if (isLoading || !data?.linked) return null;
+  return (
+    <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+      <CardHeader>
+        <CardTitle className="text-white flex items-center gap-2"><Shield className="w-5 h-5" />Discord message sharing</CardTitle>
+        <CardDescription className="text-purple-200">A server admin installs the bot and selects channels. Each linked member must opt in separately. Direct messages are never read.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {data.guilds.map(guild => <DiscordGuildSharing key={guild.guildId} guild={guild} />)}
+        <Button onClick={() => install.mutate()} disabled={!data.configured || install.isPending}>
+          <SiDiscord className="w-4 h-4 mr-2" />Install MyKliq bot in a server
+        </Button>
+        {!data.configured && <p className="text-amber-200 text-sm">Bot message sharing is not configured by the MyKliq operator yet.</p>}
+        {data.audit.length > 0 && <Accordion type="single" collapsible><AccordionItem value="audit"><AccordionTrigger className="text-white">Permission history</AccordionTrigger><AccordionContent className="space-y-1 text-purple-200 text-sm">
+          {data.audit.map(item => <div key={item.id}>{item.action.replaceAll("_", " ")} · {new Date(item.createdAt).toLocaleString()}</div>)}
+        </AccordionContent></AccordionItem></Accordion>}
+      </CardContent>
+    </Card>
+  );
+}
+
 interface SocialAccount {
   id: string;
   platform: string;
@@ -1560,6 +1652,8 @@ export default function Settings() {
                 )}
               </CardContent>
             </Card>
+
+            <DiscordSharingCard />
 
             {/* Sports Preferences */}
             <Card className="bg-white/10 backdrop-blur-sm border-white/20">

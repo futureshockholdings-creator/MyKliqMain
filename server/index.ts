@@ -271,6 +271,13 @@ app.get('/', (req, res, next) => {
         console.error("Failed to start social sync service:", error);
       }
 
+      try {
+        const { startDiscordBot } = await import('./discordBotService');
+        await startDiscordBot();
+      } catch (error) {
+        console.error("Failed to start Discord bot:", error);
+      }
+
       log("Background services started");
     }, 10000);
 
