@@ -2,7 +2,9 @@ import {
   ChannelType,
   Client,
   GatewayIntentBits,
+  Partials,
   type Message,
+  type PartialMessage,
 } from 'discord.js';
 import { and, desc, eq, inArray } from 'drizzle-orm';
 import { db } from './db';
@@ -19,6 +21,8 @@ import {
 const API = 'https://discord.com/api/v10';
 const ADMINISTRATOR = 1 << 3;
 const MANAGE_GUILD = 1 << 5;
+const discordMessageUrl = (guildId: string, channelId: string, messageId: string) =>
+  `https://discord.com/channels/${guildId}/${channelId}/${messageId}`;
 
 async function botFetch(path: string): Promise<Response> {
   const token = process.env.DISCORD_BOT_TOKEN;
@@ -86,8 +90,12 @@ export function canManageGuild(guild: { permissions: string; owner?: boolean }):
   return Boolean(guild.owner) || (permissions & ADMINISTRATOR) !== 0 || (permissions & MANAGE_GUILD) !== 0;
 }
 
-export async function importDiscordMessage(message: Message): Promise<boolean> {
-  if (!message.inGuild() || message.author.bot || !message.content.trim()) return false;
+async function getMessageSharingPermission(message: {
+  guildId: string | null;
+  channelId: string;
+  author: { id: string; bot: boolean };
+}) {
+  if (!message.guildId || message.author.bot) return null;
   const [permission] = await db.select({ credentialId: discordMemberPermissions.socialCredentialId })
     .from(discordMemberPermissions)
     .innerJoin(discordGuildInstallations, and(
@@ -104,10 +112,16 @@ export async function importDiscordMessage(message: Message): Promise<boolean> {
       eq(discordMemberPermissions.discordUserId, message.author.id),
       eq(discordMemberPermissions.isEnabled, true),
     )).limit(1);
-  if (!permission) return false;
+  if (!permission) return null;
 
   const [credential] = await db.select().from(socialCredentials)
     .where(and(eq(socialCredentials.id, permission.credentialId), eq(socialCredentials.isActive, true))).limit(1);
+  return credential || null;
+}
+
+export async function importDiscordMessage(message: Message): Promise<boolean> {
+  if (!message.inGuild() || !message.content.trim()) return false;
+  const credential = await getMessageSharingPermission(message);
   if (!credential) return false;
 
   const [existing] = await db.select({ id: externalPosts.id }).from(externalPosts)
@@ -132,6 +146,74 @@ export async function importDiscordMessage(message: Message): Promise<boolean> {
   return true;
 }
 
+export async function updateImportedDiscordMessage(message: Message): Promise<boolean> {
+  if (!message.inGuild() || message.author.bot) return false;
+  const [existing] = await db.select({
+    id: externalPosts.id,
+    actorUserId: socialCredentials.userId,
+  }).from(externalPosts)
+    .innerJoin(socialCredentials, eq(socialCredentials.id, externalPosts.socialCredentialId))
+    .where(and(
+      eq(externalPosts.platformPostId, `discord-message-${message.id}`),
+      eq(externalPosts.platform, 'discord'),
+      eq(externalPosts.platformUserId, message.author.id),
+      eq(externalPosts.postUrl, discordMessageUrl(message.guildId, message.channelId, message.id)),
+    )).limit(1);
+  if (!existing) return false;
+
+  const attachments = Array.from(message.attachments.values());
+  const [updated] = await db.transaction(async tx => {
+    const changed = await tx.update(externalPosts).set({
+      platformUsername: message.author.username,
+      content: message.content,
+      mediaUrls: attachments.map(file => file.url),
+      thumbnailUrl: attachments.find(file => file.contentType?.startsWith('image/'))?.url || null,
+      postUrl: message.url,
+    }).where(eq(externalPosts.id, existing.id)).returning({ id: externalPosts.id });
+    if (!changed[0]) return changed;
+    await tx.insert(discordSharingAudit).values({
+      guildId: message.guildId,
+      actorUserId: existing.actorUserId,
+      action: 'message_updated',
+      channelId: message.channelId,
+      details: { messageId: message.id, externalPostId: changed[0].id },
+    });
+    return changed;
+  });
+  return Boolean(updated);
+}
+
+export async function deleteImportedDiscordMessage(message: Message | PartialMessage): Promise<boolean> {
+  if (!message.guildId) return false;
+  const [existing] = await db.select({
+    id: externalPosts.id,
+    actorUserId: socialCredentials.userId,
+  }).from(externalPosts)
+    .innerJoin(socialCredentials, eq(socialCredentials.id, externalPosts.socialCredentialId))
+    .where(and(
+      eq(externalPosts.platformPostId, `discord-message-${message.id}`),
+      eq(externalPosts.platform, 'discord'),
+      eq(externalPosts.postUrl, discordMessageUrl(message.guildId, message.channelId, message.id)),
+    )).limit(1);
+  if (!existing) return false;
+
+  const [deleted] = await db.transaction(async tx => {
+    const removed = await tx.delete(externalPosts)
+      .where(eq(externalPosts.id, existing.id))
+      .returning({ id: externalPosts.id });
+    if (!removed[0]) return removed;
+    await tx.insert(discordSharingAudit).values({
+      guildId: message.guildId!,
+      actorUserId: existing.actorUserId,
+      action: 'message_deleted',
+      channelId: message.channelId,
+      details: { messageId: message.id, externalPostId: removed[0].id },
+    });
+    return removed;
+  });
+  return Boolean(deleted);
+}
+
 let client: Client | null = null;
 export async function startDiscordBot(): Promise<void> {
   if (client || !process.env.DISCORD_BOT_TOKEN) {
@@ -140,9 +222,19 @@ export async function startDiscordBot(): Promise<void> {
   }
   client = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+    partials: [Partials.Channel, Partials.Message],
   });
   client.on('messageCreate', message => {
     void importDiscordMessage(message).catch(error => console.error('[DiscordBot] Message import failed:', error));
+  });
+  client.on('messageUpdate', (_oldMessage, newMessage) => {
+    void (async () => {
+      const message = newMessage.partial ? await newMessage.fetch() : newMessage;
+      await updateImportedDiscordMessage(message);
+    })().catch(error => console.error('[DiscordBot] Message update failed:', error));
+  });
+  client.on('messageDelete', message => {
+    void deleteImportedDiscordMessage(message).catch(error => console.error('[DiscordBot] Message deletion failed:', error));
   });
   client.on('guildDelete', guild => {
     void db.update(discordGuildInstallations)
