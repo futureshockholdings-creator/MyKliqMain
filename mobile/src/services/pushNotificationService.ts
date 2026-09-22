@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { apiClient } from '../lib/apiClient';
 import type { RegisterDeviceRequest } from '@shared/api-contracts';
+import { Linking } from 'react-native';
 
 const DEVICE_TOKEN_KEY = 'expo_push_token';
 
@@ -143,7 +144,10 @@ export class PushNotificationService {
     });
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('Notification response:', response);
+      const actionUrl = response.notification.request.content.data?.actionUrl;
+      if (actionUrl === '/settings#discord-sharing') {
+        void Linking.openURL('mykliq://social-accounts?section=discord-sharing');
+      }
     });
 
     return () => {

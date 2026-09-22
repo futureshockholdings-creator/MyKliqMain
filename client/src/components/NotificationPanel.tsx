@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@shared/schema";
+import { useLocation } from "wouter";
 
 interface NotificationPanelProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ const priorityColors = {
 };
 
 export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
+  const [, navigate] = useLocation();
   const [selectedTab, setSelectedTab] = useState("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -64,6 +66,14 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
       });
     },
   });
+
+  const openNotification = (notification: Notification) => {
+    if (!notification.isRead) markAsReadMutation.mutate(notification.id);
+    if (notification.actionUrl) {
+      onClose();
+      navigate(notification.actionUrl);
+    }
+  };
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async (type?: string) => {
@@ -272,9 +282,19 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                           key={notification.id}
                           className={cn(
                             "transition-colors",
+                            notification.actionUrl && "cursor-pointer hover:bg-accent/50",
                             !notification.isRead && "border-primary bg-primary/5"
                           )}
                           data-testid={`notification-item-${notification.id}`}
+                          role={notification.actionUrl ? "button" : undefined}
+                          tabIndex={notification.actionUrl ? 0 : undefined}
+                          onClick={() => openNotification(notification)}
+                          onKeyDown={(event) => {
+                            if (notification.actionUrl && (event.key === "Enter" || event.key === " ")) {
+                              event.preventDefault();
+                              openNotification(notification);
+                            }
+                          }}
                         >
                           <CardContent className="p-3">
                             <div className="flex items-start space-x-3">

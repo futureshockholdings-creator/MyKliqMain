@@ -212,7 +212,14 @@ export const AppNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={{
+      prefixes: ['mykliq://'],
+      config: {
+        screens: {
+          SocialAccountsScreen: 'social-accounts',
+        },
+      },
+    }}>
       {isAuthenticated ? (
         <RootStackNavigator />
       ) : (

@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { notifications, type InsertNotification } from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { notifications, deviceTokens, type InsertNotification } from "@shared/schema";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { deleteCache } from "./redis";
 
 export class NotificationService {
@@ -20,6 +20,88 @@ export class NotificationService {
     }
     
     return notification;
+  }
+
+  async createDiscordSharingNotificationsInTx(
+    tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+    params: {
+    userIds: string[];
+    eventId: string;
+    guildName: string;
+    enabledChannelNames: string[];
+    disabledChannelNames: string[];
+    revoked?: boolean;
+  }) {
+    const userIds = Array.from(new Set(params.userIds));
+    if (userIds.length === 0) return [];
+
+    const enabled = [...params.enabledChannelNames].sort((a, b) => a.localeCompare(b));
+    const disabled = [...params.disabledChannelNames].sort((a, b) => a.localeCompare(b));
+    const channelSummary = [
+      enabled.length ? `Enabled: ${enabled.map(name => `#${name}`).join(", ")}.` : "",
+      disabled.length ? `Disabled: ${disabled.map(name => `#${name}`).join(", ")}.` : "",
+    ].filter(Boolean).join(" ");
+    const data = {
+      type: "system" as const,
+      title: params.revoked
+        ? `Discord sharing revoked for ${params.guildName}`
+        : `Discord sharing changed for ${params.guildName}`,
+      message: params.revoked
+        ? `${params.guildName} no longer shares Discord channels with MyKliq.`
+        : `${params.guildName} changed its permitted channels. ${channelSummary}`,
+      actionUrl: "/settings#discord-sharing",
+      relatedId: params.eventId,
+      relatedType: "discord_sharing_audit",
+      priority: "high",
+    };
+
+    const inserted = await Promise.all(userIds.map(async userId => {
+      const [notification] = await tx
+        .insert(notifications)
+        .values({ ...data, userId })
+        .returning();
+      return notification;
+    }));
+    return inserted;
+  }
+
+  async notifyDiscordSharingChanged(params: {
+    userIds: string[];
+    title: string;
+    message: string;
+  }) {
+    const userIds = Array.from(new Set(params.userIds));
+    if (userIds.length === 0) return;
+
+    try {
+      await Promise.all(userIds.flatMap(userId => [
+        deleteCache(`notifications:${userId}:all`),
+        deleteCache(`notifications:${userId}:system`),
+      ]));
+    } catch (error) {
+      console.error("[NotificationService] Cache invalidation failed:", error);
+    }
+
+    try {
+      const tokens = await db.select({ token: deviceTokens.token })
+        .from(deviceTokens)
+        .where(and(inArray(deviceTokens.userId, userIds), eq(deviceTokens.isActive, true)));
+      const expoTokens = tokens.map(({ token }) => token).filter(token => token.startsWith("ExponentPushToken["));
+      if (expoTokens.length === 0) return;
+      const response = await fetch("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
+        headers: { "Accept": "application/json", "Content-Type": "application/json" },
+        body: JSON.stringify(expoTokens.map(to => ({
+          to,
+          title: params.title,
+          body: params.message,
+          data: { actionUrl: "/settings#discord-sharing" },
+        }))),
+      });
+      if (!response.ok) console.error("[NotificationService] Expo notification delivery failed:", response.status);
+    } catch (error) {
+      console.error("[NotificationService] Expo notification delivery failed:", error);
+    }
   }
 
   // Get notifications for a user

@@ -130,7 +130,7 @@ function DiscordSharingCard() {
   });
   if (isLoading || !data?.linked) return null;
   return (
-    <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+    <Card id="discord-sharing" className="bg-white/10 backdrop-blur-sm border-white/20 scroll-mt-6">
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2"><Shield className="w-5 h-5" />Discord message sharing</CardTitle>
         <CardDescription className="text-purple-200">A server admin installs the bot and selects channels. Each linked member must opt in separately. Direct messages are never read.</CardDescription>

@@ -982,12 +982,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
 
-      // TODO: Implement notifications table in schema
-      // For now, return empty array
+      const userNotifications = await notificationService.getUserNotifications(userId);
+      const page = userNotifications.slice(offset, offset + Math.min(limit, 100));
       res.json({
-        notifications: [],
-        hasMore: false,
-        total: 0,
+        notifications: page.map(notification => ({
+          ...notification,
+          actionUrl: notification.actionUrl === '/settings#discord-sharing'
+            ? 'mykliq://social-accounts?section=discord-sharing'
+            : notification.actionUrl,
+        })),
+        hasMore: offset + page.length < userNotifications.length,
+        total: userNotifications.length,
       });
     } catch (error) {
       console.error('Mobile notifications fetch error:', error);
@@ -1005,8 +1010,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req as any).userId;
       const notificationId = req.params.id;
 
-      // TODO: Implement notification read status update
-      res.json({ success: true });
+      const notification = await notificationService.markAsRead(notificationId, userId);
+      if (!notification) return res.status(404).json({ message: 'Notification not found' });
+      res.json({ success: true, notification });
     } catch (error) {
       console.error('Mobile notification read error:', error);
       res.status(500).json({ message: 'Failed to mark notification as read' });
@@ -11869,14 +11875,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/discord/guilds/:guildId/channels', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      await getDiscordManagerContext(userId, req.params.guildId);
+      const { guild } = await getDiscordManagerContext(userId, req.params.guildId);
       const { getGuildTextChannels } = await import('./discordBotService');
       const available = await getGuildTextChannels(req.params.guildId);
       const requested = new Set(z.array(z.string()).max(100).parse(req.body.channelIds));
       if (Array.from(requested).some(id => !available.some(channel => channel.id === id))) {
         return res.status(400).json({ message: 'One or more channels are invalid' });
       }
-      await db.transaction(async tx => {
+      const [previousChannels, optedInMembers] = await Promise.all([
+        db.select().from(discordChannelPermissions).where(and(
+          eq(discordChannelPermissions.guildId, req.params.guildId),
+          eq(discordChannelPermissions.isEnabled, true),
+        )),
+        db.select({ userId: discordMemberPermissions.userId }).from(discordMemberPermissions).where(and(
+          eq(discordMemberPermissions.guildId, req.params.guildId),
+          eq(discordMemberPermissions.isEnabled, true),
+        )),
+      ]);
+      const previousIds = new Set(previousChannels.map(channel => channel.channelId));
+      const changed = previousIds.size !== requested.size || Array.from(requested).some(id => !previousIds.has(id));
+      if (!changed) return res.json({ success: true, unchanged: true });
+
+      const enabledChannelNames = available.filter(channel => requested.has(channel.id) && !previousIds.has(channel.id)).map(channel => channel.name);
+      const disabledChannelNames = previousChannels.filter(channel => !requested.has(channel.channelId)).map(channel => channel.channelName);
+      const notification = await db.transaction(async tx => {
         await tx.update(discordChannelPermissions).set({ isEnabled: false, revokedAt: new Date(), updatedAt: new Date() })
           .where(eq(discordChannelPermissions.guildId, req.params.guildId));
         for (const channel of available.filter(item => requested.has(item.id))) {
@@ -11887,10 +11909,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             set: { channelName: channel.name, enabledByUserId: userId, isEnabled: true, revokedAt: null, updatedAt: new Date() },
           });
         }
-        await tx.insert(discordSharingAudit).values({
+        const [event] = await tx.insert(discordSharingAudit).values({
           guildId: req.params.guildId, actorUserId: userId, action: 'channels_updated',
           details: { channelIds: Array.from(requested) },
+        }).returning({ id: discordSharingAudit.id });
+        const created = await notificationService.createDiscordSharingNotificationsInTx(tx, {
+          userIds: optedInMembers.map(member => member.userId),
+          eventId: event.id,
+          guildName: guild.name,
+          enabledChannelNames,
+          disabledChannelNames,
         });
+        return created[0];
+      });
+      if (notification) await notificationService.notifyDiscordSharingChanged({
+        userIds: optedInMembers.map(member => member.userId),
+        title: notification.title,
+        message: notification.message,
       });
       res.json({ success: true });
     } catch (error: any) {
@@ -11929,15 +11964,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/discord/guilds/:guildId', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      await getDiscordManagerContext(userId, req.params.guildId);
-      await db.transaction(async tx => {
+      const { guild } = await getDiscordManagerContext(userId, req.params.guildId);
+      const [[installation], optedInMembers] = await Promise.all([
+        db.select({ isActive: discordGuildInstallations.isActive }).from(discordGuildInstallations)
+          .where(eq(discordGuildInstallations.guildId, req.params.guildId)).limit(1),
+        db.select({ userId: discordMemberPermissions.userId }).from(discordMemberPermissions).where(and(
+          eq(discordMemberPermissions.guildId, req.params.guildId),
+          eq(discordMemberPermissions.isEnabled, true),
+        )),
+      ]);
+      if (!installation?.isActive) return res.json({ success: true, unchanged: true });
+      const notification = await db.transaction(async tx => {
         await tx.update(discordGuildInstallations).set({ isActive: false, revokedAt: new Date(), updatedAt: new Date() })
           .where(eq(discordGuildInstallations.guildId, req.params.guildId));
         await tx.update(discordChannelPermissions).set({ isEnabled: false, revokedAt: new Date(), updatedAt: new Date() })
           .where(eq(discordChannelPermissions.guildId, req.params.guildId));
         await tx.update(discordMemberPermissions).set({ isEnabled: false, revokedAt: new Date(), updatedAt: new Date() })
           .where(eq(discordMemberPermissions.guildId, req.params.guildId));
-        await tx.insert(discordSharingAudit).values({ guildId: req.params.guildId, actorUserId: userId, action: 'server_sharing_revoked' });
+        const [event] = await tx.insert(discordSharingAudit).values({
+          guildId: req.params.guildId, actorUserId: userId, action: 'server_sharing_revoked',
+        }).returning({ id: discordSharingAudit.id });
+        const created = await notificationService.createDiscordSharingNotificationsInTx(tx, {
+          userIds: optedInMembers.map(member => member.userId),
+          eventId: event.id,
+          guildName: guild.name,
+          enabledChannelNames: [],
+          disabledChannelNames: [],
+          revoked: true,
+        });
+        return created[0];
+      });
+      if (notification) await notificationService.notifyDiscordSharingChanged({
+        userIds: optedInMembers.map(member => member.userId),
+        title: notification.title,
+        message: notification.message,
       });
       res.json({ success: true });
     } catch (error: any) {

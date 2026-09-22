@@ -296,7 +296,7 @@ export default function SocialAccountsScreen() {
           })}
 
           {discordSharing?.linked ? (
-            <View className="bg-card border border-border rounded-xl p-4 mb-3">
+            <View nativeID="discord-sharing" className="bg-card border border-border rounded-xl p-4 mb-3">
               <Text className="text-foreground text-lg font-semibold">Discord message sharing</Text>
               <Text className="text-muted-foreground mt-1 mb-3">
                 Server admins choose permitted channels. You must opt in before your messages can appear in MyKliq. Direct messages are never read.
