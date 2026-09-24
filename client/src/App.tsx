@@ -182,7 +182,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
       </div>
 
       {/* ── Bottom Navigation Bar (desktop only, hidden on mobile) ── */}
-      <div className="hidden md:flex fixed bottom-0 left-0 right-0 h-16 bg-card border-t-2 border-primary z-50 items-center justify-around px-4">
+      <div className="hidden md:flex fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-[760px] h-16 bg-card border-2 border-primary rounded-full shadow-xl z-50 items-center justify-around px-4">
         {/* Notification Bell */}
         <button
           onClick={toggleNotificationPanel}
@@ -435,7 +435,7 @@ function AppContent() {
             )}
 
             {/* Main Content with proper scrolling and mobile padding */}
-            <div className="relative z-10 min-h-full pb-20 md:pb-20">
+            <div className="relative z-10 min-h-full pb-20 md:pb-28">
               <Router />
             </div>
           </div>
