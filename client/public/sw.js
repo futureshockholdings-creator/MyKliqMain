@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mykliq-v21';
+const CACHE_NAME = 'mykliq-v22';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -70,7 +70,34 @@ self.addEventListener('fetch', (e) => {
     return; // let the browser handle it — no service worker interception
   }
 
-  // Cache-First for static assets (HTML shell, JS, CSS, images, icons)
+  // Always check the network for pages. Cache-first navigation can keep an
+  // older HTML shell (and its old asset URLs) in use after a publish.
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      (async () => {
+        try {
+          const response = await fetch(e.request);
+          if (response.ok) {
+            try {
+              const cache = await caches.open(CACHE_NAME);
+              await cache.put(e.request, response.clone());
+            } catch (_cacheError) {
+              // A full/unavailable cache must not hide a fresh page response.
+            }
+          }
+          return response;
+        } catch (_err) {
+          return (await caches.match(e.request))
+            || (await caches.match('/index.html'))
+            || (await caches.match('/offline.html'))
+            || Response.error();
+        }
+      })()
+    );
+    return;
+  }
+
+  // Cache-First for versioned static assets (JS, CSS, images, icons)
   e.respondWith(
     (async () => {
       // 1. Cache hit → return immediately (works offline)

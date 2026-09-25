@@ -8,6 +8,12 @@ description: sw.js was caching /api/ GET responses with Cache-First strategy, si
 ## The Rule
 `client/public/sw.js` must always have an early-return for `/api/` paths in the fetch handler so the service worker never intercepts or caches API calls.
 
+HTML navigations must be network-first (with a cached offline fallback), and a service-worker behavior change must advance its cache version.
+
+**Why:** A published desktop navigation restyle reached the production JS and CSS, but an unchanged cache-first service worker could keep returning the prior HTML shell and its old asset URLs to Safari. A successful deployment alone did not guarantee returning visitors saw the new UI.
+
+**How to apply:** Keep hashed assets cache-first for offline support, but never give cached HTML priority while online; advance the cache name when changing the worker so installed clients replace the old cache.
+
 ## Why
 The original sw.js used Cache-First with no API exclusion. It cached a `200 []` response from `/api/nearby-activities?postal=60601` (returned by old broken geocoding code). Every subsequent search for 60601 was served from the SW cache — no request ever reached the server. Logs showed zero `/api/nearby-activities` entries because the fetch never left the device.
 
