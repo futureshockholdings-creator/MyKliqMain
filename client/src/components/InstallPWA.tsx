@@ -88,8 +88,18 @@ export function InstallPWA() {
 
   const device = detectDevice();
   const isIOS = device.isIOS;
+  const isAndroid = device.isAndroid;
 
   useEffect(() => {
+    if (isAndroid) {
+      // Android users install the native app from Google Play, not this PWA.
+      const suppressPWAPrompt = (event: Event) => event.preventDefault();
+      window.addEventListener('beforeinstallprompt', suppressPWAPrompt);
+      return () => {
+        window.removeEventListener('beforeinstallprompt', suppressPWAPrompt);
+      };
+    }
+
     if (window.matchMedia('(display-mode: standalone)').matches ||
         (window.navigator as any).standalone === true) {
       setIsInstalled(true);
@@ -130,7 +140,7 @@ export function InstallPWA() {
       window.removeEventListener('appinstalled', installedHandler);
       clearTimeout(timer);
     };
-  }, []);
+  }, [isAndroid]);
 
   const handleInstallClick = async () => {
     if (isIOS) {
@@ -156,7 +166,7 @@ export function InstallPWA() {
     localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
   };
 
-  const shouldShow = !isInstalled && showDialog && (isIOS || deferredPrompt);
+  const shouldShow = !isAndroid && !isInstalled && showDialog && (isIOS || deferredPrompt);
 
   if (!shouldShow) {
     return null;

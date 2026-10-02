@@ -2,3 +2,4 @@
 - [Service Worker must never cache API routes](sw-api-cache-bug.md) — sw.js Cache-First with no /api/ exclusion silently cached stale API responses; server logs showed zero requests. Diagnosis pattern + fix documented.
 - [Member social connections](member-social-connections.md) — OAuth and app-password accounts belong to individual members; never blend workspace connector content into member feeds.
 - [Production database health checks](production-database-health.md) — Database pane Active and tool-level SELECT do not prove a published app's direct connection works.
+- [Android distribution](android-distribution.md) — MyKliq is on Google Play; Android web visitors should use the native app rather than a PWA install popup.
