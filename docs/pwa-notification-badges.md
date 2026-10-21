@@ -46,6 +46,41 @@ Sources:
 
 ## Verification and rollout
 
+### Main website release path
+
+The owner updates **mykliq.app** by syncing this project to GitHub, after which
+AWS Amplify builds the frontend. Replit Publish separately updates the backend
+at **api.mykliq.app**; a successful backend publish does not release the main
+website's frontend or its installed PWA workers.
+
+The Git remote is `futureshockholdings-creator/MyKliqMain`, and this workspace is
+on `main`. Sync the reviewed changes through the existing GitHub-to-Amplify
+pipeline. Confirm Amplify builds the updated commit on its configured production
+branch; do not change that branch or trigger a production deployment without
+the owner's approval.
+
+Amplify's checked-in build configuration runs `npm run build` and publishes
+`dist`. Vite copies `client/public` into that directory. The release must contain
+`app-badge.js`, `sw-ios.js`, `firebase-messaging-sw.js`, and `sw.js` alongside the
+current frontend bundle. No changes to badge APIs, subscriptions, or installation
+are needed just to deliver those existing files.
+
+After Amplify reports a successful release, check **mykliq.app**, not only the
+API origin:
+
+- `/app-badge.js` must return the badge helper JavaScript, including
+  `APP_BADGE_SYNC`, not the SPA's HTML fallback. HTTP 200 or a JavaScript content
+  type alone does not establish that the file exists.
+- `/sw-ios.js` must import `/app-badge.js`.
+- The entry bundle referenced by `/` must be from the updated frontend build.
+
+If those files remain old, investigate the Amplify source commit, production
+branch, and release status before changing badge logic or asking users to
+reinstall. Existing installations can check for the new worker during an online
+launch; allow the update to activate and reopen if needed.
+
+### Local and device checks
+
 Run `npm run validate:pwa-badges` for simulated worker, lifecycle, payload,
 permission-denial, registration, and recipient-routing checks. These checks do
 not send pushes or modify any database. They do not emulate a physical home
