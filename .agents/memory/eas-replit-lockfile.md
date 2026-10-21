@@ -1,19 +1,16 @@
 ---
-name: EAS Build — Replit package-lock.json registry issue
-description: EAS builds fail with ENOTFOUND when package-lock.json is generated inside Replit due to Replit's internal package firewall being baked into resolved URLs.
+name: External builds — Replit lockfile registry issue
+description: Replit-internal resolved URLs in lockfiles are unreachable from external CI, including EAS and AWS Amplify.
 ---
 
 # EAS Build — Replit package-lock.json registry issue
 
 ## The Rule
-Any `package-lock.json` generated inside Replit contains `http://package-firewall.replit.local/npm/...` as resolved URLs. EAS macOS build servers cannot resolve this hostname (ENOTFOUND), causing `npm install` to fail.
+Lockfiles generated inside Replit can contain `http://package-firewall.replit.local/npm/...` as resolved URLs. External build machines, including EAS and AWS Amplify, cannot resolve this hostname; installs that follow those URLs fail.
 
 **Why:** Replit proxies npm traffic through an internal package firewall. This hostname is only resolvable inside the Replit sandbox, not on external CI/CD machines.
 
-**How to apply:** Before triggering any EAS build:
-1. Run `grep -c "package-firewall.replit.local" mobile/package-lock.json` — if non-zero, fix it.
-2. Fix: `sed -i 's|http://package-firewall.replit.local/npm|https://registry.npmjs.org|g' mobile/package-lock.json`
-3. Ensure `mobile/.npmrc` contains `registry=https://registry.npmjs.org` to prevent the problem recurring.
+**How to apply:** Before external builds, check the lockfile for the app being built, not only the mobile lockfile. Normalize internal resolved URLs to their equivalent public npm URLs without changing package versions or integrity hashes. This is an external-CI portability correction, not a reason to bypass Replit's package-security checks when installing dependencies.
 
 ## Additional EAS / Xcode 26 notes
 - Apple requires Xcode 26+ for App Store submissions since April 28, 2026.

@@ -81,6 +81,12 @@ launch; allow the update to activate and reopen if needed.
 
 ### Local and device checks
 
+External builders must not receive lockfile download URLs pointing to
+`package-firewall.replit.local`: that hostname is only reachable inside Replit.
+Keep those URLs portable while preserving package versions and integrity hashes.
+An externally failed build must be diagnosed from its logs rather than inferred
+solely from the website continuing to serve the previous successful release.
+
 Run `npm run validate:pwa-badges` for simulated worker, lifecycle, payload,
 permission-denial, registration, and recipient-routing checks. These checks do
 not send pushes or modify any database. They do not emulate a physical home
