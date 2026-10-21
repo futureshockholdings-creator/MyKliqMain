@@ -1,0 +1,10 @@
+---
+name: Verify the installed PWA origin
+description: Backend publishing success does not establish that the separately hosted main-site PWA received its frontend and worker update.
+---
+
+Diagnose PWA releases at the origin from which the user installed the app, not just the published API origin. The main website and API origin can serve different frontend releases.
+
+**Why:** A successful Replit republish exposed the updated badge worker and helper at the API origin while the main website still served an older worker. The helper URL on the main website returned SPA HTML despite an HTTP 200 response and JavaScript content type.
+
+**How to apply:** Compare actual bundle references, worker contents, and imported-helper bodies on the installation origin before changing badge logic or recommending a reinstall. Check response bodies, not just status codes or content types. Permissions and push subscriptions also belong to that installation origin.

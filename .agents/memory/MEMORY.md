@@ -3,3 +3,4 @@
 - [Member social connections](member-social-connections.md) — OAuth and app-password accounts belong to individual members; never blend workspace connector content into member feeds.
 - [Production database health checks](production-database-health.md) — Database pane Active and tool-level SELECT do not prove a published app's direct connection works.
 - [Android distribution](android-distribution.md) — MyKliq is on Google Play; Android web visitors should use the native app rather than a PWA install popup.
+- [PWA release origin](pwa-release-origin.md) — verify frontend and worker bodies on the installation origin; an API-origin publish can leave the main-site PWA unchanged.
