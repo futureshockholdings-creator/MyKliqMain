@@ -61,17 +61,20 @@ the owner's approval.
 
 Amplify's checked-in build configuration runs `npm run build` and publishes
 `dist`. Vite copies `client/public` into that directory. The release must contain
-`app-badge.js`, `sw-ios.js`, `firebase-messaging-sw.js`, and `sw.js` alongside the
-current frontend bundle. No changes to badge APIs, subscriptions, or installation
-are needed just to deliver those existing files.
+`assets/app-badge.js`, `sw-ios.js`, `firebase-messaging-sw.js`, and `sw.js`
+alongside the current frontend bundle. A Vite plugin emits the helper from the
+single `client/public/app-badge.js` source to `/assets/` for both development and
+production. The root helper remains as a compatibility entry point, but current
+workers do not depend on it. No changes to badge APIs, subscriptions, or
+installation are needed just to deliver those existing files.
 
 After Amplify reports a successful release, check **mykliq.app**, not only the
 API origin:
 
-- `/app-badge.js` must return the badge helper JavaScript, including
+- `/assets/app-badge.js` must return the badge helper JavaScript, including
   `APP_BADGE_SYNC`, not the SPA's HTML fallback. HTTP 200 or a JavaScript content
   type alone does not establish that the file exists.
-- `/sw-ios.js` must import `/app-badge.js`.
+- `/sw-ios.js` must import `/assets/app-badge.js`.
 - The entry bundle referenced by `/` must be from the updated frontend build.
 
 If those files remain old, investigate the Amplify source commit, production

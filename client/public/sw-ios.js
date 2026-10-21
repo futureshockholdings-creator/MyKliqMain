@@ -1,16 +1,16 @@
 /**
- * iOS Safari PWA Service Worker — v5
+ * iOS Safari PWA Service Worker — v6
  * Handles Web Push (VAPID, no Firebase) and offline caching for iOS Safari.
  */
 
-importScripts('/app-badge.js');
-const CACHE_NAME = 'mykliq-ios-v5';
-const STATIC_CACHE = 'mykliq-ios-static-v5';
-const DYNAMIC_CACHE = 'mykliq-ios-dynamic-v5';
+importScripts('/assets/app-badge.js');
+const CACHE_NAME = 'mykliq-ios-v6';
+const STATIC_CACHE = 'mykliq-ios-static-v6';
+const DYNAMIC_CACHE = 'mykliq-ios-dynamic-v6';
 
 // ─── Install ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[iOS SW v5] Installing…');
+  console.log('[iOS SW v6] Installing…');
   const SHELL_URLS = [
     '/',
     '/index.html',
@@ -33,7 +33,7 @@ self.addEventListener('install', (event) => {
         )
       );
       const cached = results.filter(r => r.status === 'fulfilled').length;
-      console.log(`[iOS SW v5] Pre-cached ${cached}/${SHELL_URLS.length} shell assets`);
+      console.log(`[iOS SW v6] Pre-cached ${cached}/${SHELL_URLS.length} shell assets`);
     })
     .then(() => self.skipWaiting())
     .catch(() => self.skipWaiting())
@@ -42,7 +42,7 @@ self.addEventListener('install', (event) => {
 
 // ─── Activate ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[iOS SW v5] Activating…');
+  console.log('[iOS SW v6] Activating…');
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
@@ -131,7 +131,7 @@ self.addEventListener('fetch', (event) => {
 
 // ─── Push notifications ───────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
-  console.log('[iOS SW v5] Push received');
+  console.log('[iOS SW v6] Push received');
 
   fetch('https://api.mykliq.app/api/push/debug-log', {
     method: 'POST',
@@ -164,8 +164,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.mykliqBadge.acceptPush(data)
       .then(accepted => accepted && self.registration.showNotification(title, options))
-      .then(() => console.log('[iOS SW v5] Push processed'))
-      .catch(err => console.error('[iOS SW v5] Notification failed:', err))
+      .then(() => console.log('[iOS SW v6] Push processed'))
+      .catch(err => console.error('[iOS SW v6] Notification failed:', err))
   );
 });
 

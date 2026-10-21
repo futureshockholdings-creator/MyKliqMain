@@ -1,11 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { pwaWorkerAssets } from "./scripts/vite-pwa-assets";
 
 export default defineConfig({
   base: "/",
   plugins: [
     react(),
+    pwaWorkerAssets(path.resolve(import.meta.dirname, "client/public/app-badge.js")),
   ],
   resolve: {
     alias: {

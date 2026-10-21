@@ -1,9 +1,9 @@
 /**
  * Firebase Cloud Messaging Service Worker
- * Handles background push notifications — badge-aware v2
+ * Handles background push notifications — badge-aware v3
  */
 
-importScripts('/app-badge.js');
+importScripts('/assets/app-badge.js');
 
 self.addEventListener('install', (event) => event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));

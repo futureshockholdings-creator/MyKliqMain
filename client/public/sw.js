@@ -1,5 +1,5 @@
-importScripts('/app-badge.js');
-const CACHE_NAME = 'mykliq-v23';
+importScripts('/assets/app-badge.js');
+const CACHE_NAME = 'mykliq-v24';
 
 const PRECACHE_ASSETS = [
   '/',

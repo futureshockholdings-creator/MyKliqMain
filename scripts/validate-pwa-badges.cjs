@@ -69,7 +69,7 @@ function worker(file, { supported = true, denied = false, firebase = false, stor
     console: { log() {}, warn() {}, error() {} },
     fetch: async () => ({}),
     importScripts(name) {
-      if (name === '/app-badge.js') {
+      if (name === '/assets/app-badge.js') {
         vm.runInContext(fs.readFileSync('client/public/app-badge.js', 'utf8'), context);
       } else if (firebase) {
         context.firebase = {
