@@ -2,6 +2,7 @@ import { db } from "./db";
 import { notifications, deviceTokens, type InsertNotification } from "@shared/schema";
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { deleteCache } from "./redis";
+import { sendPwaNotification } from "./pwaNotificationService";
 
 export class NotificationService {
   // Create a new notification
@@ -19,7 +20,23 @@ export class NotificationService {
       console.error('[NotificationService] Cache invalidation failed:', e);
     }
     
+    // Await delivery so an autoscale request does not end before the push is
+    // queued. A delivery failure must never roll back a persisted in-app alert.
+    try {
+      await sendPwaNotification(notification);
+    } catch (error) {
+      console.error("[NotificationService] PWA delivery failed:", error instanceof Error ? error.message : "unknown error");
+    }
     return notification;
+  }
+
+  async invalidateUserCache(userId: string, types: string[] = []) {
+    try {
+      await Promise.all(["all", ...Array.from(new Set(types))].map(type =>
+        deleteCache(`notifications:${userId}:${type}`)));
+    } catch (error) {
+      console.error("[NotificationService] Cache invalidation failed:", error);
+    }
   }
 
   async createDiscordSharingNotificationsInTx(
@@ -137,6 +154,7 @@ export class NotificationService {
         eq(notifications.userId, userId)
       ))
       .returning();
+    await this.invalidateUserCache(userId, notification ? [notification.type] : []);
     return notification;
   }
 
@@ -165,6 +183,7 @@ export class NotificationService {
       .where(whereClause)
       .returning();
     
+    await this.invalidateUserCache(userId, updatedNotifications.map(n => n.type));
     return updatedNotifications;
   }
 
@@ -178,6 +197,7 @@ export class NotificationService {
         eq(notifications.userId, userId)
       ))
       .returning();
+    await this.invalidateUserCache(userId, notification ? [notification.type] : []);
     return notification;
   }
 
@@ -190,6 +210,7 @@ export class NotificationService {
         eq(notifications.userId, userId)
       ))
       .returning();
+    await this.invalidateUserCache(userId, notification ? [notification.type] : []);
     return notification;
   }
 
@@ -213,6 +234,7 @@ export class NotificationService {
       .where(whereClause)
       .returning();
     
+    await this.invalidateUserCache(userId, deletedNotifications.map(n => n.type));
     return deletedNotifications;
   }
 

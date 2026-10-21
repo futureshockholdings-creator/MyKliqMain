@@ -956,7 +956,7 @@ export default function Settings() {
     try {
       // 1. Clear JWT token first (for cross-domain auth with AWS Amplify)
       console.log('[Logout] Clearing JWT token...');
-      removeAuthToken();
+      await removeAuthToken();
       
       // 2. Mark that we're logging out to prevent auto-redirect on login page
       sessionStorage.setItem('forceLogout', 'true');
@@ -1403,7 +1403,7 @@ export default function Settings() {
       try {
         // 1. Clear JWT token first
         console.log('[Delete Account] Clearing JWT token...');
-        removeAuthToken();
+      await removeAuthToken();
         
         // 2. Mark that we're logging out to prevent auto-redirect
         sessionStorage.setItem('forceLogout', 'true');

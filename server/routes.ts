@@ -10712,7 +10712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (result.length > 0) {
         console.log(`[MARK-READ-DEBUG] Marked ${result.length} notifications as read for userId=${userId}, relatedId=${relatedId}, notificationIds=${result.map(n => n.id).join(',')}`);
       }
-      
+      await notificationService.invalidateUserCache(userId, result.map(n => n.type));
       res.json({ success: true, count: result.length });
     } catch (error) {
       console.error("Error marking notifications as read by relatedId:", error);

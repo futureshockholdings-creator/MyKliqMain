@@ -1,3 +1,5 @@
+import { clearAppBadgeOnLogout, resumeAppBadgeSession } from "./appBadge";
+
 const TOKEN_KEY = 'mykliq_auth_token';
 const COOKIE_TOKEN_KEY = 'mykliq_jwt';
 
@@ -140,6 +142,7 @@ export function getAuthToken(): string | null {
 }
 
 export function setAuthToken(token: string): void {
+  resumeAppBadgeSession();
   if (typeof window === 'undefined') {
     return;
   }
@@ -190,12 +193,13 @@ export function setAuthToken(token: string): void {
   console.log('[TokenStorage] Token stored in:', storageSummary.join(', '));
 }
 
-export function removeAuthToken(): void {
+export function removeAuthToken(): Promise<void> {
+  const badgeCleared = clearAppBadgeOnLogout();
   // Clear all storage mechanisms
   memoryToken = null;
   
   if (typeof window === 'undefined') {
-    return;
+    return badgeCleared;
   }
   
   // Clear localStorage
@@ -216,6 +220,7 @@ export function removeAuthToken(): void {
   removeCookieToken();
   
   console.log('[TokenStorage] Token cleared from all storage');
+  return badgeCleared;
 }
 
 /**

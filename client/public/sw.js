@@ -1,4 +1,5 @@
-const CACHE_NAME = 'mykliq-v22';
+importScripts('/app-badge.js');
+const CACHE_NAME = 'mykliq-v23';
 
 const PRECACHE_ASSETS = [
   '/',
@@ -130,13 +131,13 @@ self.addEventListener('push', (e) => {
   let data = { title: 'MyKliq', body: 'You have a new notification' };
   try { data = e.data.json(); } catch (_) {}
   e.waitUntil(
-    self.registration.showNotification(data.title || 'MyKliq', {
+    self.mykliqBadge.acceptPush(data).then(accepted => accepted && self.registration.showNotification(data.title || 'MyKliq', {
       body: data.body || 'You have a new notification',
       icon: '/icons/icon-192x192.png',
       badge: '/icons/icon-192x192.png',
-      tag: data.tag || 'mykliq-notification',
-      data
-    })
+      tag: data.data?.notificationId || data.tag || 'mykliq-notification',
+      data: { ...data, ...data.data }
+    }))
   );
 });
 

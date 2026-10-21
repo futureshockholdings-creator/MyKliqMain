@@ -160,6 +160,38 @@ export class FirebaseNotificationService {
   }
 
   /**
+   * Data-only PWA messages: the worker owns display, avoiding Firebase's
+   * automatic notification plus a second manually displayed notification.
+   * Native mobile send methods remain unchanged.
+   */
+  async sendPwaToMultipleDevices(tokens: string[], payload: NotificationPayload) {
+    if (!tokens.length) return { successCount: 0, failureCount: 0 };
+    if (!this.initialized) {
+      console.warn("[PWA Push] Firebase Admin SDK not initialized");
+      return { successCount: 0, failureCount: tokens.length };
+    }
+    let successCount = 0;
+    let failureCount = 0;
+    // Firebase accepts at most 500 recipients in one multicast request.
+    for (let start = 0; start < tokens.length; start += 500) {
+      const batch = tokens.slice(start, start + 500);
+      try {
+        const result = await getMessaging().sendEachForMulticast({
+          tokens: batch,
+          data: { ...payload.data, title: payload.title, body: payload.body },
+          webpush: { headers: { TTL: "3600", Urgency: "high" } },
+        });
+        successCount += result.successCount;
+        failureCount += result.failureCount;
+      } catch (error) {
+        console.error("[PWA Push] Firebase delivery failed:", error instanceof Error ? error.message : "unknown error");
+        failureCount += batch.length;
+      }
+    }
+    return { successCount, failureCount };
+  }
+
+  /**
    * Send data-only message (no notification UI)
    */
   async sendDataMessage(

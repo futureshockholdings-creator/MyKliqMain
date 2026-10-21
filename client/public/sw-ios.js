@@ -1,15 +1,16 @@
 /**
- * iOS Safari PWA Service Worker — v4
+ * iOS Safari PWA Service Worker — v5
  * Handles Web Push (VAPID, no Firebase) and offline caching for iOS Safari.
  */
 
-const CACHE_NAME = 'mykliq-ios-v4';
-const STATIC_CACHE = 'mykliq-ios-static-v4';
-const DYNAMIC_CACHE = 'mykliq-ios-dynamic-v4';
+importScripts('/app-badge.js');
+const CACHE_NAME = 'mykliq-ios-v5';
+const STATIC_CACHE = 'mykliq-ios-static-v5';
+const DYNAMIC_CACHE = 'mykliq-ios-dynamic-v5';
 
 // ─── Install ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[iOS SW v4] Installing…');
+  console.log('[iOS SW v5] Installing…');
   const SHELL_URLS = [
     '/',
     '/index.html',
@@ -32,7 +33,7 @@ self.addEventListener('install', (event) => {
         )
       );
       const cached = results.filter(r => r.status === 'fulfilled').length;
-      console.log(`[iOS SW v4] Pre-cached ${cached}/${SHELL_URLS.length} shell assets`);
+      console.log(`[iOS SW v5] Pre-cached ${cached}/${SHELL_URLS.length} shell assets`);
     })
     .then(() => self.skipWaiting())
     .catch(() => self.skipWaiting())
@@ -41,7 +42,7 @@ self.addEventListener('install', (event) => {
 
 // ─── Activate ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[iOS SW v4] Activating…');
+  console.log('[iOS SW v5] Activating…');
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
@@ -130,7 +131,7 @@ self.addEventListener('fetch', (event) => {
 
 // ─── Push notifications ───────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
-  console.log('[iOS SW v4] Push received');
+  console.log('[iOS SW v5] Push received');
 
   fetch('https://api.mykliq.app/api/push/debug-log', {
     method: 'POST',
@@ -155,15 +156,16 @@ self.addEventListener('push', (event) => {
     body: data.body || 'You have a new notification',
     icon: data.icon || '/icons/icon-192x192.png',
     badge: '/icons/icon-180x180.png',
-    tag: data.tag || 'mykliq-notification',
+    tag: data.data?.notificationId || data.tag || 'mykliq-notification',
     requireInteraction: false,
     data: { url: data.url || data.click_action || '/', ...data.data }
   };
 
   event.waitUntil(
-    self.registration.showNotification(title, options)
-      .then(() => console.log('[iOS SW v4] Notification shown'))
-      .catch(err => console.error('[iOS SW v4] Notification failed:', err))
+    self.mykliqBadge.acceptPush(data)
+      .then(accepted => accepted && self.registration.showNotification(title, options))
+      .then(() => console.log('[iOS SW v5] Push processed'))
+      .catch(err => console.error('[iOS SW v5] Notification failed:', err))
   );
 });
 

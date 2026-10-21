@@ -1,7 +1,12 @@
 /**
  * Firebase Cloud Messaging Service Worker
- * Handles background push notifications
+ * Handles background push notifications — badge-aware v2
  */
+
+importScripts('/app-badge.js');
+
+self.addEventListener('install', (event) => event.waitUntil(self.skipWaiting()));
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
 // Try to import Firebase scripts - handle failures gracefully
 let firebaseInitialized = false;
@@ -36,17 +41,21 @@ if (messaging) {
   messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Received background message:', payload);
 
-    const notificationTitle = payload.notification?.title || 'MyKliq';
+    // Firebase automatically displays notification-payload messages. Only our
+    // data-only PWA messages need manual display here.
+    if (payload.notification) return;
+    const notificationTitle = payload.data?.title || 'MyKliq';
     const notificationOptions = {
-      body: payload.notification?.body || 'You have a new notification',
+      body: payload.data?.body || 'You have a new notification',
       icon: '/icons/icon-192x192.png',
       badge: '/icons/icon-180x180.png',
       data: payload.data || {},
-      tag: payload.data?.tag || 'mykliq-notification',
+      tag: payload.data?.notificationId || payload.data?.tag || 'mykliq-notification',
       requireInteraction: false,
     };
 
-    return self.registration.showNotification(notificationTitle, notificationOptions);
+    return self.mykliqBadge.acceptPush(payload)
+      .then(accepted => accepted && self.registration.showNotification(notificationTitle, notificationOptions));
   });
 }
 
@@ -62,13 +71,13 @@ self.addEventListener('notificationclick', (event) => {
       // Check if app is already open
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          return client.focus();
+            return client.focus().then(() => client.navigate?.(event.notification.data?.url || '/'));
         }
       }
       
       // If no window is open, open a new one
       if (clients.openWindow) {
-        return clients.openWindow('/');
+        return clients.openWindow(event.notification.data?.url || '/');
       }
     })
   );
@@ -81,16 +90,21 @@ self.addEventListener('push', (event) => {
     
     try {
       const data = event.data.json();
-      const title = data.notification?.title || 'MyKliq';
+      const title = data.notification?.title || data.title || data.data?.title || 'MyKliq';
       const options = {
-        body: data.notification?.body || 'You have a new notification',
+        body: data.notification?.body || data.body || data.data?.body || 'You have a new notification',
         icon: '/icons/icon-192x192.png',
         badge: '/icons/icon-180x180.png',
         data: data.data || {},
+        tag: data.data?.notificationId || data.data?.tag || 'mykliq-notification',
       };
 
       event.waitUntil(
-        self.registration.showNotification(title, options)
+        self.mykliqBadge.acceptPush(data).then(accepted => {
+          // Do not also display messages already owned by Firebase's listener.
+          const ownedByFirebase = firebaseInitialized && (data.from || data.fcmMessageId);
+          if (accepted && !ownedByFirebase) return self.registration.showNotification(title, options);
+        })
       );
     } catch (error) {
       console.error('[firebase-messaging-sw.js] Error parsing push data:', error);

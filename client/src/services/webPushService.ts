@@ -178,14 +178,11 @@ export class WebPushNotificationService {
       
       // Try to reuse existing iOS service worker registration
       console.log('[WebPush] iOS: Checking for existing service worker...');
-      let registration = await navigator.serviceWorker.getRegistration('/sw-ios.js');
-      
-      if (!registration) {
-        console.log('[WebPush] iOS: Registering new service worker...');
-        registration = await navigator.serviceWorker.register('/sw-ios.js', { scope: '/' });
-      } else {
-        console.log('[WebPush] iOS: Reusing existing service worker registration');
-      }
+      // Registering the same script/scope updates it without replacing the push
+      // subscription. Force the correct worker rather than accepting any root SW.
+      const registration = await navigator.serviceWorker.register('/sw-ios.js', {
+        scope: '/', updateViaCache: 'none',
+      });
       
       // Wait for service worker to be ready
       await navigator.serviceWorker.ready;
@@ -377,15 +374,20 @@ export class WebPushNotificationService {
     onMessage(messaging, (payload) => {
       console.log('[WebPush] Foreground message received:', payload);
       
-      if (payload.notification) {
-        new Notification(payload.notification.title || 'MyKliq', {
-          body: payload.notification.body,
+      const title = payload.notification?.title || payload.data?.title;
+      if (title) {
+        new Notification(title, {
+          body: payload.notification?.body || payload.data?.body,
           icon: '/icons/icon-192x192.png',
           badge: '/icons/icon-180x180.png',
           data: payload.data
         });
       }
       
+      // Data-only PWA pushes also need to refresh the foreground bell/icon.
+      import('@/lib/queryClient').then(({ queryClient }) => {
+        queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+      });
       onNotification(payload);
     });
   }
@@ -458,21 +460,11 @@ export class WebPushNotificationService {
     }
 
     try {
-      const existingRegistrations = await navigator.serviceWorker.getRegistrations();
-      let registration = existingRegistrations.find(
-        reg => reg.active?.scriptURL.includes('firebase-messaging-sw.js')
-      );
-      
-      if (registration && registration.active) {
-        console.log('[WebPush] Using existing active Firebase service worker');
-        return registration;
-      }
-      
-      if (!registration) {
-        console.log('[WebPush] Registering firebase-messaging-sw.js...');
-        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        console.log('[WebPush] Service worker registered:', registration.scope);
-      }
+      // Re-register the same root scope to pick up worker/helper updates while
+      // preserving the existing PushSubscription and FCM token.
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        scope: '/', updateViaCache: 'none',
+      });
 
       console.log('[WebPush] Waiting for service worker to be ready...');
       

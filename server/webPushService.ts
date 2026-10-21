@@ -87,7 +87,7 @@ class WebPushService {
         icon: payload.icon || '/icons/icon-192x192.png',
         badge: payload.badge || '/icons/icon-72x72.png',
         data: payload.data || {},
-        tag: 'mykliq-notification',
+        tag: payload.data?.notificationId || 'mykliq-notification',
         requireInteraction: false
       });
 
@@ -95,6 +95,7 @@ class WebPushService {
       // CRITICAL: Safari requires aes128gcm content encoding
       const options: webPush.RequestOptions = {
         TTL: 60 * 60, // 1 hour TTL
+        timeout: 10000,
         urgency: 'high' as any,
         contentEncoding: 'aes128gcm' as any
       };

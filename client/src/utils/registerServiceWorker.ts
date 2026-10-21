@@ -2,7 +2,8 @@ import { pwaUpdateManager } from '../lib/pwaUpdateManager';
 
 // Detect iOS Safari PWA (installed to home screen)
 function isIOSSafariPWA(): boolean {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const isStandalone = (window.navigator as any).standalone === true;
   const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome|CriOS|FxiOS/.test(navigator.userAgent);
   return isIOS && (isStandalone || isSafari);
@@ -10,12 +11,18 @@ function isIOSSafariPWA(): boolean {
 
 export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
+    window.addEventListener('load', async () => {
       // Use sw-ios.js for iOS Safari PWA (has push handler), sw.js for others
-      const swFile = isIOSSafariPWA() ? '/sw-ios.js' : '/sw.js';
+      const existing = await navigator.serviceWorker.getRegistration("/").catch(() => undefined);
+      // FCM and the generic worker share the root scope. Do not replace the
+      // subscribed FCM worker with sw.js on every launch.
+      const hasFirebaseWorker = [existing?.active, existing?.waiting, existing?.installing]
+        .some(worker => worker?.scriptURL.includes('firebase-messaging-sw.js'));
+      const swFile = isIOSSafariPWA() ? '/sw-ios.js'
+        : hasFirebaseWorker ? '/firebase-messaging-sw.js' : '/sw.js';
       
       navigator.serviceWorker
-        .register(swFile)
+        .register(swFile, { scope: '/', updateViaCache: 'none' })
         .then(async registration => {
           console.log(`[PWA] Service Worker registered (${swFile}):`, registration.scope);
 
