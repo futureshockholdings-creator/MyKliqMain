@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
+const ts = require('typescript');
 
 // Exercise the actual pre-bundle script and React handoff without signing in,
 // touching production, or depending on how quickly the development API responds.
@@ -9,8 +10,12 @@ const html = fs.readFileSync('client/index.html', 'utf8');
 const bootstrap = html.match(/<script>\s*([\s\S]*?)<\/script>/)[1];
 const app = fs.readFileSync('client/src/App.tsx', 'utf8');
 const handoff = app.slice(app.indexOf('function StartupSplashHandoff()'), app.indexOf('function Navigation('));
+const navigationModule = ts.transpileModule(fs.readFileSync('client/src/lib/startupNavigation.ts', 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+}).outputText;
+const navigationKey = 'mykliq-startup-navigation';
 
-function environment(userAgent, platform = '', maxTouchPoints = 0) {
+function environment(userAgent, platform = '', maxTouchPoints = 0, options = {}) {
   const classes = new Set();
   const timers = [];
   const listeners = {};
@@ -22,21 +27,33 @@ function environment(userAgent, platform = '', maxTouchPoints = 0) {
   };
   let reloads = 0;
   let auth = { isLoading: true };
+  const storage = options.storage || new Map();
+  const sessionStorage = Object.fromEntries(['getItem', 'setItem', 'removeItem'].map(method => [method, (key, value) => {
+    if (options.storageBlocked) throw new Error('Storage is blocked');
+    if (method === 'getItem') return storage.get(key) ?? null;
+    if (method === 'setItem') return storage.set(key, value);
+    return storage.delete(key);
+  }]));
   const window = {
     setTimeout: (callback, delay) => { timers.push({ callback, delay }); return timers.length; },
     clearTimeout: () => {},
-    location: { reload() { reloads++; } },
+    location: { pathname: options.path || '/', href: options.path || '/', reload() { reloads++; } },
   };
   const context = vm.createContext({
     navigator: { userAgent, platform, maxTouchPoints },
-    document, window,
+    document, window, sessionStorage, exports: {},
     useAuth: () => auth,
     useEffect: callback => callback(),
   });
   vm.runInContext(bootstrap, context);
   return {
-    classes, splash, timers, listeners,
+    classes, splash, timers, listeners, storage,
     get reloads() { return reloads; },
+    get destination() { return window.location.href; },
+    navigate(path) {
+      vm.runInContext(navigationModule, context);
+      context.exports.navigateWithoutStartupSplash(path);
+    },
     settle(result = {}) {
       auth = { isLoading: false, ...result };
       vm.runInContext(`${handoff}\nStartupSplashHandoff();`, context);
@@ -113,4 +130,57 @@ test('critical shell includes safe areas, reduced motion, recovery and local bra
   assert.ok(html.indexOf('id="mykliq-startup"') < html.indexOf('src="/src/main.tsx"'));
   assert.ok(fs.existsSync('client/public/icons/icon-512x512.png'));
   assert.match(html, /#mykliq-startup\s*\{\s*display: none/);
+});
+
+for (const [name, destination] of [['successful login', '/'], ['logout', '/landing']]) {
+  test(`${name} skips the splash once without suppressing the next cold launch`, () => {
+    const source = environment('iPhone');
+    source.navigate(destination);
+    assert.equal(source.destination, destination);
+    assert.ok(source.storage.has(navigationKey));
+    const arrival = environment('iPhone', '', 0, { path: destination, storage: source.storage });
+    assert.equal(arrival.classes.size, 0);
+    assert.equal(arrival.timers.length, 0);
+    assert.equal(arrival.storage.has(navigationKey), false);
+    const freshLaunch = environment('iPhone', '', 0, { path: '/', storage: source.storage });
+    assert.ok(freshLaunch.classes.has('mykliq-mobile-startup'));
+  });
+}
+
+test('expired, future-dated, malformed and wrong-destination markers cannot hide a fresh splash', () => {
+  for (const raw of [
+    JSON.stringify({ path: '/', createdAt: Date.now() - 31000 }),
+    JSON.stringify({ path: '/', createdAt: Date.now() + 60000 }),
+    JSON.stringify({ path: '/landing', createdAt: Date.now() }),
+    JSON.stringify({ path: '/', createdAt: String(Date.now()) }),
+    'not JSON', 'null',
+  ]) {
+    const storage = new Map([[navigationKey, raw]]);
+    const env = environment('iPhone', '', 0, { storage });
+    assert.ok(env.classes.has('mykliq-mobile-startup'));
+    assert.equal(storage.has(navigationKey), false);
+  }
+});
+
+test('blocked session storage does not break startup or auth navigation', () => {
+  const env = environment('iPhone', '', 0, { storageBlocked: true });
+  assert.ok(env.classes.has('mykliq-mobile-startup'));
+  env.navigate('/landing');
+  assert.equal(env.destination, '/landing');
+});
+
+test('desktop auth redirects still bypass mobile presentation', () => {
+  const source = environment('Mozilla/5.0 (Windows NT 10.0) Chrome/130.0');
+  source.navigate('/');
+  const arrival = environment('Mozilla/5.0 (Windows NT 10.0) Chrome/130.0', '', 0, { storage: source.storage });
+  assert.equal(arrival.classes.size, 0);
+  assert.equal(arrival.storage.has(navigationKey), false);
+});
+
+test('login and both settings exits use the one-shot navigation helper', () => {
+  const login = fs.readFileSync('client/src/pages/login.tsx', 'utf8');
+  const settings = fs.readFileSync('client/src/pages/settings.tsx', 'utf8');
+  assert.match(login, /navigateWithoutStartupSplash\("\/"\)/);
+  assert.equal(settings.match(/navigateWithoutStartupSplash\("\/landing"\)/g)?.length, 2);
+  assert.doesNotMatch(settings, /window\.location\.href\s*=\s*['"]\/landing/);
 });

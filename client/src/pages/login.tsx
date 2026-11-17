@@ -14,6 +14,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { buildApiUrl } from "@/lib/apiConfig";
 import { setAuthToken, getAuthToken } from "@/lib/tokenStorage";
+import { navigateWithoutStartupSplash } from "@/lib/startupNavigation";
 
 
 const loginSchema = z.object({
@@ -187,7 +188,7 @@ export default function Login() {
         // Note: User data will be fetched automatically by useAuth after redirect
         const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
         await sleep(500);
-        window.location.href = "/"; 
+        navigateWithoutStartupSplash("/");
       } else {
         // Handle error response
         let errorMessage = "Invalid phone number or password";

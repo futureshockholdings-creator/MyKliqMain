@@ -135,6 +135,24 @@
   </style>
   <script>
     (function () {
+      // Consume a short-lived, destination-specific marker before first paint.
+      // Never retain a session-wide flag: the next fresh launch needs its splash.
+      var skipSplash = false;
+      try {
+        var rawNavigation = sessionStorage.getItem("mykliq-startup-navigation");
+        sessionStorage.removeItem("mykliq-startup-navigation");
+        if (rawNavigation) {
+          var navigation = JSON.parse(rawNavigation);
+          var age = Date.now() - navigation.createdAt;
+          skipSplash = (navigation.path === "/" || navigation.path === "/landing") &&
+            navigation.path === window.location.pathname &&
+            typeof navigation.createdAt === "number" && age >= 0 && age < 30000;
+        }
+      } catch {
+        // A malformed marker or blocked storage must not stop startup.
+      }
+      if (skipSplash) return;
+
       var ua = navigator.userAgent || "";
       var isAppleTouchTablet = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
       var isMobileOrTablet = /Android|iPhone|iPad|iPod|Mobile/i.test(ua) || isAppleTouchTablet;

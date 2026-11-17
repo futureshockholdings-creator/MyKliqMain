@@ -15,6 +15,7 @@ import { KoinWalletCard } from "@/components/KliqKoin/KoinWalletCard";
 import { BorderMarketplaceCard } from "@/components/KliqKoin/BorderMarketplaceCard";
 import { MyBordersCard } from "@/components/KliqKoin/MyBordersCard";
 import { NotificationSettings } from "@/components/NotificationSettings";
+import { navigateWithoutStartupSplash } from "@/lib/startupNavigation";
 import { AnalyticsConsentSettings } from "@/components/AnalyticsConsentSettings";
 
 import { 
@@ -996,7 +997,7 @@ export default function Settings() {
     }
     
     // 7. Redirect to landing page
-    window.location.href = '/landing';
+    navigateWithoutStartupSplash("/landing");
   };
 
 
@@ -1431,7 +1432,7 @@ export default function Settings() {
       }
       
       // Redirect to landing page immediately
-      window.location.href = '/landing';
+      navigateWithoutStartupSplash("/landing");
     },
     onError: () => {
       toast({
