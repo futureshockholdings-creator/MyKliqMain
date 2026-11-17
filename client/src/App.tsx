@@ -68,6 +68,27 @@ import { InstallPWA } from "@/components/InstallPWA";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { useState } from "react";
 
+function StartupSplashHandoff() {
+  const { isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!document.documentElement.classList.contains("mykliq-mobile-startup")) return;
+
+    if (isLoading) return;
+
+    const splash = document.getElementById("mykliq-startup");
+    if (!splash || splash.dataset.state === "ready") return;
+
+    // A settled check includes signed-out/401 and offline failures. Always let
+    // existing login, offline and error UI take over instead of trapping users.
+    splash.dataset.state = "ready";
+    const removeAfterFade = window.setTimeout(() => splash.remove(), 220);
+    return () => window.clearTimeout(removeAfterFade);
+  }, [isLoading]);
+
+  return null;
+}
+
 function Navigation({ currentPath }: { currentPath: string }) {
   const { t } = useTranslation();
   const [showPinModal, setShowPinModal] = useState(false);
@@ -472,6 +493,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <VideoCallProvider>
         <GroupVideoCallProvider>
+          <StartupSplashHandoff />
           <AppContent />
           <IncomingCallOverlay />
           <VideoCallScreen />
