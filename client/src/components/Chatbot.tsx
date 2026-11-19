@@ -35,7 +35,7 @@ const knowledgeBase: KnowledgeBase = {
   },
   kliq: {
     keywords: ['kliq', 'friends', 'pyramid', 'rank', 'add friends', 'friend ranking', 'my kliq', 'users icon', 'emoji', 'close kliq', 'closure'],
-    response: "My Kliq page (👥 Users icon) shows your friend pyramid with up to 28 friends ranked 1-28 by closeness. Key features: 1) Drag friends to rerank them, 2) Add custom emoji to your kliq name (16 options: 🏆 🚀 🎆 ✨ 🔥 💫 ❤️ 👏 🌟 💎 🎉 ⚡ 🎯 💪 👑 🦄), 3) Manage kliq closure settings (open/closed for new members), 4) Add new friends with KLIQ-XXXX-XXXX invite codes, 5) Remove friends. The emoji appears in both the header and pyramid display.",
+    response: "My Kliq page (👥 Users icon) shows your friend pyramid with up to 28 friends ranked 1-28 by closeness. Key features: 1) Drag friends to rerank them, 2) Add custom emoji to your kliq name (16 options: 🏆 🚀 🎆 ✨ 🔥 💫 ❤️ 👏 🌟 💎 🎉 ⚡ 🎯 💪 👑 🦄), 3) Manage kliq closure settings (open/closed for new members), 4) Add new friends with KQ-XXXX-XXXX invite codes (uppercase or lowercase both work; old shared codes still work), 5) Remove friends. The emoji appears in both the header and pyramid display.",
     relatedTopics: ['friends', 'invites', 'ranking', 'navigation', 'closure']
   },
   events: {
@@ -95,7 +95,7 @@ const knowledgeBase: KnowledgeBase = {
   },
   invites: {
     keywords: ['invite', 'invite code', 'join kliq', 'add friends', 'KLIQ'],
-    response: "MyKliq uses unique invite codes for secure friend connections. System details: 1) Format: KLIQ-XXXX-XXXX (e.g., KLIQ-1234-5678), 2) One-time use only - each code works once, 3) Creates mutual friendship when used, 4) Secure method to control kliq growth, 5) Generate codes on My Kliq page, 6) Share codes outside the app to invite new members. This ensures your kliq remains close-knit and trusted.",
+    response: "MyKliq uses unique invite codes for friend connections. New codes use KQ-XXXX-XXXX (for example KQ-ABCD-7892), without I, L, or 1. Uppercase and lowercase both work, and previously shared codes remain valid. Codes can be shared with multiple friends, subject to the 28-friend limit and kliq closure settings. Previously removed members may need approval to rejoin. Share your code from My Kliq to invite new members.",
     relatedTopics: ['kliq', 'friends', 'security', 'growth']
   },
   notifications: {

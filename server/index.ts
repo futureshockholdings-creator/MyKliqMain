@@ -14,6 +14,7 @@ import { rateLimitService } from "./rateLimitService";
 import { firebaseNotificationService } from "./firebase-notifications";
 import { thumbnailService } from "./thumbnailService";
 import { db } from "./db";
+import { replaceAllLegacyInviteCodes } from "./inviteCodeService";
 import { posts } from "@shared/schema";
 import { eq, and, isNotNull, isNull } from "drizzle-orm";
 
@@ -175,6 +176,12 @@ app.get('/', (req, res, next) => {
 
   const onListening = () => {
     log(`serving on port ${port}`);
+
+    // Data-only, idempotent upgrade. The alias table is created by the normal
+    // development-schema / Replit Publish flow, never by application startup.
+    replaceAllLegacyInviteCodes()
+      .then(count => log(`Readable invite codes ready: ${count} owners upgraded; old invitations preserved`))
+      .catch(error => console.error("Invite code upgrade failed; retry on next startup or owner visit:", error));
 
     if (firebaseNotificationService.isInitialized()) {
       log("Firebase Admin SDK ready for push notifications");

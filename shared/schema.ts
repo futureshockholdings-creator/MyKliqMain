@@ -205,6 +205,17 @@ export const friendships = pgTable("friendships", {
 ]);
 
 // Used invite codes - tracks which codes have been used (for referral tracking, not blocking reuse)
+// Canonical uppercase aliases preserve shared invitations when legacy codes
+// are replaced. A code can belong to only one owner.
+export const inviteCodeAliases = pgTable("invite_code_aliases", {
+  code: varchar("code", { length: 20 }).primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_invite_code_aliases_user").on(table.userId),
+]);
+
+// Usage is referral history, not an alias registry or a one-use restriction.
 export const usedInviteCodes = pgTable("used_invite_codes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   inviteCode: varchar("invite_code", { length: 20 }).notNull(),

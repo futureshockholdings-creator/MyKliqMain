@@ -71,7 +71,7 @@ export default function Landing() {
         });
         // Redirect to signup with invite code
         setTimeout(() => {
-          window.location.href = `/signup?inviteCode=${encodeURIComponent(inviteCode.trim())}`;
+          window.location.href = `/signup?inviteCode=${encodeURIComponent(data.inviteCode || inviteCode.trim())}`;
         }, 1000);
       } else {
         toast({
@@ -255,13 +255,16 @@ export default function Landing() {
                     <Input
                       value={inviteCode}
                       onChange={(e) => setInviteCode(e.target.value)}
-                      placeholder="KLIQ-XXXX-XXXX"
+                      placeholder="KQ-ABCD-7892"
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      spellCheck={false}
                       className="mt-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       disabled={isValidating}
                       data-testid="input-invite-code"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Enter the invitation code you received from a friend
+                      Enter your friend’s invitation code — uppercase or lowercase both work
                     </p>
                   </div>
 

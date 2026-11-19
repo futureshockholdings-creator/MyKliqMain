@@ -1831,7 +1831,10 @@ export default function Kliq() {
               <Input
                 value={inviteCode}
                 onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                placeholder="KLIQ-XXXX-XXXX"
+                placeholder="KQ-ABCD-7892"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
                 className="mt-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                 disabled={joinKliqMutation.isPending}
                 data-testid="input-join-invite-code"

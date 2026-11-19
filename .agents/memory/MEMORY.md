@@ -8,3 +8,5 @@
 - [Mobile PWA experience](mobile-pwa-experience.md) — branded startup applies to installed mobile PWAs and mobile browsers; preserve desktop behavior.
 - [Navigation recovery](navigation-recovery.md) — all app 404 pages need a Home button to login; password recovery must link directly back to login.
 - [Kliq invite card](kliq-invite-card.md) — capacity is 28 friends, but the headlines invite card intentionally disappears at 10.
+- [Invite code compatibility](invite-code-compatibility.md) — exclude I/L/1 from new displayed codes; ignore case and keep replaced codes working for their original owners.
+- [TypeScript validation](typescript-validation.md) — a default-heap typecheck can run out of memory; inspect exit status before trusting filtered diagnostics.

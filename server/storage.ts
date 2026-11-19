@@ -3,6 +3,7 @@ import {
   userThemes,
   friendships,
   usedInviteCodes,
+  inviteCodeAliases,
   kliqRemovals,
   referralBonuses,
   posts,
@@ -181,6 +182,8 @@ import { eq, and, desc, sql, inArray, like, or, asc, lt, gt, lte, gte, count, co
 import { FeedCurationIntelligence } from './feedCurationIntelligence';
 import { cacheService } from './cacheService';
 import { randomUUID } from "crypto";
+import { generateUniqueInviteCode } from "./inviteCodeService";
+import { normalizeInviteCode } from "@shared/inviteCodes";
 
 export interface IStorage {
   // User operations - mandatory for Replit Auth
@@ -1693,42 +1696,35 @@ export class DatabaseStorage implements IStorage {
 
   // Utility operations
   async generateInviteCode(): Promise<string> {
-    let code: string;
-    let isUnique = false;
-    
-    while (!isUnique) {
-      // Generate KLIQ-XXXX-XXXX format with random alphanumeric characters
-      const part1 = Math.random().toString(36).substr(2, 4).toUpperCase();
-      const part2 = Math.random().toString(36).substr(2, 4).toUpperCase();
-      code = `KLIQ-${part1}-${part2}`;
-      
-      // Check if code is already assigned to a user
-      const existingUser = await db.select().from(users).where(eq(users.inviteCode, code));
-      // Check if code has been used
-      const usedCode = await db.select().from(usedInviteCodes).where(eq(usedInviteCodes.inviteCode, code));
-      
-      isUnique = existingUser.length === 0 && usedCode.length === 0;
-    }
-    
-    return code!;
+    return generateUniqueInviteCode();
   }
 
   async getUserByInviteCode(inviteCode: string): Promise<User | undefined> {
-    // Case-insensitive lookup to handle user input variations
-    const [user] = await db.select().from(users).where(
-      sql`LOWER(${users.inviteCode}) = LOWER(${inviteCode})`
-    );
-    return user;
+    const code = normalizeInviteCode(inviteCode);
+    if (!code) return undefined;
+    const owners = await db.select().from(users).where(
+      sql`upper(btrim(${users.inviteCode})) = ${code}`
+    ).limit(2);
+    const [aliasOwner] = await db.select({ user: users }).from(inviteCodeAliases)
+      .innerJoin(users, eq(users.id, inviteCodeAliases.userId))
+      .where(eq(inviteCodeAliases.code, code));
+    if (owners.length > 1 || (owners[0] && aliasOwner && owners[0].id !== aliasOwner.user.id)) {
+      throw new Error("Invite code has ambiguous ownership");
+    }
+    return owners[0] || aliasOwner?.user;
   }
 
   async isInviteCodeUsed(inviteCode: string): Promise<boolean> {
-    const [usedCode] = await db.select().from(usedInviteCodes).where(eq(usedInviteCodes.inviteCode, inviteCode));
+    const code = normalizeInviteCode(inviteCode);
+    if (!code) return false;
+    const [usedCode] = await db.select().from(usedInviteCodes)
+      .where(sql`upper(btrim(${usedInviteCodes.inviteCode})) = ${code}`);
     return !!usedCode;
   }
 
   async markInviteCodeAsUsed(inviteCode: string, usedBy: string, ownedBy: string): Promise<void> {
     await db.insert(usedInviteCodes).values({
-      inviteCode,
+      inviteCode: normalizeInviteCode(inviteCode),
       usedBy,
       ownedBy,
     });

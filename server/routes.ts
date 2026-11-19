@@ -18,6 +18,8 @@ import { pool, db } from "./db";
 import { friendRankingIntelligence } from "./friendRankingIntelligence";
 import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
+import { isReadableInviteCode, normalizeInviteCode } from "@shared/inviteCodes";
+import { replaceLegacyInviteCode } from "./inviteCodeService";
 import { performanceOptimizer } from "./performanceOptimizer";
 
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts, friendships, notifications, userThemes, discordGuildInstallations, discordChannelPermissions, discordMemberPermissions, discordSharingAudit, socialCredentials } from "@shared/schema";
@@ -465,8 +467,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         relationshipStatus,
         petPreferences,
         lifestyle,
-        inviteCode: receivedInviteCode
+        inviteCode: rawInviteCode
       } = req.body;
+      const receivedInviteCode = normalizeInviteCode(rawInviteCode);
+      if (rawInviteCode != null && typeof rawInviteCode !== "string") {
+        return res.status(400).json({ message: "Invalid invite code" });
+      }
 
       // Validate required fields
       if (!firstName || !lastName || !email || !phoneNumber || !password || !securityAnswer1 || !securityAnswer2 || !securityAnswer3 || !securityPin) {
@@ -656,6 +662,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await cacheService.set(cacheKey, user, 600); // 10 minutes
       }
       
+      // A cached legacy code must not remain the code displayed to its owner.
+      if (!isReadableInviteCode(user.inviteCode)) {
+        const inviteCode = await replaceLegacyInviteCode(userId);
+        user = { ...user, inviteCode };
+        await cacheService.set(cacheKey, user, 600);
+      }
+
       // Always process password decryption fresh for security (don't cache decrypted passwords)
       const userResponse = { ...user };
       if (userResponse.password) {
@@ -5245,8 +5258,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/user/generate-invite', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const inviteCode = await storage.generateInviteCode();
-      await storage.updateUser(userId, { inviteCode });
+      const inviteCode = await replaceLegacyInviteCode(userId, true);
+      if (!inviteCode) return res.status(404).json({ message: "User not found" });
       
       // Invalidate user profile cache
       await cacheService.del(`user:profile:${userId}`);
@@ -5753,7 +5766,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/friends/invite', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { inviteCode } = req.body;
+      const inviteCode = normalizeInviteCode(req.body.inviteCode);
+      if (!inviteCode) return res.status(400).json({ message: "Invite code is required" });
       
       const inviter = await storage.getUserByInviteCode(inviteCode);
       if (!inviter) {
@@ -9091,7 +9105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/validate-invite-code', async (req, res) => {
     try {
       const { inviteCode } = req.body;
-      const trimmedCode = inviteCode?.trim();
+      const trimmedCode = normalizeInviteCode(inviteCode);
       
       console.log(`[InviteCode] Validating code: "${trimmedCode}" (original input: "${inviteCode}")`);
       
@@ -9140,6 +9154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         success: true, 
         message: "Valid invite code",
+        inviteCode: normalizeInviteCode(inviteCodeOwner.inviteCode),
         kliqOwner: {
           firstName: inviteCodeOwner.firstName,
           lastName: inviteCodeOwner.lastName,
