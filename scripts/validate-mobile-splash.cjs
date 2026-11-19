@@ -132,6 +132,14 @@ test('critical shell includes safe areas, reduced motion, recovery and local bra
   assert.match(html, /#mykliq-startup\s*\{\s*display: none/);
 });
 
+test('normal splash copy is only Your Private Social Circle beneath the icon', () => {
+  const normalSplash = html.split('<div class="mk-splash-content">')[1].split('<div class="mk-splash-recovery">')[0];
+  const visibleText = normalSplash.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  assert.equal(visibleText, 'Your Private Social Circle');
+  assert.ok(normalSplash.indexOf('<img ') < normalSplash.indexOf('Your Private Social Circle'));
+  assert.doesNotMatch(html, /mk-splash-name|mk-splash-status|Finding your circle|Your people\. Your place\./);
+});
+
 for (const [name, destination] of [['successful login', '/'], ['logout', '/landing']]) {
   test(`${name} skips the splash once without suppressing the next cold launch`, () => {
     const source = environment('iPhone');
