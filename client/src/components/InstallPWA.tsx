@@ -12,7 +12,7 @@ interface BeforeInstallPromptEvent extends Event {
 function IOSBanner({ onInstall, onDismiss, showSteps }: { onInstall: () => void; onDismiss: () => void; showSteps: boolean }) {
   if (showSteps) {
     return (
-      <div className="fixed top-0 left-0 right-0 z-[9999] bg-gray-100 border-b border-gray-300 shadow-md">
+      <div data-pwa-install-banner className="fixed top-0 left-0 right-0 z-[9999] bg-gray-100 border-b border-gray-300 shadow-md">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <span className="text-lg font-bold text-gray-900">Install MyKliq</span>
@@ -50,7 +50,7 @@ function IOSBanner({ onInstall, onDismiss, showSteps }: { onInstall: () => void;
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[9999] bg-gray-100 border-b border-gray-300 shadow-md">
+    <div data-pwa-install-banner className="fixed top-0 left-0 right-0 z-[9999] bg-gray-100 border-b border-gray-300 shadow-md">
       <div className="flex items-center px-4 py-3 gap-3">
         <button onClick={onDismiss} className="flex-shrink-0 text-gray-400 hover:text-gray-600">
           <X className="w-6 h-6" />

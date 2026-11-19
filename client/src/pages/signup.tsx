@@ -11,7 +11,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
-import { User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, X, Plus, Calendar, Phone, Mail } from "lucide-react";
+import { useSignupSteps } from "@/hooks/useSignupSteps";
+import { useInstallBannerInset } from "@/hooks/useInstallBannerInset";
+import { ArrowLeft, User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, X, Plus, Calendar, Phone, Mail } from "lucide-react";
 
 const TagInput = ({ 
   label, 
@@ -87,7 +89,8 @@ const TagInput = ({
 export default function Signup() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: Basic Info, 2: Security Setup, 3: About You
+  const { currentStep, goToStep, goBack: handlePreviousStep } = useSignupSteps();
+  const installBannerInset = useInstallBannerInset();
   const [inviteCode, setInviteCode] = useState<string | null>(null);
 
   // Get invite code from URL params
@@ -162,7 +165,7 @@ export default function Signup() {
         });
         return;
       }
-      setCurrentStep(2);
+      goToStep(2);
     } else if (currentStep === 2) {
       // Validate Security Setup before proceeding
       if (!password || !confirmPassword || !securityAnswer1 || !securityAnswer2 || !securityAnswer3 || !securityPin) {
@@ -204,13 +207,7 @@ export default function Signup() {
         return;
       }
 
-      setCurrentStep(3);
-    }
-  };
-
-  const handlePreviousStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      goToStep(3);
     }
   };
 
@@ -323,8 +320,21 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="min-h-screen bg-background p-4" style={{ paddingTop: installBannerInset + 16 }}>
       <div className="w-full max-w-sm md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
+        {currentStep > 1 && (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={handlePreviousStep}
+            disabled={isSubmitting}
+            className="mb-4"
+            data-testid="button-signup-back"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
+            Back
+          </Button>
+        )}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-primary mb-2">Welcome to MyKliq!</h1>
           <p className="text-muted-foreground">Create your profile to join your exclusive social circle</p>
@@ -768,7 +778,7 @@ export default function Signup() {
                 <Button
                   type="button"
                   onClick={handlePreviousStep}
-                  disabled={currentStep === 1}
+                  disabled={currentStep === 1 || isSubmitting}
                   variant="outline"
                   className={currentStep === 1 ? "invisible" : ""}
                   data-testid="button-previous-step"
@@ -777,6 +787,7 @@ export default function Signup() {
                 </Button>
                 
                 <Button
+                  type="button"
                   onClick={currentStep === 3 ? handleSubmit : handleNextStep}
                   disabled={isSubmitting}
                   className="px-8"
