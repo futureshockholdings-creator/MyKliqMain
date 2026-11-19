@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { OverlayPortal } from "@/components/ui/overlay-portal";
 
 interface MediaItem {
   id?: string;
@@ -120,11 +121,12 @@ export function ImageViewer({
   const currentMedia = media[currentIndex];
 
   return (
+    <OverlayPortal>
     <div
       role="dialog"
       aria-modal="true"
       aria-label={`Image viewer, showing image ${currentIndex + 1} of ${totalItems}`}
-      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      className="fixed inset-0 z-modal flex items-center justify-center"
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.95)',
         height: '100dvh',
@@ -237,5 +239,6 @@ export function ImageViewer({
         </div>
       )}
     </div>
+    </OverlayPortal>
   );
 }

@@ -8,6 +8,14 @@ export default {
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      // Navigation stays at 50; even install/offline banners use 9999.
+      // Keep modal surfaces above app chrome and their menus above the modal.
+      zIndex: {
+        modal: "10000",
+        popup: "10010",
+        tooltip: "10020",
+        toast: "10100",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

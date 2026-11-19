@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { OverlayPortal } from "@/components/ui/overlay-portal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -187,7 +188,8 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" data-testid="notification-panel-overlay">
+    <OverlayPortal>
+    <div className="fixed inset-0 z-modal bg-black/50 backdrop-blur-sm" data-testid="notification-panel-overlay">
       <div className="fixed right-2 md:right-4 top-2 md:top-4 bottom-16 md:bottom-4 w-[calc(100vw-1rem)] md:w-96 max-w-[calc(100vw-1rem)]">
         <Card className="h-full flex flex-col bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -340,5 +342,6 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
         </Card>
       </div>
     </div>
+    </OverlayPortal>
   );
 }

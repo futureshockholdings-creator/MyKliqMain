@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { OverlayPortal } from "@/components/ui/overlay-portal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -117,7 +118,8 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <OverlayPortal>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-modal">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700">
         <CardHeader className="border-b border-gray-700">
           <div className="flex items-center justify-between">
@@ -307,5 +309,6 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
         </CardContent>
       </Card>
     </div>
+    </OverlayPortal>
   );
 }
