@@ -7,3 +7,4 @@
 - [iPhone notification readiness](iphone-notification-readiness.md) — an enabled in-app switch did not prove device readiness; user confirmed re-enabling restored the icon badge.
 - [Mobile PWA experience](mobile-pwa-experience.md) — branded startup applies to installed mobile PWAs and mobile browsers; preserve desktop behavior.
 - [Navigation recovery](navigation-recovery.md) — all app 404 pages need a Home button to login; password recovery must link directly back to login.
+- [Kliq invite card](kliq-invite-card.md) — capacity is 28 friends, but the headlines invite card intentionally disappears at 10.

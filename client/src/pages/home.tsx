@@ -388,7 +388,7 @@ function FeedInviteCard({
               📣 Invite Friends to Your Kliq
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              You have {kliqMemberCount} of 10 members — keep growing!
+              You have {kliqMemberCount} of 28 members — keep growing!
             </p>
           </div>
           <button
