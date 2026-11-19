@@ -370,15 +370,16 @@ export default function Login() {
             <p className="text-muted-foreground text-sm mb-2">
               Don't have an account yet?
             </p>
-            <Link href="/">
-              <Button 
-                variant="outline" 
-                className="w-full bg-card border-border text-card-foreground hover:bg-accent"
-                data-testid="link-signup"
-              >
+            <Button
+              asChild
+              variant="outline"
+              className="w-full bg-card border-border text-card-foreground hover:bg-accent"
+              data-testid="link-signup"
+            >
+              <Link href="/signup">
                 Join MyKliq
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           {/* Footer */}

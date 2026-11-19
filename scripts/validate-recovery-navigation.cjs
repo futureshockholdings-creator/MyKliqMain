@@ -54,3 +54,17 @@ test('the login destination exists and unknown routes use the shared 404 page', 
   assert.ok(routes.some(route => !attribute(route, 'path') &&
     attribute(route, 'component')?.initializer?.getText() === '{NotFound}'));
 });
+
+test('new users on the login page can go directly to profile creation', () => {
+  const root = parse('client/src/pages/login.tsx');
+  const links = nodes(root, node => ts.isJsxElement(node) &&
+    node.openingElement.tagName.getText() === 'Link' &&
+    attribute(node.openingElement, 'href')?.initializer?.text === '/signup' &&
+    node.children.some(child => ts.isJsxText(child) && child.text.trim() === 'Join MyKliq'));
+  assert.equal(links.length, 1);
+  assert.ok(attribute(links[0].parent.openingElement, 'asChild'));
+  const routes = nodes(parse('client/src/App.tsx'), node =>
+    ts.isJsxSelfClosingElement(node) && node.tagName.getText() === 'Route');
+  assert.ok(routes.some(route => attribute(route, 'path')?.initializer?.text === '/signup*' &&
+    attribute(route, 'component')?.initializer?.getText() === '{Signup}'));
+});
