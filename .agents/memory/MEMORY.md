@@ -6,3 +6,4 @@
 - [PWA release origin](pwa-release-origin.md) — verify frontend and worker bodies on the installation origin; an API-origin publish can leave the main-site PWA unchanged.
 - [iPhone notification readiness](iphone-notification-readiness.md) — an enabled in-app switch did not prove device readiness; user confirmed re-enabling restored the icon badge.
 - [Mobile PWA experience](mobile-pwa-experience.md) — branded startup applies to installed mobile PWAs and mobile browsers; preserve desktop behavior.
+- [Navigation recovery](navigation-recovery.md) — all app 404 pages need a Home button to login; password recovery must link directly back to login.

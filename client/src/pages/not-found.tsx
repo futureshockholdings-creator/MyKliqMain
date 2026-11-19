@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Home } from "lucide-react";
 import { PageWrapper } from "@/components/PageWrapper";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 
 export default function NotFound() {
   return (
@@ -14,8 +16,14 @@ export default function NotFound() {
             </div>
 
             <p className="mt-4 text-sm text-muted-foreground">
-              Did you forget to add the page to the router?
+              This page doesn’t exist or is no longer available. Return to the login page to continue.
             </p>
+            <Button asChild className="mt-6 w-full">
+              <Link href="/login">
+                <Home className="mr-2 h-4 w-4" aria-hidden="true" />
+                Home
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

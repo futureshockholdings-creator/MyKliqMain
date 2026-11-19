@@ -174,15 +174,14 @@ export default function ForgotPassword() {
         {/* Back Button */}
         <div className="mb-6">
           <Button 
+            asChild
             variant="ghost" 
             className="text-muted-foreground hover:text-primary"
-            onClick={() => {
-              // Logout and redirect to login
-              window.location.href = "/api/logout";
-            }}
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Log In
+            <Link href="/login">
+              <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
+              Back to Log In
+            </Link>
           </Button>
         </div>
 
