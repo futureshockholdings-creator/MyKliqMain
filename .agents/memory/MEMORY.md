@@ -12,3 +12,4 @@
 - [TypeScript validation](typescript-validation.md) — a default-heap typecheck can run out of memory; inspect exit status before trusting filtered diagnostics.
 - [Popup visibility](popup-priority.md) — popups, especially signup welcome and media posting, must stay fully in front of navigation without clipping text or controls.
 - [Post edit freshness](post-edit-freshness.md) — a fast save can appear delayed when private SWR refreshes do not update React Query; apply confirmed edits directly.
+- [Image upload reliability](image-upload-reliability.md) — retain selections through transfer/save retries; single-PUT completion must not depend on a browser-visible ETag.

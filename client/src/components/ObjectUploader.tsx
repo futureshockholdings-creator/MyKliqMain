@@ -1,13 +1,18 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
-import { DashboardModal } from "@uppy/react";
+import { Dashboard } from "@uppy/react";
 import "@uppy/core/dist/style.min.css";
 import "@uppy/dashboard/dist/style.min.css";
 import AwsS3 from "@uppy/aws-s3";
 import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { uploadSinglePart } from "@/lib/singlePartUpload";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+type ObjectUploadResult = UploadResult<Record<string, unknown>, Record<string, unknown>>;
 
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
@@ -16,10 +21,11 @@ interface ObjectUploaderProps {
   onGetUploadParameters: (file: { name: string; type: string; size: number }) => Promise<{
     method: "PUT";
     url: string;
+    headers?: Record<string, string>;
   }>;
   onComplete?: (
     result: UploadResult<Record<string, unknown>, Record<string, unknown>>
-  ) => void;
+  ) => void | Promise<unknown>;
   buttonClassName?: string;
   children: ReactNode;
 }
@@ -63,6 +69,36 @@ export function ObjectUploader({
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
   const { toast } = useToast();
+  const [retry, setRetry] = useState<{ result?: ObjectUploadResult } | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const latest = useRef({ onGetUploadParameters, onComplete });
+  latest.current = { onGetUploadParameters, onComplete };
+  const completing = useRef(false);
+  const retryLock = useRef(false);
+
+  const finishUpload = async (result: ObjectUploadResult) => {
+    if (completing.current) return;
+    completing.current = true;
+    setIsRetrying(true);
+    try {
+      if (result.failed?.length) {
+        setRetry({});
+        return; // Keep all files so retryAll can resume the failed transfer.
+      }
+      if (!result.successful?.length) return;
+      await latest.current.onComplete?.(result);
+      setRetry(null);
+      setShowModal(false);
+      // Only discard files after BOTH transfer and profile/media save succeed.
+      uppy.cancelAll();
+    } catch {
+      setRetry({ result }); // Retry saving the uploaded URL; don't re-upload.
+    } finally {
+      completing.current = false;
+      retryLock.current = false;
+      setIsRetrying(false);
+    }
+  };
   
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
@@ -70,7 +106,7 @@ export function ObjectUploader({
     return (bytes / 1048576).toFixed(1) + " MB";
   };
 
-  const [uppy] = useState(() =>
+  const [uppy] = useState<Uppy>(() =>
     new Uppy({
       restrictions: {
         maxNumberOfFiles,
@@ -81,15 +117,17 @@ export function ObjectUploader({
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
+        uploadPartBytes: uploadSinglePart,
         getUploadParameters: async (file) => {
-          console.log(`[ObjectUploader] Getting upload parameters for file: ${file.name}, id: ${file.id}`);
-          const params = await onGetUploadParameters({
+          const params = await latest.current.onGetUploadParameters({
             name: file.name || 'file',
             type: file.type || 'application/octet-stream',
             size: file.size || 0,
           });
-          console.log(`[ObjectUploader] Got upload URL for ${file.name}: ${params.url.substring(0, 80)}...`);
-          return params;
+          return {
+            ...params,
+            headers: { "Content-Type": file.type || "application/octet-stream", ...params.headers },
+          };
         },
       })
       .on("restriction-failed", (file, error) => {
@@ -122,24 +160,12 @@ export function ObjectUploader({
         });
       })
       .on("upload-error", (file, error) => {
-        console.error("Upload error:", error);
-        toast({
-          title: "Upload failed",
-          description: file?.name 
-            ? `Failed to upload "${file.name}". Please try again.` 
-            : "Upload failed. Please try again.",
-          variant: "destructive",
-        });
+        // The completion handler presents a retry action and retains the file.
+        // Never log presigned storage URLs or the full upload error payload.
+        console.warn("[ObjectUploader] Transfer interrupted");
       })
       .on("complete", (result) => {
-        console.log(`[ObjectUploader] Upload complete. Successful files: ${result.successful?.length || 0}`);
-        result.successful?.forEach((file, idx) => {
-          console.log(`[ObjectUploader] File ${idx + 1}: name=${file.name}, uploadURL=${file.uploadURL?.substring(0, 80)}...`);
-        });
-        onComplete?.(result);
-        setShowModal(false);
-        // Clear all files from Uppy to prevent stale state on next upload
-        uppy.cancelAll();
+        void finishUpload(result);
       })
   );
 
@@ -149,12 +175,53 @@ export function ObjectUploader({
         {children}
       </Button>
 
-      <DashboardModal
-        uppy={uppy}
-        open={showModal}
-        onRequestClose={() => setShowModal(false)}
-        proudlyDisplayPoweredByUppy={false}
-      />
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="max-w-3xl gap-0 overflow-hidden p-0" aria-describedby={undefined}>
+          <DialogHeader className="px-4 pt-4 pb-2 pr-12 text-left">
+            <DialogTitle>Upload files</DialogTitle>
+          </DialogHeader>
+          <Dashboard
+            uppy={uppy}
+            width="100%"
+            height="min(650px, calc(100dvh - 8rem))"
+            proudlyDisplayPoweredByUppy={false}
+          />
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={retry !== null} onOpenChange={open => { if (!open && !isRetrying) setRetry(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Try that again</AlertDialogTitle>
+            <AlertDialogDescription>
+              {retry?.result
+                ? "Your file uploaded, but the change hasn’t been saved yet. We’ve kept it ready so you can try again."
+                : "Your upload couldn’t be finished yet. We’ve kept your selection so you can try again."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRetrying}>Not now</AlertDialogCancel>
+            <Button
+              data-testid="button-retry-upload"
+              disabled={isRetrying}
+              onClick={() => {
+                if (!retry || isRetrying || retryLock.current) return;
+                retryLock.current = true;
+                if (retry.result) {
+                  void finishUpload(retry.result);
+                } else {
+                  setIsRetrying(true);
+                  void uppy.retryAll().catch(() => {
+                    retryLock.current = false;
+                    setIsRetrying(false);
+                  });
+                }
+              }}
+            >
+              {isRetrying ? "Trying again…" : "Try again"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { ProfileDetailsDisplay } from "@/components/ProfileDetailsDisplay";
 import { MusicUploader } from "@/components/MusicUploader";
 import { ProfileMusicPlayer } from "@/components/ProfileMusicPlayer";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { applyProfileImageUpdate } from "@/lib/profileImageCache";
 import { InviteCard } from "@/components/InviteCard";
 import { getInviteMessage } from "@/lib/deviceDetection";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -88,45 +89,26 @@ export default function Profile() {
 
   const updateProfilePictureMutation = useMutation({
     mutationFn: async (profileImageURL: string) => {
-      console.log('[ProfilePicture] Starting update with URL:', profileImageURL);
       return await apiRequest("PUT", "/api/user/profile-picture", { profileImageURL: profileImageURL });
     },
     onSuccess: async (updatedUser) => {
-      console.log('[ProfilePicture] Server response:', updatedUser);
-      
-      await enhancedCache.removeByPattern('/api/auth/user');
-      await enhancedCache.removeByPattern('/api/user');
-      
+      await applyProfileImageUpdate(queryClient, "profileImageUrl", updatedUser);
       (window as any).__profileCacheKey = Date.now();
-      
-      if (updatedUser && updatedUser.id) {
-        console.log('[ProfilePicture] Setting query data with updated user, profileImageUrl:', updatedUser.profileImageUrl);
-        queryClient.setQueryData(["/api/auth/user"], updatedUser);
-      }
-      
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
       toast({
         title: "Success",
         description: "Profile picture updated successfully!",
       });
     },
-    onError: (error) => {
-      console.error('[ProfilePicture] Error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile picture",
-        variant: "destructive",
-      });
-    },
   });
 
-  const handleProfilePictureComplete = (result: any) => {
+  const handleProfilePictureComplete = async (result: any) => {
     if (result.successful && result.successful[0]) {
       // Strip query parameters from presigned URL to get the actual file URL
       const presignedUrl = result.successful[0].uploadURL || '';
       const uploadURL = presignedUrl.split('?')[0];
-      updateProfilePictureMutation.mutate(uploadURL);
+      if (!uploadURL) throw new Error("Uploaded image URL was not returned");
+      await updateProfilePictureMutation.mutateAsync(uploadURL);
     }
   };
 
@@ -141,41 +123,25 @@ export default function Profile() {
 
   const updateBackgroundMutation = useMutation({
     mutationFn: async (backgroundUrl: string) => {
-      console.log('[Background] Starting update with URL:', backgroundUrl);
       return await apiRequest("PATCH", "/api/user/background", { backgroundImageUrl: backgroundUrl });
     },
     onSuccess: async (updatedUser) => {
-      console.log('[Background] Server response:', updatedUser);
-      
-      // Directly update TanStack Query cache with the response data
-      if (updatedUser && updatedUser.id) {
-        console.log('[Background] Setting query data with updated user, backgroundImageUrl:', updatedUser.backgroundImageUrl);
-        queryClient.setQueryData(["/api/auth/user"], updatedUser);
-      } else {
-        console.warn('[Background] No valid user data returned from server');
-      }
+      await applyProfileImageUpdate(queryClient, "backgroundImageUrl", updatedUser);
       
       toast({
         title: "Success",
         description: "Background image updated successfully",
       });
     },
-    onError: (error: any) => {
-      console.error("[Background] Error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update background image",
-        variant: "destructive",
-      });
-    },
   });
 
-  const handleBackgroundComplete = (result: any) => {
+  const handleBackgroundComplete = async (result: any) => {
     if (result.successful && result.successful[0]) {
       // Strip query parameters from presigned URL to get the actual file URL
       const presignedUrl = result.successful[0].uploadURL || '';
       const uploadURL = presignedUrl.split('?')[0];
-      updateBackgroundMutation.mutate(uploadURL);
+      if (!uploadURL) throw new Error("Uploaded image URL was not returned");
+      await updateBackgroundMutation.mutateAsync(uploadURL);
     }
   };
 
