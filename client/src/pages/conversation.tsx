@@ -26,6 +26,14 @@ import { LinkPreviewList } from "@/components/LinkPreviewCard";
 import { extractGenericUrlsFromText } from "@/lib/linkPreviewUtils";
 import { LinkifyText } from "@/components/LinkifyText";
 
+interface ConversationParticipant {
+  id: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImageUrl?: string | null;
+}
+
 interface MessageData {
   id: string;
   content: string;
@@ -114,7 +122,7 @@ interface ConversationData {
 
 export function Conversation() {
   const { conversationId } = useParams<{ conversationId: string }>();
-  // For now, treat conversationId as otherUserId - in a real app we'd fetch conversation details
+  // Direct-message routes identify the recipient, including before a thread exists.
   const otherUserId = conversationId;
   const { user } = useAuth() as unknown as { user: User | null };
   const { toast } = useToast();
@@ -135,6 +143,26 @@ export function Conversation() {
     refetchInterval: 3000, // Poll every 3 seconds for new messages
   });
 
+  const { data: recipient, isPending: isRecipientPending, refetch: refetchRecipient } = useQuery<ConversationParticipant>({
+    // Reuse the profile screen's cache so its Message button opens with the
+    // recipient's identity already available, without depending on message history.
+    queryKey: ["/api/user/profile", otherUserId],
+    queryFn: () => apiRequest("GET", `/api/user/profile/${otherUserId}`),
+    enabled: !!otherUserId && !!user,
+    placeholderData: () => {
+      const friends = queryClient.getQueryData<{ friend: ConversationParticipant }[]>(["/api/friends"]);
+      const friend = friends?.find(row => row.friend?.id === otherUserId)?.friend;
+      if (friend) return friend;
+      const inbox = queryClient.getQueryData<{ otherUser?: ConversationParticipant }[]>(["/api/messages/conversations"]);
+      return inbox?.find(row => row.otherUser?.id === otherUserId)?.otherUser;
+    },
+  });
+  const firstMessage = conversation?.messages?.[0];
+  const messageParticipant = firstMessage?.sender?.id === otherUserId
+    ? firstMessage.sender
+    : firstMessage?.receiver?.id === otherUserId ? firstMessage.receiver : null;
+  const displayUser = recipient?.id === otherUserId ? recipient : messageParticipant;
+
   // Mark message notifications as read when opening the conversation
   useEffect(() => {
     if (otherUserId) {
@@ -149,8 +177,6 @@ export function Conversation() {
       });
     }
   }, [otherUserId, queryClient]);
-
-  // We'll get user info from the conversation messages instead of separate API call
 
   const sendMessageMutation = useMutation({
     mutationFn: async (messageData: {
@@ -188,6 +214,7 @@ export function Conversation() {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!displayUser || displayUser.id !== otherUserId || isLoading) return;
     const content = messageText.trim();
     
     if (content || selectedMedia) {
@@ -234,23 +261,22 @@ export function Conversation() {
     setSelectedMedia(null);
   };
 
-  const getDisplayName = (userData: MessageData["sender"]) => {
-    if (userData.firstName && userData.lastName) {
-      return `${userData.firstName} ${userData.lastName}`;
-    }
-    if (userData.firstName) return userData.firstName;
+  const getDisplayName = (userData: ConversationParticipant) => {
+    const fullName = [userData.firstName, userData.lastName].filter(Boolean).join(" ").trim();
+    if (fullName) return fullName;
     return userData.email?.split("@")[0] || "Unknown User";
   };
 
-  const getInitials = (userData: MessageData["sender"]) => {
+  const getInitials = (userData: ConversationParticipant) => {
     if (userData.firstName && userData.lastName) {
       return `${userData.firstName[0]}${userData.lastName[0]}`.toUpperCase();
     }
     if (userData.firstName) return userData.firstName[0].toUpperCase();
+    if (userData.lastName) return userData.lastName[0].toUpperCase();
     return userData.email?.[0]?.toUpperCase() || "U";
   };
 
-  if (isLoading) {
+  if (!displayUser && (isLoading || isRecipientPending)) {
     return (
       <PageWrapper className="bg-background text-foreground p-4">
         <div className="max-w-2xl mx-auto">
@@ -270,12 +296,6 @@ export function Conversation() {
     );
   }
 
-  // Get the other user from the first message if available
-  const firstMessage = conversation?.messages?.[0];
-  const displayUser = firstMessage && user ? 
-    (firstMessage.sender.id === user.id ? firstMessage.receiver : firstMessage.sender) :
-    null;
-
   return (
     <PageWrapper className="bg-background text-foreground">
       <div className="flex flex-col flex-1">
@@ -288,11 +308,11 @@ export function Conversation() {
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
               </Link>
-              {displayUser && (
+              {displayUser ? (
                 <div className="flex items-center justify-between flex-1">
                   <div className="flex items-center gap-3">
                     <Avatar className="w-10 h-10">
-                      <AvatarImage src={resolveAssetUrl(displayUser.profileImageUrl)} />
+                      <AvatarImage src={resolveAssetUrl(displayUser.profileImageUrl)} alt={getDisplayName(displayUser)} />
                       <AvatarFallback className="bg-blue-100 text-blue-600">
                         {getInitials(displayUser)}
                       </AvatarFallback>
@@ -305,6 +325,15 @@ export function Conversation() {
                     recipientId={displayUser.id}
                     recipientName={getDisplayName(displayUser)}
                   />
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-3" role="alert">
+                  <p className="text-sm text-muted-foreground">
+                    Couldn't load this recipient. Try again before sending a message.
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => void refetchRecipient()}>
+                    Try again
+                  </Button>
                 </div>
               )}
             </div>
@@ -362,12 +391,12 @@ export function Conversation() {
                 onChange={(e) => setMessageText(e.target.value)}
                 placeholder="Type your message..."
                 className="flex-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
-                disabled={sendMessageMutation.isPending}
+                disabled={!displayUser || sendMessageMutation.isPending}
                 data-testid="input-message"
               />
               <Button
                 type="submit"
-                disabled={(!messageText.trim() && !selectedMedia) || sendMessageMutation.isPending}
+                disabled={!displayUser || isLoading || (!messageText.trim() && !selectedMedia) || sendMessageMutation.isPending}
                 data-testid="button-send-message"
               >
                 <Send className="w-4 h-4" />
@@ -379,7 +408,11 @@ export function Conversation() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 bg-background">
         <div className="max-w-2xl mx-auto space-y-4">
-          {(!conversation?.messages || conversation.messages.length === 0) ? (
+          {isLoading ? (
+            <div className="text-center py-12" role="status">
+              <p className="text-muted-foreground">Loading messages...</p>
+            </div>
+          ) : (!conversation?.messages || conversation.messages.length === 0) ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
                 No messages yet. Start the conversation!

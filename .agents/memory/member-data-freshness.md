@@ -14,3 +14,9 @@ Live messages are refresh signals, not a transport for private message bodies. N
 **Why:** Existing WebSocket routing is process-local and clients also have polling fallbacks. Content must remain behind authenticated HTTP access rather than exposing it through subscription metadata.
 
 **How to apply:** Emit hints only after persistence, reconnect across signed-in routes, resynchronize on return to the app, and retain polling for interrupted live connections. Do not change message-expiry or kliq-access rules to improve perceived speed.
+
+Show the recipient's name and profile picture before the first message, independently of whether a thread has messages.
+
+**Why:** The user asked to identify who they are messaging from the onset, rather than only after sending the initial message.
+
+**How to apply:** Reuse the selected member's profile details when available and load their profile independently for direct links. Empty or expired message history must not remove the recipient's identity. Do not replace the shared full-profile cache with a partial identity object.
