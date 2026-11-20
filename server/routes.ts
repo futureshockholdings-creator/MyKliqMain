@@ -22,10 +22,14 @@ import { isReadableInviteCode, normalizeInviteCode } from "@shared/inviteCodes";
 import { replaceLegacyInviteCode } from "./inviteCodeService";
 import { performanceOptimizer } from "./performanceOptimizer";
 import { createPasswordChangeHandler } from "./passwordChange";
+import { authenticateAndUpgradePassword, hashPassword } from "./passwordSecurity";
+import { protectApiData } from "./apiPrivacy";
+import { advanceResetToken, isResetStage, newResetToken } from "./passwordResetSecurity";
+import { passwordResetTokens } from "@shared/schema";
 
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts, friendships, notifications, userThemes, discordGuildInstallations, discordChannelPermissions, discordMemberPermissions, discordSharingAudit, socialCredentials } from "@shared/schema";
 import { generateMobileToken, verifyMobileToken, JWT_CONFIG } from "./mobile-auth";
-import { eq, and, or, desc, sql as sqlOp, isNotNull, isNull, inArray } from "drizzle-orm";
+import { eq, and, or, desc, sql as sqlOp, isNotNull, isNull, inArray, gt } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { oauthService } from "./oauthService";
 import { encryptForStorage, decryptFromStorage } from './cryptoService';
@@ -443,7 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Signup endpoint for new user registration
-  app.post('/api/auth/signup', async (req, res) => {
+  app.post('/api/auth/signup', rateLimitService.createRateLimitMiddleware('auth'), async (req, res) => {
     try {
       const {
         firstName,
@@ -507,9 +511,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = crypto.randomUUID();
       const inviteCode = await storage.generateInviteCode();
 
-      // Encrypt security data
-      const { encryptForStorage } = await import('./cryptoService');
-      const encryptedPassword = encryptForStorage(password);
+      // Passwords are one-way hashes; only provider OAuth secrets use encryption.
+      const hashedPassword = await hashPassword(password);
       const hashedSecurityAnswer1 = await bcrypt.hash(securityAnswer1, 12);
       const hashedSecurityAnswer2 = await bcrypt.hash(securityAnswer2, 12);
       const hashedSecurityAnswer3 = await bcrypt.hash(securityAnswer3, 12);
@@ -526,7 +529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         inviteCode,
         kliqName: kliqName?.trim() || "My Kliq",
         birthdate: birthdate || null,
-        password: encryptedPassword,
+        password: hashedPassword,
         securityAnswer1: hashedSecurityAnswer1,
         securityAnswer2: hashedSecurityAnswer2,
         securityAnswer3: hashedSecurityAnswer3,
@@ -659,9 +662,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!user) {
           return res.status(404).json({ message: "User not found" });
         }
-        // Cache the user data (without password processing)
-        await cacheService.set(cacheKey, user, 600); // 10 minutes
       }
+
+      // Profile caches must not become a second credential store. Scrub older
+      // cache entries as they are read and retain presence flags, not hashes.
+      user = protectApiData(user, { ownerId: userId, privateAccount: true });
+      await cacheService.set(cacheKey, user, 600);
       
       // A cached legacy code must not remain the code displayed to its owner.
       if (!isReadableInviteCode(user.inviteCode)) {
@@ -672,11 +678,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Account settings need password presence, never the stored secret or plaintext.
       const userResponse = { ...user };
-      userResponse.hasPassword = !!user.password;
+      userResponse.hasPassword = !!user.hasPassword;
       delete userResponse.password;
       
       // Add security setup status to response
-      const securitySetupComplete = !!(userResponse.hasPassword && userResponse.securityAnswer1 && userResponse.securityAnswer2 && userResponse.securityAnswer3 && userResponse.securityPin);
+      const securitySetupComplete = !!(userResponse.hasPassword && userResponse.hasSecurityAnswers && userResponse.hasSecurityPin);
       
       // Generate a fresh JWT token for cross-domain auth (AWS Amplify → Replit backend)
       // This ensures users authenticated via session/cookies also have a token for API calls
@@ -704,9 +710,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       getUser: id => storage.getUser(id),
       decryptPassword: decryptFromStorage,
       replacePassword: async (id, previous, next) => {
-        const changed = await db.update(users).set({ password: next, updatedAt: new Date() })
-          .where(and(eq(users.id, id), eq(users.password, previous))).returning({ id: users.id });
-        return changed.length === 1;
+        return db.transaction(async tx => {
+          const changed = await tx.update(users).set({ password: next, updatedAt: new Date() })
+            .where(and(eq(users.id, id), eq(users.password, previous))).returning({ id: users.id });
+          if (changed.length) await tx.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, id));
+          return changed.length === 1;
+        });
       },
       clearCache: id => cacheService.del(`user:profile:${id}`),
     }));
@@ -732,12 +741,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { password } = validation.data;
 
-      // Encrypt the password for secure storage (allows viewing in UI)
-      const { encryptForStorage } = await import('./cryptoService');
-      const encryptedPassword = encryptForStorage(password);
-
-      // Update user with encrypted password
-      await storage.updateUserPassword(userId, encryptedPassword);
+      const nextPassword = await hashPassword(password);
+      const created = await db.transaction(async tx => {
+        const changed = await tx.update(users).set({ password: nextPassword, updatedAt: new Date() })
+          .where(and(eq(users.id, userId), or(isNull(users.password), eq(users.password, ""))))
+          .returning({ id: users.id });
+        if (changed.length) await tx.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+        return changed.length === 1;
+      });
+      if (!created) return res.status(409).json({ message: "A password is already set. Use Change Password." });
       
       // Invalidate user profile cache
       await cacheService.del(`user:profile:${userId}`);
@@ -782,7 +794,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ============================================================================
 
   // Mobile authentication endpoints with JWT tokens
-  app.post('/api/mobile/auth/login', async (req, res) => {
+  app.post('/api/mobile/auth/login', rateLimitService.createRateLimitMiddleware('auth'), async (req, res) => {
     console.log('=== MOBILE LOGIN ATTEMPT ===', new Date().toISOString());
     try {
       const { phoneNumber, password } = req.body;
@@ -806,19 +818,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check password (bcrypt for admin, encrypted for others)
-      let isPasswordValid = false;
-      if (user.password?.startsWith('$2b$')) {
-        isPasswordValid = await bcrypt.compare(password, user.password);
-      } else if (user.password) {
-        try {
-          const { decryptFromStorage } = await import('./cryptoService');
-          const decryptedPassword = decryptFromStorage(user.password);
-          isPasswordValid = password === decryptedPassword;
-        } catch (error) {
-          console.error('Password decryption failed:', error);
-        }
-      }
+      // A successful legacy login must persist its one-way replacement before
+      // any session/token is issued. Both mobile and web share this policy.
+      const isPasswordValid = await authenticateAndUpgradePassword(user, password);
 
       if (!isPasswordValid) {
         return res.status(401).json({ 
@@ -826,6 +828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      res.locals.authenticatedUserId = user.id;
       // Generate JWT token using centralized utility
       const token = generateMobileToken(user.id, user.phoneNumber || '');
 
@@ -836,6 +839,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         token,
         user: {
           id: user.id,
+          hasPassword: true,
+          hasSecurityAnswer1: !!user.securityAnswer1,
+          hasSecurityAnswer2: !!user.securityAnswer2,
+          hasSecurityAnswer3: !!user.securityAnswer3,
+          hasSecurityPin: !!user.securityPin,
           firstName: user.firstName,
           lastName: user.lastName,
           phoneNumber: user.phoneNumber,
@@ -4453,7 +4461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 
   // Alternative login endpoint to avoid Replit auth conflicts
-  app.post('/api/user/login', async (req, res) => {
+  app.post('/api/user/login', rateLimitService.createRateLimitMiddleware('auth'), async (req, res) => {
     console.log('=== LOGIN ATTEMPT ===', new Date().toISOString());
     console.log('Request body:', req.body);
     console.log('User agent:', req.headers['user-agent']);
@@ -4484,32 +4492,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Check if it's an old hashed password or new encrypted password
-      if (user.password.startsWith('$2b$')) {
-        // Old bcrypt hashed password - use bcrypt comparison
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-          return res.status(401).json({ 
-            message: "Invalid phone number or password" 
-          });
-        }
-      } else {
-        // New encrypted password - decrypt and compare
-        const { decryptFromStorage } = await import('./cryptoService');
-        try {
-          const decryptedPassword = decryptFromStorage(user.password);
-          if (password !== decryptedPassword) {
-            return res.status(401).json({ 
-              message: "Invalid phone number or password" 
-            });
-          }
-        } catch (error) {
-          return res.status(401).json({ 
-            message: "Invalid phone number or password" 
-          });
-        }
+      if (!await authenticateAndUpgradePassword(user, password)) {
+        return res.status(401).json({
+          message: "Invalid phone number or password"
+        });
       }
 
+      res.locals.authenticatedUserId = user.id;
       // Create session for the user (matching the OAuth session structure)
       const userSession = {
         claims: {
@@ -4565,6 +4554,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             token, // JWT token for cross-domain auth
             user: {
               id: user.id,
+              hasPassword: true,
+              hasSecurityAnswer1: !!user.securityAnswer1,
+              hasSecurityAnswer2: !!user.securityAnswer2,
+              hasSecurityAnswer3: !!user.securityAnswer3,
+              hasSecurityPin: !!user.securityPin,
               email: user.email,
               firstName: user.firstName,
               lastName: user.lastName,
@@ -4651,7 +4645,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Step 2: Verify phone number (requires name from step 1)
-  app.post('/api/auth/forgot-password', async (req, res) => {
+  app.post('/api/auth/forgot-password', rateLimitService.createRateLimitMiddleware('auth'), async (req, res) => {
     try {
       const { firstName, lastName, phoneNumber } = req.body;
       
@@ -4697,7 +4691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Generate reset token (valid for 1 hour)
-      const resetToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const resetToken = newResetToken("questions");
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
       // Store reset token in storage
@@ -4714,9 +4708,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/verify-security', async (req, res) => {
+  app.post('/api/auth/verify-security', rateLimitService.createRateLimitMiddleware('auth'), async (req, res) => {
     try {
       const { resetToken, securityAnswer1, securityAnswer2, securityAnswer3 } = req.body;
+      if (!isResetStage(resetToken, "questions")) {
+        return res.status(400).json({ message: "Please restart password recovery." });
+      }
       
       if (!resetToken || !securityAnswer1 || !securityAnswer2 || !securityAnswer3) {
         return res.status(400).json({ message: "All security answers are required" });
@@ -4764,7 +4761,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Security answers do not match" });
       }
 
-      res.json({ success: true, message: "Security questions verified" });
+      const nextToken = await advanceResetToken(resetToken, "questions", "pin");
+      if (!nextToken) return res.status(409).json({ message: "Recovery request changed or expired. Please restart." });
+      res.json({ success: true, resetToken: nextToken, message: "Security questions verified" });
     } catch (error) {
       console.error("Error verifying security questions:", error);
       res.status(500).json({ message: "Failed to verify security questions" });
@@ -4781,13 +4780,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const hasLegacyData = {
-        pin: user.securityPin && user.securityPin.startsWith('$2b$'),
-        answer1: user.securityAnswer1 && user.securityAnswer1.startsWith('$2b$'),
-        answer2: user.securityAnswer2 && user.securityAnswer2.startsWith('$2b$'),
-        answer3: user.securityAnswer3 && user.securityAnswer3.startsWith('$2b$'),
+        pinNeedsUpdate: !!user.securityPin && !/^\$2[aby]\$/.test(user.securityPin),
+        answer1NeedsUpdate: !!user.securityAnswer1 && !/^\$2[aby]\$/.test(user.securityAnswer1),
+        answer2NeedsUpdate: !!user.securityAnswer2 && !/^\$2[aby]\$/.test(user.securityAnswer2),
+        answer3NeedsUpdate: !!user.securityAnswer3 && !/^\$2[aby]\$/.test(user.securityAnswer3),
       };
 
-      const needsUpdate = hasLegacyData.pin || hasLegacyData.answer1 || hasLegacyData.answer2 || hasLegacyData.answer3;
+      const needsUpdate = Object.values(hasLegacyData).some(Boolean);
 
       res.json({ hasLegacyData, needsUpdate });
     } catch (error) {
@@ -4835,9 +4834,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/verify-pin', async (req, res) => {
+  app.post('/api/auth/verify-pin', rateLimitService.createRateLimitMiddleware('auth'), async (req, res) => {
     try {
       const { resetToken, pin } = req.body;
+      if (!isResetStage(resetToken, "pin")) {
+        return res.status(400).json({ message: "Please complete security-question verification first." });
+      }
       
       if (!resetToken || !pin) {
         return res.status(400).json({ message: "Reset token and PIN are required" });
@@ -4892,7 +4894,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid PIN" });
       }
 
-      res.json({ success: true, message: "PIN verified successfully" });
+      const nextToken = await advanceResetToken(resetToken, "pin", "reset");
+      if (!nextToken) return res.status(409).json({ message: "Recovery request changed or expired. Please restart." });
+      res.json({ success: true, resetToken: nextToken, message: "PIN verified successfully" });
     } catch (error) {
       console.error("Error verifying PIN:", error);
       res.status(500).json({ message: "Failed to verify PIN" });
@@ -4937,9 +4941,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/reset-password', async (req, res) => {
+  app.post('/api/auth/reset-password', rateLimitService.createRateLimitMiddleware('auth'), async (req, res) => {
     try {
       const { resetToken, newPassword } = req.body;
+      if (!isResetStage(resetToken, "reset")) {
+        return res.status(403).json({ message: "Complete security-question and PIN verification before resetting your password." });
+      }
+      const validation = passwordSetupSchema.safeParse({ password: newPassword });
+      if (!validation.success) {
+        return res.status(400).json({ message: validation.error.issues[0].message });
+      }
       
       if (!resetToken || !newPassword) {
         return res.status(400).json({ message: "Reset token and new password are required" });
@@ -4960,19 +4971,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Hash new password
-      const hashedPassword = await bcrypt.hash(newPassword, 12);
+      const hashedPassword = await hashPassword(newPassword);
 
-      // Update user password
-      await storage.updateUser(tokenData.userId, { password: hashedPassword });
+      // Consume the verified token and update the password atomically. Concurrent
+      // requests cannot reuse it or leave a consumed token with an unchanged password.
+      const saved = await db.transaction(async tx => {
+        const [used] = await tx.delete(passwordResetTokens)
+          .where(and(eq(passwordResetTokens.token, resetToken), gt(passwordResetTokens.expiresAt, new Date())))
+          .returning({ userId: passwordResetTokens.userId });
+        if (!used || used.userId !== tokenData.userId) return false;
+        await tx.update(users).set({ password: hashedPassword, updatedAt: new Date() })
+          .where(eq(users.id, used.userId));
+        await tx.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, used.userId));
+        return true;
+      });
+      if (!saved) return res.status(400).json({ message: "Invalid, expired, or already used reset token" });
       
-      // Invalidate user profile cache
-      await cacheService.del(`user:profile:${tokenData.userId}`);
-
-      // Clear password reset attempts on successful reset
-      await storage.clearPasswordResetAttempts(tokenData.userId);
-
-      // Delete used reset token
-      await storage.deletePasswordResetToken(resetToken);
+      // The transaction has already consumed all reset tokens. Cleanup failures
+      // must not report that a successfully changed password failed to save.
+      await Promise.all([
+        cacheService.del(`user:profile:${tokenData.userId}`),
+        storage.clearPasswordResetAttempts(tokenData.userId),
+      ]).catch(() => console.warn("[PasswordReset] Password saved; cleanup unavailable"));
 
       res.json({ success: true, message: "Password reset successfully" });
     } catch (error) {
@@ -5105,7 +5125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await cacheService.del(`user:profile:${userId}`);
 
       const updatedUser = await storage.getUser(userId);
-      res.json(updatedUser);
+      res.json(protectApiData(updatedUser, { ownerId: userId }));
     } catch (error) {
       console.error("Error updating profile:", error);
       res.status(500).json({ message: "Failed to update profile" });
@@ -5256,7 +5276,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await cacheService.del(`user:profile:${userId}`);
 
       const updatedUser = await storage.getUser(userId);
-      res.json(updatedUser);
+      res.json({
+        id: userId,
+        backgroundImageUrl: updatedUser?.backgroundImageUrl,
+        updatedAt: updatedUser?.updatedAt,
+      });
     } catch (error) {
       console.error("Error updating background image:", error);
       res.status(500).json({ message: "Failed to update background image" });
@@ -5553,9 +5577,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Invalidate user profile cache
       await cacheService.del(`user:profile:${userId}`);
 
-      // Return the full updated user so the client can update its cache immediately
+      // Return display/profile fields only. Credentials and contact details are
+      // neither necessary nor safe in an image-update response.
       const updatedUser = await storage.getUser(userId);
-      res.status(200).json(updatedUser);
+      res.status(200).json({
+        id: userId,
+        profileImageUrl: updatedUser?.profileImageUrl,
+        updatedAt: updatedUser?.updatedAt,
+      });
     } catch (error) {
       console.error("Error updating profile picture:", error);
       res.status(500).json({ error: "Internal server error" });
@@ -12995,95 +13024,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Reveal password after security verification - requires all 3 correct answers
+  // Retired for all clients, including administrators.
   app.post('/api/admin/users/:userId/reveal-password', async (req, res) => {
-    try {
-      const { password, answer1, answer2, answer3 } = req.body;
-      const { userId } = req.params;
-      
-      if (password !== ADMIN_PASSWORD) {
-        return res.status(401).json({ message: "Admin access required" });
-      }
-
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // User must have security answers set up
-      if (!user.securityAnswer1 || !user.securityAnswer2 || !user.securityAnswer3) {
-        return res.status(400).json({ 
-          success: false,
-          message: "User has not set up security questions - cannot verify identity" 
-        });
-      }
-
-      // All 3 answers must be provided
-      if (!answer1 || !answer2 || !answer3) {
-        return res.status(400).json({ 
-          success: false,
-          message: "All three security answers are required to reveal password" 
-        });
-      }
-
-      // Verify all security answers
-      const answer1Valid = await bcrypt.compare(answer1.toLowerCase().trim(), user.securityAnswer1);
-      const answer2Valid = await bcrypt.compare(answer2.toLowerCase().trim(), user.securityAnswer2);
-      const answer3Valid = await bcrypt.compare(answer3.toLowerCase().trim(), user.securityAnswer3);
-
-      if (!answer1Valid || !answer2Valid || !answer3Valid) {
-        return res.status(403).json({ 
-          success: false,
-          message: "Security verification failed - cannot reveal password",
-          answer1Valid,
-          answer2Valid,
-          answer3Valid
-        });
-      }
-
-      // All answers verified - now decrypt and return the password
-      if (!user.password) {
-        return res.json({ 
-          success: true,
-          hasPassword: false,
-          message: "User has not set a password" 
-        });
-      }
-
-      // Check if password is a bcrypt hash (legacy) or encrypted
-      if (user.password.startsWith('$2b$')) {
-        return res.json({ 
-          success: true,
-          hasPassword: true,
-          password: null,
-          message: "Legacy hashed password - cannot be retrieved. User must reset password." 
-        });
-      }
-
-      // Decrypt the password
-      const { decryptFromStorage } = await import('./cryptoService');
-      try {
-        const decryptedPassword = decryptFromStorage(user.password);
-        console.log(`[ADMIN] Password revealed for user ${userId} after security verification`);
-        return res.json({ 
-          success: true,
-          hasPassword: true,
-          password: decryptedPassword,
-          message: "Identity verified - password retrieved successfully" 
-        });
-      } catch (decryptError) {
-        console.error("Error decrypting password:", decryptError);
-        return res.json({ 
-          success: true,
-          hasPassword: true,
-          password: null,
-          message: "Cannot decrypt password - user must reset password" 
-        });
-      }
-    } catch (error) {
-      console.error("Error revealing password:", error);
-      res.status(500).json({ message: "Failed to reveal password" });
-    }
+    // Kept as an explicit retired route for older clients. No credential lookup
+    // or decryption is performed, even for an administrator.
+    return res.status(410).json({
+      success: false,
+      message: "Password retrieval has been removed. Use the password reset process.",
+      requiresPasswordReset: true,
+    });
   });
 
   // Suspend user endpoint for admin

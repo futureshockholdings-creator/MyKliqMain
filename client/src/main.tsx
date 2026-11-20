@@ -9,7 +9,7 @@ import "./index.css";
 // data is deployed. On first load after a version change, both the
 // enterprise_cache and offline_data IndexedDB stores are wiped before React
 // renders — so no stale data can ever be served by the SWR fallback.
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4-credential-privacy";
 const CACHE_VERSION_KEY = "mykliq_cache_version";
 
 async function bustCacheIfNeeded() {

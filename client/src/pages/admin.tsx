@@ -66,8 +66,6 @@ export default function AdminPage() {
   const [securityAnswer2, setSecurityAnswer2] = useState("");
   const [securityAnswer3, setSecurityAnswer3] = useState("");
   const [securityVerificationResult, setSecurityVerificationResult] = useState<any>(null);
-  const [revealedPassword, setRevealedPassword] = useState<string | null>(null);
-  const [isRevealingPassword, setIsRevealingPassword] = useState(false);
   const [viewingPostId, setViewingPostId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -340,7 +338,6 @@ export default function AdminPage() {
       setSecurityAnswer2("");
       setSecurityAnswer3("");
       setSecurityVerificationResult(null);
-      setRevealedPassword(null);
     },
     onError: () => {
       toast({
@@ -437,46 +434,6 @@ export default function AdminPage() {
       });
     },
   });
-
-  // Reveal password after verification
-  const revealPassword = async (userId: string) => {
-    setIsRevealingPassword(true);
-    try {
-      const response = await apiRequest("POST", `/api/admin/users/${userId}/reveal-password`, {
-        password: adminPassword,
-        answer1: securityAnswer1,
-        answer2: securityAnswer2,
-        answer3: securityAnswer3
-      });
-      if (response.success && response.password) {
-        setRevealedPassword(response.password);
-        toast({
-          title: "Password Retrieved",
-          description: "User's password is now visible. Please share it securely.",
-        });
-      } else if (response.success && !response.password) {
-        toast({
-          title: "Password Unavailable",
-          description: response.message || "Cannot retrieve password for this user.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Verification Failed",
-          description: response.message || "Security answers did not match.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to reveal password.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsRevealingPassword(false);
-    }
-  };
 
   // Export data mutation
   const exportData = useMutation({
@@ -686,7 +643,7 @@ export default function AdminPage() {
                   <Shield className="h-8 w-8 text-green-500 mr-4" />
                   <div>
                     <p className="text-2xl font-bold text-foreground">
-                      {users.filter((u: any) => u.password).length}
+                      {users.filter((u: any) => u.hasPassword).length}
                     </p>
                     <p className="text-muted-foreground">Users with Passwords</p>
                   </div>
@@ -697,7 +654,7 @@ export default function AdminPage() {
                   <Database className="h-8 w-8 text-purple-500 mr-4" />
                   <div>
                     <p className="text-2xl font-bold text-foreground">
-                      {users.filter((u: any) => u.securityPin).length}
+                      {users.filter((u: any) => u.hasSecurityPin).length}
                     </p>
                     <p className="text-muted-foreground">Users with Security PINs</p>
                   </div>
@@ -801,12 +758,12 @@ export default function AdminPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          {user.password && (
+                          {user.hasPassword && (
                             <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs">
                               Password
                             </span>
                           )}
-                          {user.securityPin && (
+                          {user.hasSecurityPin && (
                             <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs">
                               PIN
                             </span>
@@ -869,12 +826,12 @@ export default function AdminPage() {
                                   <div className="space-y-3">
                                     <div className="flex items-center gap-2 text-sm">
                                       <span className="text-muted-foreground">Password Set:</span>
-                                      <span className={selectedUser.password ? "text-green-600" : "text-red-600"}>
-                                        {selectedUser.password ? "Yes" : "No"}
+                                      <span className={selectedUser.hasPassword ? "text-green-600" : "text-red-600"}>
+                                        {selectedUser.hasPassword ? "Yes" : "No"}
                                       </span>
                                       <span className="text-muted-foreground ml-4">PIN Set:</span>
-                                      <span className={selectedUser.securityPin ? "text-green-600" : "text-red-600"}>
-                                        {selectedUser.securityPin ? "Yes" : "No"}
+                                      <span className={selectedUser.hasSecurityPin ? "text-green-600" : "text-red-600"}>
+                                        {selectedUser.hasSecurityPin ? "Yes" : "No"}
                                       </span>
                                     </div>
 
@@ -885,7 +842,7 @@ export default function AdminPage() {
                                           <Input
                                             placeholder="Enter user's answer..."
                                             value={securityAnswer1}
-                                            onChange={(e) => { setSecurityAnswer1(e.target.value); setSecurityVerificationResult(null); setRevealedPassword(null); }}
+                                            onChange={(e) => { setSecurityAnswer1(e.target.value); setSecurityVerificationResult(null); }}
                                             className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                                           />
                                           {securityVerificationResult && (
@@ -901,7 +858,7 @@ export default function AdminPage() {
                                           <Input
                                             placeholder="Enter user's answer..."
                                             value={securityAnswer2}
-                                            onChange={(e) => { setSecurityAnswer2(e.target.value); setSecurityVerificationResult(null); setRevealedPassword(null); }}
+                                            onChange={(e) => { setSecurityAnswer2(e.target.value); setSecurityVerificationResult(null); }}
                                             className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                                           />
                                           {securityVerificationResult && (
@@ -917,7 +874,7 @@ export default function AdminPage() {
                                           <Input
                                             placeholder="Enter user's answer..."
                                             value={securityAnswer3}
-                                            onChange={(e) => { setSecurityAnswer3(e.target.value); setSecurityVerificationResult(null); setRevealedPassword(null); }}
+                                            onChange={(e) => { setSecurityAnswer3(e.target.value); setSecurityVerificationResult(null); }}
                                             className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                                           />
                                           {securityVerificationResult && (
@@ -956,45 +913,8 @@ export default function AdminPage() {
                                       {securityVerificationResult?.allValid && (
                                         <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
                                           <p className="text-sm text-blue-800 dark:text-blue-200 mb-2 font-medium">
-                                            Identity verified. You can now reveal the user's password to share with them.
+                                            Identity verified. Passwords cannot be viewed or retrieved. The user must use Forgot password to choose a new password.
                                           </p>
-                                          {!revealedPassword ? (
-                                            <Button
-                                              onClick={() => revealPassword(selectedUser.id)}
-                                              disabled={isRevealingPassword}
-                                              className="w-full bg-blue-600 hover:bg-blue-700"
-                                              data-testid="button-reveal-password"
-                                            >
-                                              {isRevealingPassword ? "Revealing..." : "Reveal Password"}
-                                            </Button>
-                                          ) : (
-                                            <div className="space-y-2">
-                                              <Label className="text-blue-800 dark:text-blue-200">User's Password:</Label>
-                                              <div className="flex gap-2">
-                                                <Input
-                                                  value={revealedPassword}
-                                                  readOnly
-                                                  className="bg-white dark:bg-gray-800 font-mono"
-                                                />
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  onClick={() => {
-                                                    navigator.clipboard.writeText(revealedPassword);
-                                                    toast({
-                                                      title: "Copied",
-                                                      description: "Password copied to clipboard.",
-                                                    });
-                                                  }}
-                                                >
-                                                  Copy
-                                                </Button>
-                                              </div>
-                                              <p className="text-xs text-muted-foreground">
-                                                Share this password securely with the verified user.
-                                              </p>
-                                            </div>
-                                          )}
                                         </div>
                                       )}
                                     </div>

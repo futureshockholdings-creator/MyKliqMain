@@ -608,6 +608,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(userId: string, updates: Partial<User>): Promise<User> {
+    const changesRecovery = ["password", "securityPin", "securityAnswer1", "securityAnswer2", "securityAnswer3"]
+      .some(key => Object.prototype.hasOwnProperty.call(updates, key));
+    if (changesRecovery) {
+      return db.transaction(async tx => {
+        const [user] = await tx.update(users)
+          .set({ ...updates, updatedAt: new Date() }).where(eq(users.id, userId)).returning();
+        await tx.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+        return user;
+      });
+    }
     const [user] = await db
       .update(users)
       .set({ ...updates, updatedAt: new Date() })

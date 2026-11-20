@@ -1,5 +1,5 @@
 importScripts('/assets/app-badge.js');
-const CACHE_NAME = 'mykliq-v24';
+const CACHE_NAME = 'mykliq-v25-credential-privacy';
 
 const PRECACHE_ASSETS = [
   '/',

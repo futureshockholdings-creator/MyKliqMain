@@ -90,6 +90,8 @@ export default function ForgotPassword() {
       });
       
       if (data.success) {
+        if (!data.resetToken) throw new Error("Please restart password recovery.");
+        setResetToken(data.resetToken);
         setStep('pin');
         toast({
           title: "Security questions verified!",
@@ -116,6 +118,8 @@ export default function ForgotPassword() {
       });
       
       if (data.success) {
+        if (!data.resetToken) throw new Error("Please restart password recovery.");
+        setResetToken(data.resetToken);
         setStep('password');
         toast({
           title: "PIN verified!",

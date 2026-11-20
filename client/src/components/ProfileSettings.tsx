@@ -21,10 +21,10 @@ interface ProfileSettingsProps {
 
 interface SecurityStatus {
   hasLegacyData: {
-    pin: boolean;
-    answer1: boolean;
-    answer2: boolean;
-    answer3: boolean;
+    pinNeedsUpdate: boolean;
+    answer1NeedsUpdate: boolean;
+    answer2NeedsUpdate: boolean;
+    answer3NeedsUpdate: boolean;
   };
   needsUpdate: boolean;
 }
@@ -170,10 +170,10 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
       setPhoneNumber(user.phoneNumber || "");
       setKliqName(user.kliqName || "My Kliq");
       setBirthdate(user.birthdate || "");
-      setSecurityAnswer1(user.securityAnswer1 ? "****" : ""); // Don't show actual answers
-      setSecurityAnswer2(user.securityAnswer2 ? "****" : "");
-      setSecurityAnswer3(user.securityAnswer3 ? "****" : "");
-      setSecurityPin(user.securityPin ? "****" : ""); // Don't show actual PIN
+      setSecurityAnswer1((user as any).hasSecurityAnswer1 ? "****" : "");
+      setSecurityAnswer2((user as any).hasSecurityAnswer2 ? "****" : "");
+      setSecurityAnswer3((user as any).hasSecurityAnswer3 ? "****" : "");
+      setSecurityPin((user as any).hasSecurityPin ? "****" : "");
       setInterests(user.interests || []);
       setFavoriteLocations(user.favoriteLocations || []);
       setFavoriteFoods(user.favoriteFoods || []);
@@ -380,10 +380,10 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                 <AlertDescription className="text-yellow-800 dark:text-yellow-200">
                   <strong>Security Update Required:</strong> Some of your security information uses an old format that can't be viewed by customer service. Please re-enter your {
                     [
-                      securityStatus.hasLegacyData.pin && 'security PIN',
-                      securityStatus.hasLegacyData.answer1 && 'first security answer',
-                      securityStatus.hasLegacyData.answer2 && 'second security answer', 
-                      securityStatus.hasLegacyData.answer3 && 'third security answer'
+                      securityStatus.hasLegacyData.pinNeedsUpdate && 'security PIN',
+                      securityStatus.hasLegacyData.answer1NeedsUpdate && 'first security answer',
+                      securityStatus.hasLegacyData.answer2NeedsUpdate && 'second security answer',
+                      securityStatus.hasLegacyData.answer3NeedsUpdate && 'third security answer'
                     ].filter(Boolean).join(', ')
                   } below to enable customer service support.
                 </AlertDescription>

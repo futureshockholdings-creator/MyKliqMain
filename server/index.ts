@@ -17,6 +17,9 @@ import { db } from "./db";
 import { replaceAllLegacyInviteCodes } from "./inviteCodeService";
 import { posts } from "@shared/schema";
 import { eq, and, isNotNull, isNull } from "drizzle-orm";
+import { apiPrivacyMiddleware, installPrivacyLogging } from "./apiPrivacy";
+
+installPrivacyLogging();
 
 process.on('uncaughtException', (err) => {
   console.error('[Server] Uncaught exception (non-fatal):', err.message);
@@ -97,6 +100,7 @@ app.use(performanceOptimizer.memoryOptimizationMiddleware());
 // Optimize Express settings for production scaling
 app.use(express.json({ limit: "50mb" })); // Set payload limit for large metadata
 app.use(express.urlencoded({ extended: false, limit: "50mb" }));
+app.use(apiPrivacyMiddleware);
 
 // Production-ready request logging (no PII exposure)
 app.use((req, res, next) => {
@@ -136,7 +140,7 @@ app.get('/', (req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    const message = status >= 500 ? "Internal Server Error" : (err.message || "Request failed");
 
     res.status(status).json({ message });
     throw err;

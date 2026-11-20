@@ -1,6 +1,6 @@
-import bcrypt from "bcrypt";
 import type { RequestHandler } from "express";
 import { passwordChangeSchema } from "../shared/passwordChange";
+import { hashPassword, verifyPassword } from "./passwordSecurity";
 
 interface PasswordChangeDependencies {
   getUser: (id: string) => Promise<{ password: string | null } | undefined>;
@@ -32,9 +32,7 @@ export function createPasswordChangeHandler(deps: PasswordChangeDependencies): R
       const { currentPassword, newPassword } = parsed.data;
       let matches = false;
       try {
-        matches = user.password.startsWith("$2b$")
-          ? await bcrypt.compare(currentPassword, user.password)
-          : deps.decryptPassword(user.password) === currentPassword;
+        matches = await verifyPassword(currentPassword, user.password);
       } catch {
         matches = false;
       }
@@ -42,7 +40,7 @@ export function createPasswordChangeHandler(deps: PasswordChangeDependencies): R
         res.status(400).json({ message: "Current password is incorrect", field: "currentPassword" });
         return;
       }
-      const hash = await bcrypt.hash(newPassword, 12);
+      const hash = await hashPassword(newPassword);
       // Compare-and-swap prevents overlapping requests from replacing a newer password.
       if (!await deps.replacePassword(id, user.password, hash)) {
         res.status(409).json({ message: "Your password changed during this request. Please enter your current password again." });

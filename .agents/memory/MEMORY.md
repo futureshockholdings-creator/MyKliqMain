@@ -13,7 +13,7 @@
 - [Popup visibility](popup-priority.md) — popups, especially signup welcome and media posting, must stay fully in front of navigation without clipping text or controls.
 - [Post edit freshness](post-edit-freshness.md) — a fast save can appear delayed when private SWR refreshes do not update React Query; apply confirmed edits directly.
 - [Image upload reliability](image-upload-reliability.md) — retain selections through transfer/save retries; single-PUT completion must not depend on a browser-visible ETag.
-- [Password settings](password-settings.md) — Security changes an existing password using empty fields and server-side current-password verification, never a stored-password viewer.
+- [Password security](password-settings.md) — shared one-way hashing, login-time migration, server-enforced recovery, empty change-password fields, and secret-free profile responses.
 - [Notification navigation](notification-navigation.md) — post alerts must reach the original post through member-safe links, not obsolete bulletin or admin-review destinations.
 - [Member data freshness](member-data-freshness.md) — keep live updates across signed-in routes; refresh message content with alerts and apply confirmed Konnect results directly.
 - [Testing ownership](user-testing.md) — the user will test the production fixes; do not run automated or browser tests.
