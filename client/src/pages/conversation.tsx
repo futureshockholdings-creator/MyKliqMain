@@ -129,6 +129,7 @@ export function Conversation() {
   const { data: conversation, isLoading } = useQuery<ConversationData>({
     queryKey: ["/api/messages/conversation", otherUserId],
     enabled: !!otherUserId,
+    refetchOnMount: "always",
     staleTime: 5000, // Consider data stale after 5 seconds
     gcTime: 5 * 60 * 1000, // Cache for 5 minutes
     refetchInterval: 3000, // Poll every 3 seconds for new messages

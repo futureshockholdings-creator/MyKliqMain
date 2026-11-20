@@ -1472,6 +1472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .where(eq(conversationsTable.id, conversationId));
 
+      (app as any).broadcastMessageUpdate?.([senderId, receiverId]);
       res.json({
         success: true,
         messageId: message.id,
@@ -3169,6 +3170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           )
         );
       
+      (app as any).broadcastMessageUpdate?.([userId, friendId]);
       res.json({
         success: true,
         message: {
@@ -3232,6 +3234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           )
         );
       
+      (app as any).broadcastMessageUpdate?.([userId, friendId]);
       res.json({
         success: true,
         message: {
@@ -3286,6 +3289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           )
         );
       
+      (app as any).broadcastMessageUpdate?.([userId, friendId]);
       res.json({
         success: true,
         message: {
@@ -5760,6 +5764,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "accepted",
       });
 
+      (app as any).broadcastKliqUpdate?.([userId, targetUserId]);
       res.json(friendship);
     } catch (error) {
       console.error("Error konnecting friend:", error);
@@ -7565,7 +7570,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         console.log(`[INCOGNITO-DEBUG] Skipped - sending to self`);
       }
-      
+
+      // Both the message and its alert are committed before asking clients to refresh.
+      (app as any).broadcastMessageUpdate?.([userId, receiverId]);
       res.json(message);
     } catch (error) {
       console.error("Error sending message:", error);
@@ -7710,6 +7717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const message = await storage.sendGroupMessage(messageData);
+      (app as any).broadcastMessageUpdate?.([userId]);
       
       // Send notifications to ALL other participants in the group
       // Using dedicated function to ensure we get all participants directly from the database
@@ -7759,6 +7767,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               } catch (notifError) {
                 notificationsFailed++;
                 console.error(`[GROUP-INCOGNITO-DEBUG] ERROR creating notification for ${participantId}:`, notifError);
+              } finally {
+                (app as any).broadcastMessageUpdate?.([String(participantId)]);
               }
             }
           }
@@ -11724,6 +11734,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   };
 
   // Global function to broadcast notification to specific user
+  // These are invalidation signals only. Private message bodies are fetched
+  // through the existing authenticated HTTP endpoints, never sent over this bus.
+  const broadcastMemberUpdate = (type: "message:new" | "kliq:updated", userIds: string[]) => {
+    const recipients = new Set(userIds);
+    const update = JSON.stringify({ type, timestamp: new Date().toISOString() });
+    wss.clients.forEach((client: ExtendedWebSocket) => {
+      if (client.readyState !== WebSocket.OPEN || !client.user_id || !recipients.has(client.user_id)) return;
+      try {
+        client.send(update, error => {
+          if (error) console.warn("[Realtime] Member update could not be delivered");
+        });
+      } catch {
+        // A socket closing must not turn a persisted send/Konnect into an HTTP error.
+        console.warn("[Realtime] Member update socket closed");
+      }
+    });
+  };
+
   const broadcastNotification = (userId: string) => {
     const message = JSON.stringify({
       type: 'notification:new',
@@ -11767,6 +11795,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Store broadcast function references for use in routes
   (app as any).broadcastFeedUpdate = broadcastFeedUpdate;
   (app as any).broadcastNotification = broadcastNotification;
+  (app as any).broadcastMessageUpdate = (ids: string[]) => broadcastMemberUpdate("message:new", ids);
+  (app as any).broadcastKliqUpdate = (ids: string[]) => broadcastMemberUpdate("kliq:updated", ids);
   (app as any).broadcastPendingRequest = broadcastPendingRequest;
 
   // Maintenance dashboard routes

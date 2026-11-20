@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { feedRealtimeService } from "@/lib/feedRealtime";
 import { useTheme } from "@/hooks/useTheme";
 import { useDailyCheckIn } from "@/hooks/useDailyCheckIn";
 import { useAppBadge } from "@/hooks/useAppBadge";
@@ -351,6 +352,22 @@ function Router() {
 function AppContent() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [currentPath] = useLocation();
+  const realtimeUserId = (user as any)?.id as string | undefined;
+
+  // Keep the shared live connection on every signed-in screen, not just Headlines.
+  useEffect(() => {
+    if (!isAuthenticated || isLoading || !realtimeUserId) return;
+    const handleVisibility = () => {
+      if (document.hidden) feedRealtimeService.pause();
+      else feedRealtimeService.resume(realtimeUserId);
+    };
+    handleVisibility();
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      feedRealtimeService.pause();
+    };
+  }, [isAuthenticated, isLoading, realtimeUserId]);
   
   // Load and apply user theme globally
   useTheme();

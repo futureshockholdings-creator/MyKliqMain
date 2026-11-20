@@ -12,6 +12,7 @@ import { buildApiUrl } from '../apiConfig';
 import { getAuthToken, removeAuthToken, isTokenExpired, getUserIdFromToken } from '../tokenStorage';
 import { offlineStore } from '../offlineStore';
 import { isPostDataUrl } from '../postDataCache';
+import { isLiveMemberDataUrl } from '../liveMemberData';
 
 interface EnterpriseFetchOptions extends Omit<RequestInit, 'priority'> {
   skipCache?: boolean;
@@ -41,7 +42,8 @@ export async function enterpriseFetch<T = any>(
 
   // Only cache GET requests
   const isGET = !fetchOptions.method || fetchOptions.method === 'GET';
-  const shouldCache = isGET && !skipCache;
+  const isLiveMemberData = isLiveMemberDataUrl(url);
+  const shouldCache = isGET && !skipCache && !isLiveMemberData;
 
   // Get userId from token for user-specific cache keys (prevents cross-user cache leakage)
   const userId = getUserIdFromToken();
@@ -89,7 +91,7 @@ export async function enterpriseFetch<T = any>(
             }
             
             // Disable browser HTTP cache for feed and user endpoints to ensure fresh data
-            const shouldBypassBrowserCache = url.includes('/api/kliq-feed') || 
+            const shouldBypassBrowserCache = isLiveMemberData || url.includes('/api/kliq-feed') ||
                                               url.includes('/api/posts') ||
                                               url.includes('/api/notifications') ||
                                               url.includes('/api/auth/user') ||
@@ -169,7 +171,7 @@ export async function enterpriseFetch<T = any>(
   const fetchFn = async (): Promise<T> => {
     // Only deduplicate GET requests - POST/PUT/DELETE should never be deduplicated
     // as they create new resources (e.g., upload URLs must be unique per file)
-    if (isGET) {
+    if (isGET && !isLiveMemberData) {
       return requestScheduler.deduplicatedRequest(cacheKey, coreFetch, priority);
     }
     // For mutations, skip deduplication entirely

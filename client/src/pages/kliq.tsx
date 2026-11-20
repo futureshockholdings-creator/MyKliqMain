@@ -28,6 +28,7 @@ import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 import { getAuthToken, isTokenExpired } from "@/lib/tokenStorage";
 import html2canvas from "html2canvas";
 import { normalizeInviteCode } from "@shared/inviteCodes";
+import { applyConfirmedKonnect } from "@/lib/liveMemberData";
 
 export default function Kliq() {
   const [kliqName, setKliqName] = useState("");
@@ -49,6 +50,8 @@ export default function Kliq() {
   const [joinInviteCode, setJoinInviteCode] = useState("");
   const [isJoiningKliq, setIsJoiningKliq] = useState(false);
   const joinInFlight = useRef(false);
+  const konnectInFlight = useRef(new Set<string>());
+  const [konnectingIds, setKonnectingIds] = useState<Set<string>>(new Set());
   const [pyramidPreview, setPyramidPreview] = useState<string | null>(null);
   const [isCapturingPyramid, setIsCapturingPyramid] = useState(false);
   const [isPostingPyramid, setIsPostingPyramid] = useState(false);
@@ -1119,20 +1122,27 @@ export default function Kliq() {
                       </div>
                       {person.suggestionType === 'in_their_kliq' ? (
                         <button
+                          disabled={konnectingIds.has(person.id)}
                           onClick={async () => {
+                            if (!userData?.id || konnectInFlight.current.has(person.id)) return;
+                            konnectInFlight.current.add(person.id);
+                            setKonnectingIds(new Set(konnectInFlight.current));
                             try {
-                              await apiRequest("POST", `/api/friends/konnect/${person.id}`);
-                              await queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
-                              await queryClient.invalidateQueries({ queryKey: ["/api/friends/suggestions"] });
-                              toast({ title: "Konnected!", description: `${person.firstName ?? "They"} has been added to your kliq.` });
+                              const saved = await apiRequest("POST", `/api/friends/konnect/${person.id}`);
+                              if (await applyConfirmedKonnect(queryClient, userData.id, person, saved)) {
+                                toast({ title: "Konnected!", description: `${person.firstName ?? "They"} has been added to your kliq.` });
+                              }
                             } catch {
                               toast({ title: "Could not konnect", description: "Something went wrong. Please try again.", variant: "destructive" });
+                            } finally {
+                              konnectInFlight.current.delete(person.id);
+                              setKonnectingIds(new Set(konnectInFlight.current));
                             }
                           }}
-                          className="w-full text-sm font-bold py-2 px-3 rounded-lg border-2 border-black"
+                          className="w-full text-sm font-bold py-2 px-3 rounded-lg border-2 border-black disabled:opacity-60 disabled:cursor-wait"
                           style={{ backgroundColor: "#00c853", color: "#000000" }}
                         >
-                          Konnect to Kliq
+                          {konnectingIds.has(person.id) ? "Konnecting…" : "Konnect to Kliq"}
                         </button>
                       ) : (
                         <button

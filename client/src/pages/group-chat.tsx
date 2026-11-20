@@ -78,6 +78,7 @@ export function GroupChat() {
   const { data: groupChat, isLoading } = useQuery<GroupConversationData>({
     queryKey: ["/api/group-chats", groupChatId],
     enabled: !!groupChatId,
+    refetchOnMount: "always",
     staleTime: 5000,
     refetchInterval: 3000,
   });

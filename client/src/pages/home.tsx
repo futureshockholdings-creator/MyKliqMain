@@ -50,7 +50,6 @@ import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import { PageWrapper } from "@/components/PageWrapper";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { usePostTranslation } from "@/lib/translationService";
-import { feedRealtimeService } from "@/lib/feedRealtime";
 import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 import { addOptimisticNotification, rollbackOptimisticNotification } from "@/lib/optimisticNotifications";
 import { LinkifyText } from "@/components/LinkifyText";
@@ -584,30 +583,6 @@ export default function Home() {
       document.removeEventListener('click', handleClickOutside);
     };
   }, []);
-
-  // Real-time feed updates via WebSocket
-  useEffect(() => {
-    // Only connect if user is authenticated
-    if (userData?.id) {
-      feedRealtimeService.connect(userData.id);
-
-      // Handle page visibility for mobile battery optimization
-      const handleVisibilityChange = () => {
-        if (document.hidden) {
-          feedRealtimeService.pause();
-        } else {
-          feedRealtimeService.resume(userData.id);
-        }
-      };
-
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-
-      return () => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-        feedRealtimeService.disconnect();
-      };
-    }
-  }, [userData?.id]);
 
   // Predefined mood options
   const moodOptions = [

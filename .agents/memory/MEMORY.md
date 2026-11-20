@@ -15,3 +15,5 @@
 - [Image upload reliability](image-upload-reliability.md) — retain selections through transfer/save retries; single-PUT completion must not depend on a browser-visible ETag.
 - [Password settings](password-settings.md) — Security changes an existing password using empty fields and server-side current-password verification, never a stored-password viewer.
 - [Notification navigation](notification-navigation.md) — post alerts must reach the original post through member-safe links, not obsolete bulletin or admin-review destinations.
+- [Member data freshness](member-data-freshness.md) — keep live updates across signed-in routes; refresh message content with alerts and apply confirmed Konnect results directly.
+- [Testing ownership](user-testing.md) — the user will test the production fixes; do not run automated or browser tests.
