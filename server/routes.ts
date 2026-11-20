@@ -21,6 +21,7 @@ import { rateLimitService } from "./rateLimitService";
 import { isReadableInviteCode, normalizeInviteCode } from "@shared/inviteCodes";
 import { replaceLegacyInviteCode } from "./inviteCodeService";
 import { performanceOptimizer } from "./performanceOptimizer";
+import { createPasswordChangeHandler } from "./passwordChange";
 
 import { insertPostSchema, insertStorySchema, insertCommentSchema, insertCommentLikeSchema, insertContentFilterSchema, insertUserThemeSchema, insertMessageSchema, insertEventSchema, insertActionSchema, insertMeetupSchema, insertMeetupCheckInSchema, insertGifSchema, insertMovieconSchema, insertPollSchema, insertPollVoteSchema, insertSponsoredAdSchema, insertAdInteractionSchema, insertUserAdPreferencesSchema, insertSocialCredentialSchema, insertContentEngagementSchema, insertReportSchema, insertAdvertiserApplicationSchema, messages, conversations, stories, users, storyViews, advertiserApplications, deviceTokens, memes, moviecons, rulesReports, posts, friendships, notifications, userThemes, discordGuildInstallations, discordChannelPermissions, discordMemberPermissions, discordSharingAudit, socialCredentials } from "@shared/schema";
 import { generateMobileToken, verifyMobileToken, JWT_CONFIG } from "./mobile-auth";
@@ -669,27 +670,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await cacheService.set(cacheKey, user, 600);
       }
 
-      // Always process password decryption fresh for security (don't cache decrypted passwords)
+      // Account settings need password presence, never the stored secret or plaintext.
       const userResponse = { ...user };
-      if (userResponse.password) {
-        try {
-          const { decryptFromStorage } = await import('./cryptoService');
-          // Check if it's an old hashed password (starts with $2b$ for bcrypt)
-          if (userResponse.password.startsWith('$2b$')) {
-            // Old hashed password, can't decrypt - clear it so user can set a new one
-            userResponse.password = null;
-          } else {
-            userResponse.password = decryptFromStorage(userResponse.password);
-          }
-        } catch (error) {
-          // If decryption fails, clear password so user can set a new one
-          console.error("Error decrypting password:", error);
-          userResponse.password = null;
-        }
-      }
+      userResponse.hasPassword = !!user.password;
+      delete userResponse.password;
       
       // Add security setup status to response
-      const securitySetupComplete = !!(userResponse.password && userResponse.securityAnswer1 && userResponse.securityAnswer2 && userResponse.securityAnswer3 && userResponse.securityPin);
+      const securitySetupComplete = !!(userResponse.hasPassword && userResponse.securityAnswer1 && userResponse.securityAnswer2 && userResponse.securityAnswer3 && userResponse.securityPin);
       
       // Generate a fresh JWT token for cross-domain auth (AWS Amplify → Replit backend)
       // This ensures users authenticated via session/cookies also have a token for API calls
@@ -712,10 +699,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Password setup endpoint
+  app.post('/api/auth/change-password', isAuthenticated, rateLimitService.createRateLimitMiddleware('auth'),
+    createPasswordChangeHandler({
+      getUser: id => storage.getUser(id),
+      decryptPassword: decryptFromStorage,
+      replacePassword: async (id, previous, next) => {
+        const changed = await db.update(users).set({ password: next, updatedAt: new Date() })
+          .where(and(eq(users.id, id), eq(users.password, previous))).returning({ id: users.id });
+        return changed.length === 1;
+      },
+      clearCache: id => cacheService.del(`user:profile:${id}`),
+    }));
+
+  // First-time setup must not bypass current-password verification for existing accounts.
   app.post('/api/auth/setup-password', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const existingUser = await storage.getUser(userId);
+      if (!existingUser) return res.status(404).json({ message: "User not found" });
+      if (existingUser.password) {
+        return res.status(400).json({ message: "Use Change Password and provide your current password." });
+      }
       
       // Validate the request body
       const validation = passwordSetupSchema.safeParse(req.body);

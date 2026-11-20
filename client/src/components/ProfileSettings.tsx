@@ -8,15 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, X, Plus, Settings, Calendar, Phone, Mail, Shield, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { ChangePasswordForm } from "@/components/ChangePasswordForm";
+import { User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, X, Plus, Settings, Calendar, Phone, Mail, AlertTriangle } from "lucide-react";
 
 interface ProfileSettingsProps {
   user: any;
@@ -157,14 +154,6 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   const [petPreferences, setPetPreferences] = useState("");
   const [lifestyle, setLifestyle] = useState("");
 
-  // Password setup states
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showPinDialog, setShowPinDialog] = useState(false);
-  const [pinInput, setPinInput] = useState("");
-  const [pinForField, setPinForField] = useState<'password' | 'confirmPassword'>('password');
-  const [savedPassword, setSavedPassword] = useState("");
-
   // Temporary input states for adding new items
   const [newInterest, setNewInterest] = useState("");
   const [newLocation, setNewLocation] = useState("");
@@ -173,27 +162,6 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   const [newHobby, setNewHobby] = useState("");
   const [newMovie, setNewMovie] = useState("");
   const [newBook, setNewBook] = useState("");
-
-  // Password setup form schema
-  const passwordSchema = z.object({
-    password: z.string()
-      .min(10, "Password must be at least 10 characters long")
-      .regex(/[a-zA-Z]/, "Password must contain at least one letter")
-      .regex(/[0-9]/, "Password must contain at least one number")
-      .regex(/[^a-zA-Z0-9]/, "Password must contain at least one special character"),
-    confirmPassword: z.string()
-  }).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
-
-  const passwordForm = useForm<z.infer<typeof passwordSchema>>({
-    resolver: zodResolver(passwordSchema),
-    defaultValues: {
-      password: "",
-      confirmPassword: ""
-    }
-  });
 
   // Initialize state when user data changes or dialog opens
   useEffect(() => {
@@ -217,17 +185,6 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
       setPetPreferences(user.petPreferences || "");
       setLifestyle(user.lifestyle || "");
       
-      // Load saved password if exists
-      if (user.password) {
-        setSavedPassword(user.password);
-        passwordForm.setValue('password', user.password);
-        passwordForm.setValue('confirmPassword', user.password);
-      } else {
-        // Clear password fields if no password exists
-        setSavedPassword("");
-        passwordForm.setValue('password', '');
-        passwordForm.setValue('confirmPassword', '');
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isOpen]);
@@ -252,93 +209,6 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
       });
     },
   });
-
-  // Password setup mutation
-  const setupPassword = useMutation({
-    mutationFn: async (data: { password: string }) => {
-      return await apiRequest("POST", "/api/auth/setup-password", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Password Set Successfully",
-        description: "Your password has been set up and will be used for future logins.",
-      });
-      // Refresh user data to load the new password
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error Setting Password",
-        description: "Failed to set up password. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onPasswordSubmit = (values: z.infer<typeof passwordSchema>) => {
-    setupPassword.mutate({ password: values.password });
-  };
-
-  // PIN verification mutation
-  const verifyPin = useMutation({
-    mutationFn: async (pin: string) => {
-      return await apiRequest("POST", "/api/user/verify-pin", { pin });
-    },
-    onSuccess: () => {
-      if (pinForField === 'password') {
-        setShowPassword(true);
-      } else {
-        setShowConfirmPassword(true);
-      }
-      setShowPinDialog(false);
-      setPinInput("");
-      toast({
-        title: "PIN Verified",
-        description: "Password is now visible.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Invalid PIN",
-        description: "The PIN you entered is incorrect.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleEyeClick = (field: 'password' | 'confirmPassword') => {
-    const isCurrentlyShowing = field === 'password' ? showPassword : showConfirmPassword;
-    
-    if (isCurrentlyShowing) {
-      // Hide the password
-      if (field === 'password') {
-        setShowPassword(false);
-      } else {
-        setShowConfirmPassword(false);
-      }
-    } else {
-      // Show PIN dialog to verify before revealing password
-      setPinForField(field);
-      setShowPinDialog(true);
-    }
-  };
-
-  const handlePinSubmit = () => {
-    if (pinInput.length === 4) {
-      verifyPin.mutate(pinInput);
-    } else {
-      toast({
-        title: "Invalid PIN",
-        description: "PIN must be 4 digits.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Function to mask password with X's while preserving length
-  const maskPassword = (value: string) => {
-    return 'X'.repeat(value.length);
-  };
 
   const handleSave = () => {
     if (!birthdate) {
@@ -423,7 +293,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
         </DialogHeader>
 
         <Tabs defaultValue="basic" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6 bg-muted">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 bg-muted sm:grid-cols-3 lg:grid-cols-6 [&>button]:min-w-0 [&>button]:whitespace-normal [&>button]:px-2 [&>button]:py-2">
             <TabsTrigger value="basic" className="data-[state=active]:bg-primary/20">Basic Info</TabsTrigger>
             <TabsTrigger value="interests" className="data-[state=active]:bg-primary/20">Interests</TabsTrigger>
             <TabsTrigger value="favorites" className="data-[state=active]:bg-primary/20">Favorites</TabsTrigger>
@@ -778,201 +648,9 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
           </TabsContent>
 
           <TabsContent value="security" className="space-y-4">
-            <Card className="bg-card/50 border-border">
-              <CardHeader>
-                <CardTitle className="text-primary flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
-                  Password Setup
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Form {...passwordForm}>
-                  <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                    <FormField
-                      control={passwordForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground">Password</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Input
-                                {...field}
-                                type="text"
-                                value={showPassword ? field.value : maskPassword(field.value)}
-                                onChange={(e) => {
-                                  if (showPassword) {
-                                    // Allow normal editing when password is visible
-                                    field.onChange(e);
-                                  } else {
-                                    // Handle masked input
-                                    const newValue = e.target.value;
-                                    const oldValue = field.value;
-                                    
-                                    if (newValue.length > oldValue.length) {
-                                      // Adding characters - replace X's with actual input
-                                      const addedChar = newValue[newValue.length - 1];
-                                      if (addedChar !== 'X') {
-                                        field.onChange(oldValue + addedChar);
-                                      }
-                                    } else if (newValue.length < oldValue.length) {
-                                      // Removing characters
-                                      field.onChange(oldValue.slice(0, newValue.length));
-                                    }
-                                  }
-                                }}
-                                placeholder="Enter your password"
-                                className="bg-white border-gray-300 text-black pr-10"
-                                data-testid="input-password"
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                onClick={() => handleEyeClick('password')}
-                                data-testid="button-toggle-password"
-                              >
-                                {showPassword ? (
-                                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                ) : (
-                                  <Eye className="h-4 w-4 text-muted-foreground" />
-                                )}
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormDescription className="text-muted-foreground text-sm">
-                            Must be at least 10 characters with letters, numbers, and special characters
-                          </FormDescription>
-                          <FormMessage className="text-destructive" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={passwordForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground">Confirm Password</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Input
-                                {...field}
-                                type="text"
-                                value={showConfirmPassword ? field.value : maskPassword(field.value)}
-                                onChange={(e) => {
-                                  if (showConfirmPassword) {
-                                    // Allow normal editing when password is visible
-                                    field.onChange(e);
-                                  } else {
-                                    // Handle masked input
-                                    const newValue = e.target.value;
-                                    const oldValue = field.value;
-                                    
-                                    if (newValue.length > oldValue.length) {
-                                      // Adding characters - replace X's with actual input
-                                      const addedChar = newValue[newValue.length - 1];
-                                      if (addedChar !== 'X') {
-                                        field.onChange(oldValue + addedChar);
-                                      }
-                                    } else if (newValue.length < oldValue.length) {
-                                      // Removing characters
-                                      field.onChange(oldValue.slice(0, newValue.length));
-                                    }
-                                  }
-                                }}
-                                placeholder="Confirm your password"
-                                className="bg-white border-gray-300 text-black pr-10"
-                                data-testid="input-confirm-password"
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                                onClick={() => handleEyeClick('confirmPassword')}
-                                data-testid="button-toggle-confirm-password"
-                              >
-                                {showConfirmPassword ? (
-                                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                ) : (
-                                  <Eye className="h-4 w-4 text-muted-foreground" />
-                                )}
-                              </Button>
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-destructive" />
-                        </FormItem>
-                      )}
-                    />
-
-                    <Button
-                      type="submit"
-                      disabled={setupPassword.isPending}
-                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                      data-testid="button-setup-password"
-                    >
-                      {setupPassword.isPending ? "Setting up..." : "Set Password"}
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
+            <ChangePasswordForm />
           </TabsContent>
         </Tabs>
-
-        {/* PIN Verification Dialog */}
-        <Dialog open={showPinDialog} onOpenChange={setShowPinDialog}>
-          <DialogContent className="bg-card border-border max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-primary">Verify Your PIN</DialogTitle>
-              <DialogDescription className="text-muted-foreground">
-                Enter your 4-digit PIN to view the password
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-foreground">PIN</Label>
-                <Input
-                  type="password"
-                  value={pinInput}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                    setPinInput(value);
-                  }}
-                  placeholder="Enter 4-digit PIN"
-                  className="bg-white border-gray-300 text-black text-center text-lg tracking-widest"
-                  maxLength={4}
-                  data-testid="input-pin-verify"
-                />
-              </div>
-              
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowPinDialog(false);
-                    setPinInput("");
-                  }}
-                  className="flex-1"
-                  data-testid="button-cancel-pin"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handlePinSubmit}
-                  disabled={pinInput.length !== 4 || verifyPin.isPending}
-                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                  data-testid="button-verify-pin"
-                >
-                  {verifyPin.isPending ? "Verifying..." : "Verify"}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         <div className="flex justify-end gap-2 pt-4 border-t border-border">
           <Button
