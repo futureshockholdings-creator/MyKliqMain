@@ -6053,6 +6053,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(100, Math.max(5, parseInt(req.query.limit as string) || 100)); // Between 5-100 items, default 100
+
+      // Notification links must find the actual post, not just the first feed page.
+      if (req.query.postId !== undefined || req.query.commentId !== undefined) {
+        let postId = typeof req.query.postId === "string" ? req.query.postId : "";
+        const commentId = typeof req.query.commentId === "string" ? req.query.commentId : "";
+        if ((!postId && !commentId) || (postId && commentId)) {
+          return res.status(400).json({ message: "Choose one post or comment to open." });
+        }
+        if (commentId) {
+          const comment = await storage.getCommentById(commentId);
+          if (!comment) return res.status(404).json({ message: "This comment is no longer available." });
+          postId = comment.postId;
+        }
+        // Reuse feed permissions, including kliq membership and blocked users.
+        const [post] = await storage.getPosts(userId, [], postId);
+        if (!post) return res.status(404).json({ message: "This post is no longer available to your kliq." });
+        const highlights = await storage.getActiveHighlights([postId]);
+        return res.json({
+          items: [{ ...post, type: "post", activityDate: post.createdAt, isHighlighted: highlights.length > 0 }],
+          hasMore: false,
+          totalPages: 1,
+        });
+      }
       
       const cacheKey = `kliq-feed:${userId}:${page}:${limit}`;
       

@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@shared/schema";
 import { useLocation } from "wouter";
+import { getNotificationTarget } from "@shared/notificationTarget";
 
 interface NotificationPanelProps {
   isOpen: boolean;
@@ -70,10 +71,8 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
 
   const openNotification = (notification: Notification) => {
     if (!notification.isRead) markAsReadMutation.mutate(notification.id);
-    if (notification.actionUrl) {
-      onClose();
-      navigate(notification.actionUrl);
-    }
+    onClose();
+    navigate(getNotificationTarget(notification));
   };
 
   const markAllAsReadMutation = useMutation({

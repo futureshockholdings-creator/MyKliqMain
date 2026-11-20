@@ -14,3 +14,4 @@
 - [Post edit freshness](post-edit-freshness.md) — a fast save can appear delayed when private SWR refreshes do not update React Query; apply confirmed edits directly.
 - [Image upload reliability](image-upload-reliability.md) — retain selections through transfer/save retries; single-PUT completion must not depend on a browser-visible ETag.
 - [Password settings](password-settings.md) — Security changes an existing password using empty fields and server-side current-password verification, never a stored-password viewer.
+- [Notification navigation](notification-navigation.md) — post alerts must reach the original post through member-safe links, not obsolete bulletin or admin-review destinations.

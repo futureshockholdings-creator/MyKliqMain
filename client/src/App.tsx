@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Switch, Route, Link, useLocation } from "wouter";
+import { Switch, Route, Link, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -310,7 +310,11 @@ function Router() {
       {/* Admin routes - accessible without authentication for emergency access */}
       <Route path="/support-admin" component={AdminPage} />
       <Route path="/rules-reports" component={AdminReports} />
-      <Route path="/post/:postId" component={PostView} />
+      <Route path="/post/:postId">
+        {(params) => sessionStorage.getItem("adminPassword")
+          ? <PostView />
+          : <Redirect to={`/?post=${encodeURIComponent(params.postId)}`} />}
+      </Route>
       <Route path="/ads-manager" component={AdsManager} />
       <Route path="/moviecon-manager" component={MovieconManagerPage} />
       <Route path="/meme-manager" component={MemeManagerPage} />

@@ -225,7 +225,7 @@ export interface IStorage {
   removeKliqRemoval(kliqOwnerId: string, removedUserId: string): Promise<void>;
   
   // Post operations
-  getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
+  getPosts(userId: string, filters: string[], postId?: string): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]>;
   getPostById(postId: string): Promise<Post | undefined>;
   createPost(post: InsertPost): Promise<Post>;
   createPostWithMedia(post: InsertPost, mediaItems: { url: string; type: "image" | "video" }[]): Promise<Post & { media: PostMedia[] }>;
@@ -838,7 +838,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Post operations
-  async getPosts(userId: string, filters: string[]): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]> {
+  async getPosts(userId: string, filters: string[], postId?: string): Promise<(Omit<Post, 'likes'> & { author: User; likes: PostLike[]; comments: (Comment & { author: User })[] })[]> {
     // Get user's friends first
     const userFriends = await this.getFriends(userId);
     const friendIds = userFriends.map(f => f.friendId);
@@ -849,6 +849,7 @@ export class DatabaseStorage implements IStorage {
 
     // Apply content filters
     let whereConditions: any[] = [inArray(posts.userId, friendIds)];
+    if (postId) whereConditions.push(eq(posts.id, postId));
     if (blockedIds.length > 0) {
       whereConditions.push(not(inArray(posts.userId, blockedIds)));
     }

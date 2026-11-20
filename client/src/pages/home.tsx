@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -440,6 +440,15 @@ function FeedInviteCard({
 }
 
 export default function Home() {
+  const notificationSearch = new URLSearchParams(useSearch());
+  const notificationPostId = notificationSearch.get("post");
+  const notificationCommentId = notificationSearch.get("comment");
+  const isNotificationPost = !!(notificationPostId || notificationCommentId);
+  const showNotificationComments = notificationSearch.get("comments") === "1";
+  const feedQueryKey = isNotificationPost
+    ? ["/api/kliq-feed", notificationPostId, notificationCommentId]
+    : ["/api/kliq-feed"];
+  const notificationTargetRef = useRef<HTMLDivElement>(null);
   const [newPost, setNewPost] = useState("");
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -629,14 +638,21 @@ export default function Home() {
   const {
     data: feedData,
     isLoading: feedLoading,
+    error: feedError,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
     refetch: refetchFeed
   } = useInfiniteQuery({
-    queryKey: ["/api/kliq-feed"],
+    queryKey: feedQueryKey,
     queryFn: async ({ pageParam = 1 }) => {
       // Use apiRequest to include JWT auth header
+      if (isNotificationPost) {
+        const target = new URLSearchParams();
+        if (notificationPostId) target.set("postId", notificationPostId);
+        else if (notificationCommentId) target.set("commentId", notificationCommentId);
+        return await apiRequest("GET", `/api/kliq-feed?${target}`);
+      }
       return await apiRequest("GET", `/api/kliq-feed?page=${pageParam}&limit=100`);
     },
     getNextPageParam: (lastPage, allPages) => {
@@ -652,6 +668,17 @@ export default function Home() {
   
   // Extract and flatten feed items from all pages (with null safety)
   const feedItems = feedData?.pages.flatMap(page => page?.items ?? []) || [];
+  const notificationResolvedPostId = isNotificationPost ? feedItems[0]?.id : undefined;
+  useEffect(() => {
+    if (showNotificationComments && notificationResolvedPostId) {
+      setExpandedComments(previous => new Set(previous).add(notificationResolvedPostId));
+    }
+  }, [showNotificationComments, notificationResolvedPostId]);
+  useEffect(() => {
+    if (!isNotificationPost || feedLoading || (!notificationResolvedPostId && !feedError)) return;
+    const frame = requestAnimationFrame(() => notificationTargetRef.current?.scrollIntoView({ block: "start" }));
+    return () => cancelAnimationFrame(frame);
+  }, [notificationPostId, notificationCommentId, notificationResolvedPostId, feedLoading, feedError]);
 
   // Intersection observer for infinite scroll
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -726,7 +753,9 @@ export default function Home() {
     return dateB - dateA;
   });
   
-  const combinedFeed = [...mergedFeed];
+  const combinedFeed = isNotificationPost
+    ? mergedFeed.filter((item: any) => item.type === "post")
+    : [...mergedFeed];
   
   // Handle the new sports API response format with teamGames and individualSports
   // Merge both into a single unified array for the carousel
@@ -1301,10 +1330,10 @@ export default function Home() {
       await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
       
       // Snapshot the previous value
-      const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
+      const previousFeed = queryClient.getQueryData(feedQueryKey);
       
       // Optimistically update the cache (infinite query has pages structure)
-      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+      queryClient.setQueryData(feedQueryKey, (old: any) => {
         if (!old || !old.pages) return old;
         return {
           ...old,
@@ -1331,12 +1360,12 @@ export default function Home() {
         };
       });
       
-      return { previousFeed };
+      return { previousFeed, feedQueryKey };
     },
     onError: (err, postId, context) => {
       // Rollback on error
       if (context?.previousFeed) {
-        queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
+        queryClient.setQueryData(context.feedQueryKey, context.previousFeed);
       }
     },
     onSettled: async () => {
@@ -1366,7 +1395,7 @@ export default function Home() {
       await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
       
       // Snapshot the previous value
-      const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
+      const previousFeed = queryClient.getQueryData(feedQueryKey);
       
       // Create optimistic comment
       const optimisticComment = {
@@ -1388,7 +1417,7 @@ export default function Home() {
       };
       
       // Optimistically update the cache (infinite query has pages structure)
-      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+      queryClient.setQueryData(feedQueryKey, (old: any) => {
         if (!old || !old.pages) return old;
         return {
           ...old,
@@ -1412,12 +1441,12 @@ export default function Home() {
       setCommentMemes(prev => ({ ...prev, [postId]: null }));
       setCommentMoviecons(prev => ({ ...prev, [postId]: null }));
       
-      return { previousFeed, postId };
+      return { previousFeed, postId, feedQueryKey };
     },
     onError: (err, variables, context) => {
       // Rollback on error
       if (context?.previousFeed) {
-        queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
+        queryClient.setQueryData(context.feedQueryKey, context.previousFeed);
       }
       
       if (isUnauthorizedError(err)) {
@@ -1477,10 +1506,10 @@ export default function Home() {
       await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
       
       // Snapshot the previous value
-      const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
+      const previousFeed = queryClient.getQueryData(feedQueryKey);
       
       // Optimistically update the cache (infinite query has pages structure)
-      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+      queryClient.setQueryData(feedQueryKey, (old: any) => {
         if (!old || !old.pages) return old;
         return {
           ...old,
@@ -1513,12 +1542,12 @@ export default function Home() {
         };
       });
       
-      return { previousFeed };
+      return { previousFeed, feedQueryKey };
     },
     onError: (error, commentId, context) => {
       // Rollback on error
       if (context?.previousFeed) {
-        queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
+        queryClient.setQueryData(context.feedQueryKey, context.previousFeed);
       }
       
       if (isUnauthorizedError(error)) {
@@ -1564,7 +1593,7 @@ export default function Home() {
       await queryClient.cancelQueries({ queryKey: ["/api/kliq-feed"] });
       
       // Snapshot the previous value
-      const previousFeed = queryClient.getQueryData(["/api/kliq-feed"]);
+      const previousFeed = queryClient.getQueryData(feedQueryKey);
       
       // Create optimistic reply
       const optimisticReply = {
@@ -1582,7 +1611,7 @@ export default function Home() {
       };
       
       // Optimistically update the cache (infinite query has pages structure)
-      queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+      queryClient.setQueryData(feedQueryKey, (old: any) => {
         if (!old || !old.pages) return old;
         return {
           ...old,
@@ -1611,7 +1640,7 @@ export default function Home() {
       setReplyInputs(prev => ({ ...prev, [commentId]: "" }));
       setReplyingToComment(null);
       
-      return { previousFeed };
+      return { previousFeed, feedQueryKey };
     },
     onSuccess: () => {
       toast({
@@ -1622,7 +1651,7 @@ export default function Home() {
     onError: (error, variables, context) => {
       // Rollback on error
       if (context?.previousFeed) {
-        queryClient.setQueryData(["/api/kliq-feed"], context.previousFeed);
+        queryClient.setQueryData(context.feedQueryKey, context.previousFeed);
       }
       
       if (isUnauthorizedError(error)) {
@@ -3360,7 +3389,23 @@ export default function Home() {
           )}
 
           {/* Feed invite card — shown at the top when feed has fewer than 2 items */}
-          {combinedFeed.length < 2 && showFeedInviteCard && userData?.inviteCode && userData?.firstName && (
+          {isNotificationPost && (
+            <div ref={notificationTargetRef} className="space-y-3 scroll-mt-4">
+              <Button asChild variant="outline"><Link href="/">Back to Headlines</Link></Button>
+              {feedError && (
+                <Card role="alert" className="p-4 space-y-2">
+                  <p className="font-semibold">Unable to open this post</p>
+                  <p className="text-sm text-muted-foreground">
+                    {String(feedError).includes("404")
+                      ? "The post or comment may have been deleted, or it is no longer available to your kliq."
+                      : "The post couldn’t be loaded. Please try again."}
+                  </p>
+                  <Button variant="outline" onClick={() => refetchFeed()}>Try again</Button>
+                </Card>
+              )}
+            </div>
+          )}
+          {!isNotificationPost && combinedFeed.length < 2 && showFeedInviteCard && userData?.inviteCode && userData?.firstName && (
             <FeedInviteCard
               kliqMemberCount={kliqMemberCount}
               firstName={userData.firstName}
@@ -3568,7 +3613,7 @@ export default function Home() {
                         }}
                         onOptimisticDelete={(postId) => {
                           // Immediately remove post from cache (infinite query has pages structure)
-                          queryClient.setQueryData(["/api/kliq-feed"], (old: any) => {
+                          queryClient.setQueryData(feedQueryKey, (old: any) => {
                             if (!old || !old.pages) return old;
                             return {
                               ...old,

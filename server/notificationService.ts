@@ -3,6 +3,7 @@ import { notifications, deviceTokens, type InsertNotification } from "@shared/sc
 import { eq, and, desc, inArray } from "drizzle-orm";
 import { deleteCache } from "./redis";
 import { sendPwaNotification } from "./pwaNotificationService";
+import { getNotificationTarget } from "@shared/notificationTarget";
 
 export class NotificationService {
   // Create a new notification
@@ -326,7 +327,7 @@ export class NotificationService {
       type: "post_like",
       title: "Post liked",
       message: `${likerName} liked your post`,
-      actionUrl: `/bulletin`,
+      actionUrl: getNotificationTarget({ type: "post_like", relatedType: "post", relatedId: postId }),
       relatedId: postId,
       relatedType: "post",
       priority: "low",
@@ -339,7 +340,7 @@ export class NotificationService {
       type: "post_share",
       title: "Post shared",
       message: `${sharerName} shared your post to their Headlines`,
-      actionUrl: `/bulletin`,
+      actionUrl: getNotificationTarget({ type: "post_share", relatedType: "post", relatedId: postId }),
       relatedId: postId,
       relatedType: "post",
       priority: "medium",
@@ -352,7 +353,7 @@ export class NotificationService {
       type: "comment",
       title: "New comment",
       message: `${commenterName} commented: ${commentPreview}`,
-      actionUrl: `/bulletin`,
+      actionUrl: getNotificationTarget({ type: "comment", relatedType: "post", relatedId: postId }),
       relatedId: postId,
       relatedType: "post",
       priority: "normal",
@@ -365,7 +366,7 @@ export class NotificationService {
       type: "comment_like",
       title: "Comment liked",
       message: `${likerName} liked your comment: ${commentPreview}`,
-      actionUrl: `/bulletin`,
+      actionUrl: getNotificationTarget({ type: "comment_like", relatedType: "comment", relatedId: commentId }),
       relatedId: commentId,
       relatedType: "comment",
       priority: "low",

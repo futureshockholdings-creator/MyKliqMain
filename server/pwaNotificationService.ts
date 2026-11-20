@@ -3,6 +3,7 @@ import { db } from "./db";
 import { deviceTokens, notificationPreferences, notifications, type Notification, type NotificationPreference } from "@shared/schema";
 import { webPushService } from "./webPushService";
 import { firebaseNotificationService } from "./firebase-notifications";
+import { getNotificationTarget } from "@shared/notificationTarget";
 
 export function allowsPwaPush(notification: Pick<Notification, "type" | "isRead" | "isVisible">, preferences?: NotificationPreference): boolean {
   // Incognito messages intentionally have only their existing in-app alert.
@@ -67,10 +68,7 @@ export async function sendPwaNotification(notification: Notification): Promise<v
       badgeUpdatedAt: String(badge.updatedAt),
       badgeUserId: notification.userId,
       notificationId: notification.id,
-      // Post alerts used an obsolete /bulletin destination.
-      url: notification.relatedType === "post" && notification.relatedId
-        ? `/post/${notification.relatedId}`
-        : notification.actionUrl || "/",
+      url: getNotificationTarget(notification),
     },
   };
   const results = await Promise.all([
