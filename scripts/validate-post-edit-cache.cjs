@@ -99,11 +99,16 @@ test("actual edit handler applies the save response, not a delayed refetch", asy
   const notices = [];
   const removed = [];
   let refetches = 0;
+  let closed = false;
   let submitting = false;
   const handler = editHandler({
     queryClient: cache, applySavedPostEdit, post: original, editContent: "requested edit",
     setIsSubmitting: value => { submitting = value; },
-    toast: message => notices.push(message),
+    toast: message => {
+      assert.equal(closed, true, "close the editor before displaying success");
+      notices.push(message);
+    },
+    onSaved: () => { closed = true; },
     onUpdate: () => { refetches++; },
     enhancedCache: { removeByPattern: async pattern => { removed.push(pattern); } },
     apiRequest: async (method, url, body) => {
@@ -117,6 +122,7 @@ test("actual edit handler applies the save response, not a delayed refetch", asy
   await handler();
   assert.equal(cache.getQueryData(["/api/kliq-feed"]).pages[0].items[0].content, saved.content);
   assert.equal(refetches, 0);
+  assert.equal(closed, true);
   assert.equal(submitting, false);
   assert.equal(notices[0].title, "Post Updated");
   assert.equal(removed.join(","), "/api/kliq-feed,/api/posts");
@@ -131,6 +137,7 @@ test("failed save keeps the original post and draft, reports error and permits r
   const handler = editHandler({
     queryClient: cache, post: original, editContent: "unsaved draft",
     applySavedPostEdit: () => assert.fail("must not apply failed save"),
+    onSaved: () => assert.fail("must keep the editor open after a failed save"),
     setEditContent: () => assert.fail("must not erase draft"),
     setIsSubmitting: value => { submitting = value; },
     toast: message => notices.push(message),

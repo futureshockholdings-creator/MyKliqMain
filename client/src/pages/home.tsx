@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { applySavedPostEdit } from "@/lib/postDataCache";
+import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 import { resolveAssetUrl, resolveProfileImageUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -61,7 +62,7 @@ import { InviteCard } from "@/components/InviteCard";
 import type { Meme, Moviecon } from "@shared/schema";
 
 // Edit Post Form Component
-function EditPostForm({ post, onUpdate, onOptimisticDelete }: { post: any; onUpdate: () => void; onOptimisticDelete?: (postId: string) => void }) {
+function EditPostForm({ post, onUpdate, onSaved, onOptimisticDelete }: { post: any; onUpdate: () => void; onSaved: () => void; onOptimisticDelete?: (postId: string) => void }) {
   const queryClient = useQueryClient();
   const [editContent, setEditContent] = useState(post.content || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,6 +89,7 @@ function EditPostForm({ post, onUpdate, onOptimisticDelete }: { post: any; onUpd
       // Show the saved content immediately, not after a full-feed refresh.
       // No optimistic write: failed saves retain the draft and original post.
       await applySavedPostEdit(queryClient, updatedPost);
+      onSaved();
       void Promise.all([
         enhancedCache.removeByPattern("/api/kliq-feed"),
         enhancedCache.removeByPattern("/api/posts"),
@@ -439,6 +441,7 @@ function FeedInviteCard({
 
 export default function Home() {
   const [newPost, setNewPost] = useState("");
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showMediaUpload, setShowMediaUpload] = useState(false);
   const [showStoryUpload, setShowStoryUpload] = useState(false);
@@ -3537,7 +3540,12 @@ export default function Home() {
 
                 {/* Edit button - only show for post author */}
                 {item.author.id === userData?.id && (
-                  <Dialog>
+                  <Dialog
+                    open={editingPostId === item.id}
+                    onOpenChange={(open) => setEditingPostId(current =>
+                      open ? item.id : current === item.id ? null : current
+                    )}
+                  >
                     <DialogTrigger asChild>
                       <Button
                         variant="ghost"
@@ -3553,7 +3561,8 @@ export default function Home() {
                         <DialogTitle className="text-foreground">Edit Post</DialogTitle>
                       </DialogHeader>
                       <EditPostForm 
-                        post={item} 
+                        post={item}
+                        onSaved={() => setEditingPostId(current => current === item.id ? null : current)}
                         onUpdate={() => {
                           queryClient.refetchQueries({ queryKey: ['/api/kliq-feed'] });
                         }}
