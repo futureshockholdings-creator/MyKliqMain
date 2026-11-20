@@ -27,13 +27,13 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 import { getAuthToken, isTokenExpired } from "@/lib/tokenStorage";
 import html2canvas from "html2canvas";
+import { normalizeInviteCode } from "@shared/inviteCodes";
 
 export default function Kliq() {
   const [kliqName, setKliqName] = useState("");
   const [kliqLeftEmoji, setKliqLeftEmoji] = useState("🏆");
   const [kliqRightEmoji, setKliqRightEmoji] = useState("🏆");
   const [editingName, setEditingName] = useState(false);
-  const [inviteCode, setInviteCode] = useState("");
   const [phoneNumbers, setPhoneNumbers] = useState("");
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [friendToRemove, setFriendToRemove] = useState<string | null>(null);
@@ -48,6 +48,7 @@ export default function Kliq() {
   const [isJoinKliqDialogOpen, setIsJoinKliqDialogOpen] = useState(false);
   const [joinInviteCode, setJoinInviteCode] = useState("");
   const [isJoiningKliq, setIsJoiningKliq] = useState(false);
+  const joinInFlight = useRef(false);
   const [pyramidPreview, setPyramidPreview] = useState<string | null>(null);
   const [isCapturingPyramid, setIsCapturingPyramid] = useState(false);
   const [isPostingPyramid, setIsPostingPyramid] = useState(false);
@@ -203,7 +204,9 @@ export default function Kliq() {
 
   // Join another kliq using invite code
   const handleJoinKliq = async () => {
-    if (!joinInviteCode.trim()) {
+    if (joinInFlight.current) return;
+    const code = normalizeInviteCode(joinInviteCode);
+    if (!code) {
       toast({
         title: "Enter invite code",
         description: "Please enter a valid invite code",
@@ -212,11 +215,12 @@ export default function Kliq() {
       return;
     }
 
+    joinInFlight.current = true;
     setIsJoiningKliq(true);
     try {
       // First validate the invite code
       const validationResponse = await apiRequest("POST", "/api/auth/validate-invite-code", {
-        inviteCode: joinInviteCode.trim()
+        inviteCode: code
       });
 
       if (!validationResponse.success) {
@@ -230,22 +234,15 @@ export default function Kliq() {
 
       // Use the invite code to join the kliq
       const response = await apiRequest("POST", "/api/friends/invite", {
-        inviteCode: joinInviteCode.trim()
+        inviteCode: code
       });
 
-      // Clear all relevant caches
-      await enhancedCache.removeByPattern('/api/friends');
-      await enhancedCache.removeByPattern('/api/kliq-feed');
-      await enhancedCache.removeByPattern('/api/notifications');
-      
-      // Invalidate and refetch queries
-      await queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/friends"], type: 'active' });
-
+      // Confirm only after the server creates the membership or pending request.
+      setIsJoinKliqDialogOpen(false);
+      setIsInviteDialogOpen(false);
+      setJoinInviteCode("");
       // Check if this is a pending request or immediate acceptance
-      if (response.pending) {
+      if (response.pending || response.status === "pending") {
         toast({
           title: "Request sent!",
           description: response.message || "Your request to join has been sent to the kliq owner for approval",
@@ -253,13 +250,31 @@ export default function Kliq() {
       } else {
         toast({
           title: "Joined kliq!",
-          description: `You've successfully joined ${validationResponse.kliqOwner?.firstName}'s kliq!`,
+          description: validationResponse.kliqOwner?.firstName
+            ? `You've successfully joined ${validationResponse.kliqOwner.firstName}'s kliq!`
+            : "You've successfully joined this kliq!",
         });
       }
 
-      // Close dialog and reset form
-      setIsJoinKliqDialogOpen(false);
-      setJoinInviteCode("");
+      // A joined kliq is not the same query as the member's own friend list.
+      // Refresh both, without reporting a persisted join as an invalid code if
+      // cache cleanup or a later refresh encounters a temporary failure.
+      try {
+        await Promise.all([
+          enhancedCache.removeByPattern("/api/friends"),
+          enhancedCache.removeByPattern("/api/kliqs"),
+          enhancedCache.removeByPattern("/api/kliq-feed"),
+          enhancedCache.removeByPattern("/api/notifications"),
+        ]);
+      } catch {
+        console.warn("[JoinKliq] Membership saved; cache cleanup unavailable");
+      }
+      await Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ["/api/friends"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/kliqs/joined"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] }),
+      ]);
     } catch (error: any) {
       if (isUnauthorizedError(error)) {
         toast({
@@ -273,13 +288,18 @@ export default function Kliq() {
         return;
       }
       
-      const errorMessage = error?.message || "Failed to join kliq";
+      let errorMessage = "Unable to join this kliq. Please try again.";
+      try {
+        const response = JSON.parse(error.message.slice(error.message.indexOf("{")));
+        if (typeof response.message === "string") errorMessage = response.message;
+      } catch { /* Network errors do not contain an API error response. */ }
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
     } finally {
+      joinInFlight.current = false;
       setIsJoiningKliq(false);
     }
   };
@@ -348,54 +368,6 @@ export default function Kliq() {
       toast({
         title: "Error",
         description: "Failed to update friend rank",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Join kliq
-  const joinKliqMutation = useMutation({
-    mutationFn: async (code: string) => {
-      const response = await apiRequest("POST", "/api/friends/invite", { inviteCode: code });
-      return response;
-    },
-    onSuccess: async (data: { pending?: boolean; message?: string }) => {
-      setInviteCode("");
-      setIsInviteDialogOpen(false);
-      
-      if (data?.pending) {
-        await enhancedCache.removeByPattern('/api/friends/pending-requests');
-        await queryClient.invalidateQueries({ queryKey: ["/api/friends/pending-requests"] });
-        await queryClient.refetchQueries({ queryKey: ["/api/friends/pending-requests"], type: 'active' });
-        toast({
-          title: "Request sent!",
-          description: data.message || "Your request to rejoin has been sent for approval",
-        });
-      } else {
-        await enhancedCache.removeByPattern('/api/friends');
-        await queryClient.invalidateQueries({ queryKey: ["/api/friends"] });
-        await queryClient.refetchQueries({ queryKey: ["/api/friends"], type: 'active' });
-        toast({
-          title: "Joined kliq!",
-          description: "You've successfully joined a new kliq",
-        });
-      }
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to join kliq. Check your invite code.",
         variant: "destructive",
       });
     },
@@ -1187,23 +1159,34 @@ export default function Kliq() {
           )}
 
           {/* Join Kliq Dialog */}
-          <Dialog open={isJoinKliqDialogOpen} onOpenChange={setIsJoinKliqDialogOpen}>
+          <Dialog open={isJoinKliqDialogOpen} onOpenChange={open => {
+            if (!joinInFlight.current) {
+              setIsJoinKliqDialogOpen(open);
+              if (!open) setJoinInviteCode("");
+            }
+          }}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Join Another Kliq</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 pt-4">
+              <form className="space-y-4 pt-4" onSubmit={event => {
+                event.preventDefault();
+                void handleJoinKliq();
+              }}>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
+                  <label htmlFor="join-another-invite-code" className="text-sm font-medium text-foreground">
                     Enter Invite Code
                   </label>
                   <Input
+                    id="join-another-invite-code"
                     value={joinInviteCode}
                     onChange={(e) => setJoinInviteCode(e.target.value.toUpperCase())}
-                    placeholder="e.g., ABC123XY"
+                    placeholder="KQ-ABCD-7892"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
                     className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 uppercase"
                     disabled={isJoiningKliq}
-                    maxLength={14}
                   />
                   <p className="text-xs text-muted-foreground">
                     Enter the invitation code you received from a friend to join their kliq
@@ -1212,6 +1195,7 @@ export default function Kliq() {
 
                 <div className="flex gap-3 pt-2">
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={() => {
                       setIsJoinKliqDialogOpen(false);
@@ -1223,14 +1207,14 @@ export default function Kliq() {
                     Cancel
                   </Button>
                   <Button
-                    onClick={handleJoinKliq}
+                    type="submit"
                     disabled={!joinInviteCode.trim() || isJoiningKliq}
                     className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80"
                   >
                     {isJoiningKliq ? "Joining..." : "Join Kliq"}
                   </Button>
                 </div>
-              </div>
+              </form>
             </DialogContent>
           </Dialog>
 
@@ -1820,23 +1804,32 @@ export default function Kliq() {
       </Tabs>
 
       {/* Join a Kliq Dialog */}
-      <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+      <Dialog open={isInviteDialogOpen} onOpenChange={open => {
+        if (!joinInFlight.current) {
+          setIsInviteDialogOpen(open);
+          if (!open) setJoinInviteCode("");
+        }
+      }}>
         <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
           <DialogHeader>
             <DialogTitle className="text-primary">Join a Kliq</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <form className="space-y-4" onSubmit={event => {
+            event.preventDefault();
+            void handleJoinKliq();
+          }}>
             <div>
-              <label className="text-sm font-medium text-foreground">Invite Code</label>
+              <label htmlFor="join-invite-code" className="text-sm font-medium text-foreground">Invite Code</label>
               <Input
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                id="join-invite-code"
+                value={joinInviteCode}
+                onChange={(e) => setJoinInviteCode(e.target.value.toUpperCase())}
                 placeholder="KQ-ABCD-7892"
                 autoCapitalize="characters"
                 autoCorrect="off"
                 spellCheck={false}
                 className="mt-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
-                disabled={joinKliqMutation.isPending}
+                disabled={isJoiningKliq}
                 data-testid="input-join-invite-code"
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -1846,27 +1839,28 @@ export default function Kliq() {
 
             <div className="flex gap-3">
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => {
                   setIsInviteDialogOpen(false);
-                  setInviteCode("");
+                  setJoinInviteCode("");
                 }}
                 className="flex-1"
-                disabled={joinKliqMutation.isPending}
+                disabled={isJoiningKliq}
                 data-testid="button-cancel-join"
               >
                 Cancel
               </Button>
               <Button
-                onClick={handleJoinKliq}
-                disabled={!inviteCode.trim() || joinKliqMutation.isPending}
+                type="submit"
+                disabled={!normalizeInviteCode(joinInviteCode) || isJoiningKliq}
                 className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                 data-testid="button-submit-join"
               >
-                {joinKliqMutation.isPending ? "Joining..." : "Join Kliq"}
+                {isJoiningKliq ? "Joining..." : "Join Kliq"}
               </Button>
             </div>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 
