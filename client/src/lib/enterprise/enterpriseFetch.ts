@@ -11,6 +11,7 @@ import { performanceMonitor } from './performanceMonitor';
 import { buildApiUrl } from '../apiConfig';
 import { getAuthToken, removeAuthToken, isTokenExpired, getUserIdFromToken } from '../tokenStorage';
 import { offlineStore } from '../offlineStore';
+import { isPostDataUrl } from '../postDataCache';
 
 interface EnterpriseFetchOptions extends Omit<RequestInit, 'priority'> {
   skipCache?: boolean;
@@ -190,7 +191,9 @@ export async function enterpriseFetch<T = any>(
       url.includes('/api/stories') ||
       url.includes('/api/posts');
 
-    const skipAllCache = isNotificationEndpoint || isRankingEndpoint;
+    // A warm SWR entry returns old post text to React Query while refreshing
+    // only its private cache. React Query otherwise waits another 15s poll.
+    const skipAllCache = isNotificationEndpoint || isRankingEndpoint || isPostDataUrl(url);
     const skipDiskForEndpoint = isHighChurnEndpoint;
 
     return enhancedCache.swr(

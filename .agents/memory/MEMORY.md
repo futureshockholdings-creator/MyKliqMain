@@ -11,3 +11,4 @@
 - [Invite code compatibility](invite-code-compatibility.md) — exclude I/L/1 from new displayed codes; ignore case and keep replaced codes working for their original owners.
 - [TypeScript validation](typescript-validation.md) — a default-heap typecheck can run out of memory; inspect exit status before trusting filtered diagnostics.
 - [Popup visibility](popup-priority.md) — popups, especially signup welcome and media posting, must stay fully in front of navigation without clipping text or controls.
+- [Post edit freshness](post-edit-freshness.md) — a fast save can appear delayed when private SWR refreshes do not update React Query; apply confirmed edits directly.

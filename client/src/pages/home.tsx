@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
+import { applySavedPostEdit } from "@/lib/postDataCache";
 import { resolveAssetUrl, resolveProfileImageUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -61,6 +62,7 @@ import type { Meme, Moviecon } from "@shared/schema";
 
 // Edit Post Form Component
 function EditPostForm({ post, onUpdate, onOptimisticDelete }: { post: any; onUpdate: () => void; onOptimisticDelete?: (postId: string) => void }) {
+  const queryClient = useQueryClient();
   const [editContent, setEditContent] = useState(post.content || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -79,9 +81,17 @@ function EditPostForm({ post, onUpdate, onOptimisticDelete }: { post: any; onUpd
 
     setIsSubmitting(true);
     try {
-      await apiRequest("PUT", `/api/posts/${post.id}`, {
+      const updatedPost = await apiRequest("PUT", `/api/posts/${post.id}`, {
         content: editContent
       });
+
+      // Show the saved content immediately, not after a full-feed refresh.
+      // No optimistic write: failed saves retain the draft and original post.
+      await applySavedPostEdit(queryClient, updatedPost);
+      void Promise.all([
+        enhancedCache.removeByPattern("/api/kliq-feed"),
+        enhancedCache.removeByPattern("/api/posts"),
+      ]).catch(error => console.error("Failed to clear old post cache:", error));
 
       toast({
         title: "Post Updated",
@@ -89,7 +99,6 @@ function EditPostForm({ post, onUpdate, onOptimisticDelete }: { post: any; onUpd
         className: "bg-white text-black border-gray-300",
       });
 
-      onUpdate();
     } catch (error) {
       console.error('Error updating post:', error);
       toast({
