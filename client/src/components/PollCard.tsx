@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogCancel, AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +54,7 @@ interface PollCardProps {
 }
 
 export function PollCard({ poll }: PollCardProps) {
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(
     poll.userVote?.selectedOption ?? null
   );
@@ -61,10 +66,12 @@ export function PollCard({ poll }: PollCardProps) {
   const isAuthor = currentUserId === poll.author.id;
 
   const deletePollMutation = useMutation({
+    retry: false,
     mutationFn: async () => {
       await apiRequest("DELETE", `/api/polls/${poll.id}`);
     },
     onSuccess: async () => {
+      setShowDeleteConfirmation(false);
       try {
         const { enhancedCache } = await import('@/lib/enterprise/enhancedCache');
         await enhancedCache.removeByPattern('/api/polls');
@@ -190,16 +197,52 @@ export function PollCard({ poll }: PollCardProps) {
                     expiresAt: poll.expiresAt,
                   }}
                 />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deletePollMutation.mutate()}
-                  disabled={deletePollMutation.isPending}
-                  className="h-8 w-8 p-0 text-gray-500 hover:text-red-500 hover:bg-red-50"
-                  data-testid={`button-delete-poll-${poll.id}`}
+                <AlertDialog
+                  open={showDeleteConfirmation}
+                  onOpenChange={open => {
+                    if (!deletePollMutation.isPending) setShowDeleteConfirmation(open);
+                  }}
                 >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={deletePollMutation.isPending}
+                      className="h-8 w-8 p-0 text-gray-500 hover:text-red-500 hover:bg-red-50"
+                      aria-label="Delete poll"
+                      data-testid={`button-delete-poll-${poll.id}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this poll?</AlertDialogTitle>
+                      <AlertDialogDescription className="break-words">
+                        This will permanently delete “{poll.title}” and all its votes. This can’t be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel
+                        disabled={deletePollMutation.isPending}
+                        data-testid={`button-cancel-delete-poll-${poll.id}`}
+                      >
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={event => {
+                          event.preventDefault();
+                          if (!deletePollMutation.isPending) deletePollMutation.mutate();
+                        }}
+                        disabled={deletePollMutation.isPending}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        data-testid={`button-confirm-delete-poll-${poll.id}`}
+                      >
+                        {deletePollMutation.isPending ? "Deleting…" : "Delete poll"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </>
             )}
           </div>
@@ -239,6 +282,7 @@ export function PollCard({ poll }: PollCardProps) {
           {poll.options.map((option, index) => {
             const result = (results as PollOption[]).find((r: PollOption) => r.index === index);
             const isSelected = selectedOption === index;
+            const percentage = Math.min(100, Math.max(0, Number(result?.percentage) || 0));
             
             return (
               <div key={index} className="space-y-2">
@@ -258,7 +302,7 @@ export function PollCard({ poll }: PollCardProps) {
                       {showResults && (
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">
-                            {result?.percentage || 0}%
+                            {percentage}%
                           </span>
                           <span className="text-xs text-gray-500">
                             ({result?.votes || 0})
@@ -269,11 +313,21 @@ export function PollCard({ poll }: PollCardProps) {
                   </Button>
                 </div>
                 {showResults && (
-                  <Progress 
-                    value={result?.percentage || 0} 
-                    className="h-2"
+                  <div
+                    role="progressbar"
+                    aria-label={`Votes for ${option}`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={percentage}
+                    aria-valuetext={`${percentage}% (${result?.votes || 0} votes)`}
+                    className="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
                     data-testid={`progress-poll-option-${poll.id}-${index}`}
-                  />
+                  >
+                    <div
+                      className="h-full rounded-full bg-blue-600 transition-[width] duration-300 motion-reduce:transition-none dark:bg-blue-400"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
                 )}
               </div>
             );
