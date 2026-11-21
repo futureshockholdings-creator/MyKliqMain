@@ -656,12 +656,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cacheKey = `user:profile:${userId}`;
       let user = await cacheService.get(cacheKey);
       
-      if (!user) {
-        // Cache miss - fetch from database
+      if (!user || !Object.prototype.hasOwnProperty.call(user, "equippedBorder")) {
+        // Reload profiles cached before public border display data was restored.
+        // Explicit null distinguishes "no border equipped" from an incomplete cache.
         user = await storage.getUser(userId);
         if (!user) {
           return res.status(404).json({ message: "User not found" });
         }
+        user = { ...user, equippedBorder: user.equippedBorder ?? null };
       }
 
       // Profile caches must not become a second credential store. Scrub older

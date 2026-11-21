@@ -19,7 +19,7 @@ const publicUserFields = new Set([
   "kliqName", "kliqLeftEmoji", "kliqRightEmoji", "kliqClosed", "birthdate",
   "profileMusicUrls", "profileMusicTitles", "interests", "favoriteLocations", "favoriteFoods",
   "musicGenres", "relationshipStatus", "hobbies", "favoriteMovies", "favoriteBooks",
-  "petPreferences", "lifestyle", "equippedBorderId", "loginStreak", "createdAt", "updatedAt",
+  "petPreferences", "lifestyle", "equippedBorderId", "equippedBorder", "loginStreak", "createdAt", "updatedAt",
   "friendCount", "postCount", "theme",
 ]);
 const ownerUserFields = new Set([
@@ -54,6 +54,19 @@ export function protectApiData(value: any, context: PrivacyContext = {}, depth =
     if (secretFields.has(normalized) && !(depth === 0 && context.protocolFields?.has(normalized))) continue;
     if (context.log && ["email", "phonenumber", "phone", "token", "resettoken"].includes(normalized)) continue;
     if (isUser && !(privateRecord ? ownerUserFields : publicUserFields).has(key)) continue;
+    if (key === "equippedBorder") {
+      // Joined avatar decoration is public display data, not an account secret.
+      // Keep only the fields consumed by avatars, never arbitrary nested data.
+      const border = entry as Record<string, unknown> | null | undefined;
+      result[key] = border && typeof border === "object" && !Array.isArray(border)
+        ? Object.fromEntries(
+            ["id", "name", "imageUrl"]
+              .filter(field => typeof border[field] === "string")
+              .map(field => [field, border[field]]),
+          )
+        : null;
+      continue;
+    }
     result[key] = protectApiData(entry, context, depth + 1);
   }
   if (isUser && (ownRecord || context.admin) &&
