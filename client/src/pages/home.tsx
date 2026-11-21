@@ -2314,10 +2314,10 @@ export default function Home() {
   return (
     <PageWrapper>
       <PullToRefresh onRefresh={handlePullToRefresh}>
-      <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="w-full min-w-0 max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         {/* Post Creation */}
-        <Card className="bg-gradient-to-r from-mykliq-purple/20 to-secondary/20 border-mykliq-purple/30">
-        <CardContent className="p-4">
+        <Card className="min-w-0 max-w-full bg-gradient-to-r from-mykliq-purple/20 to-secondary/20 border-mykliq-purple/30">
+        <CardContent className="min-w-0 p-4">
           <div className="flex items-center space-x-3 mb-3">
             <Avatar className="w-14 h-14 border-2 border-mykliq-orange">
               <AvatarImage src={resolveProfileImageUrl(userData?.profileImageUrl, userData?.updatedAt)} />
@@ -2329,7 +2329,7 @@ export default function Home() {
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
               placeholder="What's happening in your kliq?"
-              className="flex-1 border-none resize-none post-input-forced"
+              className="min-w-0 flex-1 border-none resize-none post-input-forced"
               rows={2}
               data-testid="textarea-new-post"
             />
@@ -2376,27 +2376,28 @@ export default function Home() {
               </Button>
             </div>
           )}
-          {/* Action Icons Row */}
-          <div className="flex space-x-4 mb-3">
+          {/* Posting tools wrap to fit the available width. */}
+          <div className="mb-3 flex min-w-0 max-w-full flex-wrap items-center gap-2">
             <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
               <PopoverTrigger asChild>
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="text-orange-600 hover:bg-orange-600/20 bg-white border border-black shadow-sm h-8 w-8 p-1"
+                  className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-orange-600 shadow-sm hover:bg-orange-600/20"
                   data-testid="button-emoji-picker"
                 >
-                  <Smile className="w-3 h-3" />
+                  <Smile className="h-4 w-4" />
+                  <span>Emoji</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-96 max-h-72 overflow-y-auto">
-                <div className="grid grid-cols-7 gap-1 p-2">
+                <div className="grid grid-cols-5 gap-1 p-2 sm:grid-cols-7">
                   {commonEmojis.map((emoji, index) => (
                     <Button
                       key={index}
                       variant="ghost"
                       size="sm"
-                      className="h-10 w-10 p-0 text-xl hover:bg-accent emoji-large"
+                      className="h-11 w-full min-w-0 p-0 text-xl hover:bg-accent emoji-large"
                       onClick={() => handleEmojiClick(emoji)}
                       data-testid={`emoji-${index}`}
                     >
@@ -2409,10 +2410,11 @@ export default function Home() {
             <Button 
               size="sm" 
               variant="ghost" 
-              className="text-green-600 hover:bg-green-600/20 bg-white border border-black shadow-sm h-8 w-8 p-1"
+              className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-green-600 shadow-sm hover:bg-green-600/20"
               onClick={() => setShowMediaUpload(true)}
             >
-              <ImageIcon className="w-3 h-3" />
+              <ImageIcon className="h-4 w-4" />
+              <span>Media</span>
             </Button>
             <MemePicker
               onSelectMeme={setSelectedMeme}
@@ -2420,9 +2422,9 @@ export default function Home() {
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="text-purple-600 hover:bg-purple-600/20 bg-white border border-black shadow-sm h-8 w-8 p-1"
+                  className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-purple-600 shadow-sm hover:bg-purple-600/20"
                 >
-                  <span className="text-[8px] font-bold">MEME</span>
+                  <span>Meme</span>
                 </Button>
               }
             />
@@ -2432,9 +2434,10 @@ export default function Home() {
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="text-blue-600 hover:bg-blue-600/20 bg-white border border-black shadow-sm h-8 w-8 p-1"
+                  className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-blue-600/20"
                 >
-                  <Clapperboard className="w-3 h-3" />
+                  <Clapperboard className="h-4 w-4" />
+                  <span>Moviecon</span>
                 </Button>
               }
             />
@@ -2442,35 +2445,38 @@ export default function Home() {
             <Button 
               size="sm" 
               variant="ghost" 
-              className="text-red-600 hover:bg-red-600/20 bg-white border border-black shadow-sm h-8 w-8 p-1"
+              className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-600/20"
               onClick={getCurrentLocation}
               disabled={isGettingLocation}
             >
               {isGettingLocation ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <MapPin className="w-3 h-3" />
+                <MapPin className="h-4 w-4" />
               )}
+              <span>Location</span>
             </Button>
 
             <Button 
               size="sm" 
               variant="ghost" 
-              className="text-yellow-600 hover:bg-yellow-600/20 bg-white border border-black shadow-sm h-8 w-8 p-1"
+              className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-yellow-600 shadow-sm hover:bg-yellow-600/20"
               onClick={() => setShowMoodDialog(true)}
               data-testid="button-mood-picker"
             >
-              <Zap className="w-3 h-3" />
+              <Zap className="h-4 w-4" />
+              <span>Mood</span>
             </Button>
 
             <Link href="/events">
               <Button 
                 size="sm" 
                 variant="ghost" 
-                className="text-cyan-600 hover:bg-cyan-600/20 bg-white border border-black shadow-sm h-8 w-8 p-1"
+                className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-cyan-600 shadow-sm hover:bg-cyan-600/20"
                 data-testid="button-events"
               >
-                <Calendar className="w-3 h-3" />
+                <Calendar className="h-4 w-4" />
+                <span>Events</span>
               </Button>
             </Link>
 
@@ -2478,17 +2484,18 @@ export default function Home() {
               <Button 
                 size="sm" 
                 variant="ghost" 
-                className="text-red-700 hover:bg-red-700/20 bg-white border border-black shadow-sm h-8 w-8 p-1"
+                className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-700/20"
                 data-testid="button-actions"
               >
-                <Video className="w-3 h-3" />
+                <Video className="h-4 w-4" />
+                <span>Actions</span>
               </Button>
             </Link>
           </div>
           
-          {/* Daily Content Buttons and Post Button - Row 2 */}
-          <div className="flex flex-wrap gap-2 items-center justify-between mb-3">
-            <div className="flex flex-wrap gap-2 items-center">
+          {/* Daily content actions stay separate from the Post button. */}
+          <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <Button
                 onClick={() => horoscopeMutation.mutate()}
                 disabled={horoscopeMutation.isPending}
@@ -2517,6 +2524,8 @@ export default function Home() {
                 {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
               </Button>
             </div>
+          </div>
+          <div className="flex justify-end">
             <Button
               onClick={handleCreatePost}
               disabled={(!newPost.trim() && !selectedMeme && !selectedMoviecon && !selectedMood) || createPostMutation.isPending}

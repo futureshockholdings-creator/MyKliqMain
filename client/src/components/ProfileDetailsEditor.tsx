@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, ScrollableTabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -233,14 +233,14 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="interests" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5 bg-muted">
-            <TabsTrigger value="interests" className="data-[state=active]:bg-primary/20">Interests</TabsTrigger>
-            <TabsTrigger value="favorites" className="data-[state=active]:bg-primary/20">Favorites</TabsTrigger>
-            <TabsTrigger value="lifestyle" className="data-[state=active]:bg-primary/20">Lifestyle</TabsTrigger>
-            <TabsTrigger value="entertainment" className="data-[state=active]:bg-primary/20">Entertainment</TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-primary/20">Security</TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="interests" className="min-w-0 max-w-full space-y-4">
+          <ScrollableTabsList className="bg-muted" aria-label="Profile details sections">
+            <TabsTrigger value="interests" className="min-h-11 shrink-0 whitespace-nowrap px-4 py-2 data-[state=active]:bg-primary/20">Interests</TabsTrigger>
+            <TabsTrigger value="favorites" className="min-h-11 shrink-0 whitespace-nowrap px-4 py-2 data-[state=active]:bg-primary/20">Favorites</TabsTrigger>
+            <TabsTrigger value="lifestyle" className="min-h-11 shrink-0 whitespace-nowrap px-4 py-2 data-[state=active]:bg-primary/20">Lifestyle</TabsTrigger>
+            <TabsTrigger value="entertainment" className="min-h-11 shrink-0 whitespace-nowrap px-4 py-2 data-[state=active]:bg-primary/20">Entertainment</TabsTrigger>
+            <TabsTrigger value="security" className="min-h-11 shrink-0 whitespace-nowrap px-4 py-2 data-[state=active]:bg-primary/20">Security</TabsTrigger>
+          </ScrollableTabsList>
 
           <TabsContent value="interests" className="space-y-4">
             <Card className="bg-card/50 border-border">
