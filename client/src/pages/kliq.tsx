@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, ScrollableTabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, WrappingTabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PyramidChart } from "@/components/pyramid-chart";
 import { PollCard } from "@/components/PollCard";
 import { CreatePollDialog } from "@/components/CreatePollDialog";
@@ -1033,24 +1033,24 @@ export default function Kliq() {
 
       {/* Tabs */}
       <Tabs defaultValue="friends" className="w-full min-w-0 max-w-full">
-        <ScrollableTabsList className="bg-muted" aria-label="MyKliq sections">
-          <TabsTrigger value="friends" className="min-h-11 shrink-0 whitespace-nowrap px-4 py-2 flex items-center gap-2" data-testid="tab-friends">
+        <WrappingTabsList className="bg-muted" aria-label="MyKliq sections">
+          <TabsTrigger value="friends" className="min-h-11 px-4 py-2 flex items-center gap-2" data-testid="tab-friends">
             <Users className="w-4 h-4" />
             Friends ({friends.length}/28)
           </TabsTrigger>
-          <TabsTrigger value="smart-ranking" className="min-h-11 shrink-0 whitespace-nowrap px-4 py-2 flex items-center gap-2" data-testid="tab-smart-ranking">
+          <TabsTrigger value="smart-ranking" className="min-h-11 px-4 py-2 flex items-center gap-2" data-testid="tab-smart-ranking">
             <MessageCircle className="w-4 h-4" />
             Smart Ranking
           </TabsTrigger>
-          <TabsTrigger value="polls" className="min-h-11 shrink-0 whitespace-nowrap px-4 py-2 flex items-center gap-2" data-testid="tab-polls">
+          <TabsTrigger value="polls" className="min-h-11 px-4 py-2 flex items-center gap-2" data-testid="tab-polls">
             <BarChart3 className="w-4 h-4" />
             Polls ({polls.length})
           </TabsTrigger>
-          <TabsTrigger value="calendar" className="min-h-11 shrink-0 whitespace-nowrap px-4 py-2 flex items-center gap-2" data-testid="tab-calendar" onClick={() => navigate('/calendar')}>
+          <TabsTrigger value="calendar" className="min-h-11 px-4 py-2 flex items-center gap-2" data-testid="tab-calendar" onClick={() => navigate('/calendar')}>
             <Calendar className="w-4 h-4" />
             Calendar
           </TabsTrigger>
-        </ScrollableTabsList>
+        </WrappingTabsList>
 
         <TabsContent value="friends" className="space-y-6">
           {/* Stats */}

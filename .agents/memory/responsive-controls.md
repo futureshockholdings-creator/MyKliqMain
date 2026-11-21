@@ -1,16 +1,16 @@
 ---
 name: Responsive navigation and posting controls
-description: User-approved distinction between horizontally scrolling navigation tabs and wrapping action toolbars.
+description: Centered wrapping tabs and icon-only Headlines tools, replacing the earlier scrolling and labeled-button approach.
 ---
 
-Navigation tabs should retain full readable labels in a single horizontally scrolling row, with natural nonshrinking widths, separated padding, and usable touch targets. Do not replace labels with icons alone on narrow phones.
+Profile Settings, Profile Details, and MyKliq navigation tabs should retain full readable labels and wrap into centered rows rather than scroll horizontally. Keep natural widths, separated padding, and usable touch targets.
 
-**Why:** The user reported crowded MyKliq and profile-settings tabs and approved scrolling navigation instead of compressed, overlapping, or truncated labels.
+**Why:** After trying the scrolling layout, the user requested that these options stack onto a second line and be centered instead.
 
-**How to apply:** Constrain the strip and its flex/grid parents to the available container width. Make overflow discoverable and bring the active tab into horizontal view without moving the page vertically. Keep the existing single-row desktop experience when everything fits.
+**How to apply:** Constrain the strip and its flex/grid parents to the available container width. Let labels wrap as complete buttons into additional centered rows when necessary; never squeeze them into fixed-width columns or truncate their text. Keep a single row when everything fits.
 
-Posting tools should wrap into additional rows on narrow screens rather than hide actions behind horizontal scrolling. Keep their labels readable and the Post action separate.
+Headlines posting tools should use icon-only buttons without the newly added word labels. They should still wrap into additional rows on narrow screens, with the Post action separate.
 
-**Why:** The user approved keeping sharing actions visible while reserving horizontal scrolling for navigation tabs.
+**Why:** The user preferred the original icon-only appearance over the newer icons with words.
 
-**How to apply:** Respond to available container width rather than user-agent detection, preserve existing handlers and selected content, and retain member-selected themes.
+**How to apply:** Keep descriptive accessible names without adding visible labels. Respond to available container width rather than user-agent detection, preserve existing handlers and selected content, and retain member-selected themes.

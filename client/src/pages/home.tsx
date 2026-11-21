@@ -2383,11 +2383,12 @@ export default function Home() {
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-orange-600 shadow-sm hover:bg-orange-600/20"
+                  className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-orange-600 shadow-sm hover:bg-orange-600/20"
                   data-testid="button-emoji-picker"
+                  aria-label="Choose emoji"
+                  title="Choose emoji"
                 >
                   <Smile className="h-4 w-4" />
-                  <span>Emoji</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-96 max-h-72 overflow-y-auto">
@@ -2410,11 +2411,12 @@ export default function Home() {
             <Button 
               size="sm" 
               variant="ghost" 
-              className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-green-600 shadow-sm hover:bg-green-600/20"
+              className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-green-600 shadow-sm hover:bg-green-600/20"
               onClick={() => setShowMediaUpload(true)}
+              aria-label="Add media"
+              title="Add media"
             >
               <ImageIcon className="h-4 w-4" />
-              <span>Media</span>
             </Button>
             <MemePicker
               onSelectMeme={setSelectedMeme}
@@ -2422,9 +2424,11 @@ export default function Home() {
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-purple-600 shadow-sm hover:bg-purple-600/20"
+                  className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-purple-600 shadow-sm hover:bg-purple-600/20"
+                  aria-label="Choose meme"
+                  title="Choose meme"
                 >
-                  <span>Meme</span>
+                  <span className="text-[10px] font-black tracking-tight">MEME</span>
                 </Button>
               }
             />
@@ -2434,10 +2438,11 @@ export default function Home() {
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-blue-600/20"
+                  className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-blue-600 shadow-sm hover:bg-blue-600/20"
+                  aria-label="Choose moviecon"
+                  title="Choose moviecon"
                 >
                   <Clapperboard className="h-4 w-4" />
-                  <span>Moviecon</span>
                 </Button>
               }
             />
@@ -2445,38 +2450,41 @@ export default function Home() {
             <Button 
               size="sm" 
               variant="ghost" 
-              className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-600/20"
+              className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-red-600 shadow-sm hover:bg-red-600/20"
               onClick={getCurrentLocation}
               disabled={isGettingLocation}
+              aria-label="Add location"
+              title="Add location"
             >
               {isGettingLocation ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <MapPin className="h-4 w-4" />
               )}
-              <span>Location</span>
             </Button>
 
             <Button 
               size="sm" 
               variant="ghost" 
-              className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-yellow-600 shadow-sm hover:bg-yellow-600/20"
+              className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-yellow-600 shadow-sm hover:bg-yellow-600/20"
               onClick={() => setShowMoodDialog(true)}
               data-testid="button-mood-picker"
+              aria-label="Choose mood"
+              title="Choose mood"
             >
               <Zap className="h-4 w-4" />
-              <span>Mood</span>
             </Button>
 
             <Link href="/events">
               <Button 
                 size="sm" 
                 variant="ghost" 
-                className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-cyan-600 shadow-sm hover:bg-cyan-600/20"
+                className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-cyan-600 shadow-sm hover:bg-cyan-600/20"
                 data-testid="button-events"
+                aria-label="Events"
+                title="Events"
               >
                 <Calendar className="h-4 w-4" />
-                <span>Events</span>
               </Button>
             </Link>
 
@@ -2484,11 +2492,12 @@ export default function Home() {
               <Button 
                 size="sm" 
                 variant="ghost" 
-                className="h-11 min-w-[44px] shrink-0 gap-2 whitespace-nowrap border border-black bg-white px-3 py-2 text-sm font-medium text-red-700 shadow-sm hover:bg-red-700/20"
+                className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-red-700 shadow-sm hover:bg-red-700/20"
                 data-testid="button-actions"
+                aria-label="Actions"
+                title="Actions"
               >
                 <Video className="h-4 w-4" />
-                <span>Actions</span>
               </Button>
             </Link>
           </div>

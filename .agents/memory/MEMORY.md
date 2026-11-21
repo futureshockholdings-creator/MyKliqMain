@@ -17,5 +17,5 @@
 - [Notification navigation](notification-navigation.md) — post alerts must reach the original post through member-safe links, not obsolete bulletin or admin-review destinations.
 - [Member data freshness](member-data-freshness.md) — keep live updates across signed-in routes; refresh message content with alerts and apply confirmed Konnect results directly.
 - [Testing ownership](user-testing.md) — the user will test the production fixes; do not run automated or browser tests.
-- [Responsive controls](responsive-controls.md) — keep full navigation labels in scrolling tabs, wrap posting tools, and keep Post separate without changing desktop behavior.
+- [Responsive controls](responsive-controls.md) — center and wrap Profile Settings/MyKliq tabs; use icon-only Headlines tools that wrap, with Post separate.
 - [Profile display/privacy contract](profile-display-privacy-contract.md) — retain safe joined display data in privacy filters and repair caches that previously lost required fields.
