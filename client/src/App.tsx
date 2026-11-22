@@ -95,6 +95,8 @@ function StartupSplashHandoff() {
 function Navigation({ currentPath }: { currentPath: string }) {
   const { t } = useTranslation();
   useUiLanguage();
+  const mobileNavigationRef = React.useRef<HTMLDivElement>(null);
+  const desktopNavigationRef = React.useRef<HTMLDivElement>(null);
   const [showPinModal, setShowPinModal] = useState(false);
   const [pendingSettingsNavigation, setPendingSettingsNavigation] = useState(false);
   const { 
@@ -127,6 +129,45 @@ function Navigation({ currentPath }: { currentPath: string }) {
 
   const [, navigate] = useLocation();
 
+  React.useLayoutEffect(() => {
+    const mobileNavigation = mobileNavigationRef.current;
+    const desktopNavigation = desktopNavigationRef.current;
+    if (!mobileNavigation || !desktopNavigation) return;
+
+    const updateNavigationSpace = () => {
+      const mobileWidth = mobileNavigation.getBoundingClientRect().width;
+      const desktopHeight = desktopNavigation.getBoundingClientRect().height;
+      // Measure intrinsic navigation, not a width derived from this variable:
+      // longer AND shorter translations must resize without a feedback loop.
+      if (mobileWidth > 0) {
+        document.documentElement.style.setProperty(
+          "--mykliq-mobile-nav-width",
+          `${Math.ceil(mobileWidth)}px`,
+        );
+      }
+      if (desktopHeight > 0) {
+        document.documentElement.style.setProperty(
+          "--mykliq-desktop-nav-space",
+          `${Math.ceil(desktopHeight + 40)}px`,
+        );
+      }
+    };
+
+    updateNavigationSpace();
+    const observer = new ResizeObserver(updateNavigationSpace);
+    [mobileNavigation, desktopNavigation].forEach((navigation) => {
+      observer.observe(navigation);
+      navigation.querySelectorAll("button, span").forEach((element) => observer.observe(element));
+    });
+    window.addEventListener("resize", updateNavigationSpace);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateNavigationSpace);
+      document.documentElement.style.removeProperty("--mykliq-mobile-nav-width");
+      document.documentElement.style.removeProperty("--mykliq-desktop-nav-space");
+    };
+  }, []);
+
   const handleNavigation = (path: string, requiresPin: boolean = false) => {
     if (requiresPin && path === "/settings") {
       setPendingSettingsNavigation(true);
@@ -152,13 +193,13 @@ function Navigation({ currentPath }: { currentPath: string }) {
   return (
     <>
       {/* ── Left Side Navigation (mobile only, hidden on desktop) ── */}
-      <div className="fixed left-0 top-0 bottom-0 bg-card border-r-2 border-primary z-50 w-16 md:hidden">
-        <div className="flex flex-col items-center py-3 h-full">
+      <div ref={mobileNavigationRef} className="mobile-navigation-rail fixed left-0 top-0 bottom-0 bg-card border-r-2 border-primary z-50 md:hidden">
+        <div className="flex flex-col items-center py-3 min-h-full h-max">
           {/* Notification Bell */}
           <button
             onClick={toggleNotificationPanel}
             className={cn(
-              "flex flex-col items-center p-2 mb-4 transition-colors rounded-lg w-14 min-h-11 relative",
+              "mobile-navigation-item flex flex-col items-center p-2 mb-4 transition-colors rounded-lg min-h-11 relative flex-shrink-0",
               "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
             data-testid="notification-bell"
@@ -171,7 +212,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
               </div>
             )}
             <Bell className="w-5 h-5" />
-            <span className="text-[9px] mt-0.5 whitespace-nowrap" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{t('navigation.alerts')}</span>
+            <span className="main-navigation-caption text-[9px] mt-0.5">{t('navigation.alerts')}</span>
           </button>
 
           {navItems.map((item) => {
@@ -183,7 +224,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 key={item.path}
                 onClick={() => handleNavigation(item.path, item.path === "/settings")}
                 className={cn(
-                  "flex flex-col items-center p-2 mb-3 transition-colors rounded-lg w-14 min-h-11 relative",
+                  "mobile-navigation-item flex flex-col items-center p-2 mb-3 transition-colors rounded-lg min-h-11 relative flex-shrink-0",
                   isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
                 data-testid={`nav-${item.tab}`}
@@ -194,25 +235,25 @@ function Navigation({ currentPath }: { currentPath: string }) {
                   </div>
                 )}
                 <item.icon className="w-5 h-5" />
-                <span className="text-[9px] mt-0.5 text-center whitespace-nowrap" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{item.label}</span>
+                <span className="main-navigation-caption text-[9px] mt-0.5 text-center">{item.label}</span>
               </button>
             );
           })}
           
           {/* Language Selector at bottom */}
           <div className="mt-auto mb-4 flex justify-center">
-            <LanguageSelector variant="dropdown" className="max-w-16 min-w-12" />
+            <LanguageSelector variant="dropdown" />
           </div>
         </div>
       </div>
 
       {/* ── Bottom Navigation Bar (desktop only, hidden on mobile) ── */}
-      <div className="hidden md:flex fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-[760px] h-16 bg-card border-2 border-primary rounded-full shadow-xl z-50 items-center justify-around px-4">
+      <div ref={desktopNavigationRef} className="desktop-navigation-bar hidden md:flex fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-[760px] bg-card border-2 border-primary rounded-[2rem] shadow-xl z-50 items-center justify-center px-4">
         {/* Notification Bell */}
         <button
           onClick={toggleNotificationPanel}
           className={cn(
-            "flex flex-col items-center px-3 py-1 transition-colors rounded-lg relative min-w-12",
+            "desktop-navigation-item flex flex-col items-center px-3 py-1 transition-colors rounded-lg relative min-w-12",
             "text-muted-foreground hover:text-foreground hover:bg-muted/50"
           )}
           data-testid="notification-bell-desktop"
@@ -225,7 +266,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
             </div>
           )}
           <Bell className="w-5 h-5" />
-          <span className="text-[9px] mt-0.5 whitespace-nowrap" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{t('navigation.alerts')}</span>
+          <span className="main-navigation-caption text-[9px] mt-0.5">{t('navigation.alerts')}</span>
         </button>
 
         {navItems.map((item) => {
@@ -235,7 +276,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
               key={item.path}
               onClick={() => handleNavigation(item.path, item.path === "/settings")}
               className={cn(
-                "flex flex-col items-center px-3 py-1 transition-colors rounded-lg relative min-w-12",
+                "desktop-navigation-item flex flex-col items-center px-3 py-1 transition-colors rounded-lg relative min-w-12",
                 isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               )}
               data-testid={`nav-${item.tab}-desktop`}
@@ -246,14 +287,14 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 </div>
               )}
               <item.icon className="w-5 h-5" />
-              <span className="text-[9px] mt-0.5 text-center whitespace-nowrap" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>{item.label}</span>
+              <span className="main-navigation-caption text-[9px] mt-0.5 text-center">{item.label}</span>
             </button>
           );
         })}
 
         {/* Language Selector */}
-        <div className="flex items-center">
-          <LanguageSelector variant="dropdown" className="max-w-16 min-w-12" />
+        <div className="desktop-navigation-item flex items-center">
+          <LanguageSelector variant="dropdown" />
         </div>
       </div>
 
@@ -466,7 +507,7 @@ function AppContent() {
         {/* Main App Container with responsive margins */}
         <div className={cn(
           "min-h-screen h-screen bg-background relative",
-          isAuthenticated && !isLoading && !isPublicPage ? "ml-16 w-[calc(100vw-4rem)] md:ml-0 md:w-full" : ""
+          isAuthenticated && !isLoading && !isPublicPage ? "main-content-with-navigation" : ""
         )}>
           {/* Full Screen App Container with scroll */}
           <div id="main-scroll-container" className="w-full h-full relative overflow-y-auto overflow-x-hidden">
@@ -481,7 +522,7 @@ function AppContent() {
             )}
 
             {/* Main Content with proper scrolling and mobile padding */}
-            <div className="relative z-10 min-h-full pb-20 md:pb-28">
+            <div className={cn("relative z-10 min-h-full pb-20 md:pb-28", isAuthenticated && !isLoading && !isPublicPage && "navigation-content-safe-area")}>
               {(!isAuthenticated || isPublicPage) && (
                 <div className="flex justify-end px-4 pt-2">
                   <LanguageSelector variant="dropdown" />

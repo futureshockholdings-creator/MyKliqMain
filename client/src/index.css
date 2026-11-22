@@ -21,21 +21,76 @@ html[dir="rtl"] [role="tablist"] {
   direction: rtl;
 }
 
-/* Translations can be longer than English; never force the sidebar label
-   outside its existing touch target. The icon-only posting tools are untouched. */
-nav button > span,
-[data-testid^="nav-"] > span {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  white-space: normal;
-}
-
 /* Full screen styling */
 html, body {
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
+}
+
+/* Navigation captions are deliberately independent of member-selected theme fonts.
+   Keep translated words whole; mobile width is measured by Navigation at runtime. */
+.main-navigation-caption {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  flex: 0 0 auto;
+}
+
+.mobile-navigation-rail {
+  width: max-content;
+  min-width: 4rem;
+  padding-inline: 0.25rem;
+  overflow-x: visible;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+}
+
+.mobile-navigation-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-navigation-rail > div {
+  min-height: 100%;
+  height: max-content;
+}
+
+.mobile-navigation-rail .mobile-navigation-item {
+  width: max-content;
+  min-width: 3.5rem;
+  max-width: none;
+}
+
+.main-content-with-navigation {
+  margin-left: var(--mykliq-mobile-nav-width, 4rem);
+  width: calc(100vw - var(--mykliq-mobile-nav-width, 4rem));
+}
+
+.desktop-navigation-bar {
+  height: auto;
+  min-height: 4rem;
+  flex-wrap: wrap;
+  column-gap: 0.25rem;
+  row-gap: 0.15rem;
+  padding-block: 0.35rem;
+}
+
+.desktop-navigation-item {
+  flex: 0 0 auto;
+}
+
+@media (min-width: 768px) {
+  .main-content-with-navigation {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .navigation-content-safe-area {
+    padding-bottom: calc(var(--mykliq-desktop-nav-space, 7rem) + env(safe-area-inset-bottom));
+  }
 }
 
 #root {
