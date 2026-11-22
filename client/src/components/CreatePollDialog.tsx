@@ -9,12 +9,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, X } from "lucide-react";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber } from "@/i18n/formatting";
 
 interface CreatePollDialogProps {
   trigger?: React.ReactNode;
 }
 
 export function CreatePollDialog({ trigger }: CreatePollDialogProps) {
+  useUiLanguage();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -123,23 +126,23 @@ export function CreatePollDialog({ trigger }: CreatePollDialogProps) {
             data-testid="button-create-poll"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Create Poll
+            {uiText("Create Poll")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="!bg-white !text-black border-gray-300 max-w-md">
         <DialogHeader>
-          <DialogTitle className="!text-black">Create a New Poll</DialogTitle>
+          <DialogTitle className="!text-black">{uiText("Create a New Poll")}</DialogTitle>
           <DialogDescription className="!text-gray-600">
-            Ask your friends a question with multiple choice options
+            {uiText("Ask your friends a question with multiple choice options")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="title" className="!text-black">Title</Label>
+            <Label htmlFor="title" className="!text-black">{uiText("Title")}</Label>
             <Input
               id="title"
-              placeholder="What's your question?"
+              placeholder={uiText("What's your question?")}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="!bg-white !text-black border-gray-300 placeholder:text-gray-500"
@@ -149,11 +152,11 @@ export function CreatePollDialog({ trigger }: CreatePollDialogProps) {
 
           <div>
             <Label htmlFor="description" className="!text-black">
-              Description (optional)
+              {uiText("Description (optional)")}
             </Label>
             <Textarea
               id="description"
-              placeholder="Add more context..."
+              placeholder={uiText("Add more context...")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="!bg-white !text-black border-gray-300 placeholder:text-gray-500 resize-none"
@@ -163,12 +166,12 @@ export function CreatePollDialog({ trigger }: CreatePollDialogProps) {
           </div>
 
           <div>
-            <Label className="!text-black">Options</Label>
+            <Label className="!text-black">{uiText("Options")}</Label>
             <div className="space-y-2 mt-2">
               {options.map((option, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <Input
-                    placeholder={`Option ${index + 1}`}
+                    placeholder={uiText("Option {{count}}", { count: formatDisplayNumber(index + 1) })}
                     value={option}
                     onChange={(e) => updateOption(index, e.target.value)}
                     className="!bg-white !text-black border-gray-300 placeholder:text-gray-500"
@@ -196,25 +199,25 @@ export function CreatePollDialog({ trigger }: CreatePollDialogProps) {
                   data-testid="button-add-option"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Option
+                  {uiText("Add Option")}
                 </Button>
               )}
             </div>
           </div>
 
           <div>
-            <Label htmlFor="duration" className="!text-black">Duration</Label>
+            <Label htmlFor="duration" className="!text-black">{uiText("Duration")}</Label>
             <Select value={duration} onValueChange={setDuration}>
               <SelectTrigger className="!bg-white !text-black border-gray-300" data-testid="select-poll-duration">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="!bg-white border-gray-300">
-                <SelectItem value="1" className="!text-black">1 hour</SelectItem>
-                <SelectItem value="6" className="!text-black">6 hours</SelectItem>
-                <SelectItem value="12" className="!text-black">12 hours</SelectItem>
-                <SelectItem value="24" className="!text-black">24 hours</SelectItem>
-                <SelectItem value="48" className="!text-black">2 days</SelectItem>
-                <SelectItem value="168" className="!text-black">1 week</SelectItem>
+                <SelectItem value="1" className="!text-black">{uiText("1 hour")}</SelectItem>
+                <SelectItem value="6" className="!text-black">{uiText("6 hours")}</SelectItem>
+                <SelectItem value="12" className="!text-black">{uiText("12 hours")}</SelectItem>
+                <SelectItem value="24" className="!text-black">{uiText("24 hours")}</SelectItem>
+                <SelectItem value="48" className="!text-black">{uiText("2 days")}</SelectItem>
+                <SelectItem value="168" className="!text-black">{uiText("1 week")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -226,7 +229,7 @@ export function CreatePollDialog({ trigger }: CreatePollDialogProps) {
               className="!bg-white !text-black border-gray-300 hover:!bg-gray-100"
               data-testid="button-cancel-poll"
             >
-              Cancel
+              {uiText("Cancel")}
             </Button>
             <Button
               onClick={handleSubmit}
@@ -234,7 +237,7 @@ export function CreatePollDialog({ trigger }: CreatePollDialogProps) {
               className="bg-blue-600 hover:bg-blue-700 text-white"
               data-testid="button-submit-poll"
             >
-              {createPollMutation.isPending ? "Creating..." : "Create Poll"}
+              {createPollMutation.isPending ? uiText("Creating...") : uiText("Create Poll")}
             </Button>
           </div>
         </div>

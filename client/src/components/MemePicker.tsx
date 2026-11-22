@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Search, Image as ImageIcon } from 'lucide-react';
 import { buildApiUrl, resolveAssetUrl } from '@/lib/apiConfig';
 import type { Meme } from '@shared/schema';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 // Get color scheme based on category for consistent theming
 function getMemeColor(meme: Meme): string {
@@ -25,6 +26,7 @@ function getMemeColor(meme: Meme): string {
 }
 
 function MemeImage({ meme, className }: { meme: Meme; className?: string }) {
+  useUiLanguage();
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   
@@ -72,7 +74,7 @@ function MemeImage({ meme, className }: { meme: Meme; className?: string }) {
       />
       {meme.isAnimated && (
         <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1 rounded">
-          GIF
+          {uiText("GIF")}
         </div>
       )}
       <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -95,6 +97,7 @@ export function MemePicker({
   isOpen, 
   onOpenChange 
 }: MemePickerProps) {
+  useUiLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [open, setOpen] = useState(false);
 
@@ -159,7 +162,7 @@ export function MemePicker({
       variant="ghost" 
       className="text-mykliq-purple hover:bg-mykliq-purple/10"
     >
-      <span className="text-xs font-bold">MEME</span>
+      <span className="text-xs font-bold">{uiText("MEME")}</span>
     </Button>
   );
 
@@ -170,9 +173,9 @@ export function MemePicker({
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle className="text-primary">Choose a Meme</DialogTitle>
+          <DialogTitle className="text-primary">{uiText("Choose a Meme")}</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Search and select a meme to add to your message
+            {uiText("Search and select a meme to add to your message")}
           </DialogDescription>
         </DialogHeader>
         
@@ -181,7 +184,7 @@ export function MemePicker({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Search memes..."
+              placeholder={uiText("Search memes...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 bg-white border-gray-300 text-black placeholder-gray-500"
@@ -192,13 +195,13 @@ export function MemePicker({
           <div className="gif-scrollbar overflow-y-auto max-h-96">
             {isLoading ? (
               <div className="flex justify-center items-center py-8">
-                <div className="text-muted-foreground">Loading memes...</div>
+                <div className="text-muted-foreground">{uiText("Loading memes...")}</div>
               </div>
             ) : memes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                <div className="text-sm">No memes found</div>
+                <div className="text-sm">{uiText("No memes found")}</div>
                 {searchQuery && (
-                  <div className="text-xs mt-1">Try a different search term</div>
+                  <div className="text-xs mt-1">{uiText("Try a different search term")}</div>
                 )}
               </div>
             ) : (

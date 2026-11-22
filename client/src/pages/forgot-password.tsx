@@ -7,8 +7,10 @@ import { ArrowLeft, Phone, Shield, Lock, Hash, User } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 export default function ForgotPassword() {
+  useUiLanguage();
   const [step, setStep] = useState<'name' | 'phone' | 'questions' | 'pin' | 'password'>('name');
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -36,14 +38,14 @@ export default function ForgotPassword() {
       if (data.success) {
         setStep('phone');
         toast({
-          title: "Name verified!",
-          description: "Please enter your phone number",
+          title: uiText("Name verified!"),
+          description: uiText("Please enter your phone number"),
         });
       }
     } catch (error: any) {
       toast({
-        title: "Name verification failed",
-        description: error.message || "Name doesn't match our records",
+        title: uiText("Name verification failed"),
+        description: error.message || uiText("Name doesn't match our records"),
         variant: "destructive",
       });
     } finally {
@@ -64,14 +66,14 @@ export default function ForgotPassword() {
         setResetToken(data.resetToken);
         setStep('questions');
         toast({
-          title: "Phone number verified!",
-          description: "Please answer your security questions",
+          title: uiText("Phone number verified!"),
+          description: uiText("Please answer your security questions"),
         });
       }
     } catch (error: any) {
       toast({
-        title: "Phone verification failed",
-        description: error.message || "Phone number doesn't match our records",
+        title: uiText("Phone verification failed"),
+        description: error.message || uiText("Phone number doesn't match our records"),
         variant: "destructive",
       });
     } finally {
@@ -90,18 +92,18 @@ export default function ForgotPassword() {
       });
       
       if (data.success) {
-        if (!data.resetToken) throw new Error("Please restart password recovery.");
+        if (!data.resetToken) throw new Error(uiText("Please restart password recovery."));
         setResetToken(data.resetToken);
         setStep('pin');
         toast({
-          title: "Security questions verified!",
-          description: "Now enter your 4-digit PIN",
+          title: uiText("Security questions verified!"),
+          description: uiText("Now enter your 4-digit PIN"),
         });
       }
     } catch (error: any) {
       toast({
-        title: "Verification failed",
-        description: error.message || "Security answers don't match",
+        title: uiText("Verification failed"),
+        description: error.message || uiText("Security answers don't match"),
         variant: "destructive",
       });
     } finally {
@@ -118,18 +120,18 @@ export default function ForgotPassword() {
       });
       
       if (data.success) {
-        if (!data.resetToken) throw new Error("Please restart password recovery.");
+        if (!data.resetToken) throw new Error(uiText("Please restart password recovery."));
         setResetToken(data.resetToken);
         setStep('password');
         toast({
-          title: "PIN verified!",
-          description: "Now you can set a new password",
+          title: uiText("PIN verified!"),
+          description: uiText("Now you can set a new password"),
         });
       }
     } catch (error: any) {
       toast({
-        title: "PIN verification failed",
-        description: error.message || "Incorrect PIN",
+        title: uiText("PIN verification failed"),
+        description: error.message || uiText("Incorrect PIN"),
         variant: "destructive",
       });
     } finally {
@@ -140,8 +142,8 @@ export default function ForgotPassword() {
   const resetPassword = async () => {
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same",
+        title: uiText("Passwords don't match"),
+        description: uiText("Please make sure both passwords are the same"),
         variant: "destructive",
       });
       return;
@@ -155,16 +157,16 @@ export default function ForgotPassword() {
       });
       
       toast({
-        title: "Password reset successful!",
-        description: "You can now login with your new password",
+        title: uiText("Password reset successful!"),
+        description: uiText("You can now login with your new password"),
       });
       
       // Redirect to login page
       window.location.href = "/login";
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to reset password",
+        title: uiText("Error"),
+        description: error.message || uiText("Failed to reset password"),
         variant: "destructive",
       });
     } finally {
@@ -184,7 +186,7 @@ export default function ForgotPassword() {
           >
             <Link href="/login">
               <ArrowLeft className="w-4 h-4 mr-2" aria-hidden="true" />
-              Back to Log In
+              {uiText("Back to Log In")}
             </Link>
           </Button>
         </div>
@@ -195,31 +197,31 @@ export default function ForgotPassword() {
               {step === 'name' && (
                 <>
                   <User className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 1 of 5
+                  {uiText("Reset Password - Step 1 of 5")}
                 </>
               )}
               {step === 'phone' && (
                 <>
                   <Phone className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 2 of 5
+                  {uiText("Reset Password - Step 2 of 5")}
                 </>
               )}
               {step === 'questions' && (
                 <>
                   <Shield className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 3 of 5
+                  {uiText("Reset Password - Step 3 of 5")}
                 </>
               )}
               {step === 'pin' && (
                 <>
                   <Hash className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 4 of 5
+                  {uiText("Reset Password - Step 4 of 5")}
                 </>
               )}
               {step === 'password' && (
                 <>
                   <Lock className="w-8 h-8 mx-auto mb-2" />
-                  Reset Password - Step 5 of 5
+                  {uiText("Reset Password - Step 5 of 5")}
                 </>
               )}
             </CardTitle>
@@ -228,29 +230,29 @@ export default function ForgotPassword() {
             {step === 'name' && (
               <>
                 <p className="text-muted-foreground text-sm text-center mb-4">
-                  Enter your first and last name for account verification
+                  {uiText("Enter your first and last name for account verification")}
                 </p>
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm text-muted-foreground">
-                      First Name
+                      {uiText("First Name")}
                     </label>
                     <Input
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Enter your first name"
+                      placeholder={uiText("Enter your first name")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-first-name"
                     />
                   </div>
                   <div>
                     <label className="text-sm text-muted-foreground">
-                      Last Name
+                      {uiText("Last Name")}
                     </label>
                     <Input
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Enter your last name"
+                      placeholder={uiText("Enter your last name")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-last-name"
                     />
@@ -262,7 +264,7 @@ export default function ForgotPassword() {
                   className="w-full"
                   data-testid="button-verify-name"
                 >
-                  {isLoading ? "Verifying..." : "Verify Name"}
+                  {isLoading ? uiText("Verifying...") : uiText("Verify Name")}
                 </Button>
               </>
             )}
@@ -270,13 +272,13 @@ export default function ForgotPassword() {
             {step === 'phone' && (
               <>
                 <p className="text-muted-foreground text-sm text-center mb-4">
-                  Enter your phone number for account verification
+                  {uiText("Enter your phone number for account verification")}
                 </p>
                 <PhoneInput
-                  label="Phone number"
+                  label={uiText("Phone number")}
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="Enter your phone number"
+                  placeholder={uiText("Enter your phone number")}
                   data-testid="input-phone-reset"
                 />
                 <Button
@@ -285,7 +287,7 @@ export default function ForgotPassword() {
                   className="w-full"
                   data-testid="button-verify-account"
                 >
-                  {isLoading ? "Verifying..." : "Verify Account"}
+                  {isLoading ? uiText("Verifying...") : uiText("Verify Account")}
                 </Button>
               </>
             )}
@@ -293,41 +295,41 @@ export default function ForgotPassword() {
             {step === 'questions' && (
               <>
                 <p className="text-muted-foreground text-sm text-center mb-4">
-                  Answer your security questions to verify your identity
+                  {uiText("Answer your security questions to verify your identity")}
                 </p>
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm text-muted-foreground">
-                      What was the make and model of your first car?
+                      {uiText("What was the make and model of your first car?")}
                     </label>
                     <Input
                       value={securityAnswers.answer1}
                       onChange={(e) => setSecurityAnswers({...securityAnswers, answer1: e.target.value})}
-                      placeholder="Enter your answer"
+                      placeholder={uiText("Enter your answer")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-1"
                     />
                   </div>
                   <div>
                     <label className="text-sm text-muted-foreground">
-                      What is your mother's maiden name?
+                      {uiText("What is your mother's maiden name?")}
                     </label>
                     <Input
                       value={securityAnswers.answer2}
                       onChange={(e) => setSecurityAnswers({...securityAnswers, answer2: e.target.value})}
-                      placeholder="Enter your answer"
+                      placeholder={uiText("Enter your answer")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-2"
                     />
                   </div>
                   <div>
                     <label className="text-sm text-muted-foreground">
-                      What was your favorite teacher's last name?
+                      {uiText("What was your favorite teacher's last name?")}
                     </label>
                     <Input
                       value={securityAnswers.answer3}
                       onChange={(e) => setSecurityAnswers({...securityAnswers, answer3: e.target.value})}
-                      placeholder="Enter your answer"
+                      placeholder={uiText("Enter your answer")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-3"
                     />
@@ -339,7 +341,7 @@ export default function ForgotPassword() {
                   className="w-full"
                   data-testid="button-verify-security"
                 >
-                  {isLoading ? "Verifying..." : "Verify Answers"}
+                  {isLoading ? uiText("Verifying...") : uiText("Verify Answers")}
                 </Button>
               </>
             )}
@@ -347,7 +349,7 @@ export default function ForgotPassword() {
             {step === 'pin' && (
               <>
                 <p className="text-muted-foreground text-sm text-center mb-4">
-                  Enter your 4-digit PIN to verify your identity
+                  {uiText("Enter your 4-digit PIN to verify your identity")}
                 </p>
                 <Input
                   type="password"
@@ -358,7 +360,7 @@ export default function ForgotPassword() {
                     const value = e.target.value.replace(/\D/g, '');
                     setPin(value);
                   }}
-                  placeholder="Enter your 4-digit PIN"
+                  placeholder={uiText("Enter your 4-digit PIN")}
                   className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 text-center text-xl tracking-widest"
                   data-testid="input-security-pin"
                 />
@@ -368,7 +370,7 @@ export default function ForgotPassword() {
                   className="w-full"
                   data-testid="button-verify-pin"
                 >
-                  {isLoading ? "Verifying..." : "Verify PIN"}
+                  {isLoading ? uiText("Verifying...") : uiText("Verify PIN")}
                 </Button>
               </>
             )}
@@ -376,31 +378,31 @@ export default function ForgotPassword() {
             {step === 'password' && (
               <>
                 <p className="text-muted-foreground text-sm text-center mb-4">
-                  Create a new password for your account
+                  {uiText("Create a new password for your account")}
                 </p>
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm text-muted-foreground">
-                      New Password
+                      {uiText("New Password")}
                     </label>
                     <Input
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Enter new password"
+                      placeholder={uiText("Enter new password")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-new-password"
                     />
                   </div>
                   <div>
                     <label className="text-sm text-muted-foreground">
-                      Confirm Password
+                      {uiText("Confirm Password")}
                     </label>
                     <Input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm new password"
+                      placeholder={uiText("Confirm new password")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-confirm-password"
                     />
@@ -412,7 +414,7 @@ export default function ForgotPassword() {
                   className="w-full"
                   data-testid="button-reset-password"
                 >
-                  {isLoading ? "Resetting..." : "Reset Password"}
+                  {isLoading ? uiText("Resetting...") : uiText("Reset Password")}
                 </Button>
               </>
             )}

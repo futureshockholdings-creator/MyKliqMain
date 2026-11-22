@@ -1,7 +1,9 @@
 import { useOfflineStatus } from '@/hooks/useOfflineStatus';
 import { WifiOff } from 'lucide-react';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 export function OfflineBanner() {
+  useUiLanguage();
   const { isOffline } = useOfflineStatus();
 
   if (!isOffline) return null;
@@ -30,7 +32,7 @@ export function OfflineBanner() {
       }}
     >
       <WifiOff size={16} />
-      <span>You're offline — showing last saved data</span>
+      <span>{uiText("You're offline — showing last saved data")}</span>
     </div>
   );
 }

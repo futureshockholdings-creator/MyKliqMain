@@ -29,6 +29,8 @@ import {
   Trash2
 } from "lucide-react";
 import { PageWrapper } from "@/components/PageWrapper";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatNativeDate } from "@/i18n/formatting";
 
 interface User {
   id: string;
@@ -71,6 +73,7 @@ interface ChatMessage {
 }
 
 export default function Actions() {
+  useUiLanguage();
   const [showCreateAction, setShowCreateAction] = useState(false);
   const [selectedAction, setSelectedAction] = useState<Action | null>(null);
   const [showStreamControls, setShowStreamControls] = useState(false);
@@ -758,7 +761,7 @@ export default function Actions() {
                   <div className="flex items-center space-x-2">
                     <Badge className="bg-red-600 text-white">
                       <div className="w-2 h-2 bg-white rounded-full mr-2"></div>
-                      LIVE
+          {uiText("LIVE")}
                     </Badge>
                     <Badge variant="secondary">
                       <Eye className="w-3 h-3 mr-1" />
@@ -797,7 +800,7 @@ export default function Actions() {
                             data-testid="button-start-stream"
                           >
                             <Play className="w-4 h-4 mr-2" />
-                            Start Streaming
+                            {uiText("Start Streaming")}
                           </Button>
                         ) : (
                           <>
@@ -824,7 +827,7 @@ export default function Actions() {
                               data-testid="button-end-stream"
                             >
                               <Square className="w-4 h-4 mr-2" />
-                              End Stream
+                              {uiText("End Stream")}
                             </Button>
                           </>
                         )}
@@ -835,8 +838,8 @@ export default function Actions() {
                     <div className="w-full h-full flex items-center justify-center text-white">
                       <div className="text-center">
                         <Video className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <p className="text-lg mb-2">Watching {selectedAction.author.firstName}'s stream</p>
-                        <p className="text-gray-400">Live video stream would appear here</p>
+                        <p className="text-lg mb-2">{uiText("Watching {{name}}'s stream", { name: selectedAction.author.firstName })}</p>
+                        <p className="text-gray-400">{uiText("Live video stream would appear here")}</p>
                       </div>
                     </div>
                   )}
@@ -851,7 +854,7 @@ export default function Actions() {
                 className="border-gray-600 text-gray-300 hover:bg-gray-700"
                 data-testid="button-back-to-actions"
               >
-                Back to Actions
+                {uiText("Back to Actions")}
               </Button>
               
               <div className="flex gap-2">
@@ -863,7 +866,7 @@ export default function Actions() {
                     data-testid="button-delete-stream"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    {deleteActionMutation.isPending ? "Deleting..." : "Delete Stream"}
+                    {deleteActionMutation.isPending ? uiText("Deleting...") : uiText("Delete Stream")}
                   </Button>
                 )}
                 
@@ -874,7 +877,7 @@ export default function Actions() {
                     className="border-red-600 text-red-400 hover:bg-red-900"
                     data-testid="button-leave-stream"
                   >
-                    Leave Stream
+                    {uiText("Leave Stream")}
                   </Button>
                 )}
               </div>
@@ -888,7 +891,7 @@ export default function Actions() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-white flex items-center">
                     <MessageCircle className="w-5 h-5 mr-2" />
-                    Live Chat
+                    {uiText("Live Chat")}
                   </CardTitle>
                 </CardHeader>
                 
@@ -910,7 +913,7 @@ export default function Actions() {
                     <Input
                       value={chatMessage}
                       onChange={(e) => setChatMessage(e.target.value)}
-                      placeholder="Type a message..."
+                      placeholder={uiText("Type a message...")}
                       className="bg-gray-700 border-gray-600 text-white"
                       onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                       data-testid="input-chat-message"
@@ -938,42 +941,42 @@ export default function Actions() {
       <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Action</h1>
-            <p className="text-gray-400">Live streams from your kliq</p>
+            <h1 className="text-3xl font-bold text-white mb-2">{uiText("Action")}</h1>
+            <p className="text-gray-400">{uiText("Live streams from your kliq")}</p>
           </div>
         
         <Dialog open={showCreateAction} onOpenChange={setShowCreateAction}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-to-r from-red-600 to-pink-600 text-white">
               <Video className="w-4 h-4 mr-2" />
-              Start Action
+              {uiText("Start Action")}
             </Button>
           </DialogTrigger>
           <DialogContent className="bg-white border-border max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-black">Start New Action</DialogTitle>
+              <DialogTitle className="text-black">{uiText("Start New Action")}</DialogTitle>
               <DialogDescription className="text-gray-600">
-                Start a live stream to share with your kliq
+                {uiText("Start a live stream to share with your kliq")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label className="text-gray-700">Title</Label>
+                <Label className="text-gray-700">{uiText("Title")}</Label>
                 <Input
                   value={newAction.title}
                   onChange={(e) => setNewAction(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="What's your action about?"
+                  placeholder={uiText("What's your action about?")}
                   className="bg-white border-gray-300 text-black placeholder:text-gray-400"
                   data-testid="input-action-title"
                 />
               </div>
               
               <div>
-                <Label className="text-gray-700">Description</Label>
+                <Label className="text-gray-700">{uiText("Description")}</Label>
                 <Textarea
                   value={newAction.description}
                   onChange={(e) => setNewAction(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Tell your kliq what to expect"
+                  placeholder={uiText("Tell your kliq what to expect")}
                   className="bg-white border-gray-300 text-black placeholder:text-gray-400 resize-none"
                   rows={3}
                   data-testid="input-action-description"
@@ -986,7 +989,7 @@ export default function Actions() {
                   onCheckedChange={(checked) => setNewAction(prev => ({ ...prev, chatEnabled: checked }))}
                   data-testid="switch-chat-enabled"
                 />
-                <Label className="text-gray-700">Enable live chat</Label>
+                <Label className="text-gray-700">{uiText("Enable live chat")}</Label>
               </div>
 
               <div className="flex space-x-2 pt-4">
@@ -996,14 +999,14 @@ export default function Actions() {
                   className="flex-1 bg-gradient-to-r from-red-600 to-pink-600 text-white"
                   data-testid="button-create-action"
                 >
-                  {createActionMutation.isPending ? "Starting..." : "Start Action"}
+                  {createActionMutation.isPending ? uiText("Starting...") : uiText("Start Action")}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setShowCreateAction(false)}
                   className="border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
-                  Cancel
+                  {uiText("Cancel")}
                 </Button>
               </div>
             </div>
@@ -1025,7 +1028,7 @@ export default function Actions() {
                 <div className="flex items-center justify-between mb-2">
                   <Badge className="bg-red-600 text-white">
                     <div className="w-2 h-2 bg-white rounded-full mr-2"></div>
-                    LIVE
+                    {uiText("LIVE")}
                   </Badge>
                   <Badge variant="secondary">
                     <Eye className="w-3 h-3 mr-1" />
@@ -1042,7 +1045,7 @@ export default function Actions() {
                     {action.author.profileImageUrl ? (
                       <img
                         src={resolveAssetUrl(action.author.profileImageUrl)}
-                        alt={`${action.author.firstName}'s profile`}
+                        alt={uiText("{{name}}'s profile", { name: action.author.firstName })}
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
@@ -1055,7 +1058,7 @@ export default function Actions() {
                         {action.author.firstName} {action.author.lastName}
                       </p>
                       <p className="text-gray-400 text-xs">
-                        Started {new Date(action.createdAt).toLocaleTimeString()}
+                        {uiText("Started {{time}}", { time: formatNativeDate(new Date(action.createdAt), { hour: "numeric", minute: "2-digit" }) })}
                       </p>
                     </div>
                   </div>
@@ -1072,16 +1075,16 @@ export default function Actions() {
         <Card className="bg-gray-800 border-gray-700">
           <CardContent className="py-16 text-center">
             <Video className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-xl font-semibold text-white mb-2">No live actions</h3>
+            <h3 className="text-xl font-semibold text-white mb-2">{uiText("No live actions")}</h3>
             <p className="text-gray-400 mb-4">
-              Be the first to start a live stream in your kliq!
+              {uiText("Be the first to start a live stream in your kliq!")}
             </p>
               <Button
                 onClick={() => setShowCreateAction(true)}
                 className="bg-gradient-to-r from-red-600 to-pink-600 text-white"
               >
                 <Video className="w-4 h-4 mr-2" />
-                Start Your First Action
+                {uiText("Start Your First Action")}
               </Button>
             </CardContent>
           </Card>
@@ -1089,17 +1092,17 @@ export default function Actions() {
 
       {/* My Recordings Section */}
       <div className="mt-8" ref={myRecordingsRef}>
-        <h2 className="text-xl font-semibold text-white mb-4">My Recordings</h2>
-        <p className="text-gray-400 text-sm mb-4">Your last 10 recorded streams (oldest auto-deleted when limit reached)</p>
+        <h2 className="text-xl font-semibold text-white mb-4">{uiText("My Recordings")}</h2>
+        <p className="text-gray-400 text-sm mb-4">{uiText("Your last 10 recorded streams (oldest auto-deleted when limit reached)")}</p>
         
         {processingActionId && (
           <Card className="bg-gray-800 border-purple-500 border-2 mb-4 animate-pulse">
             <CardContent className="py-8 text-center">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-10 h-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                <h3 className="text-white font-semibold">Processing Stream Recording</h3>
-                <p className="text-gray-400 text-sm">"{processingTitle}" is being uploaded and processed...</p>
-                <p className="text-gray-500 text-xs">This may take a few seconds</p>
+                <h3 className="text-white font-semibold">{uiText("Processing Stream Recording")}</h3>
+                <p className="text-gray-400 text-sm">{uiText("{{title}} is being uploaded and processed...", { title: processingTitle })}</p>
+                <p className="text-gray-500 text-xs">{uiText("This may take a few seconds")}</p>
               </div>
             </CardContent>
           </Card>
@@ -1108,7 +1111,7 @@ export default function Actions() {
         {recordingsLoading ? (
           <Card className="bg-gray-800 border-gray-700">
             <CardContent className="py-8 text-center">
-              <p className="text-gray-400">Loading recordings...</p>
+              <p className="text-gray-400">{uiText("Loading recordings...")}</p>
             </CardContent>
           </Card>
         ) : myRecordings && myRecordings.length > 0 ? (
@@ -1122,10 +1125,10 @@ export default function Actions() {
                   <div className="flex items-center justify-between mb-2">
                     <Badge className="bg-purple-600 text-white">
                       <Play className="w-3 h-3 mr-1" />
-                      REPLAY
+                      {uiText("REPLAY")}
                     </Badge>
                     <span className="text-gray-400 text-xs">
-                      {new Date(recording.createdAt).toLocaleDateString()}
+                      {formatNativeDate(recording.createdAt, { month: "short", day: "numeric", year: "numeric" })}
                     </span>
                   </div>
                   <CardTitle className="text-white text-base">{recording.title}</CardTitle>
@@ -1145,14 +1148,14 @@ export default function Actions() {
                       poster={recording.thumbnailUrl ? resolveAssetUrl(recording.thumbnailUrl) : undefined}
                       src={resolveAssetUrl(recording.recordingUrl)}
                     >
-                      Your browser does not support video playback.
+                      {uiText("Your browser does not support video playback.")}
                     </video>
                   )}
                   
                   <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center gap-2">
                       <p className="text-gray-400 text-xs">
-                        {new Date(recording.createdAt).toLocaleTimeString()}
+                        {formatNativeDate(recording.createdAt, { hour: "numeric", minute: "2-digit" })}
                       </p>
                       {recording.recordingDuration && recording.recordingDuration > 0 && (
                         <Badge variant="outline" className="text-gray-400 border-gray-600 text-xs">
@@ -1179,8 +1182,8 @@ export default function Actions() {
           <Card className="bg-gray-800 border-gray-700">
             <CardContent className="py-8 text-center">
               <Video className="w-12 h-12 mx-auto mb-3 text-gray-500" />
-              <p className="text-gray-400">No recordings yet</p>
-              <p className="text-gray-500 text-sm mt-1">Your completed streams will appear here</p>
+              <p className="text-gray-400">{uiText("No recordings yet")}</p>
+              <p className="text-gray-500 text-sm mt-1">{uiText("Your completed streams will appear here")}</p>
             </CardContent>
           </Card>
         )}

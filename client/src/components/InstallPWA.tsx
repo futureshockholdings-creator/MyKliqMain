@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Download, X } from "lucide-react";
 import { detectDevice } from "@/lib/deviceDetection";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -10,21 +11,22 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 function IOSBanner({ onInstall, onDismiss, showSteps }: { onInstall: () => void; onDismiss: () => void; showSteps: boolean }) {
+  useUiLanguage();
   if (showSteps) {
     return (
       <div data-pwa-install-banner className="fixed top-0 left-0 right-0 z-[9999] bg-gray-100 border-b border-gray-300 shadow-md">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-lg font-bold text-gray-900">Install MyKliq</span>
+            <span className="text-lg font-bold text-gray-900">{uiText("Install MyKliq")}</span>
             <button onClick={onDismiss} className="text-gray-500 hover:text-gray-700 p-1">
               <X className="w-6 h-6" />
             </button>
           </div>
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-base">1</span>
+              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-base">{uiText("1")}</span>
               <p className="text-base text-gray-700">
-                Tap the{" "}
+                {uiText("Tap the")}{" "}
                 <span className="inline-flex items-center align-middle">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
                     <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
@@ -32,16 +34,16 @@ function IOSBanner({ onInstall, onDismiss, showSteps }: { onInstall: () => void;
                     <line x1="12" y1="2" x2="12" y2="15" />
                   </svg>
                 </span>
-                {" "}Share button in Safari
+                {" "}{uiText("Share button in Safari")}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-base">2</span>
-              <p className="text-base text-gray-700">Tap "Add to Home Screen"</p>
+              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-base">{uiText("2")}</span>
+              <p className="text-base text-gray-700">{uiText("Tap \"Add to Home Screen\"")}</p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-base">3</span>
-              <p className="text-base text-gray-700">Tap "Add" to install</p>
+              <span className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center font-bold text-base">{uiText("3")}</span>
+              <p className="text-base text-gray-700">{uiText("Tap \"Add\" to install")}</p>
             </div>
           </div>
         </div>
@@ -59,21 +61,21 @@ function IOSBanner({ onInstall, onDismiss, showSteps }: { onInstall: () => void;
         <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden shadow-sm">
           <img 
             src="/icons/icon-192x192.png" 
-            alt="MyKliq" 
+            alt={uiText("MyKliq")} 
             className="w-full h-full object-cover"
           />
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-base font-semibold text-gray-900 leading-tight">MyKliq</p>
-          <p className="text-sm text-gray-500 leading-tight mt-0.5">Your Private Social Circle</p>
+          <p className="text-base font-semibold text-gray-900 leading-tight">{uiText("MyKliq")}</p>
+          <p className="text-sm text-gray-500 leading-tight mt-0.5">{uiText("Your Private Social Circle")}</p>
         </div>
 
         <button
           onClick={onInstall}
           className="flex-shrink-0 bg-green-500 hover:bg-green-600 text-black font-bold text-base px-5 py-2 rounded-full transition-colors"
         >
-          Install
+          {uiText("Install")}
         </button>
       </div>
     </div>
@@ -81,6 +83,7 @@ function IOSBanner({ onInstall, onDismiss, showSteps }: { onInstall: () => void;
 }
 
 export function InstallPWA() {
+  useUiLanguage();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [showIOSSteps, setShowIOSSteps] = useState(false);
@@ -191,14 +194,14 @@ export function InstallPWA() {
           <div className="w-20 h-20 rounded-2xl overflow-hidden mb-4 shadow-lg">
             <img 
               src="/icons/icon-192x192.png" 
-              alt="MyKliq" 
+              alt={uiText("MyKliq")} 
               className="w-full h-full object-cover"
             />
           </div>
 
-          <h2 className="text-xl font-bold text-foreground mb-1">Install MyKliq</h2>
+          <h2 className="text-xl font-bold text-foreground mb-1">{uiText("Install MyKliq")}</h2>
           <p className="text-sm text-muted-foreground mb-6">
-            Add MyKliq to your home screen for quick access and a better experience
+            {uiText("Add MyKliq to your home screen for quick access and a better experience")}
           </p>
 
           <div className="w-full space-y-3">
@@ -208,7 +211,7 @@ export function InstallPWA() {
               size="lg"
             >
               <Download className="w-5 h-5 mr-2" />
-              Install App
+              {uiText("Install App")}
             </Button>
             <Button
               onClick={handleDismiss}
@@ -216,7 +219,7 @@ export function InstallPWA() {
               className="w-full text-muted-foreground hover:text-foreground"
               size="lg"
             >
-              Not Now
+              {uiText("Not Now")}
             </Button>
           </div>
         </div>

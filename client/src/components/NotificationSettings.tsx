@@ -8,8 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { getMessaging, vapidKey, isMessagingSupported } from "@/lib/firebase";
 import { buildApiUrl } from "@/lib/apiConfig";
 import { getAuthToken } from "@/lib/tokenStorage";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 export function NotificationSettings() {
+  useUiLanguage();
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
   const [isEnabled, setIsEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -98,8 +100,8 @@ export function NotificationSettings() {
           const errorMsg = `Firebase not initialized. Supported: ${isMessagingSupported()}, VAPID: ${!!vapidKey}`;
           setLastError(errorMsg);
           toast({
-            title: "Configuration Error",
-            description: "Firebase messaging is not available. Please try again or use a different browser.",
+            title: uiText("Configuration Error"),
+            description: uiText("Firebase messaging is not available. Please try again or use a different browser."),
             variant: "destructive"
           });
           setIsToggling(false);
@@ -112,8 +114,8 @@ export function NotificationSettings() {
       if (!granted) {
         setLastError("Permission denied by user");
         toast({
-          title: "Permission Denied",
-          description: "You need to allow notifications in your browser settings.",
+          title: uiText("Permission Denied"),
+          description: uiText("You need to allow notifications in your browser settings."),
           variant: "destructive"
         });
         setIsToggling(false);
@@ -132,15 +134,15 @@ export function NotificationSettings() {
         });
         
         toast({
-          title: "Notifications Enabled",
-          description: "You'll now receive push notifications from MyKliq!",
+          title: uiText("Notifications Enabled"),
+          description: uiText("You'll now receive push notifications from MyKliq!"),
         });
       } else {
         const serviceError = webPushService.getLastError();
         const errorDetail = serviceError || "Device registration failed - check browser console for details";
         setLastError(errorDetail);
         toast({
-          title: "Registration Failed",
+          title: uiText("Registration Failed"),
           description: errorDetail,
           variant: "destructive",
           duration: 10000
@@ -152,8 +154,8 @@ export function NotificationSettings() {
       console.error('[NotificationSettings] Error stack:', error?.stack);
       setLastError(`Enable Error: ${errorMsg}`);
       toast({
-        title: "Error",
-        description: errorMsg || "An error occurred while enabling notifications.",
+        title: uiText("Error"),
+        description: errorMsg || uiText("An error occurred while enabling notifications."),
         variant: "destructive",
         duration: 10000
       });
@@ -170,14 +172,14 @@ export function NotificationSettings() {
       setIsEnabled(false);
       
       toast({
-        title: "Notifications Disabled",
-        description: "You won't receive push notifications anymore.",
+        title: uiText("Notifications Disabled"),
+        description: uiText("You won't receive push notifications anymore."),
       });
     } catch (error) {
       console.error('[NotificationSettings] Error disabling notifications:', error);
       toast({
-        title: "Error",
-        description: "An error occurred while disabling notifications.",
+        title: uiText("Error"),
+        description: uiText("An error occurred while disabling notifications."),
         variant: "destructive"
       });
     } finally {
@@ -199,40 +201,40 @@ export function NotificationSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
             <Smartphone className="w-5 h-5" />
-            Install MyKliq to Enable Notifications
+            {uiText("Install MyKliq to Enable Notifications")}
           </CardTitle>
           <CardDescription className="text-purple-200">
-            Safari requires MyKliq to be installed as an app on your home screen to receive push notifications.
+            {uiText("Safari requires MyKliq to be installed as an app on your home screen to receive push notifications.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="bg-white/10 border border-white/20 rounded-lg p-4">
-            <p className="font-semibold text-white mb-2">How to Install:</p>
+            <p className="font-semibold text-white mb-2">{uiText("How to Install:")}</p>
             <ol className="space-y-2 text-sm text-purple-200">
               <li className="flex items-start gap-2">
-                <span className="font-bold">1.</span>
-                <span>Tap the Share button (square with arrow) in Safari</span>
+                <span className="font-bold">{uiText("1.")}</span>
+                <span>{uiText("Tap the Share button (square with arrow) in Safari")}</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="font-bold">2.</span>
-                <span>Scroll down and tap "Add to Home Screen"</span>
+                <span className="font-bold">{uiText("2.")}</span>
+                <span>{uiText('Scroll down and tap "Add to Home Screen"')}</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="font-bold">3.</span>
-                <span>Tap "Add" to confirm</span>
+                <span className="font-bold">{uiText("3.")}</span>
+                <span>{uiText('Tap "Add" to confirm')}</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="font-bold">4.</span>
-                <span>Open MyKliq from your home screen</span>
+                <span className="font-bold">{uiText("4.")}</span>
+                <span>{uiText("Open MyKliq from your home screen")}</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="font-bold">5.</span>
-                <span>Return to Settings to enable push notifications</span>
+                <span className="font-bold">{uiText("5.")}</span>
+                <span>{uiText("Return to Settings to enable push notifications")}</span>
               </li>
             </ol>
           </div>
           <p className="text-sm text-purple-300">
-            Once installed, you'll be able to receive notifications for posts, comments, messages, and more!
+            {uiText("Once installed, you'll be able to receive notifications for posts, comments, messages, and more!")}
           </p>
         </CardContent>
       </Card>
@@ -245,10 +247,10 @@ export function NotificationSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
             <BellOff className="w-5 h-5" />
-            Push Notifications Not Supported
+            {uiText("Push Notifications Not Supported")}
           </CardTitle>
           <CardDescription className="text-purple-200">
-            Your browser doesn't support push notifications.
+            {uiText("Your browser doesn't support push notifications.")}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -260,22 +262,22 @@ export function NotificationSettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-white">
           <Bell className="w-5 h-5" />
-          Push Notifications
+          {uiText("Push Notifications")}
         </CardTitle>
         <CardDescription className="text-purple-200">
-          Get notified about new posts, comments, likes, and more
+          {uiText("Get notified about new posts, comments, likes, and more")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <Label htmlFor="push-notifications" className="flex flex-col space-y-1">
-            <span className="font-medium text-white">Enable Push Notifications</span>
+            <span className="font-medium text-white">{uiText("Enable Push Notifications")}</span>
             <span className="text-sm text-purple-300">
               {isLoading 
-                ? "Checking status..." 
+                ? uiText("Checking status...")
                 : isEnabled 
-                  ? "You're receiving push notifications" 
-                  : "Turn on to receive notifications"}
+                  ? uiText("You're receiving push notifications")
+                  : uiText("Turn on to receive notifications")}
             </span>
           </Label>
           {isLoading ? (
@@ -296,7 +298,7 @@ export function NotificationSettings() {
           <div className="flex items-center gap-2 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
             <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
             <span className="text-sm text-blue-200">
-              {isEnabled ? "Disabling notifications..." : "Enabling notifications..."}
+              {isEnabled ? uiText("Disabling notifications...") : uiText("Enabling notifications...")}
             </span>
           </div>
         )}
@@ -304,14 +306,14 @@ export function NotificationSettings() {
         {isEnabled && !isToggling && (
           <div className="flex items-center gap-2 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
             <Check className="w-4 h-4 text-green-400" />
-            <span className="text-sm text-green-200">Push notifications are active</span>
+            <span className="text-sm text-green-200">{uiText("Push notifications are active")}</span>
           </div>
         )}
 
         {permissionStatus === 'denied' && (
           <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
             <p className="text-sm text-red-200">
-              You've blocked notifications. To enable them, please allow notifications in your browser settings.
+              {uiText("You've blocked notifications. To enable them, please allow notifications in your browser settings.")}
             </p>
           </div>
         )}
@@ -321,12 +323,12 @@ export function NotificationSettings() {
             <div className="flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-orange-400 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-orange-200">Debug Info</p>
+                <p className="text-sm font-medium text-orange-200">{uiText("Debug Info")}</p>
                 <p className="text-xs text-orange-300 mt-1">{lastError}</p>
                 <p className="text-xs text-orange-300 mt-1">
-                  Firebase: {firebaseConfigStatus.hasMessaging ? 'OK' : 'Not initialized'} | 
-                  VAPID: {firebaseConfigStatus.hasVapidKey ? firebaseConfigStatus.vapidKeyPreview : 'MISSING'} |
-                  Supported: {firebaseConfigStatus.isMessagingSupported ? 'Yes' : 'No'}
+                  {uiText("Firebase:")} {firebaseConfigStatus.hasMessaging ? uiText("OK") : uiText("Not initialized")} |
+                  {uiText("VAPID:")} {firebaseConfigStatus.hasVapidKey ? firebaseConfigStatus.vapidKeyPreview : uiText("MISSING")} |
+                  {uiText("Supported:")} {firebaseConfigStatus.isMessagingSupported ? uiText("Yes") : uiText("No")}
                 </p>
               </div>
             </div>

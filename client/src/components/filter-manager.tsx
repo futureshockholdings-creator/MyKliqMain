@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X, Plus, Shield } from "lucide-react";
 import type { ContentFilter } from "@shared/schema";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface FilterManagerProps {
   filters: ContentFilter[];
@@ -13,6 +14,7 @@ interface FilterManagerProps {
 }
 
 export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterManagerProps) {
+  useUiLanguage();
   const [newKeyword, setNewKeyword] = useState("");
 
   const handleAddFilter = () => {
@@ -33,10 +35,10 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
       <CardHeader>
         <CardTitle className="text-primary flex items-center gap-2">
           <Shield className="w-5 h-5" />
-          🚫 Content Filters
+          {uiText("🚫 Content Filters")}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Hide posts containing these keywords from your feed
+          {uiText("Hide posts containing these keywords from your feed")}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -46,7 +48,7 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
             value={newKeyword}
             onChange={(e) => setNewKeyword(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Enter keyword to filter..."
+            placeholder={uiText("Enter keyword to filter...")}
             className="flex-1 bg-white border-gray-300 text-black placeholder-gray-500"
           />
           <Button
@@ -61,11 +63,10 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
         {/* Current Filters */}
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-foreground">
-            Active Filters ({filters.length})
-          </h4>
+            {uiText("Active Filters ({{length}})", { "length": filters.length })}</h4>
           {filters.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">
-              No filters set. All posts will be visible.
+              {uiText("No filters set. All posts will be visible.")}
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">
@@ -87,15 +88,14 @@ export function FilterManager({ filters, onAddFilter, onRemoveFilter }: FilterMa
         {/* Info Box */}
         <div className="bg-muted/30 border border-border rounded-lg p-3">
           <p className="text-xs text-muted-foreground">
-            💡 <strong>Tip:</strong> Filters are case-insensitive and will hide any post 
-            containing these keywords. Add filters for topics you'd rather not see in your feed.
+            💡 <strong>{uiText("Tip:")}</strong> {uiText("Filters are case-insensitive and will hide any post containing these keywords. Add filters for topics you'd rather not see in your feed.")}
           </p>
         </div>
 
         {/* Common Filter Suggestions */}
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-foreground">
-            Common Filters
+            {uiText("Common Filters")}
           </h4>
           <div className="flex flex-wrap gap-2">
             {["drama", "politics", "negative", "spam", "toxic", "hate"].map((suggestion) => {

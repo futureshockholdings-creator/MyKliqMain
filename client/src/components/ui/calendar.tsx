@@ -4,6 +4,8 @@ import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { useUiLanguage } from "@/i18n/interfaceText"
+import { selectedDateLocale } from "@/i18n/formatting"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
@@ -13,8 +15,11 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
+  const language = useUiLanguage()
   return (
     <DayPicker
+      locale={selectedDateLocale()}
+      dir={language === "ar" ? "rtl" : "ltr"}
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{

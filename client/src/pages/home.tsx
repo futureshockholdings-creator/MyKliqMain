@@ -59,9 +59,12 @@ import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { InviteCard } from "@/components/InviteCard";
 
 import type { Meme, Moviecon } from "@shared/schema";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber } from "@/i18n/formatting";
 
 // Edit Post Form Component
 function EditPostForm({ post, onUpdate, onSaved, onOptimisticDelete }: { post: any; onUpdate: () => void; onSaved: () => void; onOptimisticDelete?: (postId: string) => void }) {
+  useUiLanguage();
   const queryClient = useQueryClient();
   const [editContent, setEditContent] = useState(post.content || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -149,7 +152,7 @@ function EditPostForm({ post, onUpdate, onSaved, onOptimisticDelete }: { post: a
       <Textarea
         value={editContent}
         onChange={(e) => setEditContent(e.target.value)}
-        placeholder="What's on your mind?"
+        placeholder={uiText("What's on your mind?")}
         className="min-h-[120px] bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
         data-testid="textarea-edit-post"
       />
@@ -162,12 +165,12 @@ function EditPostForm({ post, onUpdate, onSaved, onOptimisticDelete }: { post: a
               className="text-white"
               data-testid="button-delete-post"
             >
-              Delete Post
+              {uiText("Delete Post")}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md bg-card border-border">
             <DialogHeader>
-              <DialogTitle className="text-foreground">Confirm Delete</DialogTitle>
+              <DialogTitle className="text-foreground">{uiText("Confirm Delete")}</DialogTitle>
             </DialogHeader>
             <div className="flex gap-2 justify-end pt-4">
               <Button
@@ -176,7 +179,7 @@ function EditPostForm({ post, onUpdate, onSaved, onOptimisticDelete }: { post: a
                 disabled={isDeleting}
                 className="border-border text-foreground"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 variant="destructive"
@@ -188,10 +191,10 @@ function EditPostForm({ post, onUpdate, onSaved, onOptimisticDelete }: { post: a
                 {isDeleting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Deleting...
+                    {uiText("Deleting...")}
                   </>
                 ) : (
-                  "Delete"
+                  uiText("Delete")
                 )}
               </Button>
             </div>
@@ -204,7 +207,7 @@ function EditPostForm({ post, onUpdate, onSaved, onOptimisticDelete }: { post: a
             disabled={isSubmitting || isDeleting}
             className="border-border text-foreground"
           >
-            Reset
+            {uiText("Reset")}
           </Button>
           <Button
             onClick={handleUpdate}
@@ -215,10 +218,10 @@ function EditPostForm({ post, onUpdate, onSaved, onOptimisticDelete }: { post: a
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Updating...
+                {uiText("Updating...")}
               </>
             ) : (
-              "Update Post"
+              uiText("Update Post")
             )}
           </Button>
         </div>
@@ -229,6 +232,7 @@ function EditPostForm({ post, onUpdate, onSaved, onOptimisticDelete }: { post: a
 
 // Edit Comment Form Component
 function EditCommentForm({ comment, onUpdate }: { comment: any; onUpdate: () => void }) {
+  useUiLanguage();
   const [editContent, setEditContent] = useState(comment.content || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -300,7 +304,7 @@ function EditCommentForm({ comment, onUpdate }: { comment: any; onUpdate: () => 
       <Textarea
         value={editContent}
         onChange={(e) => setEditContent(e.target.value)}
-        placeholder="Edit your comment..."
+        placeholder={uiText("Edit your comment...")}
         className="min-h-[100px] bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
         data-testid="textarea-edit-comment"
       />
@@ -313,12 +317,12 @@ function EditCommentForm({ comment, onUpdate }: { comment: any; onUpdate: () => 
               className="text-white"
               data-testid="button-delete-comment"
             >
-              Delete Comment
+              {uiText("Delete Comment")}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md bg-card border-border">
             <DialogHeader>
-              <DialogTitle className="text-foreground">Confirm Delete</DialogTitle>
+              <DialogTitle className="text-foreground">{uiText("Confirm Delete")}</DialogTitle>
             </DialogHeader>
             <div className="flex gap-2 justify-end pt-4">
               <Button
@@ -327,7 +331,7 @@ function EditCommentForm({ comment, onUpdate }: { comment: any; onUpdate: () => 
                 disabled={isDeleting}
                 className="border-border text-foreground"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 variant="destructive"
@@ -339,10 +343,10 @@ function EditCommentForm({ comment, onUpdate }: { comment: any; onUpdate: () => 
                 {isDeleting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Deleting...
+                    {uiText("Deleting...")}
                   </>
                 ) : (
-                  "Delete"
+                  uiText("Delete")
                 )}
               </Button>
             </div>
@@ -355,7 +359,7 @@ function EditCommentForm({ comment, onUpdate }: { comment: any; onUpdate: () => 
             disabled={isSubmitting || isDeleting}
             className="border-border text-foreground"
           >
-            Reset
+            {uiText("Reset")}
           </Button>
           <Button
             onClick={handleUpdate}
@@ -366,10 +370,10 @@ function EditCommentForm({ comment, onUpdate }: { comment: any; onUpdate: () => 
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Updating...
+                {uiText("Updating...")}
               </>
             ) : (
-              "Update Comment"
+              uiText("Update Comment")
             )}
           </Button>
         </div>
@@ -389,41 +393,41 @@ function FeedInviteCard({
   inviteCode: string;
   onDismiss: () => void;
 }) {
+  useUiLanguage();
   return (
     <div className="invite-card-glow-wrapper mb-6">
       <div className="bg-card p-4 space-y-4">
         <div className="flex items-start justify-between gap-2">
           <div>
             <h3 className="font-bold text-foreground text-base flex items-center gap-2">
-              📣 Invite Friends to Your Kliq
+              {uiText("📣 Invite Friends to Your Kliq")}
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              You have {kliqMemberCount} of 28 members — keep growing!
-            </p>
+              {uiText("You have {{kliqMemberCount}} of 28 members — keep growing!", { "kliqMemberCount": kliqMemberCount })}</p>
           </div>
           <button
             onClick={onDismiss}
             className="text-muted-foreground hover:text-foreground shrink-0 mt-0.5"
-            aria-label="Dismiss invite card"
+            aria-label={uiText("Dismiss invite card")}
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="bg-muted/60 rounded-lg p-3 space-y-2">
-          <p className="text-xs font-semibold text-foreground uppercase tracking-wide">How to invite your friends:</p>
+          <p className="text-xs font-semibold text-foreground uppercase tracking-wide">{uiText("How to invite your friends:")}</p>
           <ol className="space-y-2 text-xs text-muted-foreground">
             <li className="flex items-start gap-2">
-              <span className="font-bold text-foreground shrink-0 w-4">1.</span>
-              <span>Tap the green <strong className="text-foreground">Copy</strong> button below — your full invite message is instantly copied to your clipboard.</span>
+              <span className="font-bold text-foreground shrink-0 w-4">{uiText("1.")}</span>
+              <span>{uiText("Tap the green")} <strong className="text-foreground">{uiText("Copy")}</strong> {uiText("button below — your full invite message is instantly copied to your clipboard.")}</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="font-bold text-foreground shrink-0 w-4">2.</span>
-              <span>Open a text message, WhatsApp, iMessage, or any messaging app on your phone.</span>
+              <span className="font-bold text-foreground shrink-0 w-4">{uiText("2.")}</span>
+              <span>{uiText("Open a text message, WhatsApp, iMessage, or any messaging app on your phone.")}</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="font-bold text-foreground shrink-0 w-4">3.</span>
-              <span>Long-press in the message field, tap <strong className="text-foreground">Paste</strong>, then hit send. That's it!</span>
+              <span className="font-bold text-foreground shrink-0 w-4">{uiText("3.")}</span>
+              <span>{uiText("Long-press in the message field, tap")} <strong className="text-foreground">{uiText("Paste")}</strong>{uiText(", then hit send. That's it!")}</span>
             </li>
           </ol>
         </div>
@@ -439,6 +443,7 @@ function FeedInviteCard({
 }
 
 export default function Home() {
+  useUiLanguage();
   const notificationSearch = new URLSearchParams(useSearch());
   const notificationPostId = notificationSearch.get("post");
   const notificationCommentId = notificationSearch.get("comment");
@@ -2322,13 +2327,13 @@ export default function Home() {
             <Avatar className="w-14 h-14 border-2 border-mykliq-orange">
               <AvatarImage src={resolveProfileImageUrl(userData?.profileImageUrl, userData?.updatedAt)} />
               <AvatarFallback className="bg-muted text-foreground">
-                {userData?.firstName?.[0] || "U"}
+                {userData?.firstName?.[0] || uiText("U")}
               </AvatarFallback>
             </Avatar>
             <Textarea
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
-              placeholder="What's happening in your kliq?"
+              placeholder={uiText("What's happening in your kliq?")}
               className="min-w-0 flex-1 border-none resize-none post-input-forced"
               rows={2}
               data-testid="textarea-new-post"
@@ -2364,7 +2369,7 @@ export default function Home() {
             <div className="mt-3 flex items-center gap-2">
               <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
                 <span className="text-lg">{moodOptions.find(m => m.label === selectedMood)?.emoji}</span>
-                <span className="text-sm font-medium">MOOD: Feeling {selectedMood.toLowerCase()}</span>
+                <span className="text-sm font-medium">{uiText("MOOD: Feeling")} {selectedMood.toLowerCase()}</span>
               </div>
               <Button
                 size="sm"
@@ -2385,8 +2390,8 @@ export default function Home() {
                   variant="ghost" 
                   className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-orange-600 shadow-sm hover:bg-orange-600/20 [&_svg]:size-6"
                   data-testid="button-emoji-picker"
-                  aria-label="Choose emoji"
-                  title="Choose emoji"
+                  aria-label={uiText("Choose emoji")}
+                  title={uiText("Choose emoji")}
                 >
                   <Smile className="h-6 w-6" />
                 </Button>
@@ -2413,8 +2418,8 @@ export default function Home() {
               variant="ghost" 
               className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-green-600 shadow-sm hover:bg-green-600/20 [&_svg]:size-6"
               onClick={() => setShowMediaUpload(true)}
-              aria-label="Add media"
-              title="Add media"
+              aria-label={uiText("Add media")}
+              title={uiText("Add media")}
             >
               <ImageIcon className="h-6 w-6" />
             </Button>
@@ -2425,10 +2430,10 @@ export default function Home() {
                   size="sm" 
                   variant="ghost" 
                   className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-purple-600 shadow-sm hover:bg-purple-600/20 [&_svg]:size-6"
-                  aria-label="Choose meme"
-                  title="Choose meme"
+                  aria-label={uiText("Choose meme")}
+                  title={uiText("Choose meme")}
                 >
-                  <span className="text-[12px] font-black tracking-tight">MEME</span>
+                  <span className="text-[12px] font-black tracking-tight">{uiText("MEME")}</span>
                 </Button>
               }
             />
@@ -2439,8 +2444,8 @@ export default function Home() {
                   size="sm" 
                   variant="ghost" 
                   className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-blue-600 shadow-sm hover:bg-blue-600/20 [&_svg]:size-6"
-                  aria-label="Choose moviecon"
-                  title="Choose moviecon"
+                  aria-label={uiText("Choose moviecon")}
+                  title={uiText("Choose moviecon")}
                 >
                   <Clapperboard className="h-6 w-6" />
                 </Button>
@@ -2453,8 +2458,8 @@ export default function Home() {
               className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-red-600 shadow-sm hover:bg-red-600/20 [&_svg]:size-6"
               onClick={getCurrentLocation}
               disabled={isGettingLocation}
-              aria-label="Add location"
-              title="Add location"
+              aria-label={uiText("Add location")}
+              title={uiText("Add location")}
             >
               {isGettingLocation ? (
                 <Loader2 className="h-6 w-6 animate-spin" />
@@ -2469,8 +2474,8 @@ export default function Home() {
               className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-yellow-600 shadow-sm hover:bg-yellow-600/20 [&_svg]:size-6"
               onClick={() => setShowMoodDialog(true)}
               data-testid="button-mood-picker"
-              aria-label="Choose mood"
-              title="Choose mood"
+              aria-label={uiText("Choose mood")}
+              title={uiText("Choose mood")}
             >
               <Zap className="h-6 w-6" />
             </Button>
@@ -2481,8 +2486,8 @@ export default function Home() {
                 variant="ghost" 
                 className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-cyan-600 shadow-sm hover:bg-cyan-600/20 [&_svg]:size-6"
                 data-testid="button-events"
-                aria-label="Events"
-                title="Events"
+                aria-label={uiText("Events")}
+                title={uiText("Events")}
               >
                 <Calendar className="h-6 w-6" />
               </Button>
@@ -2494,8 +2499,8 @@ export default function Home() {
                 variant="ghost" 
                 className="h-11 w-11 min-w-[44px] shrink-0 border border-black bg-white p-0 text-red-700 shadow-sm hover:bg-red-700/20 [&_svg]:size-6"
                 data-testid="button-actions"
-                aria-label="Actions"
-                title="Actions"
+                aria-label={uiText("Actions")}
+                title={uiText("Actions")}
               >
                 <Video className="h-6 w-6" />
               </Button>
@@ -2512,7 +2517,7 @@ export default function Home() {
                 size="sm"
                 data-testid="button-daily-horoscope"
               >
-                {horoscopeMutation.isPending ? "Loading..." : "Daily Horoscope"}
+                {horoscopeMutation.isPending ? uiText("Loading...") : uiText("Daily Horoscope")}
               </Button>
               <Button
                 onClick={() => bibleVerseMutation.mutate()}
@@ -2521,7 +2526,7 @@ export default function Home() {
                 size="sm"
                 data-testid="button-daily-bible-verse"
               >
-                {bibleVerseMutation.isPending ? "Loading..." : "Daily Bible Verse"}
+                {bibleVerseMutation.isPending ? uiText("Loading...") : uiText("Daily Bible Verse")}
               </Button>
               <Button
                 onClick={handleReflect}
@@ -2530,7 +2535,7 @@ export default function Home() {
                 size="sm"
                 data-testid="button-lets-reflect"
               >
-                {reflectMutation.isPending ? "Reflecting..." : "Lets Reflect"}
+                {reflectMutation.isPending ? uiText("Reflecting...") : uiText("Lets Reflect")}
               </Button>
             </div>
           </div>
@@ -2541,7 +2546,7 @@ export default function Home() {
               className="bg-primary hover:bg-primary/90 !text-black font-bold px-6 flex-shrink-0"
               style={{ boxShadow: '0 0 15px hsl(var(--primary) / 0.4)' }}
             >
-              {createPostMutation.isPending ? "Posting..." : "Post!"}
+              {createPostMutation.isPending ? uiText("Posting...") : uiText("Post!")}
             </Button>
           </div>
         </CardContent>
@@ -2556,34 +2561,34 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Edit className="h-5 w-5" />
-              <span>Add Meetup Details</span>
+              <span>{uiText("Add Meetup Details")}</span>
             </DialogTitle>
             <DialogDescription>
-              Add a location name and address to allow your friends to meetup with you to join in on the fun
+              {uiText("Add a location name and address to allow your friends to meetup with you to join in on the fun")}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="locationName">Location Name</Label>
+              <Label htmlFor="locationName">{uiText("Location Name")}</Label>
               <Input
                 id="locationName"
                 data-testid="input-location-name"
                 value={locationName}
                 onChange={(e) => setLocationName(e.target.value)}
-                placeholder="e.g., Starbucks, Central Park, Home"
+                placeholder={uiText("e.g., Starbucks, Central Park, Home")}
                 className="bg-white border-gray-300 text-black placeholder-gray-500"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="address">Address (Optional)</Label>
+              <Label htmlFor="address">{uiText("Address (Optional)")}</Label>
               <Input
                 id="address"
                 data-testid="input-address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
-                placeholder="e.g., 123 Main St, New York, NY"
+                placeholder={uiText("e.g., 123 Main St, New York, NY")}
                 className="bg-white border-gray-300 text-black placeholder-gray-500"
               />
             </div>
@@ -2594,7 +2599,7 @@ export default function Home() {
                 onClick={() => setShowLocationDialog(false)}
                 className="border-border text-foreground"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 onClick={handleLocationCheckIn}
@@ -2602,7 +2607,7 @@ export default function Home() {
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 data-testid="button-confirm-checkin"
               >
-                {locationCheckInMutation.isPending ? "Posting meetup..." : "Post Meetup"}
+                {locationCheckInMutation.isPending ? uiText("Posting meetup...") : uiText("Post Meetup")}
               </Button>
             </div>
           </div>
@@ -2615,10 +2620,10 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Zap className="h-5 w-5 text-yellow-500" />
-              <span>How are you feeling?</span>
+              <span>{uiText("How are you feeling?")}</span>
             </DialogTitle>
             <DialogDescription>
-              Share your current mood with your kliq
+              {uiText("Share your current mood with your kliq")}
             </DialogDescription>
           </DialogHeader>
           
@@ -2636,7 +2641,7 @@ export default function Home() {
               >
                 <span className="text-2xl">{mood.emoji}</span>
                 <span className={cn("text-xs font-medium", mood.color)}>
-                  {mood.label}
+                  {uiText(mood.label)}
                 </span>
               </Button>
             ))}
@@ -2648,7 +2653,7 @@ export default function Home() {
               onClick={() => setShowMoodDialog(false)}
               className="border-border text-foreground"
             >
-              Cancel
+              {uiText("Cancel")}
             </Button>
           </div>
         </DialogContent>
@@ -2660,17 +2665,17 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <span className="text-2xl">✨</span>
-              <span>Your Kliq Dashboard</span>
+              <span>{uiText("Your Kliq Dashboard")}</span>
             </DialogTitle>
             <DialogDescription>
-              View your reflection and manage your scrapbook
+              {uiText("View your reflection and manage your scrapbook")}
             </DialogDescription>
           </DialogHeader>
 
           <Tabs value={reflectTab} onValueChange={setReflectTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="reflection" data-testid="tab-reflection">Reflection</TabsTrigger>
-              <TabsTrigger value="scrapbook" data-testid="tab-scrapbook">Scrapbook</TabsTrigger>
+              <TabsTrigger value="reflection" data-testid="tab-reflection">{uiText("Reflection")}</TabsTrigger>
+              <TabsTrigger value="scrapbook" data-testid="tab-scrapbook">{uiText("Scrapbook")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="reflection" className="space-y-6 mt-4">
@@ -2680,19 +2685,19 @@ export default function Home() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center p-4 bg-muted rounded-lg">
                       <div className="text-2xl font-bold text-primary">{reflectionData.stats.totalPosts}</div>
-                      <div className="text-xs text-muted-foreground">Posts</div>
+                      <div className="text-xs text-muted-foreground">{uiText("Posts")}</div>
                     </div>
                     <div className="text-center p-4 bg-muted rounded-lg">
                       <div className="text-2xl font-bold text-red-500">{reflectionData.stats.totalLikes}</div>
-                      <div className="text-xs text-muted-foreground">Likes</div>
+                      <div className="text-xs text-muted-foreground">{uiText("Likes")}</div>
                     </div>
                     <div className="text-center p-4 bg-muted rounded-lg">
                       <div className="text-2xl font-bold text-blue-500">{reflectionData.stats.totalComments}</div>
-                      <div className="text-xs text-muted-foreground">Comments</div>
+                      <div className="text-xs text-muted-foreground">{uiText("Comments")}</div>
                     </div>
                     <div className="text-center p-4 bg-muted rounded-lg">
                       <div className="text-2xl font-bold text-green-500">{reflectionData.stats.avgEngagement}</div>
-                      <div className="text-xs text-muted-foreground">Avg Engagement</div>
+                      <div className="text-xs text-muted-foreground">{uiText("Avg Engagement")}</div>
                     </div>
                   </div>
 
@@ -2704,7 +2709,7 @@ export default function Home() {
                   {/* Posts Collage */}
                   {reflectionData.posts.length > 0 && (
                     <div className="space-y-4">
-                      <h3 className="font-semibold text-lg">Your Top Posts</h3>
+                      <h3 className="font-semibold text-lg">{uiText("Your Top Posts")}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
                         {reflectionData.posts.map((post: any, index: number) => (
                           <Card key={post.id} className="relative">
@@ -2723,7 +2728,7 @@ export default function Home() {
                                     ) : (
                                       <img 
                                         src={resolveAssetUrl(post.mediaUrl)} 
-                                        alt="Post media" 
+                                        alt={uiText("Post media")} 
                                         className="w-full h-full object-cover"
                                       />
                                     )}
@@ -2740,8 +2745,7 @@ export default function Home() {
                                     {post.commentCount}
                                   </span>
                                   <span className="font-medium">
-                                    Score: {post.engagementScore}
-                                  </span>
+                                    {uiText("Score: {{engagementScore}}", { "engagementScore": post.engagementScore })}</span>
                                 </div>
                               </div>
                             </CardContent>
@@ -2758,8 +2762,7 @@ export default function Home() {
               {/* Scrapbook Header */}
               <div className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground" data-testid="text-saves-count">
-                  {(scrapbookSaves as any[]).length}/1000 posts added
-                </div>
+                  {uiText("{{length}}/1000 posts added", { "length": (scrapbookSaves as any[]).length })}</div>
                 <Button
                   onClick={() => setShowCreateAlbumDialog(true)}
                   size="sm"
@@ -2767,13 +2770,13 @@ export default function Home() {
                   data-testid="button-new-album"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  New Album
+                  {uiText("New Album")}
                 </Button>
               </div>
 
               {/* Album List */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Albums</h3>
+                <h3 className="font-semibold text-lg">{uiText("Albums")}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* All Saves */}
                   <Card
@@ -2791,10 +2794,9 @@ export default function Home() {
                             <PlusCircle className="h-5 w-5 text-white" />
                           </div>
                           <div>
-                            <h4 className="font-medium">All Saves</h4>
+                            <h4 className="font-medium">{uiText("All Saves")}</h4>
                             <p className="text-xs text-muted-foreground">
-                              {(scrapbookSaves as any[]).length} posts
-                            </p>
+                              {uiText("{{length}} posts", { "length": (scrapbookSaves as any[]).length })}</p>
                           </div>
                         </div>
                       </div>
@@ -2829,8 +2831,7 @@ export default function Home() {
                               <div>
                                 <h4 className="font-medium">{album.name}</h4>
                                 <p className="text-xs text-muted-foreground">
-                                  {albumSaveCount} posts
-                                </p>
+                                  {uiText("{{albumSaveCount}} posts", { "albumSaveCount": albumSaveCount })}</p>
                               </div>
                             </div>
                             <div className="flex gap-1">
@@ -2877,7 +2878,7 @@ export default function Home() {
                 <h3 className="font-semibold text-lg">
                   {selectedAlbumFilter 
                     ? (scrapbookAlbums as any[]).find((a: any) => a.id === selectedAlbumFilter)?.name 
-                    : "All Saves"}
+                    : uiText("All Saves")}
                 </h3>
                 {(scrapbookSaves as any[]).filter((save: any) => 
                   selectedAlbumFilter ? save.albumId === selectedAlbumFilter : true
@@ -2917,7 +2918,7 @@ export default function Home() {
                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <Avatar className="h-6 w-6">
                                       <AvatarImage src={resolveAssetUrl(save.action.author?.profileImageUrl)} />
-                                      <AvatarFallback>{save.action.author?.firstName?.[0] || 'U'}</AvatarFallback>
+                                      <AvatarFallback>{save.action.author?.firstName?.[0] || uiText("U")}</AvatarFallback>
                                     </Avatar>
                                     <span>{save.action.author?.firstName} {save.action.author?.lastName}</span>
                                   </div>
@@ -2937,7 +2938,7 @@ export default function Home() {
                                       ) : (
                                         <img 
                                           src={resolveAssetUrl(save.selectedMediaUrl || save.post.mediaUrl)} 
-                                          alt="Post media" 
+                                          alt={uiText("Post media")} 
                                           className="w-full h-full object-cover"
                                         />
                                       )}
@@ -2994,7 +2995,7 @@ export default function Home() {
                                       data-testid={`button-add-note-${save.id}`}
                                     >
                                       <Plus className="h-4 w-4 mr-1" />
-                                      Add Note
+                                      {uiText("Add Note")}
                                     </Button>
                                   )}
                                 </div>
@@ -3014,7 +3015,7 @@ export default function Home() {
                                   data-testid={`button-remove-${save.id}`}
                                 >
                                   <Trash2 className="h-4 w-4 mr-1" />
-                                  Remove
+                                  {uiText("Remove")}
                                 </Button>
                               </div>
                             </div>
@@ -3025,9 +3026,9 @@ export default function Home() {
                 ) : (
                   <div className="text-center py-12">
                     <Plus className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No posts in this album</p>
+                    <p className="text-muted-foreground">{uiText("No posts in this album")}</p>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Add posts by clicking the + icon on any post
+                      {uiText("Add posts by clicking the + icon on any post")}
                     </p>
                   </div>
                 )}
@@ -3041,7 +3042,7 @@ export default function Home() {
               onClick={() => setShowReflectDialog(false)}
               className="bg-black dark:bg-black text-white dark:text-white border-black dark:border-black hover:bg-gray-800 dark:hover:bg-gray-800"
             >
-              Close
+              {uiText("Close")}
             </Button>
           </div>
         </DialogContent>
@@ -3053,10 +3054,10 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle className="text-foreground flex items-center gap-2">
               <span>🔮</span>
-              Your Daily Horoscope
+              {uiText("Your Daily Horoscope")}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Get insights into your day and share your horoscope with your kliq
+              {uiText("Get insights into your day and share your horoscope with your kliq")}
             </DialogDescription>
           </DialogHeader>
           
@@ -3071,11 +3072,11 @@ export default function Home() {
                 </p>
                 <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium text-muted-foreground">Lucky Number:</span>
+                    <span className="font-medium text-muted-foreground">{uiText("Lucky Number:")}</span>
                     <span className="ml-2 text-foreground">{horoscopeData.luckyNumber}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-muted-foreground">Lucky Color:</span>
+                    <span className="font-medium text-muted-foreground">{uiText("Lucky Color:")}</span>
                     <span className="ml-2 text-foreground">{horoscopeData.luckyColor}</span>
                   </div>
                 </div>
@@ -3088,7 +3089,7 @@ export default function Home() {
                   className="border-border text-foreground"
                   disabled={isPostingHoroscope}
                 >
-                  Close
+                  {uiText("Close")}
                 </Button>
                 <Button
                   disabled={isPostingHoroscope}
@@ -3139,7 +3140,7 @@ export default function Home() {
                   }}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  {isPostingHoroscope ? "Posting..." : "Post to Headlines"}
+                  {isPostingHoroscope ? uiText("Posting...") : uiText("Post to Headlines")}
                 </Button>
               </div>
             </div>
@@ -3153,10 +3154,10 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle className="text-foreground flex items-center gap-2">
               <span>📖</span>
-              Daily Bible Verse
+              {uiText("Daily Bible Verse")}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              A verse of encouragement and reflection for your day
+              {uiText("A verse of encouragement and reflection for your day")}
             </DialogDescription>
           </DialogHeader>
           
@@ -3173,7 +3174,7 @@ export default function Home() {
                   — {bibleVerseData.reference}
                 </p>
                 <div className="mt-4 p-3 bg-background/50 rounded border">
-                  <h4 className="font-medium text-foreground mb-2">Today's Reflection:</h4>
+                  <h4 className="font-medium text-foreground mb-2">{uiText("Today's Reflection:")}</h4>
                   <p className="text-foreground leading-relaxed text-sm">
                     {bibleVerseData.reflection}
                   </p>
@@ -3187,7 +3188,7 @@ export default function Home() {
                   className="border-border text-foreground"
                   disabled={isPostingBibleVerse}
                 >
-                  Close
+                  {uiText("Close")}
                 </Button>
                 <Button
                   disabled={isPostingBibleVerse}
@@ -3238,7 +3239,7 @@ export default function Home() {
                   }}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
-                  {isPostingBibleVerse ? "Posting..." : "Post to Headlines"}
+                  {isPostingBibleVerse ? uiText("Posting...") : uiText("Post to Headlines")}
                 </Button>
               </div>
             </div>
@@ -3250,7 +3251,7 @@ export default function Home() {
       {(stories as any[]).length > 0 && (
         <Card className="bg-card border-border">
           <CardHeader className="pb-3">
-            <h2 className="text-lg font-bold text-foreground">Stories</h2>
+            <h2 className="text-lg font-bold text-foreground">{uiText("Stories")}</h2>
           </CardHeader>
           <CardContent>
             <div className="flex gap-3 overflow-x-auto pb-2">
@@ -3297,10 +3298,9 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-secondary">🚫</span>
-              <span className="text-sm font-medium text-secondary">Content Filters</span>
+              <span className="text-sm font-medium text-secondary">{uiText("Content Filters")}</span>
               <Badge variant="secondary" className="text-xs">
-                {(filters as any[]).length} active
-              </Badge>
+                {uiText("{{length}} active", { "length": (filters as any[]).length })}</Badge>
             </div>
             <Button
               size="sm"
@@ -3308,7 +3308,7 @@ export default function Home() {
               onClick={() => setShowFilters(!showFilters)}
               className="text-xs border-secondary text-secondary hover:bg-secondary/10"
             >
-              {showFilters ? "Hide" : "Manage"}
+              {showFilters ? uiText("Hide") : uiText("Manage")}
             </Button>
           </div>
           {showFilters && (
@@ -3360,16 +3360,16 @@ export default function Home() {
           <Card className="bg-card border-border">
             <CardContent className="p-8 text-center">
               <div className="text-4xl mb-4">🌟</div>
-              <h3 className="text-lg font-bold text-muted-foreground mb-2">Your feed is empty</h3>
+              <h3 className="text-lg font-bold text-muted-foreground mb-2">{uiText("Your feed is empty")}</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Invite friends to your kliq or create your first post to get started!
+                {uiText("Invite friends to your kliq or create your first post to get started!")}
               </p>
               <Button
                 onClick={() => setNewPost("Hello, MyKliq! 👋")}
                 variant="outline"
                 className="border-primary text-primary hover:bg-primary/10"
               >
-                Create your first post
+                {uiText("Create your first post")}
               </Button>
             </CardContent>
           </Card>
@@ -3384,16 +3384,16 @@ export default function Home() {
           {/* Feed invite card — shown at the top when feed has fewer than 2 items */}
           {isNotificationPost && (
             <div ref={notificationTargetRef} className="space-y-3 scroll-mt-4">
-              <Button asChild variant="outline"><Link href="/">Back to Headlines</Link></Button>
+              <Button asChild variant="outline"><Link href="/">{uiText("Back to Headlines")}</Link></Button>
               {feedError && (
                 <Card role="alert" className="p-4 space-y-2">
-                  <p className="font-semibold">Unable to open this post</p>
+                  <p className="font-semibold">{uiText("Unable to open this post")}</p>
                   <p className="text-sm text-muted-foreground">
                     {String(feedError).includes("404")
-                      ? "The post or comment may have been deleted, or it is no longer available to your kliq."
-                      : "The post couldn’t be loaded. Please try again."}
+                      ? uiText("The post or comment may have been deleted, or it is no longer available to your kliq.")
+                      : uiText("The post couldn’t be loaded. Please try again.")}
                   </p>
-                  <Button variant="outline" onClick={() => refetchFeed()}>Try again</Button>
+                  <Button variant="outline" onClick={() => refetchFeed()}>{uiText("Try again")}</Button>
                 </Card>
               )}
             </div>
@@ -3505,7 +3505,7 @@ export default function Home() {
                     }}
                   >
                     <span className="text-lg">{item.icon}</span>
-                    <span>MyKliq Tip</span>
+                    <span>{uiText("MyKliq Tip")}</span>
                   </div>
                   
                   {/* Content */}
@@ -3596,7 +3596,7 @@ export default function Home() {
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-md bg-card border-border">
                       <DialogHeader>
-                        <DialogTitle className="text-foreground">Edit Post</DialogTitle>
+                        <DialogTitle className="text-foreground">{uiText("Edit Post")}</DialogTitle>
                       </DialogHeader>
                       <EditPostForm 
                         post={item}
@@ -3671,7 +3671,7 @@ export default function Home() {
                       <div className="mb-3 rounded-lg overflow-hidden" style={{ height: '12rem' }}>
                         <img
                           src={resolveAssetUrl(item.mediaUrl)}
-                          alt="Event"
+                          alt={uiText("Event")}
                           className="w-full h-full"
                           style={{ objectFit: 'fill' }}
                           loading="lazy"
@@ -3781,7 +3781,7 @@ export default function Home() {
                     className="text-muted-foreground hover:text-red-500 hover:bg-red-50 p-1 h-auto text-xs"
                     data-testid={`button-report-${item.id}`}
                   >
-                    REPORT
+                    {uiText("REPORT")}
                   </Button>
                 )}
               </div>
@@ -3860,7 +3860,7 @@ export default function Home() {
                                     </DialogTrigger>
                                     <DialogContent className="sm:max-w-md bg-card border-border">
                                       <DialogHeader>
-                                        <DialogTitle className="text-foreground">Edit Comment</DialogTitle>
+                                        <DialogTitle className="text-foreground">{uiText("Edit Comment")}</DialogTitle>
                                       </DialogHeader>
                                       <EditCommentForm 
                                         comment={comment} 
@@ -3891,7 +3891,7 @@ export default function Home() {
                                   data-testid={`button-reply-comment-${comment.id}`}
                                 >
                                   <MessageCircle className="w-3 h-3 mr-1" />
-                                  Reply
+                                  {uiText("Reply")}
                                 </Button>
                               </div>
                             </div>
@@ -3903,12 +3903,12 @@ export default function Home() {
                                   <Avatar className="w-6 h-6 border border-border">
                                     <AvatarImage src={resolveProfileImageUrl(userData?.profileImageUrl, userData?.updatedAt)} />
                                     <AvatarFallback className="bg-muted text-foreground text-xs">
-                                      {userData?.firstName?.[0] || "U"}
+                                      {userData?.firstName?.[0] || uiText("U")}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1 flex space-x-2">
                                     <Textarea
-                                      placeholder="Write a reply..."
+                                      placeholder={uiText("Write a reply...")}
                                       className="resize-none bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 text-sm"
                                       rows={2}
                                       value={replyInputs[comment.id] || ""}
@@ -3927,7 +3927,7 @@ export default function Home() {
                                         size="sm"
                                         className="bg-secondary hover:bg-secondary/90 text-secondary-foreground h-6 text-xs"
                                       >
-                                        {replyCommentMutation.isPending ? "..." : "Reply"}
+                                        {replyCommentMutation.isPending ? "..." : uiText("Reply")}
                                       </Button>
                                       <Button
                                         onClick={() => setReplyingToComment(null)}
@@ -3935,7 +3935,7 @@ export default function Home() {
                                         variant="ghost"
                                         className="h-6 text-xs"
                                       >
-                                        Cancel
+                                        {uiText("Cancel")}
                                       </Button>
                                     </div>
                                   </div>
@@ -3953,7 +3953,7 @@ export default function Home() {
                     <Avatar className="w-8 h-8 border border-border">
                       <AvatarImage src={resolveProfileImageUrl(userData?.profileImageUrl, userData?.updatedAt)} />
                       <AvatarFallback className="bg-muted text-foreground text-xs">
-                        {userData?.firstName?.[0] || "U"}
+                        {userData?.firstName?.[0] || uiText("U")}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
@@ -3987,7 +3987,7 @@ export default function Home() {
                         <Textarea
                           value={commentInputs[item.id] || ""}
                           onChange={(e) => handleCommentInputChange(item.id, e.target.value)}
-                          placeholder="Write a comment..."
+                          placeholder={uiText("Write a comment...")}
                           className="flex-1 bg-white text-black placeholder-gray-500 border-border resize-none"
                           rows={2}
                           data-testid={`input-comment-${item.id}`}
@@ -4008,7 +4008,7 @@ export default function Home() {
                                 className="text-mykliq-purple hover:bg-mykliq-purple/10 h-8 w-8 p-0"
                                 data-testid={`button-comment-meme-${item.id}`}
                               >
-                                <span className="text-xs font-bold">MEME</span>
+                                <span className="text-xs font-bold">{uiText("MEME")}</span>
                               </Button>
                             }
                           />
@@ -4063,7 +4063,7 @@ export default function Home() {
                             className="bg-secondary hover:bg-secondary/90 text-secondary-foreground h-8"
                             data-testid={`button-submit-comment-${item.id}`}
                           >
-                            {addCommentMutation.isPending ? "..." : "Post"}
+                            {addCommentMutation.isPending ? "..." : uiText("Post")}
                           </Button>
                         </div>
                       </div>
@@ -4119,7 +4119,7 @@ export default function Home() {
                     <Avatar className="w-10 h-10 border-2 border-primary">
                       <AvatarImage src={resolveAssetUrl(item.author.profileImageUrl)} />
                       <AvatarFallback className="bg-muted text-foreground">
-                        {item.author.firstName?.[0] || "U"}
+                        {item.author.firstName?.[0] || uiText("U")}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
@@ -4152,7 +4152,7 @@ export default function Home() {
                     <div className="mb-3 rounded-lg overflow-hidden">
                       <img 
                         src={item.mediaUrl} 
-                        alt={`${item.platform} post`}
+                        alt={uiText("{{platform}} post", { platform: item.platform })}
                         className="w-full object-cover max-h-96"
                       />
                     </div>
@@ -4167,7 +4167,7 @@ export default function Home() {
                     data-testid={`link-external-post-${item.id}`}
                   >
                     <ExternalLink className="w-4 h-4" />
-                    View on {item.platform.charAt(0).toUpperCase() + item.platform.slice(1)}
+                    {uiText("View on")} {item.platform.charAt(0).toUpperCase() + item.platform.slice(1)}
                   </a>
                 </CardContent>
               </Card>
@@ -4190,11 +4190,11 @@ export default function Home() {
               {isFetchingNextPage ? (
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Loading more...</span>
+                  <span>{uiText("Loading more...")}</span>
                 </div>
               ) : (
                 <div className="text-muted-foreground text-sm">
-                  Scroll down to load more
+                  {uiText("Scroll down to load more")}
                 </div>
               )}
             </div>
@@ -4203,7 +4203,7 @@ export default function Home() {
           {/* End of feed indicator */}
           {!hasNextPage && feedItems.length > 0 && (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              You've reached the end of your feed
+              {uiText("You've reached the end of your feed")}
             </div>
           )}
         </>
@@ -4230,9 +4230,9 @@ export default function Home() {
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Share to Headlines</DialogTitle>
+            <DialogTitle>{uiText("Share to Headlines")}</DialogTitle>
             <DialogDescription>
-              Share this post to your Headlines feed so your kliq can see it
+              {uiText("Share this post to your Headlines feed so your kliq can see it")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -4241,7 +4241,7 @@ export default function Home() {
                 <div className="flex items-center gap-3 mb-2">
                   <img 
                     src={selectedPostToShare.author?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedPostToShare.author?.firstName || 'User')}&background=random`} 
-                    alt={selectedPostToShare.author?.firstName || 'User'} 
+                    alt={selectedPostToShare.author?.firstName || uiText("User")} 
                     className="w-8 h-8 rounded-full"
                   />
                   <div className="text-sm font-medium">
@@ -4249,7 +4249,7 @@ export default function Home() {
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground line-clamp-3">
-                  {selectedPostToShare.content || "Post with media"}
+                  {selectedPostToShare.content || uiText("Post with media")}
                 </p>
               </div>
             )}
@@ -4260,7 +4260,7 @@ export default function Home() {
                 className="flex-1"
                 data-testid="button-cancel-share"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button 
                 onClick={sharePostToHeadlines}
@@ -4268,7 +4268,7 @@ export default function Home() {
                 data-testid="button-confirm-share"
               >
                 <Send className="w-4 h-4 mr-2" />
-                Share to Headlines
+                {uiText("Share to Headlines")}
               </Button>
             </div>
           </div>
@@ -4288,37 +4288,37 @@ export default function Home() {
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <AlertTriangle className="h-5 w-5 text-red-500" />
-              <span>Report Content</span>
+              <span>{uiText("Report Content")}</span>
             </DialogTitle>
             <DialogDescription>
-              Help us keep MyKliq safe by reporting inappropriate content
+              {uiText("Help us keep MyKliq safe by reporting inappropriate content")}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="report-reason">Reason for report *</Label>
+              <Label htmlFor="report-reason">{uiText("Reason for report *")}</Label>
               <Select value={reportReason} onValueChange={setReportReason}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a reason" />
+                  <SelectValue placeholder={uiText("Select a reason")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="hate_speech">Hate Speech</SelectItem>
-                  <SelectItem value="discrimination">Discrimination</SelectItem>
-                  <SelectItem value="offensive">Offensive Content</SelectItem>
-                  <SelectItem value="pornographic">Pornographic Content</SelectItem>
-                  <SelectItem value="spam">Spam</SelectItem>
-                  <SelectItem value="harassment">Harassment</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="hate_speech">{uiText("Hate Speech")}</SelectItem>
+                  <SelectItem value="discrimination">{uiText("Discrimination")}</SelectItem>
+                  <SelectItem value="offensive">{uiText("Offensive Content")}</SelectItem>
+                  <SelectItem value="pornographic">{uiText("Pornographic Content")}</SelectItem>
+                  <SelectItem value="spam">{uiText("Spam")}</SelectItem>
+                  <SelectItem value="harassment">{uiText("Harassment")}</SelectItem>
+                  <SelectItem value="other">{uiText("Other")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div>
-              <Label htmlFor="report-description">Additional details (optional)</Label>
+              <Label htmlFor="report-description">{uiText("Additional details (optional)")}</Label>
               <Textarea
                 id="report-description"
-                placeholder="Please provide additional context about why you're reporting this content..."
+                placeholder={uiText("Please provide additional context about why you're reporting this content...")}
                 value={reportDescription}
                 onChange={(e) => setReportDescription(e.target.value)}
                 rows={3}
@@ -4341,9 +4341,9 @@ export default function Home() {
                   htmlFor="block-user-checkbox"
                   className="text-sm text-foreground cursor-pointer leading-tight"
                 >
-                  <span className="font-medium">Also block this user</span>
+                  <span className="font-medium">{uiText("Also block this user")}</span>
                   <span className="block text-xs text-muted-foreground mt-0.5">
-                    Their posts will be hidden from your feed
+                    {uiText("Their posts will be hidden from your feed")}
                   </span>
                 </label>
               </div>
@@ -4360,14 +4360,14 @@ export default function Home() {
                 }}
                 disabled={reportPostMutation.isPending}
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 onClick={handleSubmitReport}
                 disabled={reportPostMutation.isPending}
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
-                {reportPostMutation.isPending ? "Submitting..." : "Submit Report"}
+                {reportPostMutation.isPending ? uiText("Submitting...") : uiText("Submit Report")}
               </Button>
             </div>
           </div>
@@ -4385,21 +4385,20 @@ export default function Home() {
       }}>
         <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-black dark:text-black">Add to Scrapbook</DialogTitle>
+            <DialogTitle className="text-black dark:text-black">{uiText("Add to Scrapbook")}</DialogTitle>
             <DialogDescription className="text-gray-700 dark:text-gray-700">
-              Add this post to your scrapbook and optionally organize it in an album
+              {uiText("Add this post to your scrapbook and optionally organize it in an album")}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             <div className="text-sm text-gray-600 dark:text-gray-600">
-              {(scrapbookSaves as any[]).length}/1000 added
-            </div>
+              {uiText("{{length}}/1000 added", { "length": (scrapbookSaves as any[]).length })}</div>
             
             {/* Multi-image selector - show when post has multiple images */}
             {selectedPostToSave?.media && selectedPostToSave.media.length > 1 && (
               <div>
-                <Label className="text-black dark:text-black mb-2 block">Select image to save</Label>
+                <Label className="text-black dark:text-black mb-2 block">{uiText("Select image to save")}</Label>
                 <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1">
                   {selectedPostToSave.media.map((media: any, index: number) => (
                     <button
@@ -4414,7 +4413,7 @@ export default function Home() {
                     >
                       <img 
                         src={resolveAssetUrl(media.mediaUrl)} 
-                        alt={`Image ${index + 1}`}
+                        alt={uiText("Image {{count}}", { count: formatDisplayNumber(index + 1) })}
                         className="w-full h-full object-cover"
                       />
                       {selectedMediaUrlToSave === media.mediaUrl && (
@@ -4431,19 +4430,19 @@ export default function Home() {
                   ))}
                 </div>
                 {!selectedMediaUrlToSave && (
-                  <p className="text-sm text-orange-600 mt-2">Please select an image to save</p>
+                  <p className="text-sm text-orange-600 mt-2">{uiText("Please select an image to save")}</p>
                 )}
               </div>
             )}
             
             <div>
-              <Label htmlFor="album-select" className="text-black dark:text-black">Album (optional)</Label>
+              <Label htmlFor="album-select" className="text-black dark:text-black">{uiText("Album (optional)")}</Label>
               <Select value={saveAlbumId} onValueChange={setSaveAlbumId}>
                 <SelectTrigger data-testid="select-album" className="bg-white dark:bg-white text-black dark:text-black border-gray-300">
-                  <SelectValue placeholder="No album (add to All)" />
+                  <SelectValue placeholder={uiText("No album (add to All)")} />
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-white border-gray-300">
-                  <SelectItem value="none" className="text-black dark:text-black">No album</SelectItem>
+                  <SelectItem value="none" className="text-black dark:text-black">{uiText("No album")}</SelectItem>
                   {(scrapbookAlbums as any[]).map((album: any) => (
                     <SelectItem key={album.id} value={album.id} className="text-black dark:text-black">
                       <div className="flex items-center gap-2">
@@ -4464,15 +4463,15 @@ export default function Home() {
                 className="mt-1 h-auto p-0 text-blue-600 dark:text-blue-600"
                 data-testid="button-create-album"
               >
-                + Create New Album
+                {uiText("+ Create New Album")}
               </Button>
             </div>
             
             <div>
-              <Label htmlFor="save-note" className="text-black dark:text-black">Note (optional)</Label>
+              <Label htmlFor="save-note" className="text-black dark:text-black">{uiText("Note (optional)")}</Label>
               <Textarea
                 id="save-note"
-                placeholder="Add a personal note..."
+                placeholder={uiText("Add a personal note...")}
                 value={saveNote}
                 onChange={(e) => setSaveNote(e.target.value)}
                 rows={3}
@@ -4492,7 +4491,7 @@ export default function Home() {
                 }}
                 className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 onClick={() => {
@@ -4524,7 +4523,7 @@ export default function Home() {
                 className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                 data-testid="button-save-post"
               >
-                {savePostMutation.isPending ? "Adding..." : "Add"}
+                {savePostMutation.isPending ? uiText("Adding...") : uiText("Add")}
               </Button>
             </div>
           </div>
@@ -4535,25 +4534,24 @@ export default function Home() {
       <Dialog open={showSaveCommentDialog} onOpenChange={setShowSaveCommentDialog}>
         <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle className="text-black dark:text-black">Add Comment to Scrapbook</DialogTitle>
+            <DialogTitle className="text-black dark:text-black">{uiText("Add Comment to Scrapbook")}</DialogTitle>
             <DialogDescription className="text-gray-700 dark:text-gray-700">
-              Add this comment to your scrapbook and optionally organize it in an album
+              {uiText("Add this comment to your scrapbook and optionally organize it in an album")}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             <div className="text-sm text-gray-600 dark:text-gray-600">
-              {(scrapbookSaves as any[]).length}/1000 added
-            </div>
+              {uiText("{{length}}/1000 added", { "length": (scrapbookSaves as any[]).length })}</div>
             
             <div>
-              <Label htmlFor="comment-album-select" className="text-black dark:text-black">Album (optional)</Label>
+              <Label htmlFor="comment-album-select" className="text-black dark:text-black">{uiText("Album (optional)")}</Label>
               <Select value={saveAlbumId} onValueChange={setSaveAlbumId}>
                 <SelectTrigger data-testid="select-comment-album" className="bg-white dark:bg-white text-black dark:text-black border-gray-300">
-                  <SelectValue placeholder="No album (add to All)" />
+                  <SelectValue placeholder={uiText("No album (add to All)")} />
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-white border-gray-300">
-                  <SelectItem value="none" className="text-black dark:text-black">No album</SelectItem>
+                  <SelectItem value="none" className="text-black dark:text-black">{uiText("No album")}</SelectItem>
                   {(scrapbookAlbums as any[]).map((album: any) => (
                     <SelectItem key={album.id} value={album.id} className="text-black dark:text-black">
                       <div className="flex items-center gap-2">
@@ -4574,15 +4572,15 @@ export default function Home() {
                 className="mt-1 h-auto p-0 text-blue-600 dark:text-blue-600"
                 data-testid="button-create-comment-album"
               >
-                + Create New Album
+                {uiText("+ Create New Album")}
               </Button>
             </div>
             
             <div>
-              <Label htmlFor="comment-save-note" className="text-black dark:text-black">Note (optional)</Label>
+              <Label htmlFor="comment-save-note" className="text-black dark:text-black">{uiText("Note (optional)")}</Label>
               <Textarea
                 id="comment-save-note"
-                placeholder="Add a personal note..."
+                placeholder={uiText("Add a personal note...")}
                 value={saveNote}
                 onChange={(e) => setSaveNote(e.target.value)}
                 rows={3}
@@ -4601,7 +4599,7 @@ export default function Home() {
                 }}
                 className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 onClick={() => {
@@ -4623,7 +4621,7 @@ export default function Home() {
                 className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                 data-testid="button-save-comment"
               >
-                {saveCommentMutation.isPending ? "Adding..." : "Add"}
+                {saveCommentMutation.isPending ? uiText("Adding...") : uiText("Add")}
               </Button>
             </div>
           </div>
@@ -4634,15 +4632,15 @@ export default function Home() {
       <Dialog open={showCreateAlbumDialog} onOpenChange={setShowCreateAlbumDialog}>
         <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle className="text-black dark:text-black">Create New Album</DialogTitle>
+            <DialogTitle className="text-black dark:text-black">{uiText("Create New Album")}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="album-name" className="text-black dark:text-black">Album Name</Label>
+              <Label htmlFor="album-name" className="text-black dark:text-black">{uiText("Album Name")}</Label>
               <Input
                 id="album-name"
-                placeholder="Enter album name..."
+                placeholder={uiText("Enter album name...")}
                 value={newAlbumName}
                 onChange={(e) => setNewAlbumName(e.target.value)}
                 data-testid="input-album-name"
@@ -4651,7 +4649,7 @@ export default function Home() {
             </div>
             
             <div>
-              <Label className="text-black dark:text-black">Album Color</Label>
+              <Label className="text-black dark:text-black">{uiText("Album Color")}</Label>
               <div className="flex gap-2 mt-2">
                 {["#FF1493", "#00BFFF", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"].map((color) => (
                   <button
@@ -4679,7 +4677,7 @@ export default function Home() {
                 }}
                 className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 onClick={() => {
@@ -4700,7 +4698,7 @@ export default function Home() {
                 className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                 data-testid="button-create-album-submit"
               >
-                {createAlbumMutation.isPending ? "Creating..." : "Create"}
+                {createAlbumMutation.isPending ? uiText("Creating...") : uiText("Create")}
               </Button>
             </div>
           </div>
@@ -4711,15 +4709,15 @@ export default function Home() {
       <Dialog open={showEditAlbumDialog} onOpenChange={setShowEditAlbumDialog}>
         <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle className="text-black dark:text-black">Edit Album</DialogTitle>
+            <DialogTitle className="text-black dark:text-black">{uiText("Edit Album")}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="edit-album-name" className="text-black dark:text-black">Album Name</Label>
+              <Label htmlFor="edit-album-name" className="text-black dark:text-black">{uiText("Album Name")}</Label>
               <Input
                 id="edit-album-name"
-                placeholder="Enter album name..."
+                placeholder={uiText("Enter album name...")}
                 value={editAlbumName}
                 onChange={(e) => setEditAlbumName(e.target.value)}
                 data-testid="input-edit-album-name"
@@ -4728,7 +4726,7 @@ export default function Home() {
             </div>
             
             <div>
-              <Label className="text-black dark:text-black">Album Color</Label>
+              <Label className="text-black dark:text-black">{uiText("Album Color")}</Label>
               <div className="flex gap-2 mt-2">
                 {["#FF1493", "#00BFFF", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899"].map((color) => (
                   <button
@@ -4755,7 +4753,7 @@ export default function Home() {
                 }}
                 className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 onClick={() => {
@@ -4779,7 +4777,7 @@ export default function Home() {
                 className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                 data-testid="button-update-album"
               >
-                {updateAlbumMutation.isPending ? "Updating..." : "Update"}
+                {updateAlbumMutation.isPending ? uiText("Updating...") : uiText("Update")}
               </Button>
             </div>
           </div>
@@ -4790,12 +4788,12 @@ export default function Home() {
       <Dialog open={showEditNoteDialog} onOpenChange={setShowEditNoteDialog}>
         <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle className="text-black dark:text-black">Edit Note</DialogTitle>
+            <DialogTitle className="text-black dark:text-black">{uiText("Edit Note")}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
             <Textarea
-              placeholder="Add a personal note..."
+              placeholder={uiText("Add a personal note...")}
               value={editNoteText}
               onChange={(e) => setEditNoteText(e.target.value)}
               rows={4}
@@ -4812,7 +4810,7 @@ export default function Home() {
                 }}
                 className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 onClick={() => {
@@ -4825,7 +4823,7 @@ export default function Home() {
                 className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
                 data-testid="button-update-note"
               >
-                {updateNoteMutation.isPending ? "Updating..." : "Update"}
+                {updateNoteMutation.isPending ? uiText("Updating...") : uiText("Update")}
               </Button>
             </div>
           </div>
@@ -4836,9 +4834,9 @@ export default function Home() {
       <Dialog open={showUnsaveDialog} onOpenChange={setShowUnsaveDialog}>
         <DialogContent className="sm:max-w-md bg-white dark:bg-white border-gray-300">
           <DialogHeader>
-            <DialogTitle className="text-black dark:text-black">Remove from Scrapbook?</DialogTitle>
+            <DialogTitle className="text-black dark:text-black">{uiText("Remove from Scrapbook?")}</DialogTitle>
             <DialogDescription className="text-gray-700 dark:text-gray-700">
-              This will remove the {postToUnsave?.type === 'action' ? 'video' : 'post'} from your scrapbook and delete any notes you've added.
+              {uiText("This will remove the")} {postToUnsave?.type === 'action' ? uiText("video") : uiText("post")} {uiText("from your scrapbook and delete any notes you've added.")}
             </DialogDescription>
           </DialogHeader>
           
@@ -4851,7 +4849,7 @@ export default function Home() {
               }}
               className="border-gray-300 text-black dark:text-black bg-white dark:bg-white hover:bg-gray-100 dark:hover:bg-gray-100"
             >
-              Cancel
+              {uiText("Cancel")}
             </Button>
               <Button
                 onClick={() => {
@@ -4865,7 +4863,7 @@ export default function Home() {
                 className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700 dark:text-white"
                 data-testid="button-confirm-unsave"
               >
-                {(unsavePostMutation.isPending || unsaveActionMutation.isPending) ? "Removing..." : "Remove"}
+                {(unsavePostMutation.isPending || unsaveActionMutation.isPending) ? uiText("Removing...") : uiText("Remove")}
               </Button>
             </div>
           </DialogContent>

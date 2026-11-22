@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { buildApiUrl } from "@/lib/apiConfig";
 import type { Meme } from "@shared/schema";
 import type { UploadResult } from "@uppy/core";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface MemeUploaderProps {
   memes: Meme[];
@@ -19,6 +20,7 @@ interface MemeUploaderProps {
 }
 
 export function MemeUploader({ memes, onRefresh, adminPassword }: MemeUploaderProps) {
+  useUiLanguage();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -191,21 +193,21 @@ export function MemeUploader({ memes, onRefresh, adminPassword }: MemeUploaderPr
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5" />
-            Upload New Meme
+            {uiText("Upload New Meme")}
           </CardTitle>
           <CardDescription>
-            Add new memes to your collection. Supports all popular formats: JPEG, JPG, PNG, GIF, WebP, HEIC, HEIF, BMP, TIFF from iOS and Android devices.
+            {uiText("Add new memes to your collection. Supports all popular formats: JPEG, JPG, PNG, GIF, WebP, HEIC, HEIF, BMP, TIFF from iOS and Android devices.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="meme-title" className="text-sm font-medium">
-                Title (optional)
+                {uiText("Title (optional)")}
               </label>
               <Input
                 id="meme-title"
-                placeholder="Enter meme title"
+                placeholder={uiText("Enter meme title")}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 data-testid="input-meme-title"
@@ -213,11 +215,11 @@ export function MemeUploader({ memes, onRefresh, adminPassword }: MemeUploaderPr
             </div>
             <div>
               <label htmlFor="meme-description" className="text-sm font-medium">
-                Description (optional)
+                {uiText("Description (optional)")}
               </label>
               <Textarea
                 id="meme-description"
-                placeholder="Enter meme description"
+                placeholder={uiText("Enter meme description")}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
@@ -248,7 +250,7 @@ export function MemeUploader({ memes, onRefresh, adminPassword }: MemeUploaderPr
           >
             <div className="flex items-center justify-center gap-2 p-4">
               <Image className="w-5 h-5" />
-              {isUploading ? "Uploading..." : "📸 Select Image Files (JPEG, PNG, GIF, WebP, HEIC, etc.)"}
+              {isUploading ? uiText("Uploading...") : uiText("📸 Select Image Files (JPEG, PNG, GIF, WebP, HEIC, etc.)")}
             </div>
           </ObjectUploader>
         </CardContent>
@@ -257,9 +259,9 @@ export function MemeUploader({ memes, onRefresh, adminPassword }: MemeUploaderPr
       {/* Existing Memes Section */}
       <Card data-testid="meme-list-card">
         <CardHeader>
-          <CardTitle>Your Memes ({memes.length})</CardTitle>
+          <CardTitle>{uiText("Your Memes ({{length}})", { "length": memes.length })}</CardTitle>
           <CardDescription>
-            Manage your existing memes
+            {uiText("Manage your existing memes")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -268,7 +270,7 @@ export function MemeUploader({ memes, onRefresh, adminPassword }: MemeUploaderPr
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search memes..."
+                placeholder={uiText("Search memes...")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -280,7 +282,7 @@ export function MemeUploader({ memes, onRefresh, adminPassword }: MemeUploaderPr
           {/* Memes Grid */}
           {filteredMemes.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              {memes.length === 0 ? "No memes uploaded yet" : "No memes match your search"}
+              {memes.length === 0 ? uiText("No memes uploaded yet") : uiText("No memes match your search")}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -330,7 +332,7 @@ export function MemeUploader({ memes, onRefresh, adminPassword }: MemeUploaderPr
                       )}
                       {meme.isAnimated && (
                         <Badge variant="outline" className="text-xs">
-                          GIF
+                          {uiText("GIF")}
                         </Badge>
                       )}
                     </div>

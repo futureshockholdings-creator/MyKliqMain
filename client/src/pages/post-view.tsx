@@ -9,8 +9,11 @@ import { MemeDisplay } from "@/components/MemeDisplay";
 import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 import { ImageGallery } from "@/components/ImageGallery";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { displayLanguage } from "@/i18n/formatting";
 
 export default function PostView() {
+  useUiLanguage();
   const [, params] = useRoute("/post/:postId");
   const postId = params?.postId;
   const password = sessionStorage.getItem("adminPassword") || "";
@@ -35,10 +38,10 @@ export default function PostView() {
       <ForcedLightSurface className="min-h-screen flex items-center justify-center">
         <div className="text-center p-8">
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-          <p className="text-gray-600">Admin credentials required to view this post.</p>
+          <h2 className="text-xl font-semibold mb-2">{uiText("Access Denied")}</h2>
+          <p className="text-gray-600">{uiText("Admin credentials required to view this post.")}</p>
           <p className="text-sm text-gray-500 mt-4">
-            Please log in to the admin panel first, then click "View Full Post" from there.
+            {uiText("Please log in to the admin panel first, then click \"View Full Post\" from there.")}
           </p>
         </div>
       </ForcedLightSurface>
@@ -58,10 +61,10 @@ export default function PostView() {
       <ForcedLightSurface className="min-h-screen flex items-center justify-center">
         <div className="text-center p-8">
           <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Unable to load post</h2>
+          <h2 className="text-xl font-semibold mb-2">{uiText("Unable to load post")}</h2>
           <p className="text-gray-600">{(error as Error).message}</p>
           <p className="text-sm text-gray-500 mt-4">
-            Make sure you're logged in as an admin with the correct password.
+            {uiText("Make sure you're logged in as an admin with the correct password.")}
           </p>
         </div>
       </ForcedLightSurface>
@@ -73,8 +76,8 @@ export default function PostView() {
       <ForcedLightSurface className="min-h-screen flex items-center justify-center">
         <div className="text-center p-8">
           <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Post not found</h2>
-          <p className="text-gray-600">This post may have been deleted.</p>
+          <h2 className="text-xl font-semibold mb-2">{uiText("Post not found")}</h2>
+          <p className="text-gray-600">{uiText("This post may have been deleted.")}</p>
         </div>
       </ForcedLightSurface>
     );
@@ -83,8 +86,8 @@ export default function PostView() {
   return (
     <ForcedLightSurface className="min-h-screen p-4">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4">Post Review</h1>
-        <p className="text-sm text-gray-500 mb-6">Post ID: {postId}</p>
+        <h1 className="text-2xl font-bold mb-4">{uiText("Post Review")}</h1>
+        <p className="text-sm text-gray-500 mb-6">{uiText("Post ID: {{postId}}", { "postId": postId })}</p>
 
         <Card>
           <CardHeader className="pb-3">
@@ -101,7 +104,7 @@ export default function PostView() {
                   {post.author?.firstName} {post.author?.lastName}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {new Date(post.createdAt).toLocaleString()}
+                  {new Date(post.createdAt).toLocaleString(displayLanguage())}
                 </p>
               </div>
             </div>
@@ -125,25 +128,25 @@ export default function PostView() {
 
             {post.meme && (
               <div>
-                <p className="text-sm text-gray-500 mb-2">Meme: {post.meme.title}</p>
+                <p className="text-sm text-gray-500 mb-2">{uiText("Meme: {{title}}", { "title": post.meme.title })}</p>
                 <MemeDisplay meme={post.meme} className="max-w-md" />
               </div>
             )}
 
             {post.moviecon && (
               <div>
-                <p className="text-sm text-gray-500 mb-2">Moviecon: {post.moviecon.title}</p>
+                <p className="text-sm text-gray-500 mb-2">{uiText("Moviecon: {{title}}", { "title": post.moviecon.title })}</p>
                 <MovieconDisplay moviecon={post.moviecon} className="max-w-md" />
               </div>
             )}
 
             {!post.content && !post.mediaUrl && !post.meme && !post.moviecon && (
-              <p className="text-gray-500 italic">This post has no visible content.</p>
+              <p className="text-gray-500 italic">{uiText("This post has no visible content.")}</p>
             )}
 
             <div className="pt-4 border-t text-sm text-gray-500">
-              <p>Created: {new Date(post.createdAt).toLocaleString()}</p>
-              {post.mood && <p>Mood: {post.mood}</p>}
+              <p>{uiText("Created:")} {new Date(post.createdAt).toLocaleString(displayLanguage())}</p>
+              {post.mood && <p>{uiText("Mood: {{mood}}", { "mood": post.mood })}</p>}
             </div>
           </CardContent>
         </Card>

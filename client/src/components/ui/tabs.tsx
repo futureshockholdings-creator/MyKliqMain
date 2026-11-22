@@ -2,8 +2,16 @@ import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 
 import { cn } from "@/lib/utils"
+import { useUiLanguage } from "@/i18n/interfaceText"
 
-const Tabs = TabsPrimitive.Root
+const Tabs = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
+>((props, ref) => {
+  const language = useUiLanguage()
+  return <TabsPrimitive.Root ref={ref} dir={language === "ar" ? "rtl" : "ltr"} {...props} />
+})
+Tabs.displayName = TabsPrimitive.Root.displayName
 
 const WrappingTabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,

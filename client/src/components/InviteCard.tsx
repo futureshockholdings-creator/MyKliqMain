@@ -2,6 +2,7 @@ import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getInviteMessage, getAppStoreUrl, getDownloadText } from "@/lib/deviceDetection";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface InviteCardProps {
   firstName: string;
@@ -11,6 +12,7 @@ interface InviteCardProps {
 }
 
 export function InviteCard({ firstName, inviteCode, kliqClosed, showNote = true }: InviteCardProps) {
+  useUiLanguage();
   const { toast } = useToast();
 
   const copyInviteMessage = async () => {
@@ -35,7 +37,7 @@ export function InviteCard({ firstName, inviteCode, kliqClosed, showNote = true 
       <div className="bg-muted rounded p-3">
         <div className="flex items-start justify-between gap-3">
           <div className="text-sm text-muted-foreground font-medium flex-1" data-testid="text-invite-message">
-            {firstName} wants you to join their Kliq. Use the following Invite Code {inviteCode} and{" "}
+            {uiText("{{firstName}} wants you to join their Kliq. Use the following Invite Code {{inviteCode}} and", { "firstName": firstName, "inviteCode": inviteCode })}{" "}
             <a
               href={getAppStoreUrl()}
               target="_blank"
@@ -44,7 +46,7 @@ export function InviteCard({ firstName, inviteCode, kliqClosed, showNote = true 
             >
               {getDownloadText()}
             </a>{" "}
-            - "A Different Social Experience"
+            {uiText("- \"A Different Social Experience\"")}
           </div>
           <Button
             size="sm"
@@ -60,8 +62,8 @@ export function InviteCard({ firstName, inviteCode, kliqClosed, showNote = true 
       {showNote && (
         <p className="text-xs text-card-foreground">
           {kliqClosed
-            ? "Your kliq is closed to new members. Existing friends can still use your code but new people cannot join."
-            : "Copy and paste this complete message to invite friends to your kliq"}
+            ? uiText("Your kliq is closed to new members. Existing friends can still use your code but new people cannot join.")
+            : uiText("Copy and paste this complete message to invite friends to your kliq")}
         </p>
       )}
     </div>

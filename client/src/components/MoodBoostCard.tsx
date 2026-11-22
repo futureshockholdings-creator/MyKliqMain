@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface MoodBoostCardProps {
   post: {
@@ -13,6 +14,7 @@ interface MoodBoostCardProps {
 }
 
 export function MoodBoostCard({ post }: MoodBoostCardProps) {
+  useUiLanguage();
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -34,7 +36,7 @@ export function MoodBoostCard({ post }: MoodBoostCardProps) {
             className="backdrop-blur-md bg-gradient-to-r from-pink-500/80 to-purple-500/80 text-white border-none shadow-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
             data-testid="badge-mood-boost"
           >
-            Mood Boost
+            {uiText("Mood Boost")}
           </Badge>
         </div>
 
@@ -43,7 +45,7 @@ export function MoodBoostCard({ post }: MoodBoostCardProps) {
           <div className="flex items-center gap-2 opacity-90">
             <Sparkles className="h-4 w-4 text-yellow-500" />
             <span className="text-xs font-semibold uppercase tracking-wider text-gray-600" data-testid="text-just-for-you">
-              ✨ Just for you
+              {uiText("✨ Just for you")}
             </span>
           </div>
 
@@ -60,7 +62,7 @@ export function MoodBoostCard({ post }: MoodBoostCardProps) {
           {/* Bottom section with subtle timestamp */}
           <div className="flex items-center justify-end text-xs pt-2 border-t border-gray-200" style={{ color: '#6b7280' }}>
             <span className="opacity-70" data-testid="text-expires-at">
-              Expires in {getTimeRemaining(post.expiresAt)}
+              {uiText("Expires in")} {getTimeRemaining(post.expiresAt)}
             </span>
           </div>
         </CardContent>

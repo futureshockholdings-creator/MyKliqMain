@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { buildApiUrl } from '@/lib/apiConfig';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface ChatMessage {
   id: string;
@@ -304,6 +305,7 @@ const fallbackResponses = [
 ];
 
 export function Chatbot() {
+  useUiLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -450,7 +452,7 @@ export function Chatbot() {
           className="fixed bottom-6 right-6 h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground z-50 text-xs font-semibold"
           data-testid="button-chatbot-toggle"
         >
-          HELP
+          {uiText("HELP")}
         </Button>
       )}
 
@@ -461,7 +463,7 @@ export function Chatbot() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Bot className="h-5 w-5 text-primary" />
-                MyKliq Support
+                {uiText("MyKliq Support")}
               </CardTitle>
               <Button
                 variant="ghost"
@@ -527,7 +529,7 @@ export function Chatbot() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask about MyKliq features..."
+                  placeholder={uiText("Ask about MyKliq features...")}
                   className="flex-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                   data-testid="input-chatbot-message"
                 />

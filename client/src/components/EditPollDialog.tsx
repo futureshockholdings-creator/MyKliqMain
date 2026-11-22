@@ -10,7 +10,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, Plus, X } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber, formatRelativeDate } from "@/i18n/formatting";
 
 interface Poll {
   id: string;
@@ -26,6 +27,7 @@ interface EditPollDialogProps {
 }
 
 export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
+  useUiLanguage();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState(poll.title);
   const [description, setDescription] = useState(poll.description || "");
@@ -138,17 +140,17 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
       </DialogTrigger>
       <DialogContent className="!bg-white !text-black border-gray-300 max-w-md">
         <DialogHeader>
-          <DialogTitle className="!text-black">Edit Poll</DialogTitle>
+          <DialogTitle className="!text-black">{uiText("Edit Poll")}</DialogTitle>
           <DialogDescription className="!text-gray-600">
-            Update your poll question and options
+            {uiText("Update your poll question and options")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="title" className="!text-black">Title</Label>
+            <Label htmlFor="title" className="!text-black">{uiText("Title")}</Label>
             <Input
               id="title"
-              placeholder="What's your question?"
+              placeholder={uiText("What's your question?")}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="!bg-white !text-black border-gray-300 placeholder:text-gray-500"
@@ -158,11 +160,11 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
 
           <div>
             <Label htmlFor="description" className="!text-black">
-              Description (optional)
+              {uiText("Description (optional)")}
             </Label>
             <Textarea
               id="description"
-              placeholder="Add more context..."
+              placeholder={uiText("Add more context...")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="!bg-white !text-black border-gray-300 placeholder:text-gray-500 resize-none"
@@ -172,12 +174,12 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
           </div>
 
           <div>
-            <Label className="!text-black">Options</Label>
+            <Label className="!text-black">{uiText("Options")}</Label>
             <div className="space-y-2 mt-2">
               {options.map((option, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <Input
-                    placeholder={`Option ${index + 1}`}
+                    placeholder={uiText("Option {{count}}", { count: formatDisplayNumber(index + 1) })}
                     value={option}
                     onChange={(e) => updateOption(index, e.target.value)}
                     className="!bg-white !text-black border-gray-300 placeholder:text-gray-500"
@@ -205,7 +207,7 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
                   data-testid="button-add-edit-option"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Option
+                  {uiText("Add Option")}
                 </Button>
               )}
             </div>
@@ -213,10 +215,10 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
 
           <div className="space-y-3">
             <div className="text-sm text-gray-600">
-              <span className="font-medium">Current expiry:</span>{" "}
-              {new Date(poll.expiresAt) > new Date() 
-                ? `Expires in ${formatDistanceToNow(new Date(poll.expiresAt))}`
-                : "Expired"
+              <span className="font-medium">{uiText("Current expiry:")}</span>{" "}
+              {new Date(poll.expiresAt) > new Date()
+                ? uiText("Expires in {{time}}", { time: formatRelativeDate(poll.expiresAt, { addSuffix: false }) })
+                : uiText("Expired")
               }
             </div>
             <div className="flex items-center gap-3">
@@ -226,7 +228,7 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
                 id="extend-duration"
               />
               <Label htmlFor="extend-duration" className="!text-black cursor-pointer">
-                Extend duration
+                {uiText("Extend duration")}
               </Label>
             </div>
             {extendDuration && (
@@ -235,12 +237,12 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="!bg-white border-gray-300">
-                  <SelectItem value="1" className="!text-black">1 hour from now</SelectItem>
-                  <SelectItem value="6" className="!text-black">6 hours from now</SelectItem>
-                  <SelectItem value="12" className="!text-black">12 hours from now</SelectItem>
-                  <SelectItem value="24" className="!text-black">24 hours from now</SelectItem>
-                  <SelectItem value="48" className="!text-black">2 days from now</SelectItem>
-                  <SelectItem value="168" className="!text-black">1 week from now</SelectItem>
+                  <SelectItem value="1" className="!text-black">{uiText("1 hour from now")}</SelectItem>
+                  <SelectItem value="6" className="!text-black">{uiText("6 hours from now")}</SelectItem>
+                  <SelectItem value="12" className="!text-black">{uiText("12 hours from now")}</SelectItem>
+                  <SelectItem value="24" className="!text-black">{uiText("24 hours from now")}</SelectItem>
+                  <SelectItem value="48" className="!text-black">{uiText("2 days from now")}</SelectItem>
+                  <SelectItem value="168" className="!text-black">{uiText("1 week from now")}</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -253,7 +255,7 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
               className="!bg-white !text-black border-gray-300 hover:!bg-gray-100"
               data-testid="button-cancel-edit-poll"
             >
-              Cancel
+              {uiText("Cancel")}
             </Button>
             <Button
               onClick={handleSubmit}
@@ -261,7 +263,7 @@ export function EditPollDialog({ poll, trigger }: EditPollDialogProps) {
               className="bg-blue-600 hover:bg-blue-700 text-white"
               data-testid="button-submit-edit-poll"
             >
-              {updatePollMutation.isPending ? "Saving..." : "Save Changes"}
+              {updatePollMutation.isPending ? uiText("Saving...") : uiText("Save Changes")}
             </Button>
           </div>
         </div>

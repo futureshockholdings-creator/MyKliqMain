@@ -14,6 +14,7 @@ import { Link } from "wouter";
 import { useSignupSteps } from "@/hooks/useSignupSteps";
 import { useInstallBannerInset } from "@/hooks/useInstallBannerInset";
 import { ArrowLeft, User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, X, Plus, Calendar, Phone, Mail } from "lucide-react";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 const TagInput = ({ 
   label, 
@@ -35,17 +36,19 @@ const TagInput = ({
   icon: any;
   addItem: (items: string[], setItems: (items: string[]) => void, newItem: string, setNewItem: (item: string) => void) => void;
   removeItem: (items: string[], setItems: (items: string[]) => void, itemToRemove: string) => void;
-}) => (
+}) => {
+  useUiLanguage();
+  return (
   <div className="space-y-2">
     <Label className="text-foreground flex items-center gap-2">
       <Icon className="w-4 h-4" />
-      {label}
+      {uiText(label)}
     </Label>
     <div className="flex gap-2">
       <Input
         value={newItem}
         onChange={(e) => setNewItem(e.target.value)}
-        placeholder={placeholder}
+        placeholder={uiText(placeholder)}
         className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 flex-1"
         onKeyDown={(e) => {
           if (e.key === "Enter") {
@@ -84,9 +87,11 @@ const TagInput = ({
       ))}
     </div>
   </div>
-);
+  );
+};
 
 export default function Signup() {
+  useUiLanguage();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { currentStep, goToStep, goBack: handlePreviousStep } = useSignupSteps();
@@ -159,8 +164,8 @@ export default function Signup() {
       // Validate Basic Info before proceeding
       if (!firstName.trim() || !lastName.trim() || !email.trim() || !phoneNumber.trim()) {
         toast({
-          title: "Missing Information",
-          description: "Please fill in all required fields (name, email, phone number)",
+          title: uiText("Missing Information"),
+          description: uiText("Please fill in all required fields (name, email, phone number)"),
           variant: "destructive"
         });
         return;
@@ -170,8 +175,8 @@ export default function Signup() {
       // Validate Security Setup before proceeding
       if (!password || !confirmPassword || !securityAnswer1 || !securityAnswer2 || !securityAnswer3 || !securityPin) {
         toast({
-          title: "Missing Security Information",
-          description: "Please complete all security setup fields",
+          title: uiText("Missing Security Information"),
+          description: uiText("Please complete all security setup fields"),
           variant: "destructive"
         });
         return;
@@ -180,8 +185,8 @@ export default function Signup() {
       // Validate password match
       if (password !== confirmPassword) {
         toast({
-          title: "Password Mismatch",
-          description: "Passwords do not match",
+          title: uiText("Password Mismatch"),
+          description: uiText("Passwords do not match"),
           variant: "destructive"
         });
         return;
@@ -190,8 +195,8 @@ export default function Signup() {
       // Validate password strength
       if (password.length < 10 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
         toast({
-          title: "Weak Password",
-          description: "Password must be at least 10 characters with letters, numbers, and special characters",
+          title: uiText("Weak Password"),
+          description: uiText("Password must be at least 10 characters with letters, numbers, and special characters"),
           variant: "destructive"
         });
         return;
@@ -200,8 +205,8 @@ export default function Signup() {
       // Validate PIN (4 digits)
       if (!/^\d{4}$/.test(securityPin)) {
         toast({
-          title: "Invalid PIN",
-          description: "Security PIN must be exactly 4 digits",
+          title: uiText("Invalid PIN"),
+          description: uiText("Security PIN must be exactly 4 digits"),
           variant: "destructive"
         });
         return;
@@ -215,8 +220,8 @@ export default function Signup() {
     // Validate required fields
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !phoneNumber.trim()) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields (name, email, phone number)",
+        title: uiText("Missing Information"),
+        description: uiText("Please fill in all required fields (name, email, phone number)"),
         variant: "destructive"
       });
       return;
@@ -225,8 +230,8 @@ export default function Signup() {
     // Validate security setup fields
     if (!password || !confirmPassword || !securityAnswer1 || !securityAnswer2 || !securityAnswer3 || !securityPin) {
       toast({
-        title: "Missing Security Information",
-        description: "Please complete all security setup fields (password, security questions, and PIN)",
+        title: uiText("Missing Security Information"),
+        description: uiText("Please complete all security setup fields (password, security questions, and PIN)"),
         variant: "destructive"
       });
       return;
@@ -235,8 +240,8 @@ export default function Signup() {
     // Validate password match
     if (password !== confirmPassword) {
       toast({
-        title: "Password Mismatch",
-        description: "Passwords do not match",
+        title: uiText("Password Mismatch"),
+        description: uiText("Passwords do not match"),
         variant: "destructive"
       });
       return;
@@ -245,8 +250,8 @@ export default function Signup() {
     // Validate password strength
     if (password.length < 10 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password) || !/[^a-zA-Z0-9]/.test(password)) {
       toast({
-        title: "Weak Password",
-        description: "Password must be at least 10 characters with letters, numbers, and special characters",
+        title: uiText("Weak Password"),
+        description: uiText("Password must be at least 10 characters with letters, numbers, and special characters"),
         variant: "destructive"
       });
       return;
@@ -255,8 +260,8 @@ export default function Signup() {
     // Validate PIN (4 digits)
     if (!/^\d{4}$/.test(securityPin)) {
       toast({
-        title: "Invalid PIN",
-        description: "Security PIN must be exactly 4 digits",
+        title: uiText("Invalid PIN"),
+        description: uiText("Security PIN must be exactly 4 digits"),
         variant: "destructive"
       });
       return;
@@ -265,8 +270,8 @@ export default function Signup() {
     // Validate terms acceptance
     if (!termsAccepted) {
       toast({
-        title: "Terms Not Accepted",
-        description: "You must agree to the Terms of Use, Privacy Policy, Disclaimer, and Community Guidelines to create an account",
+        title: uiText("Terms Not Accepted"),
+        description: uiText("You must agree to the Terms of Use, Privacy Policy, Disclaimer, and Community Guidelines to create an account"),
         variant: "destructive"
       });
       return;
@@ -302,16 +307,16 @@ export default function Signup() {
       });
 
       toast({
-        title: "Welcome to MyKliq!",
-        description: "Your profile has been created successfully.",
+        title: uiText("Welcome to MyKliq!"),
+        description: uiText("Your profile has been created successfully."),
       });
 
       // Redirect to the new user's profile page with newUser flag for onboarding modal
       window.location.href = "/profile?newUser=true";
     } catch (error: any) {
       toast({
-        title: "Signup Failed",
-        description: error.message || "Failed to create your profile. Please try again.",
+        title: uiText("Signup Failed"),
+        description: error.message || uiText("Failed to create your profile. Please try again."),
         variant: "destructive"
       });
     } finally {
@@ -332,19 +337,19 @@ export default function Signup() {
             data-testid="button-signup-back"
           >
             <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
-            Back
+            {uiText("Back")}
           </Button>
         )}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-primary mb-2">Welcome to MyKliq!</h1>
-          <p className="text-muted-foreground">Create your profile to join your exclusive social circle</p>
+          <h1 className="text-3xl font-bold text-primary mb-2">{uiText("Welcome to MyKliq!")}</h1>
+          <p className="text-muted-foreground">{uiText("Create your profile to join your exclusive social circle")}</p>
         </div>
 
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-foreground flex items-center gap-2">
               <User className="w-5 h-5" />
-              Create Your Profile
+              {uiText("Create Your Profile")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -352,28 +357,28 @@ export default function Signup() {
               {/* Progress indicator */}
               <div className="flex items-center justify-center space-x-4">
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                  1
+                  {uiText("1")}
                 </div>
                 <div className={`h-1 w-12 ${currentStep >= 2 ? 'bg-primary' : 'bg-muted'}`}></div>
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                  2
+                  {uiText("2")}
                 </div>
                 <div className={`h-1 w-12 ${currentStep >= 3 ? 'bg-primary' : 'bg-muted'}`}></div>
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                  3
+                  {uiText("3")}
                 </div>
               </div>
 
               <div className="text-center">
                 <h3 className="text-lg font-semibold">
-                  {currentStep === 1 && "Basic Information"}
-                  {currentStep === 2 && "Security Setup"}
-                  {currentStep === 3 && "About You"}
+                  {currentStep === 1 && uiText("Basic Information")}
+                  {currentStep === 2 && uiText("Security Setup")}
+                  {currentStep === 3 && uiText("About You")}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {currentStep === 1 && "Tell us who you are"}
-                  {currentStep === 2 && "Secure your account"}
-                  {currentStep === 3 && "Share your interests (optional)"}
+                  {currentStep === 1 && uiText("Tell us who you are")}
+                  {currentStep === 2 && uiText("Secure your account")}
+                  {currentStep === 3 && uiText("Share your interests (optional)")}
                 </p>
               </div>
 
@@ -384,12 +389,12 @@ export default function Signup() {
                   <div className="space-y-2">
                     <Label className="text-foreground flex items-center gap-2">
                       <User className="w-4 h-4" />
-                      First Name *
+                      {uiText("First Name *")}
                     </Label>
                     <Input
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Your first name"
+                      placeholder={uiText("Your first name")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-first-name"
                     />
@@ -398,12 +403,12 @@ export default function Signup() {
                   <div className="space-y-2">
                     <Label className="text-foreground flex items-center gap-2">
                       <User className="w-4 h-4" />
-                      Last Name *
+                      {uiText("Last Name *")}
                     </Label>
                     <Input
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Your last name"
+                      placeholder={uiText("Your last name")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-last-name"
                     />
@@ -412,13 +417,13 @@ export default function Signup() {
                   <div className="space-y-2">
                     <Label className="text-foreground flex items-center gap-2">
                       <Mail className="w-4 h-4" />
-                      Email *
+                      {uiText("Email *")}
                     </Label>
                     <Input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your.email@example.com"
+                      placeholder={uiText("your.email@example.com")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-email"
                     />
@@ -427,13 +432,13 @@ export default function Signup() {
                   <div className="space-y-2">
                     <Label className="text-foreground flex items-center gap-2">
                       <Phone className="w-4 h-4" />
-                      Phone Number *
+                      {uiText("Phone Number *")}
                     </Label>
                     <Input
                       type="tel"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="(555) 123-4567"
+                      placeholder={uiText("(555) 123-4567")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-phone"
                     />
@@ -442,7 +447,7 @@ export default function Signup() {
                   <div className="space-y-2 md:col-span-2">
                     <Label className="text-foreground flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Birthday
+                      {uiText("Birthday")}
                     </Label>
                     <Input
                       type="date"
@@ -454,22 +459,22 @@ export default function Signup() {
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-foreground">Kliq Name</Label>
+                    <Label className="text-foreground">{uiText("Kliq Name")}</Label>
                     <Input
                       value={kliqName}
                       onChange={(e) => setKliqName(e.target.value)}
-                      placeholder="My Kliq"
+                      placeholder={uiText("My Kliq")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-kliq-name"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-foreground">Bio</Label>
+                    <Label className="text-foreground">{uiText("Bio")}</Label>
                     <Textarea
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
-                      placeholder="Tell us about yourself..."
+                      placeholder={uiText("Tell us about yourself...")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 resize-none"
                       rows={3}
                       data-testid="input-bio"
@@ -484,83 +489,83 @@ export default function Signup() {
                 <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-foreground">Password *</Label>
+                    <Label className="text-foreground">{uiText("Password *")}</Label>
                     <Input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter secure password"
+                      placeholder={uiText("Enter secure password")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-password"
                     />
                     <p className="text-xs text-muted-foreground">
-                      At least 10 characters with letters, numbers, and special characters
+                      {uiText("At least 10 characters with letters, numbers, and special characters")}
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-foreground">Confirm Password *</Label>
+                    <Label className="text-foreground">{uiText("Confirm Password *")}</Label>
                     <Input
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm your password"
+                      placeholder={uiText("Confirm your password")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-confirm-password"
                     />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-foreground">Security Questions *</Label>
-                    <p className="text-sm text-muted-foreground">These will help you recover your account if needed</p>
+                    <Label className="text-foreground">{uiText("Security Questions *")}</Label>
+                    <p className="text-sm text-muted-foreground">{uiText("These will help you recover your account if needed")}</p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-foreground">What was your first car? *</Label>
+                    <Label className="text-foreground">{uiText("What was your first car? *")}</Label>
                     <Input
                       value={securityAnswer1}
                       onChange={(e) => setSecurityAnswer1(e.target.value)}
-                      placeholder="Your answer"
+                      placeholder={uiText("Your answer")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-1"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-foreground">What is your mother's maiden name? *</Label>
+                    <Label className="text-foreground">{uiText("What is your mother's maiden name? *")}</Label>
                     <Input
                       value={securityAnswer2}
                       onChange={(e) => setSecurityAnswer2(e.target.value)}
-                      placeholder="Your answer"
+                      placeholder={uiText("Your answer")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-2"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-foreground">What was your favorite teacher's last name? *</Label>
+                    <Label className="text-foreground">{uiText("What was your favorite teacher's last name? *")}</Label>
                     <Input
                       value={securityAnswer3}
                       onChange={(e) => setSecurityAnswer3(e.target.value)}
-                      placeholder="Your answer"
+                      placeholder={uiText("Your answer")}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-answer-3"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-foreground">4-Digit Security PIN *</Label>
+                    <Label className="text-foreground">{uiText("4-Digit Security PIN *")}</Label>
                     <Input
                       type="password"
                       value={securityPin}
                       onChange={(e) => setSecurityPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                      placeholder="1234"
+                      placeholder={uiText("1234")}
                       maxLength={4}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                       data-testid="input-security-pin"
                     />
                     <p className="text-xs text-muted-foreground">
-                      For additional account verification
+                      {uiText("For additional account verification")}
                     </p>
                   </div>
                 </div>
@@ -572,84 +577,84 @@ export default function Signup() {
                 <div className="space-y-6">
                 <div className="grid gap-6">
                   <TagInput
-                    label="Interests & Hobbies"
+                    label={uiText("Interests & Hobbies")}
                     items={interests}
                     setItems={setInterests}
                     newItem={newInterest}
                     setNewItem={setNewInterest}
-                    placeholder="Add an interest"
+                    placeholder={uiText("Add an interest")}
                     icon={Heart}
                     addItem={addItem}
                     removeItem={removeItem}
                   />
 
                   <TagInput
-                    label="Hobbies"
+                    label={uiText("Hobbies")}
                     items={hobbies}
                     setItems={setHobbies}
                     newItem={newHobby}
                     setNewItem={setNewHobby}
-                    placeholder="Add a hobby"
+                    placeholder={uiText("Add a hobby")}
                     icon={Gamepad2}
                     addItem={addItem}
                     removeItem={removeItem}
                   />
 
                   <TagInput
-                    label="Favorite Locations"
+                    label={uiText("Favorite Locations")}
                     items={favoriteLocations}
                     setItems={setFavoriteLocations}
                     newItem={newLocation}
                     setNewItem={setNewLocation}
-                    placeholder="Add a place"
+                    placeholder={uiText("Add a place")}
                     icon={MapPin}
                     addItem={addItem}
                     removeItem={removeItem}
                   />
 
                   <TagInput
-                    label="Favorite Foods"
+                    label={uiText("Favorite Foods")}
                     items={favoriteFoods}
                     setItems={setFavoriteFoods}
                     newItem={newFood}
                     setNewItem={setNewFood}
-                    placeholder="Add a food"
+                    placeholder={uiText("Add a food")}
                     icon={Utensils}
                     addItem={addItem}
                     removeItem={removeItem}
                   />
 
                   <TagInput
-                    label="Music Genres"
+                    label={uiText("Music Genres")}
                     items={musicGenres}
                     setItems={setMusicGenres}
                     newItem={newGenre}
                     setNewItem={setNewGenre}
-                    placeholder="Add a genre"
+                    placeholder={uiText("Add a genre")}
                     icon={Music}
                     addItem={addItem}
                     removeItem={removeItem}
                   />
 
                   <TagInput
-                    label="Favorite Movies"
+                    label={uiText("Favorite Movies")}
                     items={favoriteMovies}
                     setItems={setFavoriteMovies}
                     newItem={newMovie}
                     setNewItem={setNewMovie}
-                    placeholder="Add a movie"
+                    placeholder={uiText("Add a movie")}
                     icon={Film}
                     addItem={addItem}
                     removeItem={removeItem}
                   />
 
                   <TagInput
-                    label="Favorite Books"
+                    label={uiText("Favorite Books")}
                     items={favoriteBooks}
                     setItems={setFavoriteBooks}
                     newItem={newBook}
                     setNewItem={setNewBook}
-                    placeholder="Add a book"
+                    placeholder={uiText("Add a book")}
                     icon={BookOpen}
                     addItem={addItem}
                     removeItem={removeItem}
@@ -657,50 +662,50 @@ export default function Signup() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-foreground">Relationship Status</Label>
+                      <Label className="text-foreground">{uiText("Relationship Status")}</Label>
                       <Select value={relationshipStatus} onValueChange={setRelationshipStatus}>
                         <SelectTrigger className="bg-input border-border text-foreground">
-                          <SelectValue placeholder="Select status" />
+                          <SelectValue placeholder={uiText("Select status")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="single">Single</SelectItem>
-                          <SelectItem value="taken">In a relationship</SelectItem>
-                          <SelectItem value="married">Married</SelectItem>
-                          <SelectItem value="complicated">It's complicated</SelectItem>
-                          <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                          <SelectItem value="single">{uiText("Single")}</SelectItem>
+                          <SelectItem value="taken">{uiText("In a relationship")}</SelectItem>
+                          <SelectItem value="married">{uiText("Married")}</SelectItem>
+                          <SelectItem value="complicated">{uiText("It's complicated")}</SelectItem>
+                          <SelectItem value="prefer-not-to-say">{uiText("Prefer not to say")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-foreground">Pet Preferences</Label>
+                      <Label className="text-foreground">{uiText("Pet Preferences")}</Label>
                       <Select value={petPreferences} onValueChange={setPetPreferences}>
                         <SelectTrigger className="bg-input border-border text-foreground">
-                          <SelectValue placeholder="Select preference" />
+                          <SelectValue placeholder={uiText("Select preference")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="dogs">Dogs</SelectItem>
-                          <SelectItem value="cats">Cats</SelectItem>
-                          <SelectItem value="both">Both dogs and cats</SelectItem>
-                          <SelectItem value="other">Other pets</SelectItem>
-                          <SelectItem value="none">No pets</SelectItem>
+                          <SelectItem value="dogs">{uiText("Dogs")}</SelectItem>
+                          <SelectItem value="cats">{uiText("Cats")}</SelectItem>
+                          <SelectItem value="both">{uiText("Both dogs and cats")}</SelectItem>
+                          <SelectItem value="other">{uiText("Other pets")}</SelectItem>
+                          <SelectItem value="none">{uiText("No pets")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-foreground">Lifestyle</Label>
+                      <Label className="text-foreground">{uiText("Lifestyle")}</Label>
                       <Select value={lifestyle} onValueChange={setLifestyle}>
                         <SelectTrigger className="bg-input border-border text-foreground">
-                          <SelectValue placeholder="Select lifestyle" />
+                          <SelectValue placeholder={uiText("Select lifestyle")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="relaxed">Relaxed</SelectItem>
-                          <SelectItem value="adventurous">Adventurous</SelectItem>
-                          <SelectItem value="homebody">Homebody</SelectItem>
-                          <SelectItem value="social">Social</SelectItem>
-                          <SelectItem value="creative">Creative</SelectItem>
+                          <SelectItem value="active">{uiText("Active")}</SelectItem>
+                          <SelectItem value="relaxed">{uiText("Relaxed")}</SelectItem>
+                          <SelectItem value="adventurous">{uiText("Adventurous")}</SelectItem>
+                          <SelectItem value="homebody">{uiText("Homebody")}</SelectItem>
+                          <SelectItem value="social">{uiText("Social")}</SelectItem>
+                          <SelectItem value="creative">{uiText("Creative")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -726,14 +731,14 @@ export default function Signup() {
                           htmlFor="terms-checkbox"
                           className="text-sm text-foreground leading-relaxed cursor-pointer"
                         >
-                          I agree to the{" "}
+                          {uiText("I agree to the")}{" "}
                           <Link 
                             href="/terms-of-use" 
                             className="text-primary hover:underline font-medium"
                             target="_blank"
                             data-testid="link-terms-of-use"
                           >
-                            Terms of Use
+                            {uiText("Terms of Use")}
                           </Link>
                           {", "}
                           <Link 
@@ -742,7 +747,7 @@ export default function Signup() {
                             target="_blank"
                             data-testid="link-privacy-policy"
                           >
-                            Privacy Policy
+                            {uiText("Privacy Policy")}
                           </Link>
                           {", "}
                           <Link 
@@ -751,21 +756,21 @@ export default function Signup() {
                             target="_blank"
                             data-testid="link-disclaimer"
                           >
-                            Disclaimer
+                            {uiText("Disclaimer")}
                           </Link>
-                          {", and "}
+                          {uiText(", and ")}
                           <Link 
                             href="/community-guidelines" 
                             className="text-primary hover:underline font-medium"
                             target="_blank"
                             data-testid="link-community-guidelines"
                           >
-                            Community Guidelines
+                            {uiText("Community Guidelines")}
                           </Link>
                           {" *"}
                         </label>
                         <p className="text-xs text-muted-foreground mt-2">
-                          By creating an account, you acknowledge that you have read and agree to our policies
+                          {uiText("By creating an account, you acknowledge that you have read and agree to our policies")}
                         </p>
                       </div>
                     </div>
@@ -783,7 +788,7 @@ export default function Signup() {
                   className={currentStep === 1 ? "invisible" : ""}
                   data-testid="button-previous-step"
                 >
-                  Previous
+                  {uiText("Previous")}
                 </Button>
                 
                 <Button
@@ -794,10 +799,10 @@ export default function Signup() {
                   data-testid={currentStep === 3 ? "button-create-profile" : "button-next-step"}
                 >
                   {isSubmitting 
-                    ? "Creating Profile..." 
+                    ? uiText("Creating Profile...")
                     : currentStep === 3 
-                      ? "Create Profile" 
-                      : "Next Step"
+                      ? uiText("Create Profile")
+                      : uiText("Next Step")
                   }
                 </Button>
               </div>

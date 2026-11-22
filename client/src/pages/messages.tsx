@@ -1,7 +1,6 @@
 import { type MouseEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { formatDistanceToNow } from "date-fns";
 import { MessageCircle, ArrowLeft, Users, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,6 +10,8 @@ import { resolveAssetUrl } from "@/lib/apiConfig";
 import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 import { useToast } from "@/hooks/use-toast";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber, formatRelativeDate } from "@/i18n/formatting";
 
 interface UserData {
   id: string;
@@ -50,6 +51,7 @@ interface GroupConversation {
 type ConversationData = IndividualConversation | GroupConversation;
 
 export function Messages() {
+  useUiLanguage();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -80,11 +82,11 @@ export function Messages() {
       if (context?.previousConversations) {
         queryClient.setQueryData(["/api/messages/conversations"], context.previousConversations);
       }
-      toast({ title: "Failed to delete conversation", variant: "destructive" });
+      toast({ title: uiText("Failed to delete conversation"), variant: "destructive" });
     },
     onSuccess: () => {
       enhancedCache.removeByPattern('/api/messages');
-      toast({ title: "Conversation deleted" });
+      toast({ title: uiText("Conversation deleted") });
     },
     onSettled: () => {
       setTimeout(() => {
@@ -104,7 +106,7 @@ export function Messages() {
       return `${user.firstName} ${user.lastName}`;
     }
     if (user.firstName) return user.firstName;
-    return user.email?.split("@")[0] || "Unknown User";
+    return user.email?.split("@")[0] || uiText("Unknown User");
   };
 
   const getInitials = (user: UserData) => {
@@ -133,7 +135,7 @@ export function Messages() {
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold text-foreground">Incognito Messages</h1>
+            <h1 className="text-2xl font-bold text-foreground">{uiText("Incognito Messages")}</h1>
           </div>
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
@@ -162,17 +164,17 @@ export function Messages() {
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold text-foreground">Incognito Messages</h1>
+          <h1 className="text-2xl font-bold text-foreground">{uiText("Incognito Messages")}</h1>
         </div>
 
         {conversations.length === 0 ? (
           <div className="text-center py-12">
             <MessageCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-muted-foreground mb-2">
-              No messages yet
+              {uiText("No messages yet")}
             </h2>
             <p className="text-muted-foreground">
-              Start a conversation with your kliq members
+              {uiText("Start a conversation with your kliq members")}
             </p>
           </div>
         ) : (
@@ -216,17 +218,18 @@ export function Messages() {
                           </h3>
                           {isGroup && (
                             <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 flex-shrink-0">
-                              Group
+                              {uiText("Group")}
                             </Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <span className="text-xs text-gray-500 whitespace-nowrap" data-testid={`text-time-${conversation.id}`}>
-                            {formatDistanceToNow(new Date(conversation.lastActivity), { addSuffix: true })}
+                            {formatRelativeDate(new Date(conversation.lastActivity))}
                           </span>
                           <button
                             className="text-red-400 hover:text-red-600 p-1 rounded-md hover:bg-red-50 transition-colors"
                             onClick={(e) => handleDelete(e, conversation)}
+                            aria-label={uiText("Delete conversation")}
                             disabled={deleteConversationMutation.isPending}
                             data-testid={`btn-delete-${conversation.id}`}
                           >
@@ -243,7 +246,7 @@ export function Messages() {
                       
                       {isGroup && (
                         <p className="text-xs text-gray-500 mt-1 truncate">
-                          {(conversation as GroupConversation).participants.length} members
+                          {uiText("{{count}} members", { count: formatDisplayNumber((conversation as GroupConversation).participants.length) })}
                         </p>
                       )}
                     </div>

@@ -33,6 +33,8 @@ import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
 import { apiRequest } from "@/lib/queryClient";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { displayLanguage } from "@/i18n/formatting";
 
 interface MaintenanceMetrics {
   database: {
@@ -110,6 +112,7 @@ interface ScalingMetrics {
 }
 
 export default function MaintenanceDashboard() {
+  useUiLanguage();
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -184,7 +187,7 @@ export default function MaintenanceDashboard() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleString();
+    return new Date(dateString).toLocaleString(displayLanguage());
   };
 
   if (!isAuthenticated) {
@@ -195,9 +198,9 @@ export default function MaintenanceDashboard() {
             <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <Shield className="w-6 h-6 text-primary" />
             </div>
-            <CardTitle>Maintenance Dashboard Access</CardTitle>
+            <CardTitle>{uiText("Maintenance Dashboard Access")}</CardTitle>
             <CardDescription>
-              Enter the admin password to access the maintenance dashboard
+              {uiText("Enter the admin password to access the maintenance dashboard")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -211,7 +214,7 @@ export default function MaintenanceDashboard() {
               <div className="relative">
                 <Input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter admin password"
+                  placeholder={uiText("Enter admin password")}
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   className="pr-10"
@@ -231,7 +234,7 @@ export default function MaintenanceDashboard() {
                 className="w-full"
                 disabled={authenticateAdmin.isPending || !adminPassword}
               >
-                {authenticateAdmin.isPending ? "Authenticating..." : "Access Maintenance Dashboard"}
+                {authenticateAdmin.isPending ? uiText("Authenticating...") : uiText("Access Maintenance Dashboard")}
               </Button>
             </form>
           </CardContent>
@@ -244,10 +247,10 @@ export default function MaintenanceDashboard() {
     return (
       <ForcedLightSurface className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Maintenance Dashboard</h1>
+          <h1 className="text-3xl font-bold">{uiText("Maintenance Dashboard")}</h1>
           <div className="flex items-center space-x-2">
             <RefreshCw className="w-4 h-4 animate-spin" />
-            <span>Loading...</span>
+            <span>{uiText("Loading...")}</span>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -275,11 +278,11 @@ export default function MaintenanceDashboard() {
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-2 text-gray-600 hover:text-black transition-colors">
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Home</span>
+              <span>{uiText("Back to Home")}</span>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold">Maintenance Dashboard</h1>
-              <p className="text-gray-600">Monitor MyKliq system health and performance</p>
+              <h1 className="text-3xl font-bold">{uiText("Maintenance Dashboard")}</h1>
+              <p className="text-gray-600">{uiText("Monitor MyKliq system health and performance")}</p>
             </div>
           </div>
         <div className="flex items-center space-x-4">
@@ -291,7 +294,7 @@ export default function MaintenanceDashboard() {
           )}
           <Button onClick={handleRefresh} disabled={refreshing} data-testid="refresh-dashboard">
             <RefreshCw className={cn("w-4 h-4 mr-2", refreshing && "animate-spin")} />
-            Refresh
+            {uiText("Refresh")}
           </Button>
         </div>
       </div>
@@ -302,7 +305,7 @@ export default function MaintenanceDashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center space-x-2 text-destructive">
               <AlertTriangle className="w-5 h-5" />
-              <span>System Issues Detected</span>
+              <span>{uiText("System Issues Detected")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -319,45 +322,45 @@ export default function MaintenanceDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium">{uiText("Total Users")}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.database.totalUsers.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Registered users</p>
+            <div className="text-2xl font-bold">{metrics.database.totalUsers.toLocaleString(displayLanguage())}</div>
+            <p className="text-xs text-muted-foreground">{uiText("Registered users")}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
+            <CardTitle className="text-sm font-medium">{uiText("Active Sessions")}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.database.activeSessions}</div>
-            <p className="text-xs text-muted-foreground">Currently online</p>
+            <p className="text-xs text-muted-foreground">{uiText("Currently online")}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
+            <CardTitle className="text-sm font-medium">{uiText("Total Posts")}</CardTitle>
             <MessageCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.database.totalPosts.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">All time posts</p>
+            <div className="text-2xl font-bold">{metrics.database.totalPosts.toLocaleString(displayLanguage())}</div>
+            <p className="text-xs text-muted-foreground">{uiText("All time posts")}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
+            <CardTitle className="text-sm font-medium">{uiText("Upcoming Events")}</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics.database.upcomingEvents}</div>
-            <p className="text-xs text-muted-foreground">Future events</p>
+            <p className="text-xs text-muted-foreground">{uiText("Future events")}</p>
           </CardContent>
         </Card>
       </div>
@@ -368,20 +371,20 @@ export default function MaintenanceDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <TrendingUp className="w-5 h-5" />
-              <span>Performance</span>
+              <span>{uiText("Performance")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <div className="flex justify-between text-sm mb-1">
-                <span>Avg Response Time</span>
-                <span>{Math.round(metrics.performance.avgResponseTime)}ms</span>
+                <span>{uiText("Avg Response Time")}</span>
+                <span>{Math.round(metrics.performance.avgResponseTime)}{uiText("ms")}</span>
               </div>
               <Progress value={Math.min(metrics.performance.avgResponseTime / 20, 100)} />
             </div>
             <div>
               <div className="flex justify-between text-sm mb-1">
-                <span>Error Rate</span>
+                <span>{uiText("Error Rate")}</span>
                 <span>{metrics.performance.errorRate.toFixed(1)}%</span>
               </div>
               <Progress 
@@ -391,8 +394,8 @@ export default function MaintenanceDashboard() {
             </div>
             <div>
               <div className="flex justify-between text-sm mb-1">
-                <span>Memory Usage</span>
-                <span>{metrics.performance.memoryUsage}MB</span>
+                <span>{uiText("Memory Usage")}</span>
+                <span>{uiText("{{memoryUsage}}MB", { "memoryUsage": metrics.performance.memoryUsage })}</span>
               </div>
               <Progress value={Math.min(metrics.performance.memoryUsage / 10, 100)} />
             </div>
@@ -403,23 +406,23 @@ export default function MaintenanceDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Database className="w-5 h-5" />
-              <span>Database Health</span>
+              <span>{uiText("Database Health")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between">
-              <span className="text-sm">Query Performance</span>
+              <span className="text-sm">{uiText("Query Performance")}</span>
               <Badge variant={metrics.database.queryPerformance < 500 ? "default" : "destructive"}>
-                {Math.round(metrics.database.queryPerformance)}ms
+                {Math.round(metrics.database.queryPerformance)}{uiText("ms")}
               </Badge>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm">Active Polls</span>
+              <span className="text-sm">{uiText("Active Polls")}</span>
               <span className="font-medium">{metrics.database.activePolls}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm">Storage Usage</span>
-              <span className="font-medium">{metrics.database.storageUsage}MB</span>
+              <span className="text-sm">{uiText("Storage Usage")}</span>
+              <span className="font-medium">{uiText("{{storageUsage}}MB", { "storageUsage": metrics.database.storageUsage })}</span>
             </div>
           </CardContent>
         </Card>
@@ -428,25 +431,25 @@ export default function MaintenanceDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <HardDrive className="w-5 h-5" />
-              <span>Cleanup Status</span>
+              <span>{uiText("Cleanup Status")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Expired Sessions</span>
+                <span>{uiText("Expired Sessions")}</span>
                 <Badge variant={metrics.cleanup.expiredSessions > 50 ? "destructive" : "secondary"}>
                   {metrics.cleanup.expiredSessions}
                 </Badge>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Old Notifications</span>
+                <span>{uiText("Old Notifications")}</span>
                 <Badge variant={metrics.cleanup.oldNotifications > 500 ? "destructive" : "secondary"}>
                   {metrics.cleanup.oldNotifications}
                 </Badge>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Expired Stories</span>
+                <span>{uiText("Expired Stories")}</span>
                 <Badge variant={metrics.cleanup.expiredStories > 10 ? "destructive" : "secondary"}>
                   {metrics.cleanup.expiredStories}
                 </Badge>
@@ -463,14 +466,14 @@ export default function MaintenanceDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Scaling Capacity</CardTitle>
+                <CardTitle className="text-sm font-medium">{uiText("Scaling Capacity")}</CardTitle>
                 <Gauge className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{scalingMetrics.scalingCapacity.estimatedConcurrentUsers.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">Max concurrent users</p>
+                <div className="text-2xl font-bold">{scalingMetrics.scalingCapacity.estimatedConcurrentUsers.toLocaleString(displayLanguage())}</div>
+                <p className="text-xs text-muted-foreground">{uiText("Max concurrent users")}</p>
                 <Badge 
-                  variant={scalingMetrics.scalingCapacity.scalingStatus === 'optimal' ? 'default' : 'secondary'}
+                  variant={scalingMetrics.scalingCapacity.scalingStatus === 'optimal' ? "default" : "secondary"}
                   className="mt-2"
                 >
                   {scalingMetrics.scalingCapacity.scalingStatus}
@@ -480,12 +483,12 @@ export default function MaintenanceDashboard() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Memory Capacity</CardTitle>
+                <CardTitle className="text-sm font-medium">{uiText("Memory Capacity")}</CardTitle>
                 <HardDrive className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{scalingMetrics.currentLoad.memoryUsageMB}MB</div>
-                <p className="text-xs text-muted-foreground">Used: {scalingMetrics.scalingCapacity.memoryCapacityUsed}</p>
+                <div className="text-2xl font-bold">{uiText("{{memoryUsageMB}}MB", { "memoryUsageMB": scalingMetrics.currentLoad.memoryUsageMB })}</div>
+                <p className="text-xs text-muted-foreground">{uiText("Used: {{memoryCapacityUsed}}", { "memoryCapacityUsed": scalingMetrics.scalingCapacity.memoryCapacityUsed })}</p>
                 <Progress 
                   value={parseFloat(scalingMetrics.scalingCapacity.memoryCapacityUsed)} 
                   className="mt-2"
@@ -495,15 +498,13 @@ export default function MaintenanceDashboard() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">DB Connections</CardTitle>
+                <CardTitle className="text-sm font-medium">{uiText("DB Connections")}</CardTitle>
                 <Database className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{scalingMetrics.currentLoad.databaseConnections.total}/50</div>
+                <div className="text-2xl font-bold">{uiText("{{total}}/50", { "total": scalingMetrics.currentLoad.databaseConnections.total })}</div>
                 <p className="text-xs text-muted-foreground">
-                  Idle: {scalingMetrics.currentLoad.databaseConnections.idle} | 
-                  Waiting: {scalingMetrics.currentLoad.databaseConnections.waiting}
-                </p>
+                  {uiText("Idle: {{idle}} | Waiting: {{waiting}}", { "idle": scalingMetrics.currentLoad.databaseConnections.idle, "waiting": scalingMetrics.currentLoad.databaseConnections.waiting })}</p>
                 <Progress 
                   value={parseFloat(scalingMetrics.scalingCapacity.dbCapacityUsed)} 
                   className="mt-2"
@@ -513,12 +514,12 @@ export default function MaintenanceDashboard() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Rate Limiting</CardTitle>
+                <CardTitle className="text-sm font-medium">{uiText("Rate Limiting")}</CardTitle>
                 <Shield className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{scalingMetrics.rateLimiting.activeRateLimits}</div>
-                <p className="text-xs text-muted-foreground">Active rate limits</p>
+                <p className="text-xs text-muted-foreground">{uiText("Active rate limits")}</p>
                 <Badge variant="outline" className="mt-2">
                   {scalingMetrics.rateLimiting.effectiveness}
                 </Badge>
@@ -532,27 +533,27 @@ export default function MaintenanceDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Server className="w-5 h-5" />
-                  <span>Cache Performance</span>
+                  <span>{uiText("Cache Performance")}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Redis Connection</span>
-                  <Badge variant={scalingMetrics.currentLoad.cachePerformance.redisConnected ? 'default' : 'secondary'}>
-                    {scalingMetrics.currentLoad.cachePerformance.redisConnected ? 'Connected' : 'Memory Fallback'}
+                  <span className="text-sm">{uiText("Redis Connection")}</span>
+                  <Badge variant={scalingMetrics.currentLoad.cachePerformance.redisConnected ? "default" : "secondary"}>
+                    {scalingMetrics.currentLoad.cachePerformance.redisConnected ? uiText("Connected") : uiText("Memory Fallback")}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Memory Cache Size</span>
-                  <span className="font-medium">{scalingMetrics.currentLoad.cachePerformance.memoryCacheSize} entries</span>
+                  <span className="text-sm">{uiText("Memory Cache Size")}</span>
+                  <span className="font-medium">{uiText("{{memoryCacheSize}} entries", { "memoryCacheSize": scalingMetrics.currentLoad.cachePerformance.memoryCacheSize })}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm">Rate Limit Entries</span>
+                  <span className="text-sm">{uiText("Rate Limit Entries")}</span>
                   <span className="font-medium">{scalingMetrics.currentLoad.cachePerformance.rateLimitEntries}</span>
                 </div>
                 {scalingMetrics.performance.slowEndpoints.length > 0 && (
                   <div>
-                    <span className="text-sm text-muted-foreground">Slow Endpoints:</span>
+                    <span className="text-sm text-muted-foreground">{uiText("Slow Endpoints:")}</span>
                     <div className="mt-1 space-y-1">
                       {scalingMetrics.performance.slowEndpoints.slice(0, 3).map((endpoint, i) => (
                         <Badge key={i} variant="destructive" className="mr-1 text-xs">
@@ -569,7 +570,7 @@ export default function MaintenanceDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Lightbulb className="w-5 h-5" />
-                  <span>Scaling Recommendations</span>
+                  <span>{uiText("Scaling Recommendations")}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -596,30 +597,30 @@ export default function MaintenanceDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Clock className="w-5 h-5" />
-            <span>Maintenance Schedule</span>
+            <span>{uiText("Maintenance Schedule")}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <h4 className="font-medium text-sm mb-1">Session Cleanup</h4>
+              <h4 className="font-medium text-sm mb-1">{uiText("Session Cleanup")}</h4>
               <p className="text-xs text-muted-foreground">{formatDate(metrics.lastMaintenance.sessionCleanup)}</p>
-              <Badge variant="outline" className="mt-1">Daily</Badge>
+              <Badge variant="outline" className="mt-1">{uiText("Daily")}</Badge>
             </div>
             <div>
-              <h4 className="font-medium text-sm mb-1">Story Cleanup</h4>
+              <h4 className="font-medium text-sm mb-1">{uiText("Story Cleanup")}</h4>
               <p className="text-xs text-muted-foreground">{formatDate(metrics.lastMaintenance.storyCleanup)}</p>
-              <Badge variant="outline" className="mt-1">Daily</Badge>
+              <Badge variant="outline" className="mt-1">{uiText("Daily")}</Badge>
             </div>
             <div>
-              <h4 className="font-medium text-sm mb-1">Notification Cleanup</h4>
+              <h4 className="font-medium text-sm mb-1">{uiText("Notification Cleanup")}</h4>
               <p className="text-xs text-muted-foreground">{formatDate(metrics.lastMaintenance.notificationCleanup)}</p>
-              <Badge variant="outline" className="mt-1">Weekly</Badge>
+              <Badge variant="outline" className="mt-1">{uiText("Weekly")}</Badge>
             </div>
             <div>
-              <h4 className="font-medium text-sm mb-1">Database Optimization</h4>
+              <h4 className="font-medium text-sm mb-1">{uiText("Database Optimization")}</h4>
               <p className="text-xs text-muted-foreground">{formatDate(metrics.lastMaintenance.databaseOptimization)}</p>
-              <Badge variant="outline" className="mt-1">Weekly</Badge>
+              <Badge variant="outline" className="mt-1">{uiText("Weekly")}</Badge>
             </div>
           </div>
         </CardContent>

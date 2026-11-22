@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SportsUpdateCard } from "./SportsUpdateCard";
 import { cn } from "@/lib/utils";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface LeaderboardEntry {
   position: number;
@@ -93,6 +94,7 @@ function getStatusCounts(updates: SportsUpdate[]) {
 }
 
 export function SportsCarousel({ updates }: SportsCarouselProps) {
+  useUiLanguage();
   const scrollRef = useRef<HTMLDivElement>(null);
   
   if (!updates || updates.length === 0) {
@@ -118,23 +120,20 @@ export function SportsCarousel({ updates }: SportsCarouselProps) {
         <div className="flex items-center gap-2">
           <Zap className="w-4 h-4 text-emerald-500" />
           <span className="font-semibold text-sm text-gray-900 dark:text-white">
-            Sports Updates
+            {uiText("Sports Updates")}
           </span>
           <div className="flex items-center gap-1.5 ml-2">
             {live > 0 && (
               <span className="text-xs bg-red-500 text-white px-1.5 py-0.5 rounded-full font-medium animate-pulse">
-                {live} Live
-              </span>
+                {uiText("{{live}} Live", { "live": live })}</span>
             )}
             {scheduled > 0 && (
               <span className="text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded-full font-medium">
-                {scheduled} Upcoming
-              </span>
+                {uiText("{{scheduled}} Upcoming", { "scheduled": scheduled })}</span>
             )}
             {final > 0 && (
               <span className="text-xs bg-gray-500 text-white px-1.5 py-0.5 rounded-full font-medium">
-                {final} Final
-              </span>
+                {uiText("{{final}} Final", { "final": final })}</span>
             )}
           </div>
         </div>

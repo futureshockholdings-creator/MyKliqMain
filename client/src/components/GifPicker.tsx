@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Smile } from 'lucide-react';
 import type { Gif } from '@shared/schema';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 // Force image loading with proper error handling
 function GifImage({ gif, className }: { gif: Gif; className?: string }) {
+  useUiLanguage();
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -23,7 +25,7 @@ function GifImage({ gif, className }: { gif: Gif; className?: string }) {
   if (hasError) {
     return (
       <div className={`${className} relative h-24 bg-muted overflow-hidden gif-container cursor-pointer border border-border flex items-center justify-center`}>
-        <span className="text-xs text-muted-foreground">Content not available</span>
+        <span className="text-xs text-muted-foreground">{uiText("Content not available")}</span>
       </div>
     );
   }
@@ -32,7 +34,7 @@ function GifImage({ gif, className }: { gif: Gif; className?: string }) {
     <div className={`${className} relative h-24 bg-muted overflow-hidden gif-container cursor-pointer border border-border`}>
       {!isLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted">
-          <span className="text-xs text-muted-foreground">Loading...</span>
+          <span className="text-xs text-muted-foreground">{uiText("Loading...")}</span>
         </div>
       )}
       <img
@@ -61,6 +63,7 @@ export function GifPicker({
   isOpen, 
   onOpenChange 
 }: GifPickerProps) {
+  useUiLanguage();
   const [open, setOpen] = useState(false);
 
   // Control dialog state
@@ -111,15 +114,15 @@ export function GifPicker({
             data-testid="gif-picker-trigger"
           >
             <Smile className="h-4 w-4 mr-2" />
-            GIF
+            {uiText("GIF")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-w-3xl h-[650px] bg-card text-foreground overflow-hidden" aria-describedby="gif-picker-description">
         <DialogHeader>
-          <DialogTitle>Choose a GIF</DialogTitle>
+          <DialogTitle>{uiText("Choose a GIF")}</DialogTitle>
           <div id="gif-picker-description" className="sr-only">
-            Browse and select animated GIFs to add to your post or message
+            {uiText("Browse and select animated GIFs to add to your post or message")}
           </div>
         </DialogHeader>
         
@@ -136,20 +139,19 @@ export function GifPicker({
               <div className="pr-2">
                 {isLoadingAll ? (
                   <div className="flex items-center justify-center h-32">
-                    <p className="text-muted-foreground">Loading GIFs...</p>
+                    <p className="text-muted-foreground">{uiText("Loading GIFs...")}</p>
                   </div>
                 ) : allGifs.length > 0 ? (
                   <>
                     <div className="mb-4 text-center">
                       <p className="text-sm text-muted-foreground">
-                        Browse all {allGifs.length} GIFs
-                      </p>
+                        {uiText("Browse all {{length}} GIFs", { "length": allGifs.length })}</p>
                     </div>
                     {renderGifGrid(allGifs)}
                   </>
                 ) : (
                   <div className="flex items-center justify-center h-32">
-                    <p className="text-muted-foreground">No GIFs available</p>
+                    <p className="text-muted-foreground">{uiText("No GIFs available")}</p>
                   </div>
                 )}
               </div>

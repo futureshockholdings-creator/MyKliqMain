@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Play } from 'lucide-react';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl, getYouTubeThumbnailUrl } from '@/lib/youtubeUtils';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface YouTubeEmbedProps {
   url: string;
@@ -9,6 +10,7 @@ interface YouTubeEmbedProps {
 }
 
 export function YouTubeEmbed({ url, className = "", autoplay = false }: YouTubeEmbedProps) {
+  useUiLanguage();
   const [isPlaying, setIsPlaying] = useState(autoplay);
   const videoId = extractYouTubeVideoId(url);
   
@@ -28,7 +30,7 @@ export function YouTubeEmbed({ url, className = "", autoplay = false }: YouTubeE
       >
         <img 
           src={thumbnailUrl}
-          alt="YouTube video thumbnail"
+          alt={uiText("YouTube video thumbnail")}
           className="w-full aspect-video object-cover"
         />
         <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -37,7 +39,7 @@ export function YouTubeEmbed({ url, className = "", autoplay = false }: YouTubeE
           </div>
         </div>
         <div className="absolute top-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
-          YouTube
+          {uiText("YouTube")}
         </div>
       </div>
     );
@@ -47,7 +49,7 @@ export function YouTubeEmbed({ url, className = "", autoplay = false }: YouTubeE
     <div className={`rounded-lg overflow-hidden ${className}`} data-testid="youtube-embed">
       <iframe
         src={embedUrl}
-        title="YouTube video player"
+        title={uiText("YouTube video player")}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
         className="w-full aspect-video"

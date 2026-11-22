@@ -4,6 +4,8 @@ import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
+import { uiText, useUiLanguage } from "@/i18n/interfaceText"
+import { formatDisplayNumber } from "@/i18n/formatting"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
@@ -131,6 +133,7 @@ const ChartTooltipContent = React.forwardRef<
     },
     ref
   ) => {
+    useUiLanguage()
     const { config } = useChart()
 
     const tooltipLabel = React.useMemo(() => {
@@ -141,10 +144,12 @@ const ChartTooltipContent = React.forwardRef<
       const [item] = payload
       const key = `${labelKey || item?.dataKey || item?.name || "value"}`
       const itemConfig = getPayloadConfigFromPayload(config, item, key)
-      const value =
-        !labelKey && typeof label === "string"
-          ? config[label as keyof typeof config]?.label || label
-          : itemConfig?.label
+      const configuredLabel = !labelKey && typeof label === "string"
+        ? config[label as keyof typeof config]?.label
+        : itemConfig?.label
+      const value = typeof configuredLabel === "string"
+        ? uiText(configuredLabel)
+        : configuredLabel || (!labelKey && typeof label === "string" ? label : undefined)
 
       if (labelFormatter) {
         return (
@@ -240,7 +245,7 @@ const ChartTooltipContent = React.forwardRef<
                       </div>
                       {item.value && (
                         <span className="font-mono font-medium tabular-nums text-foreground">
-                          {item.value.toLocaleString()}
+                          {typeof item.value === "number" ? formatDisplayNumber(item.value) : item.value.toLocaleString()}
                         </span>
                       )}
                     </div>
@@ -270,6 +275,7 @@ const ChartLegendContent = React.forwardRef<
     { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
     ref
   ) => {
+    useUiLanguage()
     const { config } = useChart()
 
     if (!payload?.length) {
@@ -306,7 +312,7 @@ const ChartLegendContent = React.forwardRef<
                   }}
                 />
               )}
-              {itemConfig?.label}
+              {typeof itemConfig?.label === "string" ? uiText(itemConfig.label) : itemConfig?.label}
             </div>
           )
         })}

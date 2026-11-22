@@ -18,8 +18,10 @@ import { useVideoCall } from '@/contexts/VideoCallContext';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import { resolveAssetUrl } from '@/lib/apiConfig';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 export function VideoCallScreen() {
+  useUiLanguage();
   const {
     callState,
     currentCallInfo,
@@ -158,7 +160,7 @@ export function VideoCallScreen() {
             </Avatar>
             <h2 className="text-2xl font-semibold text-white mb-2">{remoteName}</h2>
             <p className="text-gray-400 animate-pulse">
-              {callState === 'calling' ? 'Calling...' : 'Connecting...'}
+              {callState === 'calling' ? uiText("Calling...") : uiText("Connecting...")}
             </p>
           </div>
         )}
@@ -176,12 +178,12 @@ export function VideoCallScreen() {
             ) : (
               <div className="w-full h-full bg-gray-800 flex items-center justify-center">
                 <Avatar className="w-16 h-16">
-                  <AvatarFallback className="text-lg bg-primary text-primary-foreground">You</AvatarFallback>
+                  <AvatarFallback className="text-lg bg-primary text-primary-foreground">{uiText("You")}</AvatarFallback>
                 </Avatar>
               </div>
             )}
             <div className="absolute bottom-1 left-1 bg-black/50 px-1 rounded text-[10px] text-white">
-              You
+              {uiText("You")}
             </div>
           </div>
         )}
@@ -206,7 +208,7 @@ export function VideoCallScreen() {
           <div className="flex justify-center gap-4">
             <Button
               size="lg"
-              variant={isAudioEnabled ? 'secondary' : 'destructive'}
+              variant={isAudioEnabled ? "secondary" : "destructive"}
               onClick={toggleAudio}
               className="rounded-full w-14 h-14 p-0"
               data-testid="button-toggle-audio"
@@ -216,7 +218,7 @@ export function VideoCallScreen() {
 
             <Button
               size="lg"
-              variant={isVideoEnabled ? 'secondary' : 'destructive'}
+              variant={isVideoEnabled ? "secondary" : "destructive"}
               onClick={toggleVideo}
               className="rounded-full w-14 h-14 p-0"
               data-testid="button-toggle-video"
@@ -247,11 +249,7 @@ export function VideoCallScreen() {
         </div>
       </div>
 
-      <style>{`
-        .mirror {
-          transform: scaleX(-1);
-        }
-      `}</style>
+      <style>{"\n        .mirror {\n          transform: scaleX(-1);\n        }\n      "}</style>
     </div>
   );
 }

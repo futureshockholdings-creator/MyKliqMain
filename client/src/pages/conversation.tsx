@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, Send, X, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +24,8 @@ import { extractSocialMediaUrlsFromText } from "@/lib/socialMediaUtils";
 import { LinkPreviewList } from "@/components/LinkPreviewCard";
 import { extractGenericUrlsFromText } from "@/lib/linkPreviewUtils";
 import { LinkifyText } from "@/components/LinkifyText";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatRelativeDate } from "@/i18n/formatting";
 
 interface ConversationParticipant {
   id: string;
@@ -121,6 +122,7 @@ interface ConversationData {
 }
 
 export function Conversation() {
+  useUiLanguage();
   const { conversationId } = useParams<{ conversationId: string }>();
   // Direct-message routes identify the recipient, including before a thread exists.
   const otherUserId = conversationId;
@@ -329,10 +331,10 @@ export function Conversation() {
               ) : (
                 <div className="flex flex-wrap items-center gap-3" role="alert">
                   <p className="text-sm text-muted-foreground">
-                    Couldn't load this recipient. Try again before sending a message.
+                    {uiText("Couldn't load this recipient. Try again before sending a message.")}
                   </p>
                   <Button variant="outline" size="sm" onClick={() => void refetchRecipient()}>
-                    Try again
+                    {uiText("Try again")}
                   </Button>
                 </div>
               )}
@@ -350,20 +352,20 @@ export function Conversation() {
                   <div className="flex items-center gap-2">
                     {selectedMedia.type === "meme" && (
                       <>
-                        <span className="text-sm font-medium">😂 MEME selected:</span>
+                        <span className="text-sm font-medium">{uiText("😂 MEME selected:")}</span>
                         <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
                       </>
                     )}
                     {selectedMedia.type === "moviecon" && (
                       <>
-                        <span className="text-sm font-medium">🎬 Moviecon selected:</span>
+                        <span className="text-sm font-medium">{uiText("🎬 Moviecon selected:")}</span>
                         <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
                       </>
                     )}
                     {(selectedMedia.type === "image" || selectedMedia.type === "video") && (
                       <>
                         <span className="text-sm font-medium">
-                          {selectedMedia.type === "image" ? "📷 Photo" : "🎥 Video"} selected
+                          {selectedMedia.type === "image" ? uiText("📷 Photo") : uiText("🎥 Video")} {uiText("selected")}
                         </span>
                       </>
                     )}
@@ -389,7 +391,7 @@ export function Conversation() {
               <Input
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
-                placeholder="Type your message..."
+                placeholder={uiText("Type your message...")}
                 className="flex-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                 disabled={!displayUser || sendMessageMutation.isPending}
                 data-testid="input-message"
@@ -410,12 +412,12 @@ export function Conversation() {
         <div className="max-w-2xl mx-auto space-y-4">
           {isLoading ? (
             <div className="text-center py-12" role="status">
-              <p className="text-muted-foreground">Loading messages...</p>
+              <p className="text-muted-foreground">{uiText("Loading messages...")}</p>
             </div>
           ) : (!conversation?.messages || conversation.messages.length === 0) ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
-                No messages yet. Start the conversation!
+                {uiText("No messages yet. Start the conversation!")}
               </p>
             </div>
           ) : (
@@ -488,7 +490,7 @@ export function Conversation() {
                             {message.mediaType === "image" ? (
                               <img 
                                 src={resolveAssetUrl(message.mediaUrl)} 
-                                alt="Shared image" 
+                                alt={uiText("Shared image")} 
                                 className="max-w-xs max-h-64 object-cover rounded-lg"
                               />
                             ) : (
@@ -518,7 +520,7 @@ export function Conversation() {
                         )}
                       </div>
                       <div className={`text-xs text-muted-foreground mt-1 ${isOwn ? "text-right" : "text-left"}`}>
-                        {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                        {formatRelativeDate(message.createdAt)}
                       </div>
                     </div>
                   </div>

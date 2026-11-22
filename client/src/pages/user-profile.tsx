@@ -14,9 +14,10 @@ import { Button } from "@/components/ui/button";
 import { useVideoCall } from "@/contexts/VideoCallContext";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
-import { formatDistanceToNow } from "date-fns";
 import { resolveAssetUrl } from "@/lib/apiConfig";
 import { ImageGallery } from "@/components/ImageGallery";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatNativeDate, formatRelativeDate } from "@/i18n/formatting";
 
 interface ProfileTheme {
   primaryColor: string;
@@ -68,6 +69,7 @@ interface Post {
 }
 
 export default function UserProfile() {
+  useUiLanguage();
   const { userId } = useParams<{ userId: string }>();
   const { translatePost } = usePostTranslation();
   const { initiateCall } = useVideoCall();
@@ -106,7 +108,7 @@ export default function UserProfile() {
     if (!profileUser) return;
     const friendName = profileUser.firstName && profileUser.lastName 
       ? `${profileUser.firstName} ${profileUser.lastName}`
-      : profileUser.firstName || "Friend";
+      : profileUser.firstName || uiText("Friend");
     const friendAvatar = profileUser.profileImageUrl;
     
     try {
@@ -134,12 +136,12 @@ export default function UserProfile() {
         <Card>
           <CardContent className="p-8 text-center">
             <UserIcon className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <h2 className="text-xl font-bold text-gray-600 mb-2">User not found</h2>
-            <p className="text-gray-500">The profile you're looking for doesn't exist.</p>
+            <h2 className="text-xl font-bold text-gray-600 mb-2">{uiText("User not found")}</h2>
+            <p className="text-gray-500">{uiText("The profile you're looking for doesn't exist.")}</p>
             <Link to="/kliq">
               <Button variant="outline" className="mt-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Kliq
+                {uiText("Back to Kliq")}
               </Button>
             </Link>
           </CardContent>
@@ -150,7 +152,7 @@ export default function UserProfile() {
 
   const displayName = profileUser.firstName && profileUser.lastName 
     ? `${profileUser.firstName} ${profileUser.lastName}`
-    : profileUser.firstName || "Anonymous User";
+    : profileUser.firstName || uiText("Anonymous User");
 
   const theme = profileUser.theme;
   const primaryColor = theme?.primaryColor || "#FF1493";
@@ -199,7 +201,7 @@ export default function UserProfile() {
         <Link to="/kliq">
           <Button variant="ghost" size="sm" className="gap-2 mb-2">
             <ArrowLeft className="w-4 h-4" />
-            Back to Kliq
+            {uiText("Back to Kliq")}
           </Button>
         </Link>
 
@@ -219,7 +221,7 @@ export default function UserProfile() {
               >
                 <AvatarImage 
                   src={resolvedProfileUrl} 
-                  alt={`${displayName}'s avatar`}
+                  alt={uiText("{{name}}'s avatar", { name: displayName })}
                   className="object-cover"
                 />
                 <AvatarFallback 
@@ -255,7 +257,7 @@ export default function UserProfile() {
                   style={{ backgroundColor: primaryColor }}
                 >
                   <MessageCircle className="w-4 h-4" />
-                  Message
+                  {uiText("Message")}
                 </Button>
               </Link>
               {currentUser && currentUser.id !== profileUser.id && (
@@ -266,7 +268,7 @@ export default function UserProfile() {
                   onClick={handleVideoCall}
                 >
                   <Video className="w-4 h-4" />
-                  Call
+                  {uiText("Call")}
                 </Button>
               )}
             </div>
@@ -287,14 +289,12 @@ export default function UserProfile() {
               <div className="flex items-center gap-3">
                 <CalendarDays className="w-5 h-5" style={{ color: secondaryColor }} />
                 <div>
-                  <div className="font-medium">Birthday</div>
+                  <div className="font-medium">{uiText("Birthday")}</div>
                   <div className="text-sm text-muted-foreground">
                     {(() => {
                       // Parse YYYY-MM-DD string without timezone conversion
                       const [year, month, day] = profileUser.birthdate!.split('-').map(Number);
-                      const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                                      'July', 'August', 'September', 'October', 'November', 'December'];
-                      return `${months[month - 1]} ${day}`;
+                      return formatNativeDate(new Date(year, month - 1, day), { month: "long", day: "numeric" });
                     })()}
                   </div>
                 </div>
@@ -306,8 +306,8 @@ export default function UserProfile() {
         {/* Profile Details (Interests, Hobbies, etc.) */}
         <Card style={{ borderColor: `${primaryColor}40` }}>
           <CardHeader>
-            <CardTitle style={{ color: primaryColor }}>About {displayName}</CardTitle>
-            <CardDescription>Interests, hobbies, and favorites</CardDescription>
+            <CardTitle style={{ color: primaryColor }}>{uiText("About {{name}}", { name: displayName })}</CardTitle>
+            <CardDescription>{uiText("Interests, hobbies, and favorites")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ProfileDetailsDisplay user={profileUser} />
@@ -318,8 +318,8 @@ export default function UserProfile() {
         {Array.isArray(userPosts) && userPosts.length > 0 && (
           <Card style={{ borderColor: `${primaryColor}40` }}>
             <CardHeader>
-              <CardTitle style={{ color: primaryColor }}>Recent Posts</CardTitle>
-              <CardDescription>{displayName}'s latest activity</CardDescription>
+              <CardTitle style={{ color: primaryColor }}>{uiText("Recent Posts")}</CardTitle>
+              <CardDescription>{uiText("{{name}}'s latest activity", { name: displayName })}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {userPosts.slice(0, 5).map((post) => (
@@ -341,7 +341,7 @@ export default function UserProfile() {
                     </div>
                   )}
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
+                    <span>{formatRelativeDate(new Date(post.createdAt))}</span>
                     <div className="flex items-center gap-4">
                       <span className="flex items-center gap-1">
                         <Heart className="w-4 h-4" /> {post.likesCount || 0}
@@ -364,9 +364,9 @@ export default function UserProfile() {
             <CardHeader>
               <div className="flex items-center space-x-2">
                 <Music className="w-5 h-5" style={{ color: primaryColor }} />
-                <CardTitle className="text-card-foreground">Profile Music</CardTitle>
+                 <CardTitle className="text-card-foreground">{uiText("Profile Music")}</CardTitle>
               </div>
-              <CardDescription>{displayName}'s vibe</CardDescription>
+               <CardDescription>{uiText("{{name}}'s vibe", { name: displayName })}</CardDescription>
             </CardHeader>
             <CardContent>
               <ProfileMusicPlayer

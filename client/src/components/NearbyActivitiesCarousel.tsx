@@ -9,6 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { getAuthToken } from "@/lib/tokenStorage";
 import { buildApiUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface NearbyActivity {
   id: string;
@@ -90,6 +91,7 @@ function ActivityCardSkeleton() {
 const PAGE_SIZE = 20;
 
 export function NearbyActivitiesCarousel() {
+  useUiLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -185,8 +187,8 @@ export function NearbyActivitiesCarousel() {
     <div className="space-y-3 bg-white rounded-xl p-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Need something to get into? 🎉</h2>
-          <p className="text-sm text-gray-500">Discover local events & activities near you</p>
+          <h2 className="text-lg font-bold text-gray-900">{uiText("Need something to get into? 🎉")}</h2>
+          <p className="text-sm text-gray-500">{uiText("Discover local events & activities near you")}</p>
         </div>
         {activities.length > 0 && (
           <div className="flex gap-1">
@@ -204,7 +206,7 @@ export function NearbyActivitiesCarousel() {
         <div className="relative flex-1 max-w-xs">
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Postal / Zip Code"
+            placeholder={uiText("Postal / Zip Code")}
             value={postalInput}
             onChange={(e) => setPostalInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -213,7 +215,7 @@ export function NearbyActivitiesCarousel() {
         </div>
         <Button onClick={handleSearch} disabled={!postalInput.trim() || isLoading} size="sm">
           {isLoading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Search className="h-4 w-4 mr-1" />}
-          {isLoading ? "Searching…" : "Search"}
+          {isLoading ? uiText("Searching…") : uiText("Search")}
         </Button>
       </div>
 
@@ -225,16 +227,16 @@ export function NearbyActivitiesCarousel() {
 
       {isError && (
         <div className="text-center py-4">
-          <p className="text-sm text-gray-500">{errorMessage || "Couldn't load results. Try again."}</p>
-          <button onClick={() => refetch()} className="mt-2 text-xs text-primary underline">Retry</button>
+          <p className="text-sm text-gray-500">{errorMessage || uiText("Couldn't load results. Try again.")}</p>
+          <button onClick={() => refetch()} className="mt-2 text-xs text-primary underline">{uiText("Retry")}</button>
         </div>
       )}
 
       {!isLoading && !isError && submittedPostal && allActivities.length === 0 && (
         <div className="text-center py-6 text-gray-500">
           <MapPin className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">No activities found near <strong>{submittedPostal}</strong>.</p>
-          <p className="text-xs mt-1">Try a nearby zip code or a larger city.</p>
+          <p className="text-sm">{uiText("No activities found near")} <strong>{submittedPostal}</strong>.</p>
+          <p className="text-xs mt-1">{uiText("Try a nearby zip code or a larger city.")}</p>
         </div>
       )}
 
@@ -265,7 +267,7 @@ export function NearbyActivitiesCarousel() {
                     }}
                   >
                     <Share2 className="h-3 w-3 mr-1" />
-                    {postingId === activity.id ? "Posting…" : "Post to Headlines"}
+                    {postingId === activity.id ? uiText("Posting…") : uiText("Post to Headlines")}
                   </Button>
                   {activity.externalUrl && (
                     <Button size="sm" variant="outline" className="h-7 w-7 p-0 border-gray-200" asChild>
@@ -286,8 +288,8 @@ export function NearbyActivitiesCarousel() {
                 className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 hover:border-primary/40 hover:text-primary transition-colors w-full h-full min-h-[200px]"
               >
                 <Plus className="h-6 w-6" />
-                <span className="text-xs font-medium text-center">Show More</span>
-                <span className="text-xs opacity-60">{allActivities.length - visibleCount} more</span>
+                <span className="text-xs font-medium text-center">{uiText("Show More")}</span>
+                <span className="text-xs opacity-60">{allActivities.length - visibleCount} {uiText("more")}</span>
               </button>
             </div>
           )}

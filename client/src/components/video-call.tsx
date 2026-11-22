@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { type User, type VideoCall, type CallParticipant } from "@shared/schema";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface VideoCallProps {
   call: VideoCall & { participants: (CallParticipant & { user: User })[] };
@@ -25,6 +26,7 @@ interface VideoCallProps {
 }
 
 export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVideo }: VideoCallProps) {
+  useUiLanguage();
   const { user } = useAuth();
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -77,9 +79,8 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Group Call ({call.participants.length} participants)
-          </CardTitle>
-          <Badge variant={call.status === 'active' ? 'default' : 'secondary'}>
+            {uiText("Group Call ({{length}} participants)", { "length": call.participants.length })}</CardTitle>
+          <Badge variant={call.status === 'active' ? "default" : "secondary"}>
             {call.status}
           </Badge>
         </div>
@@ -109,12 +110,12 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
                       {(user as unknown as User)?.firstName?.[0]}
                     </span>
                   </div>
-                  <p className="text-sm text-foreground">{(user as unknown as User)?.firstName} (You)</p>
+                  <p className="text-sm text-foreground">{uiText("{{firstName}} (You)", { "firstName": (user as unknown as User)?.firstName })}</p>
                 </div>
               </div>
             )}
             <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 px-2 py-1 rounded text-xs">
-              You
+              {uiText("You")}
             </div>
           </div>
 
@@ -145,7 +146,7 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
               </div>
               <Badge 
                 className="absolute top-2 right-2"
-                variant={participant.status === 'joined' ? 'default' : 'secondary'}
+                variant={participant.status === 'joined' ? "default" : "secondary"}
               >
                 {participant.status}
               </Badge>
@@ -198,7 +199,7 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
 
         {/* Participants List */}
         <div className="mt-4 space-y-2">
-          <h4 className="text-sm font-medium">Participants ({call.participants.length})</h4>
+          <h4 className="text-sm font-medium">{uiText("Participants ({{length}})", { "length": call.participants.length })}</h4>
           <div className="grid grid-cols-2 gap-2">
             {call.participants.map((participant) => (
               <div key={participant.userId} className="flex items-center gap-2 p-2 bg-gray-800 rounded">
@@ -207,9 +208,9 @@ export function VideoCallComponent({ call, onEndCall, onToggleAudio, onToggleVid
                 </div>
                 <span className="text-sm truncate flex-1">
                   {participant.user.firstName}
-                  {participant.userId === (user as unknown as User)?.id && " (You)"}
+                  {participant.userId === (user as unknown as User)?.id && uiText(" (You)")}
                 </span>
-                <Badge variant={participant.status === 'joined' ? 'default' : 'secondary'}>
+                <Badge variant={participant.status === 'joined' ? "default" : "secondary"}>
                   {participant.status}
                 </Badge>
               </div>

@@ -5,6 +5,8 @@ import { ShoppingCart, Lock, Check, Coins } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { BorderedAvatar } from "@/components/BorderedAvatar";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber } from "@/i18n/formatting";
 
 interface BorderMarketplaceCardProps {
   bordersData: any[];
@@ -16,7 +18,7 @@ interface BorderMarketplaceCardProps {
 
 // Helper function to format numbers with commas for readability
 function formatKoins(amount: number): string {
-  return amount.toLocaleString('en-US');
+  return formatDisplayNumber(amount);
 }
 
 export function BorderMarketplaceCard({ 
@@ -26,17 +28,18 @@ export function BorderMarketplaceCard({
   isPurchasing,
   onPurchase 
 }: BorderMarketplaceCardProps) {
+  useUiLanguage();
   if (isLoading) {
     return (
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
-            Loading Marketplace...
+            {uiText("Loading Marketplace...")}
           </CardTitle>
         </CardHeader>
         <CardContent className="h-32 flex items-center justify-center">
-          <div className="animate-pulse text-purple-300">Loading borders...</div>
+          <div className="animate-pulse text-purple-300">{uiText("Loading borders...")}</div>
         </CardContent>
       </Card>
     );
@@ -54,18 +57,18 @@ export function BorderMarketplaceCard({
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <ShoppingCart className="w-5 h-5" />
-          Border Marketplace
+          {uiText("Border Marketplace")}
         </CardTitle>
         <CardDescription className="text-purple-200">
-          Purchase exclusive borders with your Kliq Koins
+          {uiText("Purchase exclusive borders with your Kliq Koins")}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="purchasable" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="purchasable">Shop ({purchasableBorders.length})</TabsTrigger>
-            <TabsTrigger value="engagement">Engagement ({rewardBorders.length})</TabsTrigger>
-            <TabsTrigger value="streak">Streaks ({streakBorders.length})</TabsTrigger>
+            <TabsTrigger value="purchasable">{uiText("Shop ({{length}})", { "length": purchasableBorders.length })}</TabsTrigger>
+            <TabsTrigger value="engagement">{uiText("Engagement ({{length}})", { "length": rewardBorders.length })}</TabsTrigger>
+            <TabsTrigger value="streak">{uiText("Streaks ({{length}})", { "length": streakBorders.length })}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="purchasable" className="space-y-4">
@@ -89,8 +92,7 @@ export function BorderMarketplaceCard({
                   >
                     {isMonthlyFree && !border.owned && (
                       <Badge className="w-full mb-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold">
-                        FREE - {monthName} Only
-                      </Badge>
+                        {uiText("FREE - {{monthName}} Only", { "monthName": monthName })}</Badge>
                     )}
                     
                     <div className="flex flex-col items-center text-center mb-2">
@@ -110,7 +112,7 @@ export function BorderMarketplaceCard({
                     {border.owned ? (
                       <Badge className="w-full bg-green-600">
                         <Check className="w-4 h-4 mr-1" />
-                        Owned
+                        {uiText("Owned")}
                       </Badge>
                     ) : isMonthlyFree ? (
                       <Button
@@ -119,7 +121,7 @@ export function BorderMarketplaceCard({
                         className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 font-bold"
                         data-testid={`button-purchase-${border.id}`}
                       >
-                        {isPurchasing ? "Claiming..." : "Claim FREE"}
+                        {isPurchasing ? uiText("Claiming...") : uiText("Claim FREE")}
                       </Button>
                     ) : (
                       <Button
@@ -128,7 +130,7 @@ export function BorderMarketplaceCard({
                         className="w-full bg-purple-600 hover:bg-purple-700 text-xs font-semibold"
                         data-testid={`button-purchase-${border.id}`}
                       >
-                        {isPurchasing ? "Purchasing..." : formatKoins(border.cost)}
+                        {isPurchasing ? uiText("Purchasing...") : formatKoins(border.cost)}
                       </Button>
                     )}
                   </div>
@@ -193,7 +195,7 @@ export function BorderMarketplaceCard({
                       border.owned ? (
                         <Badge className="w-full bg-green-600">
                           <Check className="w-4 h-4 mr-1" />
-                          Owned
+                          {uiText("Owned")}
                         </Badge>
                       ) : (
                         <Button
@@ -202,14 +204,13 @@ export function BorderMarketplaceCard({
                           className="w-full bg-green-600 hover:bg-green-700 font-bold"
                           data-testid={`button-claim-${border.id}`}
                         >
-                          {isPurchasing ? "Claiming..." : "Claim Reward"}
+                          {isPurchasing ? uiText("Claiming...") : uiText("Claim Reward")}
                         </Button>
                       )
                     ) : (
                       <Badge className="w-full bg-gray-600">
                         <Lock className="w-4 h-4 mr-1" />
-                        {required - progress} more {metric}
-                      </Badge>
+                        {required - progress} {uiText("more {{metric}}", { "metric": metric })}</Badge>
                     )}
                   </div>
                 );
@@ -246,13 +247,12 @@ export function BorderMarketplaceCard({
                   {border.owned ? (
                     <Badge className="w-full bg-green-600">
                       <Check className="w-4 h-4 mr-1" />
-                      Unlocked
+                      {uiText("Unlocked")}
                     </Badge>
                   ) : (
                     <Badge className="w-full bg-orange-600">
                       <Lock className="w-4 h-4 mr-1" />
-                      Reach {border.tier}-day streak
-                    </Badge>
+                      {uiText("Reach {{tier}}-day streak", { "tier": border.tier })}</Badge>
                   )}
                 </div>
               ))}

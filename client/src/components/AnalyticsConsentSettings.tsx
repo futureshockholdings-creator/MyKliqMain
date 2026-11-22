@@ -6,12 +6,14 @@ import { BarChart3, Shield } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface AnalyticsConsentSettingsProps {
   initialConsent: boolean;
 }
 
 export function AnalyticsConsentSettings({ initialConsent }: AnalyticsConsentSettingsProps) {
+  useUiLanguage();
   const [isEnabled, setIsEnabled] = useState(initialConsent);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -66,20 +68,20 @@ export function AnalyticsConsentSettings({ initialConsent }: AnalyticsConsentSet
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <BarChart3 className="w-5 h-5" />
-          Analytics & Data Collection
+          {uiText("Analytics & Data Collection")}
         </CardTitle>
         <CardDescription className="text-purple-200">
-          Control how MyKliq uses your anonymous usage data
+          {uiText("Control how MyKliq uses your anonymous usage data")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <Label htmlFor="analytics-consent" className="flex flex-col space-y-1">
-            <span className="font-medium text-white">Allow Analytics</span>
+            <span className="font-medium text-white">{uiText("Allow Analytics")}</span>
             <span className="text-sm text-purple-300">
               {isEnabled 
-                ? "We're collecting anonymous usage data to improve MyKliq" 
-                : "Analytics tracking is disabled for your account"}
+                ? uiText("We're collecting anonymous usage data to improve MyKliq") 
+                : uiText("Analytics tracking is disabled for your account")}
             </span>
           </Label>
           <Switch
@@ -96,19 +98,19 @@ export function AnalyticsConsentSettings({ initialConsent }: AnalyticsConsentSet
           <div className="flex items-start gap-2">
             <Shield className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-purple-200">
-              <p className="font-semibold mb-2">Privacy-Focused Analytics</p>
+              <p className="font-semibold mb-2">{uiText("Privacy-Focused Analytics")}</p>
               <ul className="space-y-1 list-disc list-inside text-purple-300">
-                <li>Completely anonymous (your IP address is hidden)</li>
-                <li>No cross-site tracking</li>
-                <li>No advertising or data selling</li>
-                <li>Helps us improve features you use</li>
+                <li>{uiText("Completely anonymous (your IP address is hidden)")}</li>
+                <li>{uiText("No cross-site tracking")}</li>
+                <li>{uiText("No advertising or data selling")}</li>
+                <li>{uiText("Helps us improve features you use")}</li>
               </ul>
             </div>
           </div>
         </div>
 
         <p className="text-xs text-purple-400">
-          You can change this anytime. Disabling analytics won't affect your MyKliq experience.
+          {uiText("You can change this anytime. Disabling analytics won't affect your MyKliq experience.")}
         </p>
       </CardContent>
     </Card>

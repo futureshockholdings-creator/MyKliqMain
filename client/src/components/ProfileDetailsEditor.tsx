@@ -16,12 +16,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, X, Plus, Settings, Shield, Eye, EyeOff } from "lucide-react";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface ProfileDetailsEditorProps {
   user: any;
 }
 
 export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
+  useUiLanguage();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -221,25 +223,25 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
           data-testid="button-edit-profile-details"
         >
           <Settings className="w-4 h-4 mr-2" />
-          Edit Profile Details
+          {uiText("Edit Profile Details")}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="bg-card border-border max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-primary">Profile Details</DialogTitle>
+          <DialogTitle className="text-primary">{uiText("Profile Details")}</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Add your interests, preferences, and personal details to help your kliq get to know you better
+            {uiText("Add your interests, preferences, and personal details to help your kliq get to know you better")}
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="interests" className="min-w-0 max-w-full space-y-4">
-          <WrappingTabsList className="bg-muted" aria-label="Profile details sections">
-            <TabsTrigger value="interests" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">Interests</TabsTrigger>
-            <TabsTrigger value="favorites" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">Favorites</TabsTrigger>
-            <TabsTrigger value="lifestyle" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">Lifestyle</TabsTrigger>
-            <TabsTrigger value="entertainment" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">Entertainment</TabsTrigger>
-            <TabsTrigger value="security" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">Security</TabsTrigger>
+          <WrappingTabsList className="bg-muted" aria-label={uiText("Profile details sections")}>
+            <TabsTrigger value="interests" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">{uiText("Interests")}</TabsTrigger>
+            <TabsTrigger value="favorites" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">{uiText("Favorites")}</TabsTrigger>
+            <TabsTrigger value="lifestyle" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">{uiText("Lifestyle")}</TabsTrigger>
+            <TabsTrigger value="entertainment" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">{uiText("Entertainment")}</TabsTrigger>
+            <TabsTrigger value="security" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">{uiText("Security")}</TabsTrigger>
           </WrappingTabsList>
 
           <TabsContent value="interests" className="space-y-4">
@@ -247,26 +249,26 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
               <CardHeader>
                 <CardTitle className="text-primary flex items-center gap-2">
                   <Heart className="w-5 h-5" />
-                  Your Interests
+                  {uiText("Your Interests")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <TagInput
-                  label="Interests"
+                  label={uiText("Interests")}
                   items={interests}
                   setItems={setInterests}
                   newItem={newInterest}
                   setNewItem={setNewInterest}
-                  placeholder="e.g., Photography, Travel, Technology"
+                  placeholder={uiText("e.g., Photography, Travel, Technology")}
                   icon={Heart}
                 />
                 <TagInput
-                  label="Hobbies"
+                  label={uiText("Hobbies")}
                   items={hobbies}
                   setItems={setHobbies}
                   newItem={newHobby}
                   setNewItem={setNewHobby}
-                  placeholder="e.g., Reading, Gaming, Cooking"
+                  placeholder={uiText("e.g., Reading, Gaming, Cooking")}
                   icon={Gamepad2}
                 />
               </CardContent>
@@ -278,35 +280,35 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
               <CardHeader>
                 <CardTitle className="text-primary flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
-                  Favorites
+                  {uiText("Favorites")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <TagInput
-                  label="Places"
+                  label={uiText("Places")}
                   items={favoriteLocations}
                   setItems={setFavoriteLocations}
                   newItem={newLocation}
                   setNewItem={setNewLocation}
-                  placeholder="e.g., Paris, Tokyo, New York"
+                  placeholder={uiText("e.g., Paris, Tokyo, New York")}
                   icon={MapPin}
                 />
                 <TagInput
-                  label="Foods"
+                  label={uiText("Foods")}
                   items={favoriteFoods}
                   setItems={setFavoriteFoods}
                   newItem={newFood}
                   setNewItem={setNewFood}
-                  placeholder="e.g., Pizza, Sushi, Tacos"
+                  placeholder={uiText("e.g., Pizza, Sushi, Tacos")}
                   icon={Utensils}
                 />
                 <TagInput
-                  label="Music Genres"
+                  label={uiText("Music Genres")}
                   items={musicGenres}
                   setItems={setMusicGenres}
                   newItem={newGenre}
                   setNewItem={setNewGenre}
-                  placeholder="e.g., Pop, Rock, Hip-Hop"
+                  placeholder={uiText("e.g., Pop, Rock, Hip-Hop")}
                   icon={Music}
                 />
               </CardContent>
@@ -318,58 +320,58 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
               <CardHeader>
                 <CardTitle className="text-primary flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Lifestyle & Status
+                  {uiText("Lifestyle & Status")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-foreground flex items-center gap-2">
                     <Heart className="w-4 h-4" />
-                    Relationship Status
+                    {uiText("Relationship Status")}
                   </Label>
                   <Select value={relationshipStatus} onValueChange={setRelationshipStatus}>
                     <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-relationship-status">
-                      <SelectValue placeholder="Select relationship status" />
+                      <SelectValue placeholder={uiText("Select relationship status")} />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border">
-                      <SelectItem value="single">Single</SelectItem>
-                      <SelectItem value="taken">Taken</SelectItem>
-                      <SelectItem value="married">Married</SelectItem>
-                      <SelectItem value="complicated">It's complicated</SelectItem>
-                      <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                      <SelectItem value="single">{uiText("Single")}</SelectItem>
+                      <SelectItem value="taken">{uiText("Taken")}</SelectItem>
+                      <SelectItem value="married">{uiText("Married")}</SelectItem>
+                      <SelectItem value="complicated">{uiText("It's complicated")}</SelectItem>
+                      <SelectItem value="prefer-not-to-say">{uiText("Prefer not to say")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-foreground">Pet Preferences</Label>
+                  <Label className="text-foreground">{uiText("Pet Preferences")}</Label>
                   <Select value={petPreferences} onValueChange={setPetPreferences}>
                     <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-pet-preferences">
-                      <SelectValue placeholder="Select pet preferences" />
+                      <SelectValue placeholder={uiText("Select pet preferences")} />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border">
-                      <SelectItem value="dogs">Dogs</SelectItem>
-                      <SelectItem value="cats">Cats</SelectItem>
-                      <SelectItem value="both">Both Dogs & Cats</SelectItem>
-                      <SelectItem value="other">Other Pets</SelectItem>
-                      <SelectItem value="none">No Pets</SelectItem>
+                      <SelectItem value="dogs">{uiText("Dogs")}</SelectItem>
+                      <SelectItem value="cats">{uiText("Cats")}</SelectItem>
+                      <SelectItem value="both">{uiText("Both Dogs & Cats")}</SelectItem>
+                      <SelectItem value="other">{uiText("Other Pets")}</SelectItem>
+                      <SelectItem value="none">{uiText("No Pets")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-foreground">Lifestyle</Label>
+                  <Label className="text-foreground">{uiText("Lifestyle")}</Label>
                   <Select value={lifestyle} onValueChange={setLifestyle}>
                     <SelectTrigger className="bg-input border-border text-foreground" data-testid="select-lifestyle">
-                      <SelectValue placeholder="Select lifestyle" />
+                      <SelectValue placeholder={uiText("Select lifestyle")} />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-border">
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="relaxed">Relaxed</SelectItem>
-                      <SelectItem value="adventurous">Adventurous</SelectItem>
-                      <SelectItem value="homebody">Homebody</SelectItem>
-                      <SelectItem value="social">Social</SelectItem>
-                      <SelectItem value="creative">Creative</SelectItem>
+                      <SelectItem value="active">{uiText("Active")}</SelectItem>
+                      <SelectItem value="relaxed">{uiText("Relaxed")}</SelectItem>
+                      <SelectItem value="adventurous">{uiText("Adventurous")}</SelectItem>
+                      <SelectItem value="homebody">{uiText("Homebody")}</SelectItem>
+                      <SelectItem value="social">{uiText("Social")}</SelectItem>
+                      <SelectItem value="creative">{uiText("Creative")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -382,26 +384,26 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
               <CardHeader>
                 <CardTitle className="text-primary flex items-center gap-2">
                   <Film className="w-5 h-5" />
-                  Entertainment
+                  {uiText("Entertainment")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <TagInput
-                  label="Movies"
+                  label={uiText("Movies")}
                   items={favoriteMovies}
                   setItems={setFavoriteMovies}
                   newItem={newMovie}
                   setNewItem={setNewMovie}
-                  placeholder="e.g., The Matrix, Inception, Avengers"
+                  placeholder={uiText("e.g., The Matrix, Inception, Avengers")}
                   icon={Film}
                 />
                 <TagInput
-                  label="Books"
+                  label={uiText("Books")}
                   items={favoriteBooks}
                   setItems={setFavoriteBooks}
                   newItem={newBook}
                   setNewItem={setNewBook}
-                  placeholder="e.g., Harry Potter, 1984, The Hobbit"
+                  placeholder={uiText("e.g., Harry Potter, 1984, The Hobbit")}
                   icon={BookOpen}
                 />
               </CardContent>
@@ -413,7 +415,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
               <CardHeader>
                 <CardTitle className="text-primary flex items-center gap-2">
                   <Shield className="w-5 h-5" />
-                  Password Setup
+                  {uiText("Password Setup")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -424,13 +426,13 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground">Password</FormLabel>
+                          <FormLabel className="text-foreground">{uiText("Password")}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input
                                 {...field}
                                 type={showPassword ? "text" : "password"}
-                                placeholder="Enter your password"
+                                placeholder={uiText("Enter your password")}
                                 className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 pr-10"
                                 data-testid="input-password"
                               />
@@ -451,7 +453,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
                             </div>
                           </FormControl>
                           <FormDescription className="text-muted-foreground text-sm">
-                            Must be at least 10 characters with letters, numbers, and special characters
+                            {uiText("Must be at least 10 characters with letters, numbers, and special characters")}
                           </FormDescription>
                           <FormMessage className="text-destructive" />
                         </FormItem>
@@ -463,13 +465,13 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground">Confirm Password</FormLabel>
+                          <FormLabel className="text-foreground">{uiText("Confirm Password")}</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input
                                 {...field}
                                 type={showConfirmPassword ? "text" : "password"}
-                                placeholder="Confirm your password"
+                                placeholder={uiText("Confirm your password")}
                                 className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 pr-10"
                                 data-testid="input-confirm-password"
                               />
@@ -500,7 +502,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
                       className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                       data-testid="button-setup-password"
                     >
-                      {setupPassword.isPending ? "Setting up..." : "Set Password"}
+                      {setupPassword.isPending ? uiText("Setting up...") : uiText("Set Password")}
                     </Button>
                   </form>
                 </Form>
@@ -516,7 +518,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
             className="border-border text-foreground hover:bg-muted"
             data-testid="button-cancel-profile-details"
           >
-            Cancel
+            {uiText("Cancel")}
           </Button>
           <Button
             onClick={handleSave}
@@ -524,7 +526,7 @@ export function ProfileDetailsEditor({ user }: ProfileDetailsEditorProps) {
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
             data-testid="button-save-profile-details"
           >
-            {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+            {updateProfileMutation.isPending ? uiText("Saving...") : uiText("Save Changes")}
           </Button>
         </div>
       </DialogContent>

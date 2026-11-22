@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Notification } from '@shared/schema';
+import { localizeInterfaceMessage, useUiLanguage } from '@/i18n/interfaceText';
 
 interface PushNotificationHook {
   permission: NotificationPermission;
@@ -10,6 +11,7 @@ interface PushNotificationHook {
 }
 
 export function usePushNotifications(): PushNotificationHook {
+  useUiLanguage();
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [lastNotificationId, setLastNotificationId] = useState<string | null>(null);
 
@@ -123,8 +125,9 @@ export function usePushNotifications(): PushNotificationHook {
     }
 
     try {
-      const notification = new Notification(title, {
+      const notification = new Notification(localizeInterfaceMessage(title), {
         ...options,
+        body: options.body && !/message from|New Message/i.test(title) ? localizeInterfaceMessage(options.body) : options.body,
         // Auto-close after 6 seconds
         ...(!options.requireInteraction && { 
           // Add timestamp to ensure uniqueness

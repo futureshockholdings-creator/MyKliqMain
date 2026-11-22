@@ -10,6 +10,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { useDailyCheckIn } from "@/hooks/useDailyCheckIn";
 import { useAppBadge } from "@/hooks/useAppBadge";
 import { useTranslation } from "react-i18next";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber } from "@/i18n/formatting";
 import "./i18n/config"; // Initialize i18n
 import { initializeEnterpriseServices, cleanupEnterpriseServices } from "@/lib/enterprise/enterpriseInit";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
@@ -92,6 +94,7 @@ function StartupSplashHandoff() {
 
 function Navigation({ currentPath }: { currentPath: string }) {
   const { t } = useTranslation();
+  useUiLanguage();
   const [showPinModal, setShowPinModal] = useState(false);
   const [pendingSettingsNavigation, setPendingSettingsNavigation] = useState(false);
   const { 
@@ -109,8 +112,8 @@ function Navigation({ currentPath }: { currentPath: string }) {
     { path: "/", icon: HomeIcon, label: t('navigation.headlines'), tab: "headlines" },
     { path: "/kliq", icon: Users, label: t('navigation.myKliq'), tab: "kliq", badgeType: "friends" as const },
     { path: "/messages", icon: MessageCircle, label: t('navigation.messages'), tab: "messages", badgeType: "messages" as const },
-    { path: "/themes", icon: Palette, label: "Themes", tab: "themes" },
-    { path: "/settings", icon: SettingsIcon, label: "Settings", tab: "settings" },
+    { path: "/themes", icon: Palette, label: uiText("Themes"), tab: "themes" },
+    { path: "/settings", icon: SettingsIcon, label: uiText("Settings"), tab: "settings" },
   ];
 
   const getBadgeCount = (badgeType?: "messages" | "friends" | "events") => {
@@ -163,7 +166,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
             {getTotalUnreadCount() > 0 && (
               <div className="absolute -top-0.5 -right-0.5 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
                 <span className="text-[10px] text-destructive-foreground font-bold">
-                  {getTotalUnreadCount() > 99 ? "99+" : getTotalUnreadCount()}
+                  {getTotalUnreadCount() > 99 ? `${formatDisplayNumber(99)}+` : formatDisplayNumber(getTotalUnreadCount())}
                 </span>
               </div>
             )}
@@ -217,7 +220,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
           {getTotalUnreadCount() > 0 && (
             <div className="absolute top-0 right-1 h-5 w-5 bg-destructive rounded-full flex items-center justify-center">
               <span className="text-[10px] text-destructive-foreground font-bold">
-                {getTotalUnreadCount() > 99 ? "99+" : getTotalUnreadCount()}
+                {getTotalUnreadCount() > 99 ? `${formatDisplayNumber(99)}+` : formatDisplayNumber(getTotalUnreadCount())}
               </span>
             </div>
           )}
@@ -273,6 +276,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
 }
 
 function Router() {
+  useUiLanguage();
   const { isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
 
@@ -285,7 +289,7 @@ function Router() {
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{uiText("Loading...")}</p>
         </div>
       </div>
     );
@@ -478,6 +482,11 @@ function AppContent() {
 
             {/* Main Content with proper scrolling and mobile padding */}
             <div className="relative z-10 min-h-full pb-20 md:pb-28">
+              {(!isAuthenticated || isPublicPage) && (
+                <div className="flex justify-end px-4 pt-2">
+                  <LanguageSelector variant="dropdown" />
+                </div>
+              )}
               <Router />
             </div>
           </div>

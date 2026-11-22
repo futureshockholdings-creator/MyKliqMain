@@ -3,6 +3,7 @@ import { Search, ExternalLink, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface SearchResult {
   title: string;
@@ -12,6 +13,7 @@ interface SearchResult {
 }
 
 export function GoogleSearch() {
+  useUiLanguage();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -97,7 +99,7 @@ export function GoogleSearch() {
             }
           }}
           onKeyPress={handleKeyPress}
-          placeholder="Google search powered by AI..."
+          placeholder={uiText("Google search powered by AI...")}
           className="flex-1 bg-white text-black border-gray-300 placeholder:text-gray-500 text-sm h-8"
           style={{ backgroundColor: 'white', color: 'black' }}
           data-testid="input-google-search"
@@ -125,13 +127,13 @@ export function GoogleSearch() {
       {isSearching && (
         <div className="mt-3 text-center py-4" style={{ color: 'var(--muted-foreground)' }}>
           <Loader2 className="w-4 h-4 animate-spin mx-auto mb-1" />
-          <div className="text-xs">Searching...</div>
+          <div className="text-xs">{uiText("Searching...")}</div>
         </div>
       )}
 
       {!isSearching && hasSearched && results.length === 0 && (
         <div className="mt-3 text-center py-4 text-xs" style={{ color: 'var(--muted-foreground)' }}>
-          No results found. Try a different search term.
+          {uiText("No results found. Try a different search term.")}
         </div>
       )}
 

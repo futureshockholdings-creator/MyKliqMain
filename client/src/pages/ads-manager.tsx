@@ -20,6 +20,8 @@ import type { SponsoredAd, AdvertiserApplication } from "@shared/schema";
 import { getTextColorForBackground, isBlackBackground } from "@/lib/colorUtils";
 import { PageWrapper } from "@/components/PageWrapper";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatNativeDate } from "@/i18n/formatting";
 
 // Ad Preview Component with dynamic text colors
 interface AdPreviewProps {
@@ -31,6 +33,7 @@ interface AdPreviewProps {
 }
 
 function AdPreview({ title, description, backgroundColor, ctaText, category }: AdPreviewProps) {
+  useUiLanguage();
   const textColor = getTextColorForBackground(backgroundColor);
   
   return (
@@ -42,7 +45,7 @@ function AdPreview({ title, description, backgroundColor, ctaText, category }: A
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <Badge variant="secondary" className="text-xs">
-            Sponsored
+            {uiText("Sponsored")}
           </Badge>
           <Badge variant="outline" className="text-xs">
             {category}
@@ -76,7 +79,7 @@ function AdPreview({ title, description, backgroundColor, ctaText, category }: A
         </div>
         
         <div className="text-xs mt-3 opacity-70" style={{ color: textColor }}>
-          Text color: {isBlackBackground(backgroundColor) ? 'White (black background)' : 'Black (colored background)'}
+          {uiText("Text color:")} {isBlackBackground(backgroundColor) ? uiText("White (black background)") : uiText("Black (colored background)")}
         </div>
       </CardContent>
     </Card>
@@ -112,6 +115,7 @@ const adFormSchema = z.object({
 type AdFormData = z.infer<typeof adFormSchema>;
 
 export default function AdsManager() {
+  useUiLanguage();
   const { toast } = useToast();
   const [editingAd, setEditingAd] = useState<SponsoredAd | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -302,7 +306,7 @@ export default function AdsManager() {
     return (
       <Badge variant={config.variant} className="flex items-center gap-1">
         <Icon className="w-3 h-3" />
-        {config.label}
+        {uiText(config.label)}
       </Badge>
     );
   };
@@ -354,7 +358,7 @@ export default function AdsManager() {
   if (isLoading) {
     return (
       <PageWrapper className="!bg-white">
-        <ForcedLightSurface className="p-6">Loading ads...</ForcedLightSurface>
+        <ForcedLightSurface className="p-6">{uiText("Loading ads...")}</ForcedLightSurface>
       </PageWrapper>
     );
   }
@@ -365,8 +369,8 @@ export default function AdsManager() {
       <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Sponsored Ads Manager</h1>
-            <p className="text-gray-600">Manage your sponsored advertisements</p>
+            <h1 className="text-3xl font-bold">{uiText("Sponsored Ads Manager")}</h1>
+            <p className="text-gray-600">{uiText("Manage your sponsored advertisements")}</p>
           </div>
         <div className="flex items-center gap-2">
           <Button 
@@ -376,7 +380,7 @@ export default function AdsManager() {
             className="relative"
           >
             <FileText className="w-4 h-4 mr-2" />
-            Pending Applications
+            {uiText("Pending Applications")}
             {pendingCount > 0 && (
               <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
                 {pendingCount}
@@ -385,7 +389,7 @@ export default function AdsManager() {
           </Button>
           <Button onClick={handleNewAd} data-testid="new-ad-button">
             <Plus className="w-4 h-4 mr-2" />
-            New Ad
+            {uiText("New Ad")}
           </Button>
         </div>
       </div>
@@ -398,34 +402,34 @@ export default function AdsManager() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5" />
-                  Advertiser Applications
+                  {uiText("Advertiser Applications")}
                 </CardTitle>
-                <CardDescription>Review and manage advertiser onboarding applications</CardDescription>
+                <CardDescription>{uiText("Review and manage advertiser onboarding applications")}</CardDescription>
               </div>
               <Select value={applicationFilter} onValueChange={setApplicationFilter}>
                 <SelectTrigger className="w-40" data-testid="application-filter">
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder={uiText("Filter by status")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Applications</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="under_review">Under Review</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                  <SelectItem value="needs_info">Needs Info</SelectItem>
+                  <SelectItem value="all">{uiText("All Applications")}</SelectItem>
+                  <SelectItem value="pending">{uiText("Pending")}</SelectItem>
+                  <SelectItem value="under_review">{uiText("Under Review")}</SelectItem>
+                  <SelectItem value="approved">{uiText("Approved")}</SelectItem>
+                  <SelectItem value="rejected">{uiText("Rejected")}</SelectItem>
+                  <SelectItem value="needs_info">{uiText("Needs Info")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </CardHeader>
           <CardContent>
             {applicationsLoading ? (
-              <div className="text-center py-8 text-gray-500">Loading applications...</div>
+              <div className="text-center py-8 text-gray-500">{uiText("Loading applications...")}</div>
             ) : applicationsError ? (
               <div className="text-center py-8 text-red-500">
-                {(applicationsError as Error).message || "Failed to load applications. You may need admin privileges."}
+                {(applicationsError as Error).message || uiText("Failed to load applications. You may need admin privileges.")}
               </div>
             ) : applications.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No applications found</div>
+              <div className="text-center py-8 text-gray-500">{uiText("No applications found")}</div>
             ) : (
               <div className="space-y-4">
                 {applications.map((app) => (
@@ -464,20 +468,20 @@ export default function AdsManager() {
                               {app.proposedDailyBudget && (
                                 <div className="flex items-center gap-1">
                                   <DollarSign className="w-4 h-4 text-green-600" />
-                                  <span>Daily: ${app.proposedDailyBudget}</span>
+                                  <span>{uiText("Daily: ${{proposedDailyBudget}}", { "proposedDailyBudget": app.proposedDailyBudget })}</span>
                                 </div>
                               )}
                               {app.proposedCostPerClick && (
                                 <div className="flex items-center gap-1">
                                   <MousePointer className="w-4 h-4 text-blue-600" />
-                                  <span>CPC: ${app.proposedCostPerClick}</span>
+                                  <span>{uiText("CPC: ${{proposedCostPerClick}}", { "proposedCostPerClick": app.proposedCostPerClick })}</span>
                                 </div>
                               )}
                             </div>
                           )}
 
                           <div className="text-xs text-gray-400">
-                            Submitted: {new Date(app.submittedAt || 0).toLocaleString()}
+                            {uiText("Submitted: {{date}}", { date: formatNativeDate(app.submittedAt || 0) })}
                           </div>
                         </div>
 
@@ -489,7 +493,7 @@ export default function AdsManager() {
                             data-testid={`view-application-${app.id}`}
                           >
                             <Eye className="w-4 h-4 mr-1" />
-                            View Details
+                            {uiText("View Details")}
                           </Button>
                           {app.status === 'pending' && (
                             <>
@@ -501,7 +505,7 @@ export default function AdsManager() {
                                 data-testid={`approve-application-${app.id}`}
                               >
                                 <CheckCircle className="w-4 h-4 mr-1" />
-                                Approve
+                                {uiText("Approve")}
                               </Button>
                               <Button 
                                 size="sm" 
@@ -511,7 +515,7 @@ export default function AdsManager() {
                                 data-testid={`reject-application-${app.id}`}
                               >
                                 <XCircle className="w-4 h-4 mr-1" />
-                                Reject
+                                {uiText("Reject")}
                               </Button>
                             </>
                           )}
@@ -537,26 +541,29 @@ export default function AdsManager() {
                   {getStatusBadge(selectedApplication.status || 'pending')}
                 </DialogTitle>
                 <DialogDescription>
-                  Application ID: {selectedApplication.id} | Submitted: {new Date(selectedApplication.submittedAt || 0).toLocaleString()}
+                  {uiText("Application ID: {{id}} | Submitted: {{date}}", {
+                    id: selectedApplication.id,
+                    date: formatNativeDate(selectedApplication.submittedAt || 0),
+                  })}
                 </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-semibold mb-2">Business Information</h4>
+                  <h4 className="font-semibold mb-2">{uiText("Business Information")}</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded">
-                    <div><strong>Contact:</strong> {selectedApplication.contactPerson}</div>
-                    <div><strong>Email:</strong> {selectedApplication.email}</div>
-                    <div><strong>Phone:</strong> {selectedApplication.phone}</div>
-                    <div><strong>Website:</strong> <a href={selectedApplication.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{selectedApplication.website}</a></div>
-                    {selectedApplication.taxId && <div><strong>Tax ID:</strong> {selectedApplication.taxId}</div>}
-                    {selectedApplication.businessAddress && <div className="col-span-2"><strong>Address:</strong> {selectedApplication.businessAddress}</div>}
+                    <div><strong>{uiText("Contact:")}</strong> {selectedApplication.contactPerson}</div>
+                    <div><strong>{uiText("Email:")}</strong> {selectedApplication.email}</div>
+                    <div><strong>{uiText("Phone:")}</strong> {selectedApplication.phone}</div>
+                    <div><strong>{uiText("Website:")}</strong> <a href={selectedApplication.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{selectedApplication.website}</a></div>
+                    {selectedApplication.taxId && <div><strong>{uiText("Tax ID:")}</strong> {selectedApplication.taxId}</div>}
+                    {selectedApplication.businessAddress && <div className="col-span-2"><strong>{uiText("Address:")}</strong> {selectedApplication.businessAddress}</div>}
                   </div>
                 </div>
 
                 {selectedApplication.adCreatives && (
                   <div>
-                    <h4 className="font-semibold mb-2">Ad Creative Details</h4>
+                    <h4 className="font-semibold mb-2">{uiText("Ad Creative Details")}</h4>
                     <div className="text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded">
                       <pre className="whitespace-pre-wrap">{JSON.stringify(selectedApplication.adCreatives, null, 2)}</pre>
                     </div>
@@ -565,7 +572,7 @@ export default function AdsManager() {
 
                 {selectedApplication.targetingPrefs && (
                   <div>
-                    <h4 className="font-semibold mb-2">Targeting Preferences</h4>
+                    <h4 className="font-semibold mb-2">{uiText("Targeting Preferences")}</h4>
                     <div className="text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded">
                       <pre className="whitespace-pre-wrap">{String(JSON.stringify(selectedApplication.targetingPrefs, null, 2))}</pre>
                     </div>
@@ -573,29 +580,29 @@ export default function AdsManager() {
                 )}
 
                 <div>
-                  <h4 className="font-semibold mb-2">Budget & Timeline</h4>
+                  <h4 className="font-semibold mb-2">{uiText("Budget & Timeline")}</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded">
-                    <div><strong>Daily Budget:</strong> ${selectedApplication.proposedDailyBudget || 'Not specified'}</div>
-                    <div><strong>CPC:</strong> ${selectedApplication.proposedCostPerClick || 'Not specified'}</div>
-                    <div><strong>Start Date:</strong> {selectedApplication.campaignStartDate || 'Not specified'}</div>
-                    <div><strong>End Date:</strong> {selectedApplication.campaignEndDate || 'Not specified'}</div>
+                    <div><strong>{uiText("Daily Budget:")}</strong> ${selectedApplication.proposedDailyBudget || uiText("Not specified")}</div>
+                    <div><strong>{uiText("CPC:")}</strong> ${selectedApplication.proposedCostPerClick || uiText("Not specified")}</div>
+                    <div><strong>{uiText("Start Date:")}</strong> {selectedApplication.campaignStartDate || uiText("Not specified")}</div>
+                    <div><strong>{uiText("End Date:")}</strong> {selectedApplication.campaignEndDate || uiText("Not specified")}</div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold mb-2">Legal Compliance</h4>
+                  <h4 className="font-semibold mb-2">{uiText("Legal Compliance")}</h4>
                   <div className="text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded space-y-1">
                     <div className="flex items-center gap-2">
                       {selectedApplication.termsAccepted ? <CheckCircle className="w-4 h-4 text-green-600" /> : <XCircle className="w-4 h-4 text-red-600" />}
-                      Terms & Conditions Accepted
+                      {uiText("Terms & Conditions Accepted")}
                     </div>
                     <div className="flex items-center gap-2">
                       {selectedApplication.privacyPolicyAccepted ? <CheckCircle className="w-4 h-4 text-green-600" /> : <XCircle className="w-4 h-4 text-red-600" />}
-                      Privacy Policy Accepted
+                      {uiText("Privacy Policy Accepted")}
                     </div>
                     <div className="flex items-center gap-2">
                       {selectedApplication.businessLicenseVerified ? <CheckCircle className="w-4 h-4 text-green-600" /> : <XCircle className="w-4 h-4 text-red-600" />}
-                      Business License Verified
+                      {uiText("Business License Verified")}
                     </div>
                   </div>
                 </div>
@@ -610,7 +617,7 @@ export default function AdsManager() {
                       disabled={updateApplicationMutation.isPending}
                     >
                       <Eye className="w-4 h-4 mr-1" />
-                      Mark Under Review
+                      {uiText("Mark Under Review")}
                     </Button>
                     <Button 
                       variant="outline"
@@ -618,7 +625,7 @@ export default function AdsManager() {
                       disabled={updateApplicationMutation.isPending}
                     >
                       <AlertCircle className="w-4 h-4 mr-1" />
-                      Request Info
+                      {uiText("Request Info")}
                     </Button>
                     <Button 
                       variant="default"
@@ -626,7 +633,7 @@ export default function AdsManager() {
                       disabled={updateApplicationMutation.isPending}
                     >
                       <CheckCircle className="w-4 h-4 mr-1" />
-                      Approve
+                      {uiText("Approve")}
                     </Button>
                     <Button 
                       variant="destructive"
@@ -634,13 +641,13 @@ export default function AdsManager() {
                       disabled={updateApplicationMutation.isPending}
                     >
                       <XCircle className="w-4 h-4 mr-1" />
-                      Reject
+                      {uiText("Reject")}
                     </Button>
                   </>
                 )}
                 {selectedApplication.status !== 'pending' && (
                   <Button variant="outline" onClick={() => setSelectedApplication(null)}>
-                    Close
+                    {uiText("Close")}
                   </Button>
                 )}
               </DialogFooter>
@@ -652,16 +659,16 @@ export default function AdsManager() {
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>{editingAd ? 'Edit Ad' : 'Create New Ad'}</CardTitle>
+            <CardTitle>{editingAd ? uiText("Edit Ad") : uiText("Create New Ad")}</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <Tabs defaultValue="basic" className="w-full">
                   <TabsList>
-                    <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                    <TabsTrigger value="targeting">Targeting</TabsTrigger>
-                    <TabsTrigger value="budget">Budget & Dates</TabsTrigger>
+                    <TabsTrigger value="basic">{uiText("Basic Info")}</TabsTrigger>
+                    <TabsTrigger value="targeting">{uiText("Targeting")}</TabsTrigger>
+                    <TabsTrigger value="budget">{uiText("Budget & Dates")}</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="basic" className="space-y-4">
@@ -671,7 +678,7 @@ export default function AdsManager() {
                         name="title"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Title</FormLabel>
+                            <FormLabel>{uiText("Title")}</FormLabel>
                             <FormControl>
                               <Input {...field} data-testid="ad-title-input" />
                             </FormControl>
@@ -685,24 +692,24 @@ export default function AdsManager() {
                         name="category"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Category</FormLabel>
+                            <FormLabel>{uiText("Category")}</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger data-testid="ad-category-select">
-                                  <SelectValue placeholder="Select category" />
+                                  <SelectValue placeholder={uiText("Select category")} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="fitness">Fitness</SelectItem>
-                                <SelectItem value="tech">Technology</SelectItem>
-                                <SelectItem value="food">Food & Drink</SelectItem>
-                                <SelectItem value="travel">Travel</SelectItem>
-                                <SelectItem value="fashion">Fashion</SelectItem>
-                                <SelectItem value="entertainment">Entertainment</SelectItem>
-                                <SelectItem value="education">Education</SelectItem>
-                                <SelectItem value="finance">Finance</SelectItem>
-                                <SelectItem value="health">Health</SelectItem>
-                                <SelectItem value="lifestyle">Lifestyle</SelectItem>
+                                <SelectItem value="fitness">{uiText("Fitness")}</SelectItem>
+                                <SelectItem value="tech">{uiText("Technology")}</SelectItem>
+                                <SelectItem value="food">{uiText("Food & Drink")}</SelectItem>
+                                <SelectItem value="travel">{uiText("Travel")}</SelectItem>
+                                <SelectItem value="fashion">{uiText("Fashion")}</SelectItem>
+                                <SelectItem value="entertainment">{uiText("Entertainment")}</SelectItem>
+                                <SelectItem value="education">{uiText("Education")}</SelectItem>
+                                <SelectItem value="finance">{uiText("Finance")}</SelectItem>
+                                <SelectItem value="health">{uiText("Health")}</SelectItem>
+                                <SelectItem value="lifestyle">{uiText("Lifestyle")}</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -716,7 +723,7 @@ export default function AdsManager() {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Description</FormLabel>
+                          <FormLabel>{uiText("Description")}</FormLabel>
                           <FormControl>
                             <Textarea {...field} rows={3} data-testid="ad-description-input" />
                           </FormControl>
@@ -731,9 +738,9 @@ export default function AdsManager() {
                         name="imageUrl"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Image URL (optional)</FormLabel>
+                            <FormLabel>{uiText("Image URL (optional)")}</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="https://..." data-testid="ad-image-url-input" />
+                              <Input {...field} placeholder={uiText("https://...")} data-testid="ad-image-url-input" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -745,9 +752,9 @@ export default function AdsManager() {
                         name="videoUrl"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Video URL (optional)</FormLabel>
+                            <FormLabel>{uiText("Video URL (optional)")}</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="https://..." data-testid="ad-video-url-input" />
+                              <Input {...field} placeholder={uiText("https://...")} data-testid="ad-video-url-input" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -760,7 +767,7 @@ export default function AdsManager() {
                       name="backgroundColor"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Background Color</FormLabel>
+                          <FormLabel>{uiText("Background Color")}</FormLabel>
                           <FormControl>
                             <Input {...field} type="color" data-testid="ad-background-color-input" />
                           </FormControl>
@@ -775,7 +782,7 @@ export default function AdsManager() {
                         name="ctaText"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Call-to-Action Text</FormLabel>
+                            <FormLabel>{uiText("Call-to-Action Text")}</FormLabel>
                             <FormControl>
                               <Input {...field} data-testid="ad-cta-text-input" />
                             </FormControl>
@@ -789,9 +796,9 @@ export default function AdsManager() {
                         name="ctaUrl"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Call-to-Action URL</FormLabel>
+                            <FormLabel>{uiText("Call-to-Action URL")}</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="https://..." data-testid="ad-cta-url-input" />
+                              <Input {...field} placeholder={uiText("https://...")} data-testid="ad-cta-url-input" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -805,7 +812,7 @@ export default function AdsManager() {
                         name="advertiserName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Advertiser Name</FormLabel>
+                            <FormLabel>{uiText("Advertiser Name")}</FormLabel>
                             <FormControl>
                               <Input {...field} data-testid="ad-advertiser-name-input" />
                             </FormControl>
@@ -819,7 +826,7 @@ export default function AdsManager() {
                         name="advertiserEmail"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Advertiser Email</FormLabel>
+                            <FormLabel>{uiText("Advertiser Email")}</FormLabel>
                             <FormControl>
                               <Input {...field} type="email" data-testid="ad-advertiser-email-input" />
                             </FormControl>
@@ -837,7 +844,7 @@ export default function AdsManager() {
                         name="targetAgeMin"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Minimum Age (optional)</FormLabel>
+                            <FormLabel>{uiText("Minimum Age (optional)")}</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
@@ -858,7 +865,7 @@ export default function AdsManager() {
                         name="targetAgeMax"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Maximum Age (optional)</FormLabel>
+                            <FormLabel>{uiText("Maximum Age (optional)")}</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
@@ -880,12 +887,12 @@ export default function AdsManager() {
                       name="targetInterests"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Target Interests (comma-separated)</FormLabel>
+                          <FormLabel>{uiText("Target Interests (comma-separated)")}</FormLabel>
                           <FormControl>
                             <Input 
                               value={field.value.join(', ')}
                               onChange={(e) => field.onChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
-                              placeholder="fitness, health, sports"
+                              placeholder={uiText("fitness, health, sports")}
                               data-testid="ad-interests-input"
                             />
                           </FormControl>
@@ -902,7 +909,7 @@ export default function AdsManager() {
                         name="priority"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Priority (1-10)</FormLabel>
+                            <FormLabel>{uiText("Priority (1-10)")}</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
@@ -923,7 +930,7 @@ export default function AdsManager() {
                         name="dailyBudget"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Daily Budget (optional)</FormLabel>
+                            <FormLabel>{uiText("Daily Budget (optional)")}</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
@@ -944,7 +951,7 @@ export default function AdsManager() {
                         name="costPerClick"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Cost per Click (optional)</FormLabel>
+                            <FormLabel>{uiText("Cost per Click (optional)")}</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
@@ -967,7 +974,7 @@ export default function AdsManager() {
                         name="startDate"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Start Date</FormLabel>
+                            <FormLabel>{uiText("Start Date")}</FormLabel>
                             <FormControl>
                               <Input {...field} type="date" data-testid="ad-start-date-input" />
                             </FormControl>
@@ -981,7 +988,7 @@ export default function AdsManager() {
                         name="endDate"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>End Date</FormLabel>
+                            <FormLabel>{uiText("End Date")}</FormLabel>
                             <FormControl>
                               <Input {...field} type="date" data-testid="ad-end-date-input" />
                             </FormControl>
@@ -995,10 +1002,10 @@ export default function AdsManager() {
 
                 {/* Real-time Ad Preview */}
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-3">Preview</h3>
+                  <h3 className="text-lg font-semibold mb-3">{uiText("Preview")}</h3>
                   <AdPreview 
-                    title={form.watch("title") || "Ad Title"}
-                    description={form.watch("description") || "Ad description will appear here"}
+                    title={form.watch("title") || uiText("Ad Title")}
+                    description={form.watch("description") || uiText("Ad description will appear here")}
                     backgroundColor={form.watch("backgroundColor") || "#ffffff"}
                     ctaText={form.watch("ctaText") || "Learn More"}
                     category={form.watch("category")}
@@ -1011,7 +1018,7 @@ export default function AdsManager() {
                     disabled={createAdMutation.isPending || updateAdMutation.isPending}
                     data-testid="save-ad-button"
                   >
-                    {editingAd ? 'Update Ad' : 'Create Ad'}
+                    {editingAd ? uiText("Update Ad") : uiText("Create Ad")}
                   </Button>
                   <Button 
                     type="button" 
@@ -1023,7 +1030,7 @@ export default function AdsManager() {
                     }}
                     data-testid="cancel-ad-button"
                   >
-                    Cancel
+                    {uiText("Cancel")}
                   </Button>
                 </div>
               </form>
@@ -1033,11 +1040,11 @@ export default function AdsManager() {
       )}
 
       <div className="grid gap-4">
-        <h2 className="text-xl font-semibold text-black dark:text-white">Active Ads ({ads.length})</h2>
+        <h2 className="text-xl font-semibold text-black dark:text-white">{uiText("Active Ads ({{length}})", { "length": ads.length })}</h2>
         {ads.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center">
-              <p className="text-gray-500 dark:text-gray-400">No ads created yet</p>
+              <p className="text-gray-500 dark:text-gray-400">{uiText("No ads created yet")}</p>
             </CardContent>
           </Card>
         ) : (
@@ -1063,7 +1070,7 @@ export default function AdsManager() {
                         {ad.title}
                       </h3>
                       <Badge 
-                        variant={ad.status === 'active' ? 'default' : 'secondary'}
+                        variant={ad.status === 'active' ? "default" : "secondary"}
                         style={{ color: textColor, borderColor: textColor }}
                       >
                         {ad.status}
@@ -1089,15 +1096,15 @@ export default function AdsManager() {
                     >
                       <div className="flex items-center gap-1">
                         <Eye className="w-4 h-4" />
-                        <span>{ad.impressions || 0} views</span>
+                        <span>{ad.impressions || 0} {uiText("views")}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <MousePointer className="w-4 h-4" />
-                        <span>{ad.clicks || 0} clicks</span>
+                        <span>{ad.clicks || 0} {uiText("clicks")}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        <span>{ad.startDate ? new Date(ad.startDate).toLocaleDateString() : 'N/A'} - {ad.endDate ? new Date(ad.endDate).toLocaleDateString() : 'N/A'}</span>
+                        <span>{ad.startDate ? formatNativeDate(ad.startDate) : uiText("N/A")} - {ad.endDate ? formatNativeDate(ad.endDate) : uiText("N/A")}</span>
                       </div>
                     </div>
 
@@ -1106,8 +1113,7 @@ export default function AdsManager() {
                         className="text-sm" 
                         style={{ color: textColor }}
                       >
-                        Advertiser: {ad.advertiserName} ({ad.advertiserEmail})
-                      </span>
+                        {uiText("Advertiser: {{advertiserName}} ({{advertiserEmail}})", { "advertiserName": ad.advertiserName, "advertiserEmail": ad.advertiserEmail })}</span>
                     </div>
                   </div>
 

@@ -3,8 +3,12 @@ import * as ContextMenuPrimitive from "@radix-ui/react-context-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useUiLanguage } from "@/i18n/interfaceText"
 
-const ContextMenu = ContextMenuPrimitive.Root
+function ContextMenu(props: React.ComponentProps<typeof ContextMenuPrimitive.Root>) {
+  const language = useUiLanguage()
+  return <ContextMenuPrimitive.Root dir={language === "ar" ? "rtl" : "ltr"} {...props} />
+}
 
 const ContextMenuTrigger = ContextMenuPrimitive.Trigger
 

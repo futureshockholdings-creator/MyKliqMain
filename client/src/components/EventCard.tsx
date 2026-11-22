@@ -9,6 +9,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatNativeDate, formatRelativeDate } from "@/i18n/formatting";
 
 interface EventCardProps {
   event: any;
@@ -17,43 +19,22 @@ interface EventCardProps {
 
 const formatEventDate = (dateString: string) => {
   const eventDate = new Date(dateString);
-  const formattedDate = eventDate.toLocaleDateString("en-US", { 
-    weekday: 'short', 
-    month: 'short', 
-    day: 'numeric',
-    year: eventDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+  const formattedDate = formatNativeDate(eventDate, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: eventDate.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
   });
-  const formattedTime = eventDate.toLocaleTimeString("en-US", { 
-    hour: 'numeric', 
-    minute: '2-digit' 
-  });
-  return `${formattedDate} at ${formattedTime}`;
+  const formattedTime = formatNativeDate(eventDate, { hour: "numeric", minute: "2-digit" });
+  return uiText("{{date}} at {{time}}", { date: formattedDate, time: formattedTime });
 };
 
 const formatTimeAgo = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) {
-    return 'just now';
-  }
-
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes}m ago`;
-  }
-
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) {
-    return `${diffInHours}h ago`;
-  }
-
-  const diffInDays = Math.floor(diffInHours / 24);
-  return `${diffInDays}d ago`;
+  return formatRelativeDate(dateString);
 };
 
 export function EventCard({ event, currentUserId }: EventCardProps) {
+  useUiLanguage();
   const [selectedAttendance, setSelectedAttendance] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -148,7 +129,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
             <Avatar className="w-10 h-10 border-2 border-primary">
               <AvatarImage src={resolveAssetUrl(event.author.profileImageUrl)} />
               <AvatarFallback className="bg-muted text-foreground">
-                {event.author.firstName?.[0] || "U"}
+                {event.author.firstName?.[0] || uiText("U")}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
@@ -160,7 +141,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
               </p>
             </div>
             <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
-              📅 Event
+              {uiText("📅 Event")}
             </Badge>
           </div>
 
@@ -183,7 +164,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
               
               <div className="flex items-center text-sm text-muted-foreground">
                 <Users className="w-4 h-4 mr-2 text-green-500" />
-                {event.attendeeCount || 0} attending
+                {event.attendeeCount || 0} {uiText("attending")}
               </div>
             </div>
 
@@ -208,7 +189,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
                 ) : (
                   <img
                     src={event.mediaUrl}
-                    alt="Event media"
+                    alt={uiText("Event media")}
                     className="w-full max-h-96 object-cover"
                     data-testid={`img-event-${event.id}`}
                   />
@@ -229,7 +210,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
                 )}
                 data-testid={`button-going-${event.id}`}
               >
-                Going
+                {uiText("Going")}
               </Button>
               
               <Button
@@ -241,7 +222,7 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
                 )}
                 data-testid={`button-maybe-${event.id}`}
               >
-                Maybe
+                {uiText("Maybe")}
               </Button>
               
               <Button
@@ -253,13 +234,13 @@ export function EventCard({ event, currentUserId }: EventCardProps) {
                 )}
                 data-testid={`button-not-going-${event.id}`}
               >
-                Not Going
+                {uiText("Not Going")}
               </Button>
             </div>
             
             {displayStatus && (
               <div className="mt-2 text-sm text-gray-600">
-                Your status: <span className="font-semibold">{displayStatus === 'not_going' ? 'Not Going' : displayStatus}</span>
+                {uiText("Your status:")} <span className="font-semibold">{displayStatus === 'not_going' ? uiText("Not Going") : displayStatus}</span>
               </div>
             )}
           </div>

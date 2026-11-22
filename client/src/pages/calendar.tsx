@@ -14,8 +14,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Trash2, Edit, Bell, User, CalendarDays, Users, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isToday } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isToday, addDays } from "date-fns";
 import { useLocation } from "wouter";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayDate } from "@/i18n/formatting";
 
 type CalendarNote = {
   id: string;
@@ -71,6 +73,7 @@ const noteFormSchema = z.object({
 type NoteFormData = z.infer<typeof noteFormSchema>;
 
 export default function Calendar() {
+  useUiLanguage();
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -181,14 +184,14 @@ export default function Calendar() {
         queryKey: ['/api/events'],
         type: 'active'
       });
-      toast({ title: "Note created successfully!" });
+      toast({ title: uiText("Note created successfully!") });
       setIsAddDialogOpen(false);
       setIsSheetOpen(false);
       form.reset();
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to create note",
+        title: uiText("Failed to create note"),
         description: error.message,
         variant: "destructive",
       });
@@ -213,14 +216,14 @@ export default function Calendar() {
         queryKey: ['/api/calendar/notes'],
         type: 'active'
       });
-      toast({ title: "Note updated successfully!" });
+      toast({ title: uiText("Note updated successfully!") });
       setEditingNote(null);
       setIsAddDialogOpen(false);
       form.reset();
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to update note",
+        title: uiText("Failed to update note"),
         description: error.message,
         variant: "destructive",
       });
@@ -245,11 +248,11 @@ export default function Calendar() {
         queryKey: ['/api/calendar/notes'],
         type: 'active'
       });
-      toast({ title: "Note deleted successfully!" });
+      toast({ title: uiText("Note deleted successfully!") });
     },
     onError: (error: any) => {
       toast({
-        title: "Failed to delete note",
+        title: uiText("Failed to delete note"),
         description: error.message,
         variant: "destructive",
       });
@@ -264,16 +267,22 @@ export default function Calendar() {
     onSuccess: (data: any) => {
       setIsSyncConfirmOpen(false);
       if (data.targetKliqs === 0) {
-        toast({ title: "Nothing to sync", description: "You don't belong to any other kliqs." });
+        toast({ title: uiText("Nothing to sync"), description: uiText("You don't belong to any other kliqs.") });
       } else if (data.synced === 0) {
-        toast({ title: "Already up to date", description: `All your entries already exist across your ${data.targetKliqs} other kliq${data.targetKliqs !== 1 ? 's' : ''}.` });
+        toast({ title: uiText("Already up to date"), description: uiText("All your entries already exist across your {{count}} other kliqs.", { count: data.targetKliqs }) });
       } else {
-        toast({ title: "Sync complete", description: `Added ${data.synced} entr${data.synced !== 1 ? 'ies' : 'y'} across ${data.targetKliqs} kliq${data.targetKliqs !== 1 ? 's' : ''}.${data.skipped > 0 ? ` ${data.skipped} already existed and were skipped.` : ''}` });
+        const summary = data.synced === 1
+          ? uiText("Added {{count}} entry across {{kliqs}} kliqs.", { count: data.synced, kliqs: data.targetKliqs })
+          : uiText("Added {{count}} entries across {{kliqs}} kliqs.", { count: data.synced, kliqs: data.targetKliqs });
+        const skipped = data.skipped > 0
+          ? ` ${uiText("{{count}} already existed and were skipped.", { count: data.skipped })}`
+          : "";
+        toast({ title: uiText("Sync complete"), description: `${summary}${skipped}` });
       }
     },
     onError: () => {
       setIsSyncConfirmOpen(false);
-      toast({ title: "Sync failed", description: "Failed to sync your calendar. Please try again.", variant: "destructive" });
+        toast({ title: uiText("Sync failed"), description: uiText("Failed to sync your calendar. Please try again."), variant: "destructive" });
     },
   });
 
@@ -341,7 +350,7 @@ export default function Calendar() {
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <CalendarIcon className="h-6 w-6" />
-                Kliq Calendar
+                {uiText("Kliq Calendar")}
               </h1>
             </div>
 
@@ -351,12 +360,14 @@ export default function Calendar() {
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <Select value={selectedKliqId || undefined} onValueChange={handleKliqChange}>
                   <SelectTrigger className="w-64" data-testid="select-kliq">
-                    <SelectValue placeholder="Select a kliq" />
+                    <SelectValue placeholder={uiText("Select a kliq")} />
                   </SelectTrigger>
                   <SelectContent>
                     {accessibleKliqs.map((kliq) => (
                       <SelectItem key={kliq.kliqId} value={kliq.kliqId}>
-                        {kliq.isOwner ? `${kliq.kliqName} (My Kliq)` : `${kliq.kliqName} (${kliq.kliqOwner.firstName}'s Kliq)`}
+                        {kliq.isOwner
+                          ? `${kliq.kliqName} (${uiText("My Kliq")})`
+                          : `${kliq.kliqName} (${uiText("{{name}}'s Kliq", { name: kliq.kliqOwner.firstName })})`}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -373,7 +384,7 @@ export default function Calendar() {
                     className="flex items-center gap-1.5"
                   >
                     <Copy className={`h-4 w-4 ${syncToAllMutation.isPending ? 'animate-pulse' : ''}`} />
-                    {syncToAllMutation.isPending ? 'Syncing…' : 'Sync'}
+                    {syncToAllMutation.isPending ? uiText("Syncing…") : uiText("Sync")}
                   </Button>
                 )}
               </div>
@@ -383,18 +394,21 @@ export default function Calendar() {
             <Dialog open={isSyncConfirmOpen} onOpenChange={setIsSyncConfirmOpen}>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Sync to all kliqs?</DialogTitle>
+                  <DialogTitle>{uiText("Sync to all kliqs?")}</DialogTitle>
                 </DialogHeader>
                 <p className="text-sm text-muted-foreground">
-                  This will copy all your calendar entries from <strong>{accessibleKliqs.find(k => k.kliqId === selectedKliqId)?.kliqName || 'this kliq'}</strong> to your other {accessibleKliqs.length - 1} kliq{accessibleKliqs.length - 1 !== 1 ? 's' : ''}. Entries that already exist in other kliqs won't be duplicated.
+                  {uiText("This will copy all your calendar entries from {{name}} to your other {{count}} kliqs. Entries that already exist in other kliqs won't be duplicated.", {
+                    name: accessibleKliqs.find(k => k.kliqId === selectedKliqId)?.kliqName || "this kliq",
+                    count: accessibleKliqs.length - 1,
+                  })}
                 </p>
                 <div className="flex justify-end gap-2 mt-2">
                   <Button variant="outline" onClick={() => setIsSyncConfirmOpen(false)} disabled={syncToAllMutation.isPending}>
-                    Cancel
+                    {uiText("Cancel")}
                   </Button>
                   <Button onClick={() => syncToAllMutation.mutate()} disabled={syncToAllMutation.isPending}>
                     <Copy className="h-4 w-4 mr-1.5" />
-                    {syncToAllMutation.isPending ? 'Syncing…' : 'Sync'}
+                    {syncToAllMutation.isPending ? uiText("Syncing…") : uiText("Sync")}
                   </Button>
                 </div>
               </DialogContent>
@@ -410,7 +424,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("month")}
                 data-testid="button-month-view"
               >
-                Month
+                {uiText("Month")}
               </Button>
               <Button
                 variant={viewMode === "week" ? "default" : "outline"}
@@ -418,7 +432,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("week")}
                 data-testid="button-week-view"
               >
-                Week
+                {uiText("Week")}
               </Button>
             </div>
           </div>
@@ -429,7 +443,7 @@ export default function Calendar() {
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <h2 className="text-xl font-semibold" data-testid="text-current-month">
-              {format(currentDate, viewMode === "month" ? 'MMMM yyyy' : 'MMM dd, yyyy')}
+              {formatDisplayDate(currentDate, viewMode === "month" ? "MMMM yyyy" : "MMM dd, yyyy")}
             </h2>
             <Button variant="ghost" size="icon" onClick={handleNextMonth} data-testid="button-next">
               <ChevronRight className="h-5 w-5" />
@@ -442,9 +456,9 @@ export default function Calendar() {
       <div className="w-full max-w-6xl mx-auto px-4 py-6">
         {/* Day headers */}
         <div className="grid grid-cols-7 gap-2 mb-2">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-center text-sm font-semibold text-muted-foreground py-2">
-              {day}
+          {Array.from({ length: 7 }, (_, index) => (
+            <div key={index} className="text-center text-sm font-semibold text-muted-foreground py-2">
+              {formatDisplayDate(addDays(startOfWeek(new Date()), index), "EEE")}
             </div>
           ))}
         </div>
@@ -507,7 +521,7 @@ export default function Calendar() {
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5" />
-              {selectedDate && format(selectedDate, 'MMMM d, yyyy')}
+              {selectedDate && formatDisplayDate(selectedDate, "MMMM d, yyyy")}
             </SheetTitle>
           </SheetHeader>
 
@@ -518,7 +532,7 @@ export default function Calendar() {
               data-testid="button-add-note"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Note
+              {uiText("Add Note")}
             </Button>
 
             {/* Events for this day */}
@@ -526,7 +540,7 @@ export default function Calendar() {
               <div>
                 <h3 className="font-semibold mb-2 flex items-center gap-2">
                   <CalendarDays className="h-4 w-4" />
-                  Events
+                  {uiText("Events")}
                 </h3>
                 <div className="space-y-2">
                   {getEventsForDate(selectedDate).map(event => (
@@ -548,7 +562,7 @@ export default function Calendar() {
             {/* Notes for this day */}
             {selectedDate && getNotesForDate(selectedDate).length > 0 && (
               <div>
-                <h3 className="font-semibold mb-2">Notes</h3>
+                <h3 className="font-semibold mb-2">{uiText("Notes")}</h3>
                 <div className="space-y-2">
                   {getNotesForDate(selectedDate).map(note => (
                     <div key={note.id} className="p-3 border rounded-lg bg-purple-500/10 border-purple-500/30">
@@ -601,7 +615,7 @@ export default function Calendar() {
 
             {selectedDate && getNotesForDate(selectedDate).length === 0 && getEventsForDate(selectedDate).length === 0 && (
               <p className="text-center text-muted-foreground py-8">
-                No notes or events for this day
+                {uiText("No notes or events for this day")}
               </p>
             )}
           </div>
@@ -612,7 +626,7 @@ export default function Calendar() {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="!bg-white !text-black border-gray-300">
           <DialogHeader>
-            <DialogTitle className="!text-black">{editingNote ? 'Edit Note' : 'Add Note'}</DialogTitle>
+            <DialogTitle className="!text-black">{editingNote ? uiText("Edit Note") : uiText("Add Note")}</DialogTitle>
           </DialogHeader>
 
           <Form {...form}>
@@ -622,9 +636,9 @@ export default function Calendar() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="!text-black">Title</FormLabel>
+                    <FormLabel className="!text-black">{uiText("Title")}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g., Sarah's surgery" data-testid="input-title" className="!bg-white !text-black border-gray-300 placeholder:text-gray-500" />
+                      <Input {...field} placeholder={uiText("e.g., Sarah's surgery")} data-testid="input-title" className="!bg-white !text-black border-gray-300 placeholder:text-gray-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -636,11 +650,11 @@ export default function Calendar() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="!text-black">Description (Optional)</FormLabel>
+                    <FormLabel className="!text-black">{uiText("Description (Optional)")}</FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
-                        placeholder="Add any additional details..."
+                        placeholder={uiText("Add any additional details...")}
                         rows={3}
                         data-testid="input-description"
                         className="!bg-white !text-black border-gray-300 placeholder:text-gray-500"
@@ -656,7 +670,7 @@ export default function Calendar() {
                 name="noteDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="!text-black">Date</FormLabel>
+                    <FormLabel className="!text-black">{uiText("Date")}</FormLabel>
                     <FormControl>
                       <Input {...field} type="date" data-testid="input-date" className="!bg-white !text-black border-gray-300" />
                     </FormControl>
@@ -671,9 +685,9 @@ export default function Calendar() {
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-lg border border-gray-300 p-4 !bg-white">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base !text-black">Remind Kliq</FormLabel>
+                      <FormLabel className="text-base !text-black">{uiText("Remind Kliq")}</FormLabel>
                       <div className="text-sm !text-gray-600">
-                        Send a notification to all kliq members on this day
+                        {uiText("Send a notification to all kliq members on this day")}
                       </div>
                     </div>
                     <FormControl>
@@ -700,14 +714,14 @@ export default function Calendar() {
                   data-testid="button-cancel"
                   className="!bg-white !text-black border-gray-300 hover:!bg-gray-100"
                 >
-                  Cancel
+                  {uiText("Cancel")}
                 </Button>
                 <Button
                   type="submit"
                   disabled={createNoteMutation.isPending || updateNoteMutation.isPending}
                   data-testid="button-save"
                 >
-                  {editingNote ? 'Update' : 'Create'} Note
+                  {editingNote ? uiText("Update") : uiText("Create")} {uiText("Note")}
                 </Button>
               </div>
             </form>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Play } from 'lucide-react';
 import type { TwitchUrl } from '@/lib/twitchUtils';
 import { getTwitchStreamThumbnail, getTwitchEmbedUrl } from '@/lib/twitchUtils';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 function TwitchIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
@@ -17,6 +18,7 @@ interface TwitchEmbedProps {
 }
 
 export function TwitchEmbed({ twitchUrl, className = "" }: TwitchEmbedProps) {
+  useUiLanguage();
   const [isPlaying, setIsPlaying] = useState(false);
   const embedUrl = getTwitchEmbedUrl(twitchUrl);
 
@@ -27,8 +29,11 @@ export function TwitchEmbed({ twitchUrl, className = "" }: TwitchEmbedProps) {
   const contentLabel = twitchUrl.contentType === 'stream'
     ? twitchUrl.identifier
     : twitchUrl.contentType === 'clip'
-      ? 'Clip'
-      : `Video ${twitchUrl.identifier}`;
+      ? uiText("Clip")
+      : uiText("Video {{id}}", { id: twitchUrl.identifier });
+  const contentTypeLabel = uiText(
+    twitchUrl.contentType === 'stream' ? "Stream" : twitchUrl.contentType === 'clip' ? "Clip" : "Video",
+  );
 
   if (!isPlaying) {
     return (
@@ -39,7 +44,7 @@ export function TwitchEmbed({ twitchUrl, className = "" }: TwitchEmbedProps) {
         {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
-            alt={`Twitch ${twitchUrl.contentType}`}
+            alt={uiText("Twitch {{contentType}}", { contentType: contentTypeLabel })}
             className="w-full aspect-video object-cover"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
@@ -57,7 +62,7 @@ export function TwitchEmbed({ twitchUrl, className = "" }: TwitchEmbedProps) {
 
         <div className="absolute top-2 right-2 bg-[#9146FF] text-white text-xs px-2 py-1 rounded flex items-center gap-1">
           <TwitchIcon className="w-3 h-3" />
-          Twitch
+          {uiText("Twitch")}
         </div>
 
         <div className="absolute bottom-2 left-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
@@ -66,7 +71,7 @@ export function TwitchEmbed({ twitchUrl, className = "" }: TwitchEmbedProps) {
 
         {twitchUrl.contentType === 'stream' && (
           <div className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded font-bold uppercase tracking-wide">
-            Live
+            {uiText("Live")}
           </div>
         )}
       </div>
@@ -77,7 +82,7 @@ export function TwitchEmbed({ twitchUrl, className = "" }: TwitchEmbedProps) {
     <div className={`rounded-lg overflow-hidden ${className}`}>
       <iframe
         src={embedUrl}
-        title={`Twitch ${twitchUrl.contentType}`}
+        title={uiText("Twitch {{contentType}}", { contentType: contentTypeLabel })}
         allowFullScreen
         className="w-full aspect-video"
       />

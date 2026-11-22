@@ -14,6 +14,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
+import { localizeInterfaceError, useUiLanguage } from "@/i18n/interfaceText"
 
 const Form = FormProvider
 
@@ -146,8 +147,10 @@ const FormMessage = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
+  useUiLanguage()
   const { error, formMessageId } = useFormField()
-  const body = error ? String(error?.message ?? "") : children
+  const rawBody = error ? String(error?.message ?? "") : children
+  const body = typeof rawBody === "string" ? localizeInterfaceError(rawBody, "Please check this field.") : rawBody
 
   if (!body) {
     return null

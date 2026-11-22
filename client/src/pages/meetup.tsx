@@ -11,8 +11,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { MapPin, Loader2, Edit } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 import { NearbyActivitiesCarousel } from '@/components/NearbyActivitiesCarousel';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 export default function MeetupPage() {
+  useUiLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -250,9 +252,9 @@ export default function MeetupPage() {
     <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
       <div className="flex flex-col items-center justify-center space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Location Check-in</h1>
+          <h1 className="text-3xl font-bold mb-2">{uiText("Location Check-in")}</h1>
           <p className="text-muted-foreground">
-            Share your current location with your kliq on the Headlines
+            {uiText("Share your current location with your kliq on the Headlines")}
           </p>
         </div>
         
@@ -260,10 +262,10 @@ export default function MeetupPage() {
           <CardHeader className="text-center">
             <CardTitle className="flex items-center justify-center space-x-2">
               <MapPin className="h-6 w-6" />
-              <span>Check In Now</span>
+              <span>{uiText("Check In Now")}</span>
             </CardTitle>
             <CardDescription>
-              This will post your current location to the Headlines for your kliq to see
+              {uiText("This will post your current location to the Headlines for your kliq to see")}
             </CardDescription>
           </CardHeader>
           
@@ -280,12 +282,12 @@ export default function MeetupPage() {
                   {isGettingLocation ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Getting Location...
+                      {uiText("Getting Location...")}
                     </>
                   ) : (
                     <>
                       <MapPin className="mr-2 h-4 w-4" />
-                      Check In to Current Location
+                      {uiText("Check In to Current Location")}
                     </>
                   )}
                 </Button>
@@ -295,20 +297,20 @@ export default function MeetupPage() {
                 <DialogHeader>
                   <DialogTitle className="flex items-center space-x-2">
                     <Edit className="h-5 w-5" />
-                    <span>Add Location Details</span>
+                    <span>{uiText("Add Location Details")}</span>
                   </DialogTitle>
                   <DialogDescription>
-                    Add a location name and address to make your check-in more informative
+                    {uiText("Add a location name and address to make your check-in more informative")}
                   </DialogDescription>
                 </DialogHeader>
                 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="locationName">Location Name</Label>
+                    <Label htmlFor="locationName">{uiText("Location Name")}</Label>
                     <Input
                       id="locationName"
                       data-testid="input-location-name"
-                      placeholder="e.g., Starbucks, Central Park, Home"
+                      placeholder={uiText("e.g., Starbucks, Central Park, Home")}
                       value={locationName}
                       onChange={(e) => setLocationName(e.target.value)}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
@@ -316,11 +318,11 @@ export default function MeetupPage() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="address">Address (optional)</Label>
+                    <Label htmlFor="address">{uiText("Address (optional)")}</Label>
                     <Input
                       id="address"
                       data-testid="input-location-address"
-                      placeholder="e.g., 123 Main St, New York, NY"
+                      placeholder={uiText("e.g., 123 Main St, New York, NY")}
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
@@ -329,7 +331,7 @@ export default function MeetupPage() {
                   
                   {userLocation && (
                     <div className="text-sm text-muted-foreground">
-                      <p>GPS Coordinates: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}</p>
+                      <p>{uiText("GPS Coordinates:")} {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}</p>
                     </div>
                   )}
                   
@@ -339,7 +341,7 @@ export default function MeetupPage() {
                       onClick={() => setShowLocationDialog(false)}
                       data-testid="button-cancel-checkin"
                     >
-                      Cancel
+                      {uiText("Cancel")}
                     </Button>
                     <Button
                       onClick={handleLocationCheckIn}
@@ -349,10 +351,10 @@ export default function MeetupPage() {
                       {isCheckingIn ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Posting...
+                          {uiText("Posting...")}
                         </>
                       ) : (
-                        'Check In'
+                        uiText('Check In')
                       )}
                     </Button>
                   </div>
@@ -364,8 +366,7 @@ export default function MeetupPage() {
         
         <div className="text-center text-sm text-muted-foreground max-w-md">
           <p>
-            When you check in, your location will be shared as a post on the Headlines. 
-            Your kliq members will be able to see where you are and can join you if they want.
+            {uiText("When you check in, your location will be shared as a post on the Headlines. Your kliq members will be able to see where you are and can join you if they want.")}
           </p>
         </div>
       </div>

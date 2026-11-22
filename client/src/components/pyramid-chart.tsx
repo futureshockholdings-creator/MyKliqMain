@@ -6,6 +6,7 @@ import { MessageCircle, Phone, Users, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useLocation } from "wouter";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface Friend {
   id: string;
@@ -32,6 +33,7 @@ interface PyramidChartProps {
 }
 
 export const PyramidChart = forwardRef<HTMLDivElement, PyramidChartProps>(function PyramidChart({ friends, onRankChange, onMessage, onVideoCall, onRemove, maxFriends = 28, kliqName, kliqLeftEmoji = '🏆', kliqRightEmoji = '🏆', kliqClosed, onCloseKliq, isClosingKliq, onJoinKliq }, ref) {
+  useUiLanguage();
   const [draggedFriend, setDraggedFriend] = useState<Friend | null>(null);
   const [showRemoveButton, setShowRemoveButton] = useState<string | null>(null);
   const [isHolding, setIsHolding] = useState<string | null>(null);
@@ -268,14 +270,13 @@ export const PyramidChart = forwardRef<HTMLDivElement, PyramidChartProps>(functi
     <div ref={ref} className="bg-card border border-border rounded-xl p-6 space-y-6">
       <div className="text-center">
         <h3 className="text-xl font-bold text-primary mb-2">
-          {kliqLeftEmoji} {kliqName || "My Kliq"} {kliqRightEmoji}
+          {kliqLeftEmoji} {kliqName || uiText("My Kliq")} {kliqRightEmoji}
         </h3>
         <p className="text-muted-foreground text-sm mb-4">
-          Your friendship pyramid
+          {uiText("Your friendship pyramid")}
         </p>
         <Badge variant="outline" className="border-primary text-primary">
-          {friends.length}/{maxFriends} Friends
-        </Badge>
+          {uiText("{{length}}/{{maxFriends}} Friends", { "length": friends.length, "maxFriends": maxFriends })}</Badge>
       </div>
 
       {/* Pyramid Layout */}
@@ -311,7 +312,7 @@ export const PyramidChart = forwardRef<HTMLDivElement, PyramidChartProps>(functi
               data-testid="button-join-kliq"
             >
               <Users className="w-4 h-4 mr-2" />
-              Join Kliq
+              {uiText("Join Kliq")}
             </Button>
           )}
           
@@ -331,12 +332,12 @@ export const PyramidChart = forwardRef<HTMLDivElement, PyramidChartProps>(functi
               {kliqClosed ? (
                 <>
                   <Users className="w-4 h-4 mr-2" />
-                  {isClosingKliq ? "Opening..." : "Open Kliq"}
+                  {isClosingKliq ? uiText("Opening...") : uiText("Open Kliq")}
                 </>
               ) : (
                 <>
                   <X className="w-4 h-4 mr-2" />
-                  {isClosingKliq ? "Closing..." : "Close Kliq"}
+                  {isClosingKliq ? uiText("Closing...") : uiText("Close Kliq")}
                 </>
               )}
             </Button>

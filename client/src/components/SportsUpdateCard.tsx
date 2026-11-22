@@ -2,6 +2,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatNativeDate } from "@/i18n/formatting";
 
 interface LeaderboardEntry {
   position: number;
@@ -60,6 +62,7 @@ export function SportsUpdateCard({ update }: SportsUpdateCardProps) {
 }
 
 function IndividualSportCardContent({ update }: { update: IndividualSportsUpdate }) {
+  useUiLanguage();
   const isLive = update.status === 'in_progress';
   const isFinal = update.status === 'final';
 
@@ -77,12 +80,12 @@ function IndividualSportCardContent({ update }: { update: IndividualSportsUpdate
           <div className="flex items-center gap-2">
             {isLive && (
               <Badge variant="destructive" className="animate-pulse text-xs px-2 py-0.5" data-testid="badge-status-live">
-                LIVE
+                {uiText("LIVE")}
               </Badge>
             )}
             {isFinal && (
               <Badge variant="secondary" className="text-xs px-2 py-0.5" data-testid="badge-status-final">
-                Final
+                {uiText("Final")}
               </Badge>
             )}
             {!isLive && !isFinal && update.statusDetail && (
@@ -109,7 +112,7 @@ function IndividualSportCardContent({ update }: { update: IndividualSportsUpdate
             <div className="space-y-1">
               <div className="flex items-center gap-1 mb-1">
                 <Trophy className="w-3 h-3 text-amber-500" />
-                <span className="text-xs font-medium text-gray-500">Top 5</span>
+                <span className="text-xs font-medium text-gray-500">{uiText("Top 5")}</span>
               </div>
               {update.topFive.map((entry) => (
                 <div
@@ -137,7 +140,7 @@ function IndividualSportCardContent({ update }: { update: IndividualSportsUpdate
 
           {update.topFive.length === 0 && (
             <div className="text-xs text-gray-400 italic">
-              Leaderboard not yet available
+              {uiText("Leaderboard not yet available")}
             </div>
           )}
         </div>
@@ -145,11 +148,7 @@ function IndividualSportCardContent({ update }: { update: IndividualSportsUpdate
         {/* Event date for final events */}
         {isFinal && update.eventDate && (
           <div className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
-            {new Date(update.eventDate).toLocaleDateString('en-US', { 
-              weekday: 'short', 
-              month: 'short', 
-              day: 'numeric' 
-            })}
+            {formatNativeDate(update.eventDate, { weekday: "short", month: "short", day: "numeric" })}
           </div>
         )}
       </CardContent>
@@ -158,6 +157,7 @@ function IndividualSportCardContent({ update }: { update: IndividualSportsUpdate
 }
 
 function TeamSportCardContent({ update }: { update: TeamSportsUpdate }) {
+  useUiLanguage();
   const isLive = update.status.toLowerCase().includes('in progress') || 
                  update.status.toLowerCase().includes('live');
   const isFinal = update.status.toLowerCase().includes('final');
@@ -180,12 +180,12 @@ function TeamSportCardContent({ update }: { update: TeamSportsUpdate }) {
           <div className="flex items-center gap-2">
             {isLive && (
               <Badge variant="destructive" className="animate-pulse text-xs px-2 py-0.5" data-testid="badge-status-live">
-                LIVE
+                {uiText("LIVE")}
               </Badge>
             )}
             {isFinal && (
               <Badge variant="secondary" className="text-xs px-2 py-0.5" data-testid="badge-status-final">
-                Final
+                {uiText("Final")}
               </Badge>
             )}
             {isScheduled && update.statusDetail && (
@@ -271,11 +271,7 @@ function TeamSportCardContent({ update }: { update: TeamSportsUpdate }) {
         )}
         {isFinal && update.eventDate && (
           <div className="mt-2 text-center text-xs sm:text-sm text-gray-500" data-testid="text-game-date">
-            {new Date(update.eventDate).toLocaleDateString('en-US', { 
-              weekday: 'short', 
-              month: 'short', 
-              day: 'numeric' 
-            })}
+            {formatNativeDate(update.eventDate, { weekday: "short", month: "short", day: "numeric" })}
           </div>
         )}
       </CardContent>

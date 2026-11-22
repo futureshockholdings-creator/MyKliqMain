@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useVideoCall } from '@/contexts/VideoCallContext';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface VideoCallButtonProps {
   recipientId: string;
@@ -21,6 +22,7 @@ export function VideoCallButton({
   className,
   showLabel = false,
 }: VideoCallButtonProps) {
+  useUiLanguage();
   const { callState, initiateCall } = useVideoCall();
   
   const isDisabled = callState !== 'idle';
@@ -45,14 +47,14 @@ export function VideoCallButton({
       disabled={isDisabled}
       className={cn('gap-2', className)}
       data-testid="button-video-call"
-      title={isDisabled ? 'Already in a call' : `Video call ${recipientName}`}
+      title={isDisabled ? uiText("Already in a call") : `Video call ${recipientName}`}
     >
       {callState === 'calling' ? (
         <Loader2 className="w-4 h-4 animate-spin" />
       ) : (
         <Video className="w-4 h-4" />
       )}
-      {showLabel && <span>Video Call</span>}
+      {showLabel && <span>{uiText("Video Call")}</span>}
     </Button>
   );
 }

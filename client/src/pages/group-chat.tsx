@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, Send, X, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +24,8 @@ import { extractSocialMediaUrlsFromText } from "@/lib/socialMediaUtils";
 import { LinkPreviewList } from "@/components/LinkPreviewCard";
 import { extractGenericUrlsFromText } from "@/lib/linkPreviewUtils";
 import { LinkifyText } from "@/components/LinkifyText";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatRelativeDate } from "@/i18n/formatting";
 
 interface MessageData {
   id: string;
@@ -62,6 +63,7 @@ interface GroupConversationData {
 }
 
 export function GroupChat() {
+  useUiLanguage();
   const { groupChatId } = useParams<{ groupChatId: string }>();
   const { user } = useAuth() as unknown as { user: User | null };
   const { toast } = useToast();
@@ -302,7 +304,7 @@ export function GroupChat() {
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </Link>
-            <h1 className="text-xl font-bold">Group Chat Not Found</h1>
+            <h1 className="text-xl font-bold">{uiText("Group Chat Not Found")}</h1>
           </div>
         </div>
       </PageWrapper>
@@ -329,7 +331,7 @@ export function GroupChat() {
                 {getGroupDisplayName()}
               </h2>
               <p className="text-xs text-muted-foreground" data-testid="text-participant-count">
-                {groupChat.participants.length + 1} participants
+                {groupChat.participants.length + 1} {uiText("participants")}
               </p>
             </div>
           </div>
@@ -352,20 +354,20 @@ export function GroupChat() {
                 <div className="flex items-center gap-2">
                   {selectedMedia.type === "meme" && (
                     <>
-                      <span className="text-sm font-medium">😂 MEME selected:</span>
+                      <span className="text-sm font-medium">{uiText("😂 MEME selected:")}</span>
                       <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
                     </>
                   )}
                   {selectedMedia.type === "moviecon" && (
                     <>
-                      <span className="text-sm font-medium">🎬 Moviecon selected:</span>
+                      <span className="text-sm font-medium">{uiText("🎬 Moviecon selected:")}</span>
                       <span className="text-sm text-gray-700">{selectedMedia.data.title}</span>
                     </>
                   )}
                   {(selectedMedia.type === "image" || selectedMedia.type === "video") && (
                     <>
                       <span className="text-sm font-medium">
-                        {selectedMedia.type === "image" ? "📷 Photo" : "🎥 Video"} selected
+                        {selectedMedia.type === "image" ? uiText("📷 Photo") : uiText("🎥 Video")} {uiText("selected")}
                       </span>
                     </>
                   )}
@@ -389,7 +391,7 @@ export function GroupChat() {
             />
             <Input
               type="text"
-              placeholder="Type a message..."
+              placeholder={uiText("Type a message...")}
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               className="flex-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
@@ -406,7 +408,7 @@ export function GroupChat() {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Messages auto-delete after 3 days
+            {uiText("Messages auto-delete after 3 days")}
           </p>
         </form>
 
@@ -416,10 +418,10 @@ export function GroupChat() {
             <div className="text-center py-12">
               <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-muted-foreground mb-2">
-                No messages yet
+                {uiText("No messages yet")}
               </h2>
               <p className="text-muted-foreground">
-                Start the conversation!
+                {uiText("Start the conversation!")}
               </p>
             </div>
           ) : (
@@ -441,7 +443,7 @@ export function GroupChat() {
                   
                   <div className={`flex flex-col ${isCurrentUser ? "items-end" : "items-start"} max-w-[70%]`}>
                     <span className={`text-xs mb-1 ${isCurrentUser ? "text-mykliq-green" : "text-muted-foreground"}`}>
-                      {isCurrentUser ? "You" : getDisplayName(message.sender)}
+                      {isCurrentUser ? uiText("You") : getDisplayName(message.sender)}
                     </span>
                     <div className="rounded-lg px-4 py-2 bg-white text-black">
                       {message.content && (
@@ -487,7 +489,7 @@ export function GroupChat() {
                           {message.mediaType === "image" ? (
                             <img 
                               src={resolveAssetUrl(message.mediaUrl)} 
-                              alt="Shared image" 
+                              alt={uiText("Shared image")} 
                               className="max-w-xs max-h-64 object-cover rounded-lg"
                             />
                           ) : (
@@ -515,7 +517,7 @@ export function GroupChat() {
                       )}
                     </div>
                     <span className="text-xs text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+                      {formatRelativeDate(message.createdAt)}
                     </span>
                   </div>
                 </div>

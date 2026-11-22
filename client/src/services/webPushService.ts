@@ -5,6 +5,7 @@
 
 import { getMessaging, getToken, onMessage, vapidKey, isMessagingSupported } from '@/lib/firebase';
 import { apiRequest } from '@/lib/queryClient';
+import { localizeInterfaceMessage } from '@/i18n/interfaceText';
 
 export class WebPushNotificationService {
   private fcmToken: string | null = null;
@@ -376,8 +377,9 @@ export class WebPushNotificationService {
       
       const title = payload.notification?.title || payload.data?.title;
       if (title) {
-        new Notification(title, {
-          body: payload.notification?.body || payload.data?.body,
+        const body = payload.notification?.body || payload.data?.body;
+        new Notification(localizeInterfaceMessage(title), {
+          body: typeof body === 'string' && !/message from/i.test(title) ? localizeInterfaceMessage(body) : body,
           icon: '/icons/icon-192x192.png',
           badge: '/icons/icon-180x180.png',
           data: payload.data

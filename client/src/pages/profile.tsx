@@ -25,8 +25,10 @@ import { PageWrapper } from "@/components/PageWrapper";
 
 
 import { type User } from "@shared/schema";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 export default function Profile() {
+  useUiLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -62,8 +64,8 @@ export default function Profile() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       toast({
-        title: "Success",
-        description: "Birthday message sent!",
+        title: uiText("Success"),
+        description: uiText("Birthday message sent!"),
       });
     },
     onError: (error) => {
@@ -96,8 +98,8 @@ export default function Profile() {
       (window as any).__profileCacheKey = Date.now();
       
       toast({
-        title: "Success",
-        description: "Profile picture updated successfully!",
+        title: uiText("Success"),
+        description: uiText("Profile picture updated successfully!"),
       });
     },
   });
@@ -129,8 +131,8 @@ export default function Profile() {
       await applyProfileImageUpdate(queryClient, "backgroundImageUrl", updatedUser);
       
       toast({
-        title: "Success",
-        description: "Background image updated successfully",
+        title: uiText("Success"),
+        description: uiText("Background image updated successfully"),
       });
     },
   });
@@ -148,7 +150,7 @@ export default function Profile() {
 
 
   if (!user) {
-    return <div>Loading...</div>;
+    return <div>{uiText("Loading...")}</div>;
   }
 
   const typedUser = user as User;
@@ -169,9 +171,9 @@ export default function Profile() {
           <div className="w-full max-w-md space-y-6">
             <div className="text-center space-y-2">
               <div className="text-5xl">🎉</div>
-              <h1 className="text-2xl font-bold text-foreground">Welcome to MyKliq!</h1>
+              <h1 className="text-2xl font-bold text-foreground">{uiText("Welcome to MyKliq!")}</h1>
               <p className="text-muted-foreground text-sm">
-                Your kliq is ready. Share your invite code with people you want to connect with.
+                {uiText("Your kliq is ready. Share your invite code with people you want to connect with.")}
               </p>
             </div>
 
@@ -183,7 +185,7 @@ export default function Profile() {
             />
 
             <p className="text-xs text-muted-foreground text-center">
-              Copy the message above and share it with anyone you'd like to invite.
+              {uiText("Copy the message above and share it with anyone you'd like to invite.")}
             </p>
 
             <div className="flex flex-col gap-3">
@@ -195,14 +197,14 @@ export default function Profile() {
                 }}
               >
                 <Share2 className="w-5 h-5" />
-                Copy &amp; Share
+                {uiText("Copy & Share")}
               </Button>
               <Button
                 variant="ghost"
                 className="w-full text-muted-foreground hover:text-foreground"
                 onClick={() => setShowOnboardingModal(false)}
               >
-                Maybe Later
+                {uiText("Maybe Later")}
               </Button>
             </div>
           </div>
@@ -214,12 +216,12 @@ export default function Profile() {
         {/* Profile Picture & Background Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-card-foreground">Profile Picture & Background</CardTitle>
-            <CardDescription>Upload and manage your profile picture and background wallpaper</CardDescription>
+            <CardTitle className="text-card-foreground">{uiText("Profile Picture & Background")}</CardTitle>
+            <CardDescription>{uiText("Upload and manage your profile picture and background wallpaper")}</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div 
-              key={resolvedBackgroundUrl || 'no-bg'}
+              key={resolvedBackgroundUrl || "no-bg"}
               className="relative h-48 bg-gradient-to-br from-primary/20 to-secondary/20 bg-cover bg-center bg-no-repeat"
               style={{
                 backgroundImage: resolvedBackgroundUrl 
@@ -239,11 +241,11 @@ export default function Profile() {
                   <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
                     <AvatarImage 
                       src={resolveProfileImageUrl(typedUser.profileImageUrl, typedUser.updatedAt)} 
-                      alt="Profile picture" 
+                      alt={uiText("Profile picture")} 
                       className="object-cover"
                     />
                     <AvatarFallback className="bg-white text-primary text-2xl">
-                      {typedUser.firstName?.[0] || "U"}
+                      {typedUser.firstName?.[0] || uiText("U")}
                     </AvatarFallback>
                   </Avatar>
                   
@@ -301,7 +303,7 @@ export default function Profile() {
                 >
                   <div className="flex items-center gap-2">
                     <Camera className="w-4 h-4" />
-                    <span className="text-xs font-medium hidden sm:block">Background</span>
+                      <span className="text-xs font-medium hidden sm:block">{uiText("Background")}</span>
                   </div>
                 </ObjectUploader>
               </div>
@@ -309,10 +311,10 @@ export default function Profile() {
             
             <div className="p-4">
               <p className="text-sm text-muted-foreground text-right">
-                Click the camera icons to upload your profile picture (15MB max) or background wallpaper (50MB max)
+                {uiText("Click the camera icons to upload your profile picture (15MB max) or background wallpaper (50MB max)")}
               </p>
               <p className="text-xs text-muted-foreground text-right mt-1">
-                Supported formats: JPEG, PNG, GIF, WebP, BMP, TIFF, SVG, AVIF, HEIC/HEIF
+                {uiText("Supported formats: JPEG, PNG, GIF, WebP, BMP, TIFF, SVG, AVIF, HEIC/HEIF")}
               </p>
             </div>
           </CardContent>
@@ -322,10 +324,10 @@ export default function Profile() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-card-foreground">Profile Information</CardTitle>
+              <CardTitle className="text-card-foreground">{uiText("Profile Information")}</CardTitle>
               <ProfileSettings user={typedUser} />
             </div>
-            <CardDescription>Your personal details, interests, and preferences</CardDescription>
+            <CardDescription>{uiText("Your personal details, interests, and preferences")}</CardDescription>
           </CardHeader>
           <CardContent>
             <ProfileDetailsDisplay user={typedUser} />
@@ -337,8 +339,8 @@ export default function Profile() {
         {birthdayUsers.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-card-foreground">🎉 Birthdays Today!</CardTitle>
-              <CardDescription>Send birthday wishes to your kliq members</CardDescription>
+              <CardTitle className="text-card-foreground">{uiText("Birthdays Today!")}</CardTitle>
+              <CardDescription>{uiText("Send birthday wishes to your kliq members")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -351,13 +353,13 @@ export default function Profile() {
                         {birthdayUser.profileImageUrl && (
                           <img 
                             src={birthdayUser.profileImageUrl} 
-                            alt={`${birthdayUser.firstName}'s avatar`}
+                            alt={uiText("{{name}}'s avatar", { name: birthdayUser.firstName ?? "" })}
                             className="w-10 h-10 rounded-full object-cover"
                           />
                         )}
                         <div>
                           <div className="font-medium">{birthdayUser.firstName} {birthdayUser.lastName}</div>
-                          <div className="text-sm text-muted-foreground">It's their birthday! 🎂</div>
+                          <div className="text-sm text-muted-foreground">{uiText("It's their birthday!")}</div>
                         </div>
                       </div>
                       <Button
@@ -369,7 +371,7 @@ export default function Profile() {
                         size="sm"
                         data-testid={`button-birthday-${birthdayUser.id}`}
                       >
-                        {sendBirthdayMessageMutation.isPending ? "Sending..." : "Send Birthday Wish"}
+                        {sendBirthdayMessageMutation.isPending ? uiText("Sending...") : uiText("Send Birthday Wish")}
                       </Button>
                     </div>
                   );
@@ -382,14 +384,14 @@ export default function Profile() {
         {/* Profile Music Section */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-card-foreground">🎵 Profile Music</CardTitle>
-            <CardDescription className="text-muted-foreground">Add music that plays when people visit your profile</CardDescription>
+            <CardTitle className="text-card-foreground">{uiText("Profile Music")}</CardTitle>
+            <CardDescription className="text-muted-foreground">{uiText("Add music that plays when people visit your profile")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Current Profile Music Player (if music exists) */}
             {(user as User)?.profileMusicUrls && (user as User)?.profileMusicUrls?.length > 0 && (user as User)?.profileMusicTitles && (
               <div>
-                <Label className="text-sm font-medium text-foreground">Current Profile Music</Label>
+                <Label className="text-sm font-medium text-foreground">{uiText("Current Profile Music")}</Label>
                 <div className="mt-2">
                   <ProfileMusicPlayer
                     musicUrls={((user as User).profileMusicUrls || []).map((u: string) => resolveAssetUrl(u) || u)}
@@ -402,7 +404,7 @@ export default function Profile() {
             
             {/* Music Upload/Management */}
             <div>
-              <Label className="text-sm font-medium text-foreground">Profile Music Settings</Label>
+              <Label className="text-sm font-medium text-foreground">{uiText("Profile Music Settings")}</Label>
               <div className="mt-2">
                 <MusicUploader
                   currentMusicUrls={(user as User)?.profileMusicUrls || []}

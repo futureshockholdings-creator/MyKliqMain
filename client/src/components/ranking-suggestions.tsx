@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChevronUp, ChevronDown, TrendingUp, MessageCircle, Eye, X, Check, Lightbulb, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface RankingSuggestion {
   id: string;
@@ -38,6 +39,7 @@ interface RankingSuggestionsProps {
 }
 
 export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps) {
+  useUiLanguage();
   const [expandedSuggestion, setExpandedSuggestion] = useState<string | null>(null);
   // Optimistic sets — cards are removed from UI immediately on action
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
@@ -231,7 +233,7 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-yellow-500" />
-            Smart Ranking Suggestions
+            {uiText("Smart Ranking Suggestions")}
           </h3>
         </div>
         <div className="animate-pulse space-y-3">
@@ -248,7 +250,7 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-yellow-500" />
-          Smart Ranking Suggestions
+          {uiText("Smart Ranking Suggestions")}
           {suggestions.length > 0 && (
             <Badge variant="secondary" className="ml-2">
               {suggestions.length}
@@ -263,7 +265,7 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
           data-testid="button-generate-suggestions"
           className="bg-green-600 text-white hover:bg-green-700 disabled:bg-green-600/50 disabled:text-white/70"
         >
-          {isGenerating ? "Analyzing..." : "Analyze Interactions"}
+          {isGenerating ? uiText("Analyzing...") : uiText("Analyze Interactions")}
         </Button>
       </div>
 
@@ -272,8 +274,8 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
           <CardContent className="pt-6">
             <div className="text-center text-muted-foreground">
               <Lightbulb className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-              <p>No ranking suggestions available</p>
-              <p className="text-sm mt-1">Your current rankings align well with your interaction patterns.</p>
+              <p>{uiText("No ranking suggestions available")}</p>
+              <p className="text-sm mt-1">{uiText("Your current rankings align well with your interaction patterns.")}</p>
             </div>
           </CardContent>
         </Card>
@@ -316,7 +318,7 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
                       </Badge>
 
                       <Badge variant="secondary" className="text-xs">
-                        {parseFloat(suggestion.confidence).toFixed(0)}% confident
+                        {parseFloat(suggestion.confidence).toFixed(0)}{uiText("% confident")}
                       </Badge>
                     </div>
                   </div>
@@ -330,19 +332,19 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
                   <div className="mb-3 p-3 bg-muted/30 rounded-lg text-xs space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <span className="font-medium">Total Interactions:</span>
+                        <span className="font-medium">{uiText("Total Interactions:")}</span>
                         <span className="ml-1">{suggestion.supportingMetrics.totalInteractions}</span>
                       </div>
                       <div>
-                        <span className="font-medium">Overall Score:</span>
+                        <span className="font-medium">{uiText("Overall Score:")}</span>
                         <span className="ml-1">{parseFloat(suggestion.supportingMetrics.overallScore).toFixed(1)}</span>
                       </div>
                       <div>
-                        <span className="font-medium">Engagement:</span>
+                        <span className="font-medium">{uiText("Engagement:")}</span>
                         <span className="ml-1">{parseFloat(suggestion.supportingMetrics.engagementScore).toFixed(1)}</span>
                       </div>
                       <div>
-                        <span className="font-medium">Consistency:</span>
+                        <span className="font-medium">{uiText("Consistency:")}</span>
                         <span className="ml-1">{parseFloat(suggestion.supportingMetrics.consistencyScore).toFixed(1)}</span>
                       </div>
                     </div>
@@ -358,7 +360,7 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
                     data-testid={`button-accept-${suggestion.id}`}
                   >
                     <Check className="h-4 w-4 mr-1" />
-                    Apply Ranking
+                    {uiText("Apply Ranking")}
                   </Button>
 
                   <Button
@@ -369,7 +371,7 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
                     data-testid={`button-dismiss-${suggestion.id}`}
                   >
                     <X className="h-4 w-4 mr-1" />
-                    Dismiss
+                    {uiText("Dismiss")}
                   </Button>
 
                   <Button
@@ -380,7 +382,7 @@ export function RankingSuggestions({ onRankingChange }: RankingSuggestionsProps)
                     )}
                     data-testid={`button-toggle-details-${suggestion.id}`}
                   >
-                    {expandedSuggestion === suggestion.id ? "Less" : "Details"}
+                    {expandedSuggestion === suggestion.id ? uiText("Less") : uiText("Details")}
                   </Button>
                 </div>
               </CardContent>

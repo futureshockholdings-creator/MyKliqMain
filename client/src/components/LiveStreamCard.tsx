@@ -33,6 +33,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { getApiBaseUrl, resolveAssetUrl, buildWebSocketUrl } from "@/lib/apiConfig";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatNativeDate, formatRelativeDate } from "@/i18n/formatting";
 
 interface LiveStreamCardProps {
   action: {
@@ -76,18 +78,11 @@ interface ChatMessage {
 }
 
 function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  if (diffInSeconds < 60) return 'just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  return date.toLocaleDateString();
+  return formatRelativeDate(dateString);
 }
 
 export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
+  useUiLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isWatching, setIsWatching] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
@@ -488,7 +483,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
             </div>
             
             <Badge variant="secondary" className="bg-gray-200 text-gray-700">
-              {action.recordingUrl ? '📹 Video' : 'ENDED'}
+              {action.recordingUrl ? uiText("📹 Video") : uiText("ENDED")}
             </Badge>
 
             {/* Plus icon for scrapbook - visible to everyone */}
@@ -522,25 +517,25 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-md bg-card border-border">
                     <DialogHeader>
-                      <DialogTitle className="text-foreground">Edit Video Post</DialogTitle>
+                      <DialogTitle className="text-foreground">{uiText("Edit Video Post")}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div>
-                        <label className="text-sm font-medium text-foreground">Title</label>
+                        <label className="text-sm font-medium text-foreground">{uiText("Title")}</label>
                         <Input
                           value={editTitle}
                           onChange={(e) => setEditTitle(e.target.value)}
                           className="mt-1"
-                          placeholder="Video title"
+                          placeholder={uiText("Video title")}
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-foreground">Description</label>
+                        <label className="text-sm font-medium text-foreground">{uiText("Description")}</label>
                         <Textarea
                           value={editDescription}
                           onChange={(e) => setEditDescription(e.target.value)}
                           className="mt-1"
-                          placeholder="Video description"
+                          placeholder={uiText("Video description")}
                           rows={3}
                         />
                       </div>
@@ -553,11 +548,11 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                             disabled={deleteActionMutation.isPending}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
+                            {uiText("Delete")}
                           </Button>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-destructive font-medium">Delete this video?</span>
+                            <span className="text-sm text-destructive font-medium">{uiText("Delete this video?")}</span>
                             <Button
                               variant="destructive"
                               size="sm"
@@ -568,14 +563,14 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                               }}
                               disabled={deleteActionMutation.isPending}
                             >
-                              {deleteActionMutation.isPending ? "Deleting..." : "Yes, Delete"}
+                              {deleteActionMutation.isPending ? uiText("Deleting...") : uiText("Yes, Delete")}
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => setShowDeleteConfirm(false)}
                             >
-                              Cancel
+                              {uiText("Cancel")}
                             </Button>
                           </div>
                         )}
@@ -584,7 +579,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                         {!showDeleteConfirm && (
                           <div className="flex space-x-2">
                             <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                              Cancel
+                              {uiText("Cancel")}
                             </Button>
                             <Button
                               onClick={() => editActionMutation.mutate({
@@ -594,7 +589,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                               })}
                               disabled={editActionMutation.isPending}
                             >
-                              {editActionMutation.isPending ? "Saving..." : "Save Changes"}
+                              {editActionMutation.isPending ? uiText("Saving...") : uiText("Save Changes")}
                             </Button>
                           </div>
                         )}
@@ -644,19 +639,18 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                 poster={action.thumbnailUrl ? resolveAssetUrl(action.thumbnailUrl) : undefined}
                 preload="metadata"
               >
-                Your browser does not support the video tag.
+                {uiText("Your browser does not support the video tag.")}
               </video>
               {action.recordingDuration && action.recordingDuration > 0 && (
                 <div className="text-xs text-muted-foreground text-center py-1">
-                  Duration: {action.recordingDuration} seconds
-                </div>
+                  {uiText("Duration: {{recordingDuration}} seconds", { "recordingDuration": action.recordingDuration })}</div>
               )}
             </div>
           ) : (
             <div className="bg-muted rounded-lg aspect-video flex items-center justify-center mb-3">
               <div className="text-center text-muted-foreground">
                 <Video className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Recording not available</p>
+                <p>{uiText("Recording not available")}</p>
               </div>
             </div>
           )}
@@ -703,7 +697,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
             <div className="mt-4 pt-4 border-t border-border">
               <div className="space-y-3">
                 {actionComments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-2">No comments yet. Be the first to comment!</p>
+                  <p className="text-sm text-muted-foreground text-center py-2">{uiText("No comments yet. Be the first to comment!")}</p>
                 ) : (
                   actionComments.map((comment: any) => {
                     const commentUserName = comment.user?.firstName && comment.user?.lastName 
@@ -713,7 +707,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                       <div key={comment.id} className="flex space-x-2">
                         <BorderedAvatar
                           src={comment.user?.profileImageUrl}
-                          fallback={comment.user?.firstName?.[0] || 'U'}
+                          fallback={comment.user?.firstName?.[0] || "U"}
                           borderImageUrl={comment.user?.id === userData?.id ? (userData as any)?.equippedBorder?.imageUrl : comment.user?.equippedBorder?.imageUrl}
                           borderName={comment.user?.id === userData?.id ? (userData as any)?.equippedBorder?.name : comment.user?.equippedBorder?.name}
                           size="sm"
@@ -735,7 +729,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                 <Input
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Write a comment..."
+                  placeholder={uiText("Write a comment...")}
                   className="flex-1"
                   onKeyPress={(e) => {
                     if (e.key === 'Enter' && newComment.trim()) {
@@ -769,12 +763,11 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
           <div className="flex items-center gap-2">
             <Badge className="bg-red-600 text-white animate-pulse flex items-center gap-1">
               <span className="w-2 h-2 bg-white rounded-full animate-ping"></span>
-              LIVE
+              {uiText("LIVE")}
             </Badge>
             <span className="text-sm text-muted-foreground flex items-center gap-1">
               <Users className="w-4 h-4" />
-              {viewerCount} watching
-            </span>
+              {uiText("{{viewerCount}} watching", { "viewerCount": viewerCount })}</span>
           </div>
           {isWatching && (
             <Button
@@ -817,8 +810,8 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
               <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-3 hover:bg-red-500 transition-colors">
                 <Video className="w-8 h-8 text-white" />
               </div>
-              <p className="text-white font-medium">Tap to watch live</p>
-              <p className="text-gray-400 text-sm">{authorName} is streaming now</p>
+              <p className="text-white font-medium">{uiText("Tap to watch live")}</p>
+              <p className="text-gray-400 text-sm">{uiText("{{authorName}} is streaming now", { "authorName": authorName })}</p>
             </div>
           </div>
         ) : (
@@ -826,8 +819,8 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
             <div className="bg-black rounded-lg aspect-video flex items-center justify-center relative">
               <div className="text-center">
                 <Video className="w-12 h-12 text-red-500 mx-auto mb-2 animate-pulse" />
-                <p className="text-white font-medium">Watching {authorName}'s stream</p>
-                <p className="text-gray-400 text-sm">Live video stream</p>
+                <p className="text-white font-medium">{uiText("Watching {{authorName}}'s stream", { "authorName": authorName })}</p>
+                <p className="text-gray-400 text-sm">{uiText("Live video stream")}</p>
               </div>
               
               <Button
@@ -841,9 +834,9 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
               
               <div className="absolute bottom-2 left-2 flex items-center gap-2">
                 <Badge className="bg-red-600 text-white text-xs">
-                  LIVE
+                  {uiText("LIVE")}
                 </Badge>
-                <span className="text-white text-xs">{viewerCount} viewers</span>
+                <span className="text-white text-xs">{uiText("{{viewerCount}} viewers", { "viewerCount": viewerCount })}</span>
               </div>
             </div>
             
@@ -851,13 +844,13 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
               <div className="bg-gray-900 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-2 text-gray-300">
                   <MessageCircle className="w-4 h-4" />
-                  <span className="text-sm font-medium">Live Chat</span>
+                  <span className="text-sm font-medium">{uiText("Live Chat")}</span>
                 </div>
                 
                 <ScrollArea className="h-32 mb-2" ref={chatScrollRef}>
                   <div className="space-y-1">
                     {chatMessages.length === 0 ? (
-                      <p className="text-gray-500 text-sm">No messages yet. Say hi!</p>
+                      <p className="text-gray-500 text-sm">{uiText("No messages yet. Say hi!")}</p>
                     ) : (
                       chatMessages.map((msg) => (
                         <div key={msg.id} className="text-sm">
@@ -875,7 +868,7 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
                   <Input
                     value={chatMessage}
                     onChange={(e) => setChatMessage(e.target.value)}
-                    placeholder="Type a message..."
+                    placeholder={uiText("Type a message...")}
                     className="bg-gray-800 border-gray-700 text-white text-sm"
                     onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                   />
@@ -894,7 +887,9 @@ export function LiveStreamCard({ action, currentUserId }: LiveStreamCardProps) {
         )}
         
         <div className="mt-3 text-xs text-muted-foreground">
-          Started {new Date(action.createdAt).toLocaleTimeString()}
+          {uiText("Started {{time}}", {
+            time: formatNativeDate(action.createdAt, { hour: "numeric", minute: "2-digit" }),
+          })}
         </div>
       </CardContent>
     </Card>

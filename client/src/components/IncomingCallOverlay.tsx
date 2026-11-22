@@ -6,8 +6,10 @@ import { useVideoCall } from '@/contexts/VideoCallContext';
 import { cn } from '@/lib/utils';
 import { resolveAssetUrl } from '@/lib/apiConfig';
 import { playRingtone } from '@/lib/audioManager';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 export function IncomingCallOverlay() {
+  useUiLanguage();
   const { callState, currentCallInfo, acceptCall, declineCall } = useVideoCall();
   const [isVisible, setIsVisible] = useState(false);
   const ringtoneRef = useRef<{ stop: () => void } | null>(null);
@@ -56,7 +58,7 @@ export function IncomingCallOverlay() {
           {currentCallInfo.callerName}
         </h2>
         <p className="text-muted-foreground mb-8 animate-pulse">
-          Incoming video call...
+          {uiText("Incoming video call...")}
         </p>
 
         <div className="flex justify-center gap-6">
@@ -84,25 +86,11 @@ export function IncomingCallOverlay() {
         </div>
 
         <p className="text-xs text-muted-foreground mt-6">
-          Swipe or tap to answer
+          {uiText("Swipe or tap to answer")}
         </p>
       </div>
 
-      <style>{`
-        @keyframes ring {
-          0%, 100% { transform: rotate(0deg); }
-          10% { transform: rotate(14deg); }
-          20% { transform: rotate(-8deg); }
-          30% { transform: rotate(14deg); }
-          40% { transform: rotate(-4deg); }
-          50% { transform: rotate(10deg); }
-          60% { transform: rotate(0deg); }
-        }
-        
-        .animate-ring {
-          animation: ring 1.5s ease-in-out infinite;
-        }
-      `}</style>
+      <style>{"\n        @keyframes ring {\n          0%, 100% { transform: rotate(0deg); }\n          10% { transform: rotate(14deg); }\n          20% { transform: rotate(-8deg); }\n          30% { transform: rotate(14deg); }\n          40% { transform: rotate(-4deg); }\n          50% { transform: rotate(10deg); }\n          60% { transform: rotate(0deg); }\n        }\n        \n        .animate-ring {\n          animation: ring 1.5s ease-in-out infinite;\n        }\n      "}</style>
     </div>
   );
 }

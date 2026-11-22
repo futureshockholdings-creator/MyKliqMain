@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { buildApiUrl } from "@/lib/apiConfig";
 import { Trash2, Upload, Search, X } from "lucide-react";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface Moviecon {
   id: string;
@@ -24,6 +25,7 @@ interface MovieconUploaderProps {
 }
 
 export function MovieconUploader({ moviecons, onRefresh, adminPassword }: MovieconUploaderProps) {
+  useUiLanguage();
   const [title, setTitle] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -184,21 +186,21 @@ export function MovieconUploader({ moviecons, onRefresh, adminPassword }: Moviec
       {/* Upload Section */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-foreground">Upload New Moviecon</CardTitle>
+          <CardTitle className="text-foreground">{uiText("Upload New Moviecon")}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Upload multiple video files (up to 500 files, 100MB each). Supported formats: .mp4, .mov, .hevc, .h265, .avi, .mkv, .3gp, .webm
+            {uiText("Upload multiple video files (up to 500 files, 100MB each). Supported formats: .mp4, .mov, .hevc, .h265, .avi, .mkv, .3gp, .webm")}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="moviecon-title" className="text-foreground">
-              Moviecon Title (Optional)
+              {uiText("Moviecon Title (Optional)")}
             </Label>
             <Input
               id="moviecon-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter a title (optional - will use filename if empty)"
+              placeholder={uiText("Enter a title (optional - will use filename if empty)")}
               className="bg-background border-border text-foreground"
               data-testid="input-moviecon-title"
             />
@@ -216,18 +218,18 @@ export function MovieconUploader({ moviecons, onRefresh, adminPassword }: Moviec
               >
                 <div className="flex items-center gap-2">
                   <Upload className="h-4 w-4" />
-                  <span>📹 Upload Video Files (.mp4, .mov, .hevc, .h265, .avi, .mkv, .3gp, .webm)</span>
+                  <span>{uiText("📹 Upload Video Files (.mp4, .mov, .hevc, .h265, .avi, .mkv, .3gp, .webm)")}</span>
                 </div>
               </SmartVideoUploader>
             ))}
             <p className="text-xs text-muted-foreground">
-              💡 HEVC/H.265 files will be automatically detected and can be converted to MP4 for better compatibility
+              {uiText("💡 HEVC/H.265 files will be automatically detected and can be converted to MP4 for better compatibility")}
             </p>
           </div>
 
           {isUploading && (
             <div className="text-muted-foreground text-sm">
-              Processing upload...
+              {uiText("Processing upload...")}
             </div>
           )}
         </CardContent>
@@ -237,8 +239,7 @@ export function MovieconUploader({ moviecons, onRefresh, adminPassword }: Moviec
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground">
-            Your Moviecons ({moviecons.length})
-          </CardTitle>
+            {uiText("Your Moviecons ({{length}})", { "length": moviecons.length })}</CardTitle>
           
           {/* Search Bar */}
           {moviecons.length > 0 && (
@@ -247,7 +248,7 @@ export function MovieconUploader({ moviecons, onRefresh, adminPassword }: Moviec
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search moviecons by title..."
+                placeholder={uiText("Search moviecons by title...")}
                 className="pl-10 pr-10 bg-background border-border text-foreground"
                 data-testid="input-search-moviecons"
               />
@@ -268,12 +269,11 @@ export function MovieconUploader({ moviecons, onRefresh, adminPassword }: Moviec
         <CardContent>
           {moviecons.length === 0 ? (
             <div className="text-muted-foreground text-center py-8">
-              No moviecons uploaded yet. Upload your first video above!
+              {uiText("No moviecons uploaded yet. Upload your first video above!")}
             </div>
           ) : filteredMoviecons.length === 0 ? (
             <div className="text-muted-foreground text-center py-8">
-              No moviecons found matching "{searchQuery}". Try a different search term.
-            </div>
+              {uiText("No moviecons found matching \"{{searchQuery}}\". Try a different search term.", { "searchQuery": searchQuery })}</div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {filteredMoviecons.map((moviecon) => (

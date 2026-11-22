@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { resolveAssetUrl } from "@/lib/apiConfig";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface BorderedAvatarProps {
   src: string | undefined;
@@ -782,6 +783,7 @@ export function BorderedAvatar({
   borderName,
   size = "md",
 }: BorderedAvatarProps) {
+  useUiLanguage();
   const sizeClass = sizeClasses[size];
   const iconSize = iconSizeClasses[size];
   const borderStyle = borderName && borderStyles[borderName] ? borderStyles[borderName] : null;
@@ -834,7 +836,7 @@ export function BorderedAvatar({
         </Avatar>
         <img 
           src={resolvedBorderImageUrl} 
-          alt={borderName || "border"}
+          alt={borderName || uiText("border")}
           className={cn("absolute inset-0 pointer-events-none", sizeClass)}
         />
         {renderStreakBadge()}

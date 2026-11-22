@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2, VolumeX, Music, ExternalLink, AlertTriangle, SkipForward } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 // Extend Window to hold the YT IFrame API globals
 declare global {
@@ -37,6 +38,7 @@ interface YTPlayerProps {
 }
 
 function YouTubeMusicPlayer({ videoId, title, onExternalOpen, showNext, onNext, trackLabel }: YTPlayerProps) {
+  useUiLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef    = useRef<any>(null);
   const [muted, setMuted]     = useState(true);   // optimistic — clears in onReady
@@ -139,18 +141,18 @@ function YouTubeMusicPlayer({ videoId, title, onExternalOpen, showNext, onNext, 
           )}
           {ready && muted && (
             <Button variant="ghost" size="sm" onClick={handleUnmute}
-              className="text-amber-500 hover:text-amber-400" title="Tap to unmute">
+              className="text-amber-500 hover:text-amber-400" title={uiText("Tap to unmute")}>
               <VolumeX className="w-4 h-4" />
             </Button>
           )}
           {showNext && (
             <Button variant="ghost" size="sm" onClick={onNext}
-              className="text-primary hover:text-primary/80" title="Next track">
+              className="text-primary hover:text-primary/80" title={uiText("Next track")}>
               <SkipForward className="w-4 h-4" />
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={onExternalOpen}
-            className="text-muted-foreground hover:text-foreground" title="Open on YouTube">
+            className="text-muted-foreground hover:text-foreground" title={uiText("Open on YouTube")}>
             <ExternalLink className="w-4 h-4" />
           </Button>
         </div>
@@ -161,8 +163,8 @@ function YouTubeMusicPlayer({ videoId, title, onExternalOpen, showNext, onNext, 
         />
 
         <div className="flex justify-between items-center text-xs text-muted-foreground">
-          <span>YouTube Music Player</span>
-          <span className="bg-primary/20 px-2 py-1 rounded text-primary">YOUTUBE</span>
+          <span>{uiText("YouTube Music Player")}</span>
+          <span className="bg-primary/20 px-2 py-1 rounded text-primary">{uiText("YOUTUBE")}</span>
         </div>
       </div>
     </div>
@@ -173,6 +175,7 @@ function YouTubeMusicPlayer({ videoId, title, onExternalOpen, showNext, onNext, 
 // Main component
 // ---------------------------------------------------------------------------
 export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: ProfileMusicPlayerProps) {
+  useUiLanguage();
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [isPlaying,       setIsPlaying]       = useState(false);
@@ -302,7 +305,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
       <div className="bg-card border-border rounded-lg p-4 border">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Music className="w-5 h-5" />
-          <span className="text-sm">No music URLs configured</span>
+          <span className="text-sm">{uiText("No music URLs configured")}</span>
         </div>
       </div>
     );
@@ -317,8 +320,8 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
           <Alert className="border-destructive bg-destructive/10">
             <AlertTriangle className="w-4 h-4 text-destructive" />
             <AlertDescription className="text-destructive text-sm">
-              <div className="font-medium mb-1">Invalid YouTube URL</div>
-              <p>Cannot extract video ID from this URL. Please check the link.</p>
+              <div className="font-medium mb-1">{uiText("Invalid YouTube URL")}</div>
+              <p>{uiText("Cannot extract video ID from this URL. Please check the link.")}</p>
             </AlertDescription>
           </Alert>
         </div>
@@ -343,7 +346,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-destructive">
             <Music className="w-4 h-4" />
-            <span className="text-sm">Unable to load audio file</span>
+            <span className="text-sm">{uiText("Unable to load audio file")}</span>
           </div>
           <Button variant="ghost" size="sm" onClick={openExternalUrl}
             className="text-muted-foreground hover:text-foreground">
@@ -351,7 +354,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
           </Button>
         </div>
         <p className="text-xs text-destructive/80 mt-1">
-          Try opening the link directly or check if the URL is accessible.
+          {uiText("Try opening the link directly or check if the URL is accessible.")}
         </p>
       </div>
     );
@@ -382,7 +385,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
 
       {blockedByPolicy && !isPlaying && (
         <p className="text-xs text-muted-foreground mb-2 text-center animate-pulse">
-          Tap ▶ to start playing
+          {uiText("Tap ▶ to start playing")}
         </p>
       )}
 
@@ -403,7 +406,7 @@ export function ProfileMusicPlayer({ musicUrls, musicTitles, autoPlay = true }: 
 
         {musicUrls.length > 1 && (
           <Button variant="ghost" size="sm" onClick={selectRandomTrack}
-            className="text-primary hover:text-primary/80" title="Next random track"
+            className="text-primary hover:text-primary/80" title={uiText("Next random track")}
             data-testid="button-next-track">
             <SkipForward className="w-4 h-4" />
           </Button>

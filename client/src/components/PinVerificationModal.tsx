@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Shield } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface PinVerificationModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function PinVerificationModal({
   title = "Security Verification",
   description = "Please enter your 4-digit PIN to access settings"
 }: PinVerificationModalProps) {
+  useUiLanguage();
   const [pin, setPin] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const { toast } = useToast();
@@ -95,7 +97,7 @@ export function PinVerificationModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="pin" className="text-sm font-medium text-gray-900 dark:text-white">
-                Enter PIN
+                {uiText("Enter PIN")}
               </label>
               <Input
                 id="pin"
@@ -122,7 +124,7 @@ export function PinVerificationModal({
                 className="flex-1"
                 data-testid="button-cancel-pin"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 type="submit"
@@ -130,7 +132,7 @@ export function PinVerificationModal({
                 className="flex-1"
                 data-testid="button-verify-pin"
               >
-                {isVerifying ? "Verifying..." : "Verify PIN"}
+                {isVerifying ? uiText("Verifying...") : uiText("Verify PIN")}
               </Button>
             </div>
           </form>

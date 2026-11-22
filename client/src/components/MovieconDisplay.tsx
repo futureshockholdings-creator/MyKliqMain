@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import type { Moviecon } from '@shared/schema';
 import { cn } from '@/lib/utils';
 import { buildApiUrl } from '@/lib/apiConfig';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface MovieconDisplayProps {
   moviecon: Moviecon;
@@ -108,6 +109,7 @@ function useVideoThumbnail(videoSrc: string, posterUrl?: string) {
 }
 
 export function MovieconDisplay({ moviecon, className, autoPlay = false, variant = 'default' }: MovieconDisplayProps) {
+  useUiLanguage();
   const [videoError, setVideoError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -134,7 +136,7 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false, variant
         <div className="text-lg mb-2">🎬</div>
         <div className="text-sm font-bold mb-1">{moviecon.title}</div>
         <div className="text-xs opacity-90">{moviecon.movieSource}</div>
-        <div className="text-xs opacity-75 mt-1">{moviecon.duration}s moviecon</div>
+        <div className="text-xs opacity-75 mt-1">{uiText("{{duration}}s moviecon", { "duration": moviecon.duration })}</div>
       </div>
     </div>
   );
@@ -147,6 +149,7 @@ function MovieconVideoPlayer({ moviecon, videoSrc, posterUrl, className, variant
   className?: string;
   variant?: 'default' | 'feed';
 }) {
+  useUiLanguage();
   const [videoError, setVideoError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -160,7 +163,7 @@ function MovieconVideoPlayer({ moviecon, videoSrc, posterUrl, className, variant
         <div className="text-center p-4">
           <div className="text-lg mb-2">🎬</div>
           <div className="text-sm font-bold mb-1">{moviecon.title}</div>
-          <div className="text-xs opacity-90">Custom Clip</div>
+          <div className="text-xs opacity-90">{uiText("Custom Clip")}</div>
         </div>
       </div>
     );

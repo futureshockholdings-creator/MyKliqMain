@@ -1,5 +1,6 @@
 import { ExternalLink } from 'lucide-react';
 import type { SocialMediaUrl } from '@/lib/socialMediaUtils';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 function InstagramIcon({ className = "w-6 h-6" }: { className?: string }) {
   return (
@@ -87,6 +88,7 @@ function extractDisplayPath(url: string, platform: string): string {
 }
 
 export function SocialMediaEmbed({ socialUrl, className = "" }: SocialMediaEmbedProps) {
+  useUiLanguage();
   const config = platformConfig[socialUrl.platform];
   const Icon = config.icon;
   const displayPath = extractDisplayPath(socialUrl.url, socialUrl.platform);
@@ -99,7 +101,7 @@ export function SocialMediaEmbed({ socialUrl, className = "" }: SocialMediaEmbed
             <Icon className="w-6 h-6 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white font-semibold text-sm">Shared Post</p>
+            <p className="text-white font-semibold text-sm">{uiText("Shared Post")}</p>
             <p className="text-white/60 text-xs truncate">{socialUrl.url}</p>
           </div>
         </div>
@@ -121,8 +123,7 @@ export function SocialMediaEmbed({ socialUrl, className = "" }: SocialMediaEmbed
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${config.buttonBg} text-white text-sm font-medium transition-colors self-start`}
         >
           <ExternalLink className="w-4 h-4" />
-          View on {config.name}
-        </a>
+          {uiText("View on {{name}}", { "name": config.name })}</a>
       </div>
 
       <div className={`absolute top-2 right-2 ${config.badgeBg} text-white text-xs px-2 py-1 rounded`}>

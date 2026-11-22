@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Image as ImageIcon, Video, X, Upload, Camera, StopCircle, Circle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber } from "@/i18n/formatting";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type UploadResult = any;
@@ -26,6 +28,7 @@ interface MediaUploadProps {
 }
 
 export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: MediaUploadProps) {
+  useUiLanguage();
   const [content, setContent] = useState("");
   // Support multiple media items for posts
   const [uploadedMediaItems, setUploadedMediaItems] = useState<{ url: string; type: "image" | "video"; fileName?: string; fileSize?: number }[]>([]);
@@ -541,12 +544,12 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
       <DialogContent className="sm:max-w-xl bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-foreground">
-            {type === "event" ? "Add Media to Event" : `Create ${type === "post" ? "Post" : "Story"}`}
+            {type === "event" ? uiText("Add Media to Event") : `Create ${type === "post" ? "Post" : "Story"}`}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             {type === "event" 
-              ? "Upload photos or videos for your event (max 250MB)" 
-              : `Share photos or videos with your kliq (max 250MB)`}
+              ? uiText("Upload photos or videos for your event (max 250MB)") 
+              : uiText("Share photos or videos with your kliq (max 250MB)")}
           </DialogDescription>
         </DialogHeader>
         
@@ -555,7 +558,9 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder={`What's happening in your ${type === "post" ? "kliq" : "story"}?`}
+              placeholder={type === "post"
+                ? uiText("What's happening in your kliq?")
+                : uiText("What's happening in your story?")}
               className="bg-white text-black placeholder-gray-500 border-gray-300"
               rows={3}
             />
@@ -569,7 +574,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                   <CardContent className="p-3">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm text-foreground font-medium">
-                        {uploadedMediaItems.length} file{uploadedMediaItems.length > 1 ? 's' : ''} uploaded
+                        {uiText("{{length}} file", { "length": uploadedMediaItems.length })}{uploadedMediaItems.length > 1 ? uiText("s") : ''} {uiText("uploaded")}
                       </p>
                       <Button
                         size="sm"
@@ -577,7 +582,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                         onClick={() => removeMedia()}
                         className="text-destructive hover:bg-destructive/10"
                       >
-                        Clear All
+                        {uiText("Clear All")}
                       </Button>
                     </div>
                     <div className="grid grid-cols-5 gap-2">
@@ -586,7 +591,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                           {media.type === "image" ? (
                             <img
                               src={media.url}
-                              alt={`Upload ${index + 1}`}
+                              alt={uiText("Upload {{count}}", { count: formatDisplayNumber(index + 1) })}
                               className="w-full h-full object-cover rounded-md"
                             />
                           ) : (
@@ -607,7 +612,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                     </div>
                     {uploadedMediaItems.length < 10 && (
                       <p className="text-xs text-muted-foreground mt-2">
-                        You can add up to {10 - uploadedMediaItems.length} more file{10 - uploadedMediaItems.length !== 1 ? 's' : ''}
+                        {uiText("You can add up to")} {10 - uploadedMediaItems.length} {uiText("more file")}{10 - uploadedMediaItems.length !== 1 ? uiText("s") : ''}
                       </p>
                     )}
                   </CardContent>
@@ -625,7 +630,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                         )}
                         <div>
                           <p className="text-sm text-foreground font-medium">
-                            {uploadedMedia?.type === "image" ? "Image" : "Video"} uploaded
+                            {uploadedMedia?.type === "image" ? uiText("Image") : uiText("Video")} {uiText("uploaded")}
                           </p>
                           {uploadedMedia?.fileName && (
                             <p className="text-xs text-muted-foreground truncate max-w-[200px]">
@@ -635,7 +640,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                           {uploadedMedia?.fileSize && (
                             <p className="text-xs text-muted-foreground">
                               {formatFileSize(uploadedMedia.fileSize)}
-                              {uploadedMedia.fileSize > 200 * 1024 * 1024 && " ⚠️ Large file"}
+                              {uploadedMedia.fileSize > 200 * 1024 * 1024 && uiText(" ⚠️ Large file")}
                             </p>
                           )}
                         </div>
@@ -657,7 +662,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                 <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
                   <CardContent className="p-3">
                     <p className="text-xs text-amber-800 dark:text-amber-200">
-                      💡 <strong>Tip:</strong> Large videos may take longer to upload and view. Consider compressing your video before uploading for faster sharing and better compatibility.
+                      💡 <strong>{uiText("Tip:")}</strong> {uiText("Large videos may take longer to upload and view. Consider compressing your video before uploading for faster sharing and better compatibility.")}
                     </p>
                   </CardContent>
                 </Card>
@@ -688,7 +693,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                       data-testid="button-take-photo"
                     >
                       <Camera className="w-5 h-5 mr-2" />
-                      Take Photo
+                      {uiText("Take Photo")}
                     </Button>
                     
                     {!isRecording ? (
@@ -699,7 +704,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                         data-testid="button-start-recording"
                       >
                         <Circle className="w-5 h-5 mr-2" />
-                        Start Recording
+                        {uiText("Start Recording")}
                       </Button>
                     ) : (
                       <Button
@@ -709,7 +714,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                         data-testid="button-stop-recording"
                       >
                         <StopCircle className="w-5 h-5 mr-2" />
-                        Stop ({formatTime(recordingTime)})
+                        {uiText("Stop (")}{formatTime(recordingTime)})
                       </Button>
                     )}
                     
@@ -741,7 +746,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                       )}
                       <div>
                         <p className="text-sm text-foreground font-medium">
-                          {capturedMedia.type === "image" ? "Photo" : "Video"} captured
+                          {capturedMedia.type === "image" ? uiText("Photo") : uiText("Video")} {uiText("captured")}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {formatFileSize(capturedMedia.blob.size)}
@@ -757,7 +762,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                       data-testid="button-upload-captured"
                     >
                       <Upload className="w-4 h-4 mr-2" />
-                      Upload
+                      {uiText("Upload")}
                     </Button>
                     <Button
                       onClick={retakeCapturedMedia}
@@ -766,7 +771,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                       data-testid="button-retake"
                     >
                       <Camera className="w-4 h-4 mr-2" />
-                      Retake
+                      {uiText("Retake")}
                     </Button>
                     <Button
                       onClick={() => setCapturedMedia(null)}
@@ -803,7 +808,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                 buttonClassName="bg-white text-black border-2 border-black hover:bg-gray-50 w-full sm:w-auto"
               >
                 <Upload className="w-4 h-4 mr-2" />
-                📸 Add Photos & Videos
+                {uiText("📸 Add Photos & Videos")}
               </ObjectUploader>
               
               <Button
@@ -813,7 +818,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                 data-testid="button-access-camera"
               >
                 <Camera className="w-4 h-4 mr-2" />
-                📷 Access Camera
+                {uiText("📷 Access Camera")}
               </Button>
             </div>
 
@@ -825,7 +830,7 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                 className="border-border text-muted-foreground hover:bg-muted w-full sm:w-auto"
                 data-testid="button-cancel"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 onClick={handleSubmit}
@@ -833,9 +838,9 @@ export function MediaUpload({ open, onOpenChange, onSuccess, type, userId }: Med
                 className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
                 data-testid="button-submit-post"
               >
-{type === "event" 
-                  ? (isUploading ? "Uploading..." : "Upload Media")
-                  : (isUploading ? "Sharing..." : `Share ${type === "post" ? "Post" : "Story"}`)}
+                {type === "event"
+                  ? (isUploading ? uiText("Uploading...") : uiText("Upload Media"))
+                  : (isUploading ? uiText("Sharing...") : type === "post" ? uiText("Share Post") : uiText("Share Story"))}
               </Button>
             </div>
           </div>

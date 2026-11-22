@@ -5,8 +5,12 @@ import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useUiLanguage } from "@/i18n/interfaceText"
 
-const Select = SelectPrimitive.Root
+function Select(props: React.ComponentProps<typeof SelectPrimitive.Root>) {
+  const language = useUiLanguage()
+  return <SelectPrimitive.Root dir={language === "ar" ? "rtl" : "ltr"} {...props} />
+}
 
 const SelectGroup = SelectPrimitive.Group
 

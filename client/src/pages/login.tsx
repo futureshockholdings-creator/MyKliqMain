@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { buildApiUrl } from "@/lib/apiConfig";
 import { setAuthToken, getAuthToken } from "@/lib/tokenStorage";
 import { navigateWithoutStartupSplash } from "@/lib/startupNavigation";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 
 const loginSchema = z.object({
@@ -23,6 +24,7 @@ const loginSchema = z.object({
 });
 
 export default function Login() {
+  useUiLanguage();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -149,16 +151,16 @@ export default function Login() {
               // Show notification if Koin was awarded
               if (loginData.koinAwarded) {
                 toast({
-                  title: "Daily Login Bonus! 🪙",
-                  description: `+1 Kliq Koin earned! Current streak: ${loginData.currentStreak} days`,
+                  title: uiText("Daily Login Bonus! 🪙"),
+                  description: uiText("+1 Kliq Koin earned! Current streak: {{count}} days", { count: loginData.currentStreak }),
                 });
               }
               
               // Show streak milestone notification
               if (loginData.borderUnlocked) {
                 toast({
-                  title: `🎉 ${loginData.borderUnlocked.border.name} Unlocked!`,
-                  description: `You've reached a ${loginData.currentStreak}-day streak! Check your borders in Settings.`,
+                  title: uiText("🎉 {{name}} Unlocked!", { name: loginData.borderUnlocked.border.name }),
+                  description: uiText("You've reached a {{count}}-day streak! Check your borders in Settings.", { count: loginData.currentStreak }),
                 });
               }
             } else {
@@ -170,8 +172,8 @@ export default function Login() {
         }
 
         toast({
-          title: "Login Successful", 
-          description: "Welcome back to MyKliq!",
+          title: uiText("Login Successful"), 
+          description: uiText("Welcome back to MyKliq!"),
         });
 
         // Clear the force login flag since they successfully logged in
@@ -191,12 +193,12 @@ export default function Login() {
         navigateWithoutStartupSplash("/");
       } else {
         // Handle error response
-        let errorMessage = "Invalid phone number or password";
+        let errorMessage = uiText("Invalid phone number or password");
         try {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
         } catch {
-          errorMessage = `Login failed (${response.status})`;
+          errorMessage = uiText("Login failed ({{status}})", { status: response.status });
         }
         
         throw new Error(errorMessage);
@@ -205,19 +207,19 @@ export default function Login() {
       console.error("Login error:", error);
       
       // Enhanced error messaging for debugging cross-browser issues
-      let errorDescription = error.message || "Invalid phone number or password. Please try again.";
+      let errorDescription = error.message || uiText("Invalid phone number or password. Please try again.");
       
       // Check for network errors (common on older browsers like Silk)
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        errorDescription = "Network error - please check your internet connection and try again.";
+        errorDescription = uiText("Network error - please check your internet connection and try again.");
         console.error("[Login] Network/Fetch error - possible CORS or browser compatibility issue");
       } else if (error.message?.includes('Failed to fetch')) {
-        errorDescription = "Unable to connect to server. Please check your connection.";
+        errorDescription = uiText("Unable to connect to server. Please check your connection.");
         console.error("[Login] Failed to fetch - server may be unreachable or CORS blocked");
       }
       
       toast({
-        title: "Login Failed",
+        title: uiText("Login Failed"),
         description: errorDescription,
         variant: "destructive",
       });
@@ -232,7 +234,7 @@ export default function Login() {
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{uiText("Loading...")}</p>
         </div>
       </div>
     );
@@ -259,9 +261,9 @@ export default function Login() {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
           <div className="absolute bottom-4 left-4">
             <h1 className="text-3xl font-bold text-white">
-              MyKliq
+              {uiText("MyKliq")}
             </h1>
-            <p className="text-white/90 text-sm">Welcome Back</p>
+            <p className="text-white/90 text-sm">{uiText("Welcome Back")}</p>
           </div>
           <Link href="/">
             <Button 
@@ -271,7 +273,7 @@ export default function Login() {
               data-testid="button-back"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              {uiText("Back")}
             </Button>
           </Link>
         </div>
@@ -280,16 +282,16 @@ export default function Login() {
         <div className="p-6 space-y-6">
           <div className="text-center">
             <h2 className="text-xl font-bold text-primary mb-2">
-              Login to Your Account
+              {uiText("Login to Your Account")}
             </h2>
             <p className="text-muted-foreground text-sm">
-              Enter your phone number and password to access your kliq
+              {uiText("Enter your phone number and password to access your kliq")}
             </p>
           </div>
 
           <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-card-foreground">Account Login</CardTitle>
+              <CardTitle className="text-card-foreground">{uiText("Account Login")}</CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -299,14 +301,14 @@ export default function Login() {
                     name="phoneNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground">Phone Number</FormLabel>
+                        <FormLabel className="text-foreground">{uiText("Phone Number")}</FormLabel>
                         <FormControl>
                           <PhoneInput
                             label=""
                             value={field.value}
                             onChange={(e) => field.onChange(e.target.value)}
                             disabled={isLoading}
-                            placeholder="Enter your phone number"
+                             placeholder={uiText("Enter your phone number")}
                           />
                         </FormControl>
                         <FormMessage />
@@ -319,13 +321,13 @@ export default function Login() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground">Password</FormLabel>
+                        <FormLabel className="text-foreground">{uiText("Password")}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
                               {...field}
                               type={showPassword ? "text" : "password"}
-                              placeholder="Enter your password"
+                              placeholder={uiText("Enter your password")}
                               className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 pr-10"
                               disabled={isLoading}
                               data-testid="input-password"
@@ -358,7 +360,7 @@ export default function Login() {
                     className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-primary-foreground font-bold py-3"
                     data-testid="button-login"
                   >
-                    {isLoading ? "Logging in..." : "Login"}
+                    {isLoading ? uiText("Logging in...") : uiText("Login")}
                   </Button>
                 </form>
               </Form>
@@ -368,7 +370,7 @@ export default function Login() {
           {/* New User Link */}
           <div className="text-center pt-3">
             <p className="text-muted-foreground text-sm mb-2">
-              Don't have an account yet?
+              {uiText("Don't have an account yet?")}
             </p>
             <Button
               asChild
@@ -377,7 +379,7 @@ export default function Login() {
               data-testid="link-signup"
             >
               <Link href="/signup">
-                Join MyKliq
+                {uiText("Join MyKliq")}
               </Link>
             </Button>
           </div>
@@ -391,7 +393,7 @@ export default function Login() {
                 onClick={() => window.open('/terms-of-use', '_blank')}
                 data-testid="link-terms-of-use"
               >
-                Terms of Use
+                {uiText("Terms of Use")}
               </button>
               <span className="text-gray-600">•</span>
               <button 
@@ -399,7 +401,7 @@ export default function Login() {
                 onClick={() => window.open('/privacy-policy', '_blank')}
                 data-testid="link-privacy-policy"
               >
-                Privacy Policy
+                {uiText("Privacy Policy")}
               </button>
               <span className="text-gray-600">•</span>
               <button 
@@ -407,7 +409,7 @@ export default function Login() {
                 onClick={() => window.open('/disclaimer', '_blank')}
                 data-testid="link-disclaimer"
               >
-                Disclaimer
+                {uiText("Disclaimer")}
               </button>
               <span className="text-gray-600">•</span>
               <button 
@@ -415,7 +417,7 @@ export default function Login() {
                 onClick={() => window.open('/community-guidelines', '_blank')}
                 data-testid="link-guidelines"
               >
-                Guidelines
+                {uiText("Guidelines")}
               </button>
               <span className="text-gray-600">•</span>
               <button 
@@ -423,12 +425,12 @@ export default function Login() {
                 onClick={() => window.open('/contact-us', '_blank')}
                 data-testid="link-contact-us"
               >
-                Contact Us
+                {uiText("Contact Us")}
               </button>
             </div>
             
             <p className="text-xs text-muted-foreground mt-2">
-              © 2025 MyKliq. All rights reserved.
+              {uiText("© 2025 MyKliq. All rights reserved.")}
             </p>
           </div>
         </div>

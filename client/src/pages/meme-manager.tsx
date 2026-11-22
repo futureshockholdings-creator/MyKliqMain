@@ -8,8 +8,10 @@ import { Eye, EyeOff, Shield } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Meme } from "@shared/schema";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 export function MemeManagerPage() {
+  useUiLanguage();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -47,9 +49,9 @@ export function MemeManagerPage() {
             <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <Shield className="w-6 h-6 text-primary" />
             </div>
-            <CardTitle>Meme Manager Access</CardTitle>
+            <CardTitle>{uiText("Meme Manager Access")}</CardTitle>
             <CardDescription>
-              Enter the admin password to access the meme library manager
+              {uiText("Enter the admin password to access the meme library manager")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -63,7 +65,7 @@ export function MemeManagerPage() {
               <div className="relative">
                 <Input
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter admin password"
+                  placeholder={uiText("Enter admin password")}
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 pr-10"
@@ -83,7 +85,7 @@ export function MemeManagerPage() {
                 className="w-full"
                 disabled={authenticateAdmin.isPending || !adminPassword}
               >
-                {authenticateAdmin.isPending ? "Authenticating..." : "Access Meme Manager"}
+                {authenticateAdmin.isPending ? uiText("Authenticating...") : uiText("Access Meme Manager")}
               </Button>
             </form>
           </CardContent>
@@ -98,10 +100,10 @@ export function MemeManagerPage() {
         <div className="space-y-4 md:space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold text-foreground">
-              Meme Manager
+              {uiText("Meme Manager")}
             </h1>
             <p className="text-muted-foreground">
-              Upload and manage your memes that users can add to their posts and messages
+              {uiText("Upload and manage your memes that users can add to their posts and messages")}
             </p>
           </div>
 

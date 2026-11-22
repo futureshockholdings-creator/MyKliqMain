@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, ArrowRight, ArrowLeft, Building, Image as ImageIcon, Target, DollarSign, Shield } from "lucide-react";
 import { PageWrapper } from "@/components/PageWrapper";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 const formSchema = z.object({
   // Business Info
@@ -63,6 +64,7 @@ const STEPS = [
 ];
 
 export default function AdvertiserOnboarding() {
+  useUiLanguage();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
@@ -176,52 +178,52 @@ export default function AdvertiserOnboarding() {
             <div className="flex justify-center mb-4">
               <CheckCircle2 className="w-20 h-20 text-green-600" />
             </div>
-            <CardTitle className="text-3xl text-black">Application Submitted!</CardTitle>
+            <CardTitle className="text-3xl text-black">{uiText("Application Submitted!")}</CardTitle>
             <CardDescription className="text-gray-700 text-lg mt-2">
-              Thank you for your interest in advertising with MyKliq
+              {uiText("Thank you for your interest in advertising with MyKliq")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <p className="text-sm text-gray-800">
-                <strong>Application ID:</strong> {applicationId}
+                <strong>{uiText("Application ID:")}</strong> {applicationId}
               </p>
               <p className="text-sm text-gray-800 mt-2">
-                Please save this ID for your records.
+                {uiText("Please save this ID for your records.")}
               </p>
             </div>
             
             <div className="space-y-2 text-gray-800">
-              <h3 className="font-semibold text-black">What happens next?</h3>
+              <h3 className="font-semibold text-black">{uiText("What happens next?")}</h3>
               <ul className="space-y-1 text-sm list-disc list-inside">
-                <li>Our ads team will review your application within 2-3 business days</li>
-                <li>We'll verify your business information and creative assets</li>
-                <li>You'll receive an email at <strong>{form.getValues('email')}</strong> with next steps</li>
-                <li>If approved, we'll guide you through campaign setup and payment</li>
+                <li>{uiText("Our ads team will review your application within 2-3 business days")}</li>
+                <li>{uiText("We'll verify your business information and creative assets")}</li>
+                <li>{uiText("You'll receive an email at")} <strong>{form.getValues('email')}</strong> {uiText("with next steps")}</li>
+                <li>{uiText("If approved, we'll guide you through campaign setup and payment")}</li>
               </ul>
             </div>
 
             <div className="border-t border-gray-200 pt-4 mt-4">
               <p className="text-sm text-gray-700 mb-3">
-                Questions? Contact our ads management team:
+                {uiText("Questions? Contact our ads management team:")}
               </p>
               <a 
                 href="mailto:mykliqadsmanagement@outlook.com"
                 className="text-blue-600 hover:underline font-medium text-sm"
               >
-                mykliqadsmanagement@outlook.com
+                {uiText("mykliqadsmanagement@outlook.com")}
               </a>
             </div>
 
             <div className="flex gap-3 pt-4">
               <Link href="/advertiser-requirements" className="flex-1">
                 <Button variant="outline" className="w-full">
-                  View Requirements
+                  {uiText("View Requirements")}
                 </Button>
               </Link>
               <Link href="/" className="flex-1">
                 <Button className="w-full">
-                  Back to Home
+                  {uiText("Back to Home")}
                 </Button>
               </Link>
             </div>
@@ -237,9 +239,9 @@ export default function AdvertiserOnboarding() {
       <ForcedLightSurface>
       <div className="w-full max-w-4xl mx-auto p-6 md:p-8 space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold">Advertiser Application</h1>
+          <h1 className="text-4xl font-bold">{uiText("Advertiser Application")}</h1>
           <p className="text-gray-700">
-            Complete this form to start advertising on MyKliq
+            {uiText("Complete this form to start advertising on MyKliq")}
           </p>
         </div>
 
@@ -284,8 +286,7 @@ export default function AdvertiserOnboarding() {
                     const Icon = STEPS[currentStep - 1].icon;
                     return <Icon className="w-6 h-6" />;
                   })()}
-                  Step {currentStep}: {STEPS[currentStep - 1].title}
-                </CardTitle>
+                  {uiText("Step {{currentStep}}: {{title}}", { "currentStep": currentStep, "title": STEPS[currentStep - 1].title })}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {currentStep === 1 && (
@@ -295,9 +296,9 @@ export default function AdvertiserOnboarding() {
                       name="businessName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Business Name *</FormLabel>
+                          <FormLabel className="text-black">{uiText("Business Name *")}</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Acme Corporation" data-testid="input-business-name" />
+                            <Input {...field} placeholder={uiText("Acme Corporation")} data-testid="input-business-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -309,9 +310,9 @@ export default function AdvertiserOnboarding() {
                       name="contactPerson"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Contact Person *</FormLabel>
+                          <FormLabel className="text-black">{uiText("Contact Person *")}</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="John Doe" data-testid="input-contact-person" />
+                            <Input {...field} placeholder={uiText("John Doe")} data-testid="input-contact-person" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -324,9 +325,9 @@ export default function AdvertiserOnboarding() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-black">Email *</FormLabel>
+                            <FormLabel className="text-black">{uiText("Email *")}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="email" placeholder="john@acme.com" data-testid="input-email" />
+                              <Input {...field} type="email" placeholder={uiText("john@acme.com")} data-testid="input-email" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -338,9 +339,9 @@ export default function AdvertiserOnboarding() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-black">Phone *</FormLabel>
+                            <FormLabel className="text-black">{uiText("Phone *")}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="tel" placeholder="(555) 123-4567" data-testid="input-phone" />
+                              <Input {...field} type="tel" placeholder={uiText("(555) 123-4567")} data-testid="input-phone" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -353,12 +354,12 @@ export default function AdvertiserOnboarding() {
                       name="website"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Website *</FormLabel>
+                          <FormLabel className="text-black">{uiText("Website *")}</FormLabel>
                           <FormControl>
-                            <Input {...field} type="url" placeholder="https://www.acme.com" data-testid="input-website" />
+                            <Input {...field} type="url" placeholder={uiText("https://www.acme.com")} data-testid="input-website" />
                           </FormControl>
                           <FormDescription className="text-gray-600">
-                            Must be HTTPS and mobile-responsive
+                            {uiText("Must be HTTPS and mobile-responsive")}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -370,12 +371,12 @@ export default function AdvertiserOnboarding() {
                       name="taxId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Tax ID / EIN (Optional)</FormLabel>
+                          <FormLabel className="text-black">{uiText("Tax ID / EIN (Optional)")}</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="12-3456789" data-testid="input-tax-id" />
+                            <Input {...field} placeholder={uiText("12-3456789")} data-testid="input-tax-id" />
                           </FormControl>
                           <FormDescription className="text-gray-600">
-                            Will be encrypted and used for legal compliance only
+                            {uiText("Will be encrypted and used for legal compliance only")}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -387,9 +388,9 @@ export default function AdvertiserOnboarding() {
                       name="businessAddress"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Business Address (Optional)</FormLabel>
+                          <FormLabel className="text-black">{uiText("Business Address (Optional)")}</FormLabel>
                           <FormControl>
-                            <Textarea {...field} placeholder="123 Main St, City, State 12345" data-testid="input-address" />
+                            <Textarea {...field} placeholder={uiText("123 Main St, City, State 12345")} data-testid="input-address" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -405,13 +406,12 @@ export default function AdvertiserOnboarding() {
                       name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Ad Title * (60-100 characters)</FormLabel>
+                          <FormLabel className="text-black">{uiText("Ad Title * (60-100 characters)")}</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Your compelling headline here" data-testid="input-title" />
+                            <Input {...field} placeholder={uiText("Your compelling headline here")} data-testid="input-title" />
                           </FormControl>
                           <FormDescription className="text-gray-600">
-                            {field.value.length}/100 characters
-                          </FormDescription>
+                            {uiText("{{length}}/100 characters", { "length": field.value.length })}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -422,13 +422,12 @@ export default function AdvertiserOnboarding() {
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Ad Description * (150-500 characters)</FormLabel>
+                          <FormLabel className="text-black">{uiText("Ad Description * (150-500 characters)")}</FormLabel>
                           <FormControl>
-                            <Textarea {...field} rows={4} placeholder="Describe your product or service..." data-testid="input-description" />
+                            <Textarea {...field} rows={4} placeholder={uiText("Describe your product or service...")} data-testid="input-description" />
                           </FormControl>
                           <FormDescription className="text-gray-600">
-                            {field.value.length}/500 characters
-                          </FormDescription>
+                            {uiText("{{length}}/500 characters", { "length": field.value.length })}</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -440,9 +439,9 @@ export default function AdvertiserOnboarding() {
                         name="ctaText"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-black">Call-to-Action * (10-30 chars)</FormLabel>
+                            <FormLabel className="text-black">{uiText("Call-to-Action * (10-30 chars)")}</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="Shop Now" data-testid="input-cta-text" />
+                              <Input {...field} placeholder={uiText("Shop Now")} data-testid="input-cta-text" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -454,9 +453,9 @@ export default function AdvertiserOnboarding() {
                         name="ctaUrl"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-black">Landing Page URL *</FormLabel>
+                            <FormLabel className="text-black">{uiText("Landing Page URL *")}</FormLabel>
                             <FormControl>
-                              <Input {...field} type="url" placeholder="https://..." data-testid="input-cta-url" />
+                              <Input {...field} type="url" placeholder={uiText("https://...")} data-testid="input-cta-url" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -469,12 +468,12 @@ export default function AdvertiserOnboarding() {
                       name="imageUrls"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Image URLs (Optional, comma-separated)</FormLabel>
+                          <FormLabel className="text-black">{uiText("Image URLs (Optional, comma-separated)")}</FormLabel>
                           <FormControl>
-                            <Textarea {...field} rows={2} placeholder="https://example.com/ad1.jpg, https://example.com/ad2.png" data-testid="input-image-urls" />
+                            <Textarea {...field} rows={2} placeholder={uiText("https://example.com/ad1.jpg, https://example.com/ad2.png")} data-testid="input-image-urls" />
                           </FormControl>
                           <FormDescription className="text-gray-600">
-                            Min 1200×628px, Max 5MB each, JPG/PNG/WebP
+                            {uiText("Min 1200×628px, Max 5MB each, JPG/PNG/WebP")}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -486,12 +485,12 @@ export default function AdvertiserOnboarding() {
                       name="videoUrls"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Video URLs (Optional, comma-separated)</FormLabel>
+                          <FormLabel className="text-black">{uiText("Video URLs (Optional, comma-separated)")}</FormLabel>
                           <FormControl>
-                            <Textarea {...field} rows={2} placeholder="https://example.com/video.mp4" data-testid="input-video-urls" />
+                            <Textarea {...field} rows={2} placeholder={uiText("https://example.com/video.mp4")} data-testid="input-video-urls" />
                           </FormControl>
                           <FormDescription className="text-gray-600">
-                            MP4 H.264, 1080p, 6-30 seconds, Max 100MB
+                            {uiText("MP4 H.264, 1080p, 6-30 seconds, Max 100MB")}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -507,12 +506,12 @@ export default function AdvertiserOnboarding() {
                       name="targetInterests"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Target Interests (Optional, comma-separated)</FormLabel>
+                          <FormLabel className="text-black">{uiText("Target Interests (Optional, comma-separated)")}</FormLabel>
                           <FormControl>
-                            <Textarea {...field} rows={3} placeholder="fitness, health, technology, music" data-testid="input-interests" />
+                            <Textarea {...field} rows={3} placeholder={uiText("fitness, health, technology, music")} data-testid="input-interests" />
                           </FormControl>
                           <FormDescription className="text-gray-600">
-                            What interests should your ads target?
+                            {uiText("What interests should your ads target?")}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -525,14 +524,14 @@ export default function AdvertiserOnboarding() {
                         name="targetAgeMin"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-black">Minimum Age (Optional)</FormLabel>
+                            <FormLabel className="text-black">{uiText("Minimum Age (Optional)")}</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
                                 type="number" 
                                 min="13" 
                                 max="100"
-                                placeholder="18"
+                                placeholder={uiText("18")}
                                 data-testid="input-age-min"
                               />
                             </FormControl>
@@ -546,14 +545,14 @@ export default function AdvertiserOnboarding() {
                         name="targetAgeMax"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-black">Maximum Age (Optional)</FormLabel>
+                            <FormLabel className="text-black">{uiText("Maximum Age (Optional)")}</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
                                 type="number" 
                                 min="13" 
                                 max="100"
-                                placeholder="35"
+                                placeholder={uiText("35")}
                                 data-testid="input-age-max"
                               />
                             </FormControl>
@@ -573,19 +572,19 @@ export default function AdvertiserOnboarding() {
                         name="proposedDailyBudget"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-black">Daily Budget (Optional)</FormLabel>
+                            <FormLabel className="text-black">{uiText("Daily Budget (Optional)")}</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
                                 type="number" 
                                 min="0"
                                 step="0.01"
-                                placeholder="50.00"
+                                placeholder={uiText("50.00")}
                                 data-testid="input-daily-budget"
                               />
                             </FormControl>
                             <FormDescription className="text-gray-600">
-                              Maximum daily spend in USD
+                              {uiText("Maximum daily spend in USD")}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -597,19 +596,19 @@ export default function AdvertiserOnboarding() {
                         name="proposedCostPerClick"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-black">Cost Per Click (Optional)</FormLabel>
+                            <FormLabel className="text-black">{uiText("Cost Per Click (Optional)")}</FormLabel>
                             <FormControl>
                               <Input 
                                 {...field} 
                                 type="number" 
                                 min="0"
                                 step="0.01"
-                                placeholder="0.50"
+                                placeholder={uiText("0.50")}
                                 data-testid="input-cpc"
                               />
                             </FormControl>
                             <FormDescription className="text-gray-600">
-                              Proposed CPC in USD
+                              {uiText("Proposed CPC in USD")}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -623,7 +622,7 @@ export default function AdvertiserOnboarding() {
                         name="campaignStartDate"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-black">Campaign Start Date (Optional)</FormLabel>
+                            <FormLabel className="text-black">{uiText("Campaign Start Date (Optional)")}</FormLabel>
                             <FormControl>
                               <Input {...field} type="date" data-testid="input-start-date" />
                             </FormControl>
@@ -637,7 +636,7 @@ export default function AdvertiserOnboarding() {
                         name="campaignEndDate"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-black">Campaign End Date (Optional)</FormLabel>
+                            <FormLabel className="text-black">{uiText("Campaign End Date (Optional)")}</FormLabel>
                             <FormControl>
                               <Input {...field} type="date" data-testid="input-end-date" />
                             </FormControl>
@@ -666,9 +665,9 @@ export default function AdvertiserOnboarding() {
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-black">
-                                I accept the{" "}
+                                {uiText("I accept the")}{" "}
                                 <Link href="/privacy-policy" className="text-blue-600 hover:underline">
-                                  Terms of Service
+                                  {uiText("Terms of Service")}
                                 </Link>
                                 {" "}*
                               </FormLabel>
@@ -692,9 +691,9 @@ export default function AdvertiserOnboarding() {
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-black">
-                                I accept the{" "}
+                                {uiText("I accept the")}{" "}
                                 <Link href="/privacy-policy" className="text-blue-600 hover:underline">
-                                  Privacy Policy
+                                  {uiText("Privacy Policy")}
                                 </Link>
                                 {" "}*
                               </FormLabel>
@@ -718,7 +717,7 @@ export default function AdvertiserOnboarding() {
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-black">
-                                I confirm that my business is properly registered and licensed
+                                {uiText("I confirm that my business is properly registered and licensed")}
                               </FormLabel>
                               <FormMessage />
                             </div>
@@ -728,13 +727,13 @@ export default function AdvertiserOnboarding() {
                     </div>
 
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
-                      <h3 className="font-semibold text-black mb-2">Compliance Requirements:</h3>
+                      <h3 className="font-semibold text-black mb-2">{uiText("Compliance Requirements:")}</h3>
                       <ul className="text-sm text-gray-800 space-y-1 list-disc list-inside">
-                        <li>All advertising claims must be truthful and substantiated</li>
-                        <li>Content must be appropriate for users aged 13+</li>
-                        <li>You must own or have rights to all creative assets</li>
-                        <li>Ads must comply with GDPR, CCPA, and other privacy laws</li>
-                        <li>MyKliq reserves the right to reject any advertisement</li>
+                        <li>{uiText("All advertising claims must be truthful and substantiated")}</li>
+                        <li>{uiText("Content must be appropriate for users aged 13+")}</li>
+                        <li>{uiText("You must own or have rights to all creative assets")}</li>
+                        <li>{uiText("Ads must comply with GDPR, CCPA, and other privacy laws")}</li>
+                        <li>{uiText("MyKliq reserves the right to reject any advertisement")}</li>
                       </ul>
                     </div>
                   </>
@@ -751,7 +750,7 @@ export default function AdvertiserOnboarding() {
                   data-testid="button-prev"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  Previous
+                  {uiText("Previous")}
                 </Button>
               )}
 
@@ -762,7 +761,7 @@ export default function AdvertiserOnboarding() {
                   className="ml-auto"
                   data-testid="button-next"
                 >
-                  Next
+                  {uiText("Next")}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
@@ -772,7 +771,7 @@ export default function AdvertiserOnboarding() {
                   disabled={submitMutation.isPending}
                   data-testid="button-submit"
                 >
-                  {submitMutation.isPending ? "Submitting..." : "Submit Application"}
+                  {submitMutation.isPending ? uiText("Submitting...") : uiText("Submit Application")}
                 </Button>
               )}
             </div>
@@ -782,7 +781,7 @@ export default function AdvertiserOnboarding() {
         <div className="text-center pt-4">
           <Link href="/advertiser-requirements">
             <Button variant="link" className="text-blue-600">
-              View Advertiser Requirements
+              {uiText("View Advertiser Requirements")}
             </Button>
           </Link>
         </div>

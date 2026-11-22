@@ -16,6 +16,7 @@ import {
   Info,
   Headphones
 } from "lucide-react";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface ConversionGuideProps {
   fileName: string;
@@ -49,6 +50,7 @@ interface ConversionMethod {
 }
 
 export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGuideProps) {
+  useUiLanguage();
   const [activeTab, setActiveTab] = useState("itunes");
 
   const conversionMethods: Record<string, ConversionMethod> = {
@@ -126,10 +128,9 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
             <div className="flex items-center gap-3">
               <Music className="w-6 h-6 text-pink-400" />
               <div>
-                <CardTitle className="text-white">DRM Conversion Guide</CardTitle>
+                <CardTitle className="text-white">{uiText("DRM Conversion Guide")}</CardTitle>
                 <p className="text-sm text-gray-400 mt-1">
-                  How to convert "{fileName}" for web use
-                </p>
+                  {uiText("How to convert \"{{fileName}}\" for web use", { "fileName": fileName })}</p>
               </div>
             </div>
             <Button variant="ghost" onClick={onClose} className="text-gray-400">
@@ -142,7 +143,7 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
           <Alert className="mb-6 border-amber-500/30 bg-amber-500/10">
             <AlertTriangle className="w-4 h-4 text-amber-400" />
             <AlertDescription className="text-amber-300">
-              <strong>Important:</strong> We respect copyright laws. These methods are for personal use only and help you enjoy music you legally own.
+              <strong>{uiText("Important:")}</strong> {uiText("We respect copyright laws. These methods are for personal use only and help you enjoy music you legally own.")}
             </AlertDescription>
           </Alert>
 
@@ -150,15 +151,15 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
             <TabsList className="grid w-full grid-cols-3 bg-gray-800">
               <TabsTrigger value="itunes" className="text-white">
                 <Disc className="w-4 h-4 mr-2" />
-                iTunes
+                {uiText("iTunes")}
               </TabsTrigger>
               <TabsTrigger value="software" className="text-white">
                 <Download className="w-4 h-4 mr-2" />
-                Software
+                {uiText("Software")}
               </TabsTrigger>
               <TabsTrigger value="alternative" className="text-white">
                 <ExternalLink className="w-4 h-4 mr-2" />
-                Alternatives
+                {uiText("Alternatives")}
               </TabsTrigger>
             </TabsList>
 
@@ -167,7 +168,7 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                   <Card className="bg-gray-800 border-gray-600">
                     <CardContent className="p-4 text-center">
-                      <div className="text-sm text-gray-400">Difficulty</div>
+                      <div className="text-sm text-gray-400">{uiText("Difficulty")}</div>
                       <Badge variant={method.difficulty === "Easy" ? "default" : "secondary"} className="mt-1">
                         {method.difficulty}
                       </Badge>
@@ -175,19 +176,19 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
                   </Card>
                   <Card className="bg-gray-800 border-gray-600">
                     <CardContent className="p-4 text-center">
-                      <div className="text-sm text-gray-400">Cost</div>
+                      <div className="text-sm text-gray-400">{uiText("Cost")}</div>
                       <div className="text-white font-medium mt-1">{method.cost}</div>
                     </CardContent>
                   </Card>
                   <Card className="bg-gray-800 border-gray-600">
                     <CardContent className="p-4 text-center">
-                      <div className="text-sm text-gray-400">Time</div>
+                      <div className="text-sm text-gray-400">{uiText("Time")}</div>
                       <div className="text-white font-medium mt-1">{method.time}</div>
                     </CardContent>
                   </Card>
                   <Card className="bg-gray-800 border-gray-600">
                     <CardContent className="p-4 text-center">
-                      <div className="text-sm text-gray-400">Legal</div>
+                      <div className="text-sm text-gray-400">{uiText("Legal")}</div>
                       <CheckCircle className="w-5 h-5 text-green-400 mx-auto mt-1" />
                     </CardContent>
                   </Card>
@@ -195,7 +196,7 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
 
                 <Card className="bg-gray-800 border-gray-600">
                   <CardHeader>
-                    <CardTitle className="text-white text-lg">Step-by-Step Instructions</CardTitle>
+                    <CardTitle className="text-white text-lg">{uiText("Step-by-Step Instructions")}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {method.steps.map((step, index) => (
@@ -213,7 +214,7 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
                 {key === "software" && method.recommendedSoftware && (
                   <Card className="bg-gray-800 border-gray-600">
                     <CardHeader>
-                      <CardTitle className="text-white text-lg">Recommended Software</CardTitle>
+                      <CardTitle className="text-white text-lg">{uiText("Recommended Software")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="grid gap-3">
@@ -221,7 +222,7 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
                           <div key={index} className="flex items-center justify-between p-3 bg-gray-700 rounded">
                             <div>
                               <div className="text-white font-medium">{software.name}</div>
-                              <div className="text-sm text-gray-400">Rating: {software.rating}</div>
+                              <div className="text-sm text-gray-400">{uiText("Rating: {{rating}}", { "rating": software.rating })}</div>
                             </div>
                             <Badge variant="outline" className="text-green-400 border-green-400">
                               {software.price}
@@ -237,7 +238,7 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
                 {key === "alternative" && method.platforms && (
                   <Card className="bg-gray-800 border-gray-600">
                     <CardHeader>
-                      <CardTitle className="text-white text-lg">DRM-Free Platforms</CardTitle>
+                      <CardTitle className="text-white text-lg">{uiText("DRM-Free Platforms")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="grid gap-3">
@@ -248,7 +249,7 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
                               <div className="text-sm text-gray-400">{platform.type}</div>
                             </div>
                             <Badge className="bg-green-500/20 text-green-400">
-                              DRM-Free
+                              {uiText("DRM-Free")}
                             </Badge>
                           </div>
                         ))}
@@ -262,7 +263,7 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
                     <CardHeader>
                       <CardTitle className="text-green-400 text-lg flex items-center gap-2">
                         <CheckCircle className="w-5 h-5" />
-                        Pros
+                        {uiText("Pros")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -278,7 +279,7 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
                     <CardHeader>
                       <CardTitle className="text-yellow-400 text-lg flex items-center gap-2">
                         <Info className="w-5 h-5" />
-                        Considerations
+                        {uiText("Considerations")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -298,10 +299,9 @@ export function ConversionGuide({ fileName, fileFormat, onClose }: ConversionGui
             <div className="flex items-start gap-3">
               <Headphones className="w-5 h-5 text-blue-400 mt-0.5" />
               <div>
-                <div className="text-blue-400 font-medium">After Conversion</div>
+                <div className="text-blue-400 font-medium">{uiText("After Conversion")}</div>
                 <p className="text-blue-300 text-sm mt-1">
-                  Once you've converted your music using any of these methods, simply upload the new DRM-free files to MyKliq. 
-                  They'll work perfectly for profile music and sharing with your kliq!
+                  {uiText("Once you've converted your music using any of these methods, simply upload the new DRM-free files to MyKliq. They'll work perfectly for profile music and sharing with your kliq!")}
                 </p>
               </div>
             </div>

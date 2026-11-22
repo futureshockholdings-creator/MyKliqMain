@@ -51,7 +51,8 @@ import {
   SiMedium
 } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useTranslation } from "react-i18next";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { displayLanguage, formatDisplayNumber } from "@/i18n/formatting";
 import { useAuth } from "@/hooks/useAuth";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
 import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
@@ -66,6 +67,7 @@ interface DiscordSharingStatus {
 }
 
 function DiscordGuildSharing({ guild }: { guild: DiscordSharingStatus["guilds"][number] }) {
+  useUiLanguage();
   const [editing, setEditing] = useState(false);
   const { data } = useQuery<{ channels: Array<{ id: string; name: string }>; selectedChannelIds: string[] }>({
     queryKey: ["/api/discord/guilds", guild.guildId, "channels"],
@@ -94,8 +96,8 @@ function DiscordGuildSharing({ guild }: { guild: DiscordSharingStatus["guilds"][
   return (
     <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div><p className="text-white font-medium">{guild.guildName}</p><p className="text-purple-200 text-xs">Server and member permission are both required.</p></div>
-        <Badge variant={guild.isActive ? "default" : "secondary"}>{guild.isActive ? "Bot installed" : "Revoked"}</Badge>
+        <div><p className="text-white font-medium">{guild.guildName}</p><p className="text-purple-200 text-xs">{uiText("Server and member permission are both required.")}</p></div>
+        <Badge variant={guild.isActive ? "default" : "secondary"}>{guild.isActive ? uiText("Bot installed") : uiText("Revoked")}</Badge>
       </div>
       {editing && data && (
         <div className="space-y-2">
@@ -108,21 +110,22 @@ function DiscordGuildSharing({ guild }: { guild: DiscordSharingStatus["guilds"][
               #{channel.name}
             </label>
           ))}
-          <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>Save permitted channels</Button>
+          <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>{uiText("Save permitted channels")}</Button>
         </div>
       )}
       <div className="flex flex-wrap gap-2">
-        {guild.isActive && guild.canManage && <Button size="sm" variant="outline" onClick={() => setEditing(value => !value)}>Manage channels</Button>}
+        {guild.isActive && guild.canManage && <Button size="sm" variant="outline" onClick={() => setEditing(value => !value)}>{uiText("Manage channels")}</Button>}
         {guild.isActive && <Button size="sm" onClick={() => consent.mutate(!guild.memberEnabled)} disabled={consent.isPending}>
-          {guild.memberEnabled ? "Stop sharing my messages" : "Share my messages"}
+          {guild.memberEnabled ? uiText("Stop sharing my messages") : uiText("Share my messages")}
         </Button>}
-        {guild.isActive && guild.canManage && <Button size="sm" variant="destructive" onClick={() => revoke.mutate()} disabled={revoke.isPending}>Revoke server access</Button>}
+        {guild.isActive && guild.canManage && <Button size="sm" variant="destructive" onClick={() => revoke.mutate()} disabled={revoke.isPending}>{uiText("Revoke server access")}</Button>}
       </div>
     </div>
   );
 }
 
 function DiscordSharingCard() {
+  useUiLanguage();
   const { data, isLoading } = useQuery<DiscordSharingStatus>({ queryKey: ["/api/discord/sharing"] });
   const install = useMutation({
     mutationFn: () => apiRequest("POST", "/api/discord/bot/install"),
@@ -133,17 +136,17 @@ function DiscordSharingCard() {
   return (
     <Card id="discord-sharing" className="bg-white/10 backdrop-blur-sm border-white/20 scroll-mt-6">
       <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2"><Shield className="w-5 h-5" />Discord message sharing</CardTitle>
-        <CardDescription className="text-purple-200">A server admin installs the bot and selects channels. Each linked member must opt in separately. Direct messages are never read.</CardDescription>
+        <CardTitle className="text-white flex items-center gap-2"><Shield className="w-5 h-5" />{uiText("Discord message sharing")}</CardTitle>
+        <CardDescription className="text-purple-200">{uiText("A server admin installs the bot and selects channels. Each linked member must opt in separately. Direct messages are never read.")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {data.guilds.map(guild => <DiscordGuildSharing key={guild.guildId} guild={guild} />)}
         <Button onClick={() => install.mutate()} disabled={!data.configured || install.isPending}>
-          <SiDiscord className="w-4 h-4 mr-2" />Install MyKliq bot in a server
+          <SiDiscord className="w-4 h-4 mr-2" />{uiText("Install MyKliq bot in a server")}
         </Button>
-        {!data.configured && <p className="text-amber-200 text-sm">Bot message sharing is not configured by the MyKliq operator yet.</p>}
-        {data.audit.length > 0 && <Accordion type="single" collapsible><AccordionItem value="audit"><AccordionTrigger className="text-white">Permission history</AccordionTrigger><AccordionContent className="space-y-1 text-purple-200 text-sm">
-          {data.audit.map(item => <div key={item.id}>{item.action.replaceAll("_", " ")} · {new Date(item.createdAt).toLocaleString()}</div>)}
+        {!data.configured && <p className="text-amber-200 text-sm">{uiText("Bot message sharing is not configured by the MyKliq operator yet.")}</p>}
+        {data.audit.length > 0 && <Accordion type="single" collapsible><AccordionItem value="audit"><AccordionTrigger className="text-white">{uiText("Permission history")}</AccordionTrigger><AccordionContent className="space-y-1 text-purple-200 text-sm">
+          {data.audit.map(item => <div key={item.id}>{item.action.replaceAll("_", " ")} · {new Date(item.createdAt).toLocaleString(displayLanguage())}</div>)}
         </AccordionContent></AccordionItem></Accordion>}
       </CardContent>
     </Card>
@@ -167,11 +170,11 @@ interface BlockedUser {
 }
 
 // Custom text icon for Tumblr
-const TumblrIcon = () => (
+const TumblrIcon = () => { useUiLanguage(); return (
   <div className="w-5 h-5 flex items-center justify-center font-bold text-white text-sm">
-    t
+    {uiText("t")}
   </div>
-);
+); };
 
 const platformInfo = {
   twitch: {
@@ -258,6 +261,7 @@ interface SportsPreference {
 }
 
 function SportsPreferences() {
+  useUiLanguage();
   const queryClient = useQueryClient();
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<Team[]>([]);
@@ -319,8 +323,8 @@ function SportsPreferences() {
     },
     onSuccess: async () => {
       toast({
-        title: "Preferences Saved",
-        description: "Your sports preferences have been updated.",
+        title: uiText("Preferences Saved"),
+        description: uiText("Your sports preferences have been updated."),
       });
       // Clear cache and refetch - no page reload needed
       await enhancedCache.removeByPattern('/api/sports/');
@@ -333,8 +337,8 @@ function SportsPreferences() {
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to save preferences. Please try again.",
+        title: uiText("Error"),
+        description: uiText("Failed to save preferences. Please try again."),
         variant: "destructive",
       });
     },
@@ -347,8 +351,8 @@ function SportsPreferences() {
     },
     onSuccess: async () => {
       toast({
-        title: "Team Removed",
-        description: "Team has been removed from your preferences.",
+        title: uiText("Team Removed"),
+        description: uiText("Team has been removed from your preferences."),
       });
       // Clear cache and refetch - no page reload needed
       await enhancedCache.removeByPattern('/api/sports/');
@@ -358,8 +362,8 @@ function SportsPreferences() {
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to remove team. Please try again.",
+        title: uiText("Error"),
+        description: uiText("Failed to remove team. Please try again."),
         variant: "destructive",
       });
     },
@@ -417,7 +421,7 @@ function SportsPreferences() {
       {/* Followed Teams */}
       {userPreferences.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-white">Following</h3>
+          <h3 className="text-lg font-semibold text-white">{uiText("Following")}</h3>
           <div className="grid gap-3">
             {userPreferences.map((pref) => (
               <div
@@ -454,18 +458,18 @@ function SportsPreferences() {
 
       {/* Add New Teams */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-white">Add Teams</h3>
+        <h3 className="text-lg font-semibold text-white">{uiText("Add Teams")}</h3>
         
         {/* Sport Selection - Organized by Category */}
         <div className="space-y-3">
-          <Label className="text-white">Select Sports</Label>
+          <Label className="text-white">{uiText("Select Sports")}</Label>
           
           <Accordion type="multiple" className="w-full space-y-2">
             {/* Football */}
             <AccordionItem value="football" className="bg-white/5 border-white/10 rounded-lg px-3">
               <AccordionTrigger className="text-white hover:no-underline py-3">
                 <span className="flex items-center gap-2">
-                  🏈 Football
+                  🏈 {uiText("Football")}
                   {selectedSports.filter(s => ['nfl', 'cfb'].includes(s)).length > 0 && (
                     <Badge variant="secondary" className="ml-2">
                       {selectedSports.filter(s => ['nfl', 'cfb'].includes(s)).length}
@@ -486,7 +490,7 @@ function SportsPreferences() {
                         : "border-white/20 text-white hover:bg-white/10"}
                       data-testid={`button-select-sport-${sport.id}`}
                     >
-                      {sport.icon} {sport.name}
+                      {sport.icon} {uiText(sport.name)}
                     </Button>
                   ))}
                 </div>
@@ -497,7 +501,7 @@ function SportsPreferences() {
             <AccordionItem value="basketball" className="bg-white/5 border-white/10 rounded-lg px-3">
               <AccordionTrigger className="text-white hover:no-underline py-3">
                 <span className="flex items-center gap-2">
-                  🏀 Basketball
+                  🏀 {uiText("Basketball")}
                   {selectedSports.filter(s => ['nba', 'cbb', 'wnba', 'wcbb'].includes(s)).length > 0 && (
                     <Badge variant="secondary" className="ml-2">
                       {selectedSports.filter(s => ['nba', 'cbb', 'wnba', 'wcbb'].includes(s)).length}
@@ -518,7 +522,7 @@ function SportsPreferences() {
                         : "border-white/20 text-white hover:bg-white/10"}
                       data-testid={`button-select-sport-${sport.id}`}
                     >
-                      {sport.icon} {sport.name}
+                      {sport.icon} {uiText(sport.name)}
                     </Button>
                   ))}
                 </div>
@@ -529,7 +533,7 @@ function SportsPreferences() {
             <AccordionItem value="baseball" className="bg-white/5 border-white/10 rounded-lg px-3">
               <AccordionTrigger className="text-white hover:no-underline py-3">
                 <span className="flex items-center gap-2">
-                  ⚾ Baseball
+                  ⚾ {uiText("Baseball")}
                   {selectedSports.filter(s => ['mlb', 'collegebb'].includes(s)).length > 0 && (
                     <Badge variant="secondary" className="ml-2">
                       {selectedSports.filter(s => ['mlb', 'collegebb'].includes(s)).length}
@@ -550,7 +554,7 @@ function SportsPreferences() {
                         : "border-white/20 text-white hover:bg-white/10"}
                       data-testid={`button-select-sport-${sport.id}`}
                     >
-                      {sport.icon} {sport.name}
+                      {sport.icon} {uiText(sport.name)}
                     </Button>
                   ))}
                 </div>
@@ -561,7 +565,7 @@ function SportsPreferences() {
             <AccordionItem value="hockey" className="bg-white/5 border-white/10 rounded-lg px-3">
               <AccordionTrigger className="text-white hover:no-underline py-3">
                 <span className="flex items-center gap-2">
-                  🏒 Hockey
+                  🏒 {uiText("Hockey")}
                   {selectedSports.filter(s => ['nhl', 'mcollegehockey', 'wcollegehockey'].includes(s)).length > 0 && (
                     <Badge variant="secondary" className="ml-2">
                       {selectedSports.filter(s => ['nhl', 'mcollegehockey', 'wcollegehockey'].includes(s)).length}
@@ -582,7 +586,7 @@ function SportsPreferences() {
                         : "border-white/20 text-white hover:bg-white/10"}
                       data-testid={`button-select-sport-${sport.id}`}
                     >
-                      {sport.icon} {sport.name}
+                      {sport.icon} {uiText(sport.name)}
                     </Button>
                   ))}
                 </div>
@@ -593,7 +597,7 @@ function SportsPreferences() {
             <AccordionItem value="soccer" className="bg-white/5 border-white/10 rounded-lg px-3">
               <AccordionTrigger className="text-white hover:no-underline py-3">
                 <span className="flex items-center gap-2">
-                  ⚽ Soccer
+                  ⚽ {uiText("Soccer")}
                   {selectedSports.filter(s => ['soccer', 'premierleague', 'laliga', 'seriea', 'bundesliga', 'championsleague'].includes(s)).length > 0 && (
                     <Badge variant="secondary" className="ml-2">
                       {selectedSports.filter(s => ['soccer', 'premierleague', 'laliga', 'seriea', 'bundesliga', 'championsleague'].includes(s)).length}
@@ -614,7 +618,7 @@ function SportsPreferences() {
                         : "border-white/20 text-white hover:bg-white/10"}
                       data-testid={`button-select-sport-${sport.id}`}
                     >
-                      {sport.icon} {sport.name}
+                      {sport.icon} {uiText(sport.name)}
                     </Button>
                   ))}
                 </div>
@@ -625,7 +629,7 @@ function SportsPreferences() {
             <AccordionItem value="racing" className="bg-white/5 border-white/10 rounded-lg px-3">
               <AccordionTrigger className="text-white hover:no-underline py-3">
                 <span className="flex items-center gap-2">
-                  🏎️ Racing
+                  🏎️ {uiText("Racing")}
                   {selectedSports.filter(s => ['nascar', 'xfinity', 'truck', 'f1', 'indycar', 'nhra'].includes(s)).length > 0 && (
                     <Badge variant="secondary" className="ml-2">
                       {selectedSports.filter(s => ['nascar', 'xfinity', 'truck', 'f1', 'indycar', 'nhra'].includes(s)).length}
@@ -646,7 +650,7 @@ function SportsPreferences() {
                         : "border-white/20 text-white hover:bg-white/10"}
                       data-testid={`button-select-sport-${sport.id}`}
                     >
-                      {sport.icon} {sport.name}
+                      {sport.icon} {uiText(sport.name)}
                     </Button>
                   ))}
                 </div>
@@ -657,7 +661,7 @@ function SportsPreferences() {
             <AccordionItem value="golf" className="bg-white/5 border-white/10 rounded-lg px-3">
               <AccordionTrigger className="text-white hover:no-underline py-3">
                 <span className="flex items-center gap-2">
-                  ⛳ Golf
+                  ⛳ {uiText("Golf")}
                   {selectedSports.filter(s => ['pga', 'lpga'].includes(s)).length > 0 && (
                     <Badge variant="secondary" className="ml-2">
                       {selectedSports.filter(s => ['pga', 'lpga'].includes(s)).length}
@@ -678,7 +682,7 @@ function SportsPreferences() {
                         : "border-white/20 text-white hover:bg-white/10"}
                       data-testid={`button-select-sport-${sport.id}`}
                     >
-                      {sport.icon} {sport.name}
+                      {sport.icon} {uiText(sport.name)}
                     </Button>
                   ))}
                 </div>
@@ -689,7 +693,7 @@ function SportsPreferences() {
             <AccordionItem value="tennis" className="bg-white/5 border-white/10 rounded-lg px-3">
               <AccordionTrigger className="text-white hover:no-underline py-3">
                 <span className="flex items-center gap-2">
-                  🎾 Tennis
+                  🎾 {uiText("Tennis")}
                   {selectedSports.filter(s => ['atp', 'wta'].includes(s)).length > 0 && (
                     <Badge variant="secondary" className="ml-2">
                       {selectedSports.filter(s => ['atp', 'wta'].includes(s)).length}
@@ -710,7 +714,7 @@ function SportsPreferences() {
                         : "border-white/20 text-white hover:bg-white/10"}
                       data-testid={`button-select-sport-${sport.id}`}
                     >
-                      {sport.icon} {sport.name}
+                      {sport.icon} {uiText(sport.name)}
                     </Button>
                   ))}
                 </div>
@@ -721,7 +725,7 @@ function SportsPreferences() {
             <AccordionItem value="combat" className="bg-white/5 border-white/10 rounded-lg px-3">
               <AccordionTrigger className="text-white hover:no-underline py-3">
                 <span className="flex items-center gap-2">
-                  🥊 Combat Sports
+                  🥊 {uiText("Combat Sports")}
                   {selectedSports.filter(s => ['ufc', 'boxing'].includes(s)).length > 0 && (
                     <Badge variant="secondary" className="ml-2">
                       {selectedSports.filter(s => ['ufc', 'boxing'].includes(s)).length}
@@ -742,7 +746,7 @@ function SportsPreferences() {
                         : "border-white/20 text-white hover:bg-white/10"}
                       data-testid={`button-select-sport-${sport.id}`}
                     >
-                      {sport.icon} {sport.name}
+                      {sport.icon} {uiText(sport.name)}
                     </Button>
                   ))}
                 </div>
@@ -753,7 +757,7 @@ function SportsPreferences() {
             <AccordionItem value="other" className="bg-white/5 border-white/10 rounded-lg px-3">
               <AccordionTrigger className="text-white hover:no-underline py-3">
                 <span className="flex items-center gap-2">
-                  🌍 Other Sports
+                  🌍 {uiText("Other Sports")}
                   {selectedSports.filter(s => ['rugby', 'cricket'].includes(s)).length > 0 && (
                     <Badge variant="secondary" className="ml-2">
                       {selectedSports.filter(s => ['rugby', 'cricket'].includes(s)).length}
@@ -774,7 +778,7 @@ function SportsPreferences() {
                         : "border-white/20 text-white hover:bg-white/10"}
                       data-testid={`button-select-sport-${sport.id}`}
                     >
-                      {sport.icon} {sport.name}
+                      {sport.icon} {uiText(sport.name)}
                     </Button>
                   ))}
                 </div>
@@ -796,10 +800,10 @@ function SportsPreferences() {
                   {sportOnlySports.length > 0 && (
                     <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
                       <p className="text-emerald-400 text-sm">
-                        ✓ {sportOnlySports.length} sport{sportOnlySports.length !== 1 ? 's' : ''} selected ({sportOnlySports.map(s => s.toUpperCase()).join(', ')})
+                        {uiText("{{count}} sports selected", { count: formatDisplayNumber(sportOnlySports.length) })} ({sportOnlySports.map(s => s.toUpperCase()).join(", ")})
                       </p>
                       <p className="text-emerald-300/70 text-xs mt-1">
-                        These sports don't require team selection
+                        {uiText("These sports don't require team selection")}
                       </p>
                     </div>
                   )}
@@ -807,9 +811,9 @@ function SportsPreferences() {
                   {/* Show team selection for team-based sports */}
                   {teamBasedSports.length > 0 && (
                     <>
-                      <Label className="text-white">Select Teams ({teamBasedSports.length} team-based sport{teamBasedSports.length !== 1 ? 's' : ''} selected)</Label>
+                      <Label className="text-white">{uiText("Select Teams ({{count}} team-based sports selected)", { count: formatDisplayNumber(teamBasedSports.length) })}</Label>
                       {allTeams.length === 0 ? (
-                        <div className="text-purple-200">Loading teams...</div>
+                        <div className="text-purple-200">{uiText("Loading teams...")}</div>
                       ) : (
                         <div className="grid gap-2 max-h-64 overflow-y-auto">
                           {allTeams.map((team) => {
@@ -843,7 +847,7 @@ function SportsPreferences() {
                                   <div className="text-purple-200 text-sm">{team.abbreviation}</div>
                                 </div>
                                 {isAlreadyFollowing && (
-                                  <Badge variant="secondary">Following</Badge>
+                                  <Badge variant="secondary">{uiText("Following")}</Badge>
                                 )}
                               </button>
                             );
@@ -862,10 +866,10 @@ function SportsPreferences() {
                       data-testid="button-save-sports-preferences"
                     >
                       {selectedTeams.length > 0 && sportOnlySports.length > 0
-                        ? `Save ${selectedTeams.length} Team${selectedTeams.length !== 1 ? 's' : ''} & ${sportOnlySports.length} Sport${sportOnlySports.length !== 1 ? 's' : ''}`
+                        ? uiText("Save {{teams}} teams & {{sports}} sports", { teams: formatDisplayNumber(selectedTeams.length), sports: formatDisplayNumber(sportOnlySports.length) })
                         : selectedTeams.length > 0
-                        ? `Save ${selectedTeams.length} Team${selectedTeams.length !== 1 ? 's' : ''}`
-                        : `Save ${sportOnlySports.length} Sport${sportOnlySports.length !== 1 ? 's' : ''}`
+                        ? uiText("Save {{count}} teams", { count: formatDisplayNumber(selectedTeams.length) })
+                        : uiText("Save {{count}} sports", { count: formatDisplayNumber(sportOnlySports.length) })
                       }
                     </Button>
                   )}
@@ -878,9 +882,9 @@ function SportsPreferences() {
 
       {userPreferences.length === 0 && !prefsLoading && (
         <div className="text-center py-8">
-          <p className="text-purple-200 mb-4">No teams followed yet</p>
+          <p className="text-purple-200 mb-4">{uiText("No teams followed yet")}</p>
           <p className="text-purple-300 text-sm">
-            Select a sport and add teams to see their scores in your Headlines feed
+            {uiText("Select a sport and add teams to see their scores in your Headlines feed")}
           </p>
         </div>
       )}
@@ -890,7 +894,7 @@ function SportsPreferences() {
 
 export default function Settings() {
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
+  useUiLanguage();
   const { user } = useAuth();
   
   // Delete account state management
@@ -1480,8 +1484,8 @@ export default function Settings() {
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
       <div className="w-full max-w-6xl mx-auto px-4 md:px-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-          <p className="text-purple-200">Manage your preferences and connected accounts</p>
+          <h1 className="text-3xl font-bold text-white mb-2">{uiText("Settings")}</h1>
+          <p className="text-purple-200">{uiText("Manage your preferences and connected accounts")}</p>
         </div>
 
         <div className="space-y-6">
@@ -1490,10 +1494,10 @@ export default function Settings() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Link2 className="w-5 h-5" />
-                  Social Media Integration
+                  {uiText("Social Media Integration")}
                 </CardTitle>
                 <CardDescription className="text-purple-200">
-                  Connect your social media accounts to aggregate content in MyKliq
+                  {uiText("Connect your social media accounts to aggregate content in MyKliq")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1501,7 +1505,7 @@ export default function Settings() {
                 {(socialAccounts as SocialAccount[]).length > 0 && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-white">Connected Accounts</h3>
+                      <h3 className="text-lg font-semibold text-white">{uiText("Connected Accounts")}</h3>
                       <Button
                         size="sm"
                         onClick={() => syncAllPlatforms.mutate()}
@@ -1510,11 +1514,11 @@ export default function Settings() {
                         data-testid="button-sync-all-platforms"
                       >
                         <RefreshCw className={`w-4 h-4 mr-2 ${syncAllPlatforms.isPending ? 'animate-spin' : ''}`} />
-                        {syncAllPlatforms.isPending ? 'Syncing...' : 'Sync All'}
+                         {syncAllPlatforms.isPending ? uiText("Syncing...") : uiText("Sync All")}
                       </Button>
                     </div>
                     <p className="text-purple-200 text-sm">
-                      Content from your connected platforms will appear in your Headlines feed. Syncs automatically every 15 minutes.
+                       {uiText("Content from your connected platforms will appear in your Headlines feed. Syncs automatically every 15 minutes.")}
                     </p>
                     <div className="grid gap-4">
                       {(socialAccounts as SocialAccount[]).map((account: SocialAccount) => {
@@ -1535,12 +1539,12 @@ export default function Settings() {
                                 <p className="text-purple-200 text-sm truncate">@{account.username}</p>
                                 {account.lastSyncAt && (
                                   <p className="text-purple-300 text-xs">
-                                    Last sync: {new Date(account.lastSyncAt).toLocaleDateString()}
+                                    {uiText("Last sync:")} {new Date(account.lastSyncAt).toLocaleDateString(displayLanguage())}
                                   </p>
                                 )}
                               </div>
                               <Badge variant={account.isActive ? "default" : "secondary"} className="flex-shrink-0 hidden sm:inline-flex">
-                                {account.isActive ? "Active" : "Inactive"}
+                                {account.isActive ? uiText("Active") : uiText("Inactive")}
                               </Badge>
                             </div>
                             
@@ -1555,7 +1559,7 @@ export default function Settings() {
                                   data-testid={`button-sync-${account.platform}`}
                                 >
                                   <RefreshCw className={`w-4 h-4 ${syncAccount.isPending ? 'animate-spin' : ''}`} />
-                                  <span className="ml-2 sm:hidden">Sync</span>
+                                   <span className="ml-2 sm:hidden">{uiText("Sync")}</span>
                                 </Button>
                               ) : (
                                 <Button
@@ -1567,7 +1571,7 @@ export default function Settings() {
                                   data-testid={`button-reconnect-${account.platform}`}
                                 >
                                   <ExternalLink className="w-4 h-4" />
-                                  <span className="ml-2">Reconnect</span>
+                                   <span className="ml-2">{uiText("Reconnect")}</span>
                                 </Button>
                               )}
                               <Button
@@ -1579,7 +1583,7 @@ export default function Settings() {
                                 data-testid={`button-remove-${account.platform}`}
                               >
                                 <Trash2 className="w-4 h-4" />
-                                <span className="ml-2 sm:hidden">Remove</span>
+                                 <span className="ml-2 sm:hidden">{uiText("Remove")}</span>
                               </Button>
                             </div>
                           </div>
@@ -1592,7 +1596,7 @@ export default function Settings() {
                 {/* Available Platforms */}
                 {getAvailablePlatforms().length > 0 && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-white">Connect New Platform</h3>
+                    <h3 className="text-lg font-semibold text-white">{uiText("Connect New Platform")}</h3>
                     <div className="grid gap-4 md:grid-cols-2">
                       {getAvailablePlatforms().map((platformKey) => {
                         const platform = platformInfo[platformKey as keyof typeof platformInfo];
@@ -1613,7 +1617,7 @@ export default function Settings() {
                                 {platform?.requiresBusiness && (
                                   <p className="text-yellow-300 text-xs mt-1 flex items-center gap-1">
                                     <AlertTriangle className="w-3 h-3" />
-                                    Requires Business or Creator account
+                                     {uiText("Requires Business or Creator account")}
                                   </p>
                                 )}
                               </div>
@@ -1634,7 +1638,7 @@ export default function Settings() {
                               data-testid={`button-connect-${platformKey}`}
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
-                              {['twitch', 'discord', 'reddit', 'pinterest', 'youtube', 'bluesky'].includes(platformKey) ? `Connect ${platform?.name}` : 'Coming Soon'}
+                               {['twitch', 'discord', 'reddit', 'pinterest', 'youtube', 'bluesky'].includes(platformKey) ? uiText("Connect {{platform}}", { platform: platform?.name ?? "" }) : uiText("Coming Soon")}
                             </Button>
                           </div>
                         );
@@ -1645,9 +1649,9 @@ export default function Settings() {
 
                 {(socialAccounts as SocialAccount[]).length === 0 && !accountsLoading && (
                   <div className="text-center py-8">
-                    <p className="text-purple-200 mb-4">No social accounts connected yet</p>
+                    <p className="text-purple-200 mb-4">{uiText("No social accounts connected yet")}</p>
                     <p className="text-purple-300 text-sm">
-                      Connect your social media accounts to see all your content in one place
+                      {uiText("Connect your social media accounts to see all your content in one place")}
                     </p>
                   </div>
                 )}
@@ -1661,10 +1665,10 @@ export default function Settings() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Trophy className="w-5 h-5" />
-                  Sports Preferences
+                  {uiText("Sports Preferences")}
                 </CardTitle>
                 <CardDescription className="text-purple-200">
-                  Follow your favorite sports teams and get score updates in your Headlines feed
+                  {uiText("Follow your favorite sports teams and get score updates in your Headlines feed")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1690,10 +1694,10 @@ export default function Settings() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Referral Program
+                  {uiText("Referral Program")}
                 </CardTitle>
                 <CardDescription className="text-purple-200">
-                  Earn 10 Kliq Koins for each friend who joins using your invite code
+                  {uiText("Earn 10 Kliq Koins for each friend who joins using your invite code")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1712,11 +1716,11 @@ export default function Settings() {
                         </div>
                         <div>
                           <p className="text-2xl font-bold text-white">{referralStats?.totalReferred || 0}</p>
-                          <p className="text-sm text-purple-200">Total Referred</p>
+                          <p className="text-sm text-purple-200">{uiText("Total Referred")}</p>
                         </div>
                       </div>
                       <p className="text-xs text-purple-300 mt-2">
-                        Friends who joined with your code
+                        {uiText("Friends who joined with your code")}
                       </p>
                     </div>
 
@@ -1727,11 +1731,11 @@ export default function Settings() {
                         </div>
                         <div>
                           <p className="text-2xl font-bold text-white">{referralStats?.pendingBonuses || 0}</p>
-                          <p className="text-sm text-purple-200">Pending Bonuses</p>
+                          <p className="text-sm text-purple-200">{uiText("Pending Bonuses")}</p>
                         </div>
                       </div>
                       <p className="text-xs text-purple-300 mt-2">
-                        Waiting for 24hr period + login
+                        {uiText("Waiting for 24hr period + login")}
                       </p>
                     </div>
 
@@ -1742,11 +1746,11 @@ export default function Settings() {
                         </div>
                         <div>
                           <p className="text-2xl font-bold text-white">{referralStats?.totalKoinsEarned || 0}</p>
-                          <p className="text-sm text-purple-200">Koins Earned</p>
+                          <p className="text-sm text-purple-200">{uiText("Koins Earned")}</p>
                         </div>
                       </div>
                       <p className="text-xs text-purple-300 mt-2">
-                        {referralStats?.completedBonuses || 0} bonuses completed
+                        {uiText("{{count}} bonuses completed", { count: formatDisplayNumber(referralStats?.completedBonuses || 0) })}
                       </p>
                     </div>
                   </div>
@@ -1758,12 +1762,12 @@ export default function Settings() {
                       <CheckCircle className="w-5 h-5 text-purple-200" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-white font-semibold mb-2">How Referral Bonuses Work</h4>
+                      <h4 className="text-white font-semibold mb-2">{uiText("How Referral Bonuses Work")}</h4>
                       <ul className="text-sm text-purple-200 space-y-1">
-                        <li>✅ Share your invite code from the MyKliq page</li>
-                        <li>✅ New user signs up with your code</li>
-                        <li>✅ They must wait 24 hours and log in at least once</li>
-                        <li>✅ You automatically receive 10 Kliq Koins!</li>
+                        <li>{uiText("✅ Share your invite code from the MyKliq page")}</li>
+                        <li>{uiText("✅ New user signs up with your code")}</li>
+                        <li>{uiText("✅ They must wait 24 hours and log in at least once")}</li>
+                        <li>{uiText("✅ You automatically receive 10 Kliq Koins!")}</li>
                       </ul>
                     </div>
                   </div>
@@ -1776,7 +1780,7 @@ export default function Settings() {
                 <AccordionTrigger className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-6 py-4 hover:bg-white/15 transition-colors data-[state=open]:rounded-b-none text-white hover:no-underline">
                   <div className="flex items-center gap-2">
                     <ShoppingCart className="w-5 h-5" />
-                    <span className="text-lg font-semibold">Border Marketplace</span>
+                    <span className="text-lg font-semibold">{uiText("Border Marketplace")}</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="bg-white/10 backdrop-blur-sm border border-t-0 border-white/20 rounded-b-lg p-0">
@@ -1794,7 +1798,7 @@ export default function Settings() {
                 <AccordionTrigger className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-6 py-4 hover:bg-white/15 transition-colors data-[state=open]:rounded-b-none text-white hover:no-underline">
                   <div className="flex items-center gap-2">
                     <Crown className="w-5 h-5" />
-                    <span className="text-lg font-semibold">My Borders Collection</span>
+                    <span className="text-lg font-semibold">{uiText("My Borders Collection")}</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="bg-white/10 backdrop-blur-sm border border-t-0 border-white/20 rounded-b-lg p-0">
@@ -1812,8 +1816,8 @@ export default function Settings() {
             {/* Language Settings */}
             <Card className="bg-white/10 backdrop-blur-sm border-white/20">
               <CardHeader>
-                <CardTitle className="text-white">🌍 Language Settings</CardTitle>
-                <CardDescription className="text-purple-200">Choose your preferred language for the interface</CardDescription>
+                <CardTitle className="text-white">{uiText("Language Settings")}</CardTitle>
+                <CardDescription className="text-purple-200">{uiText("Choose your preferred language for the interface")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <LanguageSelector 
@@ -1839,17 +1843,17 @@ export default function Settings() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Shield className="w-5 h-5" />
-                  Blocked Users
+                  {uiText("Blocked Users")}
                 </CardTitle>
                 <CardDescription className="text-purple-200">
-                  People you have blocked. Unblock them to let them see your content again.
+                  {uiText("People you have blocked. Unblock them to let them see your content again.")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {blockedLoading ? (
-                  <p className="text-purple-200 text-sm text-center py-4">Loading...</p>
+                  <p className="text-purple-200 text-sm text-center py-4">{uiText("Loading...")}</p>
                 ) : blockedUsers.length === 0 ? (
-                  <p className="text-purple-200 text-sm text-center py-4">You haven't blocked anyone.</p>
+                  <p className="text-purple-200 text-sm text-center py-4">{uiText("You haven't blocked anyone.")}</p>
                 ) : (
                   <div className="space-y-3">
                     {blockedUsers.map((blocked) => {
@@ -1871,7 +1875,7 @@ export default function Settings() {
                             data-testid={`button-unblock-${blocked.id}`}
                           >
                             <UserX className="w-4 h-4 mr-1" />
-                            Unblock
+                            {uiText("Unblock")}
                           </Button>
                         </div>
                       );
@@ -1886,10 +1890,10 @@ export default function Settings() {
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <User className="w-5 h-5" />
-                  Account Management
+                  {uiText("Account Management")}
                 </CardTitle>
                 <CardDescription className="text-purple-200">
-                  Manage your account settings and session
+                  {uiText("Manage your account settings and session")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -1900,7 +1904,7 @@ export default function Settings() {
                   data-testid="button-logout"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  Logout
+                  {uiText("Logout")}
                 </Button>
                 
                 {/* Delete Account Button */}
@@ -1912,10 +1916,10 @@ export default function Settings() {
                     data-testid="button-delete-account"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Account
+                    {uiText("Delete Account")}
                   </Button>
                   <p className="text-purple-300 text-xs mt-2 text-center">
-                    This action cannot be undone
+                    {uiText("This action cannot be undone")}
                   </p>
                 </div>
               </CardContent>
@@ -1935,37 +1939,37 @@ export default function Settings() {
           <DialogHeader>
             <DialogTitle className="text-sky-500 flex items-center gap-2">
               <SiBluesky className="w-5 h-5" />
-              Connect Bluesky
+              {uiText("Connect Bluesky")}
             </DialogTitle>
             <DialogDescription>
-              Bluesky uses app passwords for secure third-party access. Create an app password in your Bluesky settings, then enter it below.
+              {uiText("Bluesky uses app passwords for secure third-party access. Create an app password in your Bluesky settings, then enter it below.")}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
             <div>
-              <Label htmlFor="bluesky-handle">Bluesky Handle</Label>
+              <Label htmlFor="bluesky-handle">{uiText("Bluesky Handle")}</Label>
               <Input
                 id="bluesky-handle"
                 type="text"
                 value={blueskyHandle}
                 onChange={(e) => setBlueskyHandle(e.target.value)}
-                placeholder="yourname.bsky.social"
+                placeholder={uiText("yourname.bsky.social")}
                 className="mt-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
               />
             </div>
             <div>
-              <Label htmlFor="bluesky-password">App Password</Label>
+              <Label htmlFor="bluesky-password">{uiText("App Password")}</Label>
               <Input
                 id="bluesky-password"
                 type="password"
                 value={blueskyAppPassword}
                 onChange={(e) => setBlueskyAppPassword(e.target.value)}
-                placeholder="xxxx-xxxx-xxxx-xxxx"
+                placeholder={uiText("xxxx-xxxx-xxxx-xxxx")}
                 className="mt-1 bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Create an app password at: Settings → Privacy and Security → App Passwords
+                {uiText("Create an app password at: Settings → Privacy and Security → App Passwords")}
               </p>
             </div>
           </div>
@@ -1980,14 +1984,14 @@ export default function Settings() {
               }}
               disabled={connectBluesky.isPending}
             >
-              Cancel
+              {uiText("Cancel")}
             </Button>
             <Button
               onClick={() => connectBluesky.mutate({ handle: blueskyHandle.trim(), appPassword: blueskyAppPassword.trim() })}
               disabled={!blueskyHandle.trim() || !blueskyAppPassword.trim() || blueskyHandle.trim().length < 3 || blueskyAppPassword.trim().length < 10 || connectBluesky.isPending}
               className="bg-sky-500 hover:bg-sky-600"
             >
-              {connectBluesky.isPending ? "Connecting..." : "Connect Bluesky"}
+              {connectBluesky.isPending ? uiText("Connecting...") : uiText("Connect Bluesky")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1998,33 +2002,33 @@ export default function Settings() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-red-600">
-              {deleteStep === 'confirm' && "Delete Account?"}
-              {deleteStep === 'pin' && "Enter PIN"}
-              {deleteStep === 'final' && "Final Confirmation"}
+              {deleteStep === 'confirm' && uiText("Delete Account?")}
+              {deleteStep === 'pin' && uiText("Enter PIN")}
+              {deleteStep === 'final' && uiText("Final Confirmation")}
             </DialogTitle>
             <DialogDescription>
               {deleteStep === 'confirm' && 
-                "Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data."
+                uiText("Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data.")
               }
               {deleteStep === 'pin' && 
-                "Please enter your 4-digit PIN to verify your identity."
+                uiText("Please enter your 4-digit PIN to verify your identity.")
               }
               {deleteStep === 'final' && 
-                "This is your final warning. Clicking 'Delete Forever' will permanently delete your account and all associated data. This action cannot be undone."
+                uiText("This is your final warning. Clicking 'Delete Forever' will permanently delete your account and all associated data. This action cannot be undone.")
               }
             </DialogDescription>
           </DialogHeader>
           
           {deleteStep === 'pin' && (
             <div className="space-y-4">
-              <Label htmlFor="delete-pin">PIN</Label>
+              <Label htmlFor="delete-pin">{uiText("PIN")}</Label>
               <Input
                 id="delete-pin"
                 type="password"
                 maxLength={4}
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                placeholder="Enter 4-digit PIN"
+                placeholder={uiText("Enter 4-digit PIN")}
                 className="text-center text-lg tracking-widest bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                 data-testid="input-delete-pin"
               />
@@ -2038,7 +2042,7 @@ export default function Settings() {
               disabled={isDeletingAccount || verifyPin.isPending}
               data-testid="button-cancel-delete"
             >
-              Cancel
+              {uiText("Cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -2051,10 +2055,10 @@ export default function Settings() {
               className="bg-red-600 hover:bg-red-700"
               data-testid="button-confirm-delete"
             >
-              {isDeletingAccount && "Deleting..."}
-              {!isDeletingAccount && deleteStep === 'confirm' && "Yes, Continue"}
-              {!isDeletingAccount && deleteStep === 'pin' && (verifyPin.isPending ? "Verifying..." : "Verify PIN")}
-              {!isDeletingAccount && deleteStep === 'final' && "Delete Forever"}
+              {isDeletingAccount && uiText("Deleting...")}
+              {!isDeletingAccount && deleteStep === 'confirm' && uiText("Yes, Continue")}
+              {!isDeletingAccount && deleteStep === 'pin' && (verifyPin.isPending ? uiText("Verifying...") : uiText("Verify PIN"))}
+              {!isDeletingAccount && deleteStep === 'final' && uiText("Delete Forever")}
             </Button>
           </DialogFooter>
         </DialogContent>

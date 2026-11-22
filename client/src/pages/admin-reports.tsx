@@ -14,6 +14,8 @@ import { resolveAssetUrl } from "@/lib/apiConfig";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ForcedLightSurface } from "@/components/ForcedLightSurface";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { displayLanguage } from "@/i18n/formatting";
 
 interface Report {
   id: string;
@@ -93,6 +95,7 @@ function normalizeError(error: unknown): { status: number | null; message: strin
 }
 
 export default function AdminReports() {
+  useUiLanguage();
   const [statusFilter, setStatusFilter] = useState("pending");
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
@@ -189,13 +192,13 @@ export default function AdminReports() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="w-3 h-3 mr-1" />Pending</Badge>;
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200"><Clock className="w-3 h-3 mr-1" />{uiText("Pending")}</Badge>;
       case 'reviewed':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200"><Eye className="w-3 h-3 mr-1" />Reviewed</Badge>;
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200"><Eye className="w-3 h-3 mr-1" />{uiText("Reviewed")}</Badge>;
       case 'resolved':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle className="w-3 h-3 mr-1" />Resolved</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><CheckCircle className="w-3 h-3 mr-1" />{uiText("Resolved")}</Badge>;
       case 'dismissed':
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200"><XCircle className="w-3 h-3 mr-1" />Dismissed</Badge>;
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200"><XCircle className="w-3 h-3 mr-1" />{uiText("Dismissed")}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -246,12 +249,12 @@ export default function AdminReports() {
               </div>
               <div className="space-y-2">
                 <h3 className="text-xl font-semibold text-red-900">
-                  {isAuthError ? 'Access Denied' : 'Error Loading Reports'}
+                  {isAuthError ? uiText("Access Denied") : uiText("Error Loading Reports")}
                 </h3>
                 <p className="text-red-700 max-w-md mx-auto">
                   {isAuthError 
-                    ? 'You need administrator privileges to access this page. Please contact a system administrator to grant you admin access.'
-                    : message || 'An error occurred while loading reports. Please try again later.'}
+                    ? uiText("You need administrator privileges to access this page. Please contact a system administrator to grant you admin access.")
+                    : message || uiText("An error occurred while loading reports. Please try again later.")}
                 </p>
               </div>
               {!isAuthError && (
@@ -261,7 +264,7 @@ export default function AdminReports() {
                   className="mt-4"
                   data-testid="button-retry-reports"
                 >
-                  Try Again
+                  {uiText("Try Again")}
                 </Button>
               )}
             </div>
@@ -276,8 +279,8 @@ export default function AdminReports() {
       <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Content Reports</h1>
-            <p className="text-gray-600">Review and moderate reported content</p>
+            <h1 className="text-3xl font-bold">{uiText("Content Reports")}</h1>
+            <p className="text-gray-600">{uiText("Review and moderate reported content")}</p>
           </div>
         
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -285,11 +288,11 @@ export default function AdminReports() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="pending">Pending Reports</SelectItem>
-            <SelectItem value="reviewed">Reviewed</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
-            <SelectItem value="dismissed">Dismissed</SelectItem>
-            <SelectItem value="all">All Reports</SelectItem>
+            <SelectItem value="pending">{uiText("Pending Reports")}</SelectItem>
+            <SelectItem value="reviewed">{uiText("Reviewed")}</SelectItem>
+            <SelectItem value="resolved">{uiText("Resolved")}</SelectItem>
+            <SelectItem value="dismissed">{uiText("Dismissed")}</SelectItem>
+            <SelectItem value="all">{uiText("All Reports")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -299,9 +302,9 @@ export default function AdminReports() {
           <CardContent className="py-12">
             <div className="text-center">
               <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No reports found</h3>
+              <h3 className="text-lg font-medium mb-2">{uiText("No reports found")}</h3>
               <p className="text-muted-foreground">
-                {statusFilter ? `No ${statusFilter} reports at this time.` : 'No reports have been submitted yet.'}
+                {statusFilter ? `No ${statusFilter} reports at this time.` : uiText("No reports have been submitted yet.")}
               </p>
             </div>
           </CardContent>
@@ -319,7 +322,7 @@ export default function AdminReports() {
                         {formatReason(report.reason)}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        Reported {new Date(report.createdAt).toLocaleDateString()}
+                        {uiText("Reported")} {new Date(report.createdAt).toLocaleDateString(displayLanguage())}
                       </p>
                     </div>
                   </div>
@@ -335,7 +338,7 @@ export default function AdminReports() {
                 {/* Reporter Info */}
                 {report.reporter && (
                   <div className="mb-4">
-                    <p className="text-sm font-medium mb-2">Reported by:</p>
+                    <p className="text-sm font-medium mb-2">{uiText("Reported by:")}</p>
                     <div className="flex items-center space-x-2">
                       <Avatar className="w-6 h-6">
                         <AvatarImage src={resolveAssetUrl(report.reporter.profileImageUrl)} />
@@ -353,7 +356,7 @@ export default function AdminReports() {
                 {/* Reported Content */}
                 {report.post && (
                   <div className="mb-4 border rounded-lg p-4 bg-red-50">
-                    <p className="text-sm font-medium mb-2">Reported content:</p>
+                    <p className="text-sm font-medium mb-2">{uiText("Reported content:")}</p>
                     <div className="space-y-2">
                       {report.post.content && (
                         <p className="text-sm">{report.post.content}</p>
@@ -361,11 +364,11 @@ export default function AdminReports() {
                       {/* Show what attachments the post has */}
                       {(report.post.mediaUrl || report.post.memeId || report.post.movieconId || report.post.gifId) && (
                         <p className="text-xs text-gray-600">
-                          Attachments: 
+                          {uiText("Attachments:")} 
                           {report.post.mediaUrl && ` ${report.post.mediaType || 'media'}`}
-                          {report.post.memeId && ' meme'}
-                          {report.post.movieconId && ' moviecon'}
-                          {report.post.gifId && ' gif'}
+                          {report.post.memeId && uiText(" meme")}
+                          {report.post.movieconId && uiText(" moviecon")}
+                          {report.post.gifId && uiText(" gif")}
                         </p>
                       )}
                       {/* Link to view the actual post */}
@@ -375,7 +378,7 @@ export default function AdminReports() {
                         rel="noopener noreferrer"
                         className="inline-block text-sm text-blue-600 hover:underline font-medium"
                       >
-                        View Full Post →
+                        {uiText("View Full Post →")}
                       </a>
                     </div>
                     {report.postAuthor && (
@@ -399,7 +402,7 @@ export default function AdminReports() {
                           data-testid={`button-suspend-user-${report.postAuthor?.id}`}
                         >
                           <UserX className="w-3 h-3 mr-1" />
-                          Suspend User
+                          {uiText("Suspend User")}
                         </Button>
                       </div>
                     )}
@@ -409,11 +412,11 @@ export default function AdminReports() {
                 {/* Fallback when post doesn't exist */}
                 {!report.post && (
                   <div className="mb-4 border rounded-lg p-4 bg-yellow-50">
-                    <p className="text-sm font-medium mb-2">Reported content:</p>
+                    <p className="text-sm font-medium mb-2">{uiText("Reported content:")}</p>
                     <p className="text-sm text-yellow-700">
-                      The reported post is no longer available (may have been deleted by the user or removed by moderation).
+                      {uiText("The reported post is no longer available (may have been deleted by the user or removed by moderation).")}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-2">Post ID: {report.postId}</p>
+                    <p className="text-xs text-muted-foreground mt-2">{uiText("Post ID: {{postId}}", { "postId": report.postId })}</p>
                   </div>
                 )}
 
@@ -422,10 +425,10 @@ export default function AdminReports() {
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <Label htmlFor="admin-notes">Admin Notes</Label>
+                        <Label htmlFor="admin-notes">{uiText("Admin Notes")}</Label>
                         <Textarea
                           id="admin-notes"
-                          placeholder="Add notes about your review..."
+                          placeholder={uiText("Add notes about your review...")}
                           value={adminNotes}
                           onChange={(e) => setAdminNotes(e.target.value)}
                           rows={2}
@@ -433,10 +436,10 @@ export default function AdminReports() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="action-taken">Action Taken</Label>
+                        <Label htmlFor="action-taken">{uiText("Action Taken")}</Label>
                         <Textarea
                           id="action-taken"
-                          placeholder="Describe what action was taken..."
+                          placeholder={uiText("Describe what action was taken...")}
                           value={actionTaken}
                           onChange={(e) => setActionTaken(e.target.value)}
                           rows={2}
@@ -454,7 +457,7 @@ export default function AdminReports() {
                         data-testid={`button-resolve-${report.id}`}
                       >
                         <CheckCircle className="w-3 h-3 mr-1" />
-                        Resolve
+                        {uiText("Resolve")}
                       </Button>
                       <Button
                         size="sm"
@@ -464,7 +467,7 @@ export default function AdminReports() {
                         data-testid={`button-dismiss-${report.id}`}
                       >
                         <XCircle className="w-3 h-3 mr-1" />
-                        Dismiss
+                        {uiText("Dismiss")}
                       </Button>
                       <Button
                         size="sm"
@@ -474,7 +477,7 @@ export default function AdminReports() {
                         data-testid={`button-review-${report.id}`}
                       >
                         <Eye className="w-3 h-3 mr-1" />
-                        Mark Reviewed
+                        {uiText("Mark Reviewed")}
                       </Button>
                     </div>
                   </div>
@@ -485,19 +488,19 @@ export default function AdminReports() {
                   <div className="mt-4 pt-4 border-t">
                     {report.adminNotes && (
                       <div className="mb-2">
-                        <p className="text-sm font-medium">Admin Notes:</p>
+                        <p className="text-sm font-medium">{uiText("Admin Notes:")}</p>
                         <p className="text-sm text-muted-foreground">{report.adminNotes}</p>
                       </div>
                     )}
                     {report.actionTaken && (
                       <div className="mb-2">
-                        <p className="text-sm font-medium">Action Taken:</p>
+                        <p className="text-sm font-medium">{uiText("Action Taken:")}</p>
                         <p className="text-sm text-muted-foreground">{report.actionTaken}</p>
                       </div>
                     )}
                     {report.reviewedAt && (
                       <p className="text-xs text-muted-foreground">
-                        Reviewed on {new Date(report.reviewedAt).toLocaleDateString()}
+                        {uiText("Reviewed on")} {new Date(report.reviewedAt).toLocaleDateString(displayLanguage())}
                       </p>
                     )}
                   </div>
@@ -514,10 +517,10 @@ export default function AdminReports() {
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <Ban className="h-5 w-5 text-red-500" />
-              <span>Suspend User</span>
+              <span>{uiText("Suspend User")}</span>
             </DialogTitle>
             <DialogDescription>
-              Enter suspension details for the reported user. This action will temporarily restrict their access.
+              {uiText("Enter suspension details for the reported user. This action will temporarily restrict their access.")}
             </DialogDescription>
           </DialogHeader>
           
@@ -537,18 +540,18 @@ export default function AdminReports() {
               </div>
               
               <div>
-                <Label>Suspension Duration</Label>
+                <Label>{uiText("Suspension Duration")}</Label>
                 <Select value={suspensionType} onValueChange={setSuspensionType}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select suspension duration" />
+                    <SelectValue placeholder={uiText("Select suspension duration")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="24h">24 Hours</SelectItem>
-                    <SelectItem value="7d">7 Days</SelectItem>
-                    <SelectItem value="30d">30 Days</SelectItem>
-                    <SelectItem value="90d">90 Days</SelectItem>
-                    <SelectItem value="180d">180 Days</SelectItem>
-                    <SelectItem value="permanent">Permanent Ban</SelectItem>
+                    <SelectItem value="24h">{uiText("24 Hours")}</SelectItem>
+                    <SelectItem value="7d">{uiText("7 Days")}</SelectItem>
+                    <SelectItem value="30d">{uiText("30 Days")}</SelectItem>
+                    <SelectItem value="90d">{uiText("90 Days")}</SelectItem>
+                    <SelectItem value="180d">{uiText("180 Days")}</SelectItem>
+                    <SelectItem value="permanent">{uiText("Permanent Ban")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -563,7 +566,7 @@ export default function AdminReports() {
                   }}
                   disabled={suspendUserMutation.isPending}
                 >
-                  Cancel
+                  {uiText("Cancel")}
                 </Button>
                 <Button
                   onClick={confirmSuspension}
@@ -571,7 +574,7 @@ export default function AdminReports() {
                   className="bg-red-600 hover:bg-red-700 text-white"
                   data-testid="button-confirm-suspension"
                 >
-                  {suspendUserMutation.isPending ? "Suspending..." : "Suspend User"}
+                  {suspendUserMutation.isPending ? uiText("Suspending...") : uiText("Suspend User")}
                 </Button>
               </div>
             </div>

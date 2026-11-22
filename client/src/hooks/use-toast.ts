@@ -1,4 +1,5 @@
 import * as React from "react"
+import { localizeInterfaceError, localizeInterfaceMessage, useUiLanguage } from "@/i18n/interfaceText"
 
 import type {
   ToastActionElement,
@@ -174,6 +175,7 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
+  useUiLanguage()
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
@@ -188,6 +190,13 @@ function useToast() {
 
   return {
     ...state,
+    toasts: state.toasts.map((item) => ({
+      ...item,
+      title: typeof item.title === "string" ? localizeInterfaceMessage(item.title) : item.title,
+      description: typeof item.description === "string"
+        ? (item.variant === "destructive" ? localizeInterfaceError(item.description) : localizeInterfaceMessage(item.description))
+        : item.description,
+    })),
     toast,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   }

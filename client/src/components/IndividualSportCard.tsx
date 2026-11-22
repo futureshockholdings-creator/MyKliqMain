@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Trophy, MapPin, Calendar } from "lucide-react";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatNativeDate } from "@/i18n/formatting";
 
 interface LeaderboardEntry {
   position: number;
@@ -25,16 +27,12 @@ interface IndividualSportCardProps {
 }
 
 export function IndividualSportCard({ update }: IndividualSportCardProps) {
+  useUiLanguage();
   const isLive = update.status === 'in_progress';
   const isFinal = update.status === 'final';
   
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    return formatNativeDate(dateStr, { weekday: "short", month: "short", day: "numeric" });
   };
 
   const getPositionStyle = (position: number) => {
@@ -64,7 +62,7 @@ export function IndividualSportCard({ update }: IndividualSportCardProps) {
           isFinal && "bg-gray-500 text-white",
           !isLive && !isFinal && "bg-blue-500 text-white"
         )}>
-          {update.statusDetail || (isLive ? 'Live' : isFinal ? 'Final' : 'Upcoming')}
+          {update.statusDetail || (isLive ? uiText('Live') : isFinal ? uiText('Final') : uiText('Upcoming'))}
         </div>
       </div>
 
@@ -90,7 +88,7 @@ export function IndividualSportCard({ update }: IndividualSportCardProps) {
           <div className="flex items-center gap-1.5 mb-1.5">
             <Trophy className="w-3.5 h-3.5 text-amber-500" />
             <span className="text-xs font-medium text-gray-600">
-              Top 5
+              {uiText("Top 5")}
             </span>
           </div>
           
@@ -120,7 +118,7 @@ export function IndividualSportCard({ update }: IndividualSportCardProps) {
       
       {update.topFive.length === 0 && (
         <div className="text-xs text-gray-400 italic">
-          Leaderboard not yet available
+          {uiText("Leaderboard not yet available")}
         </div>
       )}
     </div>

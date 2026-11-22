@@ -46,8 +46,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { displayLanguage } from "@/i18n/formatting";
 
 export default function AdminPage() {
+  useUiLanguage();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminPassword, setAdminPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -491,21 +494,21 @@ export default function AdminPage() {
             <div className="mx-auto mb-4 p-3 rounded-full bg-gray-100">
               <Shield className="h-8 w-8 text-gray-800 mx-auto" />
             </div>
-            <CardTitle className="text-2xl">Admin Access</CardTitle>
+            <CardTitle className="text-2xl">{uiText("Admin Access")}</CardTitle>
             <p className="text-gray-600">
-              Enter the admin password to access the customer service dashboard
+              {uiText("Enter the admin password to access the customer service dashboard")}
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">Admin Password</Label>
+              <Label htmlFor="password">{uiText("Admin Password")}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="Enter admin password"
+                  placeholder={uiText("Enter admin password")}
                   className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 pr-10"
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                   data-testid="input-admin-password"
@@ -532,7 +535,7 @@ export default function AdminPage() {
               disabled={authenticateAdmin.isPending}
               data-testid="button-admin-login"
             >
-              {authenticateAdmin.isPending ? "Authenticating..." : "Access Dashboard"}
+              {authenticateAdmin.isPending ? uiText("Authenticating...") : uiText("Access Dashboard")}
             </Button>
           </CardContent>
         </Card>
@@ -550,8 +553,8 @@ export default function AdminPage() {
               <Database className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
-              <p className="text-muted-foreground">Customer Service & User Management</p>
+              <h1 className="text-3xl font-bold text-primary">{uiText("Admin Dashboard")}</h1>
+              <p className="text-muted-foreground">{uiText("Customer Service & User Management")}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -563,14 +566,14 @@ export default function AdminPage() {
               data-testid="button-export-users"
             >
               <Download className="h-4 w-4 mr-2" />
-              Export Users
+              {uiText("Export Users")}
             </Button>
             <Button 
               onClick={() => setIsAuthenticated(false)}
               variant="outline"
               className="border-border text-foreground hover:bg-muted"
             >
-              Logout
+              {uiText("Logout")}
             </Button>
           </div>
         </div>
@@ -584,7 +587,7 @@ export default function AdminPage() {
             data-testid="tab-users"
           >
             <Users className="h-4 w-4 mr-2" />
-            Users
+            {uiText("Users")}
           </Button>
           <Button
             variant={selectedTab === "analytics" ? "default" : "ghost"}
@@ -593,7 +596,7 @@ export default function AdminPage() {
             data-testid="tab-analytics"
           >
             <BarChart3 className="h-4 w-4 mr-2" />
-            Analytics
+            {uiText("Analytics")}
           </Button>
           <Button
             variant={selectedTab === "system" ? "default" : "ghost"}
@@ -602,7 +605,7 @@ export default function AdminPage() {
             data-testid="tab-system"
           >
             <Activity className="h-4 w-4 mr-2" />
-            System Health
+            {uiText("System Health")}
           </Button>
           <Button
             variant={selectedTab === "reports" ? "default" : "ghost"}
@@ -611,7 +614,7 @@ export default function AdminPage() {
             data-testid="tab-reports"
           >
             <Flag className="h-4 w-4 mr-2" />
-            Rules Reports
+            {uiText("Rules Reports")}
           </Button>
           <Button
             variant={selectedTab === "broadcasts" ? "default" : "ghost"}
@@ -620,7 +623,7 @@ export default function AdminPage() {
             data-testid="tab-broadcasts"
           >
             <Bell className="h-4 w-4 mr-2" />
-            Broadcasts
+            {uiText("Broadcasts")}
           </Button>
         </div>
 
@@ -634,7 +637,7 @@ export default function AdminPage() {
                   <Users className="h-8 w-8 text-blue-500 mr-4" />
                   <div>
                     <p className="text-2xl font-bold text-foreground">{users.length}</p>
-                    <p className="text-muted-foreground">Total Users</p>
+                    <p className="text-muted-foreground">{uiText("Total Users")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -645,7 +648,7 @@ export default function AdminPage() {
                     <p className="text-2xl font-bold text-foreground">
                       {users.filter((u: any) => u.hasPassword).length}
                     </p>
-                    <p className="text-muted-foreground">Users with Passwords</p>
+                    <p className="text-muted-foreground">{uiText("Users with Passwords")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -656,7 +659,7 @@ export default function AdminPage() {
                     <p className="text-2xl font-bold text-foreground">
                       {users.filter((u: any) => u.hasSecurityPin).length}
                     </p>
-                    <p className="text-muted-foreground">Users with Security PINs</p>
+                    <p className="text-muted-foreground">{uiText("Users with Security PINs")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -672,7 +675,7 @@ export default function AdminPage() {
                         return daysDiff <= 7;
                       }).length}
                     </p>
-                    <p className="text-muted-foreground">New This Week</p>
+                    <p className="text-muted-foreground">{uiText("New This Week")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -683,12 +686,12 @@ export default function AdminPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
               <Users className="h-5 w-5" />
-              User Management
+              {uiText("User Management")}
             </CardTitle>
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search users by name, email, or phone..."
+                placeholder={uiText("Search users by name, email, or phone...")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="max-w-md bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
@@ -698,19 +701,19 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading users...</div>
+              <div className="text-center py-8 text-muted-foreground">{uiText("Loading users...")}</div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-foreground">Name</TableHead>
-                    <TableHead className="text-foreground">Email</TableHead>
-                    <TableHead className="text-foreground">Phone</TableHead>
-                    <TableHead className="text-foreground">Kliq Name</TableHead>
-                    <TableHead className="text-foreground">Account Status</TableHead>
-                    <TableHead className="text-foreground">Role</TableHead>
-                    <TableHead className="text-foreground">Security Status</TableHead>
-                    <TableHead className="text-foreground">Actions</TableHead>
+                    <TableHead className="text-foreground">{uiText("Name")}</TableHead>
+                    <TableHead className="text-foreground">{uiText("Email")}</TableHead>
+                    <TableHead className="text-foreground">{uiText("Phone")}</TableHead>
+                    <TableHead className="text-foreground">{uiText("Kliq Name")}</TableHead>
+                    <TableHead className="text-foreground">{uiText("Account Status")}</TableHead>
+                    <TableHead className="text-foreground">{uiText("Role")}</TableHead>
+                    <TableHead className="text-foreground">{uiText("Security Status")}</TableHead>
+                    <TableHead className="text-foreground">{uiText("Actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -720,39 +723,39 @@ export default function AdminPage() {
                         {user.firstName} {user.lastName}
                       </TableCell>
                       <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                      <TableCell className="text-muted-foreground">{user.phoneNumber || "N/A"}</TableCell>
-                      <TableCell className="text-muted-foreground">{user.kliqName || "N/A"}</TableCell>
+                      <TableCell className="text-muted-foreground">{user.phoneNumber || uiText("N/A")}</TableCell>
+                      <TableCell className="text-muted-foreground">{user.kliqName || uiText("N/A")}</TableCell>
                       <TableCell>
                         {user.isSuspended ? (
                           <div className="space-y-1">
                             <span className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded text-xs font-semibold">
-                              {user.suspensionType === "banned" ? "BANNED" : "SUSPENDED"}
+                              {user.suspensionType === "banned" ? uiText("BANNED") : uiText("SUSPENDED")}
                             </span>
                             {user.suspendedAt && (
                               <p className="text-xs text-muted-foreground">
-                                Since: {new Date(user.suspendedAt).toLocaleDateString()}
+                                {uiText("Since:")} {new Date(user.suspendedAt).toLocaleDateString(displayLanguage())}
                               </p>
                             )}
                             {user.suspensionExpiresAt && user.suspensionType !== "banned" && (
                               <p className="text-xs text-muted-foreground">
-                                Until: {new Date(user.suspensionExpiresAt).toLocaleDateString()}
+                                {uiText("Until:")} {new Date(user.suspensionExpiresAt).toLocaleDateString(displayLanguage())}
                               </p>
                             )}
                           </div>
                         ) : (
                           <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs">
-                            Active
+                            {uiText("Active")}
                           </span>
                         )}
                       </TableCell>
                       <TableCell>
                         {user.isAdmin ? (
                           <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs font-semibold">
-                            ADMIN
+                            {uiText("ADMIN")}
                           </span>
                         ) : (
                           <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded text-xs">
-                            User
+                            {uiText("User")}
                           </span>
                         )}
                       </TableCell>
@@ -760,12 +763,12 @@ export default function AdminPage() {
                         <div className="flex gap-2">
                           {user.hasPassword && (
                             <span className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs">
-                              Password
+                              {uiText("Password")}
                             </span>
                           )}
                           {user.hasSecurityPin && (
                             <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs">
-                              PIN
+                              {uiText("PIN")}
                             </span>
                           )}
                         </div>
@@ -781,14 +784,14 @@ export default function AdminPage() {
                                 className="border-border text-foreground hover:bg-muted"
                                 data-testid={`button-view-user-${user.id}`}
                               >
-                                View Details
+                                {uiText("View Details")}
                               </Button>
                             </DialogTrigger>
                           <DialogContent className="max-w-2xl bg-card border-border max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
-                              <DialogTitle className="text-foreground">User Details</DialogTitle>
+                              <DialogTitle className="text-foreground">{uiText("User Details")}</DialogTitle>
                               <DialogDescription>
-                                View comprehensive user account information and activity details.
+                                {uiText("View comprehensive user account information and activity details.")}
                               </DialogDescription>
                             </DialogHeader>
                             {selectedUser && (
@@ -796,20 +799,20 @@ export default function AdminPage() {
                                 {/* Basic Info */}
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
-                                    <Label className="text-foreground">Full Name</Label>
+                                    <Label className="text-foreground">{uiText("Full Name")}</Label>
                                     <p className="text-muted-foreground">{selectedUser.firstName} {selectedUser.lastName}</p>
                                   </div>
                                   <div>
-                                    <Label className="text-foreground">Email</Label>
+                                    <Label className="text-foreground">{uiText("Email")}</Label>
                                     <p className="text-muted-foreground">{selectedUser.email}</p>
                                   </div>
                                   <div>
-                                    <Label className="text-foreground">Phone Number</Label>
-                                    <p className="text-muted-foreground">{selectedUser.phoneNumber || "Not provided"}</p>
+                                    <Label className="text-foreground">{uiText("Phone Number")}</Label>
+                                    <p className="text-muted-foreground">{selectedUser.phoneNumber || uiText("Not provided")}</p>
                                   </div>
                                   <div>
-                                    <Label className="text-foreground">Kliq Name</Label>
-                                    <p className="text-muted-foreground">{selectedUser.kliqName || "Not set"}</p>
+                                    <Label className="text-foreground">{uiText("Kliq Name")}</Label>
+                                    <p className="text-muted-foreground">{selectedUser.kliqName || uiText("Not set")}</p>
                                   </div>
                                 </div>
 
@@ -817,30 +820,30 @@ export default function AdminPage() {
                                 <div className="border-t pt-4">
                                   <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
                                     <Shield className="h-4 w-4" />
-                                    Identity Verification
+                                    {uiText("Identity Verification")}
                                   </h3>
                                   <p className="text-sm text-muted-foreground mb-4">
-                                    Ask the user to provide their security answers verbally, then enter them below to verify their identity.
+                                    {uiText("Ask the user to provide their security answers verbally, then enter them below to verify their identity.")}
                                   </p>
                                   
                                   <div className="space-y-3">
                                     <div className="flex items-center gap-2 text-sm">
-                                      <span className="text-muted-foreground">Password Set:</span>
+                                      <span className="text-muted-foreground">{uiText("Password Set:")}</span>
                                       <span className={selectedUser.hasPassword ? "text-green-600" : "text-red-600"}>
-                                        {selectedUser.hasPassword ? "Yes" : "No"}
+                                        {selectedUser.hasPassword ? uiText("Yes") : uiText("No")}
                                       </span>
-                                      <span className="text-muted-foreground ml-4">PIN Set:</span>
+                                      <span className="text-muted-foreground ml-4">{uiText("PIN Set:")}</span>
                                       <span className={selectedUser.hasSecurityPin ? "text-green-600" : "text-red-600"}>
-                                        {selectedUser.hasSecurityPin ? "Yes" : "No"}
+                                        {selectedUser.hasSecurityPin ? uiText("Yes") : uiText("No")}
                                       </span>
                                     </div>
 
                                     <div className="bg-muted/50 p-4 rounded-lg space-y-3">
                                       <div>
-                                        <Label className="text-foreground text-sm">Question 1: What was your first car?</Label>
+                                        <Label className="text-foreground text-sm">{uiText("Question 1: What was your first car?")}</Label>
                                         <div className="flex gap-2 mt-1">
                                           <Input
-                                            placeholder="Enter user's answer..."
+                                            placeholder={uiText("Enter user's answer...")}
                                             value={securityAnswer1}
                                             onChange={(e) => { setSecurityAnswer1(e.target.value); setSecurityVerificationResult(null); }}
                                             className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
@@ -853,10 +856,10 @@ export default function AdminPage() {
                                         </div>
                                       </div>
                                       <div>
-                                        <Label className="text-foreground text-sm">Question 2: What is your mother's maiden name?</Label>
+                                        <Label className="text-foreground text-sm">{uiText("Question 2: What is your mother's maiden name?")}</Label>
                                         <div className="flex gap-2 mt-1">
                                           <Input
-                                            placeholder="Enter user's answer..."
+                                            placeholder={uiText("Enter user's answer...")}
                                             value={securityAnswer2}
                                             onChange={(e) => { setSecurityAnswer2(e.target.value); setSecurityVerificationResult(null); }}
                                             className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
@@ -869,10 +872,10 @@ export default function AdminPage() {
                                         </div>
                                       </div>
                                       <div>
-                                        <Label className="text-foreground text-sm">Question 3: What is your favorite teacher's last name?</Label>
+                                        <Label className="text-foreground text-sm">{uiText("Question 3: What is your favorite teacher's last name?")}</Label>
                                         <div className="flex gap-2 mt-1">
                                           <Input
-                                            placeholder="Enter user's answer..."
+                                            placeholder={uiText("Enter user's answer...")}
                                             value={securityAnswer3}
                                             onChange={(e) => { setSecurityAnswer3(e.target.value); setSecurityVerificationResult(null); }}
                                             className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
@@ -899,13 +902,13 @@ export default function AdminPage() {
                                         className="w-full mt-2"
                                         data-testid="button-verify-security"
                                       >
-                                        {verifySecurityAnswers.isPending ? "Verifying..." : "Verify Security Answers"}
+                                        {verifySecurityAnswers.isPending ? uiText("Verifying...") : uiText("Verify Security Answers")}
                                       </Button>
                                       
                                       {securityVerificationResult && (
                                         <div className={`p-3 rounded-lg ${securityVerificationResult.allValid ? 'bg-green-100 dark:bg-green-900/30 border border-green-300' : 'bg-red-100 dark:bg-red-900/30 border border-red-300'}`}>
                                           <p className={`text-sm font-medium ${securityVerificationResult.allValid ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
-                                            {securityVerificationResult.allValid ? '✓ Identity Verified - All answers match' : '✗ Verification Failed - One or more answers incorrect'}
+                                            {securityVerificationResult.allValid ? uiText("✓ Identity Verified - All answers match") : uiText("✗ Verification Failed - One or more answers incorrect")}
                                           </p>
                                         </div>
                                       )}
@@ -913,7 +916,7 @@ export default function AdminPage() {
                                       {securityVerificationResult?.allValid && (
                                         <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
                                           <p className="text-sm text-blue-800 dark:text-blue-200 mb-2 font-medium">
-                                            Identity verified. Passwords cannot be viewed or retrieved. The user must use Forgot password to choose a new password.
+                                            {uiText("Identity verified. Passwords cannot be viewed or retrieved. The user must use Forgot password to choose a new password.")}
                                           </p>
                                         </div>
                                       )}
@@ -923,20 +926,20 @@ export default function AdminPage() {
 
                                 {/* Profile Information */}
                                 <div className="border-t pt-4">
-                                  <h3 className="font-semibold text-foreground mb-3">Profile Information</h3>
+                                  <h3 className="font-semibold text-foreground mb-3">{uiText("Profile Information")}</h3>
                                   <div className="space-y-2">
                                     <div>
-                                      <Label className="text-foreground">Bio</Label>
-                                      <p className="text-muted-foreground">{selectedUser.bio || "No bio set"}</p>
+                                      <Label className="text-foreground">{uiText("Bio")}</Label>
+                                      <p className="text-muted-foreground">{selectedUser.bio || uiText("No bio set")}</p>
                                     </div>
                                     <div>
-                                      <Label className="text-foreground">Birthdate</Label>
-                                      <p className="text-muted-foreground">{selectedUser.birthdate || "Not provided"}</p>
+                                      <Label className="text-foreground">{uiText("Birthdate")}</Label>
+                                      <p className="text-muted-foreground">{selectedUser.birthdate || uiText("Not provided")}</p>
                                     </div>
                                     <div>
-                                      <Label className="text-foreground">Member Since</Label>
+                                      <Label className="text-foreground">{uiText("Member Since")}</Label>
                                       <p className="text-muted-foreground">
-                                        {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString() : "Unknown"}
+                                        {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString(displayLanguage()) : uiText("Unknown")}
                                       </p>
                                     </div>
                                   </div>
@@ -960,15 +963,14 @@ export default function AdminPage() {
                             </DialogTrigger>
                             <DialogContent className="bg-card border-border">
                               <DialogHeader>
-                                <DialogTitle className="text-foreground">Suspend User Account</DialogTitle>
+                                <DialogTitle className="text-foreground">{uiText("Suspend User Account")}</DialogTitle>
                                 <DialogDescription>
-                                  Temporarily restrict user access to the platform. This action can be reversed.
+                                  {uiText("Temporarily restrict user access to the platform. This action can be reversed.")}
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="space-y-4">
                                 <p className="text-muted-foreground">
-                                  Select how long to suspend {user.firstName} {user.lastName}'s account:
-                                </p>
+                                  {uiText("Select how long to suspend {{firstName}} {{lastName}}'s account:", { "firstName": user.firstName, "lastName": user.lastName })}</p>
                                 
                                 <div className="space-y-3">
                                   <div className="flex gap-2">
@@ -983,7 +985,7 @@ export default function AdminPage() {
                                       disabled={suspendUser.isPending}
                                       className="flex-1"
                                     >
-                                      24 Hours
+                                      {uiText("24 Hours")}
                                     </Button>
                                     <Button
                                       variant="outline"
@@ -996,7 +998,7 @@ export default function AdminPage() {
                                       disabled={suspendUser.isPending}
                                       className="flex-1"
                                     >
-                                      7 Days
+                                      {uiText("7 Days")}
                                     </Button>
                                   </div>
                                   
@@ -1012,7 +1014,7 @@ export default function AdminPage() {
                                       disabled={suspendUser.isPending}
                                       className="flex-1"
                                     >
-                                      30 Days
+                                      {uiText("30 Days")}
                                     </Button>
                                     <Button
                                       variant="outline"
@@ -1025,7 +1027,7 @@ export default function AdminPage() {
                                       disabled={suspendUser.isPending}
                                       className="flex-1"
                                     >
-                                      90 Days
+                                      {uiText("90 Days")}
                                     </Button>
                                   </div>
                                   
@@ -1041,7 +1043,7 @@ export default function AdminPage() {
                                       disabled={suspendUser.isPending}
                                       className="flex-1"
                                     >
-                                      180 Days
+                                      {uiText("180 Days")}
                                     </Button>
                                     <Button
                                       variant="destructive"
@@ -1054,7 +1056,7 @@ export default function AdminPage() {
                                       disabled={suspendUser.isPending}
                                       className="flex-1"
                                     >
-                                      Ban Forever
+                                      {uiText("Ban Forever")}
                                     </Button>
                                   </div>
                                 </div>
@@ -1062,16 +1064,16 @@ export default function AdminPage() {
                                 {user.isSuspended && (
                                   <div className="border-t pt-3">
                                     <p className="text-sm text-orange-600 dark:text-orange-400">
-                                      <strong>Current Status:</strong> This user is currently suspended
+                                      <strong>{uiText("Current Status:")}</strong> {uiText("This user is currently suspended")}
                                       {user.suspensionType && ` (${user.suspensionType})`}
                                       {user.suspendedAt && (
                                         <span className="block">
-                                          Suspended on: {new Date(user.suspendedAt).toLocaleDateString()}
+                                          {uiText("Suspended on:")} {new Date(user.suspendedAt).toLocaleDateString(displayLanguage())}
                                         </span>
                                       )}
                                       {user.suspensionExpiresAt && user.suspensionType !== "banned" && (
                                         <span className="block">
-                                          Expires: {new Date(user.suspensionExpiresAt).toLocaleDateString()}
+                                          {uiText("Expires:")} {new Date(user.suspensionExpiresAt).toLocaleDateString(displayLanguage())}
                                         </span>
                                       )}
                                     </p>
@@ -1116,7 +1118,7 @@ export default function AdminPage() {
                   <Users className="h-8 w-8 text-blue-500 mr-4" />
                   <div>
                     <p className="text-2xl font-bold text-foreground">{analytics?.totalUsers || users.length}</p>
-                    <p className="text-muted-foreground">Total Users</p>
+                    <p className="text-muted-foreground">{uiText("Total Users")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1125,7 +1127,7 @@ export default function AdminPage() {
                   <Activity className="h-8 w-8 text-green-500 mr-4" />
                   <div>
                     <p className="text-2xl font-bold text-foreground">{analytics?.activeToday || 0}</p>
-                    <p className="text-muted-foreground">Active Today</p>
+                    <p className="text-muted-foreground">{uiText("Active Today")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1134,7 +1136,7 @@ export default function AdminPage() {
                   <BarChart3 className="h-8 w-8 text-purple-500 mr-4" />
                   <div>
                     <p className="text-2xl font-bold text-foreground">{analytics?.postsToday || 0}</p>
-                    <p className="text-muted-foreground">Posts Today</p>
+                    <p className="text-muted-foreground">{uiText("Posts Today")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1143,7 +1145,7 @@ export default function AdminPage() {
                   <Shield className="h-8 w-8 text-orange-500 mr-4" />
                   <div>
                     <p className="text-2xl font-bold text-foreground">{analytics?.storiesActive || 0}</p>
-                    <p className="text-muted-foreground">Active Stories</p>
+                    <p className="text-muted-foreground">{uiText("Active Stories")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1151,11 +1153,11 @@ export default function AdminPage() {
 
             <Card className="bg-card/80 backdrop-blur-sm border-border">
               <CardHeader>
-                <CardTitle className="text-foreground">User Activity Overview</CardTitle>
+                <CardTitle className="text-foreground">{uiText("User Activity Overview")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8 text-muted-foreground">
-                  Analytics dashboard coming soon...
+                  {uiText("Analytics dashboard coming soon...")}
                 </div>
               </CardContent>
             </Card>
@@ -1170,8 +1172,8 @@ export default function AdminPage() {
                 <CardContent className="flex items-center p-6">
                   <Activity className="h-8 w-8 text-green-500 mr-4" />
                   <div>
-                    <p className="text-2xl font-bold text-green-600">Online</p>
-                    <p className="text-muted-foreground">Server Status</p>
+                    <p className="text-2xl font-bold text-green-600">{uiText("Online")}</p>
+                    <p className="text-muted-foreground">{uiText("Server Status")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1179,8 +1181,8 @@ export default function AdminPage() {
                 <CardContent className="flex items-center p-6">
                   <Database className="h-8 w-8 text-blue-500 mr-4" />
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{systemHealth?.dbConnections || "N/A"}</p>
-                    <p className="text-muted-foreground">DB Connections</p>
+                    <p className="text-2xl font-bold text-foreground">{systemHealth?.dbConnections || uiText("N/A")}</p>
+                    <p className="text-muted-foreground">{uiText("DB Connections")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1188,8 +1190,8 @@ export default function AdminPage() {
                 <CardContent className="flex items-center p-6">
                   <AlertTriangle className="h-8 w-8 text-yellow-500 mr-4" />
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{systemHealth?.memoryUsage || "N/A"}</p>
-                    <p className="text-muted-foreground">Memory Usage</p>
+                    <p className="text-2xl font-bold text-foreground">{systemHealth?.memoryUsage || uiText("N/A")}</p>
+                    <p className="text-muted-foreground">{uiText("Memory Usage")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1197,8 +1199,8 @@ export default function AdminPage() {
                 <CardContent className="flex items-center p-6">
                   <RefreshCw className="h-8 w-8 text-purple-500 mr-4" />
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{systemHealth?.uptime || "N/A"}</p>
-                    <p className="text-muted-foreground">Uptime</p>
+                    <p className="text-2xl font-bold text-foreground">{systemHealth?.uptime || uiText("N/A")}</p>
+                    <p className="text-muted-foreground">{uiText("Uptime")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1208,26 +1210,26 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground">
                   <Activity className="h-5 w-5" />
-                  System Performance
+                  {uiText("System Performance")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Database Pool Status</span>
-                    <span className="text-green-600 font-medium">Healthy</span>
+                    <span className="text-muted-foreground">{uiText("Database Pool Status")}</span>
+                    <span className="text-green-600 font-medium">{uiText("Healthy")}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Cache Performance</span>
-                    <span className="text-green-600 font-medium">Optimal</span>
+                    <span className="text-muted-foreground">{uiText("Cache Performance")}</span>
+                    <span className="text-green-600 font-medium">{uiText("Optimal")}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">API Response Time</span>
-                    <span className="text-green-600 font-medium">&lt; 200ms</span>
+                    <span className="text-muted-foreground">{uiText("API Response Time")}</span>
+                    <span className="text-green-600 font-medium">{uiText("< 200ms")}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Error Rate</span>
-                    <span className="text-green-600 font-medium">0.01%</span>
+                    <span className="text-muted-foreground">{uiText("Error Rate")}</span>
+                    <span className="text-green-600 font-medium">{uiText("0.01%")}</span>
                   </div>
                 </div>
               </CardContent>
@@ -1247,7 +1249,7 @@ export default function AdminPage() {
                     <p className="text-2xl font-bold text-foreground">
                       {reports.filter((r: any) => r.status === "pending").length}
                     </p>
-                    <p className="text-muted-foreground">OPEN</p>
+                    <p className="text-muted-foreground">{uiText("OPEN")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1258,7 +1260,7 @@ export default function AdminPage() {
                     <p className="text-2xl font-bold text-foreground">
                       {reports.filter((r: any) => r.status === "reviewed").length}
                     </p>
-                    <p className="text-muted-foreground">PENDING</p>
+                    <p className="text-muted-foreground">{uiText("PENDING")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1269,7 +1271,7 @@ export default function AdminPage() {
                     <p className="text-2xl font-bold text-foreground">
                       {reports.filter((r: any) => r.status === "resolved" || r.status === "dismissed").length}
                     </p>
-                    <p className="text-muted-foreground">CLOSED</p>
+                    <p className="text-muted-foreground">{uiText("CLOSED")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1278,7 +1280,7 @@ export default function AdminPage() {
                   <Database className="h-8 w-8 text-blue-500 mr-4" />
                   <div>
                     <p className="text-2xl font-bold text-foreground">{reports.length}</p>
-                    <p className="text-muted-foreground">Total Reports</p>
+                    <p className="text-muted-foreground">{uiText("Total Reports")}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1290,30 +1292,30 @@ export default function AdminPage() {
                 <CardTitle className="flex items-center justify-between text-foreground">
                   <div className="flex items-center gap-2">
                     <Flag className="h-5 w-5" />
-                    Content Reports
+                    {uiText("Content Reports")}
                   </div>
                   <div className="flex items-center gap-2">
                     <Select value={reportStatusFilter} onValueChange={setReportStatusFilter}>
                       <SelectTrigger className="w-[180px]" data-testid="select-report-status-filter">
-                        <SelectValue placeholder="Filter by status" />
+                        <SelectValue placeholder={uiText("Filter by status")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Reports</SelectItem>
-                        <SelectItem value="pending">OPEN (Not Reviewed)</SelectItem>
-                        <SelectItem value="reviewed">PENDING (Under Review)</SelectItem>
-                        <SelectItem value="resolved">CLOSED (Resolved)</SelectItem>
-                        <SelectItem value="dismissed">CLOSED (Dismissed)</SelectItem>
+                        <SelectItem value="all">{uiText("All Reports")}</SelectItem>
+                        <SelectItem value="pending">{uiText("OPEN (Not Reviewed)")}</SelectItem>
+                        <SelectItem value="reviewed">{uiText("PENDING (Under Review)")}</SelectItem>
+                        <SelectItem value="resolved">{uiText("CLOSED (Resolved)")}</SelectItem>
+                        <SelectItem value="dismissed">{uiText("CLOSED (Dismissed)")}</SelectItem>
                       </SelectContent>
                     </Select>
                     <Select value={reportedUserFilter} onValueChange={setReportedUserFilter}>
                       <SelectTrigger className="w-[200px]" data-testid="select-reported-user-filter">
-                        <SelectValue placeholder="Filter by user" />
+                        <SelectValue placeholder={uiText("Filter by user")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Users</SelectItem>
+                        <SelectItem value="all">{uiText("All Users")}</SelectItem>
                         {reportedUsersWithCounts.map((user) => (
                           <SelectItem key={user.id} value={user.id}>
-                            {user.name} ({user.count} {user.count === 1 ? 'report' : 'reports'})
+                            {user.name} ({user.count} {user.count === 1 ? uiText("report") : uiText("reports")})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1323,21 +1325,21 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 {reportsLoading ? (
-                  <div className="text-center py-8 text-muted-foreground">Loading reports...</div>
+                  <div className="text-center py-8 text-muted-foreground">{uiText("Loading reports...")}</div>
                 ) : filteredReports.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    {reports.length === 0 ? "No reports found. All clear!" : "No reports match the current filters."}
+                    {reports.length === 0 ? uiText("No reports found. All clear!") : uiText("No reports match the current filters.")}
                   </div>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-foreground">Status</TableHead>
-                        <TableHead className="text-foreground">Reported User</TableHead>
-                        <TableHead className="text-foreground">Reason</TableHead>
-                        <TableHead className="text-foreground">Reporter</TableHead>
-                        <TableHead className="text-foreground">Date</TableHead>
-                        <TableHead className="text-foreground">Actions</TableHead>
+                        <TableHead className="text-foreground">{uiText("Status")}</TableHead>
+                        <TableHead className="text-foreground">{uiText("Reported User")}</TableHead>
+                        <TableHead className="text-foreground">{uiText("Reason")}</TableHead>
+                        <TableHead className="text-foreground">{uiText("Reporter")}</TableHead>
+                        <TableHead className="text-foreground">{uiText("Date")}</TableHead>
+                        <TableHead className="text-foreground">{uiText("Actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1353,9 +1355,9 @@ export default function AdminPage() {
                                 ? "bg-green-100 text-green-700"
                                 : "bg-gray-100 text-gray-700"
                             }`}>
-                              {report.status === "pending" ? "OPEN" 
-                                : report.status === "reviewed" ? "PENDING" 
-                                : "CLOSED"}
+                              {report.status === "pending" ? uiText("OPEN") 
+                                : report.status === "reviewed" ? uiText("PENDING") 
+                                : uiText("CLOSED")}
                             </span>
                           </TableCell>
                           <TableCell className="text-foreground">
@@ -1370,10 +1372,10 @@ export default function AdminPage() {
                           </TableCell>
                           <TableCell className="text-foreground capitalize">{report.reason}</TableCell>
                           <TableCell className="text-foreground">
-                            {report.reporter?.firstName || "Anonymous"}
+                            {report.reporter?.firstName || uiText("Anonymous")}
                           </TableCell>
                           <TableCell className="text-foreground">
-                            {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : "N/A"}
+                            {report.createdAt ? new Date(report.createdAt).toLocaleDateString(displayLanguage()) : uiText("N/A")}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -1385,20 +1387,20 @@ export default function AdminPage() {
                                   onClick={() => setSelectedReport(report)}
                                   data-testid={`button-review-report-${report.id}`}
                                 >
-                                  Review
+                                  {uiText("Review")}
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className="max-w-2xl">
                                 <DialogHeader>
-                                  <DialogTitle>Review Report</DialogTitle>
+                                  <DialogTitle>{uiText("Review Report")}</DialogTitle>
                                   <DialogDescription>
-                                    Review this content report and take appropriate action.
+                                    {uiText("Review this content report and take appropriate action.")}
                                   </DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4">
                                   <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                      <Label className="text-muted-foreground">Reported User</Label>
+                                      <Label className="text-muted-foreground">{uiText("Reported User")}</Label>
                                       <p className="font-medium">
                                         {report.postAuthor?.firstName} {report.postAuthor?.lastName}
                                       </p>
@@ -1407,34 +1409,34 @@ export default function AdminPage() {
                                       )}
                                     </div>
                                     <div>
-                                      <Label className="text-muted-foreground">Reported By</Label>
+                                      <Label className="text-muted-foreground">{uiText("Reported By")}</Label>
                                       <p className="font-medium">
                                         {report.reporter?.firstName} {report.reporter?.lastName}
                                       </p>
                                     </div>
                                   </div>
                                   <div>
-                                    <Label className="text-muted-foreground">Reason</Label>
+                                    <Label className="text-muted-foreground">{uiText("Reason")}</Label>
                                     <p className="font-medium capitalize">{report.reason}</p>
                                   </div>
                                   {report.description && (
                                     <div>
-                                      <Label className="text-muted-foreground">Description</Label>
+                                      <Label className="text-muted-foreground">{uiText("Description")}</Label>
                                       <p>{report.description}</p>
                                     </div>
                                   )}
                                   <div>
-                                    <Label className="text-muted-foreground">Post Content</Label>
+                                    <Label className="text-muted-foreground">{uiText("Post Content")}</Label>
                                     {report.post?.content && (
                                       <p className="p-3 bg-muted rounded-md mb-2">{report.post.content}</p>
                                     )}
                                     {(report.post?.mediaUrl || report.post?.memeId || report.post?.movieconId || report.post?.gifId) && (
                                       <p className="text-xs text-muted-foreground mb-2">
-                                        Attachments: 
+                                        {uiText("Attachments:")} 
                                         {report.post?.mediaUrl && ` ${report.post?.mediaType || 'media'}`}
-                                        {report.post?.memeId && ' meme'}
-                                        {report.post?.movieconId && ' moviecon'}
-                                        {report.post?.gifId && ' gif'}
+                                        {report.post?.memeId && uiText(" meme")}
+                                        {report.post?.movieconId && uiText(" moviecon")}
+                                        {report.post?.gifId && uiText(" gif")}
                                       </p>
                                     )}
                                     <Button
@@ -1442,11 +1444,11 @@ export default function AdminPage() {
                                       className="p-0 h-auto text-blue-600 font-medium"
                                       onClick={() => setViewingPostId(report.postId)}
                                     >
-                                      View Full Post →
+                                      {uiText("View Full Post →")}
                                     </Button>
                                   </div>
                                   <div className="border-t pt-4">
-                                    <Label className="mb-2 block">Take Action</Label>
+                                    <Label className="mb-2 block">{uiText("Take Action")}</Label>
                                     <div className="grid grid-cols-2 gap-2">
                                       <Button
                                         variant="outline"
@@ -1457,7 +1459,7 @@ export default function AdminPage() {
                                         })}
                                         disabled={updateReport.isPending}
                                       >
-                                        Mark as Pending
+                                        {uiText("Mark as Pending")}
                                       </Button>
                                       <Button
                                         variant="outline"
@@ -1469,7 +1471,7 @@ export default function AdminPage() {
                                         })}
                                         disabled={updateReport.isPending}
                                       >
-                                        Dismiss
+                                        {uiText("Dismiss")}
                                       </Button>
                                       <Button
                                         variant="outline"
@@ -1481,7 +1483,7 @@ export default function AdminPage() {
                                         })}
                                         disabled={updateReport.isPending}
                                       >
-                                        Issue Warning
+                                        {uiText("Issue Warning")}
                                       </Button>
                                       <Button
                                         variant="outline"
@@ -1493,11 +1495,11 @@ export default function AdminPage() {
                                         })}
                                         disabled={updateReport.isPending}
                                       >
-                                        Remove Post
+                                        {uiText("Remove Post")}
                                       </Button>
                                     </div>
                                     <div className="mt-4 pt-4 border-t">
-                                      <Label className="mb-2 block text-red-600">Suspend User</Label>
+                                      <Label className="mb-2 block text-red-600">{uiText("Suspend User")}</Label>
                                       <div className="grid grid-cols-3 gap-2">
                                         <Button
                                           variant="destructive"
@@ -1517,7 +1519,7 @@ export default function AdminPage() {
                                           }}
                                           disabled={suspendUser.isPending || updateReport.isPending}
                                         >
-                                          24h
+                                          {uiText("24h")}
                                         </Button>
                                         <Button
                                           variant="destructive"
@@ -1537,7 +1539,7 @@ export default function AdminPage() {
                                           }}
                                           disabled={suspendUser.isPending || updateReport.isPending}
                                         >
-                                          7 Days
+                                          {uiText("7 Days")}
                                         </Button>
                                         <Button
                                           variant="destructive"
@@ -1557,7 +1559,7 @@ export default function AdminPage() {
                                           }}
                                           disabled={suspendUser.isPending || updateReport.isPending}
                                         >
-                                          Ban
+                                          {uiText("Ban")}
                                         </Button>
                                       </div>
                                     </div>
@@ -1577,18 +1579,18 @@ export default function AdminPage() {
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete Report</AlertDialogTitle>
+                                  <AlertDialogTitle>{uiText("Delete Report")}</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Are you sure you want to delete this report? This action cannot be undone.
+                                    {uiText("Are you sure you want to delete this report? This action cannot be undone.")}
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogCancel>{uiText("Cancel")}</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => deleteReport.mutate(report.id)}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   >
-                                    Delete
+                                    {uiText("Delete")}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
@@ -1613,46 +1615,46 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground">
                   <Send className="h-5 w-5" />
-                  Create Broadcast
+                  {uiText("Create Broadcast")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="broadcast-title" className="text-foreground">Title</Label>
+                    <Label htmlFor="broadcast-title" className="text-foreground">{uiText("Title")}</Label>
                     <Input
                       id="broadcast-title"
-                      placeholder="Notification title..."
+                      placeholder={uiText("Notification title...")}
                       value={broadcastTitle}
                       onChange={(e) => setBroadcastTitle(e.target.value)}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="broadcast-audience" className="text-foreground">Target Audience</Label>
+                    <Label htmlFor="broadcast-audience" className="text-foreground">{uiText("Target Audience")}</Label>
                     <Select value={broadcastAudience} onValueChange={setBroadcastAudience}>
                       <SelectTrigger className="bg-background border-border text-foreground">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Users</SelectItem>
-                        <SelectItem value="active_7d">Active (Last 7 Days)</SelectItem>
-                        <SelectItem value="active_30d">Active (Last 30 Days)</SelectItem>
-                        <SelectItem value="streak_users">Users with Login Streaks</SelectItem>
+                        <SelectItem value="all">{uiText("All Users")}</SelectItem>
+                        <SelectItem value="active_7d">{uiText("Active (Last 7 Days)")}</SelectItem>
+                        <SelectItem value="active_30d">{uiText("Active (Last 30 Days)")}</SelectItem>
+                        <SelectItem value="streak_users">{uiText("Users with Login Streaks")}</SelectItem>
                       </SelectContent>
                     </Select>
                     {audienceCount && (
                       <p className="text-sm text-muted-foreground">
-                        {audienceCount.count} device{audienceCount.count !== 1 ? 's' : ''} will receive this
+                        {uiText("{{count}} device", { "count": audienceCount.count })}{audienceCount.count !== 1 ? uiText("s") : ''} {uiText("will receive this")}
                       </p>
                     )}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="broadcast-body" className="text-foreground">Message</Label>
+                  <Label htmlFor="broadcast-body" className="text-foreground">{uiText("Message")}</Label>
                   <textarea
                     id="broadcast-body"
-                    placeholder="Enter your broadcast message..."
+                    placeholder={uiText("Enter your broadcast message...")}
                     value={broadcastBody}
                     onChange={(e) => setBroadcastBody(e.target.value)}
                     rows={3}
@@ -1660,15 +1662,15 @@ export default function AdminPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="broadcast-deeplink" className="text-foreground">Deep Link (Optional)</Label>
+                  <Label htmlFor="broadcast-deeplink" className="text-foreground">{uiText("Deep Link (Optional)")}</Label>
                   <Input
                     id="broadcast-deeplink"
-                    placeholder="e.g., /profile or /headlines"
+                    placeholder={uiText("e.g., /profile or /headlines")}
                     value={broadcastDeepLink}
                     onChange={(e) => setBroadcastDeepLink(e.target.value)}
                     className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
                   />
-                  <p className="text-xs text-muted-foreground">Opens this screen when user taps the notification</p>
+                  <p className="text-xs text-muted-foreground">{uiText("Opens this screen when user taps the notification")}</p>
                 </div>
                 <div className="flex gap-3">
                   <Button
@@ -1683,7 +1685,7 @@ export default function AdminPage() {
                     className="flex items-center gap-2"
                   >
                     <Send className="h-4 w-4" />
-                    {createBroadcast.isPending ? "Sending..." : "Send Now"}
+                    {createBroadcast.isPending ? uiText("Sending...") : uiText("Send Now")}
                   </Button>
                   <Button
                     variant="outline"
@@ -1696,7 +1698,7 @@ export default function AdminPage() {
                     })}
                     disabled={!broadcastTitle.trim() || !broadcastBody.trim() || createBroadcast.isPending}
                   >
-                    Save as Draft
+                    {uiText("Save as Draft")}
                   </Button>
                 </div>
               </CardContent>
@@ -1707,7 +1709,7 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground">
                   <Bell className="h-5 w-5" />
-                  Broadcast History
+                  {uiText("Broadcast History")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1716,18 +1718,18 @@ export default function AdminPage() {
                     <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : broadcasts.length === 0 ? (
-                  <p className="text-center py-8 text-muted-foreground">No broadcasts yet</p>
+                  <p className="text-center py-8 text-muted-foreground">{uiText("No broadcasts yet")}</p>
                 ) : (
                   <Table>
                     <TableHeader>
                       <TableRow className="border-border">
-                        <TableHead className="text-foreground">Title</TableHead>
-                        <TableHead className="text-foreground">Audience</TableHead>
-                        <TableHead className="text-foreground">Status</TableHead>
-                        <TableHead className="text-foreground">Recipients</TableHead>
-                        <TableHead className="text-foreground">Success Rate</TableHead>
-                        <TableHead className="text-foreground">Date</TableHead>
-                        <TableHead className="text-foreground">Actions</TableHead>
+                        <TableHead className="text-foreground">{uiText("Title")}</TableHead>
+                        <TableHead className="text-foreground">{uiText("Audience")}</TableHead>
+                        <TableHead className="text-foreground">{uiText("Status")}</TableHead>
+                        <TableHead className="text-foreground">{uiText("Recipients")}</TableHead>
+                        <TableHead className="text-foreground">{uiText("Success Rate")}</TableHead>
+                        <TableHead className="text-foreground">{uiText("Date")}</TableHead>
+                        <TableHead className="text-foreground">{uiText("Actions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1735,10 +1737,10 @@ export default function AdminPage() {
                         <TableRow key={broadcast.id} className="border-border">
                           <TableCell className="text-foreground font-medium">{broadcast.title}</TableCell>
                           <TableCell className="text-muted-foreground capitalize">
-                            {broadcast.targetAudience === 'all' ? 'All Users' : 
-                             broadcast.targetAudience === 'active_7d' ? 'Active 7d' :
-                             broadcast.targetAudience === 'active_30d' ? 'Active 30d' :
-                             broadcast.targetAudience === 'streak_users' ? 'Streak Users' :
+                            {broadcast.targetAudience === 'all' ? uiText("All Users") : 
+                             broadcast.targetAudience === 'active_7d' ? uiText("Active 7d") :
+                             broadcast.targetAudience === 'active_30d' ? uiText("Active 30d") :
+                             broadcast.targetAudience === 'streak_users' ? uiText("Streak Users") :
                              broadcast.targetAudience}
                           </TableCell>
                           <TableCell>
@@ -1747,7 +1749,7 @@ export default function AdminPage() {
                                 ? 'bg-green-100 text-green-800' 
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}>
-                              {broadcast.status === 'sent' ? 'Sent' : 'Draft'}
+                              {broadcast.status === 'sent' ? uiText("Sent") : uiText("Draft")}
                             </span>
                           </TableCell>
                           <TableCell className="text-muted-foreground">
@@ -1760,8 +1762,8 @@ export default function AdminPage() {
                           </TableCell>
                           <TableCell className="text-muted-foreground">
                             {broadcast.sentAt 
-                              ? new Date(broadcast.sentAt).toLocaleDateString()
-                              : new Date(broadcast.createdAt).toLocaleDateString()}
+                              ? new Date(broadcast.sentAt).toLocaleDateString(displayLanguage())
+                              : new Date(broadcast.createdAt).toLocaleDateString(displayLanguage())}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -1773,7 +1775,7 @@ export default function AdminPage() {
                                   disabled={sendBroadcast.isPending}
                                 >
                                   <Send className="h-3 w-3 mr-1" />
-                                  Send
+                                  {uiText("Send")}
                                 </Button>
                               )}
                               <Button
@@ -1805,8 +1807,8 @@ export default function AdminPage() {
       <Dialog open={!!viewingPostId} onOpenChange={(open) => !open && setViewingPostId(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Post Review</DialogTitle>
-            <DialogDescription>Post ID: {viewingPostId}</DialogDescription>
+            <DialogTitle>{uiText("Post Review")}</DialogTitle>
+            <DialogDescription>{uiText("Post ID: {{viewingPostId}}", { "viewingPostId": viewingPostId })}</DialogDescription>
           </DialogHeader>
           
           {postLoading ? (
@@ -1831,10 +1833,10 @@ export default function AdminPage() {
                 </Avatar>
                 <div>
                   <p className="font-semibold">
-                    {viewingPost.author?.firstName || "Unknown"} {viewingPost.author?.lastName || "User"}
+                    {viewingPost.author?.firstName || uiText("Unknown")} {viewingPost.author?.lastName || uiText("User")}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {viewingPost.createdAt ? new Date(viewingPost.createdAt).toLocaleString() : "Date unknown"}
+                    {viewingPost.createdAt ? new Date(viewingPost.createdAt).toLocaleString(displayLanguage()) : uiText("Date unknown")}
                   </p>
                 </div>
               </div>
@@ -1860,7 +1862,7 @@ export default function AdminPage() {
                   ) : (
                     <img 
                       src={resolveAssetUrl(viewingPost.mediaUrl)} 
-                      alt="Post media"
+                      alt={uiText("Post media")}
                       className="w-full max-h-[400px] object-contain"
                     />
                   )}
@@ -1886,7 +1888,7 @@ export default function AdminPage() {
                 <div className="rounded-lg overflow-hidden">
                   <img 
                     src={viewingPost.gifUrl} 
-                    alt="GIF"
+                    alt={uiText("GIF")}
                     className="w-full max-h-[400px] object-contain"
                   />
                 </div>
@@ -1895,7 +1897,7 @@ export default function AdminPage() {
           ) : (
             <div className="text-center p-8">
               <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-              <p>Post not found or could not be loaded.</p>
+              <p>{uiText("Post not found or could not be loaded.")}</p>
             </div>
           )}
         </DialogContent>

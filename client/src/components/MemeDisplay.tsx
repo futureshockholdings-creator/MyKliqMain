@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ImageIcon } from 'lucide-react';
 import type { Meme } from '@shared/schema';
 import { resolveAssetUrl } from '@/lib/apiConfig';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface MemeDisplayProps {
   meme: Meme | { url: string; title: string; isAnimated?: boolean };
@@ -10,6 +11,7 @@ interface MemeDisplayProps {
 }
 
 export function MemeDisplay({ meme, className = "", variant = 'default' }: MemeDisplayProps) {
+  useUiLanguage();
   const [imageError, setImageError] = useState(false);
   const isFeed = variant === 'feed';
   
@@ -28,7 +30,7 @@ export function MemeDisplay({ meme, className = "", variant = 'default' }: MemeD
     return (
       <div className={`inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm ${className}`}>
         <ImageIcon className="w-4 h-4" />
-        <span>😂 MEME: {meme.title}</span>
+        <span>{uiText("😂 MEME: {{title}}", { "title": meme.title })}</span>
       </div>
     );
   }
@@ -39,12 +41,12 @@ export function MemeDisplay({ meme, className = "", variant = 'default' }: MemeD
         <img
           src={imageUrl}
           alt={meme.title}
-          className={isFeed ? 'h-auto w-full rounded-lg object-contain' : 'rounded-lg max-h-48 object-contain'}
+          className={isFeed ? "h-auto w-full rounded-lg object-contain" : "rounded-lg max-h-48 object-contain"}
           onError={() => setImageError(true)}
         />
         {meme.isAnimated && (
           <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-            GIF
+            {uiText("GIF")}
           </div>
         )}
       </div>

@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Bell, BellOff, Smartphone, X } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { cn } from '@/lib/utils';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface PushNotificationSetupProps {
   onDismiss?: () => void;
@@ -13,6 +14,7 @@ interface PushNotificationSetupProps {
 }
 
 export function PushNotificationSetup({ onDismiss, compact = false }: PushNotificationSetupProps) {
+  useUiLanguage();
   const { permission, requestPermission, isSupported } = usePushNotifications();
   const [isRequesting, setIsRequesting] = useState(false);
 
@@ -52,14 +54,14 @@ export function PushNotificationSetup({ onDismiss, compact = false }: PushNotifi
             </div>
             <div>
               <h3 className="font-medium text-sm text-white">
-                Push Notifications
+                {uiText("Push Notifications")}
               </h3>
               <p className="text-xs text-purple-200">
                 {isEnabled 
-                  ? "Receiving real-time alerts" 
+                  ? uiText("Receiving real-time alerts") 
                   : isBlocked 
-                    ? "Blocked - check browser settings"
-                    : "Get instant kliq activity alerts"
+                    ? uiText("Blocked - check browser settings")
+                    : uiText("Get instant kliq activity alerts")
                 }
               </p>
             </div>
@@ -90,7 +92,7 @@ export function PushNotificationSetup({ onDismiss, compact = false }: PushNotifi
         
         {isBlocked && (
           <div className="mt-3 p-2 rounded text-xs bg-white/10 text-purple-200">
-            To enable notifications, click the notification icon in your browser's address bar and allow notifications.
+            {uiText("To enable notifications, click the notification icon in your browser's address bar and allow notifications.")}
           </div>
         )}
       </CardContent>

@@ -9,12 +9,14 @@ import { useToast } from "@/hooks/use-toast";
 import { trackMobileEvent } from "@/lib/mobileAnalytics";
 import { SponsoredAd as SponsoredAdType } from "@shared/schema";
 import { getTextColorForBackground } from "@/lib/colorUtils";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface SponsoredAdProps {
   ad: SponsoredAdType;
 }
 
 export function SponsoredAd({ ad }: SponsoredAdProps) {
+  useUiLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -84,7 +86,7 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
             style={{ color: textColor, borderColor: textColor, backgroundColor: 'transparent' }}
             data-testid="sponsored-badge"
           >
-            Sponsored
+            {uiText("Sponsored")}
           </Badge>
           <Badge 
             variant="outline" 
@@ -135,7 +137,7 @@ export function SponsoredAd({ ad }: SponsoredAdProps) {
               data-testid="ad-cta-button"
             >
               <ExternalLink className="w-4 h-4" />
-              {ad.ctaText || "Learn More"}
+              {ad.ctaText || uiText("Learn More")}
             </Button>
 
             {/* Ad Stats (for testing/debug) */}

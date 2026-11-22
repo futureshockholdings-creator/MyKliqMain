@@ -8,6 +8,7 @@ import { Music, Trash2, Loader2, Settings, Info, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface MusicUploaderProps {
   currentMusicUrls?: string[];
@@ -23,6 +24,7 @@ interface MusicTrack {
 const MAX_TRACKS = 10;
 
 export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], userId }: MusicUploaderProps) {
+  useUiLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [tracks, setTracks] = useState<MusicTrack[]>(() => {
     // Initialize tracks from current data
@@ -161,23 +163,23 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full" data-testid="button-music-settings">
           <Settings className="w-4 h-4 mr-2" />
-          {currentMusicUrls.length > 0 ? `Manage Music (${currentMusicUrls.length} tracks)` : "Add Profile Music"}
+          {currentMusicUrls.length > 0 ? `Manage Music (${currentMusicUrls.length} tracks)` : uiText("Add Profile Music")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-background text-foreground border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Music className="w-5 h-5" />
-            Profile Music Playlist
+            {uiText("Profile Music Playlist")}
           </DialogTitle>
           <DialogDescription>
-            Add 1-10 YouTube songs that will play randomly when people visit your profile. Only YouTube links are supported.
+            {uiText("Add 1-10 YouTube songs that will play randomly when people visit your profile. Only YouTube links are supported.")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium text-foreground">YouTube Music Tracks</Label>
+            <Label className="text-sm font-medium text-foreground">{uiText("YouTube Music Tracks")}</Label>
             {tracks.length < MAX_TRACKS && (
               <Button
                 type="button"
@@ -188,8 +190,7 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
                 data-testid="button-add-track"
               >
                 <Plus className="w-4 h-4" />
-                Add Track ({tracks.length}/{MAX_TRACKS})
-              </Button>
+                {uiText("Add Track ({{length}}/{{MAX_TRACKS}})", { "length": tracks.length, "MAX_TRACKS": MAX_TRACKS })}</Button>
             )}
           </div>
 
@@ -197,22 +198,22 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
             <div key={index} className="flex gap-2 items-start p-3 border border-border rounded-lg bg-card">
               <div className="flex-1 space-y-2">
                 <div>
-                  <Label className="text-xs text-muted-foreground">YouTube URL</Label>
+                  <Label className="text-xs text-muted-foreground">{uiText("YouTube URL")}</Label>
                   <Input
-                    placeholder="https://youtube.com/watch?v=..."
+                    placeholder={uiText("https://youtube.com/watch?v=...")}
                     value={track.url}
                     onChange={(e) => updateTrack(index, 'url', e.target.value)}
                     data-testid={`input-url-${index}`}
                     className={track.url && !isValidYouTubeUrl(track.url) ? "border-destructive" : ""}
                   />
                   {track.url && !isValidYouTubeUrl(track.url) && (
-                    <p className="text-xs text-destructive mt-1">Please enter a valid YouTube URL</p>
+                    <p className="text-xs text-destructive mt-1">{uiText("Please enter a valid YouTube URL")}</p>
                   )}
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Song Title (Optional)</Label>
+                  <Label className="text-xs text-muted-foreground">{uiText("Song Title (Optional)")}</Label>
                   <Input
-                    placeholder="Optional - will auto-generate if empty"
+                    placeholder={uiText("Optional - will auto-generate if empty")}
                     value={track.title}
                     onChange={(e) => updateTrack(index, 'title', e.target.value)}
                     data-testid={`input-title-${index}`}
@@ -237,7 +238,7 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
           <Alert>
             <Info className="w-4 h-4" />
             <AlertDescription>
-              Add YouTube music links for your profile playlist. Songs will play randomly when people visit your profile. Only YouTube URL is required - song titles are optional and will auto-generate if empty. You can add 1-10 tracks maximum.
+              {uiText("Add YouTube music links for your profile playlist. Songs will play randomly when people visit your profile. Only YouTube URL is required - song titles are optional and will auto-generate if empty. You can add 1-10 tracks maximum.")}
             </AlertDescription>
           </Alert>
         </div>
@@ -255,12 +256,12 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
                 {deleteMusicMutation.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Removing...
+                    {uiText("Removing...")}
                   </>
                 ) : (
                   <>
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Remove All
+                    {uiText("Remove All")}
                   </>
                 )}
               </Button>
@@ -274,7 +275,7 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
               className="text-foreground border-border hover:bg-accent hover:text-accent-foreground"
               data-testid="button-cancel"
             >
-              Cancel
+              {uiText("Cancel")}
             </Button>
             <Button
               onClick={handleSave}
@@ -285,10 +286,10 @@ export function MusicUploader({ currentMusicUrls = [], currentMusicTitles = [], 
               {saveMusicMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
+                  {uiText("Saving...")}
                 </>
               ) : (
-                "Save Playlist"
+                uiText("Save Playlist")
               )}
             </Button>
           </div>

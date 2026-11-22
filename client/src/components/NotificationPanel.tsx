@@ -8,13 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, Check, Trash2, Bell, MessageCircle, Users, Calendar, Heart, MessageSquare, Radio, MapPin, Cake } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { formatRelativeDate, formatDisplayNumber } from "@/i18n/formatting";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@shared/schema";
 import { useLocation } from "wouter";
 import { getNotificationTarget } from "@shared/notificationTarget";
+import { uiText, useUiLanguage, localizeInterfaceMessage } from "@/i18n/interfaceText";
 
 interface NotificationPanelProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ const priorityColors = {
 };
 
 export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
+  useUiLanguage();
   const [, navigate] = useLocation();
   const [selectedTab, setSelectedTab] = useState("all");
   const { toast } = useToast();
@@ -193,10 +195,10 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
         <Card className="h-full flex flex-col bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-semibold text-foreground">
-              Notifications
+              {uiText("Notifications")}
               {unreadCount > 0 && (
                 <Badge variant="destructive" className="ml-2">
-                  {unreadCount}
+                  {formatDisplayNumber(unreadCount)}
                 </Badge>
               )}
             </CardTitle>
@@ -251,10 +253,10 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                       data-testid={`notification-tab-${tab.value}`}
                     >
                       <Icon className="h-3 w-3 mr-1" />
-                      {tab.label}
+                      {uiText(tab.label)}
                       {tabCount > 0 && (
                         <Badge variant="destructive" className="ml-1 h-4 w-4 p-0 text-[10px] flex items-center justify-center">
-                          {tabCount}
+                          {formatDisplayNumber(tabCount)}
                         </Badge>
                       )}
                     </TabsTrigger>
@@ -268,12 +270,12 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                 <TabsContent value={selectedTab} className="space-y-2 mt-0">
                   {isLoading ? (
                     <div className="flex items-center justify-center py-8">
-                      <div className="text-muted-foreground">Loading notifications...</div>
+                      <div className="text-muted-foreground">{uiText("Loading notifications...")}</div>
                     </div>
                   ) : filteredNotifications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
                       <Bell className="h-12 w-12 text-muted-foreground mb-2" />
-                      <p className="text-muted-foreground">No notifications</p>
+                      <p className="text-muted-foreground">{uiText("No notifications")}</p>
                     </div>
                   ) : (
                     filteredNotifications.map((notification: Notification) => {
@@ -315,17 +317,19 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                                     "text-sm font-medium truncate",
                                     !notification.isRead && "font-semibold"
                                   )}>
-                                    {notification.title}
+                                    {localizeInterfaceMessage(notification.title)}
                                   </h4>
                                   {!notification.isRead && (
                                     <div className="h-2 w-2 bg-primary rounded-full flex-shrink-0" />
                                   )}
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                  {notification.message}
+                                  {notification.type === "message" || notification.type === "incognito_message"
+                                    ? notification.message
+                                    : localizeInterfaceMessage(notification.message)}
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                  {formatDistanceToNow(new Date(notification.createdAt || Date.now()), { addSuffix: true })}
+                                  {formatRelativeDate(new Date(notification.createdAt || Date.now()), { addSuffix: true })}
                                 </p>
                               </div>
                             </div>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Crown, Check, X } from "lucide-react";
 import { BorderedAvatar } from "@/components/BorderedAvatar";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface MyBordersCardProps {
   myBordersData: any[];
@@ -13,17 +14,18 @@ interface MyBordersCardProps {
 }
 
 export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, onUnequip }: MyBordersCardProps) {
+  useUiLanguage();
   if (isLoading) {
     return (
       <Card className="bg-white/10 backdrop-blur-sm border-white/20">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Crown className="w-5 h-5" />
-            Loading Collection...
+            {uiText("Loading Collection...")}
           </CardTitle>
         </CardHeader>
         <CardContent className="h-32 flex items-center justify-center">
-          <div className="animate-pulse text-purple-300">Loading your borders...</div>
+          <div className="animate-pulse text-purple-300">{uiText("Loading your borders...")}</div>
         </CardContent>
       </Card>
     );
@@ -36,19 +38,19 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, 
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <Crown className="w-5 h-5" />
-          My Border Collection
+          {uiText("My Border Collection")}
         </CardTitle>
         <CardDescription className="text-purple-200">
-          Equip borders to customize your profile appearance
+          {uiText("Equip borders to customize your profile appearance")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {myBordersData.length === 0 ? (
           <div className="text-center py-12">
             <Crown className="w-16 h-16 text-purple-400 mx-auto mb-4 opacity-50" />
-            <p className="text-purple-200 text-lg font-medium">No borders yet</p>
+            <p className="text-purple-200 text-lg font-medium">{uiText("No borders yet")}</p>
             <p className="text-purple-300 text-sm mt-2">
-              Earn borders by maintaining login streaks or purchase them from the marketplace!
+              {uiText("Earn borders by maintaining login streaks or purchase them from the marketplace!")}
             </p>
           </div>
         ) : (
@@ -64,7 +66,7 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, 
                     size="xl"
                   />
                   <div className="flex-1">
-                    <Badge className="mb-2 bg-purple-600">Currently Equipped</Badge>
+                    <Badge className="mb-2 bg-purple-600">{uiText("Currently Equipped")}</Badge>
                     <h3 className="text-white font-bold text-lg">{equippedBorder.border.name}</h3>
                     <p className="text-purple-200 text-sm">{equippedBorder.border.description}</p>
                   </div>
@@ -77,7 +79,7 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, 
                     data-testid="button-unequip-border"
                   >
                     <X className="w-4 h-4 mr-1" />
-                    Unequip
+                    {uiText("Unequip")}
                   </Button>
                 </div>
               </div>
@@ -110,15 +112,14 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, 
                       <p className="text-purple-300 text-xs">{userBorder.border.description}</p>
                       {userBorder.border.type === 'streak_reward' && (
                         <Badge variant="secondary" className="mt-1 text-xs">
-                          {userBorder.border.tier}-day streak
-                        </Badge>
+                          {uiText("{{tier}}-day streak", { "tier": userBorder.border.tier })}</Badge>
                       )}
                     </div>
 
                     {isEquipped ? (
                       <Badge className="w-full bg-purple-600">
                         <Check className="w-4 h-4 mr-1" />
-                        Equipped
+                        {uiText("Equipped")}
                       </Badge>
                     ) : (
                       <Button
@@ -127,7 +128,7 @@ export function MyBordersCard({ myBordersData, isLoading, isEquipping, onEquip, 
                         className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                         data-testid={`button-equip-${userBorder.id}`}
                       >
-                        {isEquipping ? "Equipping..." : "Equip Border"}
+                        {isEquipping ? uiText("Equipping...") : uiText("Equip Border")}
                       </Button>
                     )}
                   </div>

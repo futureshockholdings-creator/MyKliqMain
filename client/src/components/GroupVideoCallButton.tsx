@@ -2,6 +2,7 @@ import { Video, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGroupVideoCall } from '@/contexts/GroupVideoCallContext';
 import { toast } from '@/hooks/use-toast';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface Participant {
   id: string;
@@ -24,6 +25,7 @@ export function GroupVideoCallButton({
   groupName,
   groupId,
 }: GroupVideoCallButtonProps) {
+  useUiLanguage();
   const { callState, initiateGroupCall } = useGroupVideoCall();
   
   const isDisabled = callState !== 'idle';
@@ -67,7 +69,7 @@ export function GroupVideoCallButton({
       disabled={isDisabled}
       onClick={handleStartGroupCall}
       data-testid="button-group-video-call"
-      title={isDisabled ? 'Already in a call' : `Video call all ${otherParticipants.length} members`}
+      title={isDisabled ? uiText("Already in a call") : `Video call all ${otherParticipants.length} members`}
     >
       {callState === 'calling' ? (
         <Loader2 className="w-4 h-4 animate-spin" />

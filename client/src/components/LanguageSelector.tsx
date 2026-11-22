@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { uiText, useUiLanguage } from '@/i18n/interfaceText';
 
 const languages = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -34,25 +35,31 @@ export function LanguageSelector({
   showFlag = true,
   className = '' 
 }: LanguageSelectorProps) {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
+  useUiLanguage();
   const [isDetected, setIsDetected] = useState(true);
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+  const currentCode = (i18n.resolvedLanguage || i18n.language || 'en').toLowerCase().split(/[-_]/)[0];
+  const currentLanguage = languages.find(lang => lang.code === currentCode) || languages[0];
 
   const changeLanguage = (languageCode: string) => {
     i18n.changeLanguage(languageCode);
     setIsDetected(false);
     // Store language preference
-    localStorage.setItem('i18nextLng', languageCode);
+    try {
+      localStorage.setItem('i18nextLng', languageCode);
+    } catch {
+      // Language selection still works for this session if storage is blocked.
+    }
   };
 
   if (variant === 'select') {
     return (
       <div className={`space-y-2 ${className}`}>
         <label className="text-sm font-medium">
-          {t('language.selectLanguage')}
+          {uiText("Select language")}
         </label>
-        <Select value={i18n.language} onValueChange={changeLanguage}>
+        <Select value={currentCode} onValueChange={changeLanguage}>
           <SelectTrigger>
             <SelectValue>
               <div className="flex items-center gap-2">
@@ -60,7 +67,7 @@ export function LanguageSelector({
                 <span>{currentLanguage.name}</span>
                 {isDetected && (
                   <span className="text-xs text-muted-foreground">
-                    ({t('language.autoDetected')})
+                    ({uiText("Auto-detected")})
                   </span>
                 )}
               </div>
@@ -89,6 +96,8 @@ export function LanguageSelector({
           size="sm" 
           className={`gap-1 text-xs ${className} flex-shrink-0`}
           data-testid="button-language-selector"
+          aria-label={uiText("Select language")}
+          title={uiText("Select language")}
         >
           <Globe className="w-3 h-3 flex-shrink-0" />
           {showFlag && <span className="flex-shrink-0">{currentLanguage.flag}</span>}
@@ -102,17 +111,17 @@ export function LanguageSelector({
             key={language.code}
             onClick={() => changeLanguage(language.code)}
             className={`flex items-center gap-3 ${
-              i18n.language === language.code ? 'bg-accent' : ''
+              currentCode === language.code ? 'bg-accent' : ''
             }`}
             data-testid={`language-option-${language.code}`}
           >
             {showFlag && <span className="text-lg">{language.flag}</span>}
             <div className="flex flex-col">
               <span className="font-medium">{language.name}</span>
-              {i18n.language === language.code && (
+              {currentCode === language.code && (
                 <span className="text-xs text-muted-foreground">
-                  {t('language.currentLanguage')}
-                  {isDetected && ` • ${t('language.autoDetected')}`}
+                  {uiText("Current language")}
+                  {isDetected && ` • ${uiText("Auto-detected")}`}
                 </span>
               )}
             </div>

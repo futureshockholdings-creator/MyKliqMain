@@ -9,6 +9,7 @@ import type { UserTheme } from "@shared/schema";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { resolveAssetUrl } from "@/lib/apiConfig";
 import { apiRequest } from "@/lib/queryClient";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface ThemeEditorProps {
   theme?: UserTheme | null;
@@ -34,6 +35,7 @@ const defaultTheme = {
 };
 
 export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = false, isFetching = false, isError = false }: ThemeEditorProps) {
+  useUiLanguage();
   // Normalize legacy "retro" values in both font and borderStyle
   const normalizeTheme = (t: UserTheme | null | undefined) => {
     if (!t) return defaultTheme;
@@ -74,9 +76,9 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
     <div className="space-y-6 pb-20">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-mykliq-purple mb-2">
-          🎨 Theme Customization
+          {uiText("🎨 Theme Customization")}
         </h2>
-        <p className="text-muted-foreground">Personalize your MyKliq experience</p>
+        <p className="text-muted-foreground">{uiText("Personalize your MyKliq experience")}</p>
       </div>
 
       {/* Banner & Colors */}
@@ -84,12 +86,12 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
         <CardHeader>
           <CardTitle className="text-primary flex items-center gap-2">
             <Palette className="w-5 h-5" />
-            Banner & Colors
+            {uiText("Banner & Colors")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-gray-400">Primary Color</Label>
+            <Label className="text-gray-400">{uiText("Primary Color")}</Label>
             <div className="flex gap-2 mt-1">
               <input
                 type="color"
@@ -106,7 +108,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
           </div>
           
           <div>
-            <Label className="text-gray-400">Secondary Color</Label>
+            <Label className="text-gray-400">{uiText("Secondary Color")}</Label>
             <div className="flex gap-2 mt-1">
               <input
                 type="color"
@@ -129,12 +131,12 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
         <CardHeader>
           <CardTitle className="text-mykliq-green flex items-center gap-2">
             <Image className="w-5 h-5" />
-            Background Style
+            {uiText("Background Style")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-gray-400">Background Type</Label>
+            <Label className="text-gray-400">{uiText("Background Type")}</Label>
             <Select 
               value={currentTheme.backgroundType || "solid"} 
               onValueChange={(value) => updateTheme('backgroundType', value)}
@@ -143,17 +145,17 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="solid">Solid Color</SelectItem>
-                <SelectItem value="gradient">Gradient</SelectItem>
-                <SelectItem value="pattern">Pattern</SelectItem>
-                <SelectItem value="image">Image</SelectItem>
+                <SelectItem value="solid">{uiText("Solid Color")}</SelectItem>
+                <SelectItem value="gradient">{uiText("Gradient")}</SelectItem>
+                <SelectItem value="pattern">{uiText("Pattern")}</SelectItem>
+                <SelectItem value="image">{uiText("Image")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {currentTheme.backgroundType === 'solid' && (
             <div>
-              <Label className="text-gray-400">Background Color</Label>
+              <Label className="text-gray-400">{uiText("Background Color")}</Label>
               <div className="flex gap-2 mt-1">
                 <input
                   type="color"
@@ -173,7 +175,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
           {currentTheme.backgroundType === 'gradient' && (
             <>
               <div>
-                <Label className="text-gray-400">Gradient Start</Label>
+                <Label className="text-gray-400">{uiText("Gradient Start")}</Label>
                 <div className="flex gap-2 mt-1">
                   <input
                     type="color"
@@ -189,7 +191,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                 </div>
               </div>
               <div>
-                <Label className="text-gray-400">Gradient End</Label>
+                <Label className="text-gray-400">{uiText("Gradient End")}</Label>
                 <div className="flex gap-2 mt-1">
                   <input
                     type="color"
@@ -209,7 +211,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
 
           {currentTheme.backgroundType === 'pattern' && (
             <div>
-              <Label className="text-gray-400">Pattern Style</Label>
+              <Label className="text-gray-400">{uiText("Pattern Style")}</Label>
               <Select 
                 value={currentTheme.backgroundPattern || "dots"} 
                 onValueChange={(value) => updateTheme('backgroundPattern', value)}
@@ -218,10 +220,10 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="dots">Dots</SelectItem>
-                  <SelectItem value="lines">Lines</SelectItem>
-                  <SelectItem value="waves">Waves</SelectItem>
-                  <SelectItem value="geometric">Geometric</SelectItem>
+                  <SelectItem value="dots">{uiText("Dots")}</SelectItem>
+                  <SelectItem value="lines">{uiText("Lines")}</SelectItem>
+                  <SelectItem value="waves">{uiText("Waves")}</SelectItem>
+                  <SelectItem value="geometric">{uiText("Geometric")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -230,13 +232,13 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
           {currentTheme.backgroundType === 'image' && (
             <div className="space-y-4">
               <div>
-                <Label className="text-gray-400">Background Image</Label>
+                <Label className="text-gray-400">{uiText("Background Image")}</Label>
                 {(currentTheme as any).backgroundImageUrl ? (
                   <div className="mt-2 space-y-2">
                     <div className="relative w-full h-28 rounded-lg overflow-hidden border border-gray-600">
                       <img
                         src={resolveAssetUrl((currentTheme as any).backgroundImageUrl) || (currentTheme as any).backgroundImageUrl}
-                        alt="Background preview"
+                        alt={uiText("Background preview")}
                         className="w-full h-full object-cover"
                       />
                       <button
@@ -287,25 +289,25 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                       buttonClassName="w-full bg-gray-700 border border-gray-600 hover:bg-gray-600 text-white"
                     >
                       <Upload className="w-4 h-4 mr-2" />
-                      Upload Image
+                      {uiText("Upload Image")}
                     </ObjectUploader>
                   </div>
                 )}
               </div>
 
               <div>
-                <Label className="text-gray-400">Image Fit</Label>
+                <Label className="text-gray-400">{uiText("Image Fit")}</Label>
                 <Select
-                  value={(currentTheme as any).backgroundImageFit || 'cover'}
+                  value={(currentTheme as any).backgroundImageFit || "cover"}
                   onValueChange={(value) => updateTheme('backgroundImageFit', value)}
                 >
                   <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cover">Cover (fill screen)</SelectItem>
-                    <SelectItem value="contain">Contain (fit inside)</SelectItem>
-                    <SelectItem value="tile">Tile (repeat)</SelectItem>
+                    <SelectItem value="cover">{uiText("Cover (fill screen)")}</SelectItem>
+                    <SelectItem value="contain">{uiText("Contain (fit inside)")}</SelectItem>
+                    <SelectItem value="tile">{uiText("Tile (repeat)")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -319,29 +321,29 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
         <CardHeader>
           <CardTitle className="text-secondary flex items-center gap-2">
             <Type className="w-5 h-5" />
-            Font Style
+            {uiText("Font Style")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-gray-400">Font Family</Label>
+            <Label className="text-gray-400">{uiText("Font Family")}</Label>
             <Select value={currentTheme.fontFamily || "comic"} onValueChange={(value) => updateTheme('fontFamily', value)}>
               <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="comic">Comic Sans MS (Default)</SelectItem>
-                <SelectItem value="helvetica">Helvetica (Clean)</SelectItem>
-                <SelectItem value="arial">Arial (Modern)</SelectItem>
-                <SelectItem value="times">Times New Roman (Classic)</SelectItem>
-                <SelectItem value="impact">Impact (Bold)</SelectItem>
-                <SelectItem value="oswald">Oswald (Condensed)</SelectItem>
+                <SelectItem value="comic">{uiText("Comic Sans MS (Default)")}</SelectItem>
+                <SelectItem value="helvetica">{uiText("Helvetica (Clean)")}</SelectItem>
+                <SelectItem value="arial">{uiText("Arial (Modern)")}</SelectItem>
+                <SelectItem value="times">{uiText("Times New Roman (Classic)")}</SelectItem>
+                <SelectItem value="impact">{uiText("Impact (Bold)")}</SelectItem>
+                <SelectItem value="oswald">{uiText("Oswald (Condensed)")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
           <div>
-            <Label className="text-gray-400">Font Color</Label>
+            <Label className="text-gray-400">{uiText("Font Color")}</Label>
             <div className="flex gap-2 mt-1">
               <input
                 type="color"
@@ -364,12 +366,12 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
         <CardHeader>
           <CardTitle className="text-green-400 flex items-center gap-2">
             <Navigation className="w-5 h-5" />
-            Navigation Bar
+            {uiText("Navigation Bar")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-gray-400">Background Color</Label>
+            <Label className="text-gray-400">{uiText("Background Color")}</Label>
             <div className="flex gap-2 mt-1">
               <input
                 type="color"
@@ -386,7 +388,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
           </div>
           
           <div>
-            <Label className="text-gray-400">Active Tab Color</Label>
+            <Label className="text-gray-400">{uiText("Active Tab Color")}</Label>
             <div className="flex gap-2 mt-1">
               <input
                 type="color"
@@ -407,7 +409,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
       {/* Preview */}
       <Card className="bg-gray-800 border-gray-700">
         <CardHeader>
-          <CardTitle className="text-yellow-400">Preview</CardTitle>
+          <CardTitle className="text-yellow-400">{uiText("Preview")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div 
@@ -423,8 +425,8 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
                           currentTheme.fontFamily === "oswald" ? "Oswald, sans-serif" : "inherit"
             }}
           >
-            <p className="font-bold mb-2">Your theme preview</p>
-            <p className="text-sm opacity-80">This is how your posts will look</p>
+            <p className="font-bold mb-2">{uiText("Your theme preview")}</p>
+            <p className="text-sm opacity-80">{uiText("This is how your posts will look")}</p>
           </div>
         </CardContent>
       </Card>
@@ -437,7 +439,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
           className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="button-save-theme"
         >
-          {isSaving ? "Saving..." : "💾 Save Theme"}
+          {isSaving ? uiText("Saving...") : uiText("💾 Save Theme")}
         </Button>
         <Button
           onClick={handleReset}
@@ -445,7 +447,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
           className="flex-1 bg-gray-600 hover:bg-gray-700 text-white border-gray-600"
           data-testid="button-reset-theme"
         >
-          Reset
+          {uiText("Reset")}
         </Button>
         {onSurpriseMe && (
           <Button
@@ -454,7 +456,7 @@ export function ThemeEditor({ theme, onSave, onReset, onSurpriseMe, isSaving = f
             className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-purple-600"
             data-testid="button-surprise-me"
           >
-            🎲 Surprise Me
+            {uiText("🎲 Surprise Me")}
           </Button>
         )}
       </div>

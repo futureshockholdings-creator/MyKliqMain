@@ -8,8 +8,10 @@ import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { enhancedCache } from "@/lib/enterprise/enhancedCache";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 export default function Landing() {
+  useUiLanguage();
   const [inviteCode, setInviteCode] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
@@ -50,8 +52,8 @@ export default function Landing() {
   const validateInviteCode = async () => {
     if (!inviteCode.trim()) {
       toast({
-        title: "Error",
-        description: "Please enter an invitation code",
+        title: uiText("Error"),
+        description: uiText("Please enter an invitation code"),
         variant: "destructive",
       });
       return;
@@ -66,8 +68,8 @@ export default function Landing() {
 
       if (data.success) {
         toast({
-          title: "Valid invitation!",
-          description: `Joining ${data.kliqOwner?.firstName}'s kliq...`,
+          title: uiText("Valid invitation!"),
+          description: uiText("Joining {{name}}'s kliq...", { name: data.kliqOwner?.firstName ?? "" }),
         });
         // Redirect to signup with invite code
         setTimeout(() => {
@@ -75,16 +77,16 @@ export default function Landing() {
         }, 1000);
       } else {
         toast({
-          title: "Invalid invitation code",
-          description: data.message || "Please check your invitation code and try again.",
+          title: uiText("Invalid invitation code"),
+          description: data.message || uiText("Please check your invitation code and try again."),
           variant: "destructive",
         });
       }
     } catch (error: any) {
       console.error("Invite code validation error:", error);
       toast({
-        title: "Invalid invitation code",
-        description: error.message || "Please check your invitation code and try again.",
+        title: uiText("Invalid invitation code"),
+        description: error.message || uiText("Please check your invitation code and try again."),
         variant: "destructive",
       });
     } finally {
@@ -108,9 +110,9 @@ export default function Landing() {
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
         <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 lg:bottom-8 lg:left-8">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
-            MyKliq
+            {uiText("MyKliq")}
           </h1>
-          <p className="text-white/90 text-sm md:text-base lg:text-lg">Your Exclusive Social Circle</p>
+          <p className="text-white/90 text-sm md:text-base lg:text-lg">{uiText("Your Exclusive Social Circle")}</p>
         </div>
 
         {/* Login + Forgot Password — top right of banner */}
@@ -121,7 +123,7 @@ export default function Landing() {
               data-testid="button-login-top"
             >
               <LogIn className="w-4 h-4 mr-1.5" />
-              Login
+              {uiText("Login")}
             </Button>
           </Link>
           <Link href="/forgot-password">
@@ -129,7 +131,7 @@ export default function Landing() {
               className="text-white/90 hover:text-white text-xs underline underline-offset-2 transition-colors"
               data-testid="link-forgot-password-top"
             >
-              Forgot Password?
+              {uiText("Forgot Password?")}
             </button>
           </Link>
         </div>
@@ -140,10 +142,10 @@ export default function Landing() {
         <div className="p-4 md:p-6 lg:p-8 space-y-6">
           <div className="text-center">
             <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary mb-2">
-              My Kliq, My Rules, My Space
+              {uiText("My Kliq, My Rules, My Space")}
             </h2>
             <p className="text-muted-foreground text-sm md:text-base">
-              Connect with your closest friends in a private, customizable space.
+              {uiText("Connect with your closest friends in a private, customizable space.")}
             </p>
           </div>
 
@@ -154,8 +156,8 @@ export default function Landing() {
                 <div className="flex items-center gap-3">
                   <Users className="w-8 h-8 text-primary" />
                   <div>
-                    <h3 className="font-bold text-primary">Exclusive Friend Limit</h3>
-                    <p className="text-xs text-muted-foreground">Only 28 friends max - quality over quantity!</p>
+                    <h3 className="font-bold text-primary">{uiText("Exclusive Friend Limit")}</h3>
+                    <p className="text-xs text-muted-foreground">{uiText("Only 28 friends max - quality over quantity!")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -166,8 +168,8 @@ export default function Landing() {
                 <div className="flex items-center gap-3">
                   <Video className="w-8 h-8 text-mykliq-purple" />
                   <div>
-                    <h3 className="font-bold text-mykliq-purple">Moviecons</h3>
-                    <p className="text-xs text-muted-foreground">Emoji's and GIF's are cool, but actual video and audio from your favorite shows and movies are better</p>
+                    <h3 className="font-bold text-mykliq-purple">{uiText("Moviecons")}</h3>
+                    <p className="text-xs text-muted-foreground">{uiText("Emoji's and GIF's are cool, but actual video and audio from your favorite shows and movies are better")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -178,8 +180,8 @@ export default function Landing() {
                 <div className="flex items-center gap-3">
                   <Crown className="w-8 h-8 text-secondary" />
                   <div>
-                    <h3 className="font-bold text-secondary">Pyramid Rankings</h3>
-                    <p className="text-xs text-muted-foreground">Organize your friends in a hierarchy that matters to you</p>
+                    <h3 className="font-bold text-secondary">{uiText("Pyramid Rankings")}</h3>
+                    <p className="text-xs text-muted-foreground">{uiText("Organize your friends in a hierarchy that matters to you")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -190,8 +192,8 @@ export default function Landing() {
                 <div className="flex items-center gap-3">
                   <Palette className="w-8 h-8 text-mykliq-orange" />
                   <div>
-                    <h3 className="font-bold text-mykliq-orange">Full Customization</h3>
-                    <p className="text-xs text-muted-foreground">Personalize colors, fonts, and themes to make it yours</p>
+                    <h3 className="font-bold text-mykliq-orange">{uiText("Full Customization")}</h3>
+                    <p className="text-xs text-muted-foreground">{uiText("Personalize colors, fonts, and themes to make it yours")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -202,8 +204,8 @@ export default function Landing() {
                 <div className="flex items-center gap-3">
                   <Shield className="w-8 h-8 text-mykliq-green" />
                   <div>
-                    <h3 className="font-bold text-mykliq-green">Content Filtering</h3>
-                    <p className="text-xs text-muted-foreground">Filter out unwanted content with keyword blocking</p>
+                    <h3 className="font-bold text-mykliq-green">{uiText("Content Filtering")}</h3>
+                    <p className="text-xs text-muted-foreground">{uiText("Filter out unwanted content with keyword blocking")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -214,8 +216,8 @@ export default function Landing() {
                 <div className="flex items-center gap-3">
                   <LinkIcon className="w-8 h-8 text-mykliq-blue" />
                   <div>
-                    <h3 className="font-bold text-mykliq-blue">Social Integration</h3>
-                    <p className="text-xs text-muted-foreground">Link other social accounts to create a one stop social experience</p>
+                    <h3 className="font-bold text-mykliq-blue">{uiText("Social Integration")}</h3>
+                    <p className="text-xs text-muted-foreground">{uiText("Link other social accounts to create a one stop social experience")}</p>
                   </div>
                 </div>
               </CardContent>
@@ -232,7 +234,7 @@ export default function Landing() {
               className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-primary-foreground font-bold py-3"
               data-testid="button-join-now"
             >
-              Join MyKliq Now!
+              {uiText("Join MyKliq Now!")}
             </Button>
 
             <Dialog>
@@ -242,20 +244,20 @@ export default function Landing() {
                   className="w-full bg-card border-border text-card-foreground hover:bg-accent"
                   data-testid="button-join-with-invite"
                 >
-                  Join with Invite Code
+                  {uiText("Join with Invite Code")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-card border-border text-card-foreground max-w-sm mx-auto">
                 <DialogHeader>
-                  <DialogTitle className="text-primary">Join a Kliq!</DialogTitle>
+                  <DialogTitle className="text-primary">{uiText("Join a Kliq!")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-foreground">Invitation Code</label>
+                    <label className="text-sm font-medium text-foreground">{uiText("Invitation Code")}</label>
                     <Input
                       value={inviteCode}
                       onChange={(e) => setInviteCode(e.target.value)}
-                      placeholder="KQ-ABCD-7892"
+                      placeholder={uiText("KQ-ABCD-7892")}
                       autoCapitalize="characters"
                       autoCorrect="off"
                       spellCheck={false}
@@ -264,7 +266,7 @@ export default function Landing() {
                       data-testid="input-invite-code"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Enter your friend’s invitation code — uppercase or lowercase both work
+                      {uiText("Enter your friend’s invitation code — uppercase or lowercase both work")}
                     </p>
                   </div>
 
@@ -274,7 +276,7 @@ export default function Landing() {
                     className="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-primary-foreground font-bold"
                     data-testid="button-validate-invite"
                   >
-                    {isValidating ? "Validating..." : "Join MyKliq"}
+                    {isValidating ? uiText("Validating...") : uiText("Join MyKliq")}
                   </Button>
                 </div>
               </DialogContent>
@@ -292,7 +294,7 @@ export default function Landing() {
                 onClick={() => window.open('/privacy-policy', '_blank')}
                 data-testid="link-privacy-policy"
               >
-                Privacy Policy
+                {uiText("Privacy Policy")}
               </button>
               <span className="text-gray-600">•</span>
               <button 
@@ -300,7 +302,7 @@ export default function Landing() {
                 onClick={() => window.open('/disclaimer', '_blank')}
                 data-testid="link-disclaimer"
               >
-                Disclaimer
+                {uiText("Disclaimer")}
               </button>
               <span className="text-gray-600">•</span>
               <button 
@@ -308,7 +310,7 @@ export default function Landing() {
                 onClick={() => window.open('/community-guidelines', '_blank')}
                 data-testid="link-guidelines"
               >
-                Guidelines
+                {uiText("Guidelines")}
               </button>
               <span className="text-gray-600">•</span>
               <button 
@@ -316,12 +318,12 @@ export default function Landing() {
                 onClick={() => window.open('/contact-us', '_blank')}
                 data-testid="link-contact-us"
               >
-                Contact Us
+                {uiText("Contact Us")}
               </button>
             </div>
             
             <p className="text-xs text-gray-600 mt-2">
-              © 2025 MyKliq. All rights reserved.
+              {uiText("© 2025 MyKliq. All rights reserved.")}
             </p>
           </div>
         </div>

@@ -3,8 +3,12 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useUiLanguage } from "@/i18n/interfaceText"
 
-const DropdownMenu = DropdownMenuPrimitive.Root
+function DropdownMenu(props: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
+  const language = useUiLanguage()
+  return <DropdownMenuPrimitive.Root dir={language === "ar" ? "rtl" : "ltr"} {...props} />
+}
 
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 

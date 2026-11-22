@@ -5,8 +5,10 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 import { PageWrapper } from "@/components/PageWrapper";
+import { useUiLanguage } from "@/i18n/interfaceText";
 
 export default function Themes() {
+  useUiLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

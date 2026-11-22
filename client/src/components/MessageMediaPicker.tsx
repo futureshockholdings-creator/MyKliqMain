@@ -8,6 +8,7 @@ import { MovieconPicker } from '@/components/MovieconPicker';
 import { buildApiUrl } from '@/lib/apiConfig';
 import { useToast } from '@/hooks/use-toast';
 import type { Meme, Moviecon } from '@shared/schema';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface MessageMediaPickerProps {
   onSelectMeme: (meme: Meme) => void;
@@ -16,6 +17,7 @@ interface MessageMediaPickerProps {
 }
 
 export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMedia }: MessageMediaPickerProps) {
+  useUiLanguage();
   const [showPicker, setShowPicker] = useState(false);
   const [activeTab, setActiveTab] = useState("meme");
   const [isUploading, setIsUploading] = useState(false);
@@ -104,9 +106,9 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
       <Dialog open={showPicker} onOpenChange={setShowPicker}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Add Media to Message</DialogTitle>
+            <DialogTitle>{uiText("Add Media to Message")}</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Choose a meme, moviecon, or upload a photo or video to attach to your message
+              {uiText("Choose a meme, moviecon, or upload a photo or video to attach to your message")}
             </DialogDescription>
           </DialogHeader>
 
@@ -114,19 +116,19 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="meme" className="flex items-center gap-2" data-testid="tab-meme">
                 <MessageSquare className="w-4 h-4" />
-                MEMEs
+                {uiText("MEMEs")}
               </TabsTrigger>
               <TabsTrigger value="moviecon" className="flex items-center gap-2" data-testid="tab-moviecon">
                 <Film className="w-4 h-4" />
-                Moviecons
+                {uiText("Moviecons")}
               </TabsTrigger>
               <TabsTrigger value="photo" className="flex items-center gap-2" data-testid="tab-photo">
                 <Image className="w-4 h-4" />
-                Photos
+                {uiText("Photos")}
               </TabsTrigger>
               <TabsTrigger value="video" className="flex items-center gap-2" data-testid="tab-video">
                 <Camera className="w-4 h-4" />
-                Videos
+                {uiText("Videos")}
               </TabsTrigger>
             </TabsList>
 
@@ -134,13 +136,13 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
               <TabsContent value="meme" className="mt-0">
                 <div className="text-center py-4">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Select a MEME to share in your message
+                    {uiText("Select a MEME to share in your message")}
                   </p>
                   <MemePicker 
                     onSelectMeme={handleMemeSelect} 
                     trigger={
                       <Button className={standardButtonStyle}>
-                        Select Meme
+                        {uiText("Select Meme")}
                       </Button>
                     }
                   />
@@ -150,13 +152,13 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
               <TabsContent value="moviecon" className="mt-0">
                 <div className="text-center py-4">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Select a Moviecon to share in your message
+                    {uiText("Select a Moviecon to share in your message")}
                   </p>
                   <MovieconPicker 
                     onSelectMoviecon={handleMovieconSelect}
                     trigger={
                       <Button className={standardButtonStyle}>
-                        Select Moviecon
+                        {uiText("Select Moviecon")}
                       </Button>
                     }
                   />
@@ -166,7 +168,7 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
               <TabsContent value="photo" className="mt-0">
                 <div className="text-center py-4">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Choose a photo from your device to share
+                    {uiText("Choose a photo from your device to share")}
                   </p>
                   <Button
                     onClick={() => handleFileSelect('image/*', 'image')}
@@ -176,10 +178,10 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                     {isUploading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Uploading...
+                        {uiText("Uploading...")}
                       </>
                     ) : (
-                      'Upload Photo'
+                      uiText('Upload Photo')
                     )}
                   </Button>
                 </div>
@@ -188,7 +190,7 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
               <TabsContent value="video" className="mt-0">
                 <div className="text-center py-4">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Choose a video from your device to share
+                    {uiText("Choose a video from your device to share")}
                   </p>
                   <Button
                     onClick={() => handleFileSelect('video/*', 'video')}
@@ -198,10 +200,10 @@ export function MessageMediaPicker({ onSelectMeme, onSelectMoviecon, onSelectMed
                     {isUploading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Uploading...
+                        {uiText("Uploading...")}
                       </>
                     ) : (
-                      'Upload Video'
+                      uiText('Upload Video')
                     )}
                   </Button>
                 </div>

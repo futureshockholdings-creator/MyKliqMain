@@ -2,12 +2,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, PawPrint } from "lucide-react";
 import { usePostTranslation } from "@/lib/translationService";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface ProfileDetailsDisplayProps {
   user: any;
 }
 
 export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
+  useUiLanguage();
   const { translatePost } = usePostTranslation();
   if (!user) return null;
 
@@ -27,7 +29,7 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
     return (
       <Card className="bg-card/50 border-border">
         <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">No profile details added yet</p>
+          <p className="text-muted-foreground">{uiText("No profile details added yet")}</p>
         </CardContent>
       </Card>
     );
@@ -51,7 +53,7 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
             <Icon className="w-4 h-4" />
             {title}
           </div>
-          <div className="text-foreground">{translatePost(singleValue)}</div>
+          <div className="text-foreground">{singleValue}</div>
         </div>
       );
     }
@@ -81,29 +83,27 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
 
   const formatRelationshipStatus = (status: string) => {
     switch (status) {
-      case "single": return "Single";
-      case "taken": return "In a relationship";
-      case "married": return "Married";
-      case "complicated": return "It's complicated";
-      case "prefer-not-to-say": return "Prefer not to say";
+      case "single": return uiText("Single");
+      case "taken": return uiText("In a relationship");
+      case "married": return uiText("Married");
+      case "complicated": return uiText("It's complicated");
+      case "prefer-not-to-say": return uiText("Prefer not to say");
       default: return status;
     }
   };
 
   const formatPetPreferences = (pref: string) => {
     switch (pref) {
-      case "dogs": return "Dog lover";
-      case "cats": return "Cat lover";
-      case "both": return "Loves dogs & cats";
-      case "other": return "Other pets";
-      case "none": return "No pets";
+      case "dogs": return uiText("Dog lover");
+      case "cats": return uiText("Cat lover");
+      case "both": return uiText("Loves dogs & cats");
+      case "other": return uiText("Other pets");
+      case "none": return uiText("No pets");
       default: return pref;
     }
   };
 
-  const formatLifestyle = (lifestyle: string) => {
-    return lifestyle.charAt(0).toUpperCase() + lifestyle.slice(1);
-  };
+  const formatLifestyle = (lifestyle: string) => uiText(lifestyle.charAt(0).toUpperCase() + lifestyle.slice(1));
 
   return (
     <div className="space-y-4">
@@ -113,12 +113,12 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
           <CardHeader>
             <CardTitle className="text-primary flex items-center gap-2">
               <Heart className="w-5 h-5" />
-              {translatePost("Interests & Hobbies")}
+              {uiText("Interests & Hobbies")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <DetailSection title={translatePost("Interests")} items={user.interests} icon={Heart} />
-            <DetailSection title={translatePost("Hobbies")} items={user.hobbies} icon={Gamepad2} />
+            <DetailSection title={uiText("Interests")} items={user.interests} icon={Heart} />
+            <DetailSection title={uiText("Hobbies")} items={user.hobbies} icon={Gamepad2} />
           </CardContent>
         </Card>
       )}
@@ -129,13 +129,13 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
           <CardHeader>
             <CardTitle className="text-primary flex items-center gap-2">
               <MapPin className="w-5 h-5" />
-              {translatePost("Favorites")}
+              {uiText("Favorites")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <DetailSection title={translatePost("Places")} items={user.favoriteLocations} icon={MapPin} />
-            <DetailSection title={translatePost("Foods")} items={user.favoriteFoods} icon={Utensils} />
-            <DetailSection title={translatePost("Music Genres")} items={user.musicGenres} icon={Music} />
+            <DetailSection title={uiText("Places")} items={user.favoriteLocations} icon={MapPin} />
+            <DetailSection title={uiText("Foods")} items={user.favoriteFoods} icon={Utensils} />
+            <DetailSection title={uiText("Music Genres")} items={user.musicGenres} icon={Music} />
           </CardContent>
         </Card>
       )}
@@ -146,28 +146,28 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
           <CardHeader>
             <CardTitle className="text-primary flex items-center gap-2">
               <Users className="w-5 h-5" />
-              {translatePost("Lifestyle & Status")}
+              {uiText("Lifestyle & Status")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {user.relationshipStatus && (
               <DetailSection 
-                title={translatePost("Relationship Status")} 
-                singleValue={translatePost(formatRelationshipStatus(user.relationshipStatus))} 
+                title={uiText("Relationship Status")} 
+                singleValue={formatRelationshipStatus(user.relationshipStatus)} 
                 icon={Heart} 
               />
             )}
             {user.petPreferences && (
               <DetailSection 
-                title={translatePost("Pet Preferences")} 
-                singleValue={translatePost(formatPetPreferences(user.petPreferences))} 
+                title={uiText("Pet Preferences")} 
+                singleValue={formatPetPreferences(user.petPreferences)} 
                 icon={PawPrint} 
               />
             )}
             {user.lifestyle && (
               <DetailSection 
-                title={translatePost("Lifestyle")} 
-                singleValue={translatePost(formatLifestyle(user.lifestyle))} 
+                title={uiText("Lifestyle")} 
+                singleValue={formatLifestyle(user.lifestyle)} 
                 icon={Users} 
               />
             )}
@@ -181,12 +181,12 @@ export function ProfileDetailsDisplay({ user }: ProfileDetailsDisplayProps) {
           <CardHeader>
             <CardTitle className="text-primary flex items-center gap-2">
               <Film className="w-5 h-5" />
-              {translatePost("Entertainment")}
+              {uiText("Entertainment")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <DetailSection title={translatePost("Movies")} items={user.favoriteMovies} icon={Film} />
-            <DetailSection title={translatePost("Books")} items={user.favoriteBooks} icon={BookOpen} />
+            <DetailSection title={uiText("Movies")} items={user.favoriteMovies} icon={Film} />
+            <DetailSection title={uiText("Books")} items={user.favoriteBooks} icon={BookOpen} />
           </CardContent>
         </Card>
       )}

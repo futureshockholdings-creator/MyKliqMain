@@ -12,10 +12,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Clock, Users, Check, Trash2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { usePostTranslation } from "@/lib/translationService";
 import { EditPollDialog } from "@/components/EditPollDialog";
 import { BorderedAvatar } from "@/components/BorderedAvatar";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber, formatRelativeDate } from "@/i18n/formatting";
 
 interface PollOption {
   option: string;
@@ -54,6 +55,7 @@ interface PollCardProps {
 }
 
 export function PollCard({ poll }: PollCardProps) {
+  useUiLanguage();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(
     poll.userVote?.selectedOption ?? null
@@ -84,15 +86,15 @@ export function PollCard({ poll }: PollCardProps) {
       await queryClient.refetchQueries({ queryKey: ["/api/polls", "mine"] });
       await queryClient.refetchQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
-        title: "Poll deleted",
-        description: "Your poll has been removed",
+        title: uiText("Poll deleted"),
+        description: uiText("Your poll has been removed"),
       });
     },
     onError: (error) => {
       console.error("Error deleting poll:", error);
       toast({
-        title: "Failed to delete poll",
-        description: "Please try again",
+        title: uiText("Failed to delete poll"),
+        description: uiText("Please try again"),
         variant: "destructive",
       });
     },
@@ -135,8 +137,8 @@ export function PollCard({ poll }: PollCardProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       
       toast({
-        title: "Vote recorded!",
-        description: "Your vote has been saved successfully",
+        title: uiText("Vote recorded!"),
+        description: uiText("Your vote has been saved successfully"),
       });
     },
     onError: (error, option, context) => {
@@ -147,8 +149,8 @@ export function PollCard({ poll }: PollCardProps) {
       }
       console.error("Error voting:", error);
       toast({
-        title: "Failed to vote",
-        description: "Please try again",
+        title: uiText("Failed to vote"),
+        description: uiText("Please try again"),
         variant: "destructive",
       });
     },
@@ -184,7 +186,7 @@ export function PollCard({ poll }: PollCardProps) {
               className="text-xs"
               data-testid={`badge-poll-status-${poll.id}`}
             >
-              {isExpired ? "Expired" : "Active"}
+              {isExpired ? uiText("Expired") : uiText("Active")}
             </Badge>
             {isAuthor && (
               <>
@@ -209,7 +211,7 @@ export function PollCard({ poll }: PollCardProps) {
                       size="sm"
                       disabled={deletePollMutation.isPending}
                       className="h-8 w-8 p-0 text-gray-500 hover:text-red-500 hover:bg-red-50"
-                      aria-label="Delete poll"
+                      aria-label={uiText("Delete poll")}
                       data-testid={`button-delete-poll-${poll.id}`}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -217,9 +219,9 @@ export function PollCard({ poll }: PollCardProps) {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete this poll?</AlertDialogTitle>
+                      <AlertDialogTitle>{uiText("Delete this poll?")}</AlertDialogTitle>
                       <AlertDialogDescription className="break-words">
-                        This will permanently delete “{poll.title}” and all its votes. This can’t be undone.
+                        {uiText("This will permanently delete “{{title}}” and all its votes. This can’t be undone.", { title: poll.title })}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -227,7 +229,7 @@ export function PollCard({ poll }: PollCardProps) {
                         disabled={deletePollMutation.isPending}
                         data-testid={`button-cancel-delete-poll-${poll.id}`}
                       >
-                        Cancel
+                        {uiText("Cancel")}
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={event => {
@@ -238,7 +240,7 @@ export function PollCard({ poll }: PollCardProps) {
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         data-testid={`button-confirm-delete-poll-${poll.id}`}
                       >
-                        {deletePollMutation.isPending ? "Deleting…" : "Delete poll"}
+                        {deletePollMutation.isPending ? uiText("Deleting…") : uiText("Delete poll")}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -264,14 +266,14 @@ export function PollCard({ poll }: PollCardProps) {
                 <Clock className="w-3 h-3" />
                 <span>
                   {isExpired 
-                    ? `Expired ${formatDistanceToNow(new Date(poll.expiresAt))} ago`
-                    : `Expires ${formatDistanceToNow(new Date(poll.expiresAt))}`
+                    ? `${uiText("Expired")} ${formatRelativeDate(new Date(poll.expiresAt))}`
+                    : `${uiText("Expires")} ${formatRelativeDate(new Date(poll.expiresAt))}`
                   }
                 </span>
               </div>
               <div className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
-                <span>{totalVotes} votes</span>
+                <span>{uiText("{{count}} votes", { count: formatDisplayNumber(totalVotes) })}</span>
               </div>
             </div>
           </div>
@@ -315,11 +317,11 @@ export function PollCard({ poll }: PollCardProps) {
                 {showResults && (
                   <div
                     role="progressbar"
-                    aria-label={`Votes for ${option}`}
+                    aria-label={uiText("Votes for {{option}}", { option })}
                     aria-valuemin={0}
                     aria-valuemax={100}
                     aria-valuenow={percentage}
-                    aria-valuetext={`${percentage}% (${result?.votes || 0} votes)`}
+                    aria-valuetext={uiText("{{percent}}% ({{count}} votes)", { percent: formatDisplayNumber(percentage), count: formatDisplayNumber(result?.votes || 0) })}
                     className="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
                     data-testid={`progress-poll-option-${poll.id}-${index}`}
                   >

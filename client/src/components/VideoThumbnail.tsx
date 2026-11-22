@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Play, Video } from "lucide-react";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface VideoThumbnailProps {
   src: string;
@@ -9,6 +10,7 @@ interface VideoThumbnailProps {
 }
 
 export function VideoThumbnail({ src, className = "", onClick, posterUrl }: VideoThumbnailProps) {
+  useUiLanguage();
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(posterUrl || null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [thumbnailReady, setThumbnailReady] = useState(false);
@@ -123,7 +125,7 @@ export function VideoThumbnail({ src, className = "", onClick, posterUrl }: Vide
       {thumbnailUrl ? (
         <img
           src={thumbnailUrl}
-          alt="Video thumbnail"
+          alt={uiText("Video thumbnail")}
           className="w-full h-full object-cover"
         />
       ) : (

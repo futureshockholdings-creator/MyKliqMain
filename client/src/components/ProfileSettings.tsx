@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ChangePasswordForm } from "@/components/ChangePasswordForm";
 import { User, Heart, MapPin, Utensils, Music, Users, BookOpen, Film, Gamepad2, X, Plus, Settings, Calendar, Phone, Mail, AlertTriangle } from "lucide-react";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface ProfileSettingsProps {
   user: any;
@@ -51,6 +52,7 @@ const TagInput = ({
   onAddItem: (items: string[], setItems: (items: string[]) => void, newItem: string, setNewItem: (item: string) => void) => void;
   onRemoveItem: (items: string[], setItems: (items: string[]) => void, itemToRemove: string) => void;
 }) => {
+  useUiLanguage();
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewItem(e.target.value);
   };
@@ -74,13 +76,13 @@ const TagInput = ({
     <div className="space-y-2">
       <Label className="text-foreground flex items-center gap-2">
         <Icon className="w-4 h-4" />
-        {label}
+        {uiText(label)}
       </Label>
       <div className="flex gap-2">
         <Input
           value={newItem}
           onChange={handleInputChange}
-          placeholder={placeholder}
+          placeholder={uiText(placeholder)}
           className="bg-white border-gray-300 text-black flex-1"
           onKeyDown={handleKeyDown}
           data-testid={`input-${label.toLowerCase().replace(/\s+/g, '-')}`}
@@ -121,6 +123,7 @@ const TagInput = ({
 };
 
 export function ProfileSettings({ user }: ProfileSettingsProps) {
+  useUiLanguage();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -195,16 +198,16 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Profile updated",
-        description: "Your profile has been saved successfully.",
+        title: uiText("Profile updated"),
+        description: uiText("Your profile has been saved successfully."),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setIsOpen(false);
     },
     onError: (error: any) => {
       toast({
-        title: "Update failed",
-        description: error.message || "Failed to update profile",
+        title: uiText("Update failed"),
+        description: error.message || uiText("Failed to update profile"),
         variant: "destructive",
       });
     },
@@ -213,8 +216,8 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   const handleSave = () => {
     if (!birthdate) {
       toast({
-        title: "Birthdate Required",
-        description: "Please provide your birthdate to save your profile.",
+        title: uiText("Birthdate Required"),
+        description: uiText("Please provide your birthdate to save your profile."),
         variant: "destructive",
       });
       return;
@@ -280,26 +283,26 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
           data-testid="button-edit-profile-settings"
         >
           <Settings className="w-4 h-4 mr-2" />
-          Profile Settings
+          {uiText("Profile Settings")}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="bg-card border-border max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-primary">Profile Settings</DialogTitle>
+          <DialogTitle className="text-primary">{uiText("Profile Settings")}</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Manage your basic information, interests, and personal details
+            {uiText("Manage your basic information, interests, and personal details")}
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="basic" className="min-w-0 max-w-full space-y-4">
-          <WrappingTabsList className="bg-muted" aria-label="Profile settings sections">
-            <TabsTrigger value="basic" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">Basic Info</TabsTrigger>
-            <TabsTrigger value="interests" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">Interests</TabsTrigger>
-            <TabsTrigger value="favorites" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">Favorites</TabsTrigger>
-            <TabsTrigger value="lifestyle" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">Lifestyle</TabsTrigger>
-            <TabsTrigger value="entertainment" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">Entertainment</TabsTrigger>
-            <TabsTrigger value="security" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">Security</TabsTrigger>
+          <WrappingTabsList className="bg-muted" aria-label={uiText("Profile settings sections")}>
+            <TabsTrigger value="basic" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">{uiText("Basic Info")}</TabsTrigger>
+            <TabsTrigger value="interests" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">{uiText("Interests")}</TabsTrigger>
+            <TabsTrigger value="favorites" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">{uiText("Favorites")}</TabsTrigger>
+            <TabsTrigger value="lifestyle" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">{uiText("Lifestyle")}</TabsTrigger>
+            <TabsTrigger value="entertainment" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">{uiText("Entertainment")}</TabsTrigger>
+            <TabsTrigger value="security" className="min-h-11 px-4 py-2 data-[state=active]:bg-primary/20">{uiText("Security")}</TabsTrigger>
           </WrappingTabsList>
 
           <TabsContent value="basic" className="space-y-4">
@@ -307,7 +310,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
               <CardHeader>
                 <CardTitle className="text-primary flex items-center gap-2">
                   <User className="w-5 h-5" />
-                  Basic Information
+                  {uiText("Basic Information")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -315,12 +318,12 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   <div className="space-y-2">
                     <Label className="text-foreground flex items-center gap-2">
                       <User className="w-4 h-4" />
-                      Bio
+                      {uiText("Bio")}
                     </Label>
                     <Textarea
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
-                      placeholder="Tell your kliq about yourself..."
+                      placeholder={uiText("Tell your kliq about yourself...")}
                       className="bg-white border-gray-300 text-black"
                       rows={3}
                       data-testid="textarea-bio"
@@ -330,12 +333,12 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   <div className="space-y-2">
                     <Label className="text-foreground flex items-center gap-2">
                       <Phone className="w-4 h-4" />
-                      Phone Number
+                      {uiText("Phone Number")}
                     </Label>
                     <Input
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="+1 (555) 123-4567"
+                      placeholder={uiText("+1 (555) 123-4567")}
                       className="bg-white border-gray-300 text-black"
                       data-testid="input-phone-number"
                     />
@@ -344,12 +347,12 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   <div className="space-y-2">
                     <Label className="text-foreground flex items-center gap-2">
                       <Users className="w-4 h-4" />
-                      Kliq Name
+                      {uiText("Kliq Name")}
                     </Label>
                     <Input
                       value={kliqName}
                       onChange={(e) => setKliqName(e.target.value)}
-                      placeholder="My Kliq"
+                      placeholder={uiText("My Kliq")}
                       className="bg-white border-gray-300 text-black"
                       data-testid="input-kliq-name"
                     />
@@ -358,7 +361,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   <div className="space-y-2">
                     <Label className="text-foreground flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
-                      Birthdate *
+                      {uiText("Birthdate *")}
                     </Label>
                     <Input
                       type="date"
@@ -378,14 +381,14 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
               <Alert className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
                 <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                 <AlertDescription className="text-yellow-800 dark:text-yellow-200">
-                  <strong>Security Update Required:</strong> Some of your security information uses an old format that can't be viewed by customer service. Please re-enter your {
-                    [
-                      securityStatus.hasLegacyData.pinNeedsUpdate && 'security PIN',
-                      securityStatus.hasLegacyData.answer1NeedsUpdate && 'first security answer',
-                      securityStatus.hasLegacyData.answer2NeedsUpdate && 'second security answer',
-                      securityStatus.hasLegacyData.answer3NeedsUpdate && 'third security answer'
+                  <strong>{uiText("Security Update Required:")}</strong> {uiText("Some of your security information uses an old format that can't be viewed by customer service. Please re-enter your {{fields}} below to enable customer service support.", {
+                    fields: [
+                      securityStatus.hasLegacyData.pinNeedsUpdate && uiText('security PIN'),
+                      securityStatus.hasLegacyData.answer1NeedsUpdate && uiText('first security answer'),
+                      securityStatus.hasLegacyData.answer2NeedsUpdate && uiText('second security answer'),
+                      securityStatus.hasLegacyData.answer3NeedsUpdate && uiText('third security answer')
                     ].filter(Boolean).join(', ')
-                  } below to enable customer service support.
+                  })}
                 </AlertDescription>
               </Alert>
             )}
@@ -395,19 +398,19 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
               <CardHeader>
                 <CardTitle className="text-primary flex items-center gap-2">
                   <Settings className="w-5 h-5" />
-                  Security Questions (Password Recovery)
+                  {uiText("Security Questions (Password Recovery)")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <Label className="text-foreground">
-                      1. What was your very first car you owned?
+                      {uiText("1. What was your very first car you owned?")}
                     </Label>
                     <Input
                       value={securityAnswer1}
                       onChange={(e) => setSecurityAnswer1(e.target.value)}
-                      placeholder="Enter your answer..."
+                      placeholder={uiText("Enter your answer...")}
                       className="bg-white border-gray-300 text-black"
                       data-testid="input-security-answer-1"
                     />
@@ -415,12 +418,12 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
 
                   <div className="space-y-2">
                     <Label className="text-foreground">
-                      2. What is your mother's maiden last name?
+                      {uiText("2. What is your mother's maiden last name?")}
                     </Label>
                     <Input
                       value={securityAnswer2}
                       onChange={(e) => setSecurityAnswer2(e.target.value)}
-                      placeholder="Enter your answer..."
+                      placeholder={uiText("Enter your answer...")}
                       className="bg-white border-gray-300 text-black"
                       data-testid="input-security-answer-2"
                     />
@@ -428,12 +431,12 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
 
                   <div className="space-y-2">
                     <Label className="text-foreground">
-                      3. What is the last name of your favorite teacher in school?
+                      {uiText("3. What is the last name of your favorite teacher in school?")}
                     </Label>
                     <Input
                       value={securityAnswer3}
                       onChange={(e) => setSecurityAnswer3(e.target.value)}
-                      placeholder="Enter your answer..."
+                      placeholder={uiText("Enter your answer...")}
                       className="bg-white border-gray-300 text-black"
                       data-testid="input-security-answer-3"
                     />
@@ -441,7 +444,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
 
                   <div className="space-y-2">
                     <Label className="text-foreground">
-                      4-Digit Security PIN
+                      {uiText("4-Digit Security PIN")}
                     </Label>
                     <Input
                       type="password"
@@ -451,13 +454,13 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                         const value = e.target.value.replace(/\D/g, '').substring(0, 4);
                         setSecurityPin(value);
                       }}
-                      placeholder="Enter 4-digit PIN..."
+                      placeholder={uiText("Enter 4-digit PIN...")}
                       className="bg-white border-gray-300 text-black"
                       maxLength={10}
                       data-testid="input-security-pin"
                     />
                     <p className="text-xs text-muted-foreground">
-                      This PIN adds an extra layer of security for password recovery, DO NOT SHARE THIS PIN WITH ANYONE
+                      {uiText("This PIN adds an extra layer of security for password recovery, DO NOT SHARE THIS PIN WITH ANYONE")}
                     </p>
                   </div>
                 </div>
@@ -470,28 +473,28 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
               <CardHeader>
                 <CardTitle className="text-primary flex items-center gap-2">
                   <Heart className="w-5 h-5" />
-                  Your Interests
+                  {uiText("Your Interests")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <TagInput
-                  label="Interests"
+                  label={uiText("Interests")}
                   items={interests}
                   setItems={setInterests}
                   newItem={newInterest}
                   setNewItem={setNewInterest}
-                  placeholder="e.g., Photography, Travel, Technology"
+                  placeholder={uiText("e.g., Photography, Travel, Technology")}
                   icon={Heart}
                   onAddItem={addItem}
                   onRemoveItem={removeItem}
                 />
                 <TagInput
-                  label="Hobbies"
+                  label={uiText("Hobbies")}
                   items={hobbies}
                   setItems={setHobbies}
                   newItem={newHobby}
                   setNewItem={setNewHobby}
-                  placeholder="e.g., Reading, Gaming, Cooking"
+                  placeholder={uiText("e.g., Reading, Gaming, Cooking")}
                   icon={Gamepad2}
                   onAddItem={addItem}
                   onRemoveItem={removeItem}
@@ -505,39 +508,39 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
               <CardHeader>
                 <CardTitle className="text-primary flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
-                  Favorites
+                  {uiText("Favorites")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <TagInput
-                  label="Favorite Locations"
+                  label={uiText("Favorite Locations")}
                   items={favoriteLocations}
                   setItems={setFavoriteLocations}
                   newItem={newLocation}
                   setNewItem={setNewLocation}
-                  placeholder="e.g., Paris, Tokyo, New York"
+                  placeholder={uiText("e.g., Paris, Tokyo, New York")}
                   icon={MapPin}
                   onAddItem={addItem}
                   onRemoveItem={removeItem}
                 />
                 <TagInput
-                  label="Favorite Foods"
+                  label={uiText("Favorite Foods")}
                   items={favoriteFoods}
                   setItems={setFavoriteFoods}
                   newItem={newFood}
                   setNewItem={setNewFood}
-                  placeholder="e.g., Pizza, Sushi, Tacos"
+                  placeholder={uiText("e.g., Pizza, Sushi, Tacos")}
                   icon={Utensils}
                   onAddItem={addItem}
                   onRemoveItem={removeItem}
                 />
                 <TagInput
-                  label="Music Genres"
+                  label={uiText("Music Genres")}
                   items={musicGenres}
                   setItems={setMusicGenres}
                   newItem={newGenre}
                   setNewItem={setNewGenre}
-                  placeholder="e.g., Pop, Rock, Hip-Hop"
+                  placeholder={uiText("e.g., Pop, Rock, Hip-Hop")}
                   icon={Music}
                   onAddItem={addItem}
                   onRemoveItem={removeItem}
@@ -551,7 +554,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
               <CardHeader>
                 <CardTitle className="text-primary flex items-center gap-2">
                   <Users className="w-5 h-5" />
-                  Lifestyle & Status
+                  {uiText("Lifestyle & Status")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -559,51 +562,51 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
                   <div className="space-y-2">
                     <Label className="text-foreground flex items-center gap-2">
                       <Heart className="w-4 h-4" />
-                      Relationship Status
+                      {uiText("Relationship Status")}
                     </Label>
                     <Select value={relationshipStatus} onValueChange={setRelationshipStatus}>
                       <SelectTrigger className="bg-white border-gray-300 text-black" data-testid="select-relationship-status">
-                        <SelectValue placeholder="Select relationship status" />
+                        <SelectValue placeholder={uiText("Select relationship status")} />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border">
-                        <SelectItem value="single">Single</SelectItem>
-                        <SelectItem value="taken">Taken</SelectItem>
-                        <SelectItem value="married">Married</SelectItem>
-                        <SelectItem value="complicated">It's complicated</SelectItem>
-                        <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                        <SelectItem value="single">{uiText("Single")}</SelectItem>
+                        <SelectItem value="taken">{uiText("Taken")}</SelectItem>
+                        <SelectItem value="married">{uiText("Married")}</SelectItem>
+                        <SelectItem value="complicated">{uiText("It's complicated")}</SelectItem>
+                        <SelectItem value="prefer-not-to-say">{uiText("Prefer not to say")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-foreground">Pet Preferences</Label>
+                    <Label className="text-foreground">{uiText("Pet Preferences")}</Label>
                     <Select value={petPreferences} onValueChange={setPetPreferences}>
                       <SelectTrigger className="bg-white border-gray-300 text-black" data-testid="select-pet-preferences">
-                        <SelectValue placeholder="Select pet preferences" />
+                        <SelectValue placeholder={uiText("Select pet preferences")} />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border">
-                        <SelectItem value="dogs">Dogs</SelectItem>
-                        <SelectItem value="cats">Cats</SelectItem>
-                        <SelectItem value="both">Both Dogs & Cats</SelectItem>
-                        <SelectItem value="other">Other Pets</SelectItem>
-                        <SelectItem value="none">No Pets</SelectItem>
+                        <SelectItem value="dogs">{uiText("Dogs")}</SelectItem>
+                        <SelectItem value="cats">{uiText("Cats")}</SelectItem>
+                        <SelectItem value="both">{uiText("Both Dogs & Cats")}</SelectItem>
+                        <SelectItem value="other">{uiText("Other Pets")}</SelectItem>
+                        <SelectItem value="none">{uiText("No Pets")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-foreground">Lifestyle</Label>
+                    <Label className="text-foreground">{uiText("Lifestyle")}</Label>
                     <Select value={lifestyle} onValueChange={setLifestyle}>
                       <SelectTrigger className="bg-white border-gray-300 text-black" data-testid="select-lifestyle">
-                        <SelectValue placeholder="Select lifestyle" />
+                        <SelectValue placeholder={uiText("Select lifestyle")} />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-border">
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="relaxed">Relaxed</SelectItem>
-                        <SelectItem value="adventurous">Adventurous</SelectItem>
-                        <SelectItem value="homebody">Homebody</SelectItem>
-                        <SelectItem value="social">Social</SelectItem>
-                        <SelectItem value="creative">Creative</SelectItem>
+                        <SelectItem value="active">{uiText("Active")}</SelectItem>
+                        <SelectItem value="relaxed">{uiText("Relaxed")}</SelectItem>
+                        <SelectItem value="adventurous">{uiText("Adventurous")}</SelectItem>
+                        <SelectItem value="homebody">{uiText("Homebody")}</SelectItem>
+                        <SelectItem value="social">{uiText("Social")}</SelectItem>
+                        <SelectItem value="creative">{uiText("Creative")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -617,28 +620,28 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
               <CardHeader>
                 <CardTitle className="text-primary flex items-center gap-2">
                   <Film className="w-5 h-5" />
-                  Entertainment
+                  {uiText("Entertainment")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <TagInput
-                  label="Favorite Movies"
+                  label={uiText("Favorite Movies")}
                   items={favoriteMovies}
                   setItems={setFavoriteMovies}
                   newItem={newMovie}
                   setNewItem={setNewMovie}
-                  placeholder="e.g., The Matrix, Inception, Avengers"
+                  placeholder={uiText("e.g., The Matrix, Inception, Avengers")}
                   icon={Film}
                   onAddItem={addItem}
                   onRemoveItem={removeItem}
                 />
                 <TagInput
-                  label="Favorite Books"
+                  label={uiText("Favorite Books")}
                   items={favoriteBooks}
                   setItems={setFavoriteBooks}
                   newItem={newBook}
                   setNewItem={setNewBook}
-                  placeholder="e.g., Harry Potter, 1984, The Hobbit"
+                  placeholder={uiText("e.g., Harry Potter, 1984, The Hobbit")}
                   icon={BookOpen}
                   onAddItem={addItem}
                   onRemoveItem={removeItem}
@@ -659,7 +662,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
             className="border-border text-foreground hover:bg-muted"
             data-testid="button-cancel-profile-settings"
           >
-            Cancel
+            {uiText("Cancel")}
           </Button>
           <Button
             onClick={handleSave}
@@ -667,7 +670,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
             data-testid="button-save-profile-settings"
           >
-            {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+            {updateProfileMutation.isPending ? uiText("Saving...") : uiText("Save Changes")}
           </Button>
         </div>
       </DialogContent>

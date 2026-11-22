@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber } from "@/i18n/formatting";
 
 interface MediaItem {
   id?: string;
@@ -29,6 +31,7 @@ export function ImageGallery({
   onImageClick,
   videoThumbnailUrl
 }: ImageGalleryProps) {
+  useUiLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -102,7 +105,10 @@ export function ImageGallery({
       ) : (
         <img 
           src={resolveUrl(currentMedia.mediaUrl)} 
-          alt={`Media ${currentIndex + 1} of ${totalItems}`}
+          alt={uiText("Media {{current}} of {{total}}", {
+            current: formatDisplayNumber(currentIndex + 1),
+            total: formatDisplayNumber(totalItems),
+          })}
           className={`w-full h-full object-cover ${onImageClick ? 'cursor-pointer' : ''}`}
           loading="lazy"
           onClick={() => onImageClick?.(currentIndex, allMedia)}

@@ -9,6 +9,7 @@ import { extractYouTubeUrlsFromText } from '@/lib/youtubeUtils';
 import { extractTwitchUrlsFromText } from '@/lib/twitchUtils';
 import { extractSocialMediaUrlsFromText } from '@/lib/socialMediaUtils';
 import { extractGenericUrlsFromText } from '@/lib/linkPreviewUtils';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface PostContentWithEmbedsProps {
   content: string;
@@ -23,6 +24,7 @@ export function PostContentWithEmbeds({
   textClassName = "text-foreground mb-3 whitespace-pre-wrap",
   embedSpacing = "mb-3",
 }: PostContentWithEmbedsProps) {
+  useUiLanguage();
   const { cleanText, youtubeUrls, twitchUrls, socialUrls, genericUrls } = useMemo(() => {
     const { cleanText: ytClean, youtubeUrls } = extractYouTubeUrlsFromText(content);
     const { cleanText: twClean, twitchUrls } = extractTwitchUrlsFromText(ytClean);
@@ -39,7 +41,7 @@ export function PostContentWithEmbeds({
         isEventPost ? (
           <Link href="/events" className="block cursor-pointer hover:bg-primary/5 rounded p-2 -m-2 transition-colors">
             <p className={textClassName}>{translateFn(cleanText)}</p>
-            <p className="text-xs text-muted-foreground italic">Click to view event details and manage attendance</p>
+            <p className="text-xs text-muted-foreground italic">{uiText("Click to view event details and manage attendance")}</p>
           </Link>
         ) : (
           <p className={textClassName}>

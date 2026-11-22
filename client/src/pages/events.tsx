@@ -18,12 +18,16 @@ import { cn } from "@/lib/utils";
 import { MediaUpload } from "@/components/MediaUpload";
 import { PageWrapper } from "@/components/PageWrapper";
 import { NearbyActivitiesCarousel } from "@/components/NearbyActivitiesCarousel";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber } from "@/i18n/formatting";
+import { formatNativeDate } from "@/i18n/formatting";
 
 interface CountdownProps {
   targetDate: string;
 }
 
 function Countdown({ targetDate }: CountdownProps) {
+  useUiLanguage();
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isExpired, setIsExpired] = useState(false);
 
@@ -57,7 +61,7 @@ function Countdown({ targetDate }: CountdownProps) {
     return (
       <div className="text-center py-2">
         <Badge variant="secondary" className="bg-muted text-muted-foreground">
-          Event Started
+          {uiText("Event Started")}
         </Badge>
       </div>
     );
@@ -66,26 +70,27 @@ function Countdown({ targetDate }: CountdownProps) {
   return (
     <div className="grid grid-cols-4 gap-2 text-center">
       <div className="bg-gradient-to-br from-primary to-secondary rounded-lg p-2">
-        <div className="text-lg font-bold text-primary-foreground">{timeLeft.days}</div>
-        <div className="text-xs text-primary-foreground/80">Days</div>
+        <div className="text-lg font-bold text-primary-foreground">{formatDisplayNumber(timeLeft.days)}</div>
+        <div className="text-xs text-primary-foreground/80">{uiText("Days")}</div>
       </div>
       <div className="bg-gradient-to-br from-secondary to-mykliq-blue rounded-lg p-2">
-        <div className="text-lg font-bold text-secondary-foreground">{timeLeft.hours}</div>
-        <div className="text-xs text-secondary-foreground/80">Hours</div>
+        <div className="text-lg font-bold text-secondary-foreground">{formatDisplayNumber(timeLeft.hours)}</div>
+        <div className="text-xs text-secondary-foreground/80">{uiText("Hours")}</div>
       </div>
       <div className="bg-gradient-to-br from-mykliq-green to-mykliq-purple rounded-lg p-2">
-        <div className="text-lg font-bold text-foreground">{timeLeft.minutes}</div>
-        <div className="text-xs text-foreground/80">Mins</div>
+        <div className="text-lg font-bold text-foreground">{formatDisplayNumber(timeLeft.minutes)}</div>
+        <div className="text-xs text-foreground/80">{uiText("Mins")}</div>
       </div>
       <div className="bg-gradient-to-br from-mykliq-orange to-primary rounded-lg p-2">
-        <div className="text-lg font-bold text-foreground">{timeLeft.seconds}</div>
-        <div className="text-xs text-foreground/80">Secs</div>
+        <div className="text-lg font-bold text-foreground">{formatDisplayNumber(timeLeft.seconds)}</div>
+        <div className="text-xs text-foreground/80">{uiText("Secs")}</div>
       </div>
     </div>
   );
 }
 
 export default function Events() {
+  useUiLanguage();
   const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [showEditEvent, setShowEditEvent] = useState(false);
   const [showMediaUpload, setShowMediaUpload] = useState(false);
@@ -141,15 +146,15 @@ export default function Events() {
         mediaType: null,
       });
       toast({
-        title: "Event created!",
-        description: "Your event has been shared with your kliq on the Headlines",
+        title: uiText("Event created!"),
+        description: uiText("Your event has been shared with your kliq on the Headlines"),
       });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: uiText("Unauthorized"),
+          description: uiText("You are logged out. Logging in again..."),
           variant: "destructive",
         });
         setTimeout(() => {
@@ -158,8 +163,8 @@ export default function Events() {
         return;
       }
       toast({
-        title: "Error",
-        description: "Failed to create event",
+        title: uiText("Error"),
+        description: uiText("Failed to create event"),
         variant: "destructive",
       });
     },
@@ -188,15 +193,15 @@ export default function Events() {
       setShowEditEvent(false);
       setEditingEvent(null);
       toast({
-        title: "Event updated!",
-        description: "Your event changes have been saved",
+        title: uiText("Event updated!"),
+        description: uiText("Your event changes have been saved"),
       });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: uiText("Unauthorized"),
+          description: uiText("You are logged out. Logging in again..."),
           variant: "destructive",
         });
         setTimeout(() => {
@@ -205,8 +210,8 @@ export default function Events() {
         return;
       }
       toast({
-        title: "Error",
-        description: "Failed to update event",
+        title: uiText("Error"),
+        description: uiText("Failed to update event"),
         variant: "destructive",
       });
     },
@@ -235,15 +240,15 @@ export default function Events() {
       setShowEditEvent(false);
       setEditingEvent(null);
       toast({
-        title: "Event deleted!",
-        description: "Your event has been cancelled and removed",
+        title: uiText("Event deleted!"),
+        description: uiText("Your event has been cancelled and removed"),
       });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: uiText("Unauthorized"),
+          description: uiText("You are logged out. Logging in again..."),
           variant: "destructive",
         });
         setTimeout(() => {
@@ -252,8 +257,8 @@ export default function Events() {
         return;
       }
       toast({
-        title: "Error",
-        description: "Failed to delete event",
+        title: uiText("Error"),
+        description: uiText("Failed to delete event"),
         variant: "destructive",
       });
     },
@@ -276,15 +281,15 @@ export default function Events() {
       await queryClient.refetchQueries({ queryKey: ["/api/events"], type: 'active' });
       queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
       toast({
-        title: "Attendance updated!",
-        description: "Your attendance status has been updated",
+        title: uiText("Attendance updated!"),
+        description: uiText("Your attendance status has been updated"),
       });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: uiText("Unauthorized"),
+          description: uiText("You are logged out. Logging in again..."),
           variant: "destructive",
         });
         setTimeout(() => {
@@ -293,8 +298,8 @@ export default function Events() {
         return;
       }
       toast({
-        title: "Error",
-        description: "Failed to update attendance",
+        title: uiText("Error"),
+        description: uiText("Failed to update attendance"),
         variant: "destructive",
       });
     },
@@ -303,8 +308,8 @@ export default function Events() {
   const handleCreateEvent = () => {
     if (!newEvent.title.trim() || !newEvent.eventDate) {
       toast({
-        title: "Missing information",
-        description: "Please provide at least a title and date for your event",
+        title: uiText("Missing information"),
+        description: uiText("Please provide at least a title and date for your event"),
         variant: "destructive",
       });
       return;
@@ -332,8 +337,8 @@ export default function Events() {
   const handleUpdateEvent = () => {
     if (!editingEvent.title.trim() || !editingEvent.eventDate) {
       toast({
-        title: "Missing information",
-        description: "Please provide at least a title and date for your event",
+        title: uiText("Missing information"),
+        description: uiText("Please provide at least a title and date for your event"),
         variant: "destructive",
       });
       return;
@@ -383,8 +388,8 @@ export default function Events() {
     }
     setShowMediaUpload(false);
     toast({
-      title: "Media uploaded!",
-      description: "Media has been attached to your event",
+      title: uiText("Media uploaded!"),
+      description: uiText("Media has been attached to your event"),
     });
   };
 
@@ -397,14 +402,14 @@ export default function Events() {
     const date = new Date(dateString);
     // Ensure we display in the user's local timezone
     return {
-      date: date.toLocaleDateString("en-US", { 
+      date: formatNativeDate(date, { 
         weekday: 'long', 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric',
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
       }),
-      time: date.toLocaleTimeString("en-US", { 
+      time: formatNativeDate(date, { 
         hour: '2-digit', 
         minute: '2-digit',
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -436,8 +441,8 @@ export default function Events() {
       <div className="w-full max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Events</h1>
-          <p className="text-muted-foreground">Create and join events with your kliq</p>
+            <h1 className="text-2xl font-bold text-foreground">{uiText("Events")}</h1>
+          <p className="text-muted-foreground">{uiText("Create and join events with your kliq")}</p>
         </div>
         
         <Dialog open={showCreateEvent} onOpenChange={setShowCreateEvent}>
@@ -445,34 +450,34 @@ export default function Events() {
           <DialogTrigger asChild>
             <Button className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">
               <Plus className="w-4 h-4 mr-2" />
-              Create Event
+              {uiText("Create Event")}
             </Button>
           </DialogTrigger>
           <DialogContent className="bg-white border-border max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-black">Create New Event</DialogTitle>
+              <DialogTitle className="text-black">{uiText("Create New Event")}</DialogTitle>
               <DialogDescription className="text-gray-600">
-                Create a new event for your kliq. Add details, set date and time, and invite members.
+                {uiText("Create a new event for your kliq. Add details, set date and time, and invite members.")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label className="text-gray-700">Event Title</Label>
+                <Label className="text-gray-700">{uiText("Event Title")}</Label>
                 <Input
                   value={newEvent.title}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter event title"
+                  placeholder={uiText("Enter event title")}
                   className="bg-white border-gray-300 text-black placeholder:text-gray-400"
                   data-testid="input-event-title"
                 />
               </div>
               
               <div>
-                <Label className="text-gray-700">Description</Label>
+                <Label className="text-gray-700">{uiText("Description")}</Label>
                 <Textarea
                   value={newEvent.description}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="What's this event about?"
+                  placeholder={uiText("What's this event about?")}
                   className="bg-white border-gray-300 text-black placeholder:text-gray-400 resize-none"
                   rows={3}
                   data-testid="input-event-description"
@@ -480,18 +485,18 @@ export default function Events() {
               </div>
 
               <div>
-                <Label className="text-gray-700">Location</Label>
+                <Label className="text-gray-700">{uiText("Location")}</Label>
                 <Input
                   value={newEvent.location}
                   onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
-                  placeholder="Where will this happen?"
+                  placeholder={uiText("Where will this happen?")}
                   className="bg-white border-gray-300 text-black placeholder:text-gray-400"
                   data-testid="input-event-location"
                 />
               </div>
 
               <div>
-                <Label className="text-gray-700">Date & Time</Label>
+                <Label className="text-gray-700">{uiText("Date & Time")}</Label>
                 <Input
                   type="datetime-local"
                   value={newEvent.eventDate}
@@ -503,7 +508,7 @@ export default function Events() {
               </div>
 
               <div>
-                <Label className="text-gray-700">Media</Label>
+                <Label className="text-gray-700">{uiText("Media")}</Label>
                 <div className="flex space-x-2">
                   <Button
                     type="button"
@@ -512,11 +517,11 @@ export default function Events() {
                     className="border-gray-300 text-gray-700 hover:bg-gray-100"
                   >
                     <ImageIcon className="w-4 h-4 mr-2" />
-                    Add Photo/Video
+                    {uiText("Add Photo/Video")}
                   </Button>
                   {newEvent.mediaUrl && (
                     <Badge className="bg-mykliq-green text-white">
-                      Media attached
+                      {uiText("Media attached")}
                     </Badge>
                   )}
                 </div>
@@ -529,14 +534,14 @@ export default function Events() {
                   className="flex-1 bg-gradient-to-r from-primary to-secondary text-primary-foreground"
                   data-testid="button-create-event"
                 >
-                  {createEventMutation.isPending ? "Creating..." : "Create Event"}
+                  {createEventMutation.isPending ? uiText("Creating...") : uiText("Create Event")}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setShowCreateEvent(false)}
                   className="border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
-                  Cancel
+                  {uiText("Cancel")}
                 </Button>
               </div>
             </div>
@@ -547,29 +552,29 @@ export default function Events() {
         <Dialog open={showEditEvent} onOpenChange={setShowEditEvent}>
           <DialogContent className="bg-white border-border max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-black">Edit Event</DialogTitle>
+              <DialogTitle className="text-black">{uiText("Edit Event")}</DialogTitle>
               <DialogDescription className="text-gray-600">
-                Update event details, change date and time, or modify the description and location.
+                {uiText("Update event details, change date and time, or modify the description and location.")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label className="text-gray-700">Event Title</Label>
+                <Label className="text-gray-700">{uiText("Event Title")}</Label>
                 <Input
                   value={editingEvent?.title || ""}
                   onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter event title"
+                  placeholder={uiText("Enter event title")}
                   className="bg-white border-gray-300 text-black placeholder:text-gray-400"
                   data-testid="input-edit-event-title"
                 />
               </div>
               
               <div>
-                <Label className="text-gray-700">Description</Label>
+                <Label className="text-gray-700">{uiText("Description")}</Label>
                 <Textarea
                   value={editingEvent?.description || ""}
                   onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, description: e.target.value }))}
-                  placeholder="What's this event about?"
+                  placeholder={uiText("What's this event about?")}
                   className="bg-white border-gray-300 text-black placeholder:text-gray-400 resize-none"
                   rows={3}
                   data-testid="input-edit-event-description"
@@ -577,18 +582,18 @@ export default function Events() {
               </div>
 
               <div>
-                <Label className="text-gray-700">Location</Label>
+                <Label className="text-gray-700">{uiText("Location")}</Label>
                 <Input
                   value={editingEvent?.location || ""}
                   onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, location: e.target.value }))}
-                  placeholder="Where will this happen?"
+                  placeholder={uiText("Where will this happen?")}
                   className="bg-white border-gray-300 text-black placeholder:text-gray-400"
                   data-testid="input-edit-event-location"
                 />
               </div>
 
               <div>
-                <Label className="text-gray-700">Date & Time</Label>
+                <Label className="text-gray-700">{uiText("Date & Time")}</Label>
                 <Input
                   type="datetime-local"
                   value={editingEvent?.eventDate || ""}
@@ -600,7 +605,7 @@ export default function Events() {
               </div>
 
               <div>
-                <Label className="text-gray-700">Media</Label>
+                <Label className="text-gray-700">{uiText("Media")}</Label>
                 <div className="flex space-x-2">
                   <Button
                     type="button"
@@ -609,11 +614,11 @@ export default function Events() {
                     className="border-gray-300 text-gray-700 hover:bg-gray-100"
                   >
                     <ImageIcon className="w-4 h-4 mr-2" />
-                    {editingEvent?.mediaUrl ? "Change Media" : "Add Photo/Video"}
+                    {editingEvent?.mediaUrl ? uiText("Change Media") : uiText("Add Photo/Video")}
                   </Button>
                   {editingEvent?.mediaUrl && (
                     <Badge className="bg-mykliq-green text-white">
-                      Media attached
+                      {uiText("Media attached")}
                     </Badge>
                   )}
                 </div>
@@ -626,7 +631,7 @@ export default function Events() {
                   className="flex-1 bg-gradient-to-r from-primary to-secondary text-primary-foreground"
                   data-testid="button-update-event"
                 >
-                  {updateEventMutation.isPending ? "Updating..." : "Update Event"}
+                  {updateEventMutation.isPending ? uiText("Updating...") : uiText("Update Event")}
                 </Button>
                 <Button
                   onClick={handleDeleteEvent}
@@ -635,14 +640,14 @@ export default function Events() {
                   className="bg-red-600 hover:bg-red-700 text-white"
                   data-testid="button-delete-event"
                 >
-                  {deleteEventMutation.isPending ? "Deleting..." : "Delete"}
+                  {deleteEventMutation.isPending ? uiText("Deleting...") : uiText("Delete")}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setShowEditEvent(false)}
                   className="border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
-                  Cancel
+                  {uiText("Cancel")}
                 </Button>
               </div>
             </div>
@@ -653,14 +658,14 @@ export default function Events() {
         <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
           <DialogContent className="bg-white border-border max-w-sm">
             <DialogHeader>
-              <DialogTitle className="text-black">Confirm Delete</DialogTitle>
+              <DialogTitle className="text-black">{uiText("Confirm Delete")}</DialogTitle>
               <DialogDescription className="text-gray-600">
-                This action cannot be undone. The event will be permanently removed from your kliq.
+                {uiText("This action cannot be undone. The event will be permanently removed from your kliq.")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <p className="text-gray-700">
-                Are you sure you want to delete "{editingEvent?.title}"? This action cannot be undone.
+                {uiText('Are you sure you want to delete "{{title}}"? This action cannot be undone.', { title: editingEvent?.title ?? "" })}
               </p>
               <div className="flex space-x-2 pt-4">
                 <Button
@@ -670,14 +675,14 @@ export default function Events() {
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white"
                   data-testid="button-confirm-delete"
                 >
-                  {deleteEventMutation.isPending ? "Deleting..." : "Delete Event"}
+                  {deleteEventMutation.isPending ? uiText("Deleting...") : uiText("Delete Event")}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setShowDeleteConfirm(false)}
                   className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
-                  Cancel
+                  {uiText("Cancel")}
                 </Button>
               </div>
             </div>
@@ -691,15 +696,15 @@ export default function Events() {
         <Card className="bg-card border-border text-center">
           <CardContent className="p-8">
             <Calendar className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-bold text-foreground mb-2">No Events Yet</h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">{uiText("No Events Yet")}</h2>
             <p className="text-muted-foreground mb-4">
-              Create your first event to start planning with your kliq!
+              {uiText("Create your first event to start planning with your kliq!")}
             </p>
             <Button
               onClick={() => setShowCreateEvent(true)}
               className="bg-gradient-to-r from-primary to-secondary text-primary-foreground"
             >
-              Create Your First Event
+              {uiText("Create Your First Event")}
             </Button>
           </CardContent>
         </Card>
@@ -723,14 +728,14 @@ export default function Events() {
                       <Avatar className="w-12 h-12 border-2 border-primary">
                         <AvatarImage src={resolveAssetUrl(event.author.profileImageUrl)} />
                         <AvatarFallback className="bg-muted text-muted-foreground">
-                          {event.author.firstName?.[0] || "U"}
+                          {event.author.firstName?.[0] || uiText("U")}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <p className="font-semibold text-foreground">
                           {event.author.firstName} {event.author.lastName}
                         </p>
-                        <p className="text-xs text-muted-foreground">Event Host</p>
+                        <p className="text-xs text-muted-foreground">{uiText("Event Host")}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -744,9 +749,9 @@ export default function Events() {
                             data-testid={`button-edit-event-${event.id}`}
                           >
                             <Edit className="w-3 h-3 mr-1" />
-                            Edit
+                            {uiText("Edit")}
                           </Button>
-                          <Badge className="bg-primary text-primary-foreground">Your Event</Badge>
+                          <Badge className="bg-primary text-primary-foreground">{uiText("Your Event")}</Badge>
                         </>
                       )}
                     </div>
@@ -774,7 +779,7 @@ export default function Events() {
                         ) : (
                           <img 
                             src={event.mediaUrl} 
-                            alt="Event media" 
+                            alt={uiText("Event media")} 
                             className="w-full max-h-64 object-cover"
                           />
                         )}
@@ -785,7 +790,7 @@ export default function Events() {
                       <div>
                         <div className="flex items-center text-secondary mb-2">
                           <Calendar className="w-4 h-4 mr-2" />
-                          <span className="text-sm font-medium">Date & Time</span>
+                          <span className="text-sm font-medium">{uiText("Date & Time")}</span>
                         </div>
                         <p className="text-foreground font-medium">{date}</p>
                         <p className="text-muted-foreground">{time}</p>
@@ -795,7 +800,7 @@ export default function Events() {
                         <div>
                           <div className="flex items-center text-mykliq-green mb-2">
                             <MapPin className="w-4 h-4 mr-2" />
-                            <span className="text-sm font-medium">Location</span>
+                            <span className="text-sm font-medium">{uiText("Location")}</span>
                           </div>
                           <p className="text-foreground">{event.location}</p>
                         </div>
@@ -806,41 +811,41 @@ export default function Events() {
                     <div>
                       <div className="flex items-center text-primary mb-3">
                         <Clock className="w-4 h-4 mr-2" />
-                        <span className="text-sm font-medium">Event Countdown</span>
+                        <span className="text-sm font-medium">{uiText("Event Countdown")}</span>
                       </div>
                       <Countdown targetDate={event.eventDate} />
                     </div>
 
                     {/* Attendance Statistics */}
                     <div className="bg-muted/30 rounded-lg p-4">
-                      <h4 className="text-sm font-semibold text-foreground mb-3">Attendance Summary</h4>
+                      <h4 className="text-sm font-semibold text-foreground mb-3">{uiText("Attendance Summary")}</h4>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="text-center">
                           <div className="flex items-center justify-center mb-1">
                             <Check className="w-4 h-4 text-green-600 mr-1" />
                             <span className="text-lg font-bold text-green-600">
-                              {event.attendees?.filter((a: any) => a.status === 'going').length || 0}
+                              {formatDisplayNumber(event.attendees?.filter((a: any) => a.status === 'going').length || 0)}
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">Going</p>
+                          <p className="text-xs text-muted-foreground">{uiText("Going")}</p>
                         </div>
                         <div className="text-center">
                           <div className="flex items-center justify-center mb-1">
                             <HelpCircle className="w-4 h-4 text-yellow-600 mr-1" />
                             <span className="text-lg font-bold text-yellow-600">
-                              {event.attendees?.filter((a: any) => a.status === 'maybe').length || 0}
+                              {formatDisplayNumber(event.attendees?.filter((a: any) => a.status === 'maybe').length || 0)}
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">Maybe</p>
+                          <p className="text-xs text-muted-foreground">{uiText("Maybe")}</p>
                         </div>
                         <div className="text-center">
                           <div className="flex items-center justify-center mb-1">
                             <X className="w-4 h-4 text-red-600 mr-1" />
                             <span className="text-lg font-bold text-red-600">
-                              {event.attendees?.filter((a: any) => a.status === 'not_going').length || 0}
+                              {formatDisplayNumber(event.attendees?.filter((a: any) => a.status === 'not_going').length || 0)}
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">Can't Go</p>
+                          <p className="text-xs text-muted-foreground">{uiText("Can't Go")}</p>
                         </div>
                       </div>
                     </div>
@@ -849,7 +854,10 @@ export default function Events() {
                       <div className="flex items-center text-mykliq-purple">
                         <Users className="w-4 h-4 mr-2" />
                         <span className="text-sm">
-                          {event.attendees?.filter((a: any) => a.status === 'going').length || 0} going • {event.attendees?.length || 0} responded
+                          {uiText("{{going}} going • {{responded}} responded", {
+                            going: formatDisplayNumber(event.attendees?.filter((a: any) => a.status === 'going').length || 0),
+                            responded: formatDisplayNumber(event.attendees?.length || 0),
+                          })}
                         </span>
                       </div>
 
@@ -867,7 +875,7 @@ export default function Events() {
                           data-testid={`button-going-${event.id}`}
                         >
                           <Check className="w-3 h-3 mr-1" />
-                          Going
+                          {uiText("Going")}
                         </Button>
                         <Button
                           size="sm"
@@ -882,7 +890,7 @@ export default function Events() {
                           data-testid={`button-maybe-${event.id}`}
                         >
                           <HelpCircle className="w-3 h-3 mr-1" />
-                          Maybe
+                          {uiText("Maybe")}
                         </Button>
                         <Button
                           size="sm"
@@ -897,7 +905,7 @@ export default function Events() {
                           data-testid={`button-not-going-${event.id}`}
                         >
                           <X className="w-3 h-3 mr-1" />
-                          Can't Go
+                          {uiText("Can't Go")}
                         </Button>
                       </div>
                     </div>

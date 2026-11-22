@@ -12,6 +12,7 @@ import {
   convertVideoToMP4, 
   isVideoConversionSupported 
 } from "@/lib/videoConverter";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface VideoConversionUploadProps {
   onGetUploadParameters: (file: { name: string; type: string; size: number }) => Promise<{ method: "PUT"; url: string }>;
@@ -28,6 +29,7 @@ export function VideoConversionUpload({
   className = "",
   disabled = false
 }: VideoConversionUploadProps) {
+  useUiLanguage();
   const [isConverting, setIsConverting] = useState(false);
   const [conversionProgress, setConversionProgress] = useState(0);
   const [conversionStatus, setConversionStatus] = useState<'idle' | 'converting' | 'complete' | 'error'>('idle');
@@ -135,7 +137,7 @@ export function VideoConversionUpload({
         className={className}
       >
         <Video className="w-4 h-4 mr-2" />
-        Upload Video
+        {uiText("Upload Video")}
       </Button>
 
       {/* Conversion Dialog */}
@@ -144,10 +146,10 @@ export function VideoConversionUpload({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileVideo className="w-5 h-5" />
-              Video Conversion Required
+              {uiText("Video Conversion Required")}
             </DialogTitle>
             <DialogDescription>
-              Convert your HEVC/H.265 video to MP4/H.264 format for better compatibility across all devices
+              {uiText("Convert your HEVC/H.265 video to MP4/H.264 format for better compatibility across all devices")}
             </DialogDescription>
           </DialogHeader>
           
@@ -155,8 +157,7 @@ export function VideoConversionUpload({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Your video appears to be in HEVC/H.265 format. For better compatibility, 
-                we recommend converting it to MP4/H.264 format.
+                {uiText("Your video appears to be in HEVC/H.265 format. For better compatibility, we recommend converting it to MP4/H.264 format.")}
               </AlertDescription>
             </Alert>
 
@@ -164,9 +165,9 @@ export function VideoConversionUpload({
               <Card>
                 <CardContent className="pt-4">
                   <div className="text-sm space-y-1">
-                    <div><strong>File:</strong> {originalFile.name}</div>
-                    <div><strong>Size:</strong> {(originalFile.size / (1024 * 1024)).toFixed(2)} MB</div>
-                    <div><strong>Type:</strong> {originalFile.type || 'Unknown'}</div>
+                    <div><strong>{uiText("File:")}</strong> {originalFile.name}</div>
+                    <div><strong>{uiText("Size:")}</strong> {(originalFile.size / (1024 * 1024)).toFixed(2)} {uiText("MB")}</div>
+                    <div><strong>{uiText("Type:")}</strong> {originalFile.type || uiText("Unknown")}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -176,7 +177,7 @@ export function VideoConversionUpload({
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">Converting video... {conversionProgress}%</span>
+                  <span className="text-sm">{uiText("Converting video... {{conversionProgress}}%", { "conversionProgress": conversionProgress })}</span>
                 </div>
                 <Progress value={conversionProgress} className="w-full" />
               </div>
@@ -186,7 +187,7 @@ export function VideoConversionUpload({
               <Alert>
                 <CheckCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Conversion complete! New file size: {(convertedFile.size / (1024 * 1024)).toFixed(2)} MB
+                  {uiText("Conversion complete! New file size:")} {(convertedFile.size / (1024 * 1024)).toFixed(2)} {uiText("MB")}
                 </AlertDescription>
               </Alert>
             )}
@@ -195,7 +196,7 @@ export function VideoConversionUpload({
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Conversion failed. You can still upload the original file, but it may not play on all devices.
+                  {uiText("Conversion failed. You can still upload the original file, but it may not play on all devices.")}
                 </AlertDescription>
               </Alert>
             )}
@@ -204,27 +205,27 @@ export function VideoConversionUpload({
               {conversionStatus === 'idle' && (
                 <>
                   <Button variant="outline" onClick={handleUploadOriginal}>
-                    Upload Original
+                    {uiText("Upload Original")}
                   </Button>
                   <Button onClick={startConversion} disabled={isConverting}>
-                    Convert to MP4
+                    {uiText("Convert to MP4")}
                   </Button>
                 </>
               )}
 
               {conversionStatus === 'converting' && (
                 <Button variant="outline" onClick={() => setShowConversionDialog(false)}>
-                  Cancel
+                  {uiText("Cancel")}
                 </Button>
               )}
 
               {conversionStatus === 'complete' && (
                 <>
                   <Button variant="outline" onClick={handleUploadOriginal}>
-                    Upload Original
+                    {uiText("Upload Original")}
                   </Button>
                   <Button onClick={handleUploadConverted}>
-                    Upload Converted
+                    {uiText("Upload Converted")}
                   </Button>
                 </>
               )}
@@ -232,10 +233,10 @@ export function VideoConversionUpload({
               {conversionStatus === 'error' && (
                 <>
                   <Button variant="outline" onClick={handleUploadOriginal}>
-                    Upload Original
+                    {uiText("Upload Original")}
                   </Button>
                   <Button onClick={startConversion}>
-                    Try Again
+                    {uiText("Try Again")}
                   </Button>
                 </>
               )}

@@ -29,8 +29,11 @@ import { getAuthToken, isTokenExpired } from "@/lib/tokenStorage";
 import html2canvas from "html2canvas";
 import { normalizeInviteCode } from "@shared/inviteCodes";
 import { applyConfirmedKonnect } from "@/lib/liveMemberData";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber } from "@/i18n/formatting";
 
 export default function Kliq() {
+  useUiLanguage();
   const [kliqName, setKliqName] = useState("");
   const [kliqLeftEmoji, setKliqLeftEmoji] = useState("🏆");
   const [kliqRightEmoji, setKliqRightEmoji] = useState("🏆");
@@ -976,7 +979,7 @@ export default function Kliq() {
                     value={kliqName}
                     onChange={(e) => setKliqName(e.target.value)}
                     className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500 text-center"
-                    placeholder={userData?.kliqName || "My Kliq"}
+                    placeholder={userData?.kliqName || uiText("My Kliq")}
                     data-testid="input-kliq-name"
                   />
                   <div className="text-2xl cursor-pointer hover:opacity-80 p-2 rounded transition-opacity" 
@@ -990,7 +993,7 @@ export default function Kliq() {
                     {kliqRightEmoji}
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground text-center">Click emojis to cycle through options</div>
+                <div className="text-xs text-muted-foreground text-center">{uiText("Click emojis to cycle through options")}</div>
                 <div className="flex justify-center">
                   <Button
                     size="sm"
@@ -999,14 +1002,14 @@ export default function Kliq() {
                     className="bg-mykliq-green hover:bg-mykliq-green/90 text-foreground"
                     data-testid="button-save-kliq"
                   >
-                    Save
+                    {uiText("Save")}
                   </Button>
                 </div>
               </div>
             ) : (
               <>
                 <span data-testid="kliq-display">
-                  {userData?.kliqLeftEmoji || '🏆'} {userData?.kliqName || "My Kliq"} {userData?.kliqRightEmoji || '🏆'}
+                  {userData?.kliqLeftEmoji || '🏆'} {userData?.kliqName || uiText("My Kliq")} {userData?.kliqRightEmoji || '🏆'}
                 </span>
                 <Button
                   size="sm"
@@ -1027,28 +1030,28 @@ export default function Kliq() {
           </h1>
         </div>
         <p className="text-muted-foreground text-sm">
-          Drag friends to reorder your pyramid
+          {uiText("Drag friends to reorder your pyramid")}
         </p>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="friends" className="w-full min-w-0 max-w-full">
-        <WrappingTabsList className="bg-muted" aria-label="MyKliq sections">
+        <WrappingTabsList className="bg-muted" aria-label={uiText("MyKliq sections")}>
           <TabsTrigger value="friends" className="min-h-11 px-4 py-2 flex items-center gap-2" data-testid="tab-friends">
             <Users className="w-4 h-4" />
-            Friends ({friends.length}/28)
+            {uiText("Friends ({{count}}/28)", { count: formatDisplayNumber(friends.length) })}
           </TabsTrigger>
           <TabsTrigger value="smart-ranking" className="min-h-11 px-4 py-2 flex items-center gap-2" data-testid="tab-smart-ranking">
             <MessageCircle className="w-4 h-4" />
-            Smart Ranking
+            {uiText("Smart Ranking")}
           </TabsTrigger>
           <TabsTrigger value="polls" className="min-h-11 px-4 py-2 flex items-center gap-2" data-testid="tab-polls">
             <BarChart3 className="w-4 h-4" />
-            Polls ({polls.length})
+            {uiText("Polls ({{count}})", { count: formatDisplayNumber(polls.length) })}
           </TabsTrigger>
           <TabsTrigger value="calendar" className="min-h-11 px-4 py-2 flex items-center gap-2" data-testid="tab-calendar" onClick={() => navigate('/calendar')}>
             <Calendar className="w-4 h-4" />
-            Calendar
+            {uiText("Calendar")}
           </TabsTrigger>
         </WrappingTabsList>
 
@@ -1058,9 +1061,9 @@ export default function Kliq() {
             <Card className="bg-card border-border">
               <CardContent className="p-2 text-center">
                 <div className="text-base font-bold text-card-foreground" data-testid="text-friend-count">
-                  {friends.length}/28
+                  {uiText("{{count}}/28", { count: formatDisplayNumber(friends.length) })}
                 </div>
-                <div className="text-xs text-card-foreground">Friends</div>
+                <div className="text-xs text-card-foreground">{uiText("Friends")}</div>
               </CardContent>
             </Card>
             <Card className="bg-card border-border">
@@ -1068,7 +1071,7 @@ export default function Kliq() {
                 <div className="text-base font-bold text-card-foreground" data-testid="text-open-spots">
                   {28 - friends.length}
                 </div>
-                <div className="text-xs text-card-foreground">Open Spots</div>
+                <div className="text-xs text-card-foreground">{uiText("Open Spots")}</div>
               </CardContent>
             </Card>
           </div>
@@ -1085,7 +1088,7 @@ export default function Kliq() {
                     paintOrder: "stroke fill",
                   }}
                 >
-                  Konnect Opportunities
+                  {uiText("Konnect Opportunities")}
                 </h3>
               </div>
               <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none">
@@ -1112,11 +1115,11 @@ export default function Kliq() {
                         <p className="text-sm font-semibold text-foreground leading-tight truncate">{fullName}</p>
                         {person.suggestionType === 'in_their_kliq' ? (
                           <p className="text-sm font-medium mt-1" style={{ color: "#00c853" }}>
-                            You're in their kliq
+                            {uiText("You're in their kliq")}
                           </p>
                         ) : (
                           <p className="text-sm text-muted-foreground mt-1">
-                            {person.mutualCount} mutual {Number(person.mutualCount) === 1 ? "friend" : "friends"}
+                            {uiText("{{count}} mutual friends", { count: Number(person.mutualCount) })}
                           </p>
                         )}
                       </div>
@@ -1130,10 +1133,10 @@ export default function Kliq() {
                             try {
                               const saved = await apiRequest("POST", `/api/friends/konnect/${person.id}`);
                               if (await applyConfirmedKonnect(queryClient, userData.id, person, saved)) {
-                                toast({ title: "Konnected!", description: `${person.firstName ?? "They"} has been added to your kliq.` });
+                                 toast({ title: "Konnected!", description: uiText("{{name}} has been added to your kliq.", { name: person.firstName ?? "They" }) });
                               }
                             } catch {
-                              toast({ title: "Could not konnect", description: "Something went wrong. Please try again.", variant: "destructive" });
+                               toast({ title: "Could not konnect", description: "Something went wrong. Please try again.", variant: "destructive" });
                             } finally {
                               konnectInFlight.current.delete(person.id);
                               setKonnectingIds(new Set(konnectInFlight.current));
@@ -1142,7 +1145,7 @@ export default function Kliq() {
                           className="w-full text-sm font-bold py-2 px-3 rounded-lg border-2 border-black disabled:opacity-60 disabled:cursor-wait"
                           style={{ backgroundColor: "#00c853", color: "#000000" }}
                         >
-                          {konnectingIds.has(person.id) ? "Konnecting…" : "Konnect to Kliq"}
+                          {konnectingIds.has(person.id) ? uiText("Konnecting…") : uiText("Konnect to Kliq")}
                         </button>
                       ) : (
                         <button
@@ -1150,15 +1153,15 @@ export default function Kliq() {
                             try {
                               const msg = getInviteMessage(userData?.firstName ?? "", userData?.inviteCode ?? "");
                               await navigator.clipboard.writeText(msg);
-                              toast({ title: "Invite copied!", description: `Paste it to ${person.firstName ?? "them"} in any messaging app.` });
+                               toast({ title: "Invite copied!", description: uiText("Paste it to {{name}} in any messaging app.", { name: person.firstName ?? "them" }) });
                             } catch {
-                              toast({ title: "Could not copy", description: "Please copy your invite code manually from below.", variant: "destructive" });
+                               toast({ title: "Could not copy", description: "Please copy your invite code manually from below.", variant: "destructive" });
                             }
                           }}
                           className="w-full text-sm font-bold py-2 px-3 rounded-lg border-2 border-black"
                           style={{ backgroundColor: "#00c853", color: "#000000" }}
                         >
-                          Invite to Kliq
+                          {uiText("Invite to Kliq")}
                         </button>
                       )}
                     </div>
@@ -1177,7 +1180,7 @@ export default function Kliq() {
           }}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Join Another Kliq</DialogTitle>
+                <DialogTitle>{uiText("Join Another Kliq")}</DialogTitle>
               </DialogHeader>
               <form className="space-y-4 pt-4" onSubmit={event => {
                 event.preventDefault();
@@ -1185,13 +1188,13 @@ export default function Kliq() {
               }}>
                 <div className="space-y-2">
                   <label htmlFor="join-another-invite-code" className="text-sm font-medium text-foreground">
-                    Enter Invite Code
+                    {uiText("Enter Invite Code")}
                   </label>
                   <Input
                     id="join-another-invite-code"
                     value={joinInviteCode}
                     onChange={(e) => setJoinInviteCode(e.target.value.toUpperCase())}
-                    placeholder="KQ-ABCD-7892"
+                    placeholder={uiText("KQ-ABCD-7892")}
                     autoCapitalize="characters"
                     autoCorrect="off"
                     spellCheck={false}
@@ -1199,7 +1202,7 @@ export default function Kliq() {
                     disabled={isJoiningKliq}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Enter the invitation code you received from a friend to join their kliq
+                    {uiText("Enter the invitation code you received from a friend to join their kliq")}
                   </p>
                 </div>
 
@@ -1214,14 +1217,14 @@ export default function Kliq() {
                     disabled={isJoiningKliq}
                     className="flex-1"
                   >
-                    Cancel
+                    {uiText("Cancel")}
                   </Button>
                   <Button
                     type="submit"
                     disabled={!joinInviteCode.trim() || isJoiningKliq}
                     className="flex-1 bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80"
                   >
-                    {isJoiningKliq ? "Joining..." : "Join Kliq"}
+                    {isJoiningKliq ? uiText("Joining...") : uiText("Join Kliq")}
                   </Button>
                 </div>
               </form>
@@ -1234,7 +1237,7 @@ export default function Kliq() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-amber-800 dark:text-amber-200 text-sm flex items-center gap-2">
                   <Users className="w-4 h-4" />
-                  Pending Join Requests ({safePendingRequests.length})
+                  {uiText("Pending Join Requests ({{count}})", { count: formatDisplayNumber(safePendingRequests.length) })}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -1252,7 +1255,7 @@ export default function Kliq() {
                           {request.friend.firstName} {request.friend.lastName}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Wants to rejoin your kliq
+                          {uiText("Wants to rejoin your kliq")}
                         </div>
                       </div>
                     </div>
@@ -1264,7 +1267,7 @@ export default function Kliq() {
                         onClick={() => declinePendingMutation.mutate(request.friendId)}
                         disabled={declinePendingMutation.isPending}
                       >
-                        Decline
+                        {uiText("Decline")}
                       </Button>
                       <Button
                         size="sm"
@@ -1272,7 +1275,7 @@ export default function Kliq() {
                         onClick={() => approvePendingMutation.mutate(request.friendId)}
                         disabled={approvePendingMutation.isPending}
                       >
-                        Approve
+                        {uiText("Approve")}
                       </Button>
                     </div>
                   </div>
@@ -1296,14 +1299,14 @@ export default function Kliq() {
               </DialogTrigger>
               <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle className="text-mykliq-green">Create Group Chat</DialogTitle>
+                  <DialogTitle className="text-mykliq-green">{uiText("Create Group Chat")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   {/* Optional Group Name */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Group Name (Optional)</label>
+                    <label className="text-sm font-medium">{uiText("Group Name (Optional)")}</label>
                     <Input
-                      placeholder="e.g., Weekend Squad"
+                      placeholder={uiText("e.g., Weekend Squad")}
                       value={groupChatName}
                       onChange={(e) => setGroupChatName(e.target.value)}
                       className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
@@ -1314,27 +1317,27 @@ export default function Kliq() {
                   {/* Member Selection */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">
-                      Select Members (min 2)
+                      {uiText("Select Members (min 2)")}
                       <span className="ml-2 text-muted-foreground">
-                        {selectedParticipants.length} selected
+                        {uiText("{{count}} selected", { count: formatDisplayNumber(selectedParticipants.length) })}
                       </span>
                     </label>
                     {friends.length === 0 ? (
                       <div className="p-4 bg-muted rounded-lg text-center">
                         <p className="text-sm text-muted-foreground">
-                          You need at least 2 friends to create a group chat.
+                          {uiText("You need at least 2 friends to create a group chat.")}
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
-                          Add friends to your kliq first!
+                          {uiText("Add friends to your kliq first!")}
                         </p>
                       </div>
                     ) : friends.length === 1 ? (
                       <div className="p-4 bg-muted rounded-lg text-center">
                         <p className="text-sm text-muted-foreground">
-                          You need at least one more friend to create a group chat.
+                          {uiText("You need at least one more friend to create a group chat.")}
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
-                          Currently have {friends.length} friend - need 2 minimum.
+                          {uiText("Currently have {{count}} friend - need 2 minimum.", { count: formatDisplayNumber(friends.length) })}
                         </p>
                       </div>
                     ) : (
@@ -1380,7 +1383,7 @@ export default function Kliq() {
                     className="w-full bg-mykliq-green hover:bg-mykliq-green/90 text-white"
                     data-testid="button-create-group"
                   >
-                    {createGroupChatMutation.isPending ? "Creating..." : "Create Group Chat"}
+                    {createGroupChatMutation.isPending ? uiText("Creating...") : uiText("Create Group Chat")}
                   </Button>
                 </div>
               </DialogContent>
@@ -1406,23 +1409,23 @@ export default function Kliq() {
               </DialogTrigger>
               <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle className="text-mykliq-green">Group Video Call</DialogTitle>
+                  <DialogTitle className="text-mykliq-green">{uiText("Group Video Call")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">
-                      Select Friends to Call (max 7)
+                      {uiText("Select Friends to Call (max 7)")}
                       <span className="ml-2 text-muted-foreground">
-                        {selectedVideoCallParticipants.length}/7 selected
+                        {uiText("{{count}}/7 selected", { count: formatDisplayNumber(selectedVideoCallParticipants.length) })}
                       </span>
                     </label>
                     {friends.length === 0 ? (
                       <div className="p-4 bg-muted rounded-lg text-center">
                         <p className="text-sm text-muted-foreground">
-                          You need at least 1 friend to start a group video call.
+                          {uiText("You need at least 1 friend to start a group video call.")}
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">
-                          Add friends to your kliq first!
+                          {uiText("Add friends to your kliq first!")}
                         </p>
                       </div>
                     ) : (
@@ -1465,7 +1468,7 @@ export default function Kliq() {
                   </div>
 
                   <p className="text-xs text-muted-foreground text-center">
-                    Group video calls support up to 8 participants (you + 7 friends)
+                    {uiText("Group video calls support up to 8 participants (you + 7 friends)")}
                   </p>
 
                   <Button
@@ -1474,7 +1477,7 @@ export default function Kliq() {
                     className="w-full bg-mykliq-green hover:bg-mykliq-green/90 text-white"
                     data-testid="button-start-group-call"
                   >
-                    {groupCallState !== 'idle' ? "In Call..." : `Start Video Call (${selectedVideoCallParticipants.length + 1} participants)`}
+                    {groupCallState !== 'idle' ? uiText("In Call...") : uiText("Start Video Call ({{count}} participants)", { count: formatDisplayNumber(selectedVideoCallParticipants.length + 1) })}
                   </Button>
                 </div>
               </DialogContent>
@@ -1497,16 +1500,16 @@ export default function Kliq() {
             <Card className="bg-card border-border">
               <CardContent className="p-8 text-center">
                 <div className="text-4xl mb-4">👥</div>
-                <h3 className="text-lg font-bold text-muted-foreground mb-2">No friends yet</h3>
+                <h3 className="text-lg font-bold text-muted-foreground mb-2">{uiText("No friends yet")}</h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  Share your invite code or join someone else's kliq to get started!
+                  {uiText("Share your invite code or join someone else's kliq to get started!")}
                 </p>
                 <Button
                   onClick={() => setIsInviteDialogOpen(true)}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Join a Kliq
+                  {uiText("Join a Kliq")}
                 </Button>
               </CardContent>
             </Card>
@@ -1547,7 +1550,7 @@ export default function Kliq() {
                 data-testid="button-post-pyramid"
               >
                 <Share2 className="w-4 h-4 mr-2" />
-                {isCapturingPyramid ? "Capturing..." : "Post Pyramid"}
+                {isCapturingPyramid ? uiText("Capturing...") : uiText("Post Pyramid")}
               </Button>
               <Dialog open={isLeaveKliqDialogOpen} onOpenChange={(open) => {
                 setIsLeaveKliqDialogOpen(open);
@@ -1561,20 +1564,20 @@ export default function Kliq() {
                     data-testid="button-leave-kliq"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
-                    Leave Kliq
+                    {uiText("Leave Kliq")}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto max-h-[80vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle className="text-red-600">Leave Kliq</DialogTitle>
+                    <DialogTitle className="text-red-600">{uiText("Leave Kliq")}</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      Select the kliq(s) you want to leave:
+                      {uiText("Select the kliq(s) you want to leave:")}
                     </p>
                     {joinedKliqs.length === 0 ? (
                       <p className="text-sm text-muted-foreground text-center py-4">
-                        You haven't joined any other kliqs yet.
+                        {uiText("You haven't joined any other kliqs yet.")}
                       </p>
                     ) : (
                       <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -1601,7 +1604,7 @@ export default function Kliq() {
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">{kliq.kliqName}</p>
                               <p className="text-xs text-muted-foreground truncate">
-                                by {kliq.kliqOwner?.firstName || kliq.kliqOwner?.username || 'Unknown'}
+                                {uiText("by {{name}}", { name: kliq.kliqOwner?.firstName || kliq.kliqOwner?.username || uiText("Unknown") })}
                               </p>
                             </div>
                           </div>
@@ -1617,7 +1620,7 @@ export default function Kliq() {
                         }}
                         className="bg-muted hover:bg-muted/80"
                       >
-                        Cancel
+                        {uiText("Cancel")}
                       </Button>
                       <Button
                         variant="destructive"
@@ -1625,7 +1628,7 @@ export default function Kliq() {
                         disabled={leaveKliqMutation.isPending || selectedKliqsToLeave.length === 0}
                         className="bg-red-600 hover:bg-red-700"
                       >
-                        {leaveKliqMutation.isPending ? "Leaving..." : `Leave${selectedKliqsToLeave.length > 0 ? ` (${selectedKliqsToLeave.length})` : ''}`}
+                        {leaveKliqMutation.isPending ? uiText("Leaving...") : uiText("Leave {{count}}", { count: selectedKliqsToLeave.length ? formatDisplayNumber(selectedKliqsToLeave.length) : "" })}
                       </Button>
                     </div>
                   </div>
@@ -1639,14 +1642,14 @@ export default function Kliq() {
             <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
               <DialogHeader>
                 <DialogTitle className={userData?.kliqClosed ? "text-green-600" : "text-orange-500"}>
-                  {userData?.kliqClosed ? "Open Kliq" : "Close Kliq"}
+                  {userData?.kliqClosed ? uiText("Open Kliq") : uiText("Close Kliq")}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   {userData?.kliqClosed 
-                    ? "Are you sure you want to open your kliq? New members will be able to join using your invite code until you reach 28 friends total."
-                    : "Are you sure you want to close your kliq? No new members will be able to join, but existing friends will remain."
+                    ? uiText("Are you sure you want to open your kliq? New members will be able to join using your invite code until you reach 28 friends total.")
+                    : uiText("Are you sure you want to close your kliq? No new members will be able to join, but existing friends will remain.")
                   }
                 </p>
                 <div className="flex gap-2 justify-end">
@@ -1655,7 +1658,7 @@ export default function Kliq() {
                     onClick={() => setIsCloseKliqDialogOpen(false)}
                     className="bg-muted hover:bg-muted/80"
                   >
-                    Cancel
+                    {uiText("Cancel")}
                   </Button>
                   <Button
                     variant={userData?.kliqClosed ? "default" : "destructive"}
@@ -1667,8 +1670,8 @@ export default function Kliq() {
                     }
                   >
                     {closeKliqMutation.isPending 
-                      ? (userData?.kliqClosed ? "Opening..." : "Closing...")
-                      : (userData?.kliqClosed ? "Open Kliq" : "Close Kliq")
+                      ? (userData?.kliqClosed ? uiText("Opening...") : uiText("Closing..."))
+                      : (userData?.kliqClosed ? uiText("Open Kliq") : uiText("Close Kliq"))
                     }
                   </Button>
                 </div>
@@ -1683,17 +1686,17 @@ export default function Kliq() {
           }}>
             <DialogContent className="bg-card border-border text-foreground max-w-md mx-auto">
               <DialogHeader>
-                <DialogTitle className="text-primary">Post Pyramid to Headlines</DialogTitle>
+                <DialogTitle className="text-primary">{uiText("Post Pyramid to Headlines")}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Share your friend pyramid to your Headlines feed?
+                  {uiText("Share your friend pyramid to your Headlines feed?")}
                 </p>
                 {pyramidPreview && (
                   <div className="rounded-lg overflow-hidden border border-border">
                     <img 
                       src={pyramidPreview} 
-                      alt="Pyramid preview" 
+                      alt={uiText("Pyramid preview")} 
                       className="w-full h-auto"
                     />
                   </div>
@@ -1707,14 +1710,14 @@ export default function Kliq() {
                     }}
                     className="bg-muted hover:bg-muted/80"
                   >
-                    Cancel
+                    {uiText("Cancel")}
                   </Button>
                   <Button
                     onClick={handlePostPyramid}
                     disabled={isPostingPyramid}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   >
-                    {isPostingPyramid ? "Posting..." : "Post to Headlines"}
+                    {isPostingPyramid ? uiText("Posting...") : uiText("Post to Headlines")}
                   </Button>
                 </div>
               </div>
@@ -1725,10 +1728,10 @@ export default function Kliq() {
           <Card className="bg-card border-border">
             <CardHeader>
               <CardTitle className="text-card-foreground text-lg flex items-center gap-2">
-                📱 Your Invite Message
+                {uiText("Your Invite Message")}
                 {userData?.kliqClosed && (
                   <Badge variant="outline" className="text-xs border-orange-500 text-orange-500">
-                    Kliq Closed
+                    {uiText("Kliq Closed")}
                   </Badge>
                 )}
               </CardTitle>
@@ -1741,7 +1744,7 @@ export default function Kliq() {
                   kliqClosed={userData.kliqClosed}
                 />
               ) : (
-                <p className="text-sm text-muted-foreground">Loading...</p>
+                <p className="text-sm text-muted-foreground">{uiText("Loading...")}</p>
               )}
             </CardContent>
           </Card>
@@ -1760,9 +1763,9 @@ export default function Kliq() {
         <TabsContent value="polls" className="space-y-6">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-lg font-semibold">Kliq Polls</h3>
+          <h3 className="text-lg font-semibold">{uiText("Kliq Polls")}</h3>
               <p className="text-sm text-muted-foreground">
-                Create polls and vote with your friends
+                {uiText("Create polls and vote with your friends")}
               </p>
             </div>
             <CreatePollDialog />
@@ -1789,15 +1792,15 @@ export default function Kliq() {
             <Card className="bg-card border-border">
               <CardContent className="p-8 text-center">
                 <div className="text-4xl mb-4">📊</div>
-                <h3 className="text-lg font-bold text-muted-foreground mb-2">No polls yet</h3>
+                <h3 className="text-lg font-bold text-muted-foreground mb-2">{uiText("No polls yet")}</h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  Create your first poll to get opinions from your friends!
+                  {uiText("Create your first poll to get opinions from your friends!")}
                 </p>
                 <CreatePollDialog
                   trigger={
                     <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                       <Plus className="w-4 h-4 mr-2" />
-                      Create First Poll
+                      {uiText("Create First Poll")}
                     </Button>
                   }
                 />
@@ -1822,19 +1825,19 @@ export default function Kliq() {
       }}>
         <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
           <DialogHeader>
-            <DialogTitle className="text-primary">Join a Kliq</DialogTitle>
+            <DialogTitle className="text-primary">{uiText("Join a Kliq")}</DialogTitle>
           </DialogHeader>
           <form className="space-y-4" onSubmit={event => {
             event.preventDefault();
             void handleJoinKliq();
           }}>
             <div>
-              <label htmlFor="join-invite-code" className="text-sm font-medium text-foreground">Invite Code</label>
+              <label htmlFor="join-invite-code" className="text-sm font-medium text-foreground">{uiText("Invite Code")}</label>
               <Input
                 id="join-invite-code"
                 value={joinInviteCode}
                 onChange={(e) => setJoinInviteCode(e.target.value.toUpperCase())}
-                placeholder="KQ-ABCD-7892"
+                placeholder={uiText("KQ-ABCD-7892")}
                 autoCapitalize="characters"
                 autoCorrect="off"
                 spellCheck={false}
@@ -1843,7 +1846,7 @@ export default function Kliq() {
                 data-testid="input-join-invite-code"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Enter the invite code you received from a friend
+                {uiText("Enter the invite code you received from a friend")}
               </p>
             </div>
 
@@ -1859,7 +1862,7 @@ export default function Kliq() {
                 disabled={isJoiningKliq}
                 data-testid="button-cancel-join"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
               <Button
                 type="submit"
@@ -1867,7 +1870,7 @@ export default function Kliq() {
                 className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                 data-testid="button-submit-join"
               >
-                {isJoiningKliq ? "Joining..." : "Join Kliq"}
+                {isJoiningKliq ? uiText("Joining...") : uiText("Join Kliq")}
               </Button>
             </div>
           </form>
@@ -1878,11 +1881,11 @@ export default function Kliq() {
       <Dialog open={!!friendToRemove} onOpenChange={() => setFriendToRemove(null)}>
         <DialogContent className="bg-card border-border text-foreground max-w-sm mx-auto">
           <DialogHeader>
-            <DialogTitle className="text-destructive">Remove Friend?</DialogTitle>
+            <DialogTitle className="text-destructive">{uiText("Remove Friend?")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-muted-foreground">
-              Are you sure you want to remove this friend from your kliq? This action cannot be undone.
+              {uiText("Are you sure you want to remove this friend from your kliq? This action cannot be undone.")}
             </p>
             <div className="flex gap-3">
               <Button
@@ -1891,7 +1894,7 @@ export default function Kliq() {
                 className="flex-1"
                 data-testid="button-cancel-remove"
               >
-                Cancel
+                {uiText("Cancel")}
               </Button>
                 <Button
                   onClick={confirmRemoveFriend}
@@ -1899,7 +1902,7 @@ export default function Kliq() {
                   className="flex-1 bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                   data-testid="button-confirm-remove"
                 >
-                  {removeFriendMutation.isPending ? "Removing..." : "Remove"}
+                  {removeFriendMutation.isPending ? uiText("Removing...") : uiText("Remove")}
                 </Button>
               </div>
             </div>

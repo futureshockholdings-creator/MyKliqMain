@@ -13,6 +13,7 @@ import {
   isVideoConversionSupported 
 } from "@/lib/videoConverter";
 import type { UploadResult } from "./MediaUpload";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface SmartVideoUploaderProps {
   onGetUploadParameters: (file: { name: string; type: string; size: number }) => Promise<{ method: "PUT"; url: string }>;
@@ -33,6 +34,7 @@ export function SmartVideoUploader({
   disabled = false,
   children
 }: SmartVideoUploaderProps) {
+  useUiLanguage();
   const [isConverting, setIsConverting] = useState(false);
   const [conversionProgress, setConversionProgress] = useState(0);
   const [showConversionDialog, setShowConversionDialog] = useState(false);
@@ -167,7 +169,7 @@ export function SmartVideoUploader({
         {children || (
           <>
             <Video className="w-4 h-4 mr-2" />
-            Upload Video
+            {uiText("Upload Video")}
           </>
         )}
       </ObjectUploader>
@@ -183,10 +185,10 @@ export function SmartVideoUploader({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileVideo className="w-5 h-5" />
-              Convert Video for Better Compatibility?
+              {uiText("Convert Video for Better Compatibility?")}
             </DialogTitle>
             <DialogDescription>
-              Convert HEVC/H.265 video to MP4/H.264 format for seamless playback on all devices and browsers
+              {uiText("Convert HEVC/H.265 video to MP4/H.264 format for seamless playback on all devices and browsers")}
             </DialogDescription>
           </DialogHeader>
           
@@ -194,8 +196,7 @@ export function SmartVideoUploader({
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Your video appears to be in HEVC/H.265 format. Converting to MP4/H.264 
-                will ensure it plays smoothly on all devices and browsers.
+                {uiText("Your video appears to be in HEVC/H.265 format. Converting to MP4/H.264 will ensure it plays smoothly on all devices and browsers.")}
               </AlertDescription>
             </Alert>
 
@@ -203,9 +204,9 @@ export function SmartVideoUploader({
               <Card>
                 <CardContent className="pt-4">
                   <div className="text-sm space-y-1">
-                    <div><strong>File:</strong> {pendingResult.successful[0].name || 'Video file'}</div>
-                    <div><strong>Size:</strong> {((pendingResult.successful[0].size || 0) / (1024 * 1024)).toFixed(2)} MB</div>
-                    <div><strong>Type:</strong> {pendingResult.successful[0].type || 'Video'}</div>
+                    <div><strong>{uiText("File:")}</strong> {pendingResult.successful[0].name || uiText("Video file")}</div>
+                    <div><strong>{uiText("Size:")}</strong> {((pendingResult.successful[0].size || 0) / (1024 * 1024)).toFixed(2)} {uiText("MB")}</div>
+                    <div><strong>{uiText("Type:")}</strong> {pendingResult.successful[0].type || uiText("Video")}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -215,7 +216,7 @@ export function SmartVideoUploader({
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">Converting video... {conversionProgress}%</span>
+                  <span className="text-sm">{uiText("Converting video... {{conversionProgress}}%", { "conversionProgress": conversionProgress })}</span>
                 </div>
                 <Progress value={conversionProgress} className="w-full" />
               </div>
@@ -225,7 +226,7 @@ export function SmartVideoUploader({
               <Alert>
                 <CheckCircle className="h-4 w-4" />
                 <AlertDescription>
-                  Conversion complete! New file: {convertedFile.name} ({(convertedFile.size / (1024 * 1024)).toFixed(2)} MB)
+                  {uiText("Conversion complete! New file: {{name}} (", { "name": convertedFile.name })}{(convertedFile.size / (1024 * 1024)).toFixed(2)} {uiText("MB)")}
                 </AlertDescription>
               </Alert>
             )}
@@ -234,10 +235,10 @@ export function SmartVideoUploader({
               {!isConverting && !convertedFile && (
                 <>
                   <Button variant="outline" onClick={useOriginalVideo}>
-                    Use Original
+                    {uiText("Use Original")}
                   </Button>
                   <Button onClick={startConversion}>
-                    Convert to MP4
+                    {uiText("Convert to MP4")}
                   </Button>
                 </>
               )}
@@ -245,17 +246,17 @@ export function SmartVideoUploader({
               {isConverting && (
                 <Button variant="outline" disabled>
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Converting...
+                  {uiText("Converting...")}
                 </Button>
               )}
 
               {convertedFile && !isConverting && (
                 <>
                   <Button variant="outline" onClick={useOriginalVideo}>
-                    Use Original
+                    {uiText("Use Original")}
                   </Button>
                   <Button onClick={useConvertedVideo}>
-                    Use Converted
+                    {uiText("Use Converted")}
                   </Button>
                 </>
               )}

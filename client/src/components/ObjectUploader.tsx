@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { uploadSinglePart } from "@/lib/singlePartUpload";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 type ObjectUploadResult = UploadResult<Record<string, unknown>, Record<string, unknown>>;
 
@@ -67,6 +68,7 @@ export function ObjectUploader({
   buttonClassName,
   children,
 }: ObjectUploaderProps) {
+  useUiLanguage();
   const [showModal, setShowModal] = useState(false);
   const { toast } = useToast();
   const [retry, setRetry] = useState<{ result?: ObjectUploadResult } | null>(null);
@@ -178,7 +180,7 @@ export function ObjectUploader({
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-3xl gap-0 overflow-hidden p-0" aria-describedby={undefined}>
           <DialogHeader className="px-4 pt-4 pb-2 pr-12 text-left">
-            <DialogTitle>Upload files</DialogTitle>
+            <DialogTitle>{uiText("Upload files")}</DialogTitle>
           </DialogHeader>
           <Dashboard
             uppy={uppy}
@@ -191,15 +193,15 @@ export function ObjectUploader({
       <AlertDialog open={retry !== null} onOpenChange={open => { if (!open && !isRetrying) setRetry(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Try that again</AlertDialogTitle>
+            <AlertDialogTitle>{uiText("Try that again")}</AlertDialogTitle>
             <AlertDialogDescription>
               {retry?.result
-                ? "Your file uploaded, but the change hasn’t been saved yet. We’ve kept it ready so you can try again."
-                : "Your upload couldn’t be finished yet. We’ve kept your selection so you can try again."}
+                ? uiText("Your file uploaded, but the change hasn’t been saved yet. We’ve kept it ready so you can try again.")
+                : uiText("Your upload couldn’t be finished yet. We’ve kept your selection so you can try again.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isRetrying}>Not now</AlertDialogCancel>
+            <AlertDialogCancel disabled={isRetrying}>{uiText("Not now")}</AlertDialogCancel>
             <Button
               data-testid="button-retry-upload"
               disabled={isRetrying}
@@ -217,7 +219,7 @@ export function ObjectUploader({
                 }
               }}
             >
-              {isRetrying ? "Trying again…" : "Try again"}
+              {isRetrying ? uiText("Trying again…") : uiText("Try again")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

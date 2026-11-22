@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import type { Gif } from '@shared/schema';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface GifDisplayProps {
   gif: Gif;
@@ -17,6 +18,7 @@ export function GifDisplay({
   showTitle = false,
   onClick 
 }: GifDisplayProps) {
+  useUiLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
@@ -38,7 +40,7 @@ export function GifDisplay({
           className
         )}
       >
-        <p className="text-sm">Failed to load GIF</p>
+        <p className="text-sm">{uiText("Failed to load GIF")}</p>
       </div>
     );
   }
@@ -55,7 +57,7 @@ export function GifDisplay({
     >
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
-          <p className="text-sm text-muted-foreground">Loading...</p>
+          <p className="text-sm text-muted-foreground">{uiText("Loading...")}</p>
         </div>
       )}
       

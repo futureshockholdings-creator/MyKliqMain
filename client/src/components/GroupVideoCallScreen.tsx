@@ -5,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useGroupVideoCall } from '@/contexts/GroupVideoCallContext';
 import { resolveAssetUrl } from '@/lib/apiConfig';
 import { useState } from 'react';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface VideoTileProps {
   stream: MediaStream | null;
@@ -15,6 +16,7 @@ interface VideoTileProps {
 }
 
 function VideoTile({ stream, name, avatar, isLocal = false, isMuted = false }: VideoTileProps) {
+  useUiLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ function VideoTile({ stream, name, avatar, isLocal = false, isMuted = false }: V
         </Avatar>
       )}
       <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-white text-sm flex items-center gap-2">
-        {isLocal && <span className="text-xs text-mykliq-green">(You)</span>}
+        {isLocal && <span className="text-xs text-mykliq-green">{uiText("(You)")}</span>}
         <span className="truncate max-w-[100px]">{name}</span>
         {isMuted && <MicOff className="w-3 h-3 text-red-400" />}
       </div>
@@ -59,6 +61,7 @@ function VideoTile({ stream, name, avatar, isLocal = false, isMuted = false }: V
 }
 
 export function GroupVideoCallScreen() {
+  useUiLanguage();
   const {
     callState,
     currentCallInfo,
@@ -99,10 +102,10 @@ export function GroupVideoCallScreen() {
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-green-400" />
             <span className="text-white text-sm font-medium">
-              {currentCallInfo?.groupName || 'Group Call'}
+              {currentCallInfo?.groupName || uiText("Group Call")}
             </span>
             <span className="text-gray-400 text-xs">
-              ({activeParticipants.filter(p => p.status === 'connected').length + 1} in call)
+              ({activeParticipants.filter(p => p.status === 'connected').length + 1} {uiText("in call)")}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -143,11 +146,11 @@ export function GroupVideoCallScreen() {
           <Users className="w-6 h-6 text-green-400" />
           <div>
             <h2 className="text-white font-semibold">
-              {currentCallInfo?.groupName || 'Group Call'}
+              {currentCallInfo?.groupName || uiText("Group Call")}
             </h2>
             <p className="text-gray-400 text-sm">
-              {callState === 'calling' ? 'Calling...' :
-               callState === 'ringing' ? 'Incoming call...' :
+              {callState === 'calling' ? uiText("Calling...") :
+               callState === 'ringing' ? uiText("Incoming call...") :
                `${activeParticipants.filter(p => p.status === 'connected').length + 1} participants`}
             </p>
           </div>

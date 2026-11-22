@@ -1,5 +1,46 @@
 importScripts('/assets/app-badge.js');
-const CACHE_NAME = 'mykliq-v25-credential-privacy';
+const CACHE_NAME = 'mykliq-v26-interface-languages';
+const LOCALE_CACHE = 'mykliq-notification-language-v1';
+const LOCALE_KEY = '/__mykliq_notification_language__';
+
+async function localizePushText(data) {
+  // Only app-owned wording is stored here, never API responses or member data.
+  try {
+    const cache = await caches.open(LOCALE_CACHE);
+    const saved = await cache.match(LOCALE_KEY);
+    if (!saved) return data;
+    const { messages, language } = await saved.json();
+    const translate = value => {
+      if (typeof value !== 'string') return value;
+      if (typeof messages[value] === 'string') return messages[value];
+      for (const [source, translated] of Object.entries(messages)) {
+        if (!source.includes('{{') || typeof translated !== 'string') continue;
+        const names = [];
+        const pattern = source.split(/(\{\{\w+\}\})/g).map(part => {
+          const placeholder = /^\{\{(\w+)\}\}$/.exec(part);
+          if (placeholder) { names.push(placeholder[1]); return '([\\s\\S]*?)'; }
+          return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }).join('');
+        const match = new RegExp(`^${pattern}$`).exec(value);
+        if (match) {
+          const values = Object.fromEntries(names.map((name, index) => [name, match[index + 1]]));
+          return translated.replace(/\{\{(\w+)\}\}/g, (token, name) => values[name] ?? token);
+        }
+      }
+      return value;
+    };
+    return {
+      ...data,
+      title: translate(data.title),
+      body: /message from/i.test(data.title || '') ? data.body : translate(data.body),
+      lang: language,
+      dir: language?.split('-')[0] === 'ar' ? 'rtl' : 'ltr',
+    };
+  } catch (_error) {
+    // Localization storage must never prevent alert or badge delivery.
+    return data;
+  }
+}
 
 const PRECACHE_ASSETS = [
   '/',
@@ -8,7 +49,8 @@ const PRECACHE_ASSETS = [
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
-  '/icons/icon-180x180.png'
+  '/icons/icon-180x180.png',
+  '/assets/startup-languages.js'
 ];
 
 // ── Install: pre-cache the app shell ───────────────────────────────────────
@@ -38,7 +80,7 @@ self.addEventListener('activate', (e) => {
       .then(keys =>
         Promise.all(
           keys.map(key => {
-            if (key !== CACHE_NAME) return caches.delete(key);
+            if (key !== CACHE_NAME && key !== LOCALE_CACHE) return caches.delete(key);
           })
         )
       )
@@ -131,13 +173,19 @@ self.addEventListener('push', (e) => {
   let data = { title: 'MyKliq', body: 'You have a new notification' };
   try { data = e.data.json(); } catch (_) {}
   e.waitUntil(
-    self.mykliqBadge.acceptPush(data).then(accepted => accepted && self.registration.showNotification(data.title || 'MyKliq', {
-      body: data.body || 'You have a new notification',
-      icon: '/icons/icon-192x192.png',
-      badge: '/icons/icon-192x192.png',
-      tag: data.data?.notificationId || data.tag || 'mykliq-notification',
-      data: { ...data, ...data.data }
-    }))
+    self.mykliqBadge.acceptPush(data).then(async accepted => {
+      if (!accepted) return;
+      const localized = await localizePushText(data);
+      return self.registration.showNotification(localized.title || 'MyKliq', {
+        body: localized.body || 'You have a new notification',
+        lang: localized.lang,
+        dir: localized.dir || 'auto',
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-192x192.png',
+        tag: data.data?.notificationId || data.tag || 'mykliq-notification',
+        data: { ...data, ...data.data }
+      });
+    })
   );
 });
 
@@ -162,6 +210,14 @@ self.addEventListener('periodicsync', (e) => {
 
 // ── Messages ───────────────────────────────────────────────────────────────
 self.addEventListener('message', (e) => {
+  if (e.data?.type === 'SET_INTERFACE_LANGUAGE' && e.data.messages && typeof e.data.language === 'string') {
+    const messages = Object.fromEntries(Object.entries(e.data.messages)
+      .filter(([key, value]) => key.length < 300 && typeof value === 'string' && value.length < 2000));
+    e.waitUntil(caches.open(LOCALE_CACHE).then(cache => cache.put(LOCALE_KEY, new Response(
+      JSON.stringify({ language: e.data.language, messages }),
+      { headers: { 'Content-Type': 'application/json' } },
+    ))));
+  }
   if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
   if (e.data?.type === 'CHECK_VERSION') {
     e.source?.postMessage({ type: 'VERSION_INFO', version: CACHE_NAME });

@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Search, Play } from 'lucide-react';
 import { buildApiUrl } from '@/lib/apiConfig';
 import type { Moviecon } from '@shared/schema';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 // Force video loading with proper error handling
 // Get color scheme based on category/title for consistent theming
@@ -77,6 +78,7 @@ export function MovieconPicker({
   isOpen, 
   onOpenChange 
 }: MovieconPickerProps) {
+  useUiLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [open, setOpen] = useState(false);
 
@@ -141,7 +143,7 @@ export function MovieconPicker({
       variant="ghost" 
       className="text-mykliq-purple hover:bg-mykliq-purple/10"
     >
-      <span className="text-xs font-bold">CLIP</span>
+      <span className="text-xs font-bold">{uiText("CLIP")}</span>
     </Button>
   );
 
@@ -152,9 +154,9 @@ export function MovieconPicker({
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle className="text-primary">Choose a Moviecon</DialogTitle>
+          <DialogTitle className="text-primary">{uiText("Choose a Moviecon")}</DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Search and select a movie clip reaction to add to your message
+            {uiText("Search and select a movie clip reaction to add to your message")}
           </DialogDescription>
         </DialogHeader>
         
@@ -163,7 +165,7 @@ export function MovieconPicker({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Search movie clips..."
+              placeholder={uiText("Search movie clips...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 bg-white border-gray-300 text-black placeholder-gray-500"
@@ -174,13 +176,13 @@ export function MovieconPicker({
           <div className="gif-scrollbar overflow-y-auto max-h-96">
             {isLoading ? (
               <div className="flex justify-center items-center py-8">
-                <div className="text-muted-foreground">Loading moviecons...</div>
+                <div className="text-muted-foreground">{uiText("Loading moviecons...")}</div>
               </div>
             ) : moviecons.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                <div className="text-sm">No moviecons found</div>
+                <div className="text-sm">{uiText("No moviecons found")}</div>
                 {searchQuery && (
-                  <div className="text-xs mt-1">Try a different search term</div>
+                  <div className="text-xs mt-1">{uiText("Try a different search term")}</div>
                 )}
               </div>
             ) : (

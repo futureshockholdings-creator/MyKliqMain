@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OverlayPortal } from "@/components/ui/overlay-portal";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { formatDisplayNumber } from "@/i18n/formatting";
 
 interface MediaItem {
   id?: string;
@@ -25,6 +27,7 @@ export function ImageViewer({
   onClose,
   resolveUrl = (url) => url,
 }: ImageViewerProps) {
+  useUiLanguage();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -125,7 +128,10 @@ export function ImageViewer({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={`Image viewer, showing image ${currentIndex + 1} of ${totalItems}`}
+      aria-label={uiText("Image viewer, showing image {{current}} of {{total}}", {
+        current: formatDisplayNumber(currentIndex + 1),
+        total: formatDisplayNumber(totalItems),
+      })}
       className="fixed inset-0 z-modal flex items-center justify-center"
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.95)',
@@ -143,7 +149,7 @@ export function ImageViewer({
           e.stopPropagation();
           onClose();
         }}
-        aria-label="Close image viewer"
+        aria-label={uiText("Close image viewer")}
         className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 text-white"
       >
         <X className="w-6 h-6" />
@@ -152,7 +158,7 @@ export function ImageViewer({
       {/* Image counter - top right */}
       {totalItems > 1 && (
         <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-black/60 text-white text-sm font-medium z-10">
-          {currentIndex + 1} / {totalItems}
+          {formatDisplayNumber(currentIndex + 1)} / {formatDisplayNumber(totalItems)}
         </div>
       )}
 
@@ -177,7 +183,10 @@ export function ImageViewer({
         ) : (
           <img
             src={resolveUrl(currentMedia.mediaUrl)}
-            alt={`Image ${currentIndex + 1} of ${totalItems}`}
+            alt={uiText("Image {{current}} of {{total}}", {
+              current: formatDisplayNumber(currentIndex + 1),
+              total: formatDisplayNumber(totalItems),
+            })}
             className="max-w-full max-h-full object-contain"
             style={{ maxHeight: 'calc(100dvh - 120px)' }}
           />
@@ -193,7 +202,7 @@ export function ImageViewer({
                 e.stopPropagation();
                 goToPrev();
               }}
-              aria-label="Previous image"
+              aria-label={uiText("Previous image")}
               className="absolute left-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white"
             >
               <ChevronLeft className="w-8 h-8" />
@@ -205,7 +214,7 @@ export function ImageViewer({
                 e.stopPropagation();
                 goToNext();
               }}
-              aria-label="Next image"
+              aria-label={uiText("Next image")}
               className="absolute right-2 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 text-white"
             >
               <ChevronRight className="w-8 h-8" />
@@ -219,7 +228,7 @@ export function ImageViewer({
         <div 
           className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 px-4 py-2 rounded-full bg-black/60 z-10" 
           role="tablist" 
-          aria-label="Image navigation"
+          aria-label={uiText("Image navigation")}
           onClick={(e) => e.stopPropagation()}
         >
           {media.map((_, index) => (

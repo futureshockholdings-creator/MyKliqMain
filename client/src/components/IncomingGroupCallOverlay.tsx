@@ -3,8 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useGroupVideoCall } from '@/contexts/GroupVideoCallContext';
 import { resolveAssetUrl } from '@/lib/apiConfig';
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 export function IncomingGroupCallOverlay() {
+  useUiLanguage();
   const {
     callState,
     currentCallInfo,
@@ -33,14 +35,13 @@ export function IncomingGroupCallOverlay() {
             <Users className="w-10 h-10 text-mykliq-green" />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">
-            Group Video Call
+            {uiText("Group Video Call")}
           </h2>
           <p className="text-gray-400 mb-2">
-            {currentCallInfo.groupName || 'Group Chat'}
+            {currentCallInfo.groupName || uiText("Group Chat")}
           </p>
           <p className="text-gray-500 text-sm">
-            {currentCallInfo.initiatorName} is calling...
-          </p>
+            {uiText("{{initiatorName}} is calling...", { "initiatorName": currentCallInfo.initiatorName })}</p>
         </div>
 
         <div className="flex justify-center gap-2 mb-6 flex-wrap">

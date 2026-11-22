@@ -6,6 +6,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Keep document direction semantic while preserving the intentionally fixed
+   left-side mobile navigation. Inputs with identifiers remain unambiguous. */
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="url"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="password"],
+html[dir="rtl"] input[inputmode="numeric"] {
+  direction: ltr;
+  text-align: start;
+}
+
+html[dir="rtl"] [role="tablist"] {
+  direction: rtl;
+}
+
+/* Translations can be longer than English; never force the sidebar label
+   outside its existing touch target. The icon-only posting tools are untouched. */
+nav button > span,
+[data-testid^="nav-"] > span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 /* Full screen styling */
 html, body {
   height: 100%;

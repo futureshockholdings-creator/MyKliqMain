@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 
 interface PhoneInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -8,12 +9,13 @@ interface PhoneInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export function PhoneInput({ label, error, className, ...props }: PhoneInputProps) {
+  useUiLanguage();
   return (
     <div className="space-y-2">
       {label && <Label htmlFor={props.id}>{label}</Label>}
       <Input
         type="tel"
-        placeholder="+1 (555) 123-4567"
+        placeholder={uiText("+1 (555) 123-4567")}
         className={cn(
           "bg-white text-gray-900 border-gray-300 placeholder:text-gray-500",
           error && "border-destructive",
