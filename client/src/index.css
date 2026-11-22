@@ -42,7 +42,7 @@ html, body {
 .mobile-navigation-rail {
   width: max-content;
   min-width: 4rem;
-  padding-inline: 0.25rem;
+  padding-inline: 0.125rem;
   overflow-x: visible;
   overflow-y: auto;
   overscroll-behavior-y: contain;

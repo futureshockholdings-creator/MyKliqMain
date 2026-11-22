@@ -199,7 +199,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
           <button
             onClick={toggleNotificationPanel}
             className={cn(
-              "mobile-navigation-item flex flex-col items-center p-2 mb-4 transition-colors rounded-lg min-h-11 relative flex-shrink-0",
+              "mobile-navigation-item flex flex-col items-center px-1 py-2 mb-4 transition-colors rounded-lg min-h-11 relative flex-shrink-0",
               "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
             data-testid="notification-bell"
@@ -211,11 +211,11 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 </span>
               </div>
             )}
-            <Bell className="w-6 h-6" />
-            <span className="main-navigation-caption text-[11px] mt-0.5">{t('navigation.alerts')}</span>
+            <Bell className="h-[22px] w-[22px]" />
+            <span className="main-navigation-caption text-[10px] mt-0.5">{t('navigation.alerts')}</span>
           </button>
 
-          <div className="mobile-navigation-destinations flex flex-1 flex-col items-center justify-evenly w-full">
+          <div className="mobile-navigation-destinations flex flex-col items-center gap-2.5 w-full">
             {navItems.map((item) => {
               const isActive = currentPath === item.path;
               const badgeCount = getBadgeCount(item.badgeType);
@@ -225,7 +225,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
                   key={item.path}
                   onClick={() => handleNavigation(item.path, item.path === "/settings")}
                   className={cn(
-                    "mobile-navigation-item flex flex-col items-center p-2 transition-colors rounded-lg min-h-11 relative flex-shrink-0",
+                    "mobile-navigation-item flex flex-col items-center px-1 py-2 transition-colors rounded-lg min-h-11 relative flex-shrink-0",
                     isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                   data-testid={`nav-${item.tab}`}
@@ -235,8 +235,8 @@ function Navigation({ currentPath }: { currentPath: string }) {
                       <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className={cn("h-5 w-5", item.badgeType === "messages" && "-right-0.5")} />
                     </div>
                   )}
-                  <item.icon className="w-6 h-6" />
-                  <span className="main-navigation-caption text-[11px] mt-0.5 text-center">{item.label}</span>
+                  <item.icon className="h-[22px] w-[22px]" />
+                  <span className="main-navigation-caption text-[10px] mt-0.5 text-center">{item.label}</span>
                 </button>
               );
             })}
@@ -244,7 +244,7 @@ function Navigation({ currentPath }: { currentPath: string }) {
           
           {/* Language Selector at bottom */}
           <div className="mt-auto mb-4 flex justify-center">
-            <LanguageSelector variant="dropdown" />
+            <LanguageSelector variant="dropdown" compact />
           </div>
         </div>
       </div>

@@ -27,12 +27,14 @@ const languages = [
 interface LanguageSelectorProps {
   variant?: 'dropdown' | 'select';
   showFlag?: boolean;
+  compact?: boolean;
   className?: string;
 }
 
 export function LanguageSelector({ 
   variant = 'dropdown', 
   showFlag = true,
+  compact = false,
   className = '' 
 }: LanguageSelectorProps) {
   const { i18n } = useTranslation();
@@ -94,15 +96,15 @@ export function LanguageSelector({
         <Button 
           variant="ghost" 
           size="sm" 
-          className={`gap-1 text-xs ${className} flex-shrink-0`}
+          className={`${compact ? 'gap-1 px-2 h-11 min-h-11 min-w-11' : 'gap-1'} text-xs ${className} flex-shrink-0`}
           data-testid="button-language-selector"
           aria-label={uiText("Select language")}
           title={uiText("Select language")}
         >
           <Globe className="w-3 h-3 flex-shrink-0" />
-          {showFlag && <span className="flex-shrink-0">{currentLanguage.flag}</span>}
-          <span className="hidden lg:inline truncate">{currentLanguage.name}</span>
-          <span className="lg:hidden truncate">{currentLanguage.code.toUpperCase()}</span>
+          {!compact && showFlag && <span className="flex-shrink-0">{currentLanguage.flag}</span>}
+          {!compact && <span className="hidden lg:inline truncate">{currentLanguage.name}</span>}
+          <span className={compact ? 'whitespace-nowrap flex-shrink-0' : 'lg:hidden truncate'}>{currentLanguage.code.toUpperCase()}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
