@@ -20,3 +20,14 @@ Posted Headlines memes should be enlarged and centered, and posted Moviecons sho
 **Why:** The user chose filling the cards over avoiding upscaling, after being advised that low-resolution originals may look softer.
 
 **How to apply:** Keep this presentation distinct from compact picker thumbnails, composer previews, and comment media. Do not crop or distort the source to force it into the frame.
+
+Main navigation captions must remain complete and on one line, without cutting
+off letters, regardless of the selected font.
+
+**Why:** The user reported letter-by-letter wrapping after localization and
+explicitly requested complete single-line navigation labels across font choices.
+
+**How to apply:** Treat main navigation separately from wrapping page tabs.
+Do not solve long translated navigation labels with arbitrary letter breaks,
+clipping, ellipses or unreadably small type. Coordinate any adaptive sidebar
+width with the page's content offset.
