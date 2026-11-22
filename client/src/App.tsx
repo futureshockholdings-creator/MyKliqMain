@@ -211,34 +211,36 @@ function Navigation({ currentPath }: { currentPath: string }) {
                 </span>
               </div>
             )}
-            <Bell className="w-5 h-5" />
-            <span className="main-navigation-caption text-[9px] mt-0.5">{t('navigation.alerts')}</span>
+            <Bell className="w-6 h-6" />
+            <span className="main-navigation-caption text-[11px] mt-0.5">{t('navigation.alerts')}</span>
           </button>
 
-          {navItems.map((item) => {
-            const isActive = currentPath === item.path;
-            const badgeCount = getBadgeCount(item.badgeType);
-            
-            return (
-              <button
-                key={item.path}
-                onClick={() => handleNavigation(item.path, item.path === "/settings")}
-                className={cn(
-                  "mobile-navigation-item flex flex-col items-center p-2 mb-3 transition-colors rounded-lg min-h-11 relative flex-shrink-0",
-                  isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-                data-testid={`nav-${item.tab}`}
-              >
-                {item.badgeType && (
-                  <div className="absolute -top-0.5 -right-0.5">
-                    <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className={cn("h-5 w-5", item.badgeType === "messages" && "-right-0.5")} />
-                  </div>
-                )}
-                <item.icon className="w-5 h-5" />
-                <span className="main-navigation-caption text-[9px] mt-0.5 text-center">{item.label}</span>
-              </button>
-            );
-          })}
+          <div className="mobile-navigation-destinations flex flex-1 flex-col items-center justify-evenly w-full">
+            {navItems.map((item) => {
+              const isActive = currentPath === item.path;
+              const badgeCount = getBadgeCount(item.badgeType);
+
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavigation(item.path, item.path === "/settings")}
+                  className={cn(
+                    "mobile-navigation-item flex flex-col items-center p-2 transition-colors rounded-lg min-h-11 relative flex-shrink-0",
+                    isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                  data-testid={`nav-${item.tab}`}
+                >
+                  {item.badgeType && (
+                    <div className="absolute -top-0.5 -right-0.5">
+                      <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className={cn("h-5 w-5", item.badgeType === "messages" && "-right-0.5")} />
+                    </div>
+                  )}
+                  <item.icon className="w-6 h-6" />
+                  <span className="main-navigation-caption text-[11px] mt-0.5 text-center">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
           
           {/* Language Selector at bottom */}
           <div className="mt-auto mb-4 flex justify-center">
@@ -265,8 +267,8 @@ function Navigation({ currentPath }: { currentPath: string }) {
               </span>
             </div>
           )}
-          <Bell className="w-5 h-5" />
-          <span className="main-navigation-caption text-[9px] mt-0.5">{t('navigation.alerts')}</span>
+          <Bell className="w-6 h-6" />
+          <span className="main-navigation-caption text-[11px] mt-0.5">{t('navigation.alerts')}</span>
         </button>
 
         {navItems.map((item) => {
@@ -286,8 +288,8 @@ function Navigation({ currentPath }: { currentPath: string }) {
                   <NotificationBadge type={item.badgeType} showIcon={false} showCount={true} className="h-5 w-5" />
                 </div>
               )}
-              <item.icon className="w-5 h-5" />
-              <span className="main-navigation-caption text-[9px] mt-0.5 text-center">{item.label}</span>
+              <item.icon className="w-6 h-6" />
+              <span className="main-navigation-caption text-[11px] mt-0.5 text-center">{item.label}</span>
             </button>
           );
         })}

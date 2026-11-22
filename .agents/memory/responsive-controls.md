@@ -31,3 +31,14 @@ explicitly requested complete single-line navigation labels across font choices.
 Do not solve long translated navigation labels with arbitrary letter breaks,
 clipping, ellipses or unreadably small type. Coordinate any adaptive sidebar
 width with the page's content offset.
+
+Keep mobile navigation visually balanced with larger icons/readable captions
+and menu items distributed down the available height, rather than clustered
+at the top. Alerts should remain near the top and language selection near
+the bottom, with vertical scrolling on shorter screens.
+
+**Why:** The user found the adaptive sidebar too wide relative to its small
+icons/text and approved larger controls with more vertical distribution.
+
+**How to apply:** Preserve single-line captions and content-aligned adaptive
+width; do not gain vertical spacing by shrinking touch targets or hiding items.
