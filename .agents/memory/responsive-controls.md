@@ -32,13 +32,15 @@ Do not solve long translated navigation labels with arbitrary letter breaks,
 clipping, ellipses or unreadably small type. Coordinate any adaptive sidebar
 width with the page's content offset.
 
-Keep mobile navigation visually balanced with larger icons/readable captions
-and menu items distributed down the available height, rather than clustered
-at the top. Alerts should remain near the top and language selection near
-the bottom, with vertical scrolling on shorter screens.
+Prioritize the Headlines posting area over a wide mobile sidebar. Use readable
+captions, moderately sized icons and a more compact vertical group rather than
+spreading destinations across all available height. Alerts should remain near
+the top and language selection near the bottom, with scrolling on shorter screens.
 
-**Why:** The user found the adaptive sidebar too wide relative to its small
-icons/text and approved larger controls with more vertical distribution.
+**Why:** After trying larger, evenly spaced navigation, the user still found it
+too wide and too spread out. They said the prime Headlines posting space is
+essential to user engagement and allowed reducing icon/label sizes again.
 
 **How to apply:** Preserve single-line captions and content-aligned adaptive
-width; do not gain vertical spacing by shrinking touch targets or hiding items.
+width. Reduce excess padding and oversized auxiliary controls rather than
+clipping text or hiding destinations; keep usable touch targets.
