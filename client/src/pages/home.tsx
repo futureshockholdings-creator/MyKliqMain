@@ -3707,14 +3707,14 @@ export default function Home() {
               {/* Meme Content */}
               {item.meme && (
                 <div className="mb-3">
-                  <MemeDisplay meme={item.meme} className="max-w-md" />
+                  <MemeDisplay meme={item.meme} variant="feed" />
                 </div>
               )}
 
               {/* Moviecon Content */}
               {item.moviecon && (
                 <div className="mb-3">
-                  <MovieconDisplay moviecon={item.moviecon} className="max-w-md" />
+                  <MovieconDisplay moviecon={item.moviecon} variant="feed" />
                 </div>
               )}
               

@@ -6,10 +6,12 @@ import { resolveAssetUrl } from '@/lib/apiConfig';
 interface MemeDisplayProps {
   meme: Meme | { url: string; title: string; isAnimated?: boolean };
   className?: string;
+  variant?: 'default' | 'feed';
 }
 
-export function MemeDisplay({ meme, className = "" }: MemeDisplayProps) {
+export function MemeDisplay({ meme, className = "", variant = 'default' }: MemeDisplayProps) {
   const [imageError, setImageError] = useState(false);
+  const isFeed = variant === 'feed';
   
   // Support both 'imageUrl' (from memes table) and 'url' (from gifs table)
   const sourceUrl = 'imageUrl' in meme ? meme.imageUrl : meme.url;
@@ -32,12 +34,12 @@ export function MemeDisplay({ meme, className = "" }: MemeDisplayProps) {
   }
   
   return (
-    <div className={`inline-block ${className}`}>
-      <div className="relative max-w-xs">
+    <div className={`${isFeed ? 'flex w-full justify-center' : 'inline-block'} ${className}`}>
+      <div className={`relative ${isFeed ? 'w-full' : 'max-w-xs'}`}>
         <img
           src={imageUrl}
           alt={meme.title}
-          className="rounded-lg max-h-48 object-contain"
+          className={isFeed ? 'h-auto w-full rounded-lg object-contain' : 'rounded-lg max-h-48 object-contain'}
           onError={() => setImageError(true)}
         />
         {meme.isAnimated && (

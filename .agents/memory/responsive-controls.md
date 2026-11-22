@@ -14,3 +14,9 @@ Headlines posting tools should use icon-only buttons without the newly added wor
 **Why:** The user preferred the original icon-only appearance over the newer icons with words.
 
 **How to apply:** Keep descriptive accessible names without adding visible labels. Respond to available container width rather than user-agent detection, preserve existing handlers and selected content, and retain member-selected themes.
+
+Posted Headlines memes should be enlarged and centered, and posted Moviecons should use the card's available width while preserving proportions.
+
+**Why:** The user chose filling the cards over avoiding upscaling, after being advised that low-resolution originals may look softer.
+
+**How to apply:** Keep this presentation distinct from compact picker thumbnails, composer previews, and comment media. Do not crop or distort the source to force it into the frame.

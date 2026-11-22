@@ -9,6 +9,7 @@ interface MovieconDisplayProps {
   moviecon: Moviecon;
   className?: string;
   autoPlay?: boolean;
+  variant?: 'default' | 'feed';
 }
 
 function getMovieconColor(moviecon: Moviecon): string {
@@ -106,7 +107,7 @@ function useVideoThumbnail(videoSrc: string, posterUrl?: string) {
   return thumbnailUrl;
 }
 
-export function MovieconDisplay({ moviecon, className, autoPlay = false }: MovieconDisplayProps) {
+export function MovieconDisplay({ moviecon, className, autoPlay = false, variant = 'default' }: MovieconDisplayProps) {
   const [videoError, setVideoError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -122,6 +123,7 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
         videoSrc={videoSrc}
         posterUrl={posterUrl}
         className={className}
+        variant={variant}
       />
     );
   }
@@ -138,17 +140,19 @@ export function MovieconDisplay({ moviecon, className, autoPlay = false }: Movie
   );
 }
 
-function MovieconVideoPlayer({ moviecon, videoSrc, posterUrl, className }: {
+function MovieconVideoPlayer({ moviecon, videoSrc, posterUrl, className, variant = 'default' }: {
   moviecon: Moviecon;
   videoSrc: string;
   posterUrl?: string;
   className?: string;
+  variant?: 'default' | 'feed';
 }) {
   const [videoError, setVideoError] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const generatedThumbnail = useVideoThumbnail(videoSrc, posterUrl);
+  const isFeed = variant === 'feed';
 
   if (videoError) {
     return (
@@ -163,12 +167,14 @@ function MovieconVideoPlayer({ moviecon, videoSrc, posterUrl, className }: {
   }
 
   return (
-    <div className={cn('relative rounded-lg overflow-hidden min-h-[120px] bg-black border-2 border-primary/50', className)}>
+    <div className={cn(isFeed
+      ? 'relative aspect-video w-full rounded-lg overflow-hidden bg-black border-2 border-primary/50'
+      : 'relative rounded-lg overflow-hidden min-h-[120px] bg-black border-2 border-primary/50', className)}>
       {isPlaying ? (
         <video
           ref={videoRef}
           src={videoSrc}
-          className="w-full h-full object-cover"
+          className={cn('w-full h-full', isFeed ? 'object-contain' : 'object-cover')}
           playsInline
           autoPlay
           muted={isMuted}
@@ -187,7 +193,7 @@ function MovieconVideoPlayer({ moviecon, videoSrc, posterUrl, className }: {
             <img
               src={generatedThumbnail}
               alt={moviecon.title}
-              className="w-full h-full object-cover"
+              className={cn('w-full h-full', isFeed ? 'object-contain' : 'object-cover')}
             />
           ) : (
             <div className="w-full h-full aspect-video bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
