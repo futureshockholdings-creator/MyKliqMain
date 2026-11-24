@@ -22,3 +22,12 @@ accepted correcting loading-state handling rather than disguising every 404.
 **How to apply:** Keep genuine unknown-page errors and their Home button.
 Preserve mounted content on temporary background failures and preserve the
 no-splash behavior of login/logout transitions.
+
+New pages should open at the top rather than inherit the previous page's scroll
+position, including navigation-bar destinations.
+
+**Why:** The owner explicitly requested top-of-page entry for newly accessed
+pages after seeing shared scroll positions carry across navigation.
+
+**How to apply:** Reset the actual page scroll container on navigation, not on
+background data updates. Preserve intentional linked-post and chat positioning.
