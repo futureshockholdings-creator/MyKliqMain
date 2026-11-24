@@ -53,7 +53,6 @@ import Signup from "@/pages/signup";
 import Login from "@/pages/login";
 import ForgotPassword from "@/pages/forgot-password";
 import AdminPage from "@/pages/admin";
-import AdminReports from "@/pages/admin-reports";
 import PostView from "@/pages/post-view";
 import AdvertiserRequirements from "@/pages/advertiser-requirements";
 import AdvertiserOnboarding from "@/pages/advertiser-onboarding";
@@ -338,7 +337,10 @@ function Router() {
       
       {/* Admin routes - accessible without authentication for emergency access */}
       <Route path="/support-admin" component={AdminPage} />
-      <Route path="/rules-reports" component={AdminReports} />
+      {/* Retired standalone screen: preserve old bookmarks without duplicating moderation UI. */}
+      <Route path="/rules-reports">
+        <Redirect to="/support-admin" />
+      </Route>
       <Route path="/post/:postId">
         {(params) => sessionStorage.getItem("adminPassword")
           ? <PostView />
