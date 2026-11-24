@@ -2079,8 +2079,9 @@ export default function Home() {
     '📍', '🏠', '🍕', '☕', '🎵', '📸', '🌟', '💫'
   ];
 
-  const handleLikePost = (postId: string) => {
-    likePostMutation.mutate(postId);
+  const handleLikePost = (post: any) => {
+    if (!userData?.id || (post.userId ?? post.author?.id) === userData.id) return;
+    likePostMutation.mutate(post.id);
   };
 
   const handleOpenImageViewer = (index: number, media: Array<{ id?: string; mediaUrl: string; mediaType: "image" | "video"; displayOrder?: number }>) => {
@@ -2133,8 +2134,9 @@ export default function Home() {
     }
   };
 
-  const handleLikeComment = (commentId: string) => {
-    likeCommentMutation.mutate(commentId);
+  const handleLikeComment = (comment: any) => {
+    if (!userData?.id || (comment.userId ?? comment.author?.id) === userData.id) return;
+    likeCommentMutation.mutate(comment.id);
   };
 
   const handleReplyToComment = (commentId: string) => {
@@ -3726,8 +3728,9 @@ export default function Home() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      handleLikePost(item.id);
+                      handleLikePost(item);
                     }}
+                    disabled={!userData?.id || (item.userId ?? item.author?.id) === userData.id}
                     className={`p-0 h-auto transition-colors ${
                       Array.isArray(item.likes) && user && (user as any).id && item.likes.some((like: any) => like.userId === (user as any).id)
                         ? "text-red-500 hover:bg-red-50" 
@@ -3875,8 +3878,8 @@ export default function Home() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => handleLikeComment(comment.id)}
-                                  disabled={likeCommentMutation.isPending}
+                                  onClick={() => handleLikeComment(comment)}
+                                  disabled={likeCommentMutation.isPending || !userData?.id || (comment.userId ?? comment.author?.id) === userData.id}
                                   className="text-muted-foreground hover:text-red-500 p-0 h-auto text-xs"
                                   data-testid={`button-like-comment-${comment.id}`}
                                 >

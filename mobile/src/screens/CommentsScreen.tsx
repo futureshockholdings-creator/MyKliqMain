@@ -14,6 +14,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { apiClient } from '../lib/apiClient';
 import { queryClient } from '../lib/queryClient';
+import { useAuth } from '../providers/AuthProvider';
 
 interface CommentData {
   id: string;
@@ -33,6 +34,7 @@ interface CommentData {
 }
 
 export default function CommentsScreen() {
+  const { user } = useAuth();
   const route = useRoute();
   const navigation = useNavigation();
   const { postId } = route.params as { postId: string };
@@ -87,6 +89,7 @@ export default function CommentsScreen() {
   });
 
   const handleLikeToggle = (comment: CommentData) => {
+    if (!user?.id || String(comment.userId ?? comment.author?.id) === String(user.id)) return;
     if (comment.isLiked) {
       unlikeCommentMutation.mutate(comment.id);
     } else {
@@ -147,6 +150,8 @@ export default function CommentsScreen() {
             <TouchableOpacity
               className="flex-row items-center"
               onPress={() => handleLikeToggle(comment)}
+              disabled={!user?.id || String(comment.userId ?? comment.author?.id) === String(user.id)}
+              accessibilityState={{ disabled: !user?.id || String(comment.userId ?? comment.author?.id) === String(user.id) }}
               data-testid={`button-like-comment-${comment.id}`}
             >
               <Text className="mr-1">{comment.isLiked ? '❤️' : '🤍'}</Text>

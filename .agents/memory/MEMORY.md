@@ -20,3 +20,4 @@
 - [Responsive controls](responsive-controls.md) — center and wrap Profile Settings/MyKliq tabs; use icon-only Headlines tools that wrap, with Post separate.
 - [Profile display/privacy contract](profile-display-privacy-contract.md) — retain safe joined display data in privacy filters and repair caches that previously lost required fields.
 - [Localization boundaries](localization-contract.md) — keep the language list, member content and stored values unchanged; preserve form state and count placeholders.
+- [Self-likes](self-likes.md) — self-likes were for alert testing only; members must not like their own posts or comments.

@@ -2242,11 +2242,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req as any).userId;
       const { commentId } = req.params;
-      
-      await storage.likeComment(commentId, userId);
-      
-      // Get comment details to notify the author
       const comment = await storage.getCommentById(commentId);
+      if (!comment) {
+        return res.status(404).json({ message: 'Comment not found' });
+      }
+      if (comment.userId === userId) {
+        return res.status(403).json({ message: 'You cannot like your own comment' });
+      }
+
+      await storage.likeComment(commentId, userId);
       
       if (comment && comment.userId !== userId) {
         const user = await storage.getUser(userId);
@@ -2530,7 +2534,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!post) {
         return res.status(404).json({ message: 'Post not found' });
       }
-      
+      if (post.userId === userId) {
+        return res.status(403).json({ message: 'You cannot like your own post' });
+      }
+
       // Check if user already liked the post by trying to unlike
       let liked = false;
       try {
@@ -6393,11 +6400,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { postId } = req.params;
-      
-      await storage.likePost(postId, userId);
-      
-      // Get post details to notify the author
       const post = await storage.getPostById(postId);
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+      if (post.userId === userId) {
+        return res.status(403).json({ message: 'You cannot like your own post' });
+      }
+
+      await storage.likePost(postId, userId);
+
+      // Get post details to notify the author
       console.log("Post like notification check:", { postUserId: post?.userId, currentUserId: userId, shouldNotify: post && post.userId !== userId });
       
       if (post) {
@@ -6633,7 +6646,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const { commentId } = req.params;
-      
+      const comment = await storage.getCommentById(commentId);
+      if (!comment) {
+        return res.status(404).json({ message: 'Comment not found' });
+      }
+      if (comment.userId === userId) {
+        return res.status(403).json({ message: 'You cannot like your own comment' });
+      }
+
       await storage.likeComment(commentId, userId);
       
       // Respond immediately for instant UI feedback
@@ -6642,8 +6662,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Handle notifications asynchronously (fire-and-forget)
       (async () => {
         try {
-          const comment = await storage.getCommentById(commentId);
-          
           if (comment && comment.userId !== userId) {
             const user = await storage.getUser(userId);
             if (user) {

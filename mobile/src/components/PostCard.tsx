@@ -16,6 +16,7 @@ interface PostCardProps {
 
 export default function PostCard({ post, currentUserId, onLike, onComment, onShare, onReport, onBlock }: PostCardProps) {
   const accessibleStyles = useAccessibleTextStyles();
+  const cannotLike = !currentUserId || String(post.userId ?? post.author?.id) === currentUserId;
   
   useEffect(() => {
     if (post.author?.profileImageUrl) {
@@ -174,13 +175,16 @@ export default function PostCard({ post, currentUserId, onLike, onComment, onSha
       <View className="flex-row justify-around pt-2 border-t border-border" style={accessibleStyles.borderTop}>
         <TouchableOpacity 
           className="flex-row items-center p-2"
-          onPress={onLike}
+          onPress={() => {
+            if (!cannotLike) onLike();
+          }}
+          disabled={cannotLike}
           data-testid={`button-like-${post.id}`}
           accessible={true}
           accessibilityLabel={post.isLiked ? 'Unlike this post' : 'Like this post'}
           accessibilityHint={`Currently has ${post.likeCount || 0} ${post.likeCount === 1 ? 'like' : 'likes'}`}
           accessibilityRole="button"
-          accessibilityState={{ selected: post.isLiked }}
+          accessibilityState={{ selected: post.isLiked, disabled: cannotLike }}
         >
           <Text className="text-lg mr-2">
             {post.isLiked ? '❤️' : '🤍'}
