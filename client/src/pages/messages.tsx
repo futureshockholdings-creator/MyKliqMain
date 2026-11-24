@@ -1,8 +1,18 @@
-import { type MouseEvent } from "react";
+import { useState, type MouseEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { MessageCircle, ArrowLeft, Users, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -54,6 +64,7 @@ export function Messages() {
   useUiLanguage();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [conversationToDelete, setConversationToDelete] = useState<ConversationData | null>(null);
 
   const { data: conversations = [], isLoading } = useQuery<ConversationData[]>({
     queryKey: ["/api/messages/conversations"],
@@ -98,7 +109,7 @@ export function Messages() {
   const handleDelete = (e: MouseEvent<HTMLButtonElement>, conversation: ConversationData) => {
     e.preventDefault();
     e.stopPropagation();
-    deleteConversationMutation.mutate({ conversation });
+    if (!deleteConversationMutation.isPending) setConversationToDelete(conversation);
   };
 
   const getDisplayName = (user: UserData) => {
@@ -257,6 +268,39 @@ export function Messages() {
           </div>
         )}
       </div>
+      <AlertDialog
+        open={conversationToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setConversationToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{uiText("Delete conversation")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {uiText("Are you sure you want to delete this conversation?")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete-conversation">
+              {uiText("Cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteConversationMutation.isPending}
+              data-testid="button-confirm-delete-conversation"
+              onClick={() => {
+                if (!conversationToDelete || deleteConversationMutation.isPending) return;
+                const conversation = conversationToDelete;
+                setConversationToDelete(null);
+                deleteConversationMutation.mutate({ conversation });
+              }}
+            >
+              {uiText("Delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageWrapper>
   );
 }
