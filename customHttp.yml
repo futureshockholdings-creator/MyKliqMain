@@ -1,4 +1,18 @@
 customHeaders:
+  - pattern: '/.well-known/assetlinks.json'
+    headers:
+      - key: 'Content-Type'
+        value: 'application/json'
+      - key: 'Cache-Control'
+        value: 'no-cache, no-store, must-revalidate'
+
+  - pattern: '/assets/assetlinks.json'
+    headers:
+      - key: 'Content-Type'
+        value: 'application/json'
+      - key: 'Cache-Control'
+        value: 'no-cache, no-store, must-revalidate'
+
   - pattern: '/index.html'
     headers:
       - key: 'Cache-Control'

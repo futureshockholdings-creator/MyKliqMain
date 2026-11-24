@@ -10,10 +10,14 @@ frontend:
         - echo "VITE_API_BASE_URL=$VITE_API_BASE_URL" >> .env
         - echo "VITE_VAPID_PUBLIC_KEY=$VITE_VAPID_PUBLIC_KEY" >> .env
         - npm run build
+        # Keep a non-hidden copy for the exact Amplify hosting rewrite documented
+        # in docs/android-play-verification.md. Both copies use one source.
+        - cp client/public/.well-known/assetlinks.json dist/assets/assetlinks.json
   artifacts:
     baseDirectory: dist
     files:
       - '**/*'
+      - '.well-known/assetlinks.json'
   cache:
     paths: []
   redirects:

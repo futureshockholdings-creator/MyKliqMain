@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.mykliq",
+      "sha256_cert_fingerprints": [
+        "F1:EC:93:AD:48:8B:5C:3C:F8:53:62:88:6F:C7:12:0E:AD:AA:D4:EA:6C:B1:36:B8:DC:9B:EC:9E:52:06:BB:C6"
+      ]
+    }
+  }
+]
