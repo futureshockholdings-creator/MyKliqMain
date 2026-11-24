@@ -135,7 +135,12 @@
       } catch {
         // A malformed marker or blocked storage must not stop startup.
       }
-      if (skipSplash) return;
+      if (skipSplash) {
+        // The router must also avoid flashing a second branded splash after a
+        // successful login; its recovery controls can still appear if needed.
+        document.documentElement.dataset.mykliqStartupSuppressed = "true";
+        return;
+      }
 
       var ua = navigator.userAgent || "";
       var isAppleTouchTablet = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;

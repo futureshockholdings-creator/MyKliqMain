@@ -29,7 +29,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { isAuthenticated, isLoading: authLoading, setUser } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   
   // Track if we should force showing the login form (user just logged out)
   const [shouldForceLogin, setShouldForceLogin] = useState(() => {

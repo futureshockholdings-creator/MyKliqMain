@@ -68,26 +68,23 @@ import { Chatbot } from "@/components/Chatbot";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { PinVerificationModal } from "@/components/PinVerificationModal";
 import { InstallPWA } from "@/components/InstallPWA";
+import { AuthenticatedPage } from "@/components/AuthenticatedPage";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { useState } from "react";
 
 function StartupSplashHandoff() {
-  const { isLoading } = useAuth();
-
   useEffect(() => {
     if (!document.documentElement.classList.contains("mykliq-mobile-startup")) return;
-
-    if (isLoading) return;
 
     const splash = document.getElementById("mykliq-startup");
     if (!splash || splash.dataset.state === "ready") return;
 
-    // A settled check includes signed-out/401 and offline failures. Always let
-    // existing login, offline and error UI take over instead of trapping users.
+    // React now owns loading/recovery on member routes. Hand off immediately
+    // so the HTML startup overlay cannot cover its five-second status or buttons.
     splash.dataset.state = "ready";
     const removeAfterFade = window.setTimeout(() => splash.remove(), 220);
     return () => window.clearTimeout(removeAfterFade);
-  }, [isLoading]);
+  }, []);
 
   return null;
 }
@@ -320,23 +317,6 @@ function Navigation({ currentPath }: { currentPath: string }) {
 
 function Router() {
   useUiLanguage();
-  const { isAuthenticated, isLoading } = useAuth();
-  const [location] = useLocation();
-
-  console.log(isAuthenticated, "--->isAuth");
-  
-  // Show loading spinner while checking auth state on root path
-  // This prevents the Landing page from flashing before redirect to Home
-  if (isLoading && location === "/") {
-    return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">{uiText("Loading...")}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <Switch>
@@ -368,28 +348,44 @@ function Router() {
       <Route path="/meme-manager" component={MemeManagerPage} />
       <Route path="/maintenance" component={MaintenanceDashboard} />
       
-      {/* NOT AUTHENTICATED → Show Landing */}
-      {!isAuthenticated && (
-        <Route exact path="/" component={Landing} />
-      )}
-    
-      {/* AUTHENTICATED ROUTES */}
-      {isAuthenticated && (
-        <>
-          <Route exact path="/" component={Home} />
-          <Route path="/kliq" component={Kliq} />
-          <Route path="/events" component={Events} />
-          <Route path="/calendar" component={CalendarPage} />
-          <Route path="/actions" component={Actions} />
-          <Route path="/messages" component={Messages} />
-          <Route path="/messages/:conversationId" component={Conversation} />
-          <Route path="/group-chat/:groupChatId" component={GroupChat} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/user/:userId" component={UserProfile} />
-          <Route path="/themes" component={Themes} />
-          <Route path="/settings" component={Settings} />
-        </>
-      )}
+      {/* Always register member routes; auth state decides content, not whether
+          the destination exists. Genuine unknown URLs still reach NotFound. */}
+      <Route exact path="/">
+        <AuthenticatedPage signedOut={<Landing />}><Home /></AuthenticatedPage>
+      </Route>
+      <Route path="/kliq">
+        <AuthenticatedPage><Kliq /></AuthenticatedPage>
+      </Route>
+      <Route path="/events">
+        <AuthenticatedPage><Events /></AuthenticatedPage>
+      </Route>
+      <Route path="/calendar">
+        <AuthenticatedPage><CalendarPage /></AuthenticatedPage>
+      </Route>
+      <Route path="/actions">
+        <AuthenticatedPage><Actions /></AuthenticatedPage>
+      </Route>
+      <Route path="/messages">
+        <AuthenticatedPage><Messages /></AuthenticatedPage>
+      </Route>
+      <Route path="/messages/:conversationId">
+        <AuthenticatedPage><Conversation /></AuthenticatedPage>
+      </Route>
+      <Route path="/group-chat/:groupChatId">
+        <AuthenticatedPage><GroupChat /></AuthenticatedPage>
+      </Route>
+      <Route path="/profile">
+        <AuthenticatedPage><Profile /></AuthenticatedPage>
+      </Route>
+      <Route path="/user/:userId">
+        <AuthenticatedPage><UserProfile /></AuthenticatedPage>
+      </Route>
+      <Route path="/themes">
+        <AuthenticatedPage><Themes /></AuthenticatedPage>
+      </Route>
+      <Route path="/settings">
+        <AuthenticatedPage><Settings /></AuthenticatedPage>
+      </Route>
       
       <Route component={NotFound} />
     </Switch>
