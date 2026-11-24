@@ -20,3 +20,14 @@ Show the recipient's name and profile picture before the first message, independ
 **Why:** The user asked to identify who they are messaging from the onset, rather than only after sending the initial message.
 
 **How to apply:** Reuse the selected member's profile details when available and load their profile independently for direct links. Empty or expired message history must not remove the recipient's identity. Do not replace the shared full-profile cache with a partial identity object.
+
+Poll voting must update counts, percentages, and bars together immediately;
+members should not see a selected vote alongside a temporary zero tally.
+
+**Why:** The owner reported poll results waiting several seconds after a vote.
+Marking selection alone is not an optimistic tally, and a separate stale cache
+can overwrite server-confirmed results.
+
+**How to apply:** Apply a reversible local tally, reconcile with the saved
+response, and keep one freshness owner for poll reads. Preserve confirmed
+voting state across feed/list navigation without increasing polling frequency.

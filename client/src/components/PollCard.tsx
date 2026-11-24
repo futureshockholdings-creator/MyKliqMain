@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { EditPollDialog } from "@/components/EditPollDialog";
 import { BorderedAvatar } from "@/components/BorderedAvatar";
 import { uiText, useUiLanguage } from "@/i18n/interfaceText";
 import { formatDisplayNumber, formatRelativeDate } from "@/i18n/formatting";
+import { mergeSavedPollVote, type SavedPollVote } from "@/lib/pollDataCache";
 
 interface PollOption {
   option: string;
@@ -57,6 +58,8 @@ interface PollCardProps {
 export function PollCard({ poll }: PollCardProps) {
   useUiLanguage();
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [isVoting, setIsVoting] = useState(false);
+  const voteInFlight = useRef(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(
     poll.userVote?.selectedOption ?? null
   );
@@ -100,41 +103,62 @@ export function PollCard({ poll }: PollCardProps) {
     },
   });
 
-  const { data: results = [], refetch: refetchResults } = useQuery<PollOption[]>({
+  const { data: results = [] } = useQuery<PollOption[]>({
     queryKey: ["/api/polls", poll.id, "results"],
     queryFn: () => apiRequest("GET", `/api/polls/${poll.id}/results`),
+    enabled: !isVoting,
     refetchInterval: 3000, // Auto-refresh every 3 seconds for real-time updates
     staleTime: 0, // Always consider data stale to ensure fresh results
   });
 
   const voteMutation = useMutation({
+    retry: false,
     mutationFn: async (option: number) => {
-      const response = await apiRequest("POST", `/api/polls/${poll.id}/vote`, { selectedOption: option });
+      const response: { vote: SavedPollVote; results: PollOption[] } =
+        await apiRequest("POST", `/api/polls/${poll.id}/vote`, { selectedOption: option });
       return { option, response };
     },
     onMutate: async (option: number) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["/api/polls", poll.id, "results"] });
-      
-      // Snapshot the previous value
-      const previousResults = queryClient.getQueryData(["/api/polls", poll.id, "results"]);
-      
-      // Optimistically update UI immediately
+      setIsVoting(true);
+      // Pause timer reads and ignore requests started before this vote.
+      await queryClient.cancelQueries(
+        { queryKey: ["/api/polls", poll.id, "results"], exact: true },
+        { revert: false },
+      );
+      const previousResults = queryClient.getQueryData<PollOption[]>(["/api/polls", poll.id, "results"]);
+      const previousSelection = selectedOption;
+      const baseline = previousResults?.length === poll.options.length
+        ? previousResults
+        : poll.options.map((option, index) => ({
+            option,
+            index,
+            votes: (poll.votes || []).filter(vote => vote.selectedOption === index).length,
+            percentage: 0,
+          }));
+      const total = baseline.reduce((sum, result) => sum + result.votes, 0) + 1;
+      const optimisticResults = baseline.map(result => {
+        const votes = result.votes + (result.index === option ? 1 : 0);
+        return { ...result, votes, percentage: Math.round(votes / total * 1000) / 10 };
+      });
+      // Counts, percentages, bars, and selected state change together, not
+      // just the checkmark while all the counts still read zero.
+      queryClient.setQueryData(["/api/polls", poll.id, "results"], optimisticResults);
       setSelectedOption(option);
-      
-      return { previousResults, option };
+
+      return { previousResults, previousSelection, baseline };
     },
-    onSuccess: (data) => {
-      // Use server response if available, otherwise refetch
-      if (data.response?.results) {
-        queryClient.setQueryData(["/api/polls", poll.id, "results"], data.response.results);
-      } else {
-        refetchResults();
-      }
-      
-      // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ["/api/polls"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/kliq-feed"] });
+    onSuccess: async (data) => {
+      const affected = (query: { queryKey: readonly unknown[] }) =>
+        query.queryKey[0] === "/api/polls" || query.queryKey[0] === "/api/kliq-feed";
+      // Older list/feed reads must not replace the confirmed vote or cause a
+      // remounted card to think the member has not voted yet.
+      await queryClient.cancelQueries({ predicate: affected }, { revert: false });
+      if (!currentUserId || queryClient.getQueryData<{ id: string }>(["/api/auth/user"])?.id !== currentUserId) return;
+      queryClient.setQueriesData({ predicate: affected }, old =>
+        mergeSavedPollVote(old, data.response.vote, data.response.results)
+      );
+      queryClient.setQueryData(["/api/polls", poll.id, "results"], data.response.results);
+      await queryClient.invalidateQueries({ predicate: affected, refetchType: "none" });
       
       toast({
         title: uiText("Vote recorded!"),
@@ -143,9 +167,10 @@ export function PollCard({ poll }: PollCardProps) {
     },
     onError: (error, option, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
-      setSelectedOption(null);
-      if (context?.previousResults) {
-        queryClient.setQueryData(["/api/polls", poll.id, "results"], context.previousResults);
+      setSelectedOption(context?.previousSelection ?? null);
+      if (!currentUserId || queryClient.getQueryData<{ id: string }>(["/api/auth/user"])?.id !== currentUserId) return;
+      if (context) {
+        queryClient.setQueryData(["/api/polls", poll.id, "results"], context.previousResults ?? context.baseline);
       }
       console.error("Error voting:", error);
       toast({
@@ -154,15 +179,20 @@ export function PollCard({ poll }: PollCardProps) {
         variant: "destructive",
       });
     },
+    onSettled: () => {
+      voteInFlight.current = false;
+      setIsVoting(false);
+    },
   });
 
   const handleVote = (optionIndex: number) => {
-    setSelectedOption(optionIndex);
+    if (voteInFlight.current || hasVoted || isExpired) return;
+    voteInFlight.current = true;
     voteMutation.mutate(optionIndex);
   };
 
   const isExpired = new Date(poll.expiresAt) <= new Date();
-  const hasVoted = poll.userVote !== undefined || selectedOption !== null;
+  const hasVoted = poll.userVote != null || selectedOption !== null;
   const totalVotes = results.reduce((sum, result) => sum + (result?.votes || 0), 0);
   
   // Always show results when there are votes, regardless of user's vote status  
@@ -283,7 +313,7 @@ export function PollCard({ poll }: PollCardProps) {
         <div className="space-y-3">
           {poll.options.map((option, index) => {
             const result = (results as PollOption[]).find((r: PollOption) => r.index === index);
-            const isSelected = selectedOption === index;
+            const isSelected = (selectedOption ?? poll.userVote?.selectedOption) === index;
             const percentage = Math.min(100, Math.max(0, Number(result?.percentage) || 0));
             
             return (

@@ -3,7 +3,9 @@ import type { QueryClient } from "@tanstack/react-query";
 export function isLiveMemberDataUrl(url: string): boolean {
   try {
     const path = new URL(url, "https://cache.invalid").pathname;
-    return /^\/api\/(?:messages|group-chats|friends|kliqs)(?:\/|$)/.test(path);
+    // React Query must receive fresh poll results, not a private SWR snapshot
+    // that silently changes behind its back after a successful vote.
+    return /^\/api\/(?:messages|group-chats|friends|kliqs|polls)(?:\/|$)/.test(path);
   } catch {
     return false;
   }
