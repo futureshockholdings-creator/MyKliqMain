@@ -7659,7 +7659,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { otherUserId } = req.params;
       
       await storage.deleteConversation(userId, otherUserId);
-      
+      await Promise.all([userId, otherUserId].map(id =>
+        notificationService.invalidateUserCache(id, ["message", "incognito_message"])
+      ));
+      // Refresh both content and the yellow badge only after deletion commits.
+      (app as any).broadcastMessageUpdate?.([userId, otherUserId]);
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting conversation:", error);
@@ -7867,8 +7872,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/group-chats/:groupId', isAuthenticated, async (req: any, res) => {
     try {
       const { groupId } = req.params;
-
+      const participantIds = await storage.getAllGroupParticipantIds(groupId);
       await storage.deleteGroupConversation(groupId);
+      await Promise.all(participantIds.map(id =>
+        notificationService.invalidateUserCache(id, ["message", "incognito_message"])
+      ));
+      (app as any).broadcastMessageUpdate?.(participantIds);
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting group chat:", error);

@@ -31,3 +31,13 @@ can overwrite server-confirmed results.
 **How to apply:** Apply a reversible local tally, reconcile with the saved
 response, and keep one freshness owner for poll reads. Preserve confirmed
 voting state across feed/list navigation without increasing polling frequency.
+
+Deleting an unread incognito conversation must also clear its matching yellow
+message alerts for affected recipients.
+
+**Why:** The owner reported that recipients saw a yellow alert after the sender
+deleted the conversation, but then found an empty inbox.
+
+**How to apply:** Keep message removal and unread-alert cleanup consistent,
+refresh affected members after persistence, and preserve alerts belonging to
+other conversations or remaining unread content.

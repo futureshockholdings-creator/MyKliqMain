@@ -2419,44 +2419,47 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteConversation(userId: string, otherUserId: string): Promise<void> {
-    // Find the conversation between these two users
-    const conversation = await db
-      .select({ id: conversations.id })
-      .from(conversations)
-      .where(
-        or(
-          and(eq(conversations.user1Id, userId), eq(conversations.user2Id, otherUserId)),
-          and(eq(conversations.user1Id, otherUserId), eq(conversations.user2Id, userId))
-        )
-      )
-      .limit(1);
-    
-    if (conversation.length === 0) {
-      return;
-    }
-    
-    const conversationId = conversation[0].id;
-    
-    // Clear lastMessageId reference first
-    await db
-      .update(conversations)
-      .set({ lastMessageId: null })
-      .where(eq(conversations.id, conversationId));
-    
-    // Delete all messages between these users
-    await db
-      .delete(messages)
-      .where(
-        or(
-          and(eq(messages.senderId, userId), eq(messages.receiverId, otherUserId)),
-          and(eq(messages.senderId, otherUserId), eq(messages.receiverId, userId))
-        )
+    await db.transaction(async tx => {
+      const conversationPair = or(
+        and(eq(conversations.user1Id, userId), eq(conversations.user2Id, otherUserId)),
+        and(eq(conversations.user1Id, otherUserId), eq(conversations.user2Id, userId))
       );
-    
-    // Delete the conversation
-    await db
-      .delete(conversations)
-      .where(eq(conversations.id, conversationId));
+      await tx.update(conversations)
+        .set({ lastMessageId: null })
+        .where(conversationPair);
+      await tx.delete(messages).where(or(
+        and(eq(messages.senderId, userId), eq(messages.receiverId, otherUserId)),
+        and(eq(messages.senderId, otherUserId), eq(messages.receiverId, userId))
+      ));
+      await tx.delete(conversations).where(conversationPair);
+
+      // These alerts identify a sender/thread, not an individual message.
+      // Clear only unread message alerts for this pair, in the same commit.
+      await tx.update(notifications)
+        .set({ isRead: true, isVisible: false, readAt: new Date() })
+        .where(and(
+          inArray(notifications.type, ["message", "incognito_message"]),
+          eq(notifications.isRead, false),
+          or(
+            eq(notifications.relatedType, "user"),
+            eq(notifications.relatedType, "conversation"),
+            isNull(notifications.relatedType)
+          ),
+          or(
+            and(eq(notifications.userId, otherUserId), eq(notifications.relatedId, userId)),
+            and(eq(notifications.userId, userId), eq(notifications.relatedId, otherUserId))
+          ),
+          // Do not hide the thread's alert if a concurrent new unread message
+          // survived deletion and still gives the recipient something to open.
+          sql`NOT EXISTS (
+            SELECT 1 FROM ${messages}
+            WHERE ${messages.senderId} = ${notifications.relatedId}
+              AND ${messages.receiverId} = ${notifications.userId}
+              AND ${messages.groupConversationId} IS NULL
+              AND ${messages.isRead} = false
+          )`
+        ));
+    });
     
     console.log(`Deleted conversation between ${userId} and ${otherUserId}`);
   }
@@ -2661,11 +2664,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteGroupConversation(groupId: string): Promise<void> {
-    await db.delete(messages).where(eq(messages.groupConversationId, groupId));
-    
-    await db.delete(conversationParticipants).where(eq(conversationParticipants.groupConversationId, groupId));
-    
-    await db.delete(groupConversations).where(eq(groupConversations.id, groupId));
+    await db.transaction(async tx => {
+      await tx.update(groupConversations).set({ lastMessageId: null })
+        .where(eq(groupConversations.id, groupId));
+      await tx.delete(messages).where(eq(messages.groupConversationId, groupId));
+      await tx.delete(conversationParticipants).where(eq(conversationParticipants.groupConversationId, groupId));
+      await tx.delete(groupConversations).where(eq(groupConversations.id, groupId));
+      await tx.update(notifications)
+        .set({ isRead: true, isVisible: false, readAt: new Date() })
+        .where(and(
+          inArray(notifications.type, ["message", "incognito_message"]),
+          eq(notifications.relatedType, "group_chat"),
+          eq(notifications.relatedId, groupId),
+          eq(notifications.isRead, false)
+        ));
+    });
   }
 
   // Event operations

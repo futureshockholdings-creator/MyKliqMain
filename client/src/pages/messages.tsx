@@ -97,6 +97,7 @@ export function Messages() {
     },
     onSuccess: () => {
       enhancedCache.removeByPattern('/api/messages');
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({ title: uiText("Conversation deleted") });
     },
     onSettled: () => {

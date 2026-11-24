@@ -95,11 +95,12 @@ class FeedRealtimeService {
       if (event.type !== 'updated' || event.query.queryKey.length !== 1 ||
           event.query.queryKey[0] !== '/api/notifications' || event.action.type !== 'success') return;
       const ids = alertIds(event.query.state.data);
-      const hasNewMessage = [...ids].some(id => !this.knownMessageAlerts.has(id));
+      const messagesChanged = ids.size !== this.knownMessageAlerts.size ||
+        [...ids].some(id => !this.knownMessageAlerts.has(id));
       this.knownMessageAlerts = ids;
-      // Also synchronize content when an alert arrives through polling or a
-      // different server instance, rather than waiting for the next chat poll.
-      if (hasNewMessage && !this.isPaused) void this.refreshMessages();
+      // Deletions can arrive through polling or a different server instance
+      // too. Refresh the inbox when alerts disappear as well as when added.
+      if (messagesChanged && !this.isPaused) void this.refreshMessages();
     });
   }
 
