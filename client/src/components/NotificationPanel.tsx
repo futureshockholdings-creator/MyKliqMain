@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { OverlayPortal } from "@/components/ui/overlay-portal";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { X, Check, Trash2, Bell, MessageCircle, Users, Calendar, Heart, MessageSquare, Radio, MapPin, Cake } from "lucide-react";
 import { formatRelativeDate, formatDisplayNumber } from "@/i18n/formatting";
 import { apiRequest } from "@/lib/queryClient";
+import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import type { Notification } from "@shared/schema";
@@ -47,6 +48,15 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   const [selectedTab, setSelectedTab] = useState("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const openingAlert = useRef<AbortController | null>(null);
+
+  // Closing the panel must also cancel any pending navigation from an alert.
+  useEffect(() => {
+    return () => {
+      openingAlert.current?.abort();
+      openingAlert.current = null;
+    };
+  }, [isOpen]);
 
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
@@ -71,10 +81,62 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     },
   });
 
-  const openNotification = (notification: Notification) => {
+  const openNotification = async (notification: Notification) => {
+    if (openingAlert.current || !isOpen) return;
+    const controller = new AbortController();
+    openingAlert.current = controller;
     if (!notification.isRead) markAsReadMutation.mutate(notification.id);
-    onClose();
-    navigate(getNotificationTarget(notification));
+    const showUnavailable = () => toast({
+      title: "This post is no longer available.",
+      duration: 3000,
+    });
+
+    try {
+      const target = getNotificationTarget(notification);
+      const url = new URL(target, window.location.origin);
+      const postId = url.searchParams.get("post");
+      const commentId = url.searchParams.get("comment");
+
+      if (url.pathname === "/" && (postId || commentId)) {
+        const params = new URLSearchParams(
+          commentId ? { commentId } : { postId: postId! },
+        );
+        // Check current, member-safe availability before closing Alerts. Never
+        // trust a cached feed entry: its post may have been deleted since loading.
+        const result = await enterpriseFetch<{ items: unknown[] }>(
+          `/api/kliq-feed?${params.toString()}`,
+          {
+            skipCache: true,
+            skipDisk: true,
+            cache: "no-store",
+            priority: "critical",
+            signal: controller.signal,
+          },
+        );
+        if (controller.signal.aborted) return;
+        if (!result.items?.length) {
+          showUnavailable();
+          return;
+        }
+      }
+
+      if (controller.signal.aborted) return;
+      onClose();
+      navigate(target);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      if (error instanceof Error && /^(403|404|410):/.test(error.message)) {
+        showUnavailable();
+      } else {
+        toast({
+          title: "Unable to open this alert. Please try again.",
+          duration: 3000,
+        });
+      }
+      // Keep the panel, selected tab, and underlying page intact on failure.
+    } finally {
+      if (openingAlert.current === controller) openingAlert.current = null;
+    }
   };
 
   const markAllAsReadMutation = useMutation({
