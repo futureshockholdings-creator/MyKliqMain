@@ -299,6 +299,17 @@ export default function Kliq() {
         const response = JSON.parse(error.message.slice(error.message.indexOf("{")));
         if (typeof response.message === "string") errorMessage = response.message;
       } catch { /* Network errors do not contain an API error response. */ }
+      if ([
+        "already friends with this user",
+        "user is already part of this kliq",
+      ].includes(errorMessage.trim().toLowerCase())) {
+        toast({
+          title: uiText("User is already part of this Kliq"),
+          variant: "default",
+          style: { color: "#000000", backgroundColor: "#ffffff" },
+        });
+        return;
+      }
       toast({
         title: "Error",
         description: errorMessage,
