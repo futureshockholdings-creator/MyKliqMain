@@ -70,21 +70,31 @@ import { PinVerificationModal } from "@/components/PinVerificationModal";
 import { InstallPWA } from "@/components/InstallPWA";
 import { AuthenticatedPage } from "@/components/AuthenticatedPage";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { getActiveStartupSplash, isMemberStartupPath } from "@/lib/startupSplash";
 import { useState } from "react";
 
 function StartupSplashHandoff() {
+  const { user, isLoading, error } = useAuth();
+  const [path] = useLocation();
+
   useEffect(() => {
-    if (!document.documentElement.classList.contains("mykliq-mobile-startup")) return;
+    const splash = getActiveStartupSplash();
+    if (!splash) return;
 
-    const splash = document.getElementById("mykliq-startup");
-    if (!splash || splash.dataset.state === "ready") return;
+    // Keep one continuous cold-start presentation until the member route can
+    // render. Public pages need no session check; login/logout markers already
+    // suppress this overlay altogether.
+    if (isMemberStartupPath(path) && !user && (isLoading || error)) {
+      // Retain the original splash's recovery UI instead of swapping to the
+      // white navigation loader if the initial session request fails.
+      if (error) splash.dataset.state = "stalled";
+      return;
+    }
 
-    // React now owns loading/recovery on member routes. Hand off immediately
-    // so the HTML startup overlay cannot cover its five-second status or buttons.
     splash.dataset.state = "ready";
     const removeAfterFade = window.setTimeout(() => splash.remove(), 220);
     return () => window.clearTimeout(removeAfterFade);
-  }, []);
+  }, [path, user, isLoading, error]);
 
   return null;
 }

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Redirect, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import RouteLoadingScreen from "@/components/RouteLoadingScreen";
+import { getActiveStartupSplash } from "@/lib/startupSplash";
 
 interface AuthenticatedPageProps {
   children: ReactNode;
@@ -28,6 +29,10 @@ export function AuthenticatedPage({ children, signedOut }: AuthenticatedPageProp
   if (loggingOut) return <Redirect to="/landing" />;
 
   if (isLoading || error) {
+    // Cold mobile launches already have the original HTML splash. Do not mount
+    // a second loading screen underneath it; later navigation keeps recovery.
+    if (getActiveStartupSplash()) return null;
+
     return (
       <RouteLoadingScreen
         hasError={!!error && !isFetching}
