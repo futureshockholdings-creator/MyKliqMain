@@ -118,6 +118,87 @@
     }
   </style>
   <script>
+    // Recovery must exist before any app module is downloaded or evaluated.
+    (function () {
+      var dirty = false;
+      document.addEventListener("input", function () { dirty = true; }, true);
+      document.addEventListener("change", function () { dirty = true; }, true);
+
+      function showRecovery() {
+        var splash = document.getElementById("mykliq-startup");
+        // Desktop only gets the fallback on a real bootstrap failure.
+        if (!splash) {
+          document.addEventListener("DOMContentLoaded", showRecovery, { once: true });
+          return;
+        }
+        document.documentElement.classList.add("mykliq-mobile-startup");
+        splash.dataset.state = "stalled";
+      }
+
+      function recoverBundle() {
+        if (document.documentElement.dataset.mykliqAppReady === "true") {
+          window.dispatchEvent(new Event("mykliq:asset-failed"));
+          return;
+        }
+        showRecovery();
+        if (dirty || !navigator.onLine) return;
+        var meta = document.querySelector('meta[name="mykliq-build"]');
+        var version = meta ? meta.content : "unknown";
+        var url = new URL(window.location.href);
+        var key = "mykliq-startup-recovery:" + version;
+        if (url.searchParams.get("__mykliq_recovery") === version) return;
+        try {
+          if (sessionStorage.getItem(key)) return;
+          sessionStorage.setItem(key, "1");
+        } catch {
+          // The URL is the loop guard when session storage is unavailable.
+        }
+        url.searchParams.set("__mykliq_recovery", version);
+        window.location.replace(url.href);
+      }
+
+      window.addEventListener("mykliq:startup-failed", function (event) {
+        if (event.detail && event.detail.recoverBundle) recoverBundle();
+        else showRecovery();
+      });
+      window.addEventListener("vite:preloadError", function (event) {
+        event.preventDefault();
+        recoverBundle();
+      });
+      window.addEventListener("error", function (event) {
+        var target = event.target;
+        if (target && target.tagName === "SCRIPT" && target.src) {
+          var url = new URL(target.src, window.location.href);
+          if (url.origin === location.origin &&
+              (target.type === "module" || url.pathname.indexOf("/assets/") === 0)) {
+            recoverBundle();
+          }
+        }
+      }, true);
+      window.addEventListener("unhandledrejection", function (event) {
+        var message = String(event.reason && (event.reason.message || event.reason) || "");
+        if (/Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk .+ failed|error loading dynamically imported module/i.test(message)) {
+          event.preventDefault();
+          recoverBundle();
+        }
+      });
+      document.addEventListener("click", function (event) {
+        var target = event.target;
+        var retry = target && target.closest ? target.closest("[data-mykliq-startup-retry]") : null;
+        if (!retry) return;
+        var splash = document.getElementById("mykliq-startup");
+        if (splash) splash.dataset.state = "loading";
+        // Every explicit attempt gets its own watchdog, including offline
+        // session retries paused by the query library.
+        window.setTimeout(function () {
+          if (splash && splash.dataset.state !== "ready") splash.dataset.state = "stalled";
+        }, 15000);
+        var handled = !window.dispatchEvent(new Event("mykliq:startup-retry", { cancelable: true }));
+        if (!handled) window.location.reload();
+      });
+    })();
+  </script>
+  <script>
     (function () {
       // Consume a short-lived, destination-specific marker before first paint.
       // Never retain a session-wide flag: the next fresh launch needs its splash.
@@ -154,12 +235,6 @@
         splash.dataset.state = "stalled";
       }, 15000);
 
-      document.addEventListener("click", function (event) {
-        var target = event.target;
-        var retry = target && target.closest ? target.closest("[data-mykliq-startup-retry]") : null;
-        if (!retry) return;
-        window.location.reload();
-      });
     })();
   </script>
 

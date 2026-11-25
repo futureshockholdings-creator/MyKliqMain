@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { enterpriseFetch } from "@/lib/enterprise/enterpriseFetch";
 import { circuitBreaker } from "@/lib/enterprise/circuitBreaker";
+import { withDeadline } from "@/lib/withDeadline";
 
 interface User {
   id: string;
@@ -22,19 +23,26 @@ interface User {
 export function useAuth() {
   const { data: user, isPending, isFetching, error, refetch } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
+      const controller = new AbortController();
+      const cancel = () => controller.abort();
+      if (signal.aborted) cancel();
+      else signal.addEventListener("abort", cancel, { once: true });
       try {
-        return await enterpriseFetch<User>("/api/auth/user", {
+        return await withDeadline(enterpriseFetch<User>("/api/auth/user", {
           credentials: "include",
           skipCache: true,
           skipDisk: true,
           priority: "critical",
-        });
+          signal: controller.signal,
+        }), 12000, "Sign-in check timed out. Please try again.", cancel);
       } catch (error) {
         // Only a confirmed expired/missing session means signed out. Network
         // failures and server errors must not masquerade as missing routes.
         if (error instanceof Error && /^401:/.test(error.message)) return null;
         throw error;
+      } finally {
+        signal.removeEventListener("abort", cancel);
       }
     },
     retry: false,

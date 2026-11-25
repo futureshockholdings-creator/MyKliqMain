@@ -1,8 +1,8 @@
 import "./setupApi"; // 👈 must be first
 import React from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
 import "./index.css";
+import { withDeadline } from "./lib/withDeadline";
 
 // ── Version-keyed cache bust ──────────────────────────────────────────────
 // Bump CACHE_VERSION whenever a fix that requires clearing stale IndexedDB
@@ -13,9 +13,15 @@ const CACHE_VERSION = "v4-credential-privacy";
 const CACHE_VERSION_KEY = "mykliq_cache_version";
 
 async function bustCacheIfNeeded() {
+  // In privacy-restricted browsers there is no reliable version marker.
+  // Still clear the two known caches; never silently skip the privacy cleanup.
+  let stored: string | null = null;
   try {
-    const stored = localStorage.getItem(CACHE_VERSION_KEY);
-    if (stored !== CACHE_VERSION) {
+    stored = localStorage.getItem(CACHE_VERSION_KEY);
+  } catch {
+    // Storage restrictions do not establish that cleanup already succeeded.
+  }
+  if (stored !== CACHE_VERSION) {
       // Dynamically import to avoid bloating the critical path normally
       const localforage = (await import("localforage")).default;
       // Clear enterprise disk cache (MyKliq / enterprise_cache)
@@ -24,12 +30,12 @@ async function bustCacheIfNeeded() {
       // Clear offline store (MyKliq_Offline / offline_data)
       const offlineCache = localforage.createInstance({ name: "MyKliq_Offline", storeName: "offline_data" });
       await offlineCache.clear();
-      localStorage.setItem(CACHE_VERSION_KEY, CACHE_VERSION);
+      try {
+        localStorage.setItem(CACHE_VERSION_KEY, CACHE_VERSION);
+      } catch {
+        // Cleanup succeeded; a blocked marker only means repeating next launch.
+      }
       console.log(`[CacheBust] Cleared all IndexedDB caches — updated to ${CACHE_VERSION}`);
-    }
-  } catch (e) {
-    // Never block the app from loading
-    console.warn("[CacheBust] Could not clear caches:", e);
   }
 }
 
@@ -96,8 +102,40 @@ if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
   }, { passive: true });
 }
 
-// Block rendering until cache bust completes (typically <50ms)
-// Using .then() instead of top-level await for broadest PWA compatibility
-bustCacheIfNeeded().then(() => {
-  createRoot(document.getElementById("root")!).render(<App />);
+// Do not initialize private app caches until mandatory cleanup has succeeded.
+// A blocked IndexedDB request must expose recovery, never hang or fail open.
+let cleanup: Promise<void> | undefined;
+let starting = false;
+let rendered = false;
+
+async function startApp() {
+  if (starting || rendered) return;
+  starting = true;
+  let loadingBundle = false;
+  try {
+    cleanup ??= bustCacheIfNeeded().catch(error => {
+      cleanup = undefined; // Failed operations may be retried explicitly.
+      throw error;
+    });
+    await withDeadline(cleanup, 8000, "Startup cache cleanup timed out.");
+    loadingBundle = true;
+    const { default: App } = await withDeadline(
+      import("./App"), 30000, "Application files took too long to load.",
+    );
+    createRoot(document.getElementById("root")!).render(<App />);
+    rendered = true;
+  } catch {
+    window.dispatchEvent(new CustomEvent("mykliq:startup-failed", {
+      detail: { recoverBundle: loadingBundle },
+    }));
+  } finally {
+    starting = false;
+  }
+}
+
+window.addEventListener("mykliq:startup-retry", event => {
+  if (rendered) return; // React owns session retry after mounting.
+  event.preventDefault();
+  void startApp();
 });
+void startApp();

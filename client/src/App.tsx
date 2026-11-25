@@ -74,12 +74,21 @@ import { getActiveStartupSplash, isMemberStartupPath } from "@/lib/startupSplash
 import { useState } from "react";
 
 function StartupSplashHandoff() {
-  const { user, isLoading, error } = useAuth();
+  const { user, isLoading, isFetching, error, retryAuth } = useAuth();
   const [path] = useLocation();
 
   useEffect(() => {
+    const retry = (event: Event) => {
+      if (!getActiveStartupSplash()) return;
+      event.preventDefault();
+      void retryAuth();
+    };
+    window.addEventListener("mykliq:startup-retry", retry);
+    return () => window.removeEventListener("mykliq:startup-retry", retry);
+  }, [retryAuth]);
+
+  useEffect(() => {
     const splash = getActiveStartupSplash();
-    if (!splash) return;
 
     // Keep one continuous cold-start presentation until the member route can
     // render. Public pages need no session check; login/logout markers already
@@ -87,14 +96,17 @@ function StartupSplashHandoff() {
     if (isMemberStartupPath(path) && !user && (isLoading || error)) {
       // Retain the original splash's recovery UI instead of swapping to the
       // white navigation loader if the initial session request fails.
-      if (error) splash.dataset.state = "stalled";
+      if (splash && error && !isFetching) splash.dataset.state = "stalled";
       return;
     }
 
+    document.documentElement.dataset.mykliqAppReady = "true";
+    window.dispatchEvent(new Event("mykliq:app-ready"));
+    if (!splash) return;
     splash.dataset.state = "ready";
     const removeAfterFade = window.setTimeout(() => splash.remove(), 220);
     return () => window.clearTimeout(removeAfterFade);
-  }, [path, user, isLoading, error]);
+  }, [path, user, isLoading, isFetching, error]);
 
   return null;
 }

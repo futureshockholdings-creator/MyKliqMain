@@ -16,3 +16,19 @@ New root script routes can fail independently of the rest of a release.
 **Why:** The main site's frontend bundle and existing worker URLs eventually updated, but the newly introduced root helper URL still returned SPA HTML. A successful frontend release therefore did not establish that every worker dependency could load.
 
 **How to apply:** Use the existing static-asset route for worker dependencies, preserve a single source for development and production, and verify the actual imported URL after deployment. Do not infer that a permission or Badging API change is needed from this hosting failure.
+
+App update handling must identify the frontend release separately from the push
+worker lifecycle, and must not force-refresh an already opened app over drafts.
+Use bounded network-first page loading with offline fallback on iOS as well as
+other browsers. Preserve subscribed worker identity and permission state.
+
+**Why:** The owner reported that the first launch after an Amplify update stuck
+on the splash until force-closing. Source review found stale-first iOS HTML,
+blanket update exclusions for push workers, and a pre-render disk-cleanup wait.
+The owner approved fixing the update lifecycle and startup waits together.
+
+**How to apply:** Bound cleanup and session checks, retain explicit recovery
+within the original splash, and keep required privacy cleanup fail-closed.
+Allow only guarded startup recovery, not repeat reloads. After the app opens,
+offer an update action instead of navigation/foreground/idle forced refreshes.
+Never solve this by unregistering subscribed workers or wiping all site data.

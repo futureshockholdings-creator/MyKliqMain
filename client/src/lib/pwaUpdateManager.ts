@@ -1,3 +1,5 @@
+import { withDeadline } from "./withDeadline";
+
 type UpdateCallback = () => void;
 
 class PWAUpdateManager {
@@ -10,16 +12,21 @@ class PWAUpdateManager {
   private idleCheckInterval: number | null = null;
   private toastCallback: UpdateCallback | null = null;
   private isReloading = false;
+  private initialized = false;
+  private checkingRelease = false;
+  private targetVersion: string | null = null;
+  private hasEditedContent = false;
+  private registration: ServiceWorkerRegistration | null = null;
 
   init() {
-    if (!('serviceWorker' in navigator)) {
+    if (this.initialized || !('serviceWorker' in navigator)) {
       console.log('[PWAUpdate] Service workers not supported');
       return;
     }
+    this.initialized = true;
 
     this.setupActivityTracking();
     this.setupVisibilityHandler();
-    this.setupNavigationHandler();
     this.setupServiceWorkerListeners();
     this.startUpdateChecks();
     
@@ -34,9 +41,15 @@ class PWAUpdateManager {
     ['click', 'keydown', 'scroll', 'touchstart', 'mousemove'].forEach(event => {
       document.addEventListener(event, updateActivity, { passive: true });
     });
+    // Conservatively retain this flag for the document's lifetime. An update
+    // must not guess that an upload, recording, or edited form is safely saved.
+    ['input', 'change', 'submit'].forEach(event => {
+      document.addEventListener(event, () => { this.hasEditedContent = true; }, true);
+    });
 
     this.idleCheckInterval = window.setInterval(() => {
-      if (this.updateAvailable && this.isUserIdle()) {
+      if (this.updateAvailable && this.isUserIdle() &&
+          document.documentElement.dataset.mykliqAppReady !== "true") {
         console.log('[PWAUpdate] User idle, reloading...');
         this.safeReload();
       }
@@ -45,114 +58,85 @@ class PWAUpdateManager {
 
   private setupVisibilityHandler() {
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && this.updateAvailable) {
-        console.log('[PWAUpdate] App returned to foreground with update available, reloading...');
-        setTimeout(() => this.safeReload(), 500);
+      if (document.visibilityState === 'visible') {
+        void this.checkRelease();
+        if (this.updateAvailable) this.showUpdateToast();
       }
+    });
+    window.addEventListener("mykliq:app-ready", () => {
+      if (this.updateAvailable) this.showUpdateToast();
+    });
+    window.addEventListener("mykliq:asset-failed", () => {
+      // A late chunk failure must not refresh over a member's draft.
+      void this.checkRelease();
+      this.showUpdateToast();
     });
   }
 
-  private setupNavigationHandler() {
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
-
-    history.pushState = (...args) => {
-      if (this.updateAvailable) {
-        console.log('[PWAUpdate] Navigation detected with update available, reloading...');
-        this.safeReload();
-        return;
-      }
-      return originalPushState.apply(history, args);
+  /** Keep the subscribed worker, but observe updates for every worker type. */
+  watchRegistration(registration: ServiceWorkerRegistration) {
+    if (this.registration === registration) return;
+    this.registration = registration;
+    const watch = (worker: ServiceWorker | null) => {
+      if (!worker) return;
+      worker.addEventListener("statechange", () => {
+        if (worker.state === "activated") void this.checkRelease();
+      });
     };
-
-    history.replaceState = (...args) => {
-      if (this.updateAvailable) {
-        console.log('[PWAUpdate] Navigation detected with update available, reloading...');
-        this.safeReload();
-        return;
-      }
-      return originalReplaceState.apply(history, args);
-    };
-
-    window.addEventListener('popstate', () => {
-      if (this.updateAvailable) {
-        console.log('[PWAUpdate] Back/forward navigation with update available, reloading...');
-        setTimeout(() => this.safeReload(), 100);
-      }
-    });
-  }
-
-  private isFirebaseServiceWorker(sw: ServiceWorker | null): boolean {
-    if (!sw) return false;
-    return sw.scriptURL.includes('firebase-messaging-sw.js');
-  }
-
-  private isIOSPushServiceWorker(sw: ServiceWorker | null): boolean {
-    if (!sw) return false;
-    return sw.scriptURL.includes('sw-ios.js');
-  }
-
-  private shouldSkipReloadForWorker(sw: ServiceWorker | null): boolean {
-    return this.isFirebaseServiceWorker(sw) || this.isIOSPushServiceWorker(sw);
+    watch(registration.installing);
+    watch(registration.waiting);
+    registration.addEventListener("updatefound", () => watch(registration.installing));
+    void registration.update().catch(() => {});
+    void this.checkRelease();
   }
 
   private setupServiceWorkerListeners() {
     navigator.serviceWorker.addEventListener('message', (event) => {
       if (event.data?.type === 'SW_UPDATED') {
-        console.log('[PWAUpdate] Service worker updated to:', event.data.version);
-        this.handleUpdateAvailable();
+        void this.checkRelease();
       }
     });
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (this.isReloading) return;
-      
-      const controller = navigator.serviceWorker.controller;
-      if (this.shouldSkipReloadForWorker(controller)) {
-        console.log('[PWAUpdate] Controller changed to push notification SW - skipping reload');
-        return;
-      }
-      
-      if (this.updateAvailable) {
-        console.log('[PWAUpdate] Controller changed with update pending, reloading...');
-        this.safeReload();
-      } else {
-        console.log('[PWAUpdate] Controller changed, but no update pending - skipping reload');
-      }
-    });
-
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        if (!newWorker) return;
-
-        if (this.shouldSkipReloadForWorker(newWorker)) {
-          console.log('[PWAUpdate] Push notification SW update detected - ignoring');
-          return;
-        }
-
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            console.log('[PWAUpdate] New service worker installed and waiting');
-            this.handleUpdateAvailable();
-          }
-        });
-      });
+      if (!this.isReloading) void this.checkRelease();
     });
   }
 
   private startUpdateChecks() {
     this.checkInterval = window.setInterval(() => {
-      navigator.serviceWorker.ready.then((registration) => {
-        registration.update().catch((err) => {
-          console.log('[PWAUpdate] Update check failed:', err);
-        });
-      });
+      if (document.visibilityState !== "visible") return;
+      void this.registration?.update().catch(() => {});
+      void this.checkRelease();
     }, 60000);
+    void this.checkRelease();
+  }
 
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.update();
-    });
+  private async checkRelease() {
+    if (!import.meta.env.PROD || this.checkingRelease || !navigator.onLine) return;
+    const current = document.querySelector<HTMLMetaElement>('meta[name="mykliq-build"]')?.content;
+    if (!current) return;
+    this.checkingRelease = true;
+    const controller = new AbortController();
+    try {
+      const release = await withDeadline((async () => {
+        const response = await fetch(`/assets/app-release.json?t=${Date.now()}`, {
+          cache: "no-store", signal: controller.signal,
+        });
+        if (!response.ok || !response.headers.get("content-type")?.includes("application/json")) return null;
+        return await response.json();
+      })(), 6000, "Update check timed out.", () => controller.abort());
+      if (!release || typeof release.version !== "string" ||
+          !/^\d{13}-[a-f0-9-]{36}$/.test(release.version)) return;
+      // Reject stale CDN metadata rather than refresh toward an older release.
+      if (release.version === current || Number(release.version.split("-")[0]) <
+          Number(current.split("-")[0])) return;
+      this.targetVersion = release.version;
+      this.handleUpdateAvailable();
+    } catch {
+      // Updates are optional background work, never a prerequisite for startup.
+    } finally {
+      this.checkingRelease = false;
+    }
   }
 
   private handleUpdateAvailable() {
@@ -162,11 +146,11 @@ class PWAUpdateManager {
     this.updateDetectedAt = Date.now();
     console.log('[PWAUpdate] Update available, waiting for safe moment to reload');
 
-    if (this.isUserIdle()) {
-      console.log('[PWAUpdate] User already idle, reloading immediately...');
+    if (document.documentElement.dataset.mykliqAppReady !== "true") {
       this.safeReload();
       return;
     }
+    this.showUpdateToast();
 
     setTimeout(() => {
       if (this.updateAvailable && !this.isReloading) {
@@ -180,8 +164,26 @@ class PWAUpdateManager {
     return Date.now() - this.lastActivity > this.idleThreshold;
   }
 
-  private safeReload() {
+  private safeReload(userInitiated = false) {
     if (this.isReloading) return;
+    if (!userInitiated && (this.hasEditedContent ||
+        document.documentElement.dataset.mykliqAppReady === "true")) {
+      this.showUpdateToast();
+      return;
+    }
+    if (userInitiated && this.hasEditedContent &&
+        !window.confirm("Updating reloads MyKliq and may discard unsaved changes or interrupt an upload. Update now?")) return;
+    if (!userInitiated) {
+      if (!this.targetVersion || !navigator.onLine) return;
+      try {
+        const key = `mykliq-update-reloaded:${this.targetVersion}`;
+        if (sessionStorage.getItem(key)) return;
+        sessionStorage.setItem(key, "1");
+      } catch {
+        // Without a persistent loop guard, require an explicit Update action.
+        return;
+      }
+    }
     this.isReloading = true;
     
     if (this.checkInterval) clearInterval(this.checkInterval);
@@ -245,7 +247,7 @@ class PWAUpdateManager {
     document.body.appendChild(toast);
 
     document.getElementById('pwa-update-btn')?.addEventListener('click', () => {
-      this.safeReload();
+      this.safeReload(true);
     });
   }
 
@@ -254,7 +256,7 @@ class PWAUpdateManager {
   }
 
   forceUpdate() {
-    this.safeReload();
+    this.safeReload(true);
   }
 
   isUpdatePending(): boolean {

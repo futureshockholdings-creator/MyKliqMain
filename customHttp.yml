@@ -1,4 +1,11 @@
 customHeaders:
+  - pattern: '/assets/app-release.json'
+    headers:
+      - key: 'Content-Type'
+        value: 'application/json; charset=UTF-8'
+      - key: 'Cache-Control'
+        value: 'no-cache, no-store, must-revalidate'
+
   - pattern: '/.well-known/assetlinks.json'
     headers:
       - key: 'Content-Type'

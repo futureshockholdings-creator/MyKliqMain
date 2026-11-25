@@ -11,7 +11,8 @@ function isIOSSafariPWA(): boolean {
 
 export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
+    pwaUpdateManager.init();
+    const register = async () => {
       // Use sw-ios.js for iOS Safari PWA (has push handler), sw.js for others
       const existing = await navigator.serviceWorker.getRegistration("/").catch(() => undefined);
       // FCM and the generic worker share the root scope. Do not replace the
@@ -26,7 +27,7 @@ export function registerServiceWorker() {
         .then(async registration => {
           console.log(`[PWA] Service Worker registered (${swFile}):`, registration.scope);
 
-          pwaUpdateManager.init();
+          pwaUpdateManager.watchRegistration(registration);
 
           // Register for Periodic Background Sync so the app can refresh cached
           // content while in the background (also satisfies PWABuilder's check).
@@ -45,7 +46,10 @@ export function registerServiceWorker() {
         .catch(error => {
           console.error('[PWA] Service Worker registration failed:', error);
         });
-    });
+    };
+    // A dynamic bootstrap may execute after load already fired.
+    if (document.readyState === "complete") void register();
+    else window.addEventListener('load', register, { once: true });
   }
 }
 

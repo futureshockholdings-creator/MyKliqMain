@@ -1,7 +1,17 @@
 importScripts('/assets/app-badge.js');
-const CACHE_NAME = 'mykliq-v26-interface-languages';
+const CACHE_NAME = 'mykliq-v27-startup-recovery';
 const LOCALE_CACHE = 'mykliq-notification-language-v1';
 const LOCALE_KEY = '/__mykliq_notification_language__';
+
+async function boundedFetch(request, options = {}, timeout = 6000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    return await fetch(request, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function localizePushText(data) {
   // Only app-owned wording is stored here, never API responses or member data.
@@ -63,7 +73,10 @@ self.addEventListener('install', (e) => {
       const cache = await caches.open(CACHE_NAME);
       await Promise.allSettled(
         PRECACHE_ASSETS.map(url =>
-          cache.add(url).catch(err =>
+          boundedFetch(url, { cache: 'no-store' })
+            .then(response => {
+              if (response.ok) return cache.put(url, response);
+            }).catch(err =>
             console.warn(`[SW] Failed to precache ${url}:`, err)
           )
         )
@@ -77,21 +90,19 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then(keys =>
-        Promise.all(
-          keys.map(key => {
-            if (key !== CACHE_NAME && key !== LOCALE_CACHE) return caches.delete(key);
-          })
-        )
-      )
-      // Extra safety: scan the current cache and evict any /api/ response that
-      // a buggy older SW version may have written before the Network-Only fix.
-      .then(() => caches.open(CACHE_NAME))
-      .then(cache => cache.keys())
-      .then(requests => {
-        const apiEntries = requests.filter(r => new URL(r.url).pathname.startsWith('/api/'));
-        return Promise.all(apiEntries.map(r => caches.delete(r)));
+      .then(keys => {
+        const stale = keys.filter(key => /^mykliq-v/.test(key) && key !== CACHE_NAME);
+        return Promise.all(stale.slice(0, -1).map(key => caches.delete(key)));
       })
+      // Purge private API responses even in the retained older asset cache.
+      .then(() => caches.keys())
+      .then(keys => Promise.all(keys.filter(key => /^mykliq-v/.test(key)).map(async key => {
+        const cache = await caches.open(key);
+        const requests = await cache.keys();
+        await Promise.all(requests
+          .filter(request => new URL(request.url).pathname.startsWith('/api/'))
+          .map(request => cache.delete(request)));
+      })))
       .then(() => self.clients.claim())
   );
 });
@@ -107,6 +118,7 @@ self.addEventListener('fetch', (e) => {
   // Network-only: all API calls, non-GET requests, cross-origin requests
   if (
     url.pathname.startsWith('/api/') ||
+    url.pathname === '/assets/app-release.json' ||
     e.request.method !== 'GET' ||
     url.origin !== self.location.origin
   ) {
@@ -119,20 +131,18 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(
       (async () => {
         try {
-          const response = await fetch(e.request);
-          if (response.ok) {
-            try {
-              const cache = await caches.open(CACHE_NAME);
-              await cache.put(e.request, response.clone());
-            } catch (_cacheError) {
-              // A full/unavailable cache must not hide a fresh page response.
-            }
+          const response = await boundedFetch(e.request, { cache: 'no-store' });
+          if (response.ok && response.headers.get('content-type')?.includes('text/html')) {
+            const copy = response.clone();
+            e.waitUntil(caches.open(CACHE_NAME)
+              .then(cache => cache.put('/index.html', copy)).catch(() => {}));
           }
+          if (response.status >= 500) throw new Error('Page temporarily unavailable');
           return response;
         } catch (_err) {
-          return (await caches.match(e.request))
-            || (await caches.match('/index.html'))
-            || (await caches.match('/offline.html'))
+          const cache = await caches.open(CACHE_NAME);
+          return (await cache.match('/index.html'))
+            || (await cache.match('/offline.html'))
             || Response.error();
         }
       })()
@@ -144,18 +154,25 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     (async () => {
       // 1. Cache hit → return immediately (works offline)
-      const r = await caches.match(e.request);
-      if (r) return r;
+      const hashed = /\/assets\/.+-[\w-]{8,}\.(?:js|css)$/.test(url.pathname) &&
+        !['/assets/startup-languages.js', '/assets/app-badge.js'].includes(url.pathname);
+      const cacheFirst = hashed || /\.(?:png|jpe?g|gif|webp|svg|ico|woff2?|ttf|mp4|webm)$/i.test(url.pathname);
+      const cache = await caches.open(CACHE_NAME);
+      const r = (await cache.match(e.request)) || (await caches.match(e.request));
+      if (cacheFirst && r) return r;
 
       // 2. Cache miss → fetch from network and cache for next time
       try {
-        const response = await fetch(e.request);
-        if (response.status === 200) {
-          const cache = await caches.open(CACHE_NAME);
-          cache.put(e.request, response.clone());
+        const response = await boundedFetch(e.request, { cache: cacheFirst ? 'default' : 'no-store' }, 30000);
+        if (response.status === 200 && !(url.pathname.endsWith('.js') &&
+            !/javascript|ecmascript/i.test(response.headers.get('content-type') || ''))) {
+          const copy = response.clone();
+          e.waitUntil(caches.open(CACHE_NAME)
+            .then(cache => cache.put(e.request, copy)).catch(() => {}));
         }
         return response;
       } catch (_err) {
+        if (r) return r;
         // Network failed (offline) — return offline page for navigation
         if (e.request.mode === 'navigate') {
           const offline = await caches.match('/offline.html');

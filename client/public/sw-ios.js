@@ -1,16 +1,26 @@
 /**
- * iOS Safari PWA Service Worker — v6
+ * iOS Safari PWA Service Worker — v7
  * Handles Web Push (VAPID, no Firebase) and offline caching for iOS Safari.
  */
 
 importScripts('/assets/app-badge.js');
-const CACHE_NAME = 'mykliq-ios-v6';
-const STATIC_CACHE = 'mykliq-ios-static-v6';
-const DYNAMIC_CACHE = 'mykliq-ios-dynamic-v6';
+const CACHE_NAME = 'mykliq-ios-v7';
+const STATIC_CACHE = 'mykliq-ios-static-v7';
+const DYNAMIC_CACHE = 'mykliq-ios-dynamic-v7';
+
+async function boundedFetch(request, options = {}, timeout = 6000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    return await fetch(request, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 // ─── Install ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[iOS SW v6] Installing…');
+  console.log('[iOS SW v7] Installing…');
   const SHELL_URLS = [
     '/',
     '/index.html',
@@ -25,7 +35,7 @@ self.addEventListener('install', (event) => {
     caches.open(STATIC_CACHE).then(async (cache) => {
       const results = await Promise.allSettled(
         SHELL_URLS.map(url =>
-          fetch(url, { cache: 'reload' })
+          boundedFetch(url, { cache: 'no-store' })
             .then(res => {
               if (res.ok) return cache.put(url, res);
             })
@@ -33,7 +43,7 @@ self.addEventListener('install', (event) => {
         )
       );
       const cached = results.filter(r => r.status === 'fulfilled').length;
-      console.log(`[iOS SW v6] Pre-cached ${cached}/${SHELL_URLS.length} shell assets`);
+      console.log(`[iOS SW v7] Pre-cached ${cached}/${SHELL_URLS.length} shell assets`);
     })
     .then(() => self.skipWaiting())
     .catch(() => self.skipWaiting())
@@ -42,16 +52,17 @@ self.addEventListener('install', (event) => {
 
 // ─── Activate ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[iOS SW v6] Activating…');
+  console.log('[iOS SW v7] Activating…');
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(
-        keys.map(k => {
-          if (k !== STATIC_CACHE && k !== DYNAMIC_CACHE && k.startsWith('mykliq-ios')) {
-            return caches.delete(k);
-          }
-        })
-      ))
+      .then(keys => {
+        // Keep the previous generation's assets for already-open documents.
+        // Never erase notification state or another worker's caches.
+        const staleStatic = keys.filter(k => k.startsWith('mykliq-ios-static-') && k !== STATIC_CACHE);
+        const staleDynamic = keys.filter(k => k.startsWith('mykliq-ios-dynamic-') && k !== DYNAMIC_CACHE);
+        return Promise.all([...staleStatic.slice(0, -1), ...staleDynamic.slice(0, -1)]
+          .map(k => caches.delete(k)));
+      })
       .then(() => self.clients.claim())
   );
 });
@@ -64,45 +75,31 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
 
   // API requests: bypass SW — offline handled in-app via IndexedDB.
-  if (url.pathname.startsWith('/api/') || url.hostname.includes('api.mykliq')) return;
+  if (url.pathname.startsWith('/api/') || url.origin !== self.location.origin) return;
 
-  // Navigation: cache-first — iOS users launch offline and see cached data.
+  // Release metadata must never come from a service-worker cache.
+  if (url.pathname === '/assets/app-release.json') return;
+
+  // Navigation: bounded network-first. Cached HTML is an offline fallback,
+  // not the default first opening after every Amplify deployment.
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
-      const MATCH_OPTS = { ignoreVary: true, ignoreSearch: true };
-
-      const cached =
-        (await caches.match('/index.html', MATCH_OPTS)) ||
-        (await caches.match('/', MATCH_OPTS)) ||
-        (await caches.match(request, MATCH_OPTS));
-
-      const networkRefresh = (async () => {
-        try {
-          const res = await fetch(request);
-          if (res.ok) {
-            const cache = await caches.open(STATIC_CACHE);
-            await cache.put('/index.html', res.clone());
-            await cache.put('/', res.clone());
-          }
-        } catch { /* offline — ignore */ }
-      })();
-
-      if (cached) {
-        event.waitUntil(networkRefresh);
-        return cached;
-      }
-
       try {
-        const res = await fetch(request);
-        if (res.ok) {
-          const cache = await caches.open(STATIC_CACHE);
-          await cache.put('/index.html', res.clone());
-          await cache.put('/', res.clone());
+        const res = await boundedFetch(request, { cache: 'no-store' });
+        if (res.ok && res.headers.get('content-type')?.includes('text/html')) {
+          // Cache writes must not delay returning the online page.
+          const copy = res.clone();
+          event.waitUntil(caches.open(STATIC_CACHE)
+            .then(cache => cache.put('/index.html', copy)).catch(() => {}));
+          return res;
         }
+        if (res.status >= 500) throw new Error('Page temporarily unavailable');
         return res;
       } catch {
+        const cache = await caches.open(STATIC_CACHE);
         return (
-          (await caches.match('/offline.html', { ignoreVary: true })) ||
+          (await cache.match('/index.html', { ignoreVary: true })) ||
+          (await cache.match('/offline.html', { ignoreVary: true })) ||
           new Response('<html><body>Offline</body></html>', {
             status: 200,
             headers: { 'Content-Type': 'text/html' }
@@ -113,20 +110,30 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: stale-while-revalidate
-  event.respondWith(
-    caches.match(request, { ignoreVary: true }).then(cached => {
-      const netFetch = fetch(request)
-        .then(res => {
-          if (res && res.status === 200) {
-            caches.open(DYNAMIC_CACHE).then(c => c.put(request, res.clone()));
-          }
-          return res;
-        })
-        .catch(() => null);
-      return cached || netFetch;
-    })
-  );
+  // Content-hashed assets are immutable; unversioned helpers must be fresh.
+  event.respondWith((async () => {
+    const hashed = /\/assets\/.+-[\w-]{8,}\.(?:js|css)$/.test(url.pathname) &&
+      !['/assets/startup-languages.js', '/assets/app-badge.js'].includes(url.pathname);
+    const cacheFirst = hashed || /\.(?:png|jpe?g|gif|webp|svg|ico|woff2?|ttf|mp4|webm)$/i.test(url.pathname);
+    const dynamic = await caches.open(DYNAMIC_CACHE);
+    const shell = await caches.open(STATIC_CACHE);
+    const cached = (await dynamic.match(request, { ignoreVary: true })) ||
+      (await shell.match(request, { ignoreVary: true })) ||
+      (await caches.match(request, { ignoreVary: true }));
+    if (cacheFirst && cached) return cached;
+    try {
+      const response = await boundedFetch(request, { cache: cacheFirst ? 'default' : 'no-store' }, 30000);
+      if (response.ok && !(url.pathname.endsWith('.js') &&
+          !/javascript|ecmascript/i.test(response.headers.get('content-type') || ''))) {
+        const copy = response.clone();
+        event.waitUntil(caches.open(DYNAMIC_CACHE)
+          .then(cache => cache.put(request, copy)).catch(() => {}));
+      }
+      return response;
+    } catch {
+      return cached || Response.error();
+    }
+  })());
 });
 
 // ─── Push notifications ───────────────────────────────────────────────────────
