@@ -10,6 +10,8 @@ Do not download or rehost TikTok video media.
 **Why:** The owner approved experimenting with inline playback after being told
 that loading it connects the viewer to TikTok, and that some videos remain
 unavailable. They want the option to restore the pre-player checkpoint if needed.
+The owner subsequently confirmed the tap-to-load player “works perfectly as
+currently built.”
 
 **How to apply:** Keep playback changes isolated from global PWA layout and the
 reverted status-area work. Preserve external-card behavior for unsupported links
