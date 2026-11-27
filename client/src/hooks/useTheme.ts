@@ -122,13 +122,8 @@ const applyTheme = (theme: Partial<UserTheme>) => {
     : '#ffffff';
   root.style.setProperty('--mykliq-safe-area-color', safeAreaColor);
 
-  // Limit browser chrome changes to touch-based WebKit. iOS standalone keeps
-  // its translucent status-bar mode; desktop and Android settings stay intact.
-  if (CSS.supports('-webkit-touch-callout', 'none') && window.matchMedia('(pointer: coarse)').matches) {
-    document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
-      meta.content = safeAreaColor;
-    });
-  }
+  // Keep browser theme-color metadata unchanged: changing it can also tint
+  // bottom browser/system chrome. Only the top painted band follows the theme.
   
   if (theme.primaryColor) {
     const primaryHsl = safeHexToHsl(theme.primaryColor, 'primaryColor');

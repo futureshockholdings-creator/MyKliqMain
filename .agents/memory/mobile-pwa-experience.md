@@ -38,5 +38,15 @@ Only update the top; leave the bottom as it was.
 **Why:** The user said the bottom was perfect and explicitly excluded it from
 the safe-area correction.
 
-**How to apply:** Preserve existing bottom spacing and viewport-height behavior
-when extending the background into the top status area.
+**How to apply:** Edge-to-edge viewport coverage exposes both ends of the screen.
+Removing a dynamic-height override alone did not restore the bottom for the
+owner. Reserve the bottom home-indicator area separately rather than extending
+the page and rail into it; do not retint browser chrome for a top-only change.
+
+The top transition must be sharp, with no blur.
+
+**Why:** The user explicitly clarified this after observing a blurry transition
+between the status area and page/navigation.
+
+**How to apply:** Use an opaque theme-compatible top band, not a separately
+rescaled copy of the page image or gradient. Preserve the original splash.

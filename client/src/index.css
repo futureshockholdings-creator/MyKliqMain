@@ -99,25 +99,25 @@ html, body {
   overflow-x: hidden;
 }
 
-/* iOS owns the status-bar icons; paint the member's background behind them,
-   but keep the scroll viewport and navigation below the camera/status area.
-   The full-size background is clipped to the top inset so cover images and
-   gradients keep their viewport proportions rather than squeezing into a strip.
-   This layer is below dialogs and the original startup splash. */
+/* Paint an opaque, hard-edged status area. Do not copy/rescale the page image
+   or gradient here: that creates a mismatched transition above the nav.
+   iOS still owns the clock and other system indicators. */
 @supports (-webkit-touch-callout: none) {
   @media (pointer: coarse) {
     html::before {
       content: "";
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: env(safe-area-inset-top, 0px);
       z-index: 60;
       pointer-events: none;
-      background-color: var(--mykliq-safe-area-color, #ffffff);
-      background-image: inherit;
-      background-size: inherit;
-      background-position: inherit;
-      background-repeat: inherit;
-      clip-path: inset(0 0 calc(100% - env(safe-area-inset-top, 0px)) 0);
+      background: var(--mykliq-safe-area-color, #ffffff);
+      filter: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
     }
 
     .app-viewport {
@@ -143,6 +143,35 @@ html, body {
     }
   }
 
+  /* cover exposes the bottom as well as the top. Recreate the previously
+     reserved black home-indicator area in installed iOS PWAs, rather than
+     extending the page and navigation into it. The splash remains above this. */
+  @media (display-mode: standalone) and (pointer: coarse) {
+    html::after {
+      content: "";
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: env(safe-area-inset-bottom, 0px);
+      z-index: 60;
+      pointer-events: none;
+      background: #000000;
+    }
+
+    .app-viewport {
+      height: calc(100vh - env(safe-area-inset-bottom, 0px));
+      min-height: calc(100vh - env(safe-area-inset-bottom, 0px));
+    }
+
+    .mobile-navigation-rail {
+      bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .chatbot-bottom-anchor {
+      bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
 }
 
 /* iOS Safari: clear focus ring on touch devices */
