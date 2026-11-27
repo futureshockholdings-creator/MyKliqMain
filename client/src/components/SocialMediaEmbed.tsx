@@ -5,6 +5,8 @@ import { isTikTokShortLink, tikTokVideoId } from '@shared/tiktok';
 import { TikTokPlayer } from './TikTokPlayer';
 import { FacebookEmbed } from './FacebookEmbed';
 import { facebookEmbedTarget, isFacebookShareUrl } from '@shared/facebook';
+import { instagramEmbedTarget } from '@shared/instagram';
+import { InstagramEmbed } from './InstagramEmbed';
 
 function InstagramIcon({ className = "w-6 h-6" }: { className?: string }) {
   return (
@@ -97,6 +99,10 @@ export function SocialMediaEmbed({ socialUrl, className = "", autoPreview = fals
   const config = platformConfig[socialUrl.platform];
   const Icon = config.icon;
   const displayPath = extractDisplayPath(socialUrl.url, socialUrl.platform);
+
+  if (autoPreview && socialUrl.platform === 'instagram' && instagramEmbedTarget(socialUrl.url)) {
+    return <InstagramEmbed key={socialUrl.url} url={socialUrl.url} className={className} />;
+  }
 
   if (autoPreview && socialUrl.platform === 'facebook' &&
       (facebookEmbedTarget(socialUrl.url) || isFacebookShareUrl(socialUrl.url))) {

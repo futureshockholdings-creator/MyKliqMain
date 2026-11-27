@@ -4,6 +4,8 @@ import { isTikTokShortLink, tikTokVideoId } from '@shared/tiktok';
 import { facebookEmbedTarget, isFacebookShareUrl } from '@shared/facebook';
 import { TikTokPlayer } from './TikTokPlayer';
 import { FacebookEmbed } from './FacebookEmbed';
+import { InstagramEmbed } from './InstagramEmbed';
+import { instagramEmbedTarget } from '@shared/instagram';
 import { uiText, useUiLanguage } from '@/i18n/interfaceText';
 
 export function SocialDraftPreviews({ text }: { text: string }) {
@@ -18,7 +20,9 @@ export function SocialDraftPreviews({ text }: { text: string }) {
   const links = findSocialMediaUrls(settledText).filter(link => {
     const supported = link.platform === 'tiktok'
       ? tikTokVideoId(link.url) || isTikTokShortLink(link.url)
-      : link.platform === 'facebook' && (facebookEmbedTarget(link.url) || isFacebookShareUrl(link.url));
+      : link.platform === 'facebook'
+        ? facebookEmbedTarget(link.url) || isFacebookShareUrl(link.url)
+        : link.platform === 'instagram' && instagramEmbedTarget(link.url);
     if (!supported || !current.has(link.url) || seen.has(link.url)) return false;
     seen.add(link.url);
     return true;
@@ -28,7 +32,9 @@ export function SocialDraftPreviews({ text }: { text: string }) {
     <div className="mb-3 space-y-3 min-w-0">
       {links.slice(0, 3).map(link => link.platform === 'facebook'
         ? <FacebookEmbed key={link.url} url={link.url} className="w-full max-w-sm mx-auto" />
-        : <TikTokPlayer key={link.url} url={link.url} className="w-full max-w-sm mx-auto" />)}
+        : link.platform === 'instagram'
+          ? <InstagramEmbed key={link.url} url={link.url} className="w-full max-w-sm mx-auto" />
+          : <TikTokPlayer key={link.url} url={link.url} className="w-full max-w-sm mx-auto" />)}
       {links.length > 3 && <p className="text-sm text-muted-foreground">
         {uiText('Additional links will appear after posting.')}
       </p>}

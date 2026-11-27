@@ -13,6 +13,8 @@ imports and requested Facebook first. They clarified that “don't want” the T
 logo was a typo: they do want the TikTok logo visible near the top too.
 
 **How to apply:** Preserve TikTok's accepted playback behavior while adding its
-logo. Do not infer permission to implement Instagram from discussion of it.
+logo. The owner subsequently approved the same approach for Instagram after
+confirming Facebook works perfectly: branded icon/name above official embeds,
+nearby loading without autoplay, and an external fallback.
 Keep automatic embeds scoped to published posts and the composer, leaving
 private-message behavior and the restored global layout unchanged.
