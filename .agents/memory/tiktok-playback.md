@@ -27,3 +27,15 @@ metadata-fetching enhancement with fallback when thumbnails are unavailable.
 **How to apply:** Send only the selected public TikTok URL for metadata, not the
 draft or member details. Keep automatic metadata out of private conversations.
 Do not make a preview a prerequisite for posting or playback.
+
+TikTok oEmbed can return HTTP 200 and valid embed markup while omitting the
+thumbnail, title and creator fields entirely.
+
+**Why:** Direct inspection of the owner's failing public short link confirmed
+that redirects resolved correctly but TikTok returned embed-only metadata.
+Production logs independently showed successful requests to the preview route.
+
+**How to apply:** Do not equate HTTP 200 with thumbnail availability or assume
+every playable video has separate image metadata. Loading the actual player
+automatically changes third-party contact and performance behavior; obtain
+approval rather than silently replacing tap-to-load.
