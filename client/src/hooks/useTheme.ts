@@ -111,6 +111,24 @@ const safeAccessibleForeground = (bgColor: string): string | null => {
 // Apply theme to document root
 const applyTheme = (theme: Partial<UserTheme>) => {
   const root = document.documentElement;
+
+  // iPhone's translucent status area needs an opaque backing even when the
+  // selected background is an image, transparent pattern, or gradient.
+  const safeAreaCandidate = theme.backgroundType === 'gradient'
+    ? theme.backgroundGradientStart
+    : theme.backgroundColor;
+  const safeAreaColor = safeAreaCandidate && /^#[0-9A-Fa-f]{6}$/.test(safeAreaCandidate)
+    ? safeAreaCandidate
+    : '#ffffff';
+  root.style.setProperty('--mykliq-safe-area-color', safeAreaColor);
+
+  // Limit browser chrome changes to touch-based WebKit. iOS standalone keeps
+  // its translucent status-bar mode; desktop and Android settings stay intact.
+  if (CSS.supports('-webkit-touch-callout', 'none') && window.matchMedia('(pointer: coarse)').matches) {
+    document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+      meta.content = safeAreaColor;
+    });
+  }
   
   if (theme.primaryColor) {
     const primaryHsl = safeHexToHsl(theme.primaryColor, 'primaryColor');

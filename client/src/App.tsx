@@ -530,7 +530,7 @@ function AppContent() {
         
         {/* Main App Container with responsive margins */}
         <div className={cn(
-          "min-h-screen h-screen bg-background relative",
+          "app-viewport min-h-screen h-screen bg-background relative",
           isAuthenticated && !isLoading && !isPublicPage ? "main-content-with-navigation" : ""
         )}>
           {/* Full Screen App Container with scroll */}

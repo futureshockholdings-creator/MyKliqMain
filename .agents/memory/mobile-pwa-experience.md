@@ -23,3 +23,12 @@ screen and explicitly requested a single original-splash launch experience.
 **How to apply:** Coordinate the handoff with the initial member-session check,
 while letting public pages open without waiting on that check. Preserve existing
 login/logout suppression and desktop behavior.
+
+The installed iPhone PWA should extend the selected background behind the top
+status area, while keeping controls clear of the camera and system indicators.
+
+**Why:** The user approved replacing the unused black top strip with a continuous
+background, without changing the splash screen or desktop layout.
+
+**How to apply:** Treat the safe-area background separately from content padding;
+preserve safe placement after rotation and leave status-bar icons under iOS control.
