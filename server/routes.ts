@@ -18,6 +18,7 @@ import { pool, db } from "./db";
 import { friendRankingIntelligence } from "./friendRankingIntelligence";
 import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
+import { resolveTikTokEmbed } from "./tiktokEmbed";
 import { isReadableInviteCode, normalizeInviteCode } from "@shared/inviteCodes";
 import { replaceLegacyInviteCode } from "./inviteCodeService";
 import { performanceOptimizer } from "./performanceOptimizer";
@@ -5418,6 +5419,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to proxy image" });
     }
   });
+
+  app.post("/api/tiktok/resolve", isAuthenticated,
+    rateLimitService.createRateLimitMiddleware('search'), resolveTikTokEmbed);
 
   app.get("/api/link-preview", async (req, res) => {
     const { url } = req.query;

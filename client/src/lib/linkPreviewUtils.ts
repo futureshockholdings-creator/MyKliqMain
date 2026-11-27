@@ -2,7 +2,7 @@ const youtubePattern = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\//i
 const twitchPattern = /(?:https?:\/\/)?(?:www\.)?(?:twitch\.tv|clips\.twitch\.tv)\//i;
 const instagramPattern = /(?:https?:\/\/)?(?:www\.)?instagram\.com\//i;
 const facebookPattern = /(?:https?:\/\/)?(?:www\.)?(?:facebook\.com|fb\.watch)\//i;
-const tiktokPattern = /(?:https?:\/\/)?(?:www\.)?(?:tiktok\.com|vm\.tiktok\.com)\//i;
+const tiktokPattern = /(?:https?:\/\/)?(?:(?:www|m|vm|vt)\.)?tiktok\.com\//i;
 
 const urlPattern = /https?:\/\/[^\s<>"')\]]+/gi;
 

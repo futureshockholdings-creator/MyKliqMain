@@ -22,3 +22,4 @@
 - [Localization boundaries](localization-contract.md) — keep the language list, member content and stored values unchanged; preserve form state and count placeholders.
 - [Self-likes](self-likes.md) — self-likes were for alert testing only; members must not like their own posts or comments.
 - [Support administration](admin-moderation.md) — the owner retired standalone Rules Reports in favor of the working Support Admin interface.
+- [TikTok playback boundaries](tiktok-playback.md) — owner approved tap-to-load official playback with disclosure and external fallback; keep separate from reverted iPhone layout work.

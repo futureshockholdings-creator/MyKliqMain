@@ -1,6 +1,8 @@
 import { ExternalLink } from 'lucide-react';
 import type { SocialMediaUrl } from '@/lib/socialMediaUtils';
 import { uiText, useUiLanguage } from "@/i18n/interfaceText";
+import { isTikTokShortLink, tikTokVideoId } from '@shared/tiktok';
+import { TikTokPlayer } from './TikTokPlayer';
 
 function InstagramIcon({ className = "w-6 h-6" }: { className?: string }) {
   return (
@@ -92,6 +94,11 @@ export function SocialMediaEmbed({ socialUrl, className = "" }: SocialMediaEmbed
   const config = platformConfig[socialUrl.platform];
   const Icon = config.icon;
   const displayPath = extractDisplayPath(socialUrl.url, socialUrl.platform);
+
+  if (socialUrl.platform === 'tiktok' &&
+      (tikTokVideoId(socialUrl.url) || isTikTokShortLink(socialUrl.url))) {
+    return <TikTokPlayer key={socialUrl.url} url={socialUrl.url} className={className} />;
+  }
 
   return (
     <div className={`relative rounded-lg overflow-hidden ${config.gradient} ${className}`}>

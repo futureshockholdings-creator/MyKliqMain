@@ -28,6 +28,8 @@ const platformPatterns: Record<SocialPlatform, RegExp[]> = {
     /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/@[\w.-]+\/video\/\d+/,
     /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/@[\w.-]+\/photo\/\d+/,
     /(?:https?:\/\/)?vm\.tiktok\.com\/[\w-]+/,
+    /https:\/\/vt\.tiktok\.com\/[\w-]+/,
+    /https:\/\/m\.tiktok\.com\/@[\w.-]+\/video\/\d+/,
     /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/t\/[\w-]+/,
     /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/@[\w.-]+\/?(?:\?[^\s]*)?/,
   ],
@@ -52,7 +54,7 @@ const contentTypeDetectors: Record<SocialPlatform, (url: string) => string> = {
   tiktok: (url: string) => {
     if (/\/video\//.test(url)) return 'Video';
     if (/\/photo\//.test(url)) return 'Photo';
-    if (/vm\.tiktok\.com|\/t\//.test(url)) return 'Video';
+    if (/v[mt]\.tiktok\.com|\/t\//.test(url)) return 'Video';
     return 'Profile';
   },
 };
@@ -82,6 +84,8 @@ const combinedPattern = new RegExp(
     'fb\\.watch\\/[^\\s]+|' +
     'tiktok\\.com\\/[^\\s]+|' +
     'vm\\.tiktok\\.com\\/[^\\s]+' +
+    '|vt\\.tiktok\\.com\\/[^\\s]+' +
+    '|m\\.tiktok\\.com\\/[^\\s]+' +
   ')',
   'gi'
 );
