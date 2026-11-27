@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ExternalLink, Play, RotateCcw } from 'lucide-react';
+import { SiTiktok } from 'react-icons/si';
 import { isTikTokShortLink, tikTokVideoId } from '@shared/tiktok';
 import { apiRequest } from '@/lib/queryClient';
 import { uiText, useUiLanguage } from '@/i18n/interfaceText';
@@ -122,8 +123,11 @@ export function TikTokPlayer({ url, className = '', autoPreview = true }: Props)
   return (
     <div ref={containerRef} className={`rounded-lg overflow-hidden bg-black text-white ${className}`}
       onClick={event => event.stopPropagation()}>
-      <div className="flex items-center justify-between gap-3 p-3 border-b border-white/20">
-        <span className="font-semibold text-sm">TikTok</span>
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 border-b border-white/20">
+        <span className="inline-flex items-center gap-2 font-semibold text-sm">
+          <SiTiktok className="h-6 w-6 shrink-0" aria-hidden="true" />
+          TikTok
+        </span>
         <a href={url} target="_blank" rel="noopener noreferrer"
           className="inline-flex items-center gap-2 underline text-sm py-2">
           <ExternalLink className="w-4 h-4" aria-hidden="true" />

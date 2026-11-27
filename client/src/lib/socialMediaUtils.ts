@@ -1,3 +1,5 @@
+import { facebookEmbedTarget, isFacebookShareUrl } from '@shared/facebook';
+
 export type SocialPlatform = 'instagram' | 'facebook' | 'tiktok';
 
 export interface SocialMediaUrl {
@@ -62,6 +64,12 @@ const contentTypeDetectors: Record<SocialPlatform, (url: string) => string> = {
 export function detectSocialPlatform(url: string): SocialMediaUrl | null {
   if (!url) return null;
 
+  const facebook = facebookEmbedTarget(url);
+  if (facebook || isFacebookShareUrl(url)) {
+    return { platform: 'facebook', url,
+      contentType: facebook?.kind === 'video' ? 'Video' : 'Post' };
+  }
+
   for (const [platform, patterns] of Object.entries(platformPatterns) as [SocialPlatform, RegExp[]][]) {
     for (const pattern of patterns) {
       if (pattern.test(url)) {
@@ -81,6 +89,7 @@ const combinedPattern = new RegExp(
   'https?:\\/\\/(?:www\\.)?(?:' +
     'instagram\\.com\\/[^\\s]+|' +
     'facebook\\.com\\/[^\\s]+|' +
+    '(?:m|web|mbasic)\\.facebook\\.com\\/[^\\s]+|' +
     'fb\\.watch\\/[^\\s]+|' +
     'tiktok\\.com\\/[^\\s]+|' +
     'vm\\.tiktok\\.com\\/[^\\s]+' +

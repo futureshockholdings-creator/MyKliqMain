@@ -33,7 +33,7 @@ import { MovieconDisplay } from "@/components/MovieconDisplay";
 import { YouTubeEmbedList, YouTubeEmbed } from "@/components/YouTubeEmbed";
 import { extractYouTubeUrlsFromText } from "@/lib/youtubeUtils";
 import { SocialMediaEmbedList } from "@/components/SocialMediaEmbed";
-import { TikTokDraftPreviews } from "@/components/TikTokDraftPreviews";
+import { SocialDraftPreviews } from "@/components/SocialDraftPreviews";
 import { extractSocialMediaUrlsFromText } from "@/lib/socialMediaUtils";
 import { TwitchEmbedList, TwitchEmbed } from "@/components/TwitchEmbed";
 import { extractTwitchUrlsFromText, detectTwitchUrl } from "@/lib/twitchUtils";
@@ -2342,7 +2342,7 @@ export default function Home() {
               data-testid="textarea-new-post"
             />
           </div>
-          <TikTokDraftPreviews text={newPost} />
+          <SocialDraftPreviews text={newPost} />
           {selectedMeme && (
             <div className="mt-3 flex items-center gap-2">
               <MemeDisplay meme={selectedMeme} className="max-w-xs" />
