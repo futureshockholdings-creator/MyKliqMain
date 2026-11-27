@@ -41,7 +41,8 @@ every playable video has separate image metadata.
 
 The owner subsequently approved automatically loading the actual player near
 the viewport, with autoplay off, after the third-party contact and data/performance
-tradeoffs were explained. They will test and may request restoration if disliked.
+tradeoffs were explained. After testing this approach, they confirmed it
+“works perfectly.” Keep this as the accepted behavior.
 
 **Why:** The separate metadata endpoint did not provide an image for their link;
 the official player is the preferred way to show TikTok's initial presentation.
