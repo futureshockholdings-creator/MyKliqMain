@@ -1,10 +1,11 @@
 ---
 name: TikTok playback boundaries
-description: Owner-approved tap-to-load TikTok playback with external fallback, isolated from iPhone layout work.
+description: Owner-approved automatic nearby TikTok players for posts/composer, manual private-message loading, external fallback.
 ---
 
-TikTok playback should use the official third-party player only after the viewer
-chooses to load it, with a visible disclosure and permanent external link.
+TikTok playback uses the official third-party player, with a permanent external
+link. Posts and the posting form may load nearby players automatically, with
+autoplay off. Private conversations retain manual loading.
 Do not download or rehost TikTok video media.
 
 **Why:** The owner approved experimenting with inline playback after being told
@@ -17,8 +18,8 @@ currently built.”
 reverted status-area work. Preserve external-card behavior for unsupported links
 and leave production testing to the owner.
 
-Automatic thumbnail/title/creator previews are approved for the posting form and
-published posts, while the video player itself remains tap-to-load.
+The owner initially approved automatic thumbnail/title/creator previews for the
+posting form and published posts, keeping the player itself tap-to-load.
 
 **Why:** After confirming playback worked, the owner requested a recognizable
 preview as soon as a TikTok link is typed or pasted and approved the proposed
@@ -36,6 +37,16 @@ that redirects resolved correctly but TikTok returned embed-only metadata.
 Production logs independently showed successful requests to the preview route.
 
 **How to apply:** Do not equate HTTP 200 with thumbnail availability or assume
-every playable video has separate image metadata. Loading the actual player
-automatically changes third-party contact and performance behavior; obtain
-approval rather than silently replacing tap-to-load.
+every playable video has separate image metadata.
+
+The owner subsequently approved automatically loading the actual player near
+the viewport, with autoplay off, after the third-party contact and data/performance
+tradeoffs were explained. They will test and may request restoration if disliked.
+
+**Why:** The separate metadata endpoint did not provide an image for their link;
+the official player is the preferred way to show TikTok's initial presentation.
+
+**How to apply:** Restrict automatic players to posts and the composer, release
+distant frames, respect Close, retain external fallback, and keep private
+messages and the restored global layout unchanged. TikTok controls the initial
+poster or unavailable screen; do not guarantee a thumbnail.

@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ExternalLink, Play, RotateCcw } from 'lucide-react';
 import { isTikTokShortLink, tikTokVideoId } from '@shared/tiktok';
 import { apiRequest } from '@/lib/queryClient';
 import { uiText, useUiLanguage } from '@/i18n/interfaceText';
-import { useTikTokPreview } from '@/hooks/useTikTokPreview';
 
 interface Props {
   url: string;
@@ -21,14 +20,33 @@ export function TikTokPlayer({ url, className = '', autoPreview = true }: Props)
   const mounted = useRef(true);
   const busy = useRef(false);
   const failed = phase === 'error';
-  const { containerRef, preview } = useTikTokPreview(url, autoPreview);
-  const [imageFailed, setImageFailed] = useState(false);
-  const showThumbnail = !!preview?.thumbnailUrl && !imageFailed;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [nearby, setNearby] = useState(false);
+  const autoStarted = useRef(false);
+  const dismissed = useRef(false);
+  const generation = useRef(0);
 
   useEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; };
+    return () => {
+      mounted.current = false;
+      generation.current++;
+      busy.current = false;
+    };
   }, []);
+
+  useEffect(() => {
+    const element = containerRef.current;
+    // On older browsers without IntersectionObserver retain manual loading,
+    // rather than loading every player in the feed.
+    if (!autoPreview || !element || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(entries => {
+      const entry = entries.find(item => item.target === element);
+      if (entry) setNearby(entry.isIntersecting);
+    }, { rootMargin: '300px' });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [autoPreview]);
 
   useEffect(() => {
     if (!videoId || failed) return;
@@ -57,14 +75,16 @@ export function TikTokPlayer({ url, className = '', autoPreview = true }: Props)
     };
   }, [videoId, failed]);
 
-  async function loadPlayer() {
+  const loadPlayer = useCallback(async () => {
     if (busy.current) return;
     busy.current = true;
+    if (autoPreview) autoStarted.current = true;
+    const requestGeneration = ++generation.current;
     setPhase('resolving');
     setSlow(false);
     setVideoId(null);
     try {
-      let id = tikTokVideoId(url) || preview?.videoId;
+      let id = tikTokVideoId(url);
       if (!id && isTikTokShortLink(url)) {
         const result = await apiRequest('POST', '/api/tiktok/resolve', { url });
         // enterpriseApiRequest returns parsed JSON, not a fetch Response.
@@ -72,16 +92,32 @@ export function TikTokPlayer({ url, className = '', autoPreview = true }: Props)
           ? result.videoId : null;
       }
       if (!id) throw new Error('Video unavailable');
-      if (mounted.current) {
+      if (mounted.current && requestGeneration === generation.current) {
         setVideoId(id);
         setPhase('loading');
       }
     } catch {
-      if (mounted.current) setPhase('error');
+      if (mounted.current && requestGeneration === generation.current) setPhase('error');
     } finally {
-      busy.current = false;
+      if (requestGeneration === generation.current) busy.current = false;
     }
-  }
+  }, [url, autoPreview]);
+
+  useEffect(() => {
+    if (!autoPreview) return;
+    if (nearby && !dismissed.current && !autoStarted.current) {
+      void loadPlayer();
+    } else if (!nearby && autoStarted.current) {
+      // Unmount distant frames to stop playback and release their resources.
+      // Ignore a short-link response that arrives after its card left view.
+      generation.current++;
+      busy.current = false;
+      autoStarted.current = false;
+      setVideoId(null);
+      setPhase('idle');
+      setSlow(false);
+    }
+  }, [autoPreview, nearby, loadPlayer]);
 
   return (
     <div ref={containerRef} className={`rounded-lg overflow-hidden bg-black text-white ${className}`}
@@ -104,39 +140,30 @@ export function TikTokPlayer({ url, className = '', autoPreview = true }: Props)
             </p>
           )}
           <iframe ref={iframe} title="TikTok video"
-            src={`https://www.tiktok.com/player/v1/${videoId}?autoplay=0&controls=1`}
+            src={`https://www.tiktok.com/player/v1/${videoId}?autoplay=0${autoPreview ? '&muted=1' : ''}&controls=1`}
             className="block w-full aspect-[9/16] border-0 bg-black"
-            allow="fullscreen; picture-in-picture; encrypted-media"
+            loading={autoPreview ? 'lazy' : undefined}
+            allow={autoPreview
+              ? "fullscreen; picture-in-picture; encrypted-media; autoplay 'none'"
+              : 'fullscreen; picture-in-picture; encrypted-media'}
             allowFullScreen referrerPolicy="no-referrer"
             onError={() => setPhase('error')} />
           <button type="button" className="block mx-auto underline text-sm px-4 py-3"
-            onClick={() => { setVideoId(null); setPhase('idle'); }}>
+            onClick={() => {
+              dismissed.current = true;
+              generation.current++;
+              busy.current = false;
+              setVideoId(null);
+              setPhase('idle');
+              setSlow(false);
+            }}>
             {uiText('Close')}
           </button>
         </div>
       ) : (
-        <div className="flex flex-col items-center text-center gap-3 p-6">
-          {showThumbnail && (
-            <button type="button" onClick={loadPlayer} disabled={phase === 'resolving'}
-              aria-label={uiText('Load video')}
-              className="relative block w-full max-w-[400px] overflow-hidden rounded-lg bg-black disabled:opacity-60">
-              <img src={preview!.thumbnailUrl!} alt={preview?.title || uiText('TikTok video preview')}
-                loading="lazy" referrerPolicy="no-referrer"
-                className="block w-full max-h-[420px] object-contain"
-                onError={() => setImageFailed(true)} />
-              <span className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-                <span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/70 text-white">
-                  <Play className="w-8 h-8" />
-                </span>
-              </span>
-            </button>
-          )}
-          {(preview?.title || preview?.authorName) && (
-            <div className="w-full min-w-0 text-left">
-              {preview.title && <p className="text-sm font-medium line-clamp-2 break-words">{preview.title}</p>}
-              {preview.authorName && <p className="mt-1 text-xs text-white/70 break-words">{preview.authorName}</p>}
-            </div>
-          )}
+        <div className={`flex flex-col justify-center items-center text-center gap-3 p-6 ${
+          autoPreview ? 'mx-auto w-full max-w-[400px] aspect-[9/16]' : ''
+        }`}>
           {phase === 'error' ? (
             <p role="status" className="text-sm">
               {uiText('This video could not be loaded here. You can still view it on TikTok.')}

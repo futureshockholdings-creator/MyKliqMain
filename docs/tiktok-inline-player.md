@@ -5,18 +5,21 @@ layout, viewport settings, service workers, database schema, or OAuth connection
 
 ## How it works
 
-- Existing supported public TikTok video links offer **Load video**.
-- The Headlines composer debounces typed/pasted links before requesting a
-  thumbnail, title and creator from the backend. Up to three draft previews
-  are shown; additional links still publish normally.
-- Published post cards request previews only when near the visible scroll area.
-- Thumbnail previews are best effort: failed metadata or image loading leaves
-  the working Load video / View on TikTok interface available.
-- No TikTok frame or external player script is loaded before that action.
-- The disclosure explains that loading the player connects to TikTok.
+- Published post cards automatically load TikTok's own player when within
+  300px of the visible area. They no longer request separate oEmbed thumbnails.
+- The Headlines composer waits 650ms after typing/pasting before showing up to
+  three draft player cards. Nearby cards load the player automatically;
+  additional links still publish normally.
+- Far-away automatic players are unmounted to stop playback and release
+  resources. Returning to them reloads the player without autoplay.
+- Close is respected: a manually closed player stays closed for that mounted
+  card until the viewer chooses Load video. Failed loads offer Try again.
+- Browsers without IntersectionObserver keep manual loading instead of loading
+  all frames at once. A portrait placeholder limits scroll-position jumps.
 - TikTok's official `https://www.tiktok.com/player/v1/{videoId}` iframe
   supplies the player; MyKliq does not download or proxy video media.
-- Autoplay is disabled. A viewer may need a second tap on TikTok's play control.
+- Autoplay is disabled. Automatically loaded players initially mute sound and
+  explicitly deny autoplay permission. Viewers press Play and unmute in TikTok.
 - **View on TikTok** is always available, including when third-party content
   is blocked. A slow-load notice does not falsely report successful playback.
 - Retry and Close allow retrying errors and stopping/removing the player.
@@ -34,9 +37,9 @@ a five-hop limit. It returns only a video ID, not remote HTML.
 
 Resolution is rate-limited. Identical pending requests are combined and results
 are held in a bounded in-memory cache (24 hours for IDs, one minute for failures).
-The same resolver now supplies canonical links for automatic thumbnail metadata.
+The existing resolver is also used automatically for nearby short-link cards.
 
-## Thumbnail metadata and privacy
+## Previous thumbnail approach and privacy
 
 The authenticated POST `/api/tiktok/preview` sends only a validated, canonical
 public TikTok video URL to TikTok's fixed oEmbed endpoint. Responses are bounded
@@ -46,19 +49,23 @@ are accepted.
 
 Metadata is cached for one hour (unavailable results for two minutes), with
 1,000-entry and 20-in-flight limits plus a separate per-member rate limit.
-Identical pending lookups are combined. The client also shares query results,
-with no automatic retry, focus refresh or persistent preview storage.
+Identical pending lookups are combined. This endpoint is retained for compatibility
+with older frontend versions, but the current frontend no longer calls it.
 
-Unlike the player itself, automatic previews do contact TikTok before playback:
-the backend requests public metadata and the viewer loads the thumbnail from
-TikTok's CDN without a referrer. No full draft, member details or credentials
-are sent to TikTok. Incognito messages, group chats and comment cards retain
-their previous tap-to-load behavior without automatic metadata requests.
+The owner's supplied public video returned valid embed markup but no thumbnail,
+title or creator. The owner therefore approved replacing the unreliable separate
+image lookup with automatic loading of the official player.
+
+Automatic post/composer players contact TikTok before pressing Play. TikTok
+receives normal third-party iframe traffic; no full draft or MyKliq credentials
+are passed to the player. Incognito messages, group chats and comment cards retain
+their previous tap-to-load behavior.
 
 ## Release
 
-Publish the Replit backend for short-link resolution and metadata, and sync GitHub so Amplify
-deploys the frontend. No database migration or TikTok OAuth credentials needed.
+For the automatic-player change, sync GitHub so Amplify deploys the frontend.
+There are no new backend changes; the existing resolver must already be published.
+No database migration or TikTok OAuth credentials needed.
 Full video links with an ID do not need the resolver.
 
 TikTok may refuse private, removed, age/region-restricted or other unavailable
