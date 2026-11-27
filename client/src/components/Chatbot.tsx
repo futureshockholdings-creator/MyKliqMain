@@ -449,7 +449,7 @@ export function Chatbot() {
       {!isOpen && (
         <Button
           onClick={toggleChatbot}
-          className="chatbot-bottom-anchor fixed bottom-6 right-6 h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground z-50 text-xs font-semibold"
+          className="fixed bottom-6 right-6 h-10 w-10 rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground z-50 text-xs font-semibold"
           data-testid="button-chatbot-toggle"
         >
           {uiText("HELP")}
@@ -458,7 +458,7 @@ export function Chatbot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="chatbot-bottom-anchor fixed bottom-6 right-6 w-[270px] h-[352px] shadow-xl z-50 flex flex-col">
+        <Card className="fixed bottom-6 right-6 w-[270px] h-[352px] shadow-xl z-50 flex flex-col">
           <CardHeader className="flex-shrink-0 pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
