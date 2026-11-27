@@ -61,7 +61,7 @@ export function PostContentWithEmbeds({
       )}
       {socialUrls.length > 0 && (
         <div className={embedSpacing}>
-          <SocialMediaEmbedList urls={socialUrls} />
+          <SocialMediaEmbedList urls={socialUrls} autoPreview />
         </div>
       )}
       {genericUrls.length > 0 && (

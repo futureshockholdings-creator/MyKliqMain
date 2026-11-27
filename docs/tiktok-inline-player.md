@@ -6,6 +6,12 @@ layout, viewport settings, service workers, database schema, or OAuth connection
 ## How it works
 
 - Existing supported public TikTok video links offer **Load video**.
+- The Headlines composer debounces typed/pasted links before requesting a
+  thumbnail, title and creator from the backend. Up to three draft previews
+  are shown; additional links still publish normally.
+- Published post cards request previews only when near the visible scroll area.
+- Thumbnail previews are best effort: failed metadata or image loading leaves
+  the working Load video / View on TikTok interface available.
 - No TikTok frame or external player script is loaded before that action.
 - The disclosure explains that loading the player connects to TikTok.
 - TikTok's official `https://www.tiktok.com/player/v1/{videoId}` iframe
@@ -28,11 +34,30 @@ a five-hop limit. It returns only a video ID, not remote HTML.
 
 Resolution is rate-limited. Identical pending requests are combined and results
 are held in a bounded in-memory cache (24 hours for IDs, one minute for failures).
-No requests are made merely because a post appears in the feed.
+The same resolver now supplies canonical links for automatic thumbnail metadata.
+
+## Thumbnail metadata and privacy
+
+The authenticated POST `/api/tiktok/preview` sends only a validated, canonical
+public TikTok video URL to TikTok's fixed oEmbed endpoint. Responses are bounded
+to 128 KiB and six seconds after URL resolution. Embed HTML is never returned
+or executed; only video ID, plain title/creator and an HTTPS TikTok-CDN thumbnail
+are accepted.
+
+Metadata is cached for one hour (unavailable results for two minutes), with
+1,000-entry and 20-in-flight limits plus a separate per-member rate limit.
+Identical pending lookups are combined. The client also shares query results,
+with no automatic retry, focus refresh or persistent preview storage.
+
+Unlike the player itself, automatic previews do contact TikTok before playback:
+the backend requests public metadata and the viewer loads the thumbnail from
+TikTok's CDN without a referrer. No full draft, member details or credentials
+are sent to TikTok. Incognito messages, group chats and comment cards retain
+their previous tap-to-load behavior without automatic metadata requests.
 
 ## Release
 
-Publish the Replit backend for short-link resolution, and sync GitHub so Amplify
+Publish the Replit backend for short-link resolution and metadata, and sync GitHub so Amplify
 deploys the frontend. No database migration or TikTok OAuth credentials needed.
 Full video links with an ID do not need the resolver.
 
@@ -41,6 +66,7 @@ posts. iOS privacy/content blockers and TikTok's own behavior can also affect
 playback. The permanent external link remains the fallback.
 
 Source: https://developers.tiktok.com/docs/en/embed-player
+Metadata: https://developers.tiktok.com/docs/en/embed-videos
 
 ## Verification ownership
 

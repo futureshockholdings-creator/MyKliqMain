@@ -58,6 +58,7 @@ const platformConfig = {
 interface SocialMediaEmbedProps {
   socialUrl: SocialMediaUrl;
   className?: string;
+  autoPreview?: boolean;
 }
 
 function extractDisplayPath(url: string, platform: string): string {
@@ -89,7 +90,7 @@ function extractDisplayPath(url: string, platform: string): string {
   }
 }
 
-export function SocialMediaEmbed({ socialUrl, className = "" }: SocialMediaEmbedProps) {
+export function SocialMediaEmbed({ socialUrl, className = "", autoPreview = false }: SocialMediaEmbedProps) {
   useUiLanguage();
   const config = platformConfig[socialUrl.platform];
   const Icon = config.icon;
@@ -97,7 +98,7 @@ export function SocialMediaEmbed({ socialUrl, className = "" }: SocialMediaEmbed
 
   if (socialUrl.platform === 'tiktok' &&
       (tikTokVideoId(socialUrl.url) || isTikTokShortLink(socialUrl.url))) {
-    return <TikTokPlayer key={socialUrl.url} url={socialUrl.url} className={className} />;
+    return <TikTokPlayer key={socialUrl.url} url={socialUrl.url} className={className} autoPreview={autoPreview} />;
   }
 
   return (
@@ -143,9 +144,10 @@ export function SocialMediaEmbed({ socialUrl, className = "" }: SocialMediaEmbed
 interface SocialMediaEmbedListProps {
   urls: SocialMediaUrl[];
   className?: string;
+  autoPreview?: boolean;
 }
 
-export function SocialMediaEmbedList({ urls, className = "" }: SocialMediaEmbedListProps) {
+export function SocialMediaEmbedList({ urls, className = "", autoPreview = false }: SocialMediaEmbedListProps) {
   if (!urls || urls.length === 0) return null;
 
   return (
@@ -155,6 +157,7 @@ export function SocialMediaEmbedList({ urls, className = "" }: SocialMediaEmbedL
           key={`${socialUrl.url}-${index}`}
           socialUrl={socialUrl}
           className="w-full max-w-2xl"
+          autoPreview={autoPreview}
         />
       ))}
     </div>

@@ -19,6 +19,7 @@ import { friendRankingIntelligence } from "./friendRankingIntelligence";
 import { cacheService } from "./cacheService";
 import { rateLimitService } from "./rateLimitService";
 import { resolveTikTokEmbed } from "./tiktokEmbed";
+import { getTikTokPreview } from "./tiktokPreview";
 import { isReadableInviteCode, normalizeInviteCode } from "@shared/inviteCodes";
 import { replaceLegacyInviteCode } from "./inviteCodeService";
 import { performanceOptimizer } from "./performanceOptimizer";
@@ -5422,6 +5423,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tiktok/resolve", isAuthenticated,
     rateLimitService.createRateLimitMiddleware('search'), resolveTikTokEmbed);
+  app.post("/api/tiktok/preview", isAuthenticated,
+    rateLimitService.createRateLimitMiddleware('tiktokPreview'), getTikTokPreview);
 
   app.get("/api/link-preview", async (req, res) => {
     const { url } = req.query;

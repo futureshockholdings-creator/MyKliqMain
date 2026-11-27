@@ -19,6 +19,7 @@ class RateLimitService {
     // Low-frequency endpoints (resource intensive)
     upload: { requests: 10, window: 60000 },       // 10 uploads per minute
     search: { requests: 30, window: 60000 },       // 30 searches per minute
+    tiktokPreview: { requests: 60, window: 60000 }, // Separate from searches and playback
     admin: { requests: 100, window: 60000 },       // 100 admin actions per minute
     
     // Authentication endpoints

@@ -16,3 +16,14 @@ currently built.”
 **How to apply:** Keep playback changes isolated from global PWA layout and the
 reverted status-area work. Preserve external-card behavior for unsupported links
 and leave production testing to the owner.
+
+Automatic thumbnail/title/creator previews are approved for the posting form and
+published posts, while the video player itself remains tap-to-load.
+
+**Why:** After confirming playback worked, the owner requested a recognizable
+preview as soon as a TikTok link is typed or pasted and approved the proposed
+metadata-fetching enhancement with fallback when thumbnails are unavailable.
+
+**How to apply:** Send only the selected public TikTok URL for metadata, not the
+draft or member details. Keep automatic metadata out of private conversations.
+Do not make a preview a prerequisite for posting or playback.

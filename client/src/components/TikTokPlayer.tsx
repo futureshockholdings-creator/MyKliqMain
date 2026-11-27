@@ -3,14 +3,16 @@ import { ExternalLink, Play, RotateCcw } from 'lucide-react';
 import { isTikTokShortLink, tikTokVideoId } from '@shared/tiktok';
 import { apiRequest } from '@/lib/queryClient';
 import { uiText, useUiLanguage } from '@/i18n/interfaceText';
+import { useTikTokPreview } from '@/hooks/useTikTokPreview';
 
 interface Props {
   url: string;
   className?: string;
+  autoPreview?: boolean;
 }
 
 // The parent keys this by URL so an edited link never retains the old player.
-export function TikTokPlayer({ url, className = '' }: Props) {
+export function TikTokPlayer({ url, className = '', autoPreview = true }: Props) {
   useUiLanguage();
   const [phase, setPhase] = useState<'idle' | 'resolving' | 'loading' | 'ready' | 'error'>('idle');
   const [videoId, setVideoId] = useState<string | null>(null);
@@ -19,6 +21,9 @@ export function TikTokPlayer({ url, className = '' }: Props) {
   const mounted = useRef(true);
   const busy = useRef(false);
   const failed = phase === 'error';
+  const { containerRef, preview } = useTikTokPreview(url, autoPreview);
+  const [imageFailed, setImageFailed] = useState(false);
+  const showThumbnail = !!preview?.thumbnailUrl && !imageFailed;
 
   useEffect(() => {
     mounted.current = true;
@@ -59,7 +64,7 @@ export function TikTokPlayer({ url, className = '' }: Props) {
     setSlow(false);
     setVideoId(null);
     try {
-      let id = tikTokVideoId(url);
+      let id = tikTokVideoId(url) || preview?.videoId;
       if (!id && isTikTokShortLink(url)) {
         const result = await apiRequest('POST', '/api/tiktok/resolve', { url });
         // enterpriseApiRequest returns parsed JSON, not a fetch Response.
@@ -79,7 +84,7 @@ export function TikTokPlayer({ url, className = '' }: Props) {
   }
 
   return (
-    <div className={`rounded-lg overflow-hidden bg-black text-white ${className}`}
+    <div ref={containerRef} className={`rounded-lg overflow-hidden bg-black text-white ${className}`}
       onClick={event => event.stopPropagation()}>
       <div className="flex items-center justify-between gap-3 p-3 border-b border-white/20">
         <span className="font-semibold text-sm">TikTok</span>
@@ -111,6 +116,27 @@ export function TikTokPlayer({ url, className = '' }: Props) {
         </div>
       ) : (
         <div className="flex flex-col items-center text-center gap-3 p-6">
+          {showThumbnail && (
+            <button type="button" onClick={loadPlayer} disabled={phase === 'resolving'}
+              aria-label={uiText('Load video')}
+              className="relative block w-full max-w-[400px] overflow-hidden rounded-lg bg-black disabled:opacity-60">
+              <img src={preview!.thumbnailUrl!} alt={preview?.title || uiText('TikTok video preview')}
+                loading="lazy" referrerPolicy="no-referrer"
+                className="block w-full max-h-[420px] object-contain"
+                onError={() => setImageFailed(true)} />
+              <span className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                <span className="flex h-16 w-16 items-center justify-center rounded-full bg-black/70 text-white">
+                  <Play className="w-8 h-8" />
+                </span>
+              </span>
+            </button>
+          )}
+          {(preview?.title || preview?.authorName) && (
+            <div className="w-full min-w-0 text-left">
+              {preview.title && <p className="text-sm font-medium line-clamp-2 break-words">{preview.title}</p>}
+              {preview.authorName && <p className="mt-1 text-xs text-white/70 break-words">{preview.authorName}</p>}
+            </div>
+          )}
           {phase === 'error' ? (
             <p role="status" className="text-sm">
               {uiText('This video could not be loaded here. You can still view it on TikTok.')}
