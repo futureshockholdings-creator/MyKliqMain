@@ -32,3 +32,11 @@ background, without changing the splash screen or desktop layout.
 
 **How to apply:** Treat the safe-area background separately from content padding;
 preserve safe placement after rotation and leave status-bar icons under iOS control.
+
+Only update the top; leave the bottom as it was.
+
+**Why:** The user said the bottom was perfect and explicitly excluded it from
+the safe-area correction.
+
+**How to apply:** Preserve existing bottom spacing and viewport-height behavior
+when extending the background into the top status area.

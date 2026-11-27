@@ -143,12 +143,6 @@ html, body {
     }
   }
 
-  @media (display-mode: standalone) and (pointer: coarse) {
-    .app-viewport {
-      height: 100dvh;
-      min-height: 100dvh;
-    }
-  }
 }
 
 /* iOS Safari: clear focus ring on touch devices */
