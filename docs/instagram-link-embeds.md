@@ -9,7 +9,12 @@ This is not a connected-account integration.
   frame in published posts and debounced Headlines draft previews.
 - The gradient header displays the Instagram icon/name and a permanent external
   link. The three-preview composer limit is shared across platforms.
-- Frames load within 300px of the viewport and unload when distant.
+- Frames first load within 300px of the viewport and stay mounted for the page
+  visit, avoiding deliberate reloads when scrolling back. Close/page unmount
+  still release them.
+- There is no supported offscreen-pause interface for this Instagram frame.
+  Autoplay stays denied, but manually started playback may continue offscreen
+  until the viewer pauses or closes it.
 - Autoplay permission is explicitly denied. Close prevents automatic reopening
   for that mounted card; manual load/retry remains available.
 - No IntersectionObserver means manual loading, not an inaccessible player.

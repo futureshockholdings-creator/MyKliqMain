@@ -10,8 +10,11 @@ layout, viewport settings, service workers, database schema, or OAuth connection
 - The Headlines composer waits 650ms after typing/pasting before showing up to
   three draft player cards. Nearby cards load the player automatically;
   additional links still publish normally.
-- Far-away automatic players are unmounted to stop playback and release
-  resources. Returning to them reloads the player without autoplay.
+- Once requested, automatic players remain mounted for the current page visit,
+  even when scrolled away. Returning does not recreate the frame or repeat
+  short-link resolution. Close and page unmount still release the frame.
+- TikTok receives its official pause message when the card leaves the viewport
+  or the document becomes hidden; returning never automatically resumes it.
 - Close is respected: a manually closed player stays closed for that mounted
   card until the viewer chooses Load video. Failed loads offer Try again.
 - Browsers without IntersectionObserver keep manual loading instead of loading

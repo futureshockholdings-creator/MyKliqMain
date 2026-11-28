@@ -47,7 +47,7 @@ tradeoffs were explained. After testing this approach, they confirmed it
 **Why:** The separate metadata endpoint did not provide an image for their link;
 the official player is the preferred way to show TikTok's initial presentation.
 
-**How to apply:** Restrict automatic players to posts and the composer, release
-distant frames, respect Close, retain external fallback, and keep private
+**How to apply:** Restrict automatic players to posts and the composer, retain
+loaded frames during the page visit, respect Close, retain external fallback, and keep private
 messages and the restored global layout unchanged. TikTok controls the initial
 poster or unavailable screen; do not guarantee a thumbnail.

@@ -75,14 +75,8 @@ export function FacebookEmbed({ url, className = '' }: { url: string; className?
 
   useEffect(() => {
     if (nearby && !started.current && !dismissed.current) void load();
-    else if (!nearby && started.current) {
-      generation.current++;
-      busy.current = false;
-      started.current = false;
-      setTarget(null);
-      setPhase('idle');
-      setSlow(false);
-    }
+    // Do not discard the frame or repeat share resolution when scrolling away.
+    // Close and page unmount still release it.
   }, [nearby, load]);
 
   useEffect(() => {

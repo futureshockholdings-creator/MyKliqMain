@@ -32,11 +32,8 @@ export function InstagramEmbed({ url, className = '' }: { url: string; className
       started.current = true;
       setPhase('loading');
       setSlow(false);
-    } else if (!nearby && started.current) {
-      started.current = false;
-      setPhase('idle');
-      setSlow(false);
     }
+    // Retain the loaded frame for this page visit, including while offscreen.
   }, [nearby]);
 
   useEffect(() => {

@@ -3419,7 +3419,7 @@ export default function Home() {
           const adIndex = Math.floor((regularItemIndex + 1) / 4 - 1) % (targetedAds as any[]).length;
 
           return (
-            <div key={`feed-wrapper-${item.id}-${index}`}>
+            <div key={`feed-wrapper-${item.type}-${item.id}`}>
               {/* Feed invite card — injected before the second feed item for users with 2+ items */}
               {index === 1 && combinedFeed.length >= 2 && showFeedInviteCard && userData?.inviteCode && userData?.firstName && (
                 <FeedInviteCard

@@ -21,7 +21,11 @@ JavaScript SDK in the main application.
 
 - Frames load within 300px of the viewport, with autoplay false and autoplay
   permission explicitly denied.
-- Frames are removed when distant, stopping playback and releasing resources.
+- Frames and pending share resolutions are retained after the first nearby load,
+  avoiding frame recreation and repeated resolution when scrolling back.
+- Close and page unmount release frames. Facebook's plugin has no supported
+  pause interface in this SDK-free implementation; autoplay is still disabled,
+  but manually started playback may continue offscreen until paused or closed.
 - Close is respected until the user manually loads that mounted card again.
 - Missing IntersectionObserver falls back to manual loading.
 - Failed share resolution or iframe network errors show Try again; an unresolved

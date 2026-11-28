@@ -26,6 +26,16 @@ export function TikTokPlayer({ url, className = '', autoPreview = true }: Props)
   const autoStarted = useRef(false);
   const dismissed = useRef(false);
   const generation = useRef(0);
+  // Without IntersectionObserver, preserve manual playback rather than treating
+  // the player as permanently offscreen.
+  const inViewport = useRef(true);
+
+  const pausePlayer = useCallback(() => {
+    iframe.current?.contentWindow?.postMessage({
+      type: 'pause',
+      'x-tiktok-player': true,
+    }, 'https://www.tiktok.com');
+  }, []);
 
   useEffect(() => {
     mounted.current = true;
@@ -45,9 +55,26 @@ export function TikTokPlayer({ url, className = '', autoPreview = true }: Props)
       const entry = entries.find(item => item.target === element);
       if (entry) setNearby(entry.isIntersecting);
     }, { rootMargin: '300px' });
+    // Keep the frame alive, but pause when it actually leaves the viewport.
+    // Do not automatically resume when it comes back into view.
+    const playbackObserver = new IntersectionObserver(entries => {
+      const entry = entries.find(item => item.target === element);
+      if (!entry) return;
+      inViewport.current = entry.isIntersecting;
+      if (!entry.isIntersecting) pausePlayer();
+    });
+    const onVisibility = () => {
+      if (document.hidden) pausePlayer();
+    };
     observer.observe(element);
-    return () => observer.disconnect();
-  }, [autoPreview]);
+    playbackObserver.observe(element);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      observer.disconnect();
+      playbackObserver.disconnect();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [autoPreview, pausePlayer]);
 
   useEffect(() => {
     if (!videoId || failed) return;
@@ -60,6 +87,11 @@ export function TikTokPlayer({ url, className = '', autoPreview = true }: Props)
         clearTimeout(timer);
         setSlow(false);
         setPhase('ready');
+      }
+      if (autoPreview && (!inViewport.current || document.hidden) &&
+          (event.data.type === 'onPlayerReady' ||
+           (event.data.type === 'onStateChange' && event.data.value === 1))) {
+        pausePlayer();
       }
       if (['onError', 'onPlayerError'].includes(event.data.type)) {
         clearTimeout(timer);
@@ -74,7 +106,7 @@ export function TikTokPlayer({ url, className = '', autoPreview = true }: Props)
       clearTimeout(timer);
       window.removeEventListener('message', onMessage);
     };
-  }, [videoId, failed]);
+  }, [videoId, failed, autoPreview, pausePlayer]);
 
   const loadPlayer = useCallback(async () => {
     if (busy.current) return;
@@ -108,16 +140,8 @@ export function TikTokPlayer({ url, className = '', autoPreview = true }: Props)
     if (!autoPreview) return;
     if (nearby && !dismissed.current && !autoStarted.current) {
       void loadPlayer();
-    } else if (!nearby && autoStarted.current) {
-      // Unmount distant frames to stop playback and release their resources.
-      // Ignore a short-link response that arrives after its card left view.
-      generation.current++;
-      busy.current = false;
-      autoStarted.current = false;
-      setVideoId(null);
-      setPhase('idle');
-      setSlow(false);
     }
+    // Retain the same frame and pending resolution until Close or page unmount.
   }, [autoPreview, nearby, loadPlayer]);
 
   return (
