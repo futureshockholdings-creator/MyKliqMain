@@ -7,7 +7,9 @@ The user wants both installed mobile PWAs and mobile-browser visits to show a br
 
 The user confirmed the mobile splash worked well, but explicitly excludes logout and successful login transitions: logout must go directly to the landing page, and successful login must not flash the splash before the account appears.
 
-The user wants all normal splash wording removed except **Your Private Social Circle** beneath the icon.
+The user wants all normal splash wording removed except the tagline beneath the
+icon. The current owner-selected wording is **MyKliq, MyPeople, MySpace**, also
+used in the MyKliq and Headlines invite cards.
 
 **Why:** The user wants the mobile experience to feel like a mobile application and be distinct from the desktop web app, with a future Apple App Store release in mind. This does not establish App Store approval or authorize a native-app migration.
 

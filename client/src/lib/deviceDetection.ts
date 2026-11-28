@@ -62,7 +62,7 @@ export const detectDevice = (): DeviceInfo => {
  * Get a formatted invite message based on the user's device
  */
 export const getInviteMessage = (firstName: string, inviteCode: string): string => {
-  return `${firstName} wants you to join their Kliq. Use the following Invite Code ${inviteCode} and Join MyKliq "A Different Social Experience"`;
+  return `${firstName} wants you to join their Kliq. Use the following Invite Code ${inviteCode} and Join MyKliq "MyKliq, MyPeople, MySpace"`;
 };
 
 /**

@@ -46,7 +46,7 @@ export function InviteCard({ firstName, inviteCode, kliqClosed, showNote = true 
             >
               {getDownloadText()}
             </a>{" "}
-            {uiText("- \"A Different Social Experience\"")}
+            {'- "MyKliq, MyPeople, MySpace"'}
           </div>
           <Button
             size="sm"

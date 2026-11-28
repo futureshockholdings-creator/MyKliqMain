@@ -11,5 +11,5 @@
   var splash = document.getElementById("mykliq-startup");
   if (!splash) return;
   splash.setAttribute("aria-label", copy.label);
-  [[".mk-splash-tagline", copy.tagline], [".mk-splash-recovery p", copy.recovery], [".mk-splash-retry", copy.retry]].forEach(function (item) { var element = splash.querySelector(item[0]); if (element) element.textContent = item[1]; });
+  [[".mk-splash-tagline", "MyKliq, MyPeople, MySpace"], [".mk-splash-recovery p", copy.recovery], [".mk-splash-retry", copy.retry]].forEach(function (item) { var element = splash.querySelector(item[0]); if (element) element.textContent = item[1]; });
 })();

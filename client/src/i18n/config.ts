@@ -100,7 +100,7 @@ function updateDocumentLanguage() {
     const tagline = splash.querySelector('.mk-splash-tagline');
     const recovery = splash.querySelector('.mk-splash-recovery p');
     const retry = splash.querySelector('.mk-splash-retry');
-    if (tagline) tagline.textContent = text('Your Private Social Circle');
+    if (tagline) tagline.textContent = 'MyKliq, MyPeople, MySpace';
     if (recovery) recovery.textContent = text('MyKliq is taking longer to start. Check your connection, then try again.');
     if (retry) retry.textContent = text('Try again');
   }
